@@ -205,6 +205,7 @@ export const ChatSettingsModalSelectors = {
   conversationSettingsModal: '[data-qa="chat-settings-modal"]',
   applyChanges: '[data-qa="apply-changes"]',
   entitySettings: '[data-qa="entity-settings"]',
+  systemPromptContainer: '[data-qa="system-prompt-container"]',
   systemPrompt: '[data-qa="system-prompt"]',
   temperatureSlider: '[data-qa="temp-slider"]',
   slider: '.temperature-slider',

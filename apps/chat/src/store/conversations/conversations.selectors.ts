@@ -36,6 +36,7 @@ import {
   isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
+import { checkIsNotAllowedModelUtil } from '@/src/utils/app/models';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
@@ -47,7 +48,7 @@ import {
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, NotAllowedItem } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
@@ -60,6 +61,8 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+
+import { AddonsSelectors } from '../selectors';
 
 import {
   ConversationInfo,
@@ -731,12 +734,83 @@ const selectRenamingConversation = createSelector(
 const selectTalkToConversationId = (state: RootState) =>
   rootSelector(state).talkToConversationId;
 
+const selectIsNotAllowed = createSelector(
+  [
+    selectSelectedConversations,
+    ModelsSelectors.selectModelsMap,
+    ModelsSelectors.selectModels,
+    ModelsSelectors.selectAreModelsLoaded,
+  ],
+  (selectedConversations, modelsMap, models, areModelsLoaded) => {
+    if (!areModelsLoaded) {
+      return false;
+    }
+    if (models.length === 0 && selectedConversations.length > 0) {
+      return true;
+    }
+    if (
+      Object.keys(modelsMap).length === 0 &&
+      models.length > 0 &&
+      selectedConversations.length > 0
+    ) {
+      return true;
+    }
+    return selectedConversations.some((conv) =>
+      checkIsNotAllowedModelUtil(conv, modelsMap),
+    );
+  },
+);
+
+const selectHasNotAllowedAddons = createSelector(
+  [
+    selectSelectedConversations,
+    AddonsSelectors.selectAddonsMap,
+    AddonsSelectors.selectInitialized,
+  ],
+  (selectedConversations, addonsMap, areAddonsInitialized) => {
+    if (!areAddonsInitialized) {
+      return false;
+    }
+    if (Object.keys(addonsMap).length === 0) {
+      return selectedConversations.some(
+        (conv) => conv.selectedAddons && conv.selectedAddons.length > 0,
+      );
+    }
+    return selectedConversations.some((conversation) =>
+      conversation.selectedAddons?.some((addonId) => !addonsMap[addonId]),
+    );
+  },
+);
+
+const selectNotAllowedItemsForDisplay = createSelector(
+  [
+    selectSelectedConversations,
+    ModelsSelectors.selectModelsMap,
+    ModelsSelectors.selectAreModelsLoaded,
+  ],
+  (selectedConversations, modelsMap, areModelsLoaded): NotAllowedItem[] => {
+    if (!areModelsLoaded || Object.keys(modelsMap).length === 0) {
+      return [];
+    }
+    return selectedConversations
+      .filter((conv) => checkIsNotAllowedModelUtil(conv, modelsMap))
+      .map((conv: Conversation): NotAllowedItem => {
+        const modelDetails = modelsMap[conv.model.id];
+        return {
+          conversationId: conv.id,
+          agentName: modelDetails?.name ?? conv.model.id,
+        };
+      });
+  },
+);
+
 const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
     PublicationSelectors.selectResourcesToReview,
     ChatSelectors.selectIsConfigurationBlocksInput,
-    ChatSelectors.selectNotAvailableEntityType,
+    selectIsNotAllowed,
+    selectHasNotAllowedAddons,
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
   ],
@@ -744,7 +818,8 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     conversations,
     resourcesToReview,
     isConfigurationBlocksInput,
-    notAvailableEntityType,
+    isNotAllowedModels,
+    hasNotAllowedAddonsFlag,
     areReadOnly,
     isAdmin,
   ) => {
@@ -759,7 +834,8 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         conversation.sharedWithMe ||
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
-        notAvailableEntityType ||
+        isNotAllowedModels ||
+        hasNotAllowedAddonsFlag ||
         isPlaybackConversation(conversation) ||
         (areReadOnly && !isReviewEntity) ||
         (isReviewEntity && !isAdmin) ||
@@ -859,4 +935,7 @@ export const ConversationsSelectors = {
   selectConversationSignal,
   getUniqueAttachments,
   selectAction,
+  selectIsNotAllowed,
+  selectHasNotAllowedAddons,
+  selectNotAllowedItemsForDisplay,
 };

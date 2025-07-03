@@ -20,8 +20,6 @@ import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   excludeSystemMessages,
   getConversationModelParams,
-  isReplayAsIsConversation,
-  isReplayConversation,
 } from '@/src/utils/app/conversation';
 import {
   isConversationWithFormSchema,
@@ -32,7 +30,6 @@ import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
-import { ApplicationStatus } from '@/src/types/applications';
 import {
   Conversation,
   ConversationsTemporarySettings,
@@ -99,10 +96,8 @@ const ChatView = memo(() => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const areModelsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
@@ -216,60 +211,27 @@ const ChatView = memo(() => {
     installedModelIds.has(conv.model.id),
   );
 
+  const notAllowedItemsForDisplay = useAppSelector(
+    ConversationsSelectors.selectNotAllowedItemsForDisplay,
+  );
+
+  const isNotAllowed = useAppSelector(
+    ConversationsSelectors.selectIsNotAllowed,
+  );
+
+  const hasNotAllowedAddons = useAppSelector(
+    ConversationsSelectors.selectHasNotAllowedAddons,
+  );
+
   useLayoutEffect(() => {
-    const isNotAllowedModel =
-      areModelsLoaded &&
-      (models.length === 0 ||
-        selectedConversations.some((conv) => {
-          if (
-            isReplayConversation(conv) &&
-            isReplayAsIsConversation(conv) &&
-            conv.replay?.replayUserMessagesStack &&
-            conv.replay?.replayUserMessagesStack[0].model
-          ) {
-            return conv.replay.replayUserMessagesStack.some(
-              (message) =>
-                message.role === Role.User &&
-                message.model?.id &&
-                !modelsMap[message.model.id],
-            );
-          }
-
-          const model = modelsMap[conv.model.id];
-          const isNotDeployedCustomApp =
-            model &&
-            model.type === EntityType.Application &&
-            model.functionStatus &&
-            model?.functionStatus !== ApplicationStatus.DEPLOYED;
-
-          return (
-            !model ||
-            isNotDeployedCustomApp ||
-            (model.type === EntityType.Assistant &&
-              conv.assistantModelId &&
-              !modelsMap[conv.assistantModelId])
-          );
-        }));
-
-    if (isNotAllowedModel) {
+    if (isNotAllowed) {
       dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
-    } else if (
-      selectedConversations.some((conversation) =>
-        conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
-      )
-    ) {
+    } else if (hasNotAllowedAddons) {
       dispatch(ChatActions.setNotAvailableEntityType(EntityType.Addon));
     } else {
       dispatch(ChatActions.setNotAvailableEntityType(undefined));
     }
-  }, [
-    selectedConversations,
-    models,
-    areModelsLoaded,
-    addonsMap,
-    modelsMap,
-    dispatch,
-  ]);
+  }, [dispatch, isNotAllowed, hasNotAllowedAddons]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: LikeState) => {
@@ -897,12 +859,14 @@ const ChatView = memo(() => {
                     )}
 
                     {!isPlayback &&
+                    (!selectedPublicationUrl || isApproveRequiredInput) &&
                     notAvailableEntityType &&
-                    (!selectedPublicationUrl || isApproveRequiredInput) ? (
+                    notAllowedItemsForDisplay.length ? (
                       <NotAllowedModel
                         showScrollDownButton={isScrollDownButton}
                         onScrollDownClick={handleScrollDown}
-                        type={notAvailableEntityType}
+                        notAllowedItemsForDisplay={notAllowedItemsForDisplay}
+                        onShowChangeModel={handleTalkToConversationId}
                       />
                     ) : (
                       <>
