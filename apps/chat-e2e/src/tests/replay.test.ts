@@ -52,7 +52,7 @@ dialTest(
     conversations,
     setTestIds,
     talkToAgents,
-    agentSettings,
+    agentSettingAssertion,
     temperatureSlider,
     addons,
     conversationDropdownMenu,
@@ -147,10 +147,7 @@ dialTest(
       async () => {
         await talkToAgentDialog.selectAgent(defaultModel);
         await chat.configureSettingsButton.click();
-        const newModelSystemPrompt = await agentSettings.getSystemPrompt();
-        expect
-          .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
-          .toBe(replayPrompt);
+        await agentSettingAssertion.assertSystemPromptValue(replayPrompt);
 
         const newModelTemperature = await temperatureSlider.getTemperature();
         expect

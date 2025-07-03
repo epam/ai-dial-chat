@@ -17,12 +17,13 @@ import { PublishActions } from '@epam/ai-dial-shared';
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
-  'New conversation stays on Back to Chat if new conversation was on the screen\n' +
-    'New conversation is NOT created on browser refresh if conversation with cleared history is focused\n' +
-    'New conversation is NOT created on Back to Chat if conversation with history was focused\n' +
-    'New conversation is NOT created on Search on My workspace opened from the chat header\n' +
-    'Autofocus on chat input when refresh page.\n' +
-    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused',
+  'New conversation stays on Back to Chat if new conversation was on the screen\n' + //EPMRTC-4587
+    'New conversation is NOT created on browser refresh if conversation with cleared history is focused\n' + //EPMRTC-4586
+    'New conversation is NOT created on Back to Chat if conversation with history was focused\n' + //EPMRTC-4718
+    'New conversation is NOT created on Search on My workspace opened from the chat header\n' + //EPMRTC-4590
+    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused.\n' + //EPMRTC-4588
+    'Autofocus on chat input when refresh page.\n' + //EPMRTC-5450
+    'New conversation is created on browser refresh if selectedConversationIds from local storage was deleted', //EPMRTC-4593
   async ({
     dialHomePage,
     chat,
@@ -41,6 +42,7 @@ dialTest(
     sendMessage,
     baseAssertion,
     localStorageAssertion,
+    agentInfoAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4587',
@@ -49,7 +51,7 @@ dialTest(
       'EPMRTC-4590',
       'EPMRTC-4588',
       'EPMRTC-5450',
-      'EPMRTC-4592',
+      'EPMRTC-4593',
     );
     dialTest.slow();
     const initialConversationName = GeneratorUtil.randomString(7);
@@ -206,6 +208,8 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
+        await sendMessage.messageInput.waitForState();
+        await agentInfoAssertion.assertAgentName(models[0].name);
         const updatedConversationIds =
           await localStorageManager.getSelectedConversationIds();
         baseAssertion.assertValue(
@@ -219,9 +223,9 @@ dialTest(
 );
 
 dialTest(
-  'New conversation is created on browser refresh if two chats with history are in compare mode\n' +
-    'New conversation is created on browser refresh if conversation in Playback mode is selected\n' +
-    'New conversation is created on browser refresh if conversation in Replay mode is selected',
+  'New conversation is created on browser refresh if two chats with history are in compare mode\n' + //EPMRTC-4592
+    'New conversation is created on browser refresh if conversation in Playback mode is selected\n' + //EPMRTC-4682
+    'New conversation is created on browser refresh if conversation in Replay mode is selected', //EPMRTC-4683
   async ({
     dialHomePage,
     chat,
@@ -235,7 +239,7 @@ dialTest(
     compareConversation,
     appContainer,
   }) => {
-    setTestIds('EPMRTC-4682', 'EPMRTC-4683', 'EPMRTC-4593');
+    setTestIds('EPMRTC-4592', 'EPMRTC-4682', 'EPMRTC-4683');
     let models: DialAIEntityModel[];
     let initialConversation: Conversation;
     let conversationToCompare: Conversation;
