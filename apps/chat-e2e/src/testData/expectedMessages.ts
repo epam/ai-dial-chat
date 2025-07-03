@@ -414,8 +414,20 @@ export const ExpectedMessages = {
   authorIsValid: 'Author in preview is valid',
   selectedTopicsAreValid: 'Selected topics are displayed in preview',
   numberOfTopicsIsCorrect: 'Number of topics in preview is correct',
+  attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
+  navigationPanelShouldBeVisible: 'Navigation panel should be visible',
+  navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
+  defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
+  defaultAppNameShouldBeFilled:
+    'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+  releaseDateShouldBeValid: 'Release date should be valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
+  LogoShouldBeCentered: (
+    expectedLogoCenterX: number,
+    actualLogoCenterX: number,
+  ) =>
+    `Logo should be centered. Expected center around ${expectedLogoCenterX}, got ${actualLogoCenterX}`,
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
 };
