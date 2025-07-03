@@ -7,7 +7,10 @@ import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
-import { isVersionExists } from '@/src/utils/app/common';
+import {
+  isVersionExists,
+  replaceSpacesFromString,
+} from '@/src/utils/app/common';
 import {
   getStringValidationErrors,
   getVersionValidationErrors,
@@ -196,11 +199,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const dispatch = useAppDispatch();
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
   const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
   const selectedPublicationResources = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+    PublicationSelectors.selectSelectedItemsToApprove,
   );
 
   const isSelected = useMemo(
@@ -213,9 +219,10 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    setInputName(item.name);
+    const cleanName = replaceSpacesFromString(item.name);
+    setInputName(cleanName);
     const nameErrors = getStringValidationErrors({
-      value: item.name,
+      value: cleanName,
       label: `${itemTypeName} name`,
       checkDotsInTheEnd: true,
     });
@@ -256,11 +263,12 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
 
   const handleSelect = useCallback(() => {
     dispatch(
-      PublicationActions.selectItemsToPublish({
+      PublicationActions.selectItemsToApprove({
+        publicationUrl: selectedPublication?.url ?? '',
         ids: [item.id],
       }),
     );
-  }, [dispatch, item.id]);
+  }, [dispatch, item.id, selectedPublication?.url]);
 
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
