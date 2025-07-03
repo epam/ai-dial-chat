@@ -267,7 +267,7 @@ export const ApplicationEditorHeader = {
 export const AppEditorGeneralInfoPreviewSelectors = {
   fullContainer: '[data-qa="app-preview-general-info-full-container"]',
   detailedSwitch: '[data-qa="toggle-switch"]',
-  containerGeneralInfo: '[data-qa="app-preview-general-info"]',
+  appPreviewGeneralInfoContainer: '[data-qa="app-preview-general-info"]',
   previewIconContainer: '[data-qa="entity-icon"]',
   previewAgentName: '[data-qa="agent-name"]',
   previewTopicsContainer: '[data-qa="app-topics"]',
@@ -276,12 +276,16 @@ export const AppEditorGeneralInfoPreviewSelectors = {
   previewAuthorValue: '[data-qa="author"]',
   description: '[data-qa="application-description"]',
   version: '[data-qa="version"]',
+  releaseDate: '[data-qa="created-at"]',
 };
 
 export const AppEditorAppSettingsPreviewSelectors = {
   container: '[data-qa="app-preview-settings"]',
-  chatPreviewContainer: '[data-qa="app-settings-chat-mode"]',
-  previewIconContainer: '[data-qa="entity-icon"]',
+  appSettingsChatModeContainer: '[data-qa="app-settings-chat-mode"]',
+  previewIcon: '[data-qa="entity-icon"]',
+  agentInfoContainer: '[data-qa="agent-info-container"]',
+  agentInfo: '[data-qa="agent-info"]',
+  agentName: '[data-qa="agent-name"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {
@@ -304,11 +308,14 @@ export const AddApplicationGeneralInfoFormSelector = {
 export const AddApplicationAppSettingsFormSelector = {
   featuresLabel: '[for="features"]',
   attachmentsTypesLabel: '[for="attachmentTypes"]',
-  attachmentsTypesInput: '[data-qa=attachment-types-field]',
+  attachmentTypesContainer: '[data-qa="attachment-types-field"]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',
   maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
+  selectedAttachmentTypePills: '[data-qa="attachment-type-pill"]',
+  unselectAttachmentTypePillButton: (type: string) =>
+    `button[data-qa="unselect-item-${type}"]`,
 };
 
 export const InformationModalSelectors = {

@@ -8,7 +8,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import { Colors, CssClasses, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
@@ -497,7 +497,7 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(promptName);
         await tooltipAssertion.assertTooltipStyle(
           Styles.wordBreak,
-          Styles.breakAll,
+          CssClasses.breakAll,
         );
       },
     );
