@@ -202,20 +202,32 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PromptsActions.savePrompt.type),
-    concatMap(({ payload: newPrompt }) =>
-      PromptService.updatePrompt(newPrompt),
+    concatMap(({ payload }) =>
+      PromptService.updatePrompt(payload.prompt).pipe(
+        switchMap(() => {
+          if (payload.selectSaved) {
+            return of(
+              PromptsActions.selectPrompt({
+                promptId: payload.prompt.id,
+                isApproveRequiredResource: !!payload.prompt.publicationInfo,
+              }),
+            );
+          }
+
+          return EMPTY;
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
+      ),
     ),
-    catchError((err) => {
-      console.error(err);
-      return of(
-        UIActions.showErrorToast(
-          translate(
-            'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
-          ),
-        ),
-      );
-    }),
-    ignoreElements(),
   );
 
 const movePromptFailEpic: AppEpic = (action$) =>
@@ -242,7 +254,7 @@ const movePromptEpic: AppEpic = (action$) =>
         overwrite: false,
       }).pipe(
         switchMap(() => {
-          return of(PromptsActions.savePrompt(payload.newPrompt));
+          return of(PromptsActions.savePrompt({ prompt: payload.newPrompt }));
         }),
         catchError(() => {
           return of(PromptsActions.movePromptFail(payload));
@@ -289,7 +301,12 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         iif(
           () => !areIdsEqual,
           of(PromptsActions.movePrompt({ oldPrompt: prompt, newPrompt })),
-          of(PromptsActions.savePrompt(newPrompt)),
+          of(
+            PromptsActions.savePrompt({
+              prompt: newPrompt,
+              selectSaved: payload.selectUpdated,
+            }),
+          ),
         ),
       );
     }),
