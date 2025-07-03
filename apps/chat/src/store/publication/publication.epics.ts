@@ -1464,7 +1464,6 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
           return {
             ...resource,
             sourceUrl: resource.sourceUrl ?? '',
-            reviewUrl: resource.reviewUrl,
           };
         }),
       };
@@ -1579,14 +1578,12 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
                 `${targetFolderIdToUpdate}/`,
                 `${newTargetFolderId}/`,
               ),
-              reviewUrl: resource.reviewUrl,
             };
           }
 
           return {
             ...resource,
             sourceUrl: resource.sourceUrl ?? '',
-            reviewUrl: resource.reviewUrl,
           };
         }),
       };
@@ -1941,8 +1938,21 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       );
       const resources = publication?.resources;
 
+      if (!publication) {
+        console.error('Publication not found, cannot select items to approve');
+        return EMPTY;
+      }
+
+      const selectedItemsToApprove =
+        PublicationSelectors.selectAllSelectedItemsToApprove(state$.value);
+
+      if (selectedItemsToApprove[publication.url] !== undefined) {
+        return EMPTY;
+      }
+
       return of(
-        PublicationActions.setItemsToPublish({
+        PublicationActions.setItemsToApprove({
+          publicationUrl: publication?.url ?? '',
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),
       );
