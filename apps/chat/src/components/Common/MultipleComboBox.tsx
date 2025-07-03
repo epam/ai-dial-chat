@@ -269,6 +269,7 @@ export function MultipleComboBox<T>({
                         'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
                         itemHeightClassName ? itemHeightClassName : 'h-[23px]',
                       )}
+                      data-qa="attachment-type-pill"
                       {...getSelectedItemProps({
                         selectedItem: selectedItemForRender,
                         index,
