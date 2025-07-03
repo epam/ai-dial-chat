@@ -12,6 +12,7 @@ import {
   isVersionExists,
   isVersionPartSizeValid,
   isVersionValid,
+  replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
@@ -59,11 +60,13 @@ import uniq from 'lodash-es/uniq';
 interface Props {
   publication: Publication;
   onUpdateRequest: () => void;
+  isFormChanged: boolean;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
   onUpdateRequest,
+  isFormChanged,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -114,7 +117,7 @@ export const PublicationHandlerFooter = ({
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules ?? [],
-        displayAuthor: publication.displayAuthor ?? '',
+        displayAuthor: replaceSpacesFromString(publication.displayAuthor),
       }),
     );
   }, [
@@ -308,12 +311,18 @@ export const PublicationHandlerFooter = ({
     false,
   );
 
-  const isEditDisabled =
+  const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
   const someReviewedConversationHaveNoMessages =
     publicationConversationsWithUploadedMessages.some(
       (conversation) => !conversation.messages.length,
     );
+  const isApproveDisabled =
+    !isAllResourcesReviewed ||
+    !!invalidEntities.length ||
+    someReviewedConversationHaveNoMessages;
+
+  const isEditDisabled = isEditInvalid || !isFormChanged;
 
   return (
     <div
@@ -384,7 +393,7 @@ export const PublicationHandlerFooter = ({
               {t('Reject')}
             </button>
             <Tooltip
-              hideTooltip={isAllResourcesReviewed}
+              hideTooltip={!isApproveDisabled}
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
@@ -395,11 +404,7 @@ export const PublicationHandlerFooter = ({
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={
-                  !isAllResourcesReviewed ||
-                  !!invalidEntities.length ||
-                  someReviewedConversationHaveNoMessages
-                }
+                disabled={isApproveDisabled}
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
@@ -419,7 +424,9 @@ export const PublicationHandlerFooter = ({
             <Tooltip
               hideTooltip={!isEditDisabled}
               tooltip={t(
-                'Request can not be updated as some resources are invalid',
+                isEditInvalid
+                  ? 'Request can not be updated as some resources are invalid'
+                  : 'Make any changes to update the request',
               )}
             >
               <button
