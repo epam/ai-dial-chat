@@ -11,6 +11,9 @@ export class AgentSettingAssertion extends BaseAssertion {
   }
 
   public async assertSystemPromptValue(expectedValue: string) {
+    await this.agentSettings.systemPromptSpinner.waitForState({
+      state: 'hidden',
+    });
     const systemPrompt = this.agentSettings.systemPrompt;
     await this.assertElementText(
       systemPrompt,

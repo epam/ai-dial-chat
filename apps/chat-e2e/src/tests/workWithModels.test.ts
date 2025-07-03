@@ -550,7 +550,7 @@ dialTest(
     chatHeader,
     systemPromptListAssertion,
     localStorageManager,
-    baseAssertion,
+    agentSettingAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -585,11 +585,7 @@ dialTest(
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementText(
-          agentSettings.systemPrompt,
-          prompt.content!,
-          ExpectedMessages.systemPromptValid,
-        );
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
         await conversationSettingsModal.applyChangesButton.click();
       },
     );
@@ -609,11 +605,7 @@ dialTest(
       'Open chat settings and verify system prompt is preserved',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await baseAssertion.assertElementText(
-          agentSettings.systemPrompt,
-          prompt.content!,
-          ExpectedMessages.systemPromptValid,
-        );
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
       },
     );
   },
