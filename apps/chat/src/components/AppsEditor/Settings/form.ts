@@ -338,7 +338,7 @@ export const getQuickAppData = (
       instructions: formData.instructions,
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData[Toolsets.WebApiToolset]),
-      ...(formData.mcpToolset && {
+      ...(formData[Toolsets.McpToolset] && {
         mcp_toolset: JSON.parse(formData[Toolsets.McpToolset]),
       }),
       model: modelsMap[formData.model]?.id ?? formData.model,
