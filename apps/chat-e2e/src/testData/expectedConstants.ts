@@ -76,6 +76,8 @@ export const ExpectedConstants = {
   noResults: 'No results found',
   notAllowedModelError:
     'Not available agent selected. Please, change the agent to proceed',
+  notAllowedAgentError: (agent: string) =>
+    `Agent is not available. Please, change the agent "${agent}" to proceed.`,
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
