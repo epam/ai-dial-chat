@@ -26,6 +26,7 @@ dialTest(
     setTestIds,
     talkToAgentDialog,
     chat,
+    agentSettingAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1046');
@@ -59,10 +60,7 @@ dialTest(
 
     await chat.configureSettingsButton.click();
     if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {
-      const systemPromptVisible = await agentSettings.getSystemPrompt();
-      expect
-        .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
-        .toBe(sysPrompt);
+      await agentSettingAssertion.assertSystemPromptValue(sysPrompt);
     }
     if (ModelsUtil.doesModelAllowTemperature(defaultModel)) {
       const temperature = await temperatureSlider.getTemperature();
@@ -82,6 +80,7 @@ dialTest(
   async ({
     dialHomePage,
     agentSettings,
+    agentSettingAssertion,
     chat,
     setTestIds,
     localStorageManager,
@@ -100,10 +99,7 @@ dialTest(
     await chat.configureSettingsButton.click();
     for (const prompt of prompts) {
       await agentSettings.setSystemPrompt(prompt);
-      const systemPrompt = await agentSettings.getSystemPrompt();
-      expect
-        .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-        .toBe(prompt);
+      await agentSettingAssertion.assertSystemPromptValue(prompt);
       await agentSettings.clearSystemPrompt();
     }
   },

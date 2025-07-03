@@ -12,6 +12,7 @@ import {
   PublicationInfo,
   PublicationRequestModel,
   PublicationRule,
+  PublicationUpdateRequestModel,
   ResourceToReview,
 } from '@/src/types/publication';
 
@@ -53,6 +54,7 @@ const initialState: PublicationState = {
   publishModel: undefined,
 
   // Review edit mode
+  selectedItemsToApprove: {},
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
@@ -222,12 +224,27 @@ export const publicationSlice = createSlice({
     ) => {
       state.selectedItemsToPublish = payload.ids;
     },
+    setItemsToApprove: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedItemsToApprove[payload.publicationUrl] = payload.ids;
+    },
     selectItemsToPublish: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
       state.selectedItemsToPublish = xor(
         state.selectedItemsToPublish,
+        payload.ids,
+      );
+    },
+    selectItemsToApprove: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedItemsToApprove[payload.publicationUrl] = xor(
+        state.selectedItemsToApprove[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },
@@ -386,7 +403,7 @@ export const publicationSlice = createSlice({
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{
-        dataToUpdate: PublicationRequestModel;
+        dataToUpdate: PublicationUpdateRequestModel;
         url: string;
       }>,
     ) => {
