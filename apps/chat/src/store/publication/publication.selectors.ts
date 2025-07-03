@@ -106,27 +106,6 @@ const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
 const selectSelectedItemsToPublish = (state: RootState) =>
   rootSelector(state).selectedItemsToPublish;
 
-const selectSelectedItemsToPublishSet = createSelector(
-  [selectSelectedItemsToPublish],
-  (selectedItemsToPublish) => new Set(selectedItemsToPublish),
-);
-
-const selectResourcesToReviewByPublicationUrl = createSelector(
-  [
-    selectResourcesToReview,
-    selectSelectedItemsToPublishSet,
-    (_state, id: string) => id,
-  ],
-  (resourcesToReview, selectedItemsToPublish, id) => {
-    return resourcesToReview.filter(
-      (r) =>
-        r.publicationUrl === id &&
-        (selectedItemsToPublish.has(r.reviewUrl) ||
-          selectedItemsToPublish.has(r.sourceUrl)),
-    );
-  },
-);
-
 const _selectRules = (state: RootState) => rootSelector(state).rules;
 
 const selectRulesByPath = createSelector(
@@ -160,17 +139,20 @@ const selectSelectedItemsToApprove = createSelector(
   },
 );
 
-const selectAllSelectedItemsToApprove = (state: RootState) =>
-  rootSelector(state).selectedItemsToApprove;
-
-const selectSelectedItemsToApprove = createSelector(
-  [selectAllSelectedItemsToApprove, selectSelectedPublicationUrl],
-  (selectedItemsToApprove, selectedPublicationUrl) => {
-    if (!selectedPublicationUrl) {
-      return [];
-    }
-
-    return selectedItemsToApprove[selectedPublicationUrl] ?? [];
+const selectResourcesToReviewByPublicationUrl = createSelector(
+  [
+    selectResourcesToReview,
+    selectSelectedItemsToApprove,
+    (_state, id: string) => id,
+  ],
+  (resourcesToReview, selectedItemsToApprove, id) => {
+    const itemsToPublish = new Set(selectedItemsToApprove);
+    return resourcesToReview.filter(
+      (r) =>
+        r.publicationUrl === id &&
+        (itemsToPublish.has(r.reviewUrl) ||
+        itemsToPublish.has(r.sourceUrl)),
+    );
   },
 );
 
