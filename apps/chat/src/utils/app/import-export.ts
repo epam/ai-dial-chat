@@ -442,7 +442,7 @@ export const getPromptActions = (
   prompt: Prompt,
   index: number,
 ): Observable<AppAction>[] => {
-  const firstPromptAction: Observable<AppAction> =
+  const firstPromptAction$: Observable<AppAction> =
     index === 0
       ? of(
           UIActions.setOpenedFoldersIds({
@@ -460,7 +460,7 @@ export const getPromptActions = (
         prompt,
       }),
     ),
-    firstPromptAction,
+    firstPromptAction$,
   ];
 };
 
