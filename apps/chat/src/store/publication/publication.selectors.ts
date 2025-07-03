@@ -160,6 +160,20 @@ const selectSelectedItemsToApprove = createSelector(
   },
 );
 
+const selectAllSelectedItemsToApprove = (state: RootState) =>
+  rootSelector(state).selectedItemsToApprove;
+
+const selectSelectedItemsToApprove = createSelector(
+  [selectAllSelectedItemsToApprove, selectSelectedPublicationUrl],
+  (selectedItemsToApprove, selectedPublicationUrl) => {
+    if (!selectedPublicationUrl) {
+      return [];
+    }
+
+    return selectedItemsToApprove[selectedPublicationUrl] ?? [];
+  },
+);
+
 const _selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
