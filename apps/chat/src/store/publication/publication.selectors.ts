@@ -103,12 +103,8 @@ const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
   },
 );
 
-const selectResourcesToReviewByPublicationUrl = createSelector(
-  [selectResourcesToReview, (_state, id: string) => id],
-  (resourcesToReview, id) => {
-    return resourcesToReview.filter((r) => r.publicationUrl === id);
-  },
-);
+const selectSelectedItemsToPublish = (state: RootState) =>
+  rootSelector(state).selectedItemsToPublish;
 
 const _selectRules = (state: RootState) => rootSelector(state).rules;
 
@@ -129,9 +125,6 @@ const selectIsRulesLoading = (state: RootState) =>
 const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
   rootSelector(state).allPublishedWithMeItemsUploaded[featureType];
 
-const selectSelectedItemsToPublish = (state: RootState) =>
-  rootSelector(state).selectedItemsToPublish;
-
 const selectAllSelectedItemsToApprove = (state: RootState) =>
   rootSelector(state).selectedItemsToApprove;
 
@@ -143,6 +136,22 @@ const selectSelectedItemsToApprove = createSelector(
     }
 
     return selectedItemsToApprove[selectedPublicationUrl] ?? [];
+  },
+);
+
+const selectResourcesToReviewByPublicationUrl = createSelector(
+  [
+    selectResourcesToReview,
+    selectSelectedItemsToApprove,
+    (_state, id: string) => id,
+  ],
+  (resourcesToReview, selectedItemsToApprove, id) => {
+    const itemsToPublish = new Set(selectedItemsToApprove);
+    return resourcesToReview.filter(
+      (r) =>
+        r.publicationUrl === id &&
+        (itemsToPublish.has(r.reviewUrl) || itemsToPublish.has(r.sourceUrl)),
+    );
   },
 );
 
