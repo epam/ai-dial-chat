@@ -1390,7 +1390,7 @@ dialTest(
 
     await dialTest.step('Verify attachment types are preserved', async () => {
       const actualAttachmentTypes =
-        await appEditorViewForm.getSelectedAttachmentTypes();
+        await appEditorViewForm.getSelectedAttachmentTypes(true);
       baseAssertion.assertArrayIncludesAll(
         actualAttachmentTypes,
         [attachmentTypeToSet],
