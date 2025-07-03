@@ -10,7 +10,7 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
   'The list of prompts is updated if to type /name.\n' +
@@ -551,6 +551,18 @@ dialTest(
     });
 
     await dialTest.step(
+      'Set the agent with allowed systemPrompt to the recent',
+      async () => {
+        const recentModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels().filter((m) => m.features?.systemPrompt),
+        );
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          recentModel,
+        );
+      },
+    );
+
+    await dialTest.step(
       `Type / in system prompt field, select created prompt and verify variable modal with default values is displayed`,
       async () => {
         await dialHomePage.openHomePage();
@@ -662,6 +674,18 @@ dialSharedWithMeTest(
           shareFolderByLinkResponse,
         );
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Set the agent with allowed systemPrompt to the recent',
+      async () => {
+        const recentModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels().filter((m) => m.features?.systemPrompt),
+        );
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
+          recentModel,
+        );
       },
     );
 
