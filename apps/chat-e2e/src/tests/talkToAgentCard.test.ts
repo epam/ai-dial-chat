@@ -12,7 +12,12 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Attributes, Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import {
+  Attributes,
+  StyleValues,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';
@@ -487,7 +492,7 @@ dialTest(
         );
         await tooltipAssertion.assertTooltipStyle(
           Styles.textWrapMode,
-          Styles.wrap,
+          StyleValues.wrap,
         );
         const tooltipTopicsCount = await topicsTooltip.topic.getElementsCount();
         for (let i = 1; i <= tooltipTopicsCount; i++) {

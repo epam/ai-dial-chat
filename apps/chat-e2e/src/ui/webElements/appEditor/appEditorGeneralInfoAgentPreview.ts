@@ -13,7 +13,7 @@ export class AppEditorGeneralInfoAgentPreview extends BaseElement {
   }
 
   public generalInfoContainer = this.getChildElementBySelector(
-    AppEditorGeneralInfoPreviewSelectors.containerGeneralInfo,
+    AppEditorGeneralInfoPreviewSelectors.appPreviewGeneralInfoContainer,
   );
 
   public previewIconContainer =
@@ -31,6 +31,10 @@ export class AppEditorGeneralInfoAgentPreview extends BaseElement {
 
   public version = this.generalInfoContainer.getChildElementBySelector(
     AppEditorGeneralInfoPreviewSelectors.version,
+  );
+
+  public releaseDate = this.generalInfoContainer.getChildElementBySelector(
+    AppEditorGeneralInfoPreviewSelectors.releaseDate,
   );
 
   public previewTopicsContainer =

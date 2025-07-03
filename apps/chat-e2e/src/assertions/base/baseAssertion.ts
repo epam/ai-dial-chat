@@ -11,6 +11,7 @@ import {
   Colors,
   Cursors,
   Overflow,
+  StyleValues,
   Styles,
 } from '@/src/ui/domData';
 import { Properties } from '@/src/ui/domData/properties';
@@ -153,7 +154,7 @@ export class BaseAssertion {
 
   public async assertInputValue(
     element: BaseElement | Locator,
-    expectedValue: string,
+    expectedValue: string | RegExp,
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
@@ -412,7 +413,7 @@ export class BaseAssertion {
 
   public async assertElementTextWrap(
     element: BaseElement | Locator,
-    expectedWrap: Overflow,
+    expectedWrap: Overflow | StyleValues,
   ) {
     const elementLocator = this.getElementLocator(element);
     await expect(
