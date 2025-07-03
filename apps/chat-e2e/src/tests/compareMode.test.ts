@@ -1692,6 +1692,9 @@ dialTest(
           Attributes.value,
           firstConversation.name,
         );
+        await renameConversationModalAssertion.assertElementTextIsSelected(
+          renameConversationModal.nameInput,
+        );
         await renameConversationModal.editConversationNameWithSaveButton(
           newLeftChatName,
         );
