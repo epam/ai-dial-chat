@@ -171,7 +171,7 @@ dialTest(
     );
 
     await dialTest.step('Update app icon', async () => {
-      await appEditorHeader.goOnGeneralInfoStep({
+      await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
         isHttpMethodTriggered: false,
       });
       await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');

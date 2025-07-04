@@ -47,6 +47,7 @@ import {
   FilesToApproveTree,
   FolderConversationsToApprove,
   FolderPrompts,
+  FolderPromptsToApprove,
   Folders,
   OrganizationConversationsTree,
   PromptsToApproveTree,
@@ -90,7 +91,8 @@ const dialAdminTest = dialTest.extend<{
   adminConversationToApproveAssertion: PublishEntityAssertion<ConversationsToApproveTree>;
   adminFilesToApproveAssertion: EntityTreeAssertion<FilesToApproveTree>;
   adminPromptToApproveAssertion: PublishEntityAssertion<PromptsToApproveTree>;
-  adminFolderToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
+  adminFolderConversationsToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
+  adminFolderPromptsToApproveAssertion: PublishFolderAssertion<FolderPromptsToApprove>;
   adminPromptDropdownMenuAssertion: MenuAssertion;
   adminPromptDropdownMenu: DropdownMenu;
   adminPublicationReviewControl: PublicationReviewControl;
@@ -396,14 +398,24 @@ const dialAdminTest = dialTest.extend<{
       new PublishEntityAssertion<PromptsToApproveTree>(adminPromptsToApprove);
     await use(adminPromptToApproveAssertion);
   },
-  adminFolderToApproveAssertion: async (
+  adminFolderConversationsToApproveAssertion: async (
     { adminPublishingApprovalModal },
     use,
   ) => {
-    const adminFolderToApproveAssertion = new PublishFolderAssertion(
-      adminPublishingApprovalModal.getFolderConversationsToApprove(),
+    const adminFolderConversationsToApproveAssertion =
+      new PublishFolderAssertion(
+        adminPublishingApprovalModal.getFolderConversationsToApprove(),
+      );
+    await use(adminFolderConversationsToApproveAssertion);
+  },
+  adminFolderPromptsToApproveAssertion: async (
+    { adminPublishingApprovalModal },
+    use,
+  ) => {
+    const adminFolderPromptsToApproveAssertion = new PublishFolderAssertion(
+      adminPublishingApprovalModal.getFolderPromptsToApprove(),
     );
-    await use(adminFolderToApproveAssertion);
+    await use(adminFolderPromptsToApproveAssertion);
   },
   adminOrganizationFolderDropdownMenuAssertion: async (
     { adminOrganizationFolderDropdownMenu },
