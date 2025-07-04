@@ -281,8 +281,14 @@ export class ApiUtils {
   }
 }
 
-export const getModelIdWithoutVersion = (id: string) =>
-  id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+export const getModelIdWithoutVersion = (id: string) => {
+  const parts = id.split(pathKeySeparator);
+  const name = parts.slice(0, -1).join(pathKeySeparator);
+  if (parts.at(-1)?.startsWith('_')) {
+    return `${name}_`;
+  }
+  return name;
+};
 
 export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
   if (version === NA_VERSION) {
@@ -321,7 +327,7 @@ export const getIdWithoutVersionFromApiKey = (
 
 export const getVersionFromId = (id: string) => {
   const parts = id.split(pathKeySeparator);
-  const version = parts.at(-1);
+  const version = parts.at(-1)?.replace(/^_/, '');
 
   // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
   if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
