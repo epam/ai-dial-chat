@@ -2357,28 +2357,82 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const saveConversationEpic: AppEpic = (action$) =>
+const saveConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.saveConversation.type),
     filter((action) => !action.payload.conversation.isMessageStreaming), // shouldn't save during streaming
     concatMap(({ payload }) => {
-      const newConversation = payload.conversation;
-      const requestMetadata = !!payload.requestMetadataAfter;
+      const { conversation, requestMetadataAfter, selectSavedOptions } =
+        payload;
 
-      if (isEntityIdLocal(newConversation)) {
+      if (isEntityIdLocal(conversation)) {
         return of(ConversationsActions.saveConversationSuccess());
       }
 
-      return ConversationService.updateConversation(newConversation).pipe(
+      return ConversationService.updateConversation(conversation).pipe(
         switchMap((conversationInfo) => {
           if (!conversationInfo) {
             return of(ConversationsActions.saveConversationSuccess());
           }
 
+          const actions: Observable<AppAction>[] = [];
+          const state = state$.value;
+
+          if (requestMetadataAfter) {
+            actions.push(
+              of(
+                ConversationsActions.getConversationMetadata({
+                  conversationId: conversation.id,
+                }),
+              ),
+            );
+          }
+
+          if (selectSavedOptions?.selectSaved) {
+            const { compareConversationId } = selectSavedOptions;
+
+            if (compareConversationId) {
+              const selectedConversationIds =
+                ConversationsSelectors.selectSelectedConversationsIds(state);
+              const haveSelectedConversationsCompareConversation =
+                selectedConversationIds.includes(compareConversationId);
+
+              if (haveSelectedConversationsCompareConversation) {
+                actions.push(
+                  of(
+                    ConversationsActions.selectConversations({
+                      conversationIds: selectedConversationIds.map((id) =>
+                        id === selectSavedOptions.compareConversationId
+                          ? selectSavedOptions.compareConversationId
+                          : conversation.id,
+                      ),
+                    }),
+                  ),
+                );
+              } else {
+                actions.push(
+                  of(
+                    ConversationsActions.selectConversations({
+                      conversationIds: [compareConversationId, conversation.id],
+                    }),
+                  ),
+                );
+              }
+            } else {
+              actions.push(
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [conversation.id],
+                  }),
+                ),
+              );
+            }
+          }
+
           return concat(
             of(
               ConversationsActions.updateConversationSuccess({
-                id: newConversation.id,
+                id: conversation.id,
                 conversation: {
                   createdAt: conversationInfo?.createdAt,
                   updatedAt: conversationInfo?.updatedAt,
@@ -2386,15 +2440,7 @@ const saveConversationEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.saveConversationSuccess()),
-            iif(
-              () => requestMetadata,
-              of(
-                ConversationsActions.getConversationMetadata({
-                  conversationId: newConversation.id,
-                }),
-              ),
-              EMPTY,
-            ),
+            ...actions,
           );
         }),
         catchError((err) => {
@@ -2407,7 +2453,7 @@ const saveConversationEpic: AppEpic = (action$) =>
                 ),
               ),
             ),
-            of(ConversationsActions.saveConversationFail(newConversation)),
+            of(ConversationsActions.saveConversationFail(conversation)),
           );
         }),
       );
@@ -2499,6 +2545,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             of(
               ConversationsActions.saveConversation({
                 conversation: newConversation,
+                selectSavedOptions: {
+                  selectSaved: payload.selectUpdatedOptions?.selectUpdated,
+                  compareConversationId:
+                    payload.selectUpdatedOptions?.compareConversationId,
+                },
               }),
             ),
             EMPTY,

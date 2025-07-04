@@ -141,6 +141,8 @@ dialTest(
     chatBar,
     confirmationDialog,
     chatMessages,
+    chatMessagesAssertion,
+    toast,
     chat,
     chatHeader,
     talkToAgentDialog,
@@ -348,12 +350,12 @@ dialTest(
         if (simpleRequestModel !== undefined) {
           await chatHeader.chatAgent.click();
           await talkToAgentDialog.selectAgent(simpleRequestModel);
+          await toast.closeToast();
+          await dialHomePage.mockChatTextResponse(
+            MockedChatApiResponseBodies.simpleTextBody,
+          );
           await chat.sendRequestWithButton('1+2=');
-          const messagesCount =
-            await chatMessages.chatMessages.getElementsCount();
-          expect
-            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-            .toBe(6);
+          await chatMessagesAssertion.assertMessagesCount(6);
         }
       },
     );

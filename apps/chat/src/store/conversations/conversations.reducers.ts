@@ -90,6 +90,10 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversation: Conversation;
         requestMetadataAfter?: boolean;
+        selectSavedOptions?: {
+          selectSaved?: boolean;
+          compareConversationId?: string;
+        };
       }>,
     ) => state,
     saveConversationSuccess: (state) => {
@@ -147,12 +151,22 @@ export const conversationsSlice = createSlice({
     },
     updateConversation: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         id: string;
         values: Partial<Conversation>;
         publicationUrl?: string | null;
+        selectUpdatedOptions?: {
+          selectUpdated?: boolean;
+          compareConversationId?: string;
+        };
       }>,
-    ) => state,
+    ) => {
+      if (payload.selectUpdatedOptions?.selectUpdated) {
+        state.areSelectedConversationsLoaded = false;
+      }
+    },
     updateConversationSuccess: (
       state,
       {
