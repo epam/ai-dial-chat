@@ -27,7 +27,7 @@ import {
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { LikeState, Message, Role } from '@epam/ai-dial-shared';
+import { Feature, LikeState, Message, Role } from '@epam/ai-dial-shared';
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
@@ -294,6 +294,12 @@ export const MessageMobileButtons = ({
   const isConversationsWithSchema = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationsWithSchema,
   );
+  const isEditLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditLastAssistantContent),
+  );
+  const isAllLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
+  );
 
   const isAssistant = message.role === Role.Assistant;
 
@@ -324,6 +330,19 @@ export const MessageMobileButtons = ({
                 onClick={onCopy}
               />
             ))}
+          {(isAllLastMessageEnabled ||
+            (isLastMessage && isEditLastMessageEnabled)) && (
+            <MenuItem
+              item={
+                <div className="flex items-center gap-3">
+                  <IconEdit className="text-secondary" size={18} />
+                  {t('Edit')}
+                </div>
+              }
+              data-qa="edit"
+              onClick={() => onToggleEditing(true)}
+            />
+          )}
           {onRegenerate && (
             <MenuItem
               item={
