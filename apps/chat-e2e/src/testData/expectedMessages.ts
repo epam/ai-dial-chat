@@ -363,6 +363,7 @@ export const ExpectedMessages = {
   entityIsNotVisible: 'Entity is not visible',
   entityIsVisible: 'Entity is visible',
   entityBackgroundColorIsValid: 'Entity background color is valid',
+  elementTextIsSelected: 'Element text is selected',
   featureIsToggledOff: 'Feature is toggled-off',
   featureIsToggledOn: 'Feature is toggled-on',
   elementColorIsValid: 'Element color is valid',
