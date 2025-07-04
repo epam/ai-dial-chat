@@ -37,6 +37,8 @@ import {
 } from '@/src/utils/app/folders';
 import {
   filterIdsByFeatureType,
+  getEntityBucket,
+  getIdWithoutRootPathSegments,
   isApplicationId,
   isConversationId,
   isFileId,
@@ -101,6 +103,7 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -1446,26 +1449,68 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      // new attachment urls that need to be added to the publication resources
+      const attachmentUrlsToUpdate = !isConversation
+        ? []
+        : (uniqBy(
+            (payload.newEntity as Conversation).messages.flatMap(
+              (msg) => msg.custom_content?.attachments?.flatMap((a) => a) ?? [],
+            ),
+            'url',
+          )
+            .map(({ url }) => url)
+            .filter(Boolean) as string[]);
+
+      const reviewUrlsByIds = attachmentUrlsToUpdate.reduce(
+        (acc, url) => {
+          acc[url] = ApiUtils.decodeApiUrl(
+            constructPath(
+              url.split('/')[0],
+              getEntityBucket(payload.newEntity),
+              url.split('/').at(-1),
+            ),
+          );
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
+      const newConversationResources = attachmentUrlsToUpdate.map((url) => ({
+        action: PublishActions.ADD,
+        sourceUrl: ApiUtils.decodeApiUrl(url),
+        targetUrl: ApiUtils.decodeApiUrl(
+          constructPath(
+            url.split('/')[0],
+            publication.targetFolder,
+            getIdWithoutRootPathSegments(payload.newEntity.folderId),
+            url.split('/').at(-1),
+          ),
+        ),
+        reviewUrl: undefined as unknown as string,
+      }));
+
       const publicationData: PublicationUpdateRequestModel = {
         ...publication,
-        resources: publication.resources.map((resource) => {
-          if (resource.reviewUrl === payload.resourceToUpdateUrl) {
-            const newTargetUrlSegments = payload.newEntity.id.split('/');
-            newTargetUrlSegments[1] = publication.targetFolder;
-            const newTargetUrl = newTargetUrlSegments.join('/');
+        resources: publication.resources
+          .map((resource) => {
+            if (resource.reviewUrl === payload.resourceToUpdateUrl) {
+              const newTargetUrlSegments = payload.newEntity.id.split('/');
+              newTargetUrlSegments[1] = publication.targetFolder;
+              const newTargetUrl = newTargetUrlSegments.join('/');
+
+              return {
+                ...resource,
+                sourceUrl: resource.sourceUrl ?? '',
+                targetUrl: newTargetUrl,
+              };
+            }
 
             return {
               ...resource,
               sourceUrl: resource.sourceUrl ?? '',
-              targetUrl: newTargetUrl,
             };
-          }
-
-          return {
-            ...resource,
-            sourceUrl: resource.sourceUrl ?? '',
-          };
-        }),
+          })
+          .concat(newConversationResources),
       };
 
       return PublicationService.updatePublicationRequest({
@@ -1477,6 +1522,32 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
             id: payload.newEntity.id,
             values: payload.newEntity,
           };
+
+          if (isConversation && attachmentUrlsToUpdate.length) {
+            updateEntityPayload.values = {
+              ...updateEntityPayload.values,
+              messages: (
+                updateEntityPayload.values as Conversation
+              ).messages.map((msg) => {
+                if (!msg.custom_content?.attachments) return msg;
+
+                const mappedAttachments = msg.custom_content.attachments.map(
+                  (a) => ({
+                    ...a,
+                    url: reviewUrlsByIds[a.url as string] ?? a.url,
+                  }),
+                );
+
+                return {
+                  ...msg,
+                  custom_content: {
+                    ...msg.custom_content,
+                    attachments: mappedAttachments,
+                  },
+                };
+              }),
+            };
+          }
 
           const isConversationResource = isConversationId(payload.newEntity.id);
 

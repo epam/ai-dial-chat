@@ -49,6 +49,10 @@ import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
+import {
+  PublicationService,
+  getOrUploadPublication,
+} from '@/src/utils/app/data/publication-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import {
   addGeneratedFolderId,
@@ -140,6 +144,7 @@ import {
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -2521,46 +2526,84 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       });
 
       const areIdsEqual = conversation.id === newConversation.id;
-      if (!areIdsEqual && publicationUrl) {
-        return of(
-          PublicationActions.updatePublicationRequestAndEntity({
-            resourceToUpdateUrl: id,
-            newEntity: newConversation,
-            publicationUrl,
-          }),
-        );
-      }
 
-      return concat(
-        iif(
-          () => !areIdsEqual,
-          of(
-            ConversationsActions.moveConversation({
-              newConversation,
-              oldConversation: conversation,
-            }),
-          ),
-          iif(
-            () => !newConversation.isPlayback,
+      return forkJoin({
+        publication: newConversation.publicationInfo?.publicationUrl
+          ? PublicationService.getPublication(
+              newConversation.publicationInfo.publicationUrl,
+            ).pipe(
+              catchError((err) => {
+                console.error('The publication was not found: ', err);
+                return of(null);
+              }),
+            )
+          : of(null),
+      }).pipe(
+        switchMap(({ publication }) => {
+          let areAllAttachmentsInPublication = true;
+          if (publication) {
+            const attachments = uniqBy(
+              newConversation.messages.flatMap(
+                (msg) =>
+                  msg.custom_content?.attachments?.flatMap(
+                    (attachment) => attachment,
+                  ) ?? [],
+              ),
+              'url',
+            );
+
+            areAllAttachmentsInPublication = attachments.every(
+              ({ url }) =>
+                !!publication?.resources?.find((res) => res.reviewUrl === url),
+            );
+          }
+
+          if (
+            (!areIdsEqual || !areAllAttachmentsInPublication) &&
+            (publicationUrl || newConversation.publicationInfo?.publicationUrl)
+          ) {
+            return of(
+              PublicationActions.updatePublicationRequestAndEntity({
+                resourceToUpdateUrl: id,
+                newEntity: newConversation,
+                publicationUrl: (publicationUrl ??
+                  newConversation.publicationInfo?.publicationUrl) as string,
+              }),
+            );
+          }
+
+          return concat(
+            iif(
+              () => !areIdsEqual,
+              of(
+                ConversationsActions.moveConversation({
+                  newConversation,
+                  oldConversation: conversation,
+                }),
+              ),
+              iif(
+                () => !newConversation.isPlayback,
+                of(
+                  ConversationsActions.saveConversation({
+                    conversation: newConversation,
+                    selectSavedOptions: {
+                      selectSaved: payload.selectUpdatedOptions?.selectUpdated,
+                      compareConversationId:
+                        payload.selectUpdatedOptions?.compareConversationId,
+                    },
+                  }),
+                ),
+                EMPTY,
+              ),
+            ),
             of(
-              ConversationsActions.saveConversation({
+              ConversationsActions.updateConversationSuccess({
+                id,
                 conversation: newConversation,
-                selectSavedOptions: {
-                  selectSaved: payload.selectUpdatedOptions?.selectUpdated,
-                  compareConversationId:
-                    payload.selectUpdatedOptions?.compareConversationId,
-                },
               }),
             ),
-            EMPTY,
-          ),
-        ),
-        of(
-          ConversationsActions.updateConversationSuccess({
-            id,
-            conversation: newConversation,
-          }),
-        ),
+          );
+        }),
       );
     }),
   );
