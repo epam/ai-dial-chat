@@ -11,6 +11,7 @@ import {
   Rate,
   Side,
 } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -1533,6 +1534,7 @@ dialTest(
     compare,
     compareConversation,
     renameConversationModal,
+    renameConversationModalAssertion,
     localStorageManager,
     conversationAssertion,
   }) => {
@@ -1685,6 +1687,14 @@ dialTest(
         const newLeftChatName = GeneratorUtil.randomString(7);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await renameConversationModalAssertion.assertElementAttribute(
+          renameConversationModal.nameInput,
+          Attributes.value,
+          firstConversation.name,
+        );
+        await renameConversationModalAssertion.assertElementTextIsSelected(
+          renameConversationModal.nameInput,
+        );
         await renameConversationModal.editConversationNameWithSaveButton(
           newLeftChatName,
         );
