@@ -30,10 +30,10 @@ export class ChatAssertion extends BaseAssertion {
     await this.assertElementState(changeAgentButton, expectedState);
   }
 
-  public async assertNotAllowedModelLabelContent() {
+  public async assertNotAllowedModelLabelContent(model: string) {
     await this.assertElementText(
       this.chat.notAllowedModelLabel,
-      ExpectedConstants.notAllowedModelError,
+      ExpectedConstants.notAllowedAgentError(model),
       ExpectedMessages.notAllowedModelErrorDisplayed,
     );
   }
