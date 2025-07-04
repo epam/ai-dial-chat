@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
@@ -102,12 +103,8 @@ const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
   },
 );
 
-const selectResourcesToReviewByPublicationUrl = createSelector(
-  [selectResourcesToReview, (_state, id: string) => id],
-  (resourcesToReview, id) => {
-    return resourcesToReview.filter((r) => r.publicationUrl === id);
-  },
-);
+const selectSelectedItemsToPublish = (state: RootState) =>
+  rootSelector(state).selectedItemsToPublish;
 
 const _selectRules = (state: RootState) => rootSelector(state).rules;
 
@@ -128,8 +125,35 @@ const selectIsRulesLoading = (state: RootState) =>
 const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
   rootSelector(state).allPublishedWithMeItemsUploaded[featureType];
 
-const selectSelectedItemsToPublish = (state: RootState) =>
-  rootSelector(state).selectedItemsToPublish;
+const selectAllSelectedItemsToApprove = (state: RootState) =>
+  rootSelector(state).selectedItemsToApprove;
+
+const selectSelectedItemsToApprove = createSelector(
+  [selectAllSelectedItemsToApprove, selectSelectedPublicationUrl],
+  (selectedItemsToApprove, selectedPublicationUrl) => {
+    if (!selectedPublicationUrl) {
+      return [];
+    }
+
+    return selectedItemsToApprove[selectedPublicationUrl] ?? [];
+  },
+);
+
+const selectResourcesToReviewByPublicationUrl = createSelector(
+  [
+    selectResourcesToReview,
+    selectSelectedItemsToApprove,
+    (_state, id: string) => id,
+  ],
+  (resourcesToReview, selectedItemsToApprove, id) => {
+    const itemsToPublish = new Set(selectedItemsToApprove);
+    return resourcesToReview.filter(
+      (r) =>
+        r.publicationUrl === id &&
+        (itemsToPublish.has(r.reviewUrl) || itemsToPublish.has(r.sourceUrl)),
+    );
+  },
+);
 
 const _selectChosenFolderIds = createSelector(
   [
@@ -138,41 +162,38 @@ const _selectChosenFolderIds = createSelector(
     (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
       itemsShouldBeChosen,
   ],
-  (selectedItemsToPublish, folders, itemsShouldBeChosen) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
-      )
-      .filter((folderId) =>
-        itemsShouldBeChosen
-          .filter((item) => item.id.startsWith(folderId))
-          .every((item) => selectedItemsToPublish.includes(item.id)),
-      );
+  (selectedItems, folders, itemsShouldBeChosen) => {
+    return getPartialAndFullyChosenFolders(
+      folders,
+      itemsShouldBeChosen,
+      selectedItems,
+    );
+  },
+);
 
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItemsToPublish.some((chosenId) =>
-            folderId.startsWith(chosenId),
-          ) &&
-          (selectedItemsToPublish.some((chosenId) =>
-            chosenId.startsWith(folderId),
-          ) ||
-            selectedItemsToPublish.some((entityId) =>
-              entityId.startsWith(folderId),
-            )) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
-
-    return { partialChosenFolderIds, fullyChosenFolderIds };
+const _selectChosenFolderIdsToApprove = createSelector(
+  [
+    selectSelectedItemsToApprove,
+    (_state, folders: FolderInterface[]) => folders,
+    (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
+      itemsShouldBeChosen,
+  ],
+  (selectedItems, folders, itemsShouldBeChosen) => {
+    return getPartialAndFullyChosenFolders(
+      folders,
+      itemsShouldBeChosen,
+      selectedItems,
+    );
   },
 );
 
 const selectChosenFolderIds =
   (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
     _selectChosenFolderIds(state, folders, items);
+
+const selectChosenFolderIdsToApprove =
+  (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
+    _selectChosenFolderIdsToApprove(state, folders, items);
 
 const selectPublicationsToReviewCount = createSelector(
   [
@@ -313,7 +334,10 @@ export const PublicationSelectors = {
   selectIsRulesLoading,
   selectIsAllItemsUploaded,
   selectSelectedItemsToPublish,
+  selectAllSelectedItemsToApprove,
+  selectSelectedItemsToApprove,
   selectChosenFolderIds,
+  selectChosenFolderIdsToApprove,
   selectPublicationsToReviewCount,
   selectIsFolderContainsResourcesToReview,
   selectIsApplicationReview,

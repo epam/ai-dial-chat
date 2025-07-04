@@ -8,7 +8,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Cursors, Overflow, ThemeColorAttributes } from '@/src/ui/domData';
+import { Cursors, StyleValues, ThemeColorAttributes } from '@/src/ui/domData';
 import { DateUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -231,7 +231,7 @@ dialTest(
         );
         await promptPreviewModalAssertion.assertElementTextWrap(
           promptPreviewModal.promptName,
-          Overflow.breakWord,
+          StyleValues.breakWord,
         );
       },
     );

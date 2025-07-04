@@ -12,6 +12,7 @@ import {
   isVersionExists,
   isVersionPartSizeValid,
   isVersionValid,
+  replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import {
   getFolderIdFromEntityId,
@@ -96,8 +97,8 @@ export const PublicationHandlerFooter = ({
   const displayAuthorEditState = useAppSelector(
     PublicationSelectors.selectDisplayAuthorEditState,
   );
-  const itemsToPublish = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+  const itemsToApprove = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToApprove,
   );
 
   const publicVersionGroups = useAppSelector(
@@ -116,7 +117,7 @@ export const PublicationHandlerFooter = ({
       PublicationActions.setEditModeState({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules ?? [],
-        displayAuthor: publication.displayAuthor ?? '',
+        displayAuthor: replaceSpacesFromString(publication.displayAuthor),
       }),
     );
   }, [
@@ -271,7 +272,7 @@ export const PublicationHandlerFooter = ({
   );
 
   const handleApprovePublication = useCallback(() => {
-    if (itemsToPublish.length !== publication.resources.length) {
+    if (itemsToApprove.length !== publication.resources.length) {
       dispatch(PublicationActions.updateAndApprovePublicationRequest());
     } else {
       dispatch(
@@ -282,7 +283,7 @@ export const PublicationHandlerFooter = ({
     }
   }, [
     dispatch,
-    itemsToPublish.length,
+    itemsToApprove.length,
     publication.resources.length,
     publication.url,
   ]);
@@ -316,6 +317,10 @@ export const PublicationHandlerFooter = ({
     publicationConversationsWithUploadedMessages.some(
       (conversation) => !conversation.messages.length,
     );
+  const isApproveDisabled =
+    !isAllResourcesReviewed ||
+    !!invalidEntities.length ||
+    someReviewedConversationHaveNoMessages;
 
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
@@ -388,7 +393,7 @@ export const PublicationHandlerFooter = ({
               {t('Reject')}
             </button>
             <Tooltip
-              hideTooltip={isAllResourcesReviewed}
+              hideTooltip={!isApproveDisabled}
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
@@ -399,11 +404,7 @@ export const PublicationHandlerFooter = ({
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={
-                  !isAllResourcesReviewed ||
-                  !!invalidEntities.length ||
-                  someReviewedConversationHaveNoMessages
-                }
+                disabled={isApproveDisabled}
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >

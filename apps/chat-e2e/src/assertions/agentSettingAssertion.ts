@@ -1,7 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { AgentSettings } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
 
 export class AgentSettingAssertion extends BaseAssertion {
   readonly agentSettings: AgentSettings;
@@ -12,9 +11,14 @@ export class AgentSettingAssertion extends BaseAssertion {
   }
 
   public async assertSystemPromptValue(expectedValue: string) {
-    const systemPrompt = await this.agentSettings.getSystemPrompt();
-    expect
-      .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-      .toBe(expectedValue);
+    await this.agentSettings.systemPromptSpinner.waitForState({
+      state: 'hidden',
+    });
+    const systemPrompt = this.agentSettings.systemPrompt;
+    await this.assertElementText(
+      systemPrompt,
+      expectedValue,
+      ExpectedMessages.systemPromptIsValid,
+    );
   }
 }
