@@ -52,7 +52,7 @@ export function withLabel<T extends object, R>(
 ) {
   const LabelWrapper = forwardRef<R, WithLabelProps & T>(
     ({ info, mandatory, ...props }, ref) => (
-      <div className="flex flex-col">
+      <div className="flex flex-col" data-qa={props.id}>
         <Label htmlFor={props?.id} mandatory={mandatory} info={info}>
           {props.label}
         </Label>

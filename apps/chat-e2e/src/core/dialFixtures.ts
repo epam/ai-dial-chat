@@ -333,6 +333,7 @@ const dialTest = test.extend<{
   marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
+  publishingRequestFolderPromptAssertion: FolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   conversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
   publishFileAssertion: EntityTreeAssertion<FilesToPublishTree>;
@@ -1235,6 +1236,15 @@ const dialTest = test.extend<{
       publishingRequestModal.getFolderConversationsToPublish(),
     );
     await use(publishingRequestFolderConversationAssertion);
+  },
+  publishingRequestFolderPromptAssertion: async (
+    { publishingRequestModal },
+    use,
+  ) => {
+    const publishingRequestFolderPromptAssertion = new FolderAssertion(
+      publishingRequestModal.getFolderPromptsToPublish(),
+    );
+    await use(publishingRequestFolderPromptAssertion);
   },
   talkToAgentDialogAssertion: async ({ talkToAgentDialog }, use) => {
     const talkToAgentDialogAssertion = new TalkToAgentDialogAssertion(

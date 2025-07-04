@@ -332,6 +332,14 @@ dialTest(
         });
         await appEditorGeneralForm.goNext();
         await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.previewSpinner,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
           navigationPanel,
           'hidden',
           ExpectedMessages.navigationPanelShouldNotBeVisible,
@@ -652,7 +660,15 @@ dialTest(
     await dialTest.step(
       'Update any field on step "General info", close the app editor by clicking on the header logo, then go back to the marketplace',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep();
+        await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper();
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewSpinner,
+          'hidden',
+        );
         await baseAssertion.assertElementState(appEditorGeneralForm);
         await appEditorHeaderAssertion.assertStepIsCompleted(
           AppEditSteps.appSettings,
@@ -715,9 +731,17 @@ dialTest(
           ExpectedMessages.FormFieldShouldRetainUpdatedValue,
         );
 
-        await appEditorHeader.goOnGeneralInfoStep({
+        await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewSpinner,
+          'hidden',
+        );
         await baseAssertion.assertElementState(appEditorGeneralForm);
         const descriptionValue = await appEditorGeneralForm.description
           .getElementLocator()
@@ -1294,6 +1318,14 @@ dialTest(
       async () => {
         await appEditorGeneralForm.goNext({ waitForResponses: false });
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.previewSpinner,
+          'hidden',
+        );
         await appEditorViewForm.featuresDataHintIcon.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.customApplicationFeaturesTooltip,
@@ -1377,20 +1409,36 @@ dialTest(
     );
 
     await dialTest.step('Navigate back to General Info step', async () => {
-      await appEditorHeader.goOnGeneralInfoStep({
+      await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
         isHttpMethodTriggered: false,
       });
       await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+      await baseAssertion.assertElementState(
+        appEditorGeneralInfoAgentPreview,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        appEditorGeneralInfoAgentPreview.previewSpinner,
+        'hidden',
+      );
     });
 
     await dialTest.step('Navigate forward to App Settings step', async () => {
       await appEditorGeneralForm.goNext({ waitForResponses: false });
       await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+      await baseAssertion.assertElementState(
+        appEditorAppSettingsAgentPreview,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        appEditorAppSettingsAgentPreview.previewSpinner,
+        'hidden',
+      );
     });
 
     await dialTest.step('Verify attachment types are preserved', async () => {
       const actualAttachmentTypes =
-        await appEditorViewForm.getSelectedAttachmentTypes();
+        await appEditorViewForm.getSelectedAttachmentTypes(true);
       baseAssertion.assertArrayIncludesAll(
         actualAttachmentTypes,
         [attachmentTypeToSet],
@@ -1401,10 +1449,18 @@ dialTest(
     await dialTest.step(
       'Navigate back to General Info step using header stepper',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep({
+        await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewSpinner,
+          'hidden',
+        );
       },
     );
 
@@ -1417,7 +1473,7 @@ dialTest(
     await dialTest.step(
       'Navigate to App Settings step using header stepper',
       async () => {
-        await appEditorHeader.getAppSettingsStep().click();
+        await appEditorHeader.goToAppSettingsStepWithHeaderStepper();
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
         await baseAssertion.assertElementState(
           appEditorAppSettingsAgentPreview,
@@ -1433,10 +1489,18 @@ dialTest(
     await dialTest.step(
       'Navigate back to General Info step using header stepper',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep({
+        await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewSpinner,
+          'hidden',
+        );
       },
     );
 
@@ -1546,10 +1610,18 @@ dialTest(
     await dialTest.step(
       'Navigate to "General info" step and upload a new icon file',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep({
+        await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewSpinner,
+          'hidden',
+        );
         await appEditorGeneralForm.addIconButton.click();
         await attachFilesModal.checkAttachedFile(
           newIconFileName,
@@ -1583,6 +1655,14 @@ dialTest(
       'Navigate to "App settings" step and verify the updated icon in the chat preview',
       async () => {
         await appEditorGeneralForm.goNext({ waitForResponses: false });
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.previewSpinner,
+          'hidden',
+        );
         const previewChatIconAppSettings =
           appEditorAppSettingsAgentPreview.previewChatIcon;
         await baseAssertion.assertEntityIcon(
@@ -1649,6 +1729,7 @@ dialTest(
     fileApiHelper,
     sendMessageInputAttachmentsAssertions,
     tooltipAssertion,
+    appEditorAppSettingsAgentPreview,
   }) => {
     setTestIds('EPMRTC-4131', 'EPMRTC-4290');
     const appName = GeneratorUtil.randomApplicationName();
@@ -1692,6 +1773,14 @@ dialTest(
           version: appEntity.version,
         });
         await appEditorGeneralForm.goNext();
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.previewSpinner,
+          'hidden',
+        );
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
       },
     );
@@ -2015,6 +2104,14 @@ dialTest(
       async () => {
         await appEditorGeneralForm.goNext({ waitForResponses: true });
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorAppSettingsAgentPreview.previewSpinner,
+          'hidden',
+        );
       },
     );
 
@@ -2112,6 +2209,8 @@ dialTest(
     appEditorHeader,
     page,
     appEditorViewForm,
+    appEditorAppSettingsAgentPreview,
+    appEditorGeneralInfoAgentPreview,
   }) => {
     setTestIds('EPMRTC-5946', 'EPMRTC-6046');
     const appNameWithSpaces = `${applicationNamePrefix}${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2 - 6)}`; // Ensure total length is 160 with spaces
@@ -2190,10 +2289,18 @@ dialTest(
     await dialTest.step(
       'Switch to General info step in App Editor',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep({
+        await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewSpinner,
+          'hidden',
+        );
       },
     );
 
@@ -2209,15 +2316,31 @@ dialTest(
     await dialTest.step('Click on "App settings" link in header', async () => {
       await appEditorHeader.goToAppSettingsStepWithHeaderStepper();
       await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+      await baseAssertion.assertElementState(
+        appEditorAppSettingsAgentPreview,
+        'visible',
+      );
+      await baseAssertion.assertElementState(
+        appEditorAppSettingsAgentPreview.previewSpinner,
+        'hidden',
+      );
     });
 
     await dialTest.step(
       'Click back on "General info" link in the header',
       async () => {
-        await appEditorHeader.goOnGeneralInfoStep({
+        await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          appEditorGeneralInfoAgentPreview.previewSpinner,
+          'hidden',
+        );
       },
     );
 

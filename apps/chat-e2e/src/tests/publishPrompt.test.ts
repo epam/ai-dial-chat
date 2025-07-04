@@ -46,6 +46,7 @@ dialAdminTest(
       baseAssertion,
       selectFolders,
       adminPublishedPromptPreviewModal,
+      adminPromptsToApprove,
       adminPromptToApproveAssertion,
       adminPublishedPromptPreviewModalAssertion,
       promptBarOrganizationFolderAssertion,
@@ -70,6 +71,7 @@ dialAdminTest(
     let prompt1: Prompt;
     let prompt2: Prompt;
     const folderName = GeneratorUtil.randomString(10);
+    const orgFolderName = GeneratorUtil.randomString(10);
     const requestName1WithoutLeadingAndTrailingSpaces = `${GeneratorUtil.randomPublicationRequestName()}    ${GeneratorUtil.randomString(7)}`;
     const requestName1WithSpaces = ` ${requestName1WithoutLeadingAndTrailingSpaces} `;
     const requestName2 = GeneratorUtil.randomPublicationRequestName();
@@ -102,7 +104,7 @@ dialAdminTest(
     });
 
     await dialTest.step(
-      'User clicks on "Change path", hover 3 dots on folder1_new, create folder2, then delete it',
+      'User clicks on "Change path", create a new folder, create a child folder and then delete it',
       async () => {
         await publishingRequestModal
           .getChangePublishToPath()
@@ -122,54 +124,16 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'User reloads the page and reopens the modal in order to workaround the 2803 issue',
+      'User renames created folder under Organization',
       async () => {
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await prompts.openEntityDropdownMenu(prompt1.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await baseAssertion.assertElementState(
-          publishingRequestModal,
-          'visible',
-        );
-        await publishingRequestModal
-          .getChangePublishToPath()
-          .changeButton.click();
-      },
-    );
-
-    await dialTest.step(
-      'User creates folder and rename it under Organization, user renames folder',
-      async () => {
-        await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithEnter(`${folderName}_rename`);
-        await selectFolders.openFolderDropdownMenu(`${folderName}_rename`);
+        await selectFolders.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectFolders.renameEmptyFolderWithEnter(folderName);
-      },
-    );
-
-    await dialTest.step(
-      'User reloads the page and reopens the modal in order to workaround the 2803 issue',
-      async () => {
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await prompts.openEntityDropdownMenu(prompt1.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await baseAssertion.assertElementState(
-          publishingRequestModal,
-          'visible',
-        );
-        await publishingRequestModal
-          .getChangePublishToPath()
-          .changeButton.click();
-        await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithEnter(folderName);
+        await selectFolders.renameEmptyFolderWithEnter(orgFolderName);
       },
     );
 
     await dialTest.step('User selects renamed folder', async () => {
-      await selectFolderModal.selectFolder(folderName);
+      await selectFolderModal.selectFolder(orgFolderName);
       await selectFolderModal.clickSelectFolderButton({
         triggeredApiHost: API.publicationRulesList,
       });
@@ -183,7 +147,7 @@ dialAdminTest(
         );
         await baseAssertion.assertElementText(
           publishingRequestModal.getChangePublishToPath().path,
-          `${PublishPath.Organization}/${folderName}`,
+          `${PublishPath.Organization}/${orgFolderName}`,
         );
         publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
@@ -221,7 +185,7 @@ dialAdminTest(
         );
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.publishToPath,
-          `Organization/${folderName}`,
+          `Organization/${orgFolderName}`,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
@@ -242,11 +206,10 @@ dialAdminTest(
           { name: prompt1.name },
           expectedColor,
         );
-        //TODO
-        // await adminPromptToApproveAssertion.assertTreeEntityIcon(
-        //   { name: prompt1.name },
-        //   expectedConversationIcon,
-        // );
+        await adminPromptToApproveAssertion.assertElementState(
+          adminPromptsToApprove.promptIcon(prompt1.name),
+          'visible',
+        );
         await adminPromptToApproveAssertion.assertElementState(
           adminPublishingApprovalModal.goToReviewButton,
           'visible',
@@ -332,12 +295,12 @@ dialAdminTest(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await promptBarOrganizationFolderAssertion.assertFolderState(
-          { name: folderName },
+          { name: orgFolderName },
           'visible',
         );
-        await organizationFolderPrompts.expandFolder(folderName);
+        await organizationFolderPrompts.expandFolder(orgFolderName);
         await promptBarOrganizationFolderAssertion.assertFolderEntityState(
-          { name: folderName },
+          { name: orgFolderName },
           { name: prompt1.name },
           'visible',
         );
@@ -356,7 +319,7 @@ dialAdminTest(
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolderModal.selectFolder(folderName);
+        await selectFolderModal.selectFolder(orgFolderName);
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
@@ -402,7 +365,7 @@ dialAdminTest(
         );
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.publishToPath,
-          `Organization/${folderName}`,
+          `Organization/${orgFolderName}`,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
@@ -488,7 +451,8 @@ dialAdminTest(
   'Publish prompt: add new folder inside nested folder structure with depth 4\n' +
     'Publish prompt into nested folder structure inside Organization section\n' +
     'Publish request name: tab is changed to space if to use it in chat name\n' +
-    'The first 160 symbols from the input text is used as publication request name #1661\n' +
+    'Publication request name: ASCII control characters %00-%1F are changed to space if to use them in publication request name.\n' +
+    'Publication request name should be 2 to 160 characters long\n' +
     'Publication request name can not be blank\n' +
     'Publication request name with hieroglyph, specific letters.\n' +
     `Author's public name displayed in metadata for prompt from Organization`,
@@ -526,7 +490,8 @@ dialAdminTest(
       'EPMRTC-3599',
       'EPMRTC-3600',
       'EPMRTC-3601',
-      'EPMRTC-3602',
+      'EPMRTC-3608',
+      'EPMRTC-6079',
       'EPMRTC-3603',
       'EPMRTC-3605',
       'EPMRTC-5653',
@@ -536,7 +501,7 @@ dialAdminTest(
     let folderName = folderNameTemplate;
     const publicationPath = `${PublishPath.Organization}/${folderNameTemplate} 1/${folderNameTemplate} 2/${folderNameTemplate} 3/${folderNameTemplate} 4`;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const requestNameWithTabs = `${requestName} Name\ttext\t1 한글이라는 고유한 문자 시스템을 사용하는데`;
+    const requestNameWithTabs = `${requestName} Name\ttext\t1 한글이라는\n고유한\r문자 시스템을\r사용하는데`;
     const requestNameWithoutTabs = `${requestName} Name text 1 한글이라는 고유한 문자 시스템을 사용하는데`;
     let publishApiModels: {
       request: PublicationRequestModel;
@@ -547,6 +512,10 @@ dialAdminTest(
     );
     const author = GeneratorUtil.randomString(10);
     const currentDate = DateUtil.getCurrentLocalDate();
+    const requestNames = [
+      `${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(61)}`,
+      '1',
+    ];
 
     await dialTest.step('Prepare a new prompt', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
@@ -608,18 +577,20 @@ dialAdminTest(
       });
     });
 
-    //TODO
-    //Blocked by 1661
-    // await dialTest.step(
-    //   'Type long solid text of 200 symbols with spaces without enters, it should be truncated to 160 symbols',
-    //   async () => {
-    //     const longName = `${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(49)} ${GeneratorUtil.randomString(99)}`;
-    //     await publishingRequestModal.requestName.fillInInput(longName);
-    //     await publishingRequestModal.getChangePublishToPath().changeButton.click(); // Click "Change Path" to move focus
-    //     const truncatedName =  await publishingRequestModal.requestName.getElementLocator().inputValue();
-    //     await baseAssertion.assertStringTruncatedTo160(longName, truncatedName);
-    //   },
-    // );
+    for (let i = 0; i < requestNames.length; i++) {
+      await dialTest.step(
+        `Type ${requestNames[i]} symbols in the request name and verify error hint is displayed under the field`,
+        async () => {
+          await publishingRequestModal.requestName.fillInInput(requestNames[i]);
+          await publishingRequestModalAssertion.assertElementText(
+            publishingRequestModal.requestNameErrorMessage,
+            i === 0
+              ? ExpectedConstants.publishRequestNameMaxLengthErrorMessage
+              : ExpectedConstants.publishRequestNameMinLengthErrorMessage,
+          );
+        },
+      );
+    }
 
     await dialTest.step('Check empty publication request name', async () => {
       await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
