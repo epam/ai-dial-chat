@@ -30,14 +30,11 @@ export enum PseudoModel {
   Playback = 'playback',
 }
 
-export const encodeModelId = (modelId: string): string => {
-  return modelId
+export const encodeModelId = (modelId: string): string =>
+  modelId
     .split(pathKeySeparator)
-    .map((item) => {
-      return encodeURI(item);
-    })
+    .map((i) => encodeURI(i))
     .join(encodedKeySeparator);
-};
 
 export const decodeModelId = (modelKey: string): string =>
   modelKey
@@ -83,8 +80,6 @@ export const parseConversationApiKey = (
   options?: ParseOptions,
 ): Omit<ConversationInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
-
-  // console.log('parts', parts);
 
   const [modelId, name] =
     parts.length < 2
