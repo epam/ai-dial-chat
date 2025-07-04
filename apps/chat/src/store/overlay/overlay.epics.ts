@@ -651,8 +651,8 @@ const stopSelectedPlaybackConversationEpic: AppEpic = (action$, state$) =>
       }
 
       return concat(
-        of(ConversationsActions.playbackCancel()),
         of(OverlayActions.stopSelectedPlaybackConversationEffect(payload)),
+        of(ConversationsActions.playbackCancel()),
       );
     }),
   );
@@ -662,7 +662,7 @@ const stopSelectedPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
     ofType(OverlayActions.stopSelectedPlaybackConversationEffect.type),
     switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        ofType(ConversationsActions.updateConversation.type),
+        ofType(ConversationsActions.updateConversationSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
         mergeMap(({ payload: { id } }) => {
