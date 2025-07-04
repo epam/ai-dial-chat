@@ -35,7 +35,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   const [conversationIdInputValue, setConversationIdInputValue] = useState('');
   const [conversationNewName, setConversationNewName] = useState('');
   const [importedConversation, setImportedConversation] = useState('');
-  const [messageIndex, setMessageIndex] = useState(0);
+  const [messageIndex, setMessageIndex] = useState('0');
   const [inputContent, setInputContent] = useState('');
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
@@ -63,7 +63,10 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   }, [conversationIdInputValue]);
 
   const handleDeleteMessage = useCallback(async () => {
-    const result = await overlay.current?.deleteMessage(messageIndex);
+    const messageIndexValue = parseInt(messageIndex, 10);
+    if (isNaN(messageIndexValue)) return;
+
+    const result = await overlay.current?.deleteMessage(messageIndexValue);
     handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
   }, [messageIndex, handleDisplayInformation]);
 
@@ -74,9 +77,12 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       return;
     }
 
-    const result = await overlay.current?.updateMessage(messageIndex, {
-      ...messages[messageIndex],
-      content: messages[messageIndex].content + '\n\nHello overlay!',
+    const messageIndexValue = parseInt(messageIndex, 10);
+    if (isNaN(messageIndexValue)) return;
+
+    const result = await overlay.current?.updateMessage(messageIndexValue, {
+      ...messages[messageIndexValue],
+      content: messages[messageIndexValue].content + '\n\nHello overlay!',
     });
     handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
   }, [messageIndex, handleDisplayInformation]);
@@ -251,9 +257,11 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
 
                 <input
                   className="border"
-                  placeholder="Imported conversation object"
+                  placeholder="Message index"
                   value={messageIndex}
-                  onChange={(e) => setMessageIndex(JSON.parse(e.target.value))}
+                  onChange={(e) => {
+                    setMessageIndex(e.target.value);
+                  }}
                   data-qa="delete-message-index"
                 />
               </div>
