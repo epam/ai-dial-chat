@@ -1,3 +1,4 @@
+import { ChatSelectors } from '@/chat/store/selectors';
 import { Tags } from '@/src/ui/domData';
 import { AppEditorGeneralInfoPreviewSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
@@ -20,6 +21,8 @@ export class AppEditorGeneralInfoAgentPreview extends BaseElement {
     this.generalInfoContainer.getChildElementBySelector(
       AppEditorGeneralInfoPreviewSelectors.previewIconContainer,
     );
+
+  public previewSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
 
   public previewIcon = this.previewIconContainer.getChildElementBySelector(
     Tags.img,
