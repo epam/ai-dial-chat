@@ -8,7 +8,7 @@ import {
 } from '@/src/testData';
 import {
   Attributes,
-  Overflow,
+  StyleValues,
   Styles,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
@@ -273,7 +273,7 @@ dialTest(
         );
         await tooltipAssertion.assertTooltipStyle(
           Styles.overflow_wrap,
-          Overflow.breakWord,
+          StyleValues.breakWord,
         );
       },
     );
@@ -328,7 +328,7 @@ dialTest(
         );
         await tooltipAssertion.assertTooltipStyle(
           Styles.overflow_wrap,
-          Overflow.breakWord,
+          StyleValues.breakWord,
         );
       },
     );
