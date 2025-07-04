@@ -27,7 +27,7 @@ export const ChatOverlayManagerWrapper: React.FC<
   const [conversations, setConversations] = useState<OverlayConversation[]>([]);
   const [conversationNewName, setConversationNewName] = useState('');
 
-  const [deleteMessageIndex, setDeleteMessageIndex] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(0);
   const [inputContent, setInputContent] = useState('');
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
@@ -53,10 +53,30 @@ export const ChatOverlayManagerWrapper: React.FC<
   const handleDeleteMessage = useCallback(async () => {
     const result = await overlayManager.current?.deleteMessage(
       overlayManagerOptions.id,
-      deleteMessageIndex,
+      messageIndex,
     );
     handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
-  }, [deleteMessageIndex, handleDisplayInformation, overlayManagerOptions.id]);
+  }, [messageIndex, handleDisplayInformation, overlayManagerOptions.id]);
+
+  const handleUpdateMessage = useCallback(async () => {
+    const messages = (
+      await overlayManager.current?.getMessages(overlayManagerOptions.id)
+    )?.messages;
+
+    if (!messages) {
+      return;
+    }
+
+    const result = await overlayManager.current?.updateMessage(
+      overlayManagerOptions.id,
+      messageIndex,
+      {
+        ...messages[messageIndex],
+        content: messages[messageIndex].content + '\n\nHello overlay!',
+      },
+    );
+    handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
+  }, [overlayManagerOptions.id, messageIndex, handleDisplayInformation]);
 
   const handleSetInputContent = useCallback(async () => {
     await overlayManager.current?.setInputContent(
@@ -256,14 +276,19 @@ export const ChatOverlayManagerWrapper: React.FC<
                 >
                   Delete message by index
                 </button>
+                <button
+                  className="button"
+                  onClick={handleUpdateMessage}
+                  data-qa="update-message"
+                >
+                  Add `Hello overlay!` to the end of message by index
+                </button>
 
                 <input
                   className="border"
                   placeholder="Imported conversation object"
-                  value={deleteMessageIndex}
-                  onChange={(e) =>
-                    setDeleteMessageIndex(JSON.parse(e.target.value))
-                  }
+                  value={messageIndex}
+                  onChange={(e) => setMessageIndex(JSON.parse(e.target.value))}
                   data-qa="delete-message-index"
                 />
               </div>

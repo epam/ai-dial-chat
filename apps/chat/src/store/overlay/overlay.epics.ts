@@ -102,6 +102,7 @@ import {
   SetInputContentRequest,
   SetSystemPromptRequest,
   StopSelectedPlaybackConversationResponse,
+  UpdateMessageRequest,
   overlayAppName,
   validateFeature,
 } from '@epam/ai-dial-shared';
@@ -236,6 +237,18 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
               const { index } = payload as DeleteMessageRequest;
 
               return of(OverlayActions.deleteMessage({ index, requestId }));
+            }
+            case OverlayRequests.updateMessage: {
+              const { index, updatedMessageFields } =
+                payload as UpdateMessageRequest;
+
+              return of(
+                OverlayActions.updateMessage({
+                  index,
+                  requestId,
+                  updatedMessageFields,
+                }),
+              );
             }
             case OverlayRequests.setInputContent: {
               const { content } = payload as SetInputContentRequest;
@@ -1046,6 +1059,65 @@ const deleteMessageEffectEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updateMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.updateMessage.type),
+    switchMap(({ payload: { index, requestId, updatedMessageFields } }) => {
+      const selectedConversation =
+        ConversationsSelectors.selectSelectedConversations(state$.value)?.[0];
+
+      if (!selectedConversation) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          OverlayActions.deleteMessageEffect({
+            index,
+            requestId,
+          }),
+        ),
+        of(
+          ConversationsActions.updateMessage({
+            messageIndex: index,
+            conversationId: selectedConversation.id,
+            values: updatedMessageFields,
+          }),
+        ),
+      );
+    }),
+  );
+
+const updateMessageEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.updateMessageEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.updateConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { conversation } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          return concat(
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.updateMessage,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    messages: conversation.messages,
+                  } as DeleteMessageResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.setOverlayOptions.type),
@@ -1460,6 +1532,8 @@ export const OverlayEpics = combineEpics(
   sendMessageEpic,
   deleteMessageEpic,
   deleteMessageEffectEpic,
+  updateMessageEpic,
+  updateMessageEffectEpic,
   notifyHostGPTMessageStatus,
   setOverlayOptionsSuccessEpic,
   signInOptionsSet,
