@@ -562,7 +562,7 @@ export class ChatOverlay {
   /**
    * Delete message in current selected conversation by index
    * @param index {number} index of message in conversation
-   * NOTE: if message on index is user message it will also remove answer from assistant
+   * NOTE: if message on index is user message or assistant it will also remove paired answer or question message
    */
   public async deleteMessage(index: number): Promise<DeleteMessageResponse> {
     const request: DeleteMessageRequest = {
