@@ -34,7 +34,6 @@ import {
   LikeState,
   Message,
   MessageFormValue,
-  Role,
 } from '@epam/ai-dial-shared';
 import { isEqual } from 'lodash-es';
 
@@ -42,6 +41,7 @@ interface AssistantMessageProps {
   messageIndex: number;
   message: Message;
   allMessages: Message[];
+  isFirstMessageSystem: boolean;
   conversation: Conversation;
   isLastMessage: boolean;
   isLikesEnabled: boolean;
@@ -59,6 +59,7 @@ export const AssistantMessage = memo(function AssistantMessage({
   messageIndex,
   message,
   allMessages,
+  isFirstMessageSystem,
   conversation,
   isLastMessage,
   isEditing,
@@ -104,10 +105,6 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
   const isInputHidden = isInputDisabled && !message.content;
-
-  const isFirstMessageSystem = useMemo(() => {
-    return conversation.messages[0]?.role === Role.System;
-  }, [conversation.messages]);
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {

@@ -1,5 +1,5 @@
 import { IconUser } from '@tabler/icons-react';
-import { MouseEvent, RefObject, useRef } from 'react';
+import { MouseEvent, RefObject, useMemo, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -76,6 +76,10 @@ export function ChatMessageContent({
 
   const messageRef = useRef<HTMLDivElement>(null);
 
+  const isFirstMessageSystem = useMemo(() => {
+    return conversation.messages[0]?.role === Role.System;
+  }, [conversation.messages]);
+
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
     !!conversation.isMessageStreaming && isLastMessage;
@@ -141,6 +145,7 @@ export function ChatMessageContent({
             <UserMessage
               message={message}
               allMessages={allMessages}
+              isFirstMessageSystem={isFirstMessageSystem}
               conversation={conversation}
               messageIndex={messageIndex}
               isEditing={isEditing}
@@ -157,6 +162,7 @@ export function ChatMessageContent({
               messageIndex={messageIndex}
               message={message}
               allMessages={allMessages}
+              isFirstMessageSystem={isFirstMessageSystem}
               conversation={conversation}
               isEditing={isEditing}
               isLastMessage={isLastMessage}

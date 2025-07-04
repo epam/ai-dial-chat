@@ -69,6 +69,7 @@ interface UserMessageProps {
   conversation: Conversation;
   messageIndex: number;
   allMessages: Message[];
+  isFirstMessageSystem: boolean;
   isEditing: boolean;
   isEditingTemplates: boolean;
   withButtons?: boolean;
@@ -84,6 +85,7 @@ export const UserMessage = memo(function UserMessage({
   conversation,
   messageIndex,
   allMessages,
+  isFirstMessageSystem,
   isEditing,
   isEditingTemplates,
   withButtons,
@@ -621,7 +623,12 @@ export const UserMessage = memo(function UserMessage({
 
         <MessageAttachments attachments={message.custom_content?.attachments} />
 
-        {isOverlay && <MessageCustomButtons messageIndex={messageIndex} />}
+        {isOverlay && (
+          <MessageCustomButtons
+            messageIndex={messageIndex}
+            isSystemMessagePresented={isFirstMessageSystem}
+          />
+        )}
 
         <div
           ref={anchorRef}
