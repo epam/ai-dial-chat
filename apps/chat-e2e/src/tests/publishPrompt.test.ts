@@ -501,7 +501,7 @@ dialAdminTest(
     let folderName = folderNameTemplate;
     const publicationPath = `${PublishPath.Organization}/${folderNameTemplate} 1/${folderNameTemplate} 2/${folderNameTemplate} 3/${folderNameTemplate} 4`;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const requestNameWithTabs = `${requestName} Name\ttext\t1 한글이라는\n고유한 문자 시스템을 사용하는데`;
+    const requestNameWithTabs = `${requestName} Name\ttext\t1 한글이라는\n고유한\r문자 시스템을\r사용하는데`;
     const requestNameWithoutTabs = `${requestName} Name text 1 한글이라는 고유한 문자 시스템을 사용하는데`;
     let publishApiModels: {
       request: PublicationRequestModel;

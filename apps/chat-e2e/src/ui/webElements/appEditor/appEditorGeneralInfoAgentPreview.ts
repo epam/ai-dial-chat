@@ -1,6 +1,8 @@
-import { ChatSelectors } from '@/chat/store/selectors';
 import { Tags } from '@/src/ui/domData';
-import { AppEditorGeneralInfoPreviewSelectors } from '@/src/ui/selectors';
+import {
+  AppEditorGeneralInfoPreviewSelectors,
+  ChatSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
