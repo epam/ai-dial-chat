@@ -76,6 +76,8 @@ export const ExpectedConstants = {
   noResults: 'No results found',
   notAllowedModelError:
     'Not available agent selected. Please, change the agent to proceed',
+  notAllowedAgentError: (agent: string) =>
+    `Agent is not available. Please, change the agent "${agent}" to proceed.`,
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
@@ -189,6 +191,7 @@ export const ExpectedConstants = {
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
   defaultAppVersion: '0.0.1',
+  defaultAppName: 'Untitled app',
   rootPublicationFolder: 'public/',
   duplicatedPublicationErrorMessage: (targetUrl: string) =>
     `Target resource already exists: ${targetUrl}`,
@@ -254,8 +257,13 @@ export const ExpectedConstants = {
   informationModalAuthorLabel: 'Author:',
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
+  pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
+  publishRequestNameMaxLengthErrorMessage:
+    'Request name should be at most 160 characters long',
+  publishRequestNameMinLengthErrorMessage:
+    'Request name should be at least 2 characters long',
 };
 
 export enum Types {

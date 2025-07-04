@@ -11,7 +11,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import { Colors, Overflow, StyleValues, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -136,7 +136,7 @@ dialTest(
           );
         expect
           .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.breakWord);
+          .toBe(StyleValues.breakWord);
 
         await shareModal.entityName.hoverOver();
         const tooltipChatName = await tooltip.getContent();
@@ -914,7 +914,7 @@ dialTest(
           );
         expect
           .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.breakWord);
+          .toBe(StyleValues.breakWord);
       },
     );
 

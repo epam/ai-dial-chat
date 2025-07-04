@@ -11,8 +11,10 @@ import {
   Colors,
   Cursors,
   Overflow,
+  StyleValues,
   Styles,
 } from '@/src/ui/domData';
+import { Properties } from '@/src/ui/domData/properties';
 import { BaseElement } from '@/src/ui/webElements';
 import { SortingUtil } from '@/src/utils/sortingUtil';
 import { Locator, expect } from '@playwright/test';
@@ -152,7 +154,7 @@ export class BaseAssertion {
 
   public async assertInputValue(
     element: BaseElement | Locator,
-    expectedValue: string,
+    expectedValue: string | RegExp,
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
@@ -250,6 +252,14 @@ export class BaseAssertion {
       elementLocator,
       ExpectedMessages.entityBackgroundColorIsValid,
     ).toHaveCSS(Styles.color, expectedColor);
+  }
+
+  public async assertElementTextIsSelected(element: BaseElement | Locator) {
+    const elementLocator = this.getElementLocator(element);
+    await expect(
+      elementLocator,
+      ExpectedMessages.elementTextIsSelected,
+    ).toHaveJSProperty(Properties.selectionStart, 0);
   }
 
   public async assertIsElementFocused(
@@ -403,7 +413,7 @@ export class BaseAssertion {
 
   public async assertElementTextWrap(
     element: BaseElement | Locator,
-    expectedWrap: Overflow,
+    expectedWrap: Overflow | StyleValues,
   ) {
     const elementLocator = this.getElementLocator(element);
     await expect(

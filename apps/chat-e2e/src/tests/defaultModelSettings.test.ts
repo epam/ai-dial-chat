@@ -38,7 +38,6 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    agentSettings,
     conversationSettingsModal,
     temperatureSlider,
     addons,
@@ -113,13 +112,9 @@ dialTest(
       'Verify default settings for default model',
       async () => {
         await chat.configureSettingsButton.click();
-        const defaultSystemPrompt = await agentSettings.getSystemPrompt();
-        expect
-          .soft(
-            defaultSystemPrompt,
-            ExpectedMessages.defaultSystemPromptIsEmpty,
-          )
-          .toBe(ExpectedConstants.emptyString);
+        await agentSettingAssertion.assertSystemPromptValue(
+          ExpectedConstants.emptyString,
+        );
 
         const defaultTemperature = await temperatureSlider.getTemperature();
         expect
@@ -337,6 +332,7 @@ dialTest(
   async ({
     dialHomePage,
     agentSettings,
+    agentSettingAssertion,
     temperatureSlider,
     setTestIds,
     addons,
@@ -375,8 +371,7 @@ dialTest(
     await chat.configureSettingsButton.click();
 
     if (isSysPromptAllowed) {
-      const systemPrompt = await agentSettings.systemPrompt.getElementContent();
-      expect.soft(systemPrompt, ExpectedMessages.systemPromptIsValid).toBe('');
+      await agentSettingAssertion.assertSystemPromptValue('');
     }
     if (isTemperatureAllowed) {
       const temperature = await temperatureSlider.getTemperature();

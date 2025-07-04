@@ -1464,7 +1464,6 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
           return {
             ...resource,
             sourceUrl: resource.sourceUrl ?? '',
-            reviewUrl: resource.reviewUrl,
           };
         }),
       };
@@ -1481,49 +1480,41 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
 
           const isConversationResource = isConversationId(payload.newEntity.id);
 
-          const updateEntityActions: Observable<AppAction>[] = [
-            of(
-              isConversationResource
-                ? ConversationsActions.updateConversation(updateEntityPayload)
-                : PromptsActions.updatePrompt(updateEntityPayload),
-            ),
-          ];
+          const { selectedPromptId } =
+            PromptsSelectors.selectSelectedPromptId(state);
+          const selectedConversationIds =
+            ConversationsSelectors.selectSelectedConversationsIds(state);
 
-          if (isConversationResource) {
-            const selectedConversationIds =
-              ConversationsSelectors.selectSelectedConversationsIds(state);
-            if (selectedConversationIds.includes(payload.resourceToUpdateUrl)) {
-              updateEntityActions.push(
-                of(
-                  ConversationsActions.selectConversations({
-                    conversationIds: selectedConversationIds.map((id) =>
-                      id === payload.resourceToUpdateUrl
-                        ? payload.newEntity.id
-                        : id,
+          const updateEntityAction$: Observable<AppAction> = of(
+            isConversationResource
+              ? ConversationsActions.updateConversation({
+                  ...updateEntityPayload,
+                  selectUpdatedOptions: {
+                    selectUpdated: selectedConversationIds.includes(
+                      payload.resourceToUpdateUrl,
                     ),
-                    suspendHideSidebar: false,
-                  }),
-                ),
-              );
-            }
-          } else {
-            updateEntityActions.push(
-              of(
-                PromptsActions.selectPrompt({
-                  promptId: payload.newEntity.id,
-                  isApproveRequiredResource: true,
+                    compareConversationId:
+                      selectedConversationIds.length > 1
+                        ? selectedConversationIds.filter(
+                            (id) => id !== payload.resourceToUpdateUrl,
+                          )[0]
+                        : undefined,
+                  },
+                })
+              : PromptsActions.updatePrompt({
+                  ...updateEntityPayload,
+                  selectUpdated:
+                    selectedPromptId === payload.resourceToUpdateUrl,
                 }),
-              ),
-            );
-          }
+          );
 
           return concat(
+            updateEntityAction$,
             of(
               PublicationActions.uploadPublication({
                 url: payload.publicationUrl,
               }),
             ),
-            ...updateEntityActions,
           );
         }),
         catchError((err) => {
@@ -1579,14 +1570,12 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
                 `${targetFolderIdToUpdate}/`,
                 `${newTargetFolderId}/`,
               ),
-              reviewUrl: resource.reviewUrl,
             };
           }
 
           return {
             ...resource,
             sourceUrl: resource.sourceUrl ?? '',
-            reviewUrl: resource.reviewUrl,
           };
         }),
       };
@@ -1941,8 +1930,21 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       );
       const resources = publication?.resources;
 
+      if (!publication) {
+        console.error('Publication not found, cannot select items to approve');
+        return EMPTY;
+      }
+
+      const selectedItemsToApprove =
+        PublicationSelectors.selectAllSelectedItemsToApprove(state$.value);
+
+      if (selectedItemsToApprove[publication.url] !== undefined) {
+        return EMPTY;
+      }
+
       return of(
-        PublicationActions.setItemsToPublish({
+        PublicationActions.setItemsToApprove({
+          publicationUrl: publication?.url ?? '',
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),
       );

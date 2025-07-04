@@ -47,8 +47,8 @@ export const ChatSelectors = {
   selectIsConfigurationSchemaLoading,
   selectIsConfigurationBlocksInput,
   selectShouldFocusAndScroll,
-  selectNotAvailableEntityType,
   selectInfoModalState,
+  selectNotAvailableEntityType,
   selectInfoModalOpened,
   selectSelectedEntityInfo,
 };

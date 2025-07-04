@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { replaceSpacesFromString } from '@/src/utils/app/common';
 import {
   getSelectedEntitiesByFolderId,
   isFolderPartialSelected,
@@ -64,25 +65,27 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     PublicationSelectors.selectSelectedPublication,
   );
 
-  const collapsedSectionsSelector = useMemo(
-    () => PublicationSelectors.selectChosenFolderIds(allFolders, allItems),
+  const chosenFoldersSelector = useMemo(
+    () =>
+      PublicationSelectors.selectChosenFolderIdsToApprove(allFolders, allItems),
     [allFolders, allItems],
   );
   const {
     fullyChosenFolderIds: selectedFolderIds,
     partialChosenFolderIds: partialSelectedFolderIds,
-  } = useAppSelector(collapsedSectionsSelector);
+  } = useAppSelector(chosenFoldersSelector);
 
   const chosenItemsIds = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+    PublicationSelectors.selectSelectedItemsToApprove,
   );
 
   useEffect(() => {
-    setInputName(currentFolder.name);
+    const cleanName = replaceSpacesFromString(currentFolder.name);
+    setInputName(cleanName);
     if (isEditMode) {
       setErrors(() =>
         getStringValidationErrors({
-          value: currentFolder.name,
+          value: cleanName,
           label: 'Folder name',
           checkDotsInTheEnd: true,
         }),
@@ -127,7 +130,8 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     });
 
     dispatch(
-      PublicationActions.selectItemsToPublish({
+      PublicationActions.selectItemsToApprove({
+        publicationUrl: selectedPublication?.url ?? '',
         ids: entitiesToSelect,
       }),
     );
@@ -137,6 +141,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     currentFolder.id,
     dispatch,
     partialSelectedFolderIds,
+    selectedPublication?.url,
   ]);
 
   useEffect(() => {
