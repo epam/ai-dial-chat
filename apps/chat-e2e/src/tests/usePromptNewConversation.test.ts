@@ -530,7 +530,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversationWithNonExistentApp.name);
-        await chatAssertion.assertNotAllowedModelLabelContent(); // Assert error message
+        await chatAssertion.assertNotAllowedModelLabelContent(
+          nonExistentAppName,
+        ); // Assert error message
       },
     );
 
