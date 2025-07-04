@@ -57,3 +57,8 @@ export enum FormButtonType {
   Populate = 'populate',
   Submit = 'submit',
 }
+
+export interface NotAllowedItem {
+  conversationId: string;
+  agentName: string;
+}

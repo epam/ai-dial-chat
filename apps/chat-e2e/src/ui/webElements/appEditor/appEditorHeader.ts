@@ -116,4 +116,22 @@ export class AppEditorHeader extends BaseElement {
       );
     }
   }
+
+  public async goToAppSettingsStepWithHeaderStepper(
+    options: { isHttpMethodTriggered: boolean } = {
+      isHttpMethodTriggered: true,
+    },
+  ) {
+    if (options.isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.url().includes(API.applicationCreateHost) &&
+          resp.request().method() === 'PUT',
+      );
+      await this.getAppSettingsStep().click();
+      await respPromise;
+    } else {
+      await this.getAppSettingsStep().click();
+    }
+  }
 }

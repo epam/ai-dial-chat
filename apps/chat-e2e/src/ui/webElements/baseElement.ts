@@ -132,8 +132,8 @@ export class BaseElement {
     return this.rootLocator.boundingBox();
   }
 
-  async isElementEnabled() {
-    return this.rootLocator.isEnabled();
+  async isElementEnabled(options?: { timeout?: number }) {
+    return this.rootLocator.isEnabled(options);
   }
 
   async scrollIntoElementView() {
