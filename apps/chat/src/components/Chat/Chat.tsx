@@ -483,15 +483,28 @@ const ChatView = memo(() => {
   }, [dispatch, selectedConversations, isAdminPreview, areModelsInstalled]);
 
   const onEditMessage = useCallback(
-    (editedMessage: Message, index: number) => {
+    (editedMessage: Message, index: number, convId: string) => {
       dispatch(ConversationsActions.stopStreamMessage());
+
+      if (editedMessage.role === Role.User) {
+        dispatch(
+          ConversationsActions.sendMessages({
+            conversations: selectedConversations,
+            message: editedMessage,
+            deleteCount: mergedMessages.length - index,
+            activeReplayIndex: 0,
+            skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
+          }),
+        );
+
+        return;
+      }
+
       dispatch(
-        ConversationsActions.sendMessages({
-          conversations: selectedConversations,
-          message: editedMessage,
-          deleteCount: mergedMessages.length - index,
-          activeReplayIndex: 0,
-          skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
+        ConversationsActions.updateMessage({
+          conversationId: convId,
+          messageIndex: index,
+          values: editedMessage,
         }),
       );
     },
@@ -859,7 +872,16 @@ const ChatView = memo(() => {
                                                 isPlayback) &&
                                               !isValidApproveRequiredConversation
                                             }
-                                            onEdit={onEditMessage}
+                                            onEdit={(
+                                              editedMessage,
+                                              messageIndex,
+                                            ) =>
+                                              onEditMessage(
+                                                editedMessage,
+                                                messageIndex,
+                                                conv.id,
+                                              )
+                                            }
                                             onLike={onLikeHandler(index, conv)}
                                             onDelete={() => {
                                               handleDeleteMessage(index, conv);

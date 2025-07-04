@@ -125,14 +125,16 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   }, [overlayOptions]);
 
   useEffect(() => {
-    overlay.current?.subscribe('@DIAL_OVERLAY/GPT_END_GENERATING', () =>
-      console.info('END GENERATING'),
+    const subEndGenerating = overlay.current?.subscribe(
+      '@DIAL_OVERLAY/GPT_END_GENERATING',
+      () => console.info('END GENERATING'),
     );
 
-    overlay.current?.subscribe('@DIAL_OVERLAY/GPT_START_GENERATING', () =>
-      console.info('START GENERATING'),
+    const subStartGenerating = overlay.current?.subscribe(
+      '@DIAL_OVERLAY/GPT_START_GENERATING',
+      () => console.info('START GENERATING'),
     );
-    overlay.current?.subscribe(
+    const subSelectedConversationLoaded = overlay.current?.subscribe(
       '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
       async (info) => {
         console.info('Conversation selected - ');
@@ -142,13 +144,13 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         console.info(JSON.stringify(info, null, 2));
       },
     );
-    overlay.current?.subscribe(
+    const subConversationUpdated = overlay.current?.subscribe(
       `@DIAL_OVERLAY/${OverlayEvents.conversationsUpdated}`,
       async () => {
         console.info('Conversations updated');
       },
     );
-    overlay.current?.subscribe(
+    const subMessageCustomButton = overlay.current?.subscribe(
       `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
       async (info) => {
         console.info(
@@ -161,6 +163,19 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
     overlay.current?.getMessages().then((messages) => {
       console.info(messages);
     });
+
+    const subs = [
+      subEndGenerating,
+      subStartGenerating,
+      subSelectedConversationLoaded,
+      subConversationUpdated,
+      subMessageCustomButton,
+    ];
+    return () => {
+      subs.forEach((sub) => {
+        sub?.();
+      });
+    };
   }, [overlay]);
 
   return (

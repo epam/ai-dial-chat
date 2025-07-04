@@ -127,6 +127,7 @@ interface MessageAssistantButtonsProps {
   copyOnClick: () => void;
   onLike: (likeStatus: LikeState) => void;
   onRegenerate?: () => void;
+  onToggleEditing?: () => void;
 }
 
 export const MessageAssistantButtons = ({
@@ -136,6 +137,7 @@ export const MessageAssistantButtons = ({
   copyOnClick,
   onLike,
   onRegenerate,
+  onToggleEditing,
 }: MessageAssistantButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -176,6 +178,17 @@ export const MessageAssistantButtons = ({
             </Button>
           </Tooltip>
         ))}
+      {onToggleEditing && (
+        <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+          <Button
+            onClick={onToggleEditing}
+            data-qa="edit"
+            className="text-secondary"
+          >
+            <IconEdit size={18} />
+          </Button>
+        </Tooltip>
+      )}
       <div className="flex flex-row gap-2">
         {isLikesEnabled &&
           (message.content.trim() || !!getMessageCustomContent(message)) && (

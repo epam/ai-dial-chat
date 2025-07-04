@@ -156,13 +156,17 @@ export function ChatMessageContent({
             <AssistantMessage
               messageIndex={messageIndex}
               message={message}
+              allMessages={allMessages}
               conversation={conversation}
+              isEditing={isEditing}
               isLastMessage={isLastMessage}
               isLikesEnabled={isLikesEnabled}
               withButtons={withButtons}
               messageCopied={messageCopied}
               onCopy={onCopy}
               onLike={onLike}
+              onToggleEditing={onToggleEditing}
+              onEdit={onEdit}
               onRegenerate={onRegenerate}
             />
           )}
