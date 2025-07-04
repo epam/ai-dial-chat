@@ -171,7 +171,9 @@ export const PublishingModalSelectors = {
   appsToPublishContainer: '[data-qa="applications-to-send-request-container"]',
   sendButton: '[data-qa="publish"]',
   noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
-  fieldErrorMessage: '[data-qa="error-message"]',
+  fieldErrorMessage: `[data-qa="error-message"]`,
+  requestNameErrorMessage: () =>
+    `${PublishingModalSelectors.requestName} + ${PublishingModalSelectors.fieldErrorMessage}`,
 };
 
 export const ChangePathElement = {

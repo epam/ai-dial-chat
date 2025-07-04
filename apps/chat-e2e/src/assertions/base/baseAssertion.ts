@@ -258,7 +258,7 @@ export class BaseAssertion {
     const elementLocator = this.getElementLocator(element);
     await expect(
       elementLocator,
-      ExpectedMessages.entityBackgroundColorIsValid,
+      ExpectedMessages.elementTextIsSelected,
     ).toHaveJSProperty(Properties.selectionStart, 0);
   }
 

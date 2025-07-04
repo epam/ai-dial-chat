@@ -126,7 +126,7 @@ export class PublishingRequestModal extends BaseElement {
     PublishingModalSelectors.requestName,
   ).getChildElementBySelector(Tags.input);
   public requestNameErrorMessage = this.getChildElementBySelector(
-    `${PublishingModalSelectors.requestName} + ${PublishingModalSelectors.fieldErrorMessage}`,
+    PublishingModalSelectors.requestNameErrorMessage(),
   );
   public author = this.getChildElementBySelector(
     PublishingModalSelectors.author,
