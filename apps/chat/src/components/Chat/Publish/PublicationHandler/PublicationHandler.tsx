@@ -345,7 +345,7 @@ export function PublicationHandler({ publication }: Props) {
                     valueDataQa="publication-display-author"
                     valueToDisplay={publication.displayAuthor ?? ''}
                     infoTooltip={t(
-                      'The name will be displayed instead of the author name for this publication.',
+                      `This name will be displayed instead of the author's name for this publication.`,
                     )}
                     editValue={displayAuthorEditState}
                     onChangeValue={handleChangeDisplayAuthor}

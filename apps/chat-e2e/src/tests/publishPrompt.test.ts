@@ -1023,7 +1023,7 @@ dialAdminTest(
     let prompt: Prompt;
     const publicationRequestName = GeneratorUtil.randomPublicationRequestName();
 
-    await dialTest.step('Publish a prompt', async () => {
+    await dialTest.step('Publish a prompt via API', async () => {
       prompt = promptData.prepareDefaultPrompt();
       await adminUserItemApiHelper.createPrompts([prompt]);
       const publishRequest = publishRequestBuilder
