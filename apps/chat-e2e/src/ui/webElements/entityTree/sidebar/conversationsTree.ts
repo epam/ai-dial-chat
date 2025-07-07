@@ -59,18 +59,22 @@ export class ConversationsTree extends SideBarEntitiesTree {
   }
 
   public async getTodayConversations() {
+    await this.chronologyByTitle(Chronology.today).waitFor();
     return this.getChronologyConversations(Chronology.today);
   }
 
   public async getYesterdayConversations() {
+    await this.chronologyByTitle(Chronology.yesterday).waitFor();
     return this.getChronologyConversations(Chronology.yesterday);
   }
 
   public async getLastWeekConversations() {
+    await this.chronologyByTitle(Chronology.lastSevenDays).waitFor();
     return this.getChronologyConversations(Chronology.lastSevenDays);
   }
 
   public async getLastMonthConversations() {
+    await this.chronologyByTitle(Chronology.lastThirtyDays).waitFor();
     return this.getChronologyConversations(Chronology.lastThirtyDays);
   }
 
