@@ -266,6 +266,7 @@ export const ExpectedConstants = {
     'Request name should be at least 2 characters long',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
+  publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
 };
 
 export enum Types {
