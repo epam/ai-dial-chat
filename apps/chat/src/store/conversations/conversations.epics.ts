@@ -720,6 +720,8 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
+      const selectedPublicationUrl =
+        PublicationSelectors.selectSelectedPublicationUrl(state$.value);
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const overlayNewConversationsFolder =
         state$.value.overlay.newConversationsFolder;
@@ -755,7 +757,11 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             selectedIdToReplaceWithNewOne: conversation.id,
           }),
         ),
-        of(PublicationActions.selectPublication(null)),
+        iif(
+          () => !!selectedPublicationUrl,
+          of(PublicationActions.selectPublication(null)),
+          EMPTY,
+        ),
       );
     }),
   );

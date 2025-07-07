@@ -307,7 +307,10 @@ export const ConversationComponent = ({
                     ids: [conversation.id],
                   }),
             );
-            if (!isSelectMode) {
+            if (
+              !isSelectMode &&
+              (additionalItemData?.publicationUrl || selectedPublicationUrl)
+            ) {
               dispatch(
                 PublicationActions.selectPublication(
                   additionalItemData?.publicationUrl ?? null,
