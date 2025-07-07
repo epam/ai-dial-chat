@@ -7,4 +7,5 @@ export const IconSelectors = {
   replayIcon: '[data-qa="replay-icon"]',
   promptIcon: '.tabler-icon-bulb',
   listDetailsIcon: '.tabler-icon-list-details',
+  helpIcon: '.tabler-icon-help',
 };
