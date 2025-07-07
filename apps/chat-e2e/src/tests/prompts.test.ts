@@ -9,7 +9,7 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { Cursors, StyleValues, ThemeColorAttributes } from '@/src/ui/domData';
-import { DateUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
@@ -901,8 +901,9 @@ dialTest(
     dataInjector,
     prompts,
     promptData,
-    promptBar,
     promptBarSearch,
+    promptBar,
+    promptBarAssertion,
     setTestIds,
     localStorageManager,
   }) => {
@@ -913,7 +914,7 @@ dialTest(
     let fourthPrompt: Prompt;
     let fifthPrompt: Prompt;
     const promptContent = 'Prompt search test';
-    const notMatchingSearchTerm = 'abc';
+    const notMatchingSearchTerm = GeneratorUtil.randomString(10);
     const searchTerm = 'test';
     const specialSymbolSearchTerm = '@';
 
@@ -946,11 +947,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await promptBarSearch.setSearchValue(notMatchingSearchTerm);
-        const noResult =
-          await promptBar.noResultFoundIcon.getElementInnerContent();
-        expect
-          .soft(noResult, ExpectedMessages.noResultsFound)
-          .toBe(ExpectedConstants.noResults);
+        await promptBarAssertion.assertElementText(
+          promptBar.noResultFoundIcon,
+          ExpectedConstants.noResults,
+          ExpectedMessages.noResultsFound,
+        );
       },
     );
 

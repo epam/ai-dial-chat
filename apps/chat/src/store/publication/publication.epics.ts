@@ -19,7 +19,7 @@ import { combineEpics, ofType } from 'redux-observable';
 import { getLastPathSegment } from '@/src/utils/app/common';
 import {
   getConversationInfoFromId,
-  updateAttachmentTitles,
+  updateMessagesAttachmentsTitles,
 } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
@@ -100,6 +100,7 @@ import {
   Feature,
   Prompt,
   PublishActions,
+  ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
@@ -1818,6 +1819,29 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                 Boolean,
               ) as CustomApplicationModel[];
 
+              const selectedItemsToApprove =
+                PublicationSelectors.selectSelectedItemsToApprove(state);
+
+              const updateBasePublicationValues = (entity: ShareEntity) => ({
+                name: entity.name,
+                publicationInfo: {
+                  ...entity.publicationInfo,
+                  version: getVersionFromId(entity.id),
+                  publicationUrl: url,
+                },
+              });
+
+              const oldResourcesToClear = oldPublicationResources.filter(
+                (oldResource) => {
+                  const match = newPublicationResources.find(
+                    (newResource) =>
+                      newResource?.sourceUrl === oldResource.sourceUrl,
+                  );
+
+                  return match && match.targetUrl !== oldResource.targetUrl;
+                },
+              );
+
               if (conversations.length) {
                 if (filesToUpdate.length) {
                   const titlesToUpdate = filesToUpdate.map(getLastPathSegment);
@@ -1828,22 +1852,19 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                         ConversationsActions.updateConversation({
                           id: conversation.id,
                           values: {
-                            name: conversation.name,
-                            publicationInfo: {
-                              version: getVersionFromId(conversation.id),
-                              publicationUrl: url,
-                            },
-                            messages: updateAttachmentTitles(
+                            ...updateBasePublicationValues(conversation),
+                            messages: updateMessagesAttachmentsTitles(
                               conversation.messages,
                               titlesToUpdate,
                             ),
                             playback: conversation.playback
                               ? {
                                   ...conversation.playback,
-                                  messagesStack: updateAttachmentTitles(
-                                    conversation.playback.messagesStack,
-                                    titlesToUpdate,
-                                  ),
+                                  messagesStack:
+                                    updateMessagesAttachmentsTitles(
+                                      conversation.playback.messagesStack,
+                                      titlesToUpdate,
+                                    ),
                                 }
                               : undefined,
                           },
@@ -1857,15 +1878,30 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                       of(
                         ConversationsActions.updateConversation({
                           id: conversation.id,
-                          values: {
-                            name: conversation.name,
-                            publicationInfo: {
-                              version: getVersionFromId(conversation.id),
-                              publicationUrl: url,
-                            },
-                          },
+                          values: updateBasePublicationValues(conversation),
                         }),
                       ),
+                    ),
+                  );
+                }
+
+                // Clear old conversations from state
+                const oldConversationResourcesIds = oldResourcesToClear
+                  .filter(({ reviewUrl }) => isConversationId(reviewUrl))
+                  .map(({ reviewUrl }) => reviewUrl);
+
+                if (oldConversationResourcesIds.length) {
+                  const allConversations =
+                    ConversationsSelectors.selectConversations(state);
+                  const clearedConversationsState = allConversations.filter(
+                    ({ id }) => !oldConversationResourcesIds.includes(id),
+                  );
+
+                  actions.push(
+                    of(
+                      ConversationsActions.setConversations({
+                        conversations: clearedConversationsState,
+                      }),
                     ),
                   );
                 }
@@ -1877,17 +1913,31 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                     of(
                       PromptsActions.updatePrompt({
                         id: prompt.id,
-                        values: {
-                          name: prompt.name,
-                          publicationInfo: {
-                            version: getVersionFromId(prompt.id),
-                            publicationUrl: url,
-                          },
-                        },
+                        values: updateBasePublicationValues(prompt),
                       }),
                     ),
                   ),
                 );
+
+                // Clear old prompts from state
+                const oldPromptResourcesIds = oldResourcesToClear
+                  .filter(({ reviewUrl }) => isPromptId(reviewUrl))
+                  .map(({ reviewUrl }) => reviewUrl);
+
+                if (oldPromptResourcesIds.length) {
+                  const allPrompts = PromptsSelectors.selectPrompts(state);
+                  const clearedPromptsState = allPrompts.filter(
+                    ({ id }) => !oldPromptResourcesIds.includes(id),
+                  );
+
+                  actions.push(
+                    of(
+                      PromptsActions.setPrompts({
+                        prompts: clearedPromptsState,
+                      }),
+                    ),
+                  );
+                }
               }
 
               if (applications.length) {
@@ -1934,6 +1984,50 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                       }),
                     );
                   }),
+                );
+
+                // Clear old applications from state
+                const oldApplicationResourcesIds = oldResourcesToClear
+                  .filter(({ reviewUrl }) => isApplicationId(reviewUrl))
+                  .map(({ reviewUrl }) => reviewUrl);
+
+                if (oldApplicationResourcesIds.length) {
+                  const allAgents = ModelsSelectors.selectModels(state);
+                  const clearedApplicationsState = allAgents.filter(
+                    ({ id }) => !oldApplicationResourcesIds.includes(id),
+                  );
+
+                  actions.push(
+                    of(
+                      ModelsActions.setModels({
+                        models: clearedApplicationsState,
+                      }),
+                    ),
+                  );
+                }
+              }
+
+              // Save checkbox state for new resources
+              const previousSourceUrlsToApprove = oldPublicationResources
+                .filter((resource) =>
+                  selectedItemsToApprove.includes(resource.reviewUrl),
+                )
+                .map((resource) => resource.sourceUrl ?? '');
+              const newSelectedItemsToApprove = newPublicationResources.filter(
+                (resource) =>
+                  previousSourceUrlsToApprove.includes(resource.sourceUrl),
+              );
+
+              if (newSelectedItemsToApprove.length) {
+                actions.push(
+                  of(
+                    PublicationActions.setItemsToApprove({
+                      publicationUrl: url,
+                      ids: newSelectedItemsToApprove.map(
+                        (resource) => resource.reviewUrl,
+                      ),
+                    }),
+                  ),
                 );
               }
 
