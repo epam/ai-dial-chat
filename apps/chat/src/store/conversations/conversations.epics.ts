@@ -63,8 +63,10 @@ import {
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
+  getEntityBucket,
   isEntityIdExternal,
   isEntityIdLocal,
+  isMyBucket,
 } from '@/src/utils/app/id';
 import {
   mergeMessages,
@@ -1233,6 +1235,24 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         overlaySystemPrompt,
         isOverlay,
       }) => {
+        const publicationUrl =
+          payload.conversation.publicationInfo?.publicationUrl;
+        if (
+          publicationUrl &&
+          payload.message.custom_content?.attachments?.some((attachment) =>
+            isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
+          )
+        ) {
+          return of(
+            PublicationActions.updatePublicationConversationAttachmentsAndSendMessage(
+              {
+                publicationUrl,
+                sendMessagePayload: payload,
+              },
+            ),
+          );
+        }
+
         const actions: Observable<AppAction>[] = [];
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,

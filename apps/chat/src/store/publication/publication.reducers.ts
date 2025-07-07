@@ -26,6 +26,7 @@ import {
 import {
   Conversation,
   FolderInterface,
+  Message,
   Prompt,
   PublishActions,
   ShareEntity,
@@ -467,6 +468,19 @@ export const publicationSlice = createSlice({
     updateAndApprovePublicationRequest: (state) => {
       state.isPublicationUpdating = true;
     },
+    updatePublicationConversationAttachmentsAndSendMessage: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        sendMessagePayload: {
+          conversation: Conversation;
+          message: Message;
+          deleteCount: number;
+          activeReplayIndex: number;
+          skipRecentModelsUpdate?: boolean;
+        };
+      }>,
+    ) => state,
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;
     },
