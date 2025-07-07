@@ -82,6 +82,16 @@ export const modelsSlice = createSlice({
       state.installedModels = payload.installedModels;
     },
     updateInstalledModelFail: (state) => state,
+    setModels: (
+      state,
+      { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
+    ) => {
+      state.models = payload.models;
+      state.modelsMap = addToModelsMap(
+        state.modelsMap ?? {},
+        ...payload.models,
+      );
+    },
     getModelsSuccess: (
       state,
       { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
