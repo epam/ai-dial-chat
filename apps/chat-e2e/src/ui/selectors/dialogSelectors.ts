@@ -188,6 +188,9 @@ export const PublishingApprovalModalSelectors = {
   publishToPath: '[data-qa="publish-to-path"]',
   publishToPathLabel: '[data-qa="publish-to-label"]',
   creationDate: '[data-qa="creation-date"]',
+  author: '[data-qa="publication-author"]',
+  publicAuthor: '[data-qa="publication-display-author"]',
+  publicAuthorLabel: '[data-qa="publication-display-author-label"]',
   requestCreatedLabel: '[data-qa="creation-date-label"]',
   conversationsToApproveContainer:
     '[data-qa="conversations-to-approve-container"]',

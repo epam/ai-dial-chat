@@ -37,9 +37,12 @@ import {
 } from '@/src/utils/app/folders';
 import {
   filterIdsByFeatureType,
+  getEntityBucket,
+  getIdWithoutRootPathSegments,
   isApplicationId,
   isConversationId,
   isFileId,
+  isMyBucket,
   isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
@@ -2015,6 +2018,113 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    ofType(
+      PublicationActions.updatePublicationConversationAttachmentsAndSendMessage
+        .type,
+    ),
+    switchMap(({ payload }) => {
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state$.value,
+        payload.publicationUrl,
+      );
+
+      if (!publication) {
+        console.error(
+          'Publication not found, cannot update conversation attachments and send message',
+        );
+        return EMPTY;
+      }
+
+      const messageAttachments =
+        payload.sendMessagePayload.message.custom_content?.attachments ?? [];
+      const messageAttachmentsToAdd = messageAttachments.filter((attachment) =>
+        isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
+      );
+
+      const publicationResources = (publication.resources ?? []).map(
+        (resource) => ({
+          action: resource.action,
+          sourceUrl: resource.sourceUrl ?? '',
+          targetUrl: resource.targetUrl,
+        }),
+      );
+
+      messageAttachmentsToAdd.forEach(({ url }) => {
+        if (url) {
+          publicationResources.push({
+            action: PublishActions.ADD,
+            sourceUrl: url,
+            targetUrl: ApiUtils.decodeApiUrl(
+              constructPath(
+                url.split('/')[0],
+                publication.targetFolder,
+                getIdWithoutRootPathSegments(
+                  payload.sendMessagePayload.conversation.folderId,
+                ),
+                url.split('/').at(-1),
+              ),
+            ),
+          });
+        }
+      });
+
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources: publicationResources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const { sendMessagePayload } = payload;
+
+          return of(
+            ConversationsActions.sendMessage({
+              ...sendMessagePayload,
+              message: {
+                ...sendMessagePayload.message,
+                custom_content: {
+                  ...sendMessagePayload.message.custom_content,
+                  attachments:
+                    sendMessagePayload.message.custom_content?.attachments?.map(
+                      (attachment) => {
+                        const addedResource = response.resources.find(
+                          (resource) => resource.sourceUrl === attachment.url,
+                        );
+
+                        if (
+                          !isMyBucket(
+                            getEntityBucket({ id: attachment.url ?? '' }),
+                          ) ||
+                          !addedResource
+                        ) {
+                          return attachment;
+                        }
+
+                        return {
+                          ...attachment,
+                          url: ApiUtils.decodeApiUrl(addedResource.reviewUrl),
+                        };
+                      },
+                    ),
+                },
+              },
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
 const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.selectPublication.type),
@@ -2082,6 +2192,7 @@ export const PublicationEpics = combineEpics(
   updateAndApprovePublicationRequestEpic,
   updatePublicationRequestAndEntityEpic,
   updatePublicationRequestAndFolderEpic,
+  updatePublicationConversationAttachmentsAndSendMessageEpic,
 
   // on select publication
   onSelectPublicationEffectEpic,
