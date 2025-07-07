@@ -16,6 +16,8 @@ import {
   ResourceToReview,
 } from '@/src/types/publication';
 
+import { SendMessagePayload } from '@/src/store/conversations/conversations.types';
+
 import {
   EDITED_FOLDER_NAME_KEY,
   FolderEditTree,
@@ -26,7 +28,6 @@ import {
 import {
   Conversation,
   FolderInterface,
-  Message,
   Prompt,
   PublishActions,
   ShareEntity,
@@ -472,13 +473,7 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         publicationUrl: string;
-        sendMessagePayload: {
-          conversation: Conversation;
-          message: Message;
-          deleteCount: number;
-          activeReplayIndex: number;
-          skipRecentModelsUpdate?: boolean;
-        };
+        sendMessagePayload: SendMessagePayload;
       }>,
     ) => state,
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
