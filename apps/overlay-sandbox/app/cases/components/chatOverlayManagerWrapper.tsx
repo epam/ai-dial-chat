@@ -27,7 +27,7 @@ export const ChatOverlayManagerWrapper: React.FC<
   const [conversations, setConversations] = useState<OverlayConversation[]>([]);
   const [conversationNewName, setConversationNewName] = useState('');
 
-  const [deleteMessageIndex, setDeleteMessageIndex] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(0);
   const [inputContent, setInputContent] = useState('');
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
@@ -53,10 +53,30 @@ export const ChatOverlayManagerWrapper: React.FC<
   const handleDeleteMessage = useCallback(async () => {
     const result = await overlayManager.current?.deleteMessage(
       overlayManagerOptions.id,
-      deleteMessageIndex,
+      messageIndex,
     );
     handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
-  }, [deleteMessageIndex, handleDisplayInformation, overlayManagerOptions.id]);
+  }, [messageIndex, handleDisplayInformation, overlayManagerOptions.id]);
+
+  const handleUpdateMessage = useCallback(async () => {
+    const messages = (
+      await overlayManager.current?.getMessages(overlayManagerOptions.id)
+    )?.messages;
+
+    if (!messages) {
+      return;
+    }
+
+    const result = await overlayManager.current?.updateMessage(
+      overlayManagerOptions.id,
+      messageIndex,
+      {
+        ...messages[messageIndex],
+        content: messages[messageIndex].content + '\n\nHello overlay!',
+      },
+    );
+    handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
+  }, [overlayManagerOptions.id, messageIndex, handleDisplayInformation]);
 
   const handleSetInputContent = useCallback(async () => {
     await overlayManager.current?.setInputContent(
@@ -151,19 +171,19 @@ export const ChatOverlayManagerWrapper: React.FC<
   }, [created, overlayManagerOptions.id]);
 
   useEffect(() => {
-    overlayManager.current?.subscribe(
+    const subEndGenerating = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       '@DIAL_OVERLAY/GPT_END_GENERATING',
       () => console.info('END GENERATING'),
     );
 
-    overlayManager.current?.subscribe(
+    const subStartGenerating = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       '@DIAL_OVERLAY/GPT_START_GENERATING',
       () => console.info('START GENERATING'),
     );
 
-    overlayManager.current?.subscribe(
+    const subSelectedConversationLoaded = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
       async (info) => {
@@ -176,14 +196,14 @@ export const ChatOverlayManagerWrapper: React.FC<
         console.info(JSON.stringify(info, null, 2));
       },
     );
-    overlayManager.current?.subscribe(
+    const subConversationUpdated = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       `@DIAL_OVERLAY/${OverlayEvents.conversationsUpdated}`,
       async () => {
         console.info('Conversations updated');
       },
     );
-    overlayManager.current?.subscribe(
+    const subMessageCustomButton = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
       async (info) => {
@@ -199,6 +219,19 @@ export const ChatOverlayManagerWrapper: React.FC<
       .then((messages) => {
         console.info(messages);
       });
+
+    const subs = [
+      subEndGenerating,
+      subStartGenerating,
+      subSelectedConversationLoaded,
+      subConversationUpdated,
+      subMessageCustomButton,
+    ];
+    return () => {
+      subs.forEach((sub) => {
+        sub?.();
+      });
+    };
   }, [overlayManagerOptions]);
 
   return (
@@ -243,14 +276,19 @@ export const ChatOverlayManagerWrapper: React.FC<
                 >
                   Delete message by index
                 </button>
+                <button
+                  className="button"
+                  onClick={handleUpdateMessage}
+                  data-qa="update-message"
+                >
+                  Add `Hello overlay!` to the end of message by index
+                </button>
 
                 <input
                   className="border"
                   placeholder="Imported conversation object"
-                  value={deleteMessageIndex}
-                  onChange={(e) =>
-                    setDeleteMessageIndex(JSON.parse(e.target.value))
-                  }
+                  value={messageIndex}
+                  onChange={(e) => setMessageIndex(JSON.parse(e.target.value))}
                   data-qa="delete-message-index"
                 />
               </div>

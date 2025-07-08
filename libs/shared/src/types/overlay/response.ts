@@ -14,6 +14,10 @@ export interface DeleteMessageResponse {
   messages: Message[];
 }
 
+export interface UpdateMessageResponse {
+  messages: Message[];
+}
+
 export interface GetConversationsResponse {
   conversations: OverlayConversation[];
 }
