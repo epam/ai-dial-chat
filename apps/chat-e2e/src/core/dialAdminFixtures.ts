@@ -31,6 +31,7 @@ import { InformationModalAssertion } from '@/src/assertions/informationModalAsse
 import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishing/publishedPromptPreviewModalAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishing/publishingApprovalModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
+import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -50,6 +51,7 @@ import {
   FolderPromptsToApprove,
   Folders,
   OrganizationConversationsTree,
+  OrganizationPromptsTree,
   PromptsToApproveTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -73,6 +75,7 @@ const dialAdminTest = dialTest.extend<{
   adminApproveRequiredConversations: ApproveRequiredConversationsTree;
   adminApproveRequiredPrompts: ApproveRequiredPrompts;
   adminOrganizationFolderConversations: Folders;
+  adminOrganizationFolderPrompts: Folders;
   adminConversationsToApprove: ConversationsToApproveTree;
   adminFilesToApprove: FilesToApproveTree;
   adminPromptsToApprove: PromptsToApproveTree;
@@ -119,6 +122,8 @@ const dialAdminTest = dialTest.extend<{
   adminConversationsToPublishTree: ConversationsToPublishTree;
   adminConversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
   adminPublishedApplicationReviewModal: PublishedApplicationReviewModal;
+  adminOrganizationPrompts: OrganizationPromptsTree;
+  adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -214,6 +219,11 @@ const dialAdminTest = dialTest.extend<{
     const adminOrganizationFolderConversations =
       adminChatBar.getOrganizationFolderConversations();
     await use(adminOrganizationFolderConversations);
+  },
+  adminOrganizationFolderPrompts: async ({ adminPromptBar }, use) => {
+    const adminOrganizationFolderPrompts =
+      adminPromptBar.getOrganizationFolderPrompts();
+    await use(adminOrganizationFolderPrompts);
   },
   adminConversationsToApprove: async (
     { adminPublishingApprovalModal },
@@ -477,6 +487,21 @@ const dialAdminTest = dialTest.extend<{
         adminConversationsToPublishTree,
       );
     await use(adminConversationToPublishAssertion);
+  },
+  adminOrganizationPrompts: async ({ adminPromptBar }, use) => {
+    const adminOrganizationPrompts =
+      adminPromptBar.getOrganizationPromptsTree();
+    await use(adminOrganizationPrompts);
+  },
+  adminOrganizationPromptAssertion: async (
+    { adminOrganizationPrompts },
+    use,
+  ) => {
+    const adminOrganizationPromptAssertion =
+      new SideBarEntityAssertion<OrganizationPromptsTree>(
+        adminOrganizationPrompts,
+      );
+    await use(adminOrganizationPromptAssertion);
   },
 });
 

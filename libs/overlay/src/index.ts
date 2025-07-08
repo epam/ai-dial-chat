@@ -28,6 +28,7 @@ export type {
   ImportConversationResponse,
   SelectedConversationLoadedResponse,
   MessageCustomButtonResponse,
+  UpdateMessageResponse,
   ImageMIMEType,
   MIMEType,
   Attachment,

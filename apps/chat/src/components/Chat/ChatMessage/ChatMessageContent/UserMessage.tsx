@@ -69,13 +69,18 @@ interface UserMessageProps {
   conversation: Conversation;
   messageIndex: number;
   allMessages: Message[];
+  isFirstMessageSystem: boolean;
   isEditing: boolean;
   isEditingTemplates: boolean;
   withButtons?: boolean;
   editDisabled?: boolean;
   onToggleEditing: (value: boolean) => void;
   onToggleEditingTemplates: (value: boolean) => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onDelete?: () => void;
 }
 
@@ -84,6 +89,7 @@ export const UserMessage = memo(function UserMessage({
   conversation,
   messageIndex,
   allMessages,
+  isFirstMessageSystem,
   isEditing,
   isEditingTemplates,
   withButtons,
@@ -329,6 +335,7 @@ export const UserMessage = memo(function UserMessage({
               ).filter(([key]) => messageContent.includes(key)),
             },
             messageIndex,
+            conversation.id,
           );
           setSelectedDialLinks([]);
         }
@@ -347,12 +354,15 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
-      e.preventDefault();
-      handleEditMessage(formValue, messageContent);
-    }
-  };
+  const handlePressEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+        e.preventDefault();
+        handleEditMessage(formValue, messageContent);
+      }
+    },
+    [formValue, handleEditMessage, isTyping, messageContent],
+  );
 
   const handleUnselectFile = useCallback(
     (fileId: string) => {
@@ -621,7 +631,12 @@ export const UserMessage = memo(function UserMessage({
 
         <MessageAttachments attachments={message.custom_content?.attachments} />
 
-        {isOverlay && <MessageCustomButtons messageIndex={messageIndex} />}
+        {isOverlay && (
+          <MessageCustomButtons
+            messageIndex={messageIndex}
+            isSystemMessagePresented={isFirstMessageSystem}
+          />
+        )}
 
         <div
           ref={anchorRef}
