@@ -1,4 +1,11 @@
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { OverlayActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -115,27 +122,25 @@ export const MessageCustomButtons = ({
 }: Props) => {
   const dispatch = useAppDispatch();
 
+  const realMessageIndex = useMemo(() => {
+    return isSystemMessagePresented ? messageIndex + 1 : messageIndex;
+  }, [isSystemMessagePresented, messageIndex]);
+
   const customMessageButtons = useAppSelector((state) =>
-    OverlaySelectors.selectCustomButtonsForMessage(state, messageIndex),
+    OverlaySelectors.selectCustomButtonsForMessage(state, realMessageIndex),
   );
 
   const handleOnButtonEvent = useCallback(
-    (
-      eventName: keyof WindowEventMap,
-      button: MessageButton,
-      messageIndex: number,
-    ) => {
+    (eventName: keyof WindowEventMap, button: MessageButton) => {
       dispatch(
         OverlayActions.sendCustomMessageEvent({
           buttonKey: button.buttonKey,
           eventName: eventName,
-          messageIndex: isSystemMessagePresented
-            ? messageIndex + 1
-            : messageIndex,
+          messageIndex: realMessageIndex,
         }),
       );
     },
-    [dispatch, isSystemMessagePresented],
+    [dispatch, realMessageIndex],
   );
 
   if (!customMessageButtons?.length) return null;
@@ -146,9 +151,7 @@ export const MessageCustomButtons = ({
         <MessageCustomButton
           key={button.buttonKey}
           button={button}
-          onEvent={(eventName) =>
-            handleOnButtonEvent(eventName, button, messageIndex)
-          }
+          onEvent={(eventName) => handleOnButtonEvent(eventName, button)}
         />
       ))}
     </div>
