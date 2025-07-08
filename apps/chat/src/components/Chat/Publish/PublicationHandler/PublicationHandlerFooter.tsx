@@ -327,7 +327,7 @@ export const PublicationHandlerFooter = ({
   return (
     <div
       className={classNames(
-        'flex w-full items-center gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4',
+        'flex w-full items-center gap-3 rounded-t bg-layer-2 px-3 py-4 md:gap-5 md:px-4',
         isOnlyFilesPublication ? 'justify-end' : 'justify-between',
       )}
     >

@@ -1,5 +1,8 @@
 import { API } from '@/src/testData';
-import { PublishingApprovalModalSelectors } from '@/src/ui/selectors';
+import {
+  IconSelectors,
+  PublishingApprovalModalSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import {
   ApplicationsToApproveTree,
@@ -114,6 +117,17 @@ export class PublishingApprovalModal extends BaseElement {
   public creationDate = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.creationDate,
   );
+  public author = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.author,
+  );
+  public publicAuthor = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publicAuthor,
+  );
+  public publicAuthorLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publicAuthorLabel,
+  );
+  public publicAuthorHelpIcon =
+    this.publicAuthorLabel.getChildElementBySelector(IconSelectors.helpIcon);
   public allowAccessLabel = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.allowAccessLabel,
   );
@@ -156,5 +170,13 @@ export class PublishingApprovalModal extends BaseElement {
     } else {
       await this.goToReviewButton.click();
     }
+  }
+
+  public async rejectRequest() {
+    const responsePromise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.publicationRequestRejection),
+    );
+    await this.rejectButton.click();
+    await responsePromise;
   }
 }
