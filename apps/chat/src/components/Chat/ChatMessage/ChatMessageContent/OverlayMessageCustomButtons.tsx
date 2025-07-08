@@ -20,7 +20,7 @@ interface ButtonProps {
   onEvent: (eventName: keyof WindowEventMap) => void;
 }
 
-const MessageCustomButton = ({ button, onEvent }: ButtonProps) => {
+const OverlayMessageCustomButton = ({ button, onEvent }: ButtonProps) => {
   const ref = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -116,7 +116,7 @@ interface Props {
   isSystemMessagePresented: boolean;
 }
 
-export const MessageCustomButtons = ({
+export const OverlayMessageCustomButtons = ({
   messageIndex,
   isSystemMessagePresented,
 }: Props) => {
@@ -148,7 +148,7 @@ export const MessageCustomButtons = ({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {customMessageButtons.map((button) => (
-        <MessageCustomButton
+        <OverlayMessageCustomButton
           key={button.buttonKey}
           button={button}
           onEvent={(eventName) => handleOnButtonEvent(eventName, button)}
