@@ -1747,6 +1747,15 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
               (_, index) =>
                 index !== payload.index && index !== payload.index + 1,
             );
+          } else if (
+            payload.index !== 0 &&
+            messages[payload.index].role === Role.Assistant &&
+            messages[payload.index - 1].role === Role.User
+          ) {
+            newMessages = messages.filter(
+              (_, index) =>
+                index !== payload.index && index !== payload.index - 1,
+            );
           } else {
             newMessages = messages.filter(
               (_, index) => index !== payload.index,

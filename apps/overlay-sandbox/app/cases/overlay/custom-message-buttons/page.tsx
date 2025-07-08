@@ -26,7 +26,8 @@ const overlayOptions = {
         {
           buttonKey: 'custom-button-1',
           events: ['click'] as (keyof WindowEventMap)[],
-          tooltip: 'Some tooltip',
+          tooltip:
+            'Some tooltip with very very long title which should cause scrolls appearing',
           iconSvg: svg,
         },
         {
