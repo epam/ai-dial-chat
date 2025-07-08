@@ -20,7 +20,7 @@ import {
   applicationNamePrefix,
 } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Locator, expect } from '@playwright/test';
+import { Locator } from '@playwright/test';
 
 dialTest(
   `Start chat with: 'Default agent' setting is set for new user.\n` +
@@ -55,7 +55,7 @@ dialTest(
       async () => {
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
-        await settingsModalAssertion.assertStartChatWithValue(
+        await settingsModalAssertion.assertStartChatWithSelectedValue(
           ExpectedConstants.defaultAgentLabel,
         );
         await settingsModal.cancelButton.click();
@@ -139,7 +139,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Prepare custom applications with different names and versions',
+      'Prepare custom applications with different names and versions via API',
       async () => {
         const firstApplicationModel = customApplicationBuilder
           .withDisplayName(firstAppName)
@@ -215,7 +215,10 @@ dialTest(
           customAppsArray,
           'asc',
         );
-        expect.soft(customAppsArray).toEqual(sortedCustomAppsArray);
+        settingsModalAssertion.assertValuesAreEqual(
+          customAppsArray,
+          sortedCustomAppsArray,
+        );
       },
     );
 
@@ -291,7 +294,7 @@ dialTest(
           settingsModal.startChatWithListbox,
           'hidden',
         );
-        await settingsModalAssertion.assertStartChatWithValue({
+        await settingsModalAssertion.assertStartChatWithSelectedValue({
           name: secondAppName,
           version: secondAppSecondVersion,
         });
@@ -425,7 +428,7 @@ dialTest(
     const secondAppName = `${commonPart.toUpperCase()}2`;
 
     await dialTest.step(
-      'Prepare custom applications with common part in the name names',
+      'Prepare custom applications with common part in the name names via API',
       async () => {
         for (const appName of [firstAppName, secondAppName]) {
           const applicationModel = customApplicationBuilder
@@ -452,7 +455,7 @@ dialTest(
         );
         await settingsModalAssertion.assertElementText(
           settingsModal.noAvailableItems,
-          'No available items',
+          ExpectedConstants.noAvailableItemsLabel,
         );
       },
     );
@@ -466,7 +469,7 @@ dialTest(
           .getNthElement(2)
           .waitFor();
         const allOptions = await settingsModal.getAllOptions();
-        expect.soft(allOptions).toEqual([
+        settingsModalAssertion.assertValuesAreEqual(allOptions, [
           {
             name: firstAppName,
             version: ExpectedConstants.defaultAppVersion,
@@ -487,7 +490,7 @@ dialTest(
           .getNthElement(1)
           .waitFor();
         const allOptions = await settingsModal.getAllOptions();
-        expect.soft(allOptions).toEqual([
+        settingsModalAssertion.assertValuesAreEqual(allOptions, [
           {
             name: firstAppName,
             version: ExpectedConstants.defaultAppVersion,

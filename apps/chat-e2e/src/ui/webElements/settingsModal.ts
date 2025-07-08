@@ -1,7 +1,9 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Tags } from '@/src/ui/domData';
-import { IconSelectors } from '@/src/ui/selectors';
-import { AccountSettingsModalSelector } from '@/src/ui/selectors/dialogSelectors';
+import {
+  AccountSettingsModalSelector,
+  IconSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { RegexUtil } from '@/src/utils';
@@ -71,10 +73,6 @@ export class SettingsModal extends BaseElement {
     this.startChatWithListbox.getChildElementBySelector(
       AccountSettingsModalSelector.startChatWithListboxOption,
     );
-  public startChatWithListboxOptionAttributes =
-    this.startChatWithListboxOptions.getChildElementBySelector(
-      AccountSettingsModalSelector.startChatWithListboxOptionAttributes,
-    );
   public optionAttributes = (
     agent: DialAIEntityModel | { name: string; version?: string } | string,
   ) =>
@@ -114,24 +112,29 @@ export class SettingsModal extends BaseElement {
   ) => this.getElementIcon(this.startChatWithListboxAgent(agent));
 
   public async getAllOptions() {
-    const allOptionsAttributes: { name: string; version: string }[] = [];
-    const optionsCount =
-      await this.startChatWithListboxOptions.getElementsCount();
-    for (let i = 1; i <= optionsCount; i++) {
-      const optionAttributesElement =
-        this.startChatWithListboxOptionAttributes.getNthElement(i);
-      const optionVersionElement = optionAttributesElement.locator(
-        AccountSettingsModalSelector.startChatWithListboxOptionVersion,
+    const attributesSelector =
+      AccountSettingsModalSelector.startChatWithListboxOptionAttributes;
+    const versionSelector =
+      AccountSettingsModalSelector.startChatWithListboxOptionVersion;
+
+    return await this.startChatWithListboxOptions
+      .getElementLocator()
+      .evaluateAll(
+        (options, { attributesSelector, versionSelector }) => {
+          return options.map((option) => {
+            const attributesEl = option.querySelector(attributesSelector);
+            const versionEl = option.querySelector(versionSelector);
+
+            const fullText = attributesEl?.textContent ?? '';
+            const versionText = versionEl?.textContent ?? '';
+
+            return {
+              name: fullText.replace(versionText, '').trim(),
+              version: versionText,
+            };
+          });
+        },
+        { attributesSelector, versionSelector },
       );
-      const optionAttributes = await optionAttributesElement.textContent();
-      const optionVersion = (await optionVersionElement.isVisible())
-        ? await optionVersionElement.textContent()
-        : '';
-      allOptionsAttributes.push({
-        name: optionAttributes!.replaceAll(optionVersion!, ''),
-        version: optionVersion!,
-      });
-    }
-    return allOptionsAttributes;
   }
 }

@@ -267,6 +267,7 @@ export const ExpectedConstants = {
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
+  noAvailableItemsLabel: 'No available items',
 };
 
 export enum Types {

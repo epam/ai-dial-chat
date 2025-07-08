@@ -39,8 +39,10 @@ export class SettingsModalAssertion extends BaseAssertion {
   }
 
   public async assertFullWidthChatToggleState(expectedState: ToggleState) {
-    const state = expectedState === 'ON' ? ToggleState.on : ToggleState.off;
-    await this.assertElementText(this.settingsModal.fullWidthChatToggle, state);
+    await this.assertElementText(
+      this.settingsModal.fullWidthChatToggle,
+      expectedState,
+    );
   }
 
   public async assertFullWidthChatToggleColor(expectedColor: string) {
@@ -50,7 +52,7 @@ export class SettingsModalAssertion extends BaseAssertion {
     );
   }
 
-  public async assertStartChatWithValue(
+  public async assertStartChatWithSelectedValue(
     expectedAgent:
       | DialAIEntityModel
       | { name: string; version?: string }
