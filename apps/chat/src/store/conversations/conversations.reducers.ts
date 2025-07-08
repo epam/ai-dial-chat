@@ -26,7 +26,11 @@ import { RootState } from '@/src/types/store';
 
 import { ConversationsSelectors } from '@/src/store/selectors';
 
-import { ConversationsState } from './conversations.types';
+import {
+  ConversationsState,
+  SendMessagePayload,
+  SendMessagesPayload,
+} from './conversations.types';
 
 import {
   ConversationInfo,
@@ -549,26 +553,8 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{ error: Response | string }>,
     ) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
-    sendMessages: (
-      state,
-      _action: PayloadAction<{
-        conversations: Conversation[];
-        message: Message;
-        deleteCount: number;
-        activeReplayIndex: number;
-        skipRecentModelsUpdate?: boolean;
-      }>,
-    ) => state,
-    sendMessage: (
-      state,
-      _action: PayloadAction<{
-        conversation: Conversation;
-        message: Message;
-        deleteCount: number;
-        activeReplayIndex: number;
-        skipRecentModelsUpdate?: boolean;
-      }>,
-    ) => state,
+    sendMessages: (state, _action: PayloadAction<SendMessagesPayload>) => state,
+    sendMessage: (state, _action: PayloadAction<SendMessagePayload>) => state,
     streamMessage: (
       state,
       _action: PayloadAction<{

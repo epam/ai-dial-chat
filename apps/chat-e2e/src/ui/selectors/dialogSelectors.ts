@@ -158,7 +158,7 @@ export const AccountSettingsModalSelector = {
 
 export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
-  requestName: '[data-qa="request-name"]',
+  requestName: '[data-qa="publishRequestName"]',
   author: '#publicationAuthor',
   publishTo: '[data-qa="change-path-container"]',
   unpublishFromLabel: '[data-qa="unpublish-from-label"]',
@@ -171,6 +171,9 @@ export const PublishingModalSelectors = {
   appsToPublishContainer: '[data-qa="applications-to-send-request-container"]',
   sendButton: '[data-qa="publish"]',
   noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
+  fieldErrorMessage: `[data-qa="error-message"]`,
+  requestNameErrorMessage: () =>
+    `${PublishingModalSelectors.requestName} + ${PublishingModalSelectors.fieldErrorMessage}`,
 };
 
 export const ChangePathElement = {
@@ -185,6 +188,9 @@ export const PublishingApprovalModalSelectors = {
   publishToPath: '[data-qa="publish-to-path"]',
   publishToPathLabel: '[data-qa="publish-to-label"]',
   creationDate: '[data-qa="creation-date"]',
+  author: '[data-qa="publication-author"]',
+  publicAuthor: '[data-qa="publication-display-author"]',
+  publicAuthorLabel: '[data-qa="publication-display-author-label"]',
   requestCreatedLabel: '[data-qa="creation-date-label"]',
   conversationsToApproveContainer:
     '[data-qa="conversations-to-approve-container"]',

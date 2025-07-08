@@ -42,7 +42,7 @@ dialAdminTest(
     adminTooltip,
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
-    adminFolderToApproveAssertion,
+    adminFolderConversationsToApproveAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
     adminOrganizationFolderConversations,
@@ -196,7 +196,7 @@ dialAdminTest(
       'Verify folders hierarchy with non empty conversations is displayed on "Publication approval" modal, "Approve" button is disabled',
       async () => {
         for (const conversation of allConversations) {
-          await adminFolderToApproveAssertion.assertFolderEntityState(
+          await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
             { name: nestedFolders[0].name },
             { name: conversation.name },
             conversation.name === emptyConversation.name ||
@@ -419,7 +419,7 @@ dialAdminTest(
     adminConversationDropdownMenu,
     adminConversationToPublishAssertion,
     adminPublishingApprovalModalAssertion,
-    adminFolderToApproveAssertion,
+    adminFolderConversationsToApproveAssertion,
     adminPublishingApprovalModal,
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
@@ -658,7 +658,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify folders hierarchy is displayed on "Publication approval" modal and "Publish to" path',
       async () => {
-        await adminFolderToApproveAssertion.assertFolderEntityState(
+        await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
           { name: folderConversationToPublish.folders.name },
           { name: folderConversationToPublish.conversations[0].name },
           'visible',
