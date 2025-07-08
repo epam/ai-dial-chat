@@ -156,12 +156,20 @@ export const AssistantMessage = memo(function AssistantMessage({
     ],
   );
 
-  const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
-      e.preventDefault();
-      handleEditMessage(formValue, messageContent);
-    }
-  };
+  const handlePressEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+        e.preventDefault();
+        handleEditMessage(formValue, messageContent);
+      }
+    },
+    [formValue, handleEditMessage, isTyping, messageContent],
+  );
+
+  const handleCancelEditing = useCallback(() => {
+    setMessageContent(message.content);
+    handleToggleEditing(false);
+  }, [handleToggleEditing, message.content]);
 
   useEffect(() => {
     setMessageContent(message.content);
@@ -220,10 +228,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           <div className="relative flex gap-3">
             <button
               className="button button-secondary"
-              onClick={() => {
-                setMessageContent(message.content);
-                handleToggleEditing(false);
-              }}
+              onClick={handleCancelEditing}
               data-qa="cancel"
             >
               {t('Cancel')}

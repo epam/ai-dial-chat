@@ -349,12 +349,15 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
-      e.preventDefault();
-      handleEditMessage(formValue, messageContent);
-    }
-  };
+  const handlePressEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+        e.preventDefault();
+        handleEditMessage(formValue, messageContent);
+      }
+    },
+    [formValue, handleEditMessage, isTyping, messageContent],
+  );
 
   const handleUnselectFile = useCallback(
     (fileId: string) => {
