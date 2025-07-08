@@ -98,6 +98,7 @@ export function ContextMenu({
   placement,
   useStandardColor,
   onTriggerClick,
+  hideTriggerIcon,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -106,17 +107,19 @@ export function ContextMenu({
 
   if (!displayedMenuItems.length) return null;
 
-  const menuContent = TriggerCustomRenderer || (
-    <TriggerIcon
-      size={triggerIconSize}
-      width={triggerIconSize}
-      height={triggerIconSize}
-      strokeWidth={1.5}
-      onClick={(e) => {
-        e.stopPropagation();
-      }}
-    />
-  );
+  const menuContent =
+    TriggerCustomRenderer ||
+    (!hideTriggerIcon && (
+      <TriggerIcon
+        size={triggerIconSize}
+        width={triggerIconSize}
+        height={triggerIconSize}
+        strokeWidth={1.5}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      />
+    ));
 
   if (isLoading && isOpen)
     return (
