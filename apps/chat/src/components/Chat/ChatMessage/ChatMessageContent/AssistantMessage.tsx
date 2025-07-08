@@ -52,7 +52,11 @@ interface AssistantMessageProps {
   onLike?: (likeStatus: LikeState) => void;
   onRegenerate?: () => void;
   onToggleEditing: (value: boolean) => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
 }
 
 export const AssistantMessage = memo(function AssistantMessage({
@@ -142,6 +146,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             ).filter(([key]) => messageContent.includes(key)),
           },
           messageIndex,
+          conversation.id,
         );
       }
       handleToggleEditing(false);

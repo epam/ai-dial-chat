@@ -834,16 +834,7 @@ const ChatView = memo(() => {
                                               (!isValidApproveRequiredConversation ||
                                                 !!notAvailableEntityType)
                                             }
-                                            onEdit={(
-                                              editedMessage,
-                                              messageIndex,
-                                            ) =>
-                                              onEditMessage(
-                                                editedMessage,
-                                                messageIndex,
-                                                conv.id,
-                                              )
-                                            }
+                                            onEdit={onEditMessage}
                                             onLike={onLikeHandler(index, conv)}
                                             onDelete={() => {
                                               handleDeleteMessage(index, conv);

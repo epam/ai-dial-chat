@@ -76,7 +76,11 @@ interface UserMessageProps {
   editDisabled?: boolean;
   onToggleEditing: (value: boolean) => void;
   onToggleEditingTemplates: (value: boolean) => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onDelete?: () => void;
 }
 
@@ -331,6 +335,7 @@ export const UserMessage = memo(function UserMessage({
               ).filter(([key]) => messageContent.includes(key)),
             },
             messageIndex,
+            conversation.id,
           );
           setSelectedDialLinks([]);
         }

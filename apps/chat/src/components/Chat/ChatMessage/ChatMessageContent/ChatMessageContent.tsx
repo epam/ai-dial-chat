@@ -35,7 +35,11 @@ interface Props {
   onToggleEditing: (value: boolean) => void;
   onToggleEditingTemplates: (value: boolean) => void;
   onRegenerate?: () => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onCopy?: () => void;
   onLike?: (likeStatus: LikeState) => void;
   onDelete?: () => void;
