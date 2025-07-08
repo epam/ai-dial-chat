@@ -35,7 +35,11 @@ export interface Props {
   messagesLength: number;
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onRegenerate?: () => void;
 }
 

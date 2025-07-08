@@ -106,9 +106,13 @@ const MessageCustomButton = ({ button, onEvent }: ButtonProps) => {
 
 interface Props {
   messageIndex: number;
+  isSystemMessagePresented: boolean;
 }
 
-export const MessageCustomButtons = ({ messageIndex }: Props) => {
+export const MessageCustomButtons = ({
+  messageIndex,
+  isSystemMessagePresented,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const customMessageButtons = useAppSelector((state) =>
@@ -125,11 +129,13 @@ export const MessageCustomButtons = ({ messageIndex }: Props) => {
         OverlayActions.sendCustomMessageEvent({
           buttonKey: button.buttonKey,
           eventName: eventName,
-          messageIndex,
+          messageIndex: isSystemMessagePresented
+            ? messageIndex + 1
+            : messageIndex,
         }),
       );
     },
-    [dispatch],
+    [dispatch, isSystemMessagePresented],
   );
 
   if (!customMessageButtons?.length) return null;
