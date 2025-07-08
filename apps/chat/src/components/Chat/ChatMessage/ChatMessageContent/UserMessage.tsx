@@ -53,7 +53,7 @@ import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Mess
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
-import { MessageCustomButtons } from './MessageCustomButtons';
+import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
 
 import {
   Feature,
@@ -632,7 +632,7 @@ export const UserMessage = memo(function UserMessage({
         <MessageAttachments attachments={message.custom_content?.attachments} />
 
         {isOverlay && (
-          <MessageCustomButtons
+          <OverlayMessageCustomButtons
             messageIndex={messageIndex}
             isSystemMessagePresented={isFirstMessageSystem}
           />

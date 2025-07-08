@@ -27,7 +27,7 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
 import { AdjustedTextarea } from '../AdjustedTextarea';
-import { MessageCustomButtons } from './MessageCustomButtons';
+import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
 
 import {
   Feature,
@@ -294,7 +294,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         <ErrorMessage error={message.errorMessage}></ErrorMessage>
 
         {isOverlay && (
-          <MessageCustomButtons
+          <OverlayMessageCustomButtons
             messageIndex={messageIndex}
             isSystemMessagePresented={isFirstMessageSystem}
           />
