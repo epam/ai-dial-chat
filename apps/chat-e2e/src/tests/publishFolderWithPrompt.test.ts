@@ -2,10 +2,11 @@ import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, FolderPrompt, MenuOptions } from '@/src/testData';
 import { BaseElement, PublicationReviewControl } from '@/src/ui/webElements';
-import { GeneratorUtil, SortingUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, SortingUtil } from '@/src/utils';
 
 dialAdminTest(
-  'Publish folder: folder with 2 prompts',
+  'Publish folder: folder with 2 prompts.\n' +
+    `"Author's public name" is displayed on Info pop-up for published prompt ( published folder with prompt)`,
   async ({
     dialHomePage,
     promptData,
@@ -23,14 +24,18 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     adminFolderPromptsToApproveAssertion,
     publishingRequestModalAssertion,
+    adminOrganizationFolderPrompts,
+    adminPromptDropdownMenu,
+    adminInformationModalAssertion,
     setTestIds,
     localStorageManager,
     adminLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-4582');
+    setTestIds('EPMRTC-4582', 'EPMRTC-5875');
     let folderPrompt: FolderPrompt;
     const folderName = GeneratorUtil.randomString(10);
     const requestName = GeneratorUtil.randomPublicationRequestName();
+    const author = GeneratorUtil.randomString(10);
     let orderedPrompts: string[] = [];
     let publicationReviewControls: PublicationReviewControl;
     let backToPublicationRequestButton: BaseElement;
@@ -67,8 +72,9 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Set publication request name and send request',
+      'Set publication request name, update Author field and send the request',
       async () => {
+        await publishingRequestModal.author.fillInInput(author);
         await publishingRequestModal.requestName.fillInInput(requestName);
         await publishingRequestModal.sendPublicationRequest();
       },
@@ -223,6 +229,35 @@ dialAdminTest(
           adminPublishingApprovalModal.approveButton,
           'enabled',
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin approves the request and verify folder disappears from "Approve required" section',
+      async () => {
+        await adminPublishingApprovalModal.approveRequest();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: requestName },
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open published prompt dropdown menu, select "Info" option and verify Author field is valid',
+      async () => {
+        await adminOrganizationFolderPrompts.expandFolder(folderName);
+        await adminOrganizationFolderPrompts.openFolderEntityDropdownMenu(
+          folderName,
+          folderPrompt.prompts[0].name,
+        );
+        await adminPromptDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await adminInformationModalAssertion.assertFields({
+          createdDate: DateUtil.getCurrentLocalDate(),
+          author: author,
+        });
       },
     );
   },

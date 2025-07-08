@@ -16,6 +16,8 @@ import {
   ResourceToReview,
 } from '@/src/types/publication';
 
+import { SendMessagePayload } from '@/src/store/conversations/conversations.types';
+
 import {
   EDITED_FOLDER_NAME_KEY,
   FolderEditTree,
@@ -467,6 +469,13 @@ export const publicationSlice = createSlice({
     updateAndApprovePublicationRequest: (state) => {
       state.isPublicationUpdating = true;
     },
+    updatePublicationConversationAttachmentsAndSendMessage: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        sendMessagePayload: SendMessagePayload;
+      }>,
+    ) => state,
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;
     },

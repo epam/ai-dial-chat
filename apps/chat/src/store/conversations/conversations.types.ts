@@ -5,8 +5,10 @@ import { SearchFilters } from '@/src/types/search';
 import { LastConversationSettings } from '@/src/types/settings';
 
 import {
+  Conversation,
   ConversationInfo,
   CustomVisualizerData,
+  Message,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 
@@ -44,4 +46,19 @@ export interface ConversationsState {
   isStartedCustomViewerConversation: boolean;
   previewConversationId?: string | null;
   preselectedAction?: string | null;
+}
+
+export interface BaseSendMessagePayload {
+  message: Message;
+  deleteCount: number;
+  activeReplayIndex: number;
+  skipRecentModelsUpdate?: boolean;
+}
+
+export interface SendMessagePayload extends BaseSendMessagePayload {
+  conversation: Conversation;
+}
+
+export interface SendMessagesPayload extends BaseSendMessagePayload {
+  conversations: Conversation[];
 }
