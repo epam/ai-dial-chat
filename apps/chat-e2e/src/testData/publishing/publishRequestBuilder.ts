@@ -58,18 +58,41 @@ export class PublishRequestBuilder {
     return this;
   }
 
+  withEntityResource(
+    entity: Conversation | Prompt,
+    action: PublishActions,
+    targetResource: string,
+    entityType: 'conversations' | 'prompts',
+    version?: string,
+  ): PublishRequestBuilder {
+    const targetUrl = `${entityType}/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
+    let resource: PublicationResource = {
+      action: action,
+      targetUrl: targetUrl,
+    };
+    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
+      resource = {
+        ...resource,
+        sourceUrl: entity.id,
+      };
+    }
+    this.publishRequest.resources.push(resource);
+    return this;
+  }
+
   withConversationWithoutFolderResource(
     conversation: Conversation,
     action: PublishActions,
     version?: string,
   ): PublishRequestBuilder {
-    const conversationIdSegments = conversation.id.split('/');
-    const targetResource =
-      conversationIdSegments[conversationIdSegments.length - 1];
-    return this.withConversationResource(
+    const targetResource = this.getEntityWithoutFolderTargetResource(
+      conversation.id,
+    );
+    return this.withEntityResource(
       conversation,
       action,
       targetResource,
+      'conversations',
       version,
     );
   }
@@ -79,55 +102,46 @@ export class PublishRequestBuilder {
     action: PublishActions,
     version?: string,
   ): PublishRequestBuilder {
-    const targetResource = conversation.id.split('/').slice(2).join('/');
-    return this.withConversationResource(
+    const targetResource = this.getEntityInFolderTargetResource(
+      conversation.id,
+    );
+    return this.withEntityResource(
       conversation,
       action,
       targetResource,
+      'conversations',
       version,
     );
   }
 
-  withConversationResource(
-    conversation: Conversation,
-    action: PublishActions,
-    targetResource: string,
-    version?: string,
-  ): PublishRequestBuilder {
-    const targetUrl = `conversations/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
-    let resource: PublicationResource = {
-      action: action,
-      targetUrl: targetUrl,
-    };
-    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
-      resource = {
-        ...resource,
-        sourceUrl: conversation.id,
-      };
-    }
-    this.publishRequest.resources.push(resource);
-    return this;
-  }
-
-  withPromptResource(
+  withPromptInFolderResource(
     prompt: Prompt,
     action: PublishActions,
     version?: string,
   ): PublishRequestBuilder {
-    const targetResource = prompt.id.substring(prompt.folderId.length + 1);
-    const targetUrl = `prompts/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
-    let resource: PublicationResource = {
-      action: action,
-      targetUrl: targetUrl,
-    };
-    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
-      resource = {
-        ...resource,
-        sourceUrl: prompt.id,
-      };
-    }
-    this.publishRequest.resources.push(resource);
-    return this;
+    const targetResource = this.getEntityInFolderTargetResource(prompt.id);
+    return this.withEntityResource(
+      prompt,
+      action,
+      targetResource,
+      'prompts',
+      version,
+    );
+  }
+
+  withPromptWithoutFolderResource(
+    prompt: Prompt,
+    action: PublishActions,
+    version?: string,
+  ): PublishRequestBuilder {
+    const targetResource = this.getEntityWithoutFolderTargetResource(prompt.id);
+    return this.withEntityResource(
+      prompt,
+      action,
+      targetResource,
+      'prompts',
+      version,
+    );
   }
 
   withApplicationResource(
@@ -174,6 +188,15 @@ export class PublishRequestBuilder {
   withRule(rule: PublicationRule): PublishRequestBuilder {
     this.publishRequest.rules?.push(rule);
     return this;
+  }
+
+  private getEntityWithoutFolderTargetResource(resourceId: string): string {
+    const segments = resourceId.split('/');
+    return segments[segments.length - 1];
+  }
+
+  private getEntityInFolderTargetResource(resourceId: string): string {
+    return resourceId.split('/').slice(2).join('/');
   }
 
   build(): PublicationRequestModel {
