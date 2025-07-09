@@ -16,11 +16,12 @@ export class ModelsUtil {
 
   public static getLatestOpenAIEntities(
     allOpenAIEntities?: DialAIEntityModel[],
-      object: object,
-    }));
-    groupedOpenAIEntities.forEach((e) => {
-      if (!latestOpenAIEntities.find((le) => le.name === e.key)) {
-        latestOpenAIEntities.push(e.object);
+  ): DialAIEntityModel[] {
+    const entities = allOpenAIEntities ?? ModelsUtil.getOpenAIEntities();
+    const uniqueEntitiesMap = new Map<string, DialAIEntityModel>();
+    entities.forEach((entity) => {
+      if (!uniqueEntitiesMap.has(entity.name)) {
+        uniqueEntitiesMap.set(entity.name, entity);
       }
     });
     return Array.from(uniqueEntitiesMap.values());
