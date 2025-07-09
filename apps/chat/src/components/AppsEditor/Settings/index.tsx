@@ -19,6 +19,7 @@ import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
@@ -164,9 +165,16 @@ export const ApplicationSettings: React.FC<Props> = ({
     [modelFromState],
   );
 
+  const quickAppSchemaId = useMemo(() => {
+    return DefaultsService.get(
+      'quickAppsSchemaId',
+      DEFAULT_QUICK_APPS_SCHEMA_ID,
+    );
+  }, []);
+
   const getDefaultValues = useCallback(
     (type: string) => {
-      if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+      if (quickAppSchemaId.endsWith(type)) {
         return getQuickAppDefaultValues({
           app: applicationData,
         });
@@ -194,7 +202,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       ? decodeURIComponent(router.query.publicationUrl.toString())
       : undefined;
 
-    if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+    if (quickAppSchemaId.endsWith(type)) {
       return (
         <QuickAppView
           schema={schema}

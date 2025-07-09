@@ -213,7 +213,8 @@ export const convertApplicationFromApi = (
 };
 
 export const isQuickApp = (entity: DialAIEntityModel) =>
-  entity.applicationTypeSchemaId === DEFAULT_QUICK_APPS_SCHEMA_ID;
+  entity.applicationTypeSchemaId ===
+  DefaultsService.get('quickAppsSchemaId', DEFAULT_QUICK_APPS_SCHEMA_ID);
 
 export const getModelDescription = (entity: DialAIEntityModel) => {
   return entity.description ?? '';
