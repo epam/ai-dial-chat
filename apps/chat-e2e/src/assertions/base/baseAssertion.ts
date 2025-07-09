@@ -53,8 +53,8 @@ export class BaseAssertion {
   }
 
   public assertArrayIncludesAll(
-    actualList: string[],
-    expectedItems: string[],
+    actualList: unknown[],
+    expectedItems: unknown[],
     assertionMessage: string,
   ) {
     expectedItems.forEach((expectedItem) => {
@@ -63,7 +63,7 @@ export class BaseAssertion {
           actualList,
           `${assertionMessage} - Expected item: "${expectedItem}"`,
         )
-        .toContain(expectedItem);
+        .toContainEqual(expectedItem);
     });
   }
 

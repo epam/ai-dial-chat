@@ -4,6 +4,7 @@ import {
   AccountMenuOptions,
   Attachment,
   ExpectedConstants,
+  ExpectedMessages,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import {
@@ -344,11 +345,17 @@ dialTest(
           settingsModal.startChatWithListbox,
           'visible',
         );
-        settingsModalAssertion.assertNumberIsGreaterThan(
-          await settingsModal.startChatWithListboxOptions.getElementsCount(),
-          ModelsUtil.getModels().length,
-        );
         const allOptions = await settingsModal.getAllOptions();
+        const expectedModels = ModelsUtil.getModels().map((m) => ({
+          name: m.name,
+          version: m.version ?? '',
+        }));
+        settingsModalAssertion.assertArrayIncludesAll(
+          allOptions,
+          expectedModels,
+          ExpectedMessages.allAgentsListIsValid,
+        );
+
         settingsModalAssertion.assertValue(allOptions[2].name, secondAppName);
         settingsModalAssertion.assertValue(
           allOptions[2].version,
