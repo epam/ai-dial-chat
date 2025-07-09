@@ -1,5 +1,5 @@
 import { IconUser } from '@tabler/icons-react';
-import { MouseEvent, RefObject, useRef } from 'react';
+import { MouseEvent, RefObject, useMemo, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -35,7 +35,11 @@ interface Props {
   onToggleEditing: (value: boolean) => void;
   onToggleEditingTemplates: (value: boolean) => void;
   onRegenerate?: () => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onCopy?: () => void;
   onLike?: (likeStatus: LikeState) => void;
   onDelete?: () => void;
@@ -75,6 +79,10 @@ export function ChatMessageContent({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const messageRef = useRef<HTMLDivElement>(null);
+
+  const isFirstMessageSystem = useMemo(() => {
+    return conversation.messages[0]?.role === Role.System;
+  }, [conversation.messages]);
 
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
@@ -141,6 +149,7 @@ export function ChatMessageContent({
             <UserMessage
               message={message}
               allMessages={allMessages}
+              isFirstMessageSystem={isFirstMessageSystem}
               conversation={conversation}
               messageIndex={messageIndex}
               isEditing={isEditing}
@@ -156,13 +165,18 @@ export function ChatMessageContent({
             <AssistantMessage
               messageIndex={messageIndex}
               message={message}
+              allMessages={allMessages}
+              isFirstMessageSystem={isFirstMessageSystem}
               conversation={conversation}
+              isEditing={isEditing}
               isLastMessage={isLastMessage}
               isLikesEnabled={isLikesEnabled}
               withButtons={withButtons}
               messageCopied={messageCopied}
               onCopy={onCopy}
               onLike={onLike}
+              onToggleEditing={onToggleEditing}
+              onEdit={onEdit}
               onRegenerate={onRegenerate}
             />
           )}

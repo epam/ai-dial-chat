@@ -871,7 +871,11 @@ dialAdminTest(
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withDisplayAuthor(author)
-          .withPromptResource(prompt, PublishActions.ADD_IF_ABSENT, version)
+          .withPromptInFolderResource(
+            prompt,
+            PublishActions.ADD_IF_ABSENT,
+            version,
+          )
           .build();
         const publication =
           await adminPublicationApiHelper.createPublishRequest(publishRequest);
@@ -1028,7 +1032,7 @@ dialAdminTest(
       await adminUserItemApiHelper.createPrompts([prompt]);
       const publishRequest = publishRequestBuilder
         .withName(publicationRequestName)
-        .withPromptResource(prompt, PublishActions.ADD_IF_ABSENT)
+        .withPromptInFolderResource(prompt, PublishActions.ADD_IF_ABSENT)
         .build();
       await adminPublicationApiHelper.createPublishRequest(publishRequest);
       await localStorageManager.setShowSideBarPanels();

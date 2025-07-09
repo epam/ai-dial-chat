@@ -23,6 +23,7 @@ import {
   SelectConversationRequest,
   SendMessageRequest,
   SetSystemPromptRequest,
+  UpdateMessageRequest,
 } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
@@ -147,6 +148,14 @@ export const overlaySlice = createSlice({
     deleteMessageEffect: (
       state,
       _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
+    ) => state,
+    updateMessage: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
+    ) => state,
+    updateMessageEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
     ) => state,
     sendPMEvent: (
       state,

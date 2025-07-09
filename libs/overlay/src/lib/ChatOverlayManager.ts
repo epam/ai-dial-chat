@@ -3,6 +3,7 @@ import { ChatOverlay } from './ChatOverlay';
 import {
   ChatOverlayOptions,
   LatestExportConversationsFormat,
+  Message,
   setStyles,
 } from '@epam/ai-dial-shared';
 
@@ -442,6 +443,16 @@ export class ChatOverlayManager {
     const { overlay } = this.getOverlay(overlayId);
 
     return overlay.deleteMessage(index);
+  }
+
+  public async updateMessage(
+    overlayId: string,
+    index: number,
+    updatedMessageFields: Partial<Message>,
+  ) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.updateMessage(index, updatedMessageFields);
   }
 
   public async setInputContent(overlayId: string, content: string) {
