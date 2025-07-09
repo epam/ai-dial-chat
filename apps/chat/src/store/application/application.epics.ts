@@ -67,7 +67,10 @@ import {
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
+import { PUBLICATION_QUERY_PARAMS } from '@/src/constants/publication';
 import { Routes } from '@/src/constants/routes';
+
+import { parse } from 'querystring';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -725,10 +728,25 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
     switchMap(({ payload }) => {
+      const query = parse(window.location.search.slice(1));
+      const publicationUrl = query[PUBLICATION_QUERY_PARAMS.publicationUrl];
+
       if (payload.redirectUrl) {
         router.push({
           pathname: payload.redirectUrl,
         });
+      } else if (publicationUrl) {
+        router.push({
+          pathname: Routes.Chat,
+        });
+        return concat(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [],
+            }),
+          ),
+          of(PublicationActions.setIsApplicationReview(true)),
+        );
       } else {
         router.push({
           pathname: Routes.Marketplace,
