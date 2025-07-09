@@ -1,11 +1,12 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendEntity } from '@/chat/types/common';
+import { ApiKeys, BackendEntity } from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
 import {
   PublicationRequestModel,
   PublicationRule,
 } from '@/chat/types/publication';
 import { ExpectedConstants } from '@/src/testData';
+import { ItemUtil } from '@/src/utils';
 import { Attachment, PublishActions } from '@epam/ai-dial-shared';
 
 export interface PublicationResource {
@@ -59,23 +60,23 @@ export class PublishRequestBuilder {
   }
 
   withEntityResource(
-    entity: Conversation | Prompt,
     action: PublishActions,
+    entityType: ApiKeys,
     targetResource: string,
-    entityType: 'conversations' | 'prompts',
+    sourceUrl?: string,
     version?: string,
   ): PublishRequestBuilder {
-    const targetUrl = `${entityType}/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
-    let resource: PublicationResource = {
-      action: action,
-      targetUrl: targetUrl,
+    const versionSuffix = version
+      ? `${ItemUtil.entityIdSeparator}${version}`
+      : '';
+    const targetUrl = `${entityType}/${this.getPublishRequest().targetFolder}${targetResource}${versionSuffix}`;
+    const resource: PublicationResource = {
+      action,
+      targetUrl,
+      ...(action === 'ADD' || (action === 'ADD_IF_ABSENT' && sourceUrl)
+        ? { sourceUrl }
+        : {}),
     };
-    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
-      resource = {
-        ...resource,
-        sourceUrl: entity.id,
-      };
-    }
     this.publishRequest.resources.push(resource);
     return this;
   }
@@ -89,10 +90,10 @@ export class PublishRequestBuilder {
       conversation.id,
     );
     return this.withEntityResource(
-      conversation,
       action,
+      ApiKeys.Conversations,
       targetResource,
-      'conversations',
+      conversation.id,
       version,
     );
   }
@@ -106,10 +107,10 @@ export class PublishRequestBuilder {
       conversation.id,
     );
     return this.withEntityResource(
-      conversation,
       action,
+      ApiKeys.Conversations,
       targetResource,
-      'conversations',
+      conversation.id,
       version,
     );
   }
@@ -121,10 +122,10 @@ export class PublishRequestBuilder {
   ): PublishRequestBuilder {
     const targetResource = this.getEntityInFolderTargetResource(prompt.id);
     return this.withEntityResource(
-      prompt,
       action,
+      ApiKeys.Prompts,
       targetResource,
-      'prompts',
+      prompt.id,
       version,
     );
   }
@@ -136,10 +137,10 @@ export class PublishRequestBuilder {
   ): PublishRequestBuilder {
     const targetResource = this.getEntityWithoutFolderTargetResource(prompt.id);
     return this.withEntityResource(
-      prompt,
       action,
+      ApiKeys.Prompts,
       targetResource,
-      'prompts',
+      prompt.id,
       version,
     );
   }
@@ -148,19 +149,12 @@ export class PublishRequestBuilder {
     application: BackendEntity,
     action: PublishActions,
   ): PublishRequestBuilder {
-    const targetUrl = `applications/${this.getPublishRequest().targetFolder}${application.name}`;
-    let resource: PublicationResource = {
-      action: action,
-      targetUrl: targetUrl,
-    };
-    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
-      resource = {
-        ...resource,
-        sourceUrl: application.url,
-      };
-    }
-    this.publishRequest.resources.push(resource);
-    return this;
+    return this.withEntityResource(
+      action,
+      ApiKeys.Applications,
+      application.name,
+      application.url,
+    );
   }
 
   withFileResource(
@@ -171,18 +165,9 @@ export class PublishRequestBuilder {
       typeof attachment === 'string'
         ? attachment.substring(attachment.lastIndexOf('/') + 1)
         : attachment.title;
-    let resource: PublicationResource = {
-      action: action,
-      targetUrl: `files/${this.getPublishRequest().targetFolder}${title}`,
-    };
-    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
-      resource = {
-        ...resource,
-        sourceUrl: typeof attachment === 'string' ? attachment : attachment.url,
-      };
-    }
-    this.publishRequest.resources.push(resource);
-    return this;
+    const sourceUrl =
+      typeof attachment === 'string' ? attachment : attachment.url;
+    return this.withEntityResource(action, ApiKeys.Files, title, sourceUrl);
   }
 
   withRule(rule: PublicationRule): PublishRequestBuilder {

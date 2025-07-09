@@ -22,13 +22,14 @@ dialTest(
     //list pending requests
     const publicationRequests =
       await adminPublicationApiHelper.listPublicationRequests();
-    for (const publicationRequest of publicationRequests.publications) {
-      if (
-        publicationRequest.name?.startsWith(unpublishRequestPrefix) ||
-        publicationRequest.name?.startsWith(publicationRequestPrefix)
-      ) {
-        await adminPublicationApiHelper.rejectRequest(publicationRequest);
-      }
+    const e2ePublicationRequests = publicationRequests.publications.filter(
+      (p) =>
+        p.name?.trim().startsWith(unpublishRequestPrefix) ||
+        p.name?.trim().startsWith(publicationRequestPrefix),
+    );
+
+    for (const publicationRequest of e2ePublicationRequests) {
+      await adminPublicationApiHelper.rejectRequest(publicationRequest);
     }
   },
 );
