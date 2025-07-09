@@ -1,8 +1,10 @@
-import { Fragment } from 'react';
+import { IconPencilMinus } from '@tabler/icons-react';
+import { Fragment, useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getApplicationType,
   getModelDescription,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -11,11 +13,17 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationActions, PublicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { IconButton } from '@/src/components/Common/IconButton';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
@@ -24,20 +32,19 @@ import { ReviewQuickAppSection } from './ReviewQuickAppSection';
 
 import isEmpty from 'lodash-es/isEmpty';
 
-// TODO: disable app editing until release: 2025-06-25. Need to enable after
 function ReviewApplicationDialogContent() {
   const { t } = useTranslation(Translation.Chat);
-  // const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
 
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  // const detailedApplicationTypeSchema = useAppSelector(
-  //   ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  // );
-  // const selectedPublicationUrl = useAppSelector(
-  //   PublicationSelectors.selectSelectedPublicationUrl,
-  // );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const isCodeApp = application && isExecutableApp(application);
 
@@ -49,24 +56,25 @@ function ReviewApplicationDialogContent() {
       }
     : null;
 
-  // const handleEditApplication = useCallback(() => {
-  //   if (!application) return;
-  //
-  //   const applicationType = getApplicationType(application);
-  //   dispatch(
-  //     ApplicationActions.enterEditMode({
-  //       entity: application,
-  //       applicationType,
-  //       detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
-  //       publicationUrl: selectedPublicationUrl as string,
-  //     }),
-  //   );
-  // }, [
-  //   application,
-  //   detailedApplicationTypeSchema?.$id,
-  //   dispatch,
-  //   selectedPublicationUrl,
-  // ]);
+  const handleEditApplication = useCallback(() => {
+    if (!application) return;
+
+    const applicationType = getApplicationType(application);
+    dispatch(
+      ApplicationActions.enterEditMode({
+        entity: application,
+        applicationType,
+        detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        publicationUrl: selectedPublicationUrl as string,
+      }),
+    );
+    dispatch(PublicationActions.setIsApplicationReview(false));
+  }, [
+    application,
+    detailedApplicationTypeSchema?.$id,
+    dispatch,
+    selectedPublicationUrl,
+  ]);
 
   return (
     <>
@@ -124,7 +132,6 @@ function ReviewApplicationDialogContent() {
                 {t('Features data:')}
               </span>
               <div className="flex flex-col justify-start break-all">
-                {'{'}
                 <div className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary">
                   {Object.entries(application?.features || {}).map(
                     ([key, value], index, array) => (
@@ -134,7 +141,6 @@ function ReviewApplicationDialogContent() {
                     ),
                   )}
                 </div>
-                {'}'}
               </div>
             </div>
           )}
@@ -182,16 +188,13 @@ function ReviewApplicationDialogContent() {
 
         <ReviewQuickAppSection application={application} />
       </div>
-      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
-        {/*<button*/}
-        {/*  className={classNames(*/}
-        {/*    'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none hover:bg-layer-4 disabled:cursor-not-allowed disabled:bg-layer-2',*/}
-        {/*  )}*/}
-        {/*  data-qa="prev-chat-review-button"*/}
-        {/*  onClick={handleEditApplication}*/}
-        {/*>*/}
-        {/*  <IconPencil className="shrink-0" height={18} width={18} />*/}
-        {/*</button>*/}
+      <div className="flex w-full items-center justify-between border-t border-tertiary px-3 py-4 md:px-5">
+        <IconButton
+          name={t('Edit application')}
+          dataQa="admin-edit-application"
+          Icon={IconPencilMinus}
+          onClick={handleEditApplication}
+        />
 
         {controlsEntity && (
           <PublicationControls
