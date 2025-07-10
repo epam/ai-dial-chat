@@ -118,10 +118,6 @@ export const ChatMessage: FC<Props> = memo(
       onDelete(messageIndex, conversation);
     }, [onDelete, messageIndex, conversation]);
 
-    useEffect(() => {
-      setIsEditing(false);
-    }, [onEdit]);
-
     return (
       <>
         {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
