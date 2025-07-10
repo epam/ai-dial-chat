@@ -868,6 +868,7 @@ const ChatView = memo(() => {
                         entity={selectedConversations[0]}
                         onScrollDownClick={handleScrollDown}
                         onToggleInput={handleToggleApproveRequiredInput}
+                        isInputActive={isApproveRequiredInput}
                       />
                     )}
 
