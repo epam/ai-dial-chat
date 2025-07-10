@@ -587,6 +587,7 @@ const ChatView = memo(() => {
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
+      !isApproveRequiredEntity &&
       (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
       !(isConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
@@ -714,7 +715,8 @@ const ChatView = memo(() => {
                                     ) &&
                                     !isPlayback &&
                                     !isReplay &&
-                                    !isReadOnly
+                                    !isReadOnly &&
+                                    !isApproveRequiredEntity
                                   }
                                   isShowSettings={isShowChatSettings}
                                   setShowSettings={setIsShowChatSettings}
