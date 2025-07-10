@@ -6,6 +6,7 @@ export const unpublishRequestPrefix = 'E2EUnpublish';
 export const applicationNamePrefix = 'E2EApp';
 
 export const conversationNamePrefix = 'E2EConversation';
+export const promptNamePrefix = 'E2EPrompt';
 
 export class GeneratorUtil {
   static randomIntegerNumber() {
@@ -64,6 +65,10 @@ export class GeneratorUtil {
 
   static randomConversationName() {
     return conversationNamePrefix + GeneratorUtil.randomString(10);
+  }
+
+  static randomPromptName() {
+    return promptNamePrefix + GeneratorUtil.randomString(10);
   }
 
   static exportedWithoutAttachmentsFilename() {
