@@ -36,14 +36,19 @@ dialTest(
     header,
     chat,
     talkToAgentDialog,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-6436', 'EPMRTC-6444');
     const defaultAgent = ModelsUtil.getDefaultAgent()!;
+    const randomModel = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getModels(),
+    );
 
     await dialTest.step(
       'Open DIAL and verify default agent is set for a new conversation',
       async () => {
+        await localStorageManager.setRecentModelsIds(defaultAgent, randomModel);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await agentInfoAssertion.assertAgentName(defaultAgent.name);
@@ -66,9 +71,6 @@ dialTest(
     await dialTest.step('Change the agent and send a new request', async () => {
       await dialHomePage.mockChatTextResponse(
         MockedChatApiResponseBodies.simpleTextBody,
-      );
-      const randomModel = GeneratorUtil.randomArrayElement(
-        ModelsUtil.getLatestOpenAIEntities(),
       );
       await chat.changeAgentButton.click();
       await talkToAgentDialog.selectAgent(randomModel);
