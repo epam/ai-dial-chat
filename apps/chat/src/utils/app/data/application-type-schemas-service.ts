@@ -20,9 +20,15 @@ export class ApplicationTypesSchemasService {
     }).pipe(
       map((response) =>
         Array.isArray(response)
-          ? response.map((schema: ApiApplicationTypeSchema) =>
-              convertApplicationTypeSchemaFromApi(schema),
-            )
+          ? response
+              .filter(
+                (schema: ApiApplicationTypeSchema) =>
+                  schema.$id !==
+                  'https://mydial.epam.com/custom_application_schemas/externalapps',
+              )
+              .map((schema: ApiApplicationTypeSchema) =>
+                convertApplicationTypeSchemaFromApi(schema),
+              )
           : [],
       ),
       // TODO: handle error
