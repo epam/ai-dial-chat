@@ -102,7 +102,7 @@ export class ModelsUtil {
   }
 
   public static getModel(modelId: string) {
-    return ModelsUtil.getModels().find((a) => a.id === modelId);
+    return ModelsUtil.getModels(false).find((a) => a.id === modelId);
   }
 
   public static getDefaultAgent() {
