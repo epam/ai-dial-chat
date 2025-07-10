@@ -307,7 +307,10 @@ export const ConversationComponent = ({
                     ids: [conversation.id],
                   }),
             );
-            if (!isSelectMode) {
+            if (
+              !isSelectMode &&
+              (additionalItemData?.publicationUrl || selectedPublicationUrl)
+            ) {
               dispatch(
                 PublicationActions.selectPublication(
                   additionalItemData?.publicationUrl ?? null,
@@ -317,7 +320,7 @@ export const ConversationComponent = ({
           }
         }}
         onDragStart={(e) => handleDragStart(e, conversation)}
-        name={isSelected ? 'selected-entity' : undefined}
+        data-qa={isSelected ? 'selected-entity' : undefined}
       >
         <ConversationView
           conversation={conversation}

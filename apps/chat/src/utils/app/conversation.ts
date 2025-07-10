@@ -385,7 +385,7 @@ export const getQuickAttachmentsSavingPath = () => {
   return `${getFileRootId()}/uploads/${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
-export const updateAttachmentTitles = (
+export const updateMessagesAttachmentsTitles = (
   messages: Message[],
   titlesToUpdate: string[],
 ) => {

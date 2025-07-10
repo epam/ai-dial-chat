@@ -86,7 +86,12 @@ export class AppEditorViewForm extends AppEditorForm {
     }
   }
 
-  public async getSelectedAttachmentTypes(): Promise<string[]> {
+  public async getSelectedAttachmentTypes(
+    waitForAtLeastOnePill?: boolean,
+  ): Promise<string[]> {
+    if (waitForAtLeastOnePill) {
+      await this.selectedAttachmentTypePills.getNthElement(1).waitFor();
+    }
     const pillsCount =
       await this.selectedAttachmentTypePills.getElementsCount();
     const types: string[] = [];

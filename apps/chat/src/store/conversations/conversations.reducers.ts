@@ -26,7 +26,11 @@ import { RootState } from '@/src/types/store';
 
 import { ConversationsSelectors } from '@/src/store/selectors';
 
-import { ConversationsState } from './conversations.types';
+import {
+  ConversationsState,
+  SendMessagePayload,
+  SendMessagesPayload,
+} from './conversations.types';
 
 import {
   ConversationInfo,
@@ -90,6 +94,10 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversation: Conversation;
         requestMetadataAfter?: boolean;
+        selectSavedOptions?: {
+          selectSaved?: boolean;
+          compareConversationId?: string;
+        };
       }>,
     ) => state,
     saveConversationSuccess: (state) => {
@@ -147,12 +155,22 @@ export const conversationsSlice = createSlice({
     },
     updateConversation: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         id: string;
         values: Partial<Conversation>;
         publicationUrl?: string | null;
+        selectUpdatedOptions?: {
+          selectUpdated?: boolean;
+          compareConversationId?: string;
+        };
       }>,
-    ) => state,
+    ) => {
+      if (payload.selectUpdatedOptions?.selectUpdated) {
+        state.areSelectedConversationsLoaded = false;
+      }
+    },
     updateConversationSuccess: (
       state,
       {
@@ -535,26 +553,8 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{ error: Response | string }>,
     ) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
-    sendMessages: (
-      state,
-      _action: PayloadAction<{
-        conversations: Conversation[];
-        message: Message;
-        deleteCount: number;
-        activeReplayIndex: number;
-        skipRecentModelsUpdate?: boolean;
-      }>,
-    ) => state,
-    sendMessage: (
-      state,
-      _action: PayloadAction<{
-        conversation: Conversation;
-        message: Message;
-        deleteCount: number;
-        activeReplayIndex: number;
-        skipRecentModelsUpdate?: boolean;
-      }>,
-    ) => state,
+    sendMessages: (state, _action: PayloadAction<SendMessagesPayload>) => state,
+    sendMessage: (state, _action: PayloadAction<SendMessagePayload>) => state,
     streamMessage: (
       state,
       _action: PayloadAction<{

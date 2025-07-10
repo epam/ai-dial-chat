@@ -67,7 +67,7 @@ export class AppEditorHeader extends BaseElement {
     return this.getStepByTitle(AppEditSteps.appSettings);
   }
 
-  public async goOnGeneralInfoStep(
+  public async goOnGeneralInfoStepWithHeaderStepper(
     options: { isHttpMethodTriggered: boolean } = {
       isHttpMethodTriggered: true,
     },
