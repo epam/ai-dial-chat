@@ -6,8 +6,9 @@ import {
   ToggleState,
   toTitleCase,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { Styles, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
   'Menu on user name',
@@ -140,7 +141,7 @@ dialTest(
           ToggleState.off,
         );
         await settingsModalAssertion.assertFullWidthChatToggleColor(
-          Colors.controlsTextDisable,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsTextDisable),
         );
       },
     );
