@@ -275,9 +275,17 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
                   payload.redirectUrl &&
                   !state$.value.application.exitAfterSave
                 ) {
+                  const query: Record<string, string> = {
+                    id: updatedCustomApplication.reference,
+                  };
+
+                  if (payload.publicationUrl) {
+                    query.publicationUrl = payload.publicationUrl;
+                  }
+
                   Router.push({
                     pathname: payload.redirectUrl,
-                    query: { id: updatedCustomApplication.id },
+                    query,
                   });
                 } else if (state$.value.application.exitAfterSave) {
                   Router.push({
