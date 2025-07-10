@@ -44,7 +44,7 @@ export const ChatPublicationControls = ({
       controlsClassNames="mx-2 mb-2 mt-5 flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
       entity={entity}
     >
-      {!isUnpublishing && (
+      {!isUnpublishing && !entity.isPlayback && (
         <IconButton
           Icon={IconPencilMinus}
           name="Edit"

@@ -41,11 +41,16 @@ const ModelSelectRow = ({
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
-      <div className={classNames(truncate && 'truncate')}>
+      <div
+        className={classNames(truncate && 'truncate')}
+        data-qa="agent-attributes"
+      >
         <span>
           {getOpenAIEntityFullName(item)}
           {item.version && (
-            <span className="ml-2 text-secondary">{item.version}</span>
+            <span className="ml-2 text-secondary" data-qa="agent-version">
+              {item.version}
+            </span>
           )}
         </span>
         {isNotAllowed && (
