@@ -8,7 +8,9 @@ import {
 import { ApplicationTypes } from '@/src/testData';
 
 export class ModelsUtil {
-  private static readonly slowModelIds: string[] = ['o3-pro'];
+  private static readonly slowModelIds: string[] = process.env.SLOW_MODELS_IDS
+    ? JSON.parse(process.env.SLOW_MODELS_IDS)
+    : [];
 
   public static getOpenAIEntities() {
     return JSON.parse(process.env.MODELS!) as DialAIEntityModel[];
