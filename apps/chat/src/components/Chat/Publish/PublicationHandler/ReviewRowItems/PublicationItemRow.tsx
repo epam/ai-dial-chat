@@ -92,8 +92,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     (version: string) => {
       setInputVersion(version);
 
-      // setErrors(getValidationErrors(version));
-
       dispatch(
         PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
@@ -210,7 +208,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           return (
             item.id !== key &&
             item.folderId === keyFolderId &&
-            name === editStateName
+            name.trim() === editStateName.trim()
           );
         },
       );
