@@ -1,5 +1,7 @@
 import { IconPencilMinus } from '@tabler/icons-react';
 
+import classNames from 'classnames';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
@@ -15,6 +17,7 @@ interface Props {
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
   onToggleInput: () => void;
+  isInputActive: boolean;
 }
 
 export const ChatPublicationControls = ({
@@ -22,6 +25,7 @@ export const ChatPublicationControls = ({
   showScrollDownButton,
   onScrollDownClick,
   onToggleInput,
+  isInputActive,
 }: Props) => {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
@@ -46,6 +50,9 @@ export const ChatPublicationControls = ({
           name="Edit"
           dataQa="edit-chat"
           onClick={onToggleInput}
+          className={classNames({
+            '!bg-accent-primary-alpha !text-accent-primary': isInputActive,
+          })}
         />
       )}
       {showScrollDownButton && (
