@@ -66,6 +66,7 @@ export const ExpectedMessages = {
   promptNameInvalid: 'Prompt name is not valid',
   promptDescriptionValid: 'Prompt description is valid',
   promptContentValid: 'Prompt content is valid',
+  promptVersionValid: 'Prompt version is valid',
   promptVariablePlaceholderValid: 'Prompt variable placeholder is valid',
   promptNameUpdated: 'Prompt name is updated',
   promptDescriptionUpdated: 'Prompt description is updated',
