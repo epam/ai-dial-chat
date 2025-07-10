@@ -295,7 +295,7 @@ export function PublicationHandler({ publication }: Props) {
   return (
     <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
       <div
-        className="relative flex size-full flex-col justify-center gap-px rounded 2xl:max-w-[1000px]"
+        className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
         data-qa="publish-approval-modal"
       >
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
