@@ -26,9 +26,11 @@ export class BaseAssertion {
       (f) => f.toLowerCase(),
       sorting,
     );
-    expect
-      .soft(arrayToSort, ExpectedMessages.elementsOrderIsCorrect)
-      .toEqual(expectedOrder);
+    this.assertValuesAreEqual(
+      arrayToSort,
+      expectedOrder,
+      ExpectedMessages.elementsOrderIsCorrect,
+    );
   }
 
   public async assertEntityIcon(
@@ -51,8 +53,8 @@ export class BaseAssertion {
   }
 
   public assertArrayIncludesAll(
-    actualList: string[],
-    expectedItems: string[],
+    actualList: unknown[],
+    expectedItems: unknown[],
     assertionMessage: string,
   ) {
     expectedItems.forEach((expectedItem) => {
@@ -61,7 +63,7 @@ export class BaseAssertion {
           actualList,
           `${assertionMessage} - Expected item: "${expectedItem}"`,
         )
-        .toContain(expectedItem);
+        .toContainEqual(expectedItem);
     });
   }
 
@@ -403,12 +405,11 @@ export class BaseAssertion {
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
-    expect
-      .soft(
-        await elementLocator.allInnerTexts(),
-        expectedMessage ?? ExpectedMessages.elementTextIsValid,
-      )
-      .toEqual(expectedInnerText);
+    this.assertValuesAreEqual(
+      await elementLocator.allInnerTexts(),
+      expectedInnerText,
+      expectedMessage ?? ExpectedMessages.elementTextIsValid,
+    );
   }
 
   public async assertElementTextWrap(
@@ -441,6 +442,16 @@ export class BaseAssertion {
     expectedResult
       ? expect(predicate, expectedMessage).toBeTruthy()
       : expect(predicate, expectedMessage).toBeFalsy();
+  }
+
+  public assertValuesAreEqual(
+    actualValue: unknown,
+    expectedValue: unknown,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreEqual)
+      .toEqual(expectedValue);
   }
 
   private getElementLocator(element: BaseElement | Locator) {
