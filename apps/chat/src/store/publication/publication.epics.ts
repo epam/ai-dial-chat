@@ -44,6 +44,7 @@ import {
   isFileId,
   isMyBucket,
   isPromptId,
+  isRootEntity,
   isRootId,
 } from '@/src/utils/app/id';
 import { getPromptInfoFromId } from '@/src/utils/app/prompts';
@@ -951,7 +952,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   folders: conversationPaths.map((path) => ({
                     ...getFolderFromId(path, FeatureType.Chat),
                     status: UploadStatus.LOADED,
-                    publishedWithMe: path.split('/').length === 3,
+                    publishedWithMe: isRootEntity(path),
                   })),
                 }),
               ),
@@ -1102,7 +1103,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   folders: promptPaths.map((path) => ({
                     ...getFolderFromId(path, FeatureType.Prompt),
                     status: UploadStatus.LOADED,
-                    publishedWithMe: path.split('/').length === 3,
+                    publishedWithMe: isRootEntity(path),
                   })),
                 }),
               ),

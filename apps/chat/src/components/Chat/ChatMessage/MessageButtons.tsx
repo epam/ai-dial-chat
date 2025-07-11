@@ -223,11 +223,11 @@ export const MessageAssistantButtons = ({
                 <Tooltip
                   placement="top"
                   isTriggerClickable={message.like !== LikeState.Disliked}
-                  tooltip={
+                  tooltip={t(
                     message.like !== LikeState.Disliked
-                      ? t('Dislike')
-                      : t('Disliked')
-                  }
+                      ? 'Dislike'
+                      : 'Disliked',
+                  )}
                 >
                   <Button
                     onClick={() => {
