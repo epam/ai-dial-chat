@@ -2,7 +2,7 @@ import { FC, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getEntityBucket } from '@/src/utils/app/id';
+import { getEntityBucket, isRootEntity } from '@/src/utils/app/id';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
@@ -52,6 +52,16 @@ const ReviewBucketFilesSectionView: FC<ReviewBucketFilesSectionViewProps> = ({
     FilesSelectors.selectReviewBucketFiles(state, bucket),
   );
 
+  const rootReviewBucketFolders = useMemo(
+    () => reviewBucketFolders.filter(({ id }) => isRootEntity(id)),
+    [reviewBucketFolders],
+  );
+
+  const rootReviewBucketFiles = useMemo(
+    () => reviewBucketFiles.filter(({ id }) => isRootEntity(id)),
+    [reviewBucketFiles],
+  );
+
   return (
     <FilesSectionWrapper
       name={t('Review files')}
@@ -61,7 +71,7 @@ const ReviewBucketFilesSectionView: FC<ReviewBucketFilesSectionViewProps> = ({
       sourceType={FileSourceType.MY_FILES}
     >
       <div className="flex flex-col gap-1 overflow-auto">
-        {reviewBucketFolders.map((folder) => {
+        {rootReviewBucketFolders.map((folder) => {
           return (
             <Folder
               key={folder.id}
@@ -83,7 +93,7 @@ const ReviewBucketFilesSectionView: FC<ReviewBucketFilesSectionViewProps> = ({
             />
           );
         })}
-        {reviewBucketFiles.map((file) => {
+        {rootReviewBucketFiles.map((file) => {
           return (
             <FileItem
               key={file.id}
