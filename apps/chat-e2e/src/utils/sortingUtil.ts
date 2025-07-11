@@ -22,6 +22,56 @@ export class SortingUtil {
   public static sortVersionsArray(array: string[]): string[] {
     return array.sort((a, b) => compareVersions(a, b));
   }
+
+  public static sortNameVersionArray(
+    nameVersionArray: { name: string; version: string }[],
+    sorting: Sorting,
+  ): { name: string; version: string }[] {
+    // Create a copy to avoid modifying the original array
+    const arrayCopy = [...nameVersionArray];
+
+    // Group items by name for efficient sorting
+    const nameGroups: Record<string, { name: string; version: string }[]> = {};
+
+    // Populate name groups
+    arrayCopy.forEach((item) => {
+      if (!nameGroups[item.name]) {
+        nameGroups[item.name] = [];
+      }
+      nameGroups[item.name].push(item);
+    });
+
+    // Get all unique names and sort them
+    const names = Object.keys(nameGroups);
+    const sortedNames = this.sortStringsArray(
+      names,
+      (name) => name.trim().toLowerCase(),
+      sorting,
+    );
+
+    // For each name group, sort by version and add to result
+    const result: { name: string; version: string }[] = [];
+
+    sortedNames.forEach((name) => {
+      const items = nameGroups[name];
+      const versions = items.map((item) => item.version);
+      const sortedVersions = this.sortVersionsArray(versions);
+
+      // Create a map of version to its sorted position for efficient lookup
+      const versionMap = new Map<string, number>();
+      sortedVersions.forEach((version, index) => {
+        versionMap.set(version, index);
+      });
+
+      // Sort items in this name group by their version
+      const sortedItems = [...items].sort(
+        (a, b) => versionMap.get(a.version)! - versionMap.get(b.version)!,
+      );
+
+      result.push(...sortedItems);
+    });
+    return result;
+  }
 }
 
 function compareStrings(
