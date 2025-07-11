@@ -271,7 +271,7 @@ export class ModelsUtil {
     return !!entity.functionStatus;
   }
 
-  public static getAgentWithSimpleDescription(agents?: DialAIEntityModel[]) {
+  public static getAgentsWithSimpleDescription(agents?: DialAIEntityModel[]) {
     agents = agents ?? ModelsUtil.getOpenAIEntities();
     //define all patterns
     const htmlTagRegExp = /<[^>]*>/g;

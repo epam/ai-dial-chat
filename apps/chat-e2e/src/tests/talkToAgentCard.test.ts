@@ -415,7 +415,7 @@ dialTest(
       'Set model and application from the config to the recent',
       async () => {
         const configModelsWithSimpleDescr =
-          ModelsUtil.getAgentWithSimpleDescription(
+          ModelsUtil.getAgentsWithSimpleDescription(
             ModelsUtil.getLatestModels(),
           );
         configModelsWithSimpleDescr.length !== 0
