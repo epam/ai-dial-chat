@@ -981,7 +981,8 @@ dialOverlayTest(
           actualConversationModel.conversations.length,
           1,
         );
-        expect(actualConversationModel.conversations[0]).toEqual(
+        overlayBaseAssertion.assertValuesAreEqual(
+          actualConversationModel.conversations[0],
           expectedConversationModel,
         );
         await overlayDialog.closeButton.click();
