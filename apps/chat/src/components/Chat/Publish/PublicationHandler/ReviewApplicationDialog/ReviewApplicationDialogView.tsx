@@ -1,6 +1,8 @@
 import { IconPencilMinus } from '@tabler/icons-react';
 import { Fragment, useCallback } from 'react';
 
+
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -28,6 +30,7 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
+import { ReviewExternalAppSection } from './ReviewExternalAppSection';
 import { ReviewQuickAppSection } from './ReviewQuickAppSection';
 
 import isEmpty from 'lodash-es/isEmpty';
@@ -187,6 +190,8 @@ function ReviewApplicationDialogContent() {
         <ReviewCodeAppSection application={application} />
 
         <ReviewQuickAppSection application={application} />
+
+        <ReviewExternalAppSection application={application} />
       </div>
       <div className="flex w-full items-center justify-between border-t border-tertiary px-3 py-4 md:px-5">
         <IconButton
