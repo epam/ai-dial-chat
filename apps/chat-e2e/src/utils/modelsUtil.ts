@@ -1,3 +1,4 @@
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import {
   doesModelAllowAddons,
@@ -7,61 +8,93 @@ import {
 import { ApplicationTypes } from '@/src/testData';
 
 export class ModelsUtil {
+  private static readonly slowModelIds: string[] = process.env.SLOW_MODELS_IDS
+    ? JSON.parse(process.env.SLOW_MODELS_IDS)
+    : [];
+
   public static getOpenAIEntities() {
     return JSON.parse(process.env.MODELS!) as DialAIEntityModel[];
   }
 
   public static getLatestOpenAIEntities(
     allOpenAIEntities?: DialAIEntityModel[],
-  ) {
-    const latestOpenAIEntities: DialAIEntityModel[] = [];
-    allOpenAIEntities = allOpenAIEntities ?? ModelsUtil.getOpenAIEntities();
-    const groupedOpenAIEntities = allOpenAIEntities.map((object) => ({
-      key: object.name,
-      object: object,
-    }));
-    groupedOpenAIEntities.forEach((e) => {
-      if (!latestOpenAIEntities.find((le) => le.name === e.key)) {
-        latestOpenAIEntities.push(e.object);
+  ): DialAIEntityModel[] {
+    const entities = allOpenAIEntities ?? ModelsUtil.getOpenAIEntities();
+    const uniqueEntitiesMap = new Map<string, DialAIEntityModel>();
+    entities.forEach((entity) => {
+      if (!uniqueEntitiesMap.has(entity.name)) {
+        uniqueEntitiesMap.set(entity.name, entity);
       }
     });
-    return latestOpenAIEntities;
+    return Array.from(uniqueEntitiesMap.values());
+  }
+
+  private static filterEntities(
+    source: DialAIEntityModel[],
+    entityType: EntityType,
+    excludedEntityIds?: string[],
+  ): DialAIEntityModel[] {
+    let entities = source.filter((e) => e.type === entityType);
+    if (excludedEntityIds) {
+      entities = entities.filter((e) => !excludedEntityIds.includes(e.id));
+    }
+    return entities;
+  }
+
+  public static getLatestEntities(
+    entityType: EntityType,
+    excludedEntityIds?: string[],
+  ): DialAIEntityModel[] {
+    return this.filterEntities(
+      ModelsUtil.getLatestOpenAIEntities(),
+      entityType,
+      excludedEntityIds,
+    );
+  }
+
+  private static getEntities(
+    entityType: EntityType,
+    excludedEntityIds?: string[],
+  ): DialAIEntityModel[] {
+    return this.filterEntities(
+      ModelsUtil.getOpenAIEntities(),
+      entityType,
+      excludedEntityIds,
+    );
   }
 
   public static getAddons() {
     return JSON.parse(process.env.ADDONS!) as DialAIEntityModel[];
   }
 
-  public static getLatestModels() {
-    return ModelsUtil.getLatestOpenAIEntities().filter(
-      (e) => e.type === 'model',
-    );
+  public static getLatestModels(excludeSlowModels = true) {
+    if (excludeSlowModels) {
+      return this.getLatestEntities(EntityType.Model, this.slowModelIds);
+    }
+    return this.getLatestEntities(EntityType.Model);
   }
 
   public static getLatestAssistants() {
-    return ModelsUtil.getLatestOpenAIEntities().filter(
-      (e) => e.type === 'assistant',
-    );
+    return this.getLatestEntities(EntityType.Assistant);
   }
 
   public static getLatestApplications() {
-    return ModelsUtil.getLatestOpenAIEntities().filter(
-      (e) => e.type === 'application',
-    );
+    return this.getLatestEntities(EntityType.Application);
   }
 
-  public static getModels() {
-    return ModelsUtil.getOpenAIEntities().filter((e) => e.type === 'model');
+  public static getModels(excludeSlowModels = true) {
+    if (excludeSlowModels) {
+      return this.getEntities(EntityType.Model, this.slowModelIds);
+    }
+    return this.getEntities(EntityType.Model);
   }
 
   public static getAssistants() {
-    return ModelsUtil.getOpenAIEntities().filter((e) => e.type === 'assistant');
+    return this.getEntities(EntityType.Assistant);
   }
 
   public static getApplications() {
-    return ModelsUtil.getOpenAIEntities().filter(
-      (e) => e.type === 'application',
-    );
+    return this.getEntities(EntityType.Application);
   }
 
   public static getOpenAIEntity(entity: string) {
@@ -69,7 +102,7 @@ export class ModelsUtil {
   }
 
   public static getModel(modelId: string) {
-    return ModelsUtil.getModels().find((a) => a.id === modelId);
+    return ModelsUtil.getModels(false).find((a) => a.id === modelId);
   }
 
   public static getDefaultAgent() {
@@ -98,8 +131,8 @@ export class ModelsUtil {
     );
   }
 
-  public static getLatestModelsWithAttachment() {
-    return ModelsUtil.getLatestModels().filter(
+  public static getLatestModelsWithAttachment(excludeSlowModels = true) {
+    return ModelsUtil.getLatestModels(excludeSlowModels).filter(
       (m) => m.inputAttachmentTypes !== undefined,
     );
   }
