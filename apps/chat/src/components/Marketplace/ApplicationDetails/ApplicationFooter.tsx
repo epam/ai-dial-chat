@@ -1,5 +1,5 @@
 import { IconExternalLink, IconPlayerPlay } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import Link from 'next/link';
 
@@ -18,14 +18,16 @@ import {
 
 import {
   ApplicationStatus,
+  ExternalAppConfig,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { AuthSelectors } from '@/src/store/selectors';
+import { ApplicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ApplicationSelectors, AuthSelectors } from '@/src/store/selectors';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
@@ -62,6 +64,8 @@ export const ApplicationDetailsFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const dispatch = useAppDispatch();
+
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const screenState = useScreenState();
@@ -82,6 +86,18 @@ export const ApplicationDetailsFooter = ({
     entity.reference !== entity.id && screenState === ScreenState.SM;
   const isPublicApp = isApplicationPublic(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
+  const isAppLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
+  const appDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+
+  useEffect(() => {
+    if (isExternalApp(entity)) {
+      dispatch(ApplicationActions.get({ applicationId: entity.id }));
+    }
+  }, [dispatch, entity]);
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -162,9 +178,15 @@ export const ApplicationDetailsFooter = ({
               </button>
             ) : (
               <Link
-                href={'http://google.com'}
+                href={
+                  (appDetails?.applicationProperties as ExternalAppConfig)
+                    ?.external_url ?? ''
+                }
                 target="_blank"
-                className="button button-primary flex shrink-0 items-center gap-2 font-theme text-sm"
+                className={classNames(
+                  'button button-primary flex shrink-0 items-center gap-2 font-theme text-sm',
+                  isAppLoading && 'cursor-not-allowed',
+                )}
                 data-qa="external-link"
               >
                 <IconExternalLink size={18} />

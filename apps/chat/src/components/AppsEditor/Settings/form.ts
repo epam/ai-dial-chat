@@ -19,6 +19,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import {
   ApplicationPropertiesType,
   CustomApplicationModel,
+  ExternalAppConfig,
   ExternalAppModel,
   Toolsets,
 } from '@/src/types/applications';
@@ -275,8 +276,7 @@ export const getExternalAppDefaultValues = ({
   return {
     ...getApplicationGeneralDefaultValues(app),
     externalUrl:
-      (app.applicationProperties as { external_url: string })?.external_url ??
-      '',
+      (app.applicationProperties as ExternalAppConfig)?.external_url ?? '',
     completionUrl: app.completionUrl ?? '',
     applicationProperties: app.applicationProperties ?? null,
   };
