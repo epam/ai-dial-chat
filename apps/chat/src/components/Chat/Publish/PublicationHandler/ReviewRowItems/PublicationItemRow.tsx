@@ -55,6 +55,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
@@ -68,12 +71,13 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   }, [defaultVersion, isEditMode]);
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
       const isExistVersion = isVersionExists(
         defaultVersion,
         item.id,
         publicVersionGroups,
         item.name,
+        selectedPublication?.targetFolder,
       );
       setErrors(
         getVersionValidationErrors(
@@ -89,7 +93,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     isEditMode,
     item.id,
     item.name,
+    item.publicationInfo?.action,
     publicVersionGroups,
+    selectedPublication?.targetFolder,
   ]);
 
   const handleChangeVersion = useCallback(
@@ -101,6 +107,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         item.id,
         publicVersionGroups,
         item.name,
+        selectedPublication?.targetFolder,
       );
       setErrors(
         getVersionValidationErrors(version, isExistVersion, isApplication),
@@ -118,6 +125,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       item.id,
       item.name,
       publicVersionGroups,
+      selectedPublication?.targetFolder,
       isApplication,
       dispatch,
       editState?.name,
