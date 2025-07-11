@@ -160,6 +160,14 @@ export function PublicationHandler({ publication }: Props) {
     [publication.rules],
   );
 
+  const isPublicationHasOnlyUnpublishEntities = useMemo(
+    () =>
+      publication.resources.every(
+        (resource) => resource.action === PublishActions.DELETE,
+      ),
+    [publication.resources],
+  );
+
   const handleUpdateRequest = useCallback(() => {
     dispatch(
       PublicationActions.updatePublicationRequest({
@@ -339,19 +347,21 @@ export function PublicationHandler({ publication }: Props) {
                     valueToDisplay={publicationAuthor}
                   />
 
-                  <PublicationInfoSection
-                    labelDataQa="publication-display-author-label"
-                    label={t("Author's public name: ")}
-                    valueDataQa="publication-display-author"
-                    valueToDisplay={publication.displayAuthor ?? ''}
-                    infoTooltip={t(
-                      `This name will be displayed instead of the author's name for this publication.`,
-                    )}
-                    editValue={displayAuthorEditState}
-                    onChangeValue={handleChangeDisplayAuthor}
-                    isEditMode={isEditMode}
-                    errors={errors}
-                  />
+                  {!isPublicationHasOnlyUnpublishEntities && (
+                    <PublicationInfoSection
+                      labelDataQa="publication-display-author-label"
+                      label={t("Author's public name: ")}
+                      valueDataQa="publication-display-author"
+                      valueToDisplay={publication.displayAuthor ?? ''}
+                      infoTooltip={t(
+                        `This name will be displayed instead of the author's name for this publication.`,
+                      )}
+                      editValue={displayAuthorEditState}
+                      onChangeValue={handleChangeDisplayAuthor}
+                      isEditMode={isEditMode}
+                      errors={errors}
+                    />
+                  )}
 
                   <PublicationInfoSection
                     labelDataQa="creation-date-label"
