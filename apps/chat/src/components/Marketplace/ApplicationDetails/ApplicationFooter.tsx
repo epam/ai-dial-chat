@@ -1,5 +1,7 @@
-import { IconPlayerPlay } from '@tabler/icons-react';
+import { IconExternalLink, IconPlayerPlay } from '@tabler/icons-react';
 import { useMemo } from 'react';
+
+import Link from 'next/link';
 
 import classNames from 'classnames';
 
@@ -11,6 +13,7 @@ import {
   getApplicationSimpleStatus,
   isApplicationPublic,
   isExecutableApp,
+  isExternalApp,
 } from '@/src/utils/app/application';
 
 import {
@@ -139,23 +142,36 @@ export const ApplicationDetailsFooter = ({
                 : 'Deploy the application to be able to use it',
             )}
           >
-            <button
-              onClick={onUseEntity}
-              className="button button-primary flex shrink-0 items-center gap-2 font-theme text-sm"
-              data-qa="use-button"
-              disabled={
-                isExecutableApp(entity) &&
-                playerStatus !== SimpleApplicationStatus.UNDEPLOY
-              }
-            >
-              <IconPlayerPlay size={18} />
-              <span className="hidden md:block">
-                {t('Use {{modelType}}', {
-                  modelType: entity.type,
-                })}
-              </span>
-              <span className="block md:hidden">{t('Use')}</span>
-            </button>
+            {!isExternalApp(entity) ? (
+              <button
+                onClick={onUseEntity}
+                className="button button-primary flex shrink-0 items-center gap-2 font-theme text-sm"
+                data-qa="use-button"
+                disabled={
+                  isExecutableApp(entity) &&
+                  playerStatus !== SimpleApplicationStatus.UNDEPLOY
+                }
+              >
+                <IconPlayerPlay size={18} />
+                <span className="hidden md:block">
+                  {t('Use {{modelType}}', {
+                    modelType: entity.type,
+                  })}
+                </span>
+                <span className="block md:hidden">{t('Use')}</span>
+              </button>
+            ) : (
+              <Link
+                href={'http://google.com'}
+                target="_blank"
+                className="button button-primary flex shrink-0 items-center gap-2 font-theme text-sm"
+                data-qa="external-link"
+              >
+                <IconExternalLink size={18} />
+                <span className="hidden md:block">{t('Open in New Tab')}</span>
+                <span className="block md:hidden">{t('Open')}</span>
+              </Link>
+            )}
           </Tooltip>
         </div>
       </div>

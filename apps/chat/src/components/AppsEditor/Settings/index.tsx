@@ -56,6 +56,7 @@ import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
+import { GeneralInfoPreview } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoPreview';
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -486,13 +487,22 @@ export const ApplicationSettings: React.FC<Props> = ({
           </div>
           {!isPreviewClosed && (
             <div className="flex-1 overflow-auto">
-              <ApplicationPreviewChat
-                isAppDeploymentInProgress={isAppDeploymentInProgress}
-                isApplicationValid={methods.formState.isValid}
-                applicationId={applicationData.id}
-                type={type}
-                isAppDeployed={isAppDeployed}
-              />
+              {!externalAppsSchemaId.endsWith(type) ? (
+                <ApplicationPreviewChat
+                  isAppDeploymentInProgress={isAppDeploymentInProgress}
+                  isApplicationValid={methods.formState.isValid}
+                  applicationId={applicationData.id}
+                  type={type}
+                  isAppDeployed={isAppDeployed}
+                />
+              ) : (
+                <GeneralInfoPreview
+                  entity={applicationData}
+                  onClosePreview={() =>
+                    handlePreviewModeChange(PreviewMode.closed)
+                  }
+                />
+              )}
             </div>
           )}
         </div>
