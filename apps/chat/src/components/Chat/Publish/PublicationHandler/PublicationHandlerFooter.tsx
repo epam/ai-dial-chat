@@ -54,7 +54,11 @@ import {
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { Conversation, FeatureType } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  FeatureType,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -298,10 +302,21 @@ export const PublicationHandlerFooter = ({
     ([key, { version, name }]) => {
       const isInvalidName = !isEntityNameValid(name);
 
+      const resource = publication.resources.find(
+        ({ reviewUrl }) => reviewUrl === key,
+      );
+
       const isValidVersion =
+        resource?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
-          !isVersionExists(version, key, publicVersionGroups, name) &&
+          !isVersionExists(
+            version,
+            key,
+            publicVersionGroups,
+            name,
+            publication.targetFolder,
+          ) &&
           (!isApplicationId(key) || isVersionPartSizeValid(version)));
 
       return isInvalidName || !isValidVersion;
