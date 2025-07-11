@@ -166,11 +166,11 @@
   },
   "optionalDependencies": {
     "@nx/playwright": "21.2.2",
-    "@playwright/test": "^1.53.1",
+    "@playwright/test": "^1.54.0",
     "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^3.2.2",
     "eslint-plugin-playwright": "^2.2.0",
-    "playwright-chromium": "^1.53.1"
+    "playwright-chromium": "^1.54.0"
   },
   "engines": {
     "node": ">=22.2.0",

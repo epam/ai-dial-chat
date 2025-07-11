@@ -22,6 +22,7 @@ import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import { isRootEntity } from './id';
 import { hasWritePermission } from './share';
 import { isReplayConversation, splitEntityId } from './shared-utils';
 
@@ -470,9 +471,7 @@ export const getFolderIdFromEntityId = (id: string) =>
 
 export const getRootFolderIdFromEntityId = (id: string) => {
   const splittedId = id.split('/');
-  const isRootEntity = splittedId.length === 3;
-
-  return splittedId.slice(0, isRootEntity ? 2 : 3).join('/');
+  return splittedId.slice(0, isRootEntity(id) ? 2 : 3).join('/');
 };
 
 export const isFolderEmpty = ({
