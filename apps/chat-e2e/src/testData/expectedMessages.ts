@@ -432,6 +432,7 @@ export const ExpectedMessages = {
     `Logo should be centered. Expected center around ${expectedLogoCenterX}, got ${actualLogoCenterX}`,
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
+  valuesAreEqual: 'Values are equal',
 };
 
 export enum PublishingExpectedMessages {

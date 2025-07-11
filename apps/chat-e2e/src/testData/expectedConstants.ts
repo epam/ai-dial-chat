@@ -264,7 +264,10 @@ export const ExpectedConstants = {
     'Request name should be at most 160 characters long',
   publishRequestNameMinLengthErrorMessage:
     'Request name should be at least 2 characters long',
+  defaultAgentLabel: 'Default agent',
+  lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
+  noAvailableItemsLabel: 'No available items',
 };
 
 export enum Types {
