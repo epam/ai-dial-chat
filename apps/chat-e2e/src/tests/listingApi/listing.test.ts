@@ -21,7 +21,10 @@ test('Models API listing', async () => {
   expectedModels.forEach((model) => {
     const actualModel = ModelsUtil.getModel(model.entityId);
     expect
-      .soft(actualModel, `${model.entityId}: ${ExpectedMessages.modelIsAvailable}`)
+      .soft(
+        actualModel,
+        `${model.entityId}: ${ExpectedMessages.modelIsAvailable}`,
+      )
       .toBeDefined();
   });
 });
