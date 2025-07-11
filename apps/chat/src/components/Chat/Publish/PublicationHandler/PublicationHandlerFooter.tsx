@@ -104,7 +104,9 @@ export const PublicationHandlerFooter = ({
   const itemsToApprove = useAppSelector(
     PublicationSelectors.selectSelectedItemsToApprove,
   );
-
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
@@ -335,7 +337,8 @@ export const PublicationHandlerFooter = ({
   const isApproveDisabled =
     !isAllResourcesReviewed ||
     !!invalidEntities.length ||
-    someReviewedConversationHaveNoMessages;
+    someReviewedConversationHaveNoMessages ||
+    isPublicationUpdating;
 
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
@@ -414,7 +417,9 @@ export const PublicationHandlerFooter = ({
                   ? "Request can't be approved as some conversations are unpublished"
                   : someReviewedConversationHaveNoMessages
                     ? "Request can't be approved as some conversations have no messages"
-                    : "It's required to review all resources",
+                    : isPublicationUpdating
+                      ? 'Request is updating'
+                      : "It's required to review all resources",
               )}
             >
               <button
@@ -423,7 +428,7 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {isSmallScreen ? t('Approve') : t('Approve selected')}
+                {t(isSmallScreen ? 'Approve' : 'Approve selected')}
               </button>
             </Tooltip>
           </>

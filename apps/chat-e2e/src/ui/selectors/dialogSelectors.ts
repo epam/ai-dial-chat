@@ -148,14 +148,6 @@ export const SelectFolderModalSelectors = {
   searchInput: '[data-qa="search-folder"]',
 };
 
-export const AccountSettingsModalSelector = {
-  settingsModal: '[data-qa="settings-modal"]',
-  theme: '[data-qa="theme"]',
-  customLogo: '[data-qa="custom-logo"]',
-  fullWidthChatToggle: '[data-qa="toggle-switch"]',
-  save: '[data-qa="save"]',
-};
-
 export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
   requestName: '[data-qa="publishRequestName"]',
