@@ -16,7 +16,13 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CustomApplicationModel, Toolsets } from '@/src/types/applications';
+import {
+  ApplicationPropertiesType,
+  CustomApplicationModel,
+  ExternalAppConfig,
+  ExternalAppModel,
+  Toolsets,
+} from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModelsMap } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
@@ -49,15 +55,16 @@ export interface CustomApplicationFormData extends ApplicationGeneralInfo {
   inputAttachmentTypes: string[];
   completionUrl: string;
   features: string | null;
-  id: string;
-  reference: string;
   maxInputAttachments?: number | '';
-  applicationProperties: Record<string, unknown> | null | QuickAppConfig;
+  applicationProperties: ApplicationPropertiesType;
+}
+
+export interface ExternalAppFormData extends ApplicationGeneralInfo {
+  externalUrl: string;
+  applicationProperties: ApplicationPropertiesType;
 }
 
 export interface QuickAppFormData extends ApplicationGeneralInfo {
-  id: string;
-  reference: string;
   instructions: string;
   temperature: number;
   [Toolsets.WebApiToolset]: string;
@@ -67,8 +74,6 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
 }
 
 export interface CodeAppFormData extends ApplicationGeneralInfo {
-  id: string;
-  reference: string;
   inputAttachmentTypes: string[];
   sources: string;
   sourceFiles?: string[];
@@ -81,7 +86,8 @@ export interface CodeAppFormData extends ApplicationGeneralInfo {
 export type FormDataType =
   | CustomApplicationFormData
   | QuickAppFormData
-  | CodeAppFormData;
+  | CodeAppFormData
+  | ExternalAppFormData;
 
 const getMappingsKeyOptions = (name: 'endpoints' | 'env') => ({
   validate: (v: string, data: CodeAppFormData) => {
@@ -262,8 +268,26 @@ export const getQuickAppDefaultValues = ({
   };
 };
 
+export const getExternalAppDefaultValues = ({
+  app,
+}: {
+  app: CustomApplicationModel;
+}): ExternalAppFormData => {
+  return {
+    ...getApplicationGeneralDefaultValues(app),
+    externalUrl:
+      (app.applicationProperties as ExternalAppConfig)?.external_url ?? '',
+    completionUrl: app.completionUrl ?? '',
+    applicationProperties: app.applicationProperties ?? null,
+  };
+};
+
 const getGeneralApplicationData = (
-  formData: CustomApplicationFormData | QuickAppFormData | CodeAppFormData,
+  formData:
+    | CustomApplicationFormData
+    | QuickAppFormData
+    | CodeAppFormData
+    | ExternalAppFormData,
 ) => ({
   type: EntityType.Application,
   name: formData.name,
@@ -324,6 +348,21 @@ export const getCustomApplicationData = (
       ? Number(formData.maxInputAttachments)
       : undefined,
     features: formData.features ? JSON.parse(formData.features) : null,
+  };
+  return preparedData;
+};
+
+export const getExternalAppData = (
+  formData: ExternalAppFormData,
+): Omit<ExternalAppModel, 'id' | 'reference'> => {
+  const preparedData: Omit<ExternalAppModel, 'id' | 'reference'> = {
+    ...getGeneralApplicationData(formData),
+
+    isDefault: false,
+    folderId: '',
+    applicationProperties: {
+      external_url: formData.externalUrl,
+    },
   };
   return preparedData;
 };
