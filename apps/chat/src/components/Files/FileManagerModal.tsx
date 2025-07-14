@@ -5,13 +5,7 @@ import {
   IconEyeOff,
   IconTrashX,
 } from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
