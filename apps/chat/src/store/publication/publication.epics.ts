@@ -529,7 +529,6 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
             }
 
             // we do not need to review files
-
             const existingReviewedResources =
               PublicationSelectors.selectResourcesToReviewByPublicationUrl(
                 state$.value,
@@ -2078,8 +2077,9 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
         .type,
     ),
     switchMap(({ payload }) => {
+      const state = state$.value;
       const publication = PublicationSelectors.selectPublicationByUrl(
-        state$.value,
+        state,
         payload.publicationUrl,
       );
 
@@ -2107,7 +2107,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
       messageAttachmentsToAdd.forEach(({ url }) => {
         if (url) {
           publicationResources.push({
-            action: PublishActions.ADD,
+            action: PublishActions.ADD_IF_ABSENT,
             sourceUrl: ApiUtils.decodeApiUrl(url),
             targetUrl: ApiUtils.decodeApiUrl(
               constructPath(
@@ -2132,39 +2132,61 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
       }).pipe(
         switchMap((response) => {
           const { sendMessagePayload } = payload;
+          const newFilesReviewUrls = response.resources
+            .filter((resource) =>
+              messageAttachmentsToAdd.some(
+                (attachment) => attachment.url === resource.sourceUrl,
+              ),
+            )
+            .map((resource) => ApiUtils.decodeApiUrl(resource.reviewUrl));
+          const selectedItemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
 
-          return of(
-            ConversationsActions.sendMessage({
-              ...sendMessagePayload,
-              message: {
-                ...sendMessagePayload.message,
-                custom_content: {
-                  ...sendMessagePayload.message.custom_content,
-                  attachments:
-                    sendMessagePayload.message.custom_content?.attachments?.map(
-                      (attachment) => {
-                        const addedResource = response.resources.find(
-                          (resource) => resource.sourceUrl === attachment.url,
-                        );
+          return concat(
+            of(
+              ConversationsActions.sendMessage({
+                ...sendMessagePayload,
+                message: {
+                  ...sendMessagePayload.message,
+                  custom_content: {
+                    ...sendMessagePayload.message.custom_content,
+                    attachments:
+                      sendMessagePayload.message.custom_content?.attachments?.map(
+                        (attachment) => {
+                          const addedResource = response.resources.find(
+                            (resource) => resource.sourceUrl === attachment.url,
+                          );
 
-                        if (
-                          !isMyBucket(
-                            getEntityBucket({ id: attachment.url ?? '' }),
-                          ) ||
-                          !addedResource
-                        ) {
-                          return attachment;
-                        }
+                          if (
+                            !isMyBucket(
+                              getEntityBucket({ id: attachment.url ?? '' }),
+                            ) ||
+                            !addedResource
+                          ) {
+                            return attachment;
+                          }
 
-                        return {
-                          ...attachment,
-                          url: addedResource.reviewUrl,
-                        };
-                      },
-                    ),
+                          return {
+                            ...attachment,
+                            url: addedResource.reviewUrl,
+                          };
+                        },
+                      ),
+                  },
                 },
-              },
-            }),
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: response.url,
+              }),
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: response.url,
+                ids: [...selectedItemsToApprove, ...newFilesReviewUrls],
+              }),
+            ),
           );
         }),
         catchError((err) => {
