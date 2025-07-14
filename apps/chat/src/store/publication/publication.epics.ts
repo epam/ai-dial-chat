@@ -2059,7 +2059,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
         if (url) {
           publicationResources.push({
             action: PublishActions.ADD,
-            sourceUrl: url,
+            sourceUrl: ApiUtils.decodeApiUrl(url),
             targetUrl: ApiUtils.decodeApiUrl(
               constructPath(
                 url.split('/')[0],
@@ -2109,7 +2109,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
 
                         return {
                           ...attachment,
-                          url: ApiUtils.decodeApiUrl(addedResource.reviewUrl),
+                          url: addedResource.reviewUrl,
                         };
                       },
                     ),
