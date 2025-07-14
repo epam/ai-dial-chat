@@ -5,7 +5,10 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getModelShortDescription,
+  isExternalApp,
+} from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
@@ -112,6 +115,7 @@ export const ApplicationCard = memo(
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
                 isMyEntity={isMyApp}
+                isExternal={isExternalApp(entity)}
               >
                 <ModelIcon
                   entityId={entity.id}

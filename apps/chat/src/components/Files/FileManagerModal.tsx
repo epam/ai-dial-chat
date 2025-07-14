@@ -1,18 +1,10 @@
 import { useId } from '@floating-ui/react';
 import { IconDownload, IconTrashX } from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
-import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -33,7 +25,6 @@ import {
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile, FileSourceType } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -47,7 +38,6 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
-import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
@@ -58,56 +48,12 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { Folder } from '@/src/components/Folder/Folder';
 
 import { FileItem, FileItemEventIds } from './FileItem';
+import { FilesSectionWrapper } from './FilesSectionWrapper';
 import { PreUploadDialog } from './PreUploadModal';
+import ReviewBucketFilesSection from './ReviewBucketFilesSection';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import uniq from 'lodash-es/uniq';
-
-interface FilesSectionProps {
-  name: string;
-  dataQa: string;
-  children: ReactNode;
-  files: DialFile[];
-  folders: FolderInterface[];
-  sourceType: FileSourceType;
-  filters?: Set<FileSourceType>;
-}
-
-const FilesSectionWrapper = ({
-  name,
-  dataQa,
-  folders,
-  files,
-  children,
-  sourceType,
-  filters,
-}: FilesSectionProps) => {
-  const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.File);
-
-  const isNothingExists = folders.length === 0 && files.length === 0;
-
-  if (isNothingExists || (filters && !filters.has(sourceType))) return null;
-
-  return (
-    <CollapsibleSection
-      onToggle={handleToggle}
-      name={name}
-      openByDefault={isExpanded}
-      dataQa={dataQa}
-      className="!p-0"
-      togglerClassName="ml-0.5"
-    >
-      <div
-        className="flex flex-col overflow-auto"
-        data-qa="file-section-content"
-      >
-        <div className="flex grow flex-col gap-0.5 overflow-auto">
-          {children}
-        </div>
-      </div>
-    </CollapsibleSection>
-  );
-};
 
 interface Props {
   isOpen: boolean;
@@ -891,6 +837,21 @@ export const FileManagerModal = ({
                   })}
                 </div>
               </FilesSectionWrapper>
+
+              <ReviewBucketFilesSection
+                searchQuery={searchQuery}
+                highlightFolderIds={highlightFolderIds}
+                additionalItemData={{
+                  selectedFilesIds,
+                  selectedFolderIds,
+                  canAttachFiles: canAttachFiles || forceShowSelectCheckBox,
+                }}
+                openedFoldersIds={openedFoldersIds}
+                onItemEvent={handleItemCallback}
+                onClickFolder={handleFolderSelect}
+                canAttachFolders={canAttachFolders}
+                onToggleFolder={handleFolderToggle}
+              />
 
               <FilesSectionWrapper
                 name={t('All files')}

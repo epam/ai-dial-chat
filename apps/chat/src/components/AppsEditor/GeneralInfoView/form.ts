@@ -7,12 +7,12 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
+  ApplicationPropertiesType,
   ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import {
   FEATURES_ENDPOINTS,
@@ -35,7 +35,7 @@ export interface ApplicationGeneralInfoFormData {
   completionUrl: string;
   id: string;
   reference: string;
-  applicationProperties?: Record<string, unknown> | QuickAppConfig | null;
+  applicationProperties?: ApplicationPropertiesType;
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number | '';
   features?: string | null;

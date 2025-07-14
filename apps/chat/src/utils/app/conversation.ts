@@ -248,37 +248,37 @@ export const addPausedError = (
   ) {
     return messages;
   }
-  let assistentMessageIndex = -1;
+  let assistantMessageIndex = -1;
   messages.forEach((message, index) => {
     if (message.role === Role.Assistant) {
-      assistentMessageIndex = index;
+      assistantMessageIndex = index;
     }
   });
   if (
-    assistentMessageIndex === -1 ||
-    assistentMessageIndex !== messages.length - 1
+    assistantMessageIndex === -1 ||
+    assistantMessageIndex !== messages.length - 1
   ) {
     return messages;
   }
 
-  const assistentMessage = messages[assistentMessageIndex];
+  const assistantMessage = messages[assistantMessageIndex];
   const updatedMessage: Message = {
-    ...assistentMessage,
-    ...(assistentMessage.custom_content?.stages?.length && {
+    ...assistantMessage,
+    ...(assistantMessage.custom_content?.stages?.length && {
       custom_content: {
-        ...assistentMessage.custom_content,
-        stages: assistentMessage.custom_content.stages.filter(
+        ...assistantMessage.custom_content,
+        stages: assistantMessage.custom_content.stages.filter(
           (stage) => stage.status != null,
         ),
       },
     }),
     errorMessage:
-      assistentMessage.errorMessage ??
+      assistantMessage.errorMessage ??
       'Response generation was stopped. Please regenerate to continue working with conversation',
   };
 
   return messages.map((message, index) => {
-    if (index === assistentMessageIndex) {
+    if (index === assistantMessageIndex) {
       return updatedMessage;
     }
 
