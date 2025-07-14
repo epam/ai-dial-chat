@@ -24,6 +24,7 @@ enum OverlayCases {
   loaderHideEventSetSandbox = '/cases/overlay/loader-hide-event-set-sandbox',
   skipFocusSetSandbox = '/cases/overlay/skip-focus-set-sandbox',
   customMessageButtons = '/cases/overlay/custom-message-buttons',
+  editLastAssistantMessage = '/cases/overlay/edit-last-assistant-message',
 }
 
 export default async function Index() {
