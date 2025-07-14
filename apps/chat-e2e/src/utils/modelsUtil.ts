@@ -270,4 +270,21 @@ export class ModelsUtil {
   public static isExecutableApp(entity: DialAIEntityModel) {
     return !!entity.functionStatus;
   }
+
+  public static getAgentsWithSimpleDescription(agents?: DialAIEntityModel[]) {
+    agents = agents ?? ModelsUtil.getOpenAIEntities();
+    //define all patterns
+    const htmlTagRegExp = /<[^>]*>/g;
+    const markdownLinkRegExp = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const markdownBoldRegExp = /\*\*(.*?)\*\*/g;
+
+    return agents.filter((agent) => {
+      const description = agent.description ?? '';
+      //check if the string match any of the patterns
+      const hasHtmlTag = description.match(htmlTagRegExp);
+      const hasMarkdownLink = description.match(markdownLinkRegExp);
+      const hasMarkdownBold = description.match(markdownBoldRegExp);
+      return !hasHtmlTag && !hasMarkdownLink && !hasMarkdownBold;
+    });
+  }
 }
