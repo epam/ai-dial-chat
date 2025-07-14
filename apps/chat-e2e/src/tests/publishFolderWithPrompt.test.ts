@@ -1,46 +1,84 @@
+import { BackendResourceType } from '@/chat/types/common';
+import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, FolderPrompt, MenuOptions } from '@/src/testData';
+import {
+  CheckboxState,
+  ExpectedConstants,
+  FolderPrompt,
+  MenuOptions,
+  PublishPath,
+  PublishingExpectedMessages,
+} from '@/src/testData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement, PublicationReviewControl } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Publish folder: folder with 2 prompts.\n' +
-    `"Author's public name" is displayed on Info pop-up for published prompt ( published folder with prompt)`,
-  async ({
-    dialHomePage,
-    promptData,
-    dataInjector,
-    folderPrompts,
-    folderDropdownMenu,
-    publishingRequestModal,
-    publishingRequestFolderPromptAssertion,
-    adminDialHomePage,
-    adminApproveRequiredPrompts,
-    adminPublishingApprovalModal,
-    adminApproveRequiredPromptsAssertion,
-    adminPublishedPromptPreviewModal,
-    adminPublishedPromptPreviewModalAssertion,
-    adminPublishingApprovalModalAssertion,
-    adminFolderPromptsToApproveAssertion,
-    publishingRequestModalAssertion,
-    adminOrganizationFolderPrompts,
-    adminPromptDropdownMenu,
-    adminInformationModalAssertion,
-    setTestIds,
-    localStorageManager,
-    adminLocalStorageManager,
-  }) => {
-    setTestIds('EPMRTC-4582', 'EPMRTC-5875');
+    `"Author's public name" is displayed on Info pop-up for published prompt ( published folder with prompt).\n` +
+    'Unpublish prompt inside folder.\n' +
+    'Unpublish all prompts from folder: folder is deleted from Organization',
+  async (
+    {
+      dialHomePage,
+      promptData,
+      dataInjector,
+      folderPrompts,
+      folderDropdownMenu,
+      promptDropdownMenu,
+      publishingRequestModal,
+      publishingRequestFolderPromptAssertion,
+      organizationFolderPrompts,
+      adminDialHomePage,
+      promptsToPublishTree,
+      adminApproveRequiredPrompts,
+      adminPublishingApprovalModal,
+      adminApproveRequiredPromptsAssertion,
+      adminPublishedPromptPreviewModal,
+      adminPublishedPromptPreviewModalAssertion,
+      adminPublishingApprovalModalAssertion,
+      adminFolderPromptsToApproveAssertion,
+      publishingRequestModalAssertion,
+      adminOrganizationFolderPrompts,
+      adminPromptDropdownMenu,
+      adminInformationModalAssertion,
+      adminOrganizationFolderPromptAssertions,
+      promptToPublishAssertion,
+      promptBarOrganizationFolderAssertion,
+      setTestIds,
+      localStorageManager,
+      adminLocalStorageManager,
+      publishRequestBuilder,
+      publicationApiHelper,
+      adminPublicationApiHelper,
+    },
+    testInfo,
+  ) => {
+    setTestIds('EPMRTC-4582', 'EPMRTC-5875', 'EPMRTC-6120', 'EPMRTC-6121');
     let folderPrompt: FolderPrompt;
     const folderName = GeneratorUtil.randomString(10);
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const author = GeneratorUtil.randomString(10);
+    const username =
+      process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
+    const unpublishAuthor = username.substring(0, username.indexOf('@'));
     let orderedPrompts: string[] = [];
     let publicationReviewControls: PublicationReviewControl;
     let backToPublicationRequestButton: BaseElement;
     let nextButton: BaseElement;
     let previousButton: BaseElement;
+    const expectedErrorColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textError,
+    );
+    const firstUnpublishRequestName =
+      GeneratorUtil.randomUnpublishRequestName();
+    let unpublishApiModels: {
+      request: PublicationRequestModel;
+      response: Publication;
+    };
 
     await dialTest.step('Prepare 2 prompts inside folder', async () => {
       folderPrompt = promptData.preparePromptsInFolder(2, folderName);
@@ -62,12 +100,13 @@ dialAdminTest(
           publishingRequestModal,
           'visible',
         );
-        for (const prompt of folderPrompt.prompts)
+        for (const prompt of folderPrompt.prompts) {
           await publishingRequestFolderPromptAssertion.assertFolderEntityState(
             { name: folderName },
             { name: prompt.name },
             'visible',
           );
+        }
       },
     );
 
@@ -258,6 +297,195 @@ dialAdminTest(
           createdDate: DateUtil.getCurrentLocalDate(),
           author: author,
         });
+      },
+    );
+
+    await dialTest.step(
+      'By main user, select "Unpublish" option from dropdown menu option for published folder prompt and verify unpublishing modal with valid data is opened',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationFolderPrompts.expandFolder(folderName);
+        await organizationFolderPrompts.openFolderEntityDropdownMenu(
+          folderName,
+          folderPrompt.prompts[0].name,
+        );
+        await promptDropdownMenu.selectMenuOption(MenuOptions.unpublish);
+        await publishingRequestModalAssertion.assertElementState(
+          publishingRequestModal,
+          'visible',
+        );
+        await promptToPublishAssertion.assertEntityState(
+          { name: folderPrompt.prompts[0].name },
+          'visible',
+        );
+        await promptToPublishAssertion.assertEntityColor(
+          { name: folderPrompt.prompts[0].name },
+          expectedErrorColor,
+        );
+        await promptToPublishAssertion.assertEntityCheckboxState(
+          { name: folderPrompt.prompts[0].name },
+          CheckboxState.checked,
+        );
+        await promptToPublishAssertion.assertEntityVersion(
+          { name: folderPrompt.prompts[0].name },
+          ExpectedConstants.defaultAppVersion,
+        );
+        await promptToPublishAssertion.assertEntityVersionColor(
+          { name: folderPrompt.prompts[0].name },
+          expectedErrorColor,
+        );
+        await promptToPublishAssertion.assertElementState(
+          promptsToPublishTree.promptIcon(folderPrompt.prompts[0].name),
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step('Set a request name and submit', async () => {
+      await publishingRequestModal.requestName.fillInInput(
+        firstUnpublishRequestName,
+      );
+      unpublishApiModels =
+        await publishingRequestModal.sendPublicationRequest();
+      await publishingRequestModalAssertion.assertElementState(
+        publishingRequestModal,
+        'hidden',
+      );
+    });
+
+    await dialAdminTest.step(
+      'As admin verify publishing request is displayed under "Approve required" section',
+      async () => {
+        await adminDialHomePage.reloadPage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: firstUnpublishRequestName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Expand unpublish request and verify "Publication approval" modal with valid data is displayed',
+      async () => {
+        await adminApproveRequiredPrompts.expandApproveRequiredFolder(
+          firstUnpublishRequestName,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminApproveRequiredPrompts.expandFolder(folderName);
+        await adminApproveRequiredPromptsAssertion.assertFolderEntityState(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          'visible',
+        );
+        await adminApproveRequiredPromptsAssertion.assertFolderEntityColor(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          expectedErrorColor,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementText(
+          adminPublishingApprovalModal.publishToPath,
+          PublishPath.Organization,
+        );
+        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
+          unpublishApiModels.response,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementText(
+          adminPublishingApprovalModal.author,
+          unpublishAuthor,
+        );
+        await adminFolderPromptsToApproveAssertion.assertFolderEntityState(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          'visible',
+        );
+        await adminFolderPromptsToApproveAssertion.assertFolderEntityColor(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          expectedErrorColor,
+        );
+        await adminFolderPromptsToApproveAssertion.assertFolderEntityCheckboxState(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          CheckboxState.checked,
+        );
+        await adminFolderPromptsToApproveAssertion.assertFolderEntityVersion(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          ExpectedConstants.defaultAppVersion,
+        );
+        await adminFolderPromptsToApproveAssertion.assertFolderEntityVersionColor(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          expectedErrorColor,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approve the request and verify it disappears from the right side panel, prompt is deleted from "Organization" section',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublishedPromptPreviewModal
+          .getPublicationReviewControl()
+          .backToPublicationRequestButton.click();
+        await adminPublishingApprovalModal.approveRequest();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: folderName },
+          'hidden',
+        );
+        await adminOrganizationFolderPrompts.expandFolder(folderName);
+        await adminOrganizationFolderPromptAssertions.assertFolderEntityState(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Refresh the page by the main user and verify prompt disappears from published folder in "Organization" section',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationFolderPrompts.expandFolder(folderName);
+        await promptBarOrganizationFolderAssertion.assertFolderEntityState(
+          { name: folderName },
+          { name: folderPrompt.prompts[0].name },
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Unpublish the second folder prompt via API and verify the folder is not listed among published',
+      async () => {
+        const unpublishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomUnpublishRequestName())
+          .withPromptInFolderResource(
+            folderPrompt.prompts[1],
+            PublishActions.DELETE,
+          )
+          .build();
+        const unpublishRequestModel =
+          await publicationApiHelper.createUnpublishRequest(unpublishRequest);
+        await adminPublicationApiHelper.approveRequest(unpublishRequestModel);
+        const publishedPromptsList =
+          await publicationApiHelper.listPublishedResources(
+            BackendResourceType.PROMPT,
+          );
+        const isFolderPromptPublished = !!publishedPromptsList.items?.find(
+          (i) => i.url === unpublishRequestModel!.resources![0].targetUrl,
+        );
+        promptBarOrganizationFolderAssertion.assertBooleanCondition(
+          isFolderPromptPublished,
+          false,
+          PublishingExpectedMessages.folderIsNotPublished,
+        );
       },
     );
   },

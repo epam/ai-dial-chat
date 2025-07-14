@@ -350,6 +350,7 @@ const dialTest = test.extend<{
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
   adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
+  organizationFolderPromptAssertions: FolderAssertion<Folders>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -1343,6 +1344,15 @@ const dialTest = test.extend<{
         adminPublicationApiHelper,
       );
     await use(adminCustomApplicationPublishingUtil);
+  },
+  organizationFolderPromptAssertions: async (
+    { organizationFolderPrompts },
+    use,
+  ) => {
+    const organizationFolderPromptAssertions = new FolderAssertion(
+      organizationFolderPrompts,
+    );
+    await use(organizationFolderPromptAssertions);
   },
 });
 

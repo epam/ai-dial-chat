@@ -330,10 +330,7 @@ export const PromptComponent = ({
             />
           </ShareIcon>
 
-          <div
-            className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left"
-            data-qa="entity-name"
-          >
+          <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
             <Tooltip
               tooltip={t(
                 getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -347,6 +344,7 @@ export const PromptComponent = ({
                   prompt.publicationInfo?.action === PublishActions.DELETE &&
                   'text-error',
               )}
+              dataQa="entity-name"
             >
               {prompt.name}
             </Tooltip>

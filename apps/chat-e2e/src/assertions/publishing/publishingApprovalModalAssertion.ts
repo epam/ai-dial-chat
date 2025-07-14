@@ -3,12 +3,10 @@ import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
   ElementState,
   ExpectedConstants,
-  ExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
 import { PublishingApprovalModal } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 export class PublishingApprovalModalAssertion extends BaseAssertion {
   readonly publishingApprovalModal: PublishingApprovalModal;
@@ -27,23 +25,19 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
   }
 
   public async assertPublishToPath(expectedPath: string) {
-    expect
-      .soft(
-        await this.publishingApprovalModal.publishToPath.getElementInnerContent(),
-        PublishingExpectedMessages.publishToPathIsValid,
-      )
-      .toBe(expectedPath);
+    await this.assertElementText(
+      this.publishingApprovalModal.publishToPath,
+      expectedPath,
+      PublishingExpectedMessages.publishToPathIsValid,
+    );
   }
 
   public async assertRequestCreationDate(publicationRequest: Publication) {
-    expect
-      .soft(
-        await this.publishingApprovalModal.creationDate.getElementInnerContent(),
-        PublishingExpectedMessages.publishToPathIsValid,
-      )
-      .toBe(
-        DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
-      );
+    await this.assertElementText(
+      this.publishingApprovalModal.creationDate,
+      DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
+      PublishingExpectedMessages.publishCreationDateIsValid,
+    );
   }
 
   public async assertRequestCreatedLabelState(expectedState: ElementState) {
@@ -79,11 +73,9 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
   }
 
   public async assertReviewButtonTitle(expectedTitle: string) {
-    expect
-      .soft(
-        await this.publishingApprovalModal.goToReviewButton.getElementInnerContent(),
-        ExpectedMessages.entityIsVisible,
-      )
-      .toBe(expectedTitle);
+    await this.assertElementText(
+      this.publishingApprovalModal.goToReviewButton,
+      expectedTitle,
+    );
   }
 }

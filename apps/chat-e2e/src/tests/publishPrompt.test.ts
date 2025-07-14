@@ -343,7 +343,7 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'by user1 reload page and check prompt in Organization section inside folder1',
+      'By user1 reload page and check prompt in Organization section inside folder1',
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
