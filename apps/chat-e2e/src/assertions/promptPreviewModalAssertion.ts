@@ -53,4 +53,12 @@ export class PromptPreviewModalAssertion extends BaseAssertion {
       ExpectedMessages.promptContentValid,
     );
   }
+
+  public async assertPromptVersion(expectedValue: string) {
+    await super.assertElementText(
+      this.promptPreviewModal.version,
+      `v. ${expectedValue}`,
+      ExpectedMessages.promptVersionValid,
+    );
+  }
 }
