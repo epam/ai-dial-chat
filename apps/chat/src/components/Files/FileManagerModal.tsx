@@ -756,7 +756,7 @@ export const FileManagerModal = ({
                 onItemEvent={handleItemCallback}
                 onClickFolder={handleFolderSelect}
                 canAttachFolders={canAttachFolders}
-                onToggleFolder={handleFolderToggle}
+                onToggleFolder={handleSelectFolder}
               />
 
               <FilesSectionWrapper
