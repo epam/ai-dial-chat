@@ -8,6 +8,7 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getPublicationDefaultName,
@@ -121,7 +122,7 @@ export function PublicationHandler({ publication }: Props) {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
-          path: publication.targetFolder.split('/').slice(1).join('/'),
+          path: getIdWithoutFeatureType(publication.targetFolder),
         }),
       );
     }

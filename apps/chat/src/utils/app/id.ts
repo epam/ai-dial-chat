@@ -102,3 +102,6 @@ export const filterIdsByFeatureType = (
 
   return [];
 };
+
+export const getIdWithoutFeatureType = (id: string) =>
+  id.split('/').slice(1).join('/');

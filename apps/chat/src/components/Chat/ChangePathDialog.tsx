@@ -12,6 +12,7 @@ import {
   updateChildAndCurrentFoldersIds,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
+import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 
 import { FolderInterface } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
@@ -53,9 +54,6 @@ interface Props {
 const additionalItemData = {
   isChangePathFolder: true,
 };
-
-const getPathWithoutType = (folder: { id: string }) =>
-  folder.id.split('/').slice(1).join('/');
 
 export const ChangePathDialog = ({
   isOpen,
@@ -109,7 +107,7 @@ export const ChangePathDialog = ({
             ...applicationFolders,
             ...fileFolders,
           ],
-          getPathWithoutType,
+          ({ id }) => getIdWithoutFeatureType(id),
         ) as FolderInterface[],
       ),
     [conversationFolders, promptFolders, applicationFolders, fileFolders],
