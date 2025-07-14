@@ -62,7 +62,7 @@ interface Props {
   isShowChatInfo: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
-  onClearConversation: () => void;
+  onClearConversation: (conversation: Conversation) => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
   onModelClick: (conversationId: string) => void;
@@ -467,7 +467,7 @@ export const ChatHeader = Inversify.register(
           onClose={(result) => {
             setIsClearConversationModalOpen(false);
             if (result) {
-              onClearConversation();
+              onClearConversation(conversation);
             }
           }}
         />

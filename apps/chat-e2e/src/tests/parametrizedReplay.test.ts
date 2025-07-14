@@ -429,6 +429,7 @@ dialTest(
     setTestIds,
     variableModalAssertion,
     variableModalDialog,
+    chatMessages,
     apiAssertion,
     localStorageManager,
   }) => {
@@ -568,6 +569,10 @@ dialTest(
       async () => {
         const thirdRequest = await variableModalDialog.submitReplayVariables();
         apiAssertion.assertRequestModelId(thirdRequest, randomModel);
+        await chatMessages.waitForResponseReceived();
+        await chatMessages.chatMessages
+          .getNthElement(historyConversation.messages.length)
+          .waitFor();
       },
     );
   },

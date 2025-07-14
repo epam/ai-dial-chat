@@ -23,6 +23,10 @@ export enum Feature {
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
 
+  // Edit assistant
+  EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
+  EditAllAssistantContent = 'edit-all-assistant-message', // allow edit all assistant messages
+
   // Chat input
   SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
 

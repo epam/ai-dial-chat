@@ -23,6 +23,7 @@ import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import { isRootEntity } from './id';
 import { hasWritePermission } from './share';
 import { isReplayConversation, splitEntityId } from './shared-utils';
 
@@ -479,9 +480,7 @@ export const getFolderIdFromEntityId = (id: string) =>
 
 export const getRootFolderIdFromEntityId = (id: string) => {
   const splittedId = id.split('/');
-  const isRootEntity = splittedId.length === 3;
-
-  return splittedId.slice(0, isRootEntity ? 2 : 3).join('/');
+  return splittedId.slice(0, isRootEntity(id) ? 2 : 3).join('/');
 };
 
 export const isFolderEmpty = ({
@@ -678,3 +677,42 @@ export const getSelectedEntitiesByFolderId = <
           !chosenItemsIds.includes(entity.id)),
     )
     .map((entity) => entity.id);
+
+export const getPartialAndFullyChosenFolders = (
+  folders: FolderInterface[],
+  items: ShareEntity[],
+  selectedItems: string[],
+  emptyFolderIds: string[] = [],
+  selectedEmptyFolderIds: string[] = [],
+) => {
+  const fullyChosenFolderIds = folders
+    .map((folder) => `${folder.id}/`)
+    .filter(
+      (folderId) =>
+        items.some((item) => item.id.startsWith(folderId)) ||
+        selectedEmptyFolderIds.some((id) => id.startsWith(folderId)),
+    )
+    .filter(
+      (folderId) =>
+        items
+          .filter((item) => item.id.startsWith(folderId))
+          .every((item) => selectedItems.includes(item.id)) &&
+        emptyFolderIds
+          .filter((id) => id.startsWith(folderId))
+          .every((id) => selectedEmptyFolderIds.includes(`${id}/`)),
+    );
+
+  const partialChosenFolderIds = folders
+    .map((folder) => `${folder.id}/`)
+    .filter(
+      (folderId) =>
+        !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+        (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+          fullyChosenFolderIds.some((entityId) =>
+            entityId.startsWith(folderId),
+          )) &&
+        !fullyChosenFolderIds.includes(folderId),
+    );
+
+  return { fullyChosenFolderIds, partialChosenFolderIds };
+};

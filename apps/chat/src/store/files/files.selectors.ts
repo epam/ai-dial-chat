@@ -5,6 +5,7 @@ import {
   getParentAndChildFolders,
   sortByName,
 } from '@/src/utils/app/folders';
+import { getEntityBucket } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
@@ -22,6 +23,13 @@ const _selectFiles = (state: RootState) => rootSelector(state).files;
 const selectFiles = createSelector([_selectFiles], (files) => {
   return sortByName([...files]);
 });
+
+const selectReviewBucketFiles = createSelector(
+  [selectFiles, (_state, bucket: string) => bucket],
+  (files, bucket) => {
+    return files.filter((file) => getEntityBucket(file) === bucket);
+  },
+);
 
 const selectFilteredFiles = createSelector(
   [
@@ -139,6 +147,21 @@ const selectPublicFolders = createSelector([_selectFolders], (folders) => {
   return folders.filter((f) => isEntityIdPublic(f));
 });
 
+const selectReviewBucketFolders = createSelector(
+  [
+    selectFolders,
+    (_state, searchTerm: string) => searchTerm,
+    (_state, _searchTerm, bucket: string) => bucket,
+  ],
+  (folders, searchTerm, bucket) => {
+    return folders.filter(
+      (folder) =>
+        doesEntityContainSearchTerm(folder, searchTerm) &&
+        getEntityBucket(folder) === bucket,
+    );
+  },
+);
+
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectLastRenamedParentFolder = (state: RootState) =>
@@ -146,6 +169,7 @@ const selectLastRenamedParentFolder = (state: RootState) =>
 
 export const FilesSelectors = {
   selectFiles,
+  selectReviewBucketFiles,
   selectFilteredFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
@@ -163,4 +187,5 @@ export const FilesSelectors = {
   selectInitialized,
   selectAreFilesLoading,
   selectLastRenamedParentFolder,
+  selectReviewBucketFolders,
 };

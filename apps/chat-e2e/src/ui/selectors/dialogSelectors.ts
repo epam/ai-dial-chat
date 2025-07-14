@@ -148,17 +148,9 @@ export const SelectFolderModalSelectors = {
   searchInput: '[data-qa="search-folder"]',
 };
 
-export const AccountSettingsModalSelector = {
-  settingsModal: '[data-qa="settings-modal"]',
-  theme: '[data-qa="theme"]',
-  customLogo: '[data-qa="custom-logo"]',
-  fullWidthChatToggle: '[data-qa="toggle-switch"]',
-  save: '[data-qa="save"]',
-};
-
 export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
-  requestName: '[data-qa="request-name"]',
+  requestName: '[data-qa="publishRequestName"]',
   author: '#publicationAuthor',
   publishTo: '[data-qa="change-path-container"]',
   unpublishFromLabel: '[data-qa="unpublish-from-label"]',
@@ -171,6 +163,9 @@ export const PublishingModalSelectors = {
   appsToPublishContainer: '[data-qa="applications-to-send-request-container"]',
   sendButton: '[data-qa="publish"]',
   noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
+  fieldErrorMessage: `[data-qa="error-message"]`,
+  requestNameErrorMessage: () =>
+    `${PublishingModalSelectors.requestName} + ${PublishingModalSelectors.fieldErrorMessage}`,
 };
 
 export const ChangePathElement = {
@@ -185,6 +180,9 @@ export const PublishingApprovalModalSelectors = {
   publishToPath: '[data-qa="publish-to-path"]',
   publishToPathLabel: '[data-qa="publish-to-label"]',
   creationDate: '[data-qa="creation-date"]',
+  author: '[data-qa="publication-author"]',
+  publicAuthor: '[data-qa="publication-display-author"]',
+  publicAuthorLabel: '[data-qa="publication-display-author-label"]',
   requestCreatedLabel: '[data-qa="creation-date-label"]',
   conversationsToApproveContainer:
     '[data-qa="conversations-to-approve-container"]',
@@ -205,6 +203,7 @@ export const ChatSettingsModalSelectors = {
   conversationSettingsModal: '[data-qa="chat-settings-modal"]',
   applyChanges: '[data-qa="apply-changes"]',
   entitySettings: '[data-qa="entity-settings"]',
+  systemPromptContainer: '[data-qa="system-prompt-container"]',
   systemPrompt: '[data-qa="system-prompt"]',
   temperatureSlider: '[data-qa="temp-slider"]',
   slider: '.temperature-slider',
@@ -266,7 +265,7 @@ export const ApplicationEditorHeader = {
 export const AppEditorGeneralInfoPreviewSelectors = {
   fullContainer: '[data-qa="app-preview-general-info-full-container"]',
   detailedSwitch: '[data-qa="toggle-switch"]',
-  containerGeneralInfo: '[data-qa="app-preview-general-info"]',
+  appPreviewGeneralInfoContainer: '[data-qa="app-preview-general-info"]',
   previewIconContainer: '[data-qa="entity-icon"]',
   previewAgentName: '[data-qa="agent-name"]',
   previewTopicsContainer: '[data-qa="app-topics"]',
@@ -275,12 +274,16 @@ export const AppEditorGeneralInfoPreviewSelectors = {
   previewAuthorValue: '[data-qa="author"]',
   description: '[data-qa="application-description"]',
   version: '[data-qa="version"]',
+  releaseDate: '[data-qa="created-at"]',
 };
 
 export const AppEditorAppSettingsPreviewSelectors = {
   container: '[data-qa="app-preview-settings"]',
-  chatPreviewContainer: '[data-qa="app-settings-chat-mode"]',
-  previewIconContainer: '[data-qa="entity-icon"]',
+  appSettingsChatModeContainer: '[data-qa="app-settings-chat-mode"]',
+  previewIcon: '[data-qa="entity-icon"]',
+  agentInfoContainer: '[data-qa="agent-info-container"]',
+  agentInfo: '[data-qa="agent-info"]',
+  agentName: '[data-qa="agent-name"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {
@@ -303,11 +306,14 @@ export const AddApplicationGeneralInfoFormSelector = {
 export const AddApplicationAppSettingsFormSelector = {
   featuresLabel: '[for="features"]',
   attachmentsTypesLabel: '[for="attachmentTypes"]',
-  attachmentsTypesInput: '[data-qa=attachment-types-field]',
+  attachmentTypesContainer: '[data-qa="attachment-types-field"]',
   chatCompletionUrl: '#completionUrl',
   addButton: '[data-qa="add-application"]',
   appViewFormContainer: '[data-qa="app-view-form"]',
   maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
+  selectedAttachmentTypePills: '[data-qa="attachment-type-pill"]',
+  unselectAttachmentTypePillButton: (type: string) =>
+    `button[data-qa="unselect-item-${type}"]`,
 };
 
 export const InformationModalSelectors = {

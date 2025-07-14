@@ -1,6 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
-import { Styles } from '@/src/ui/domData';
+import { StyleValues, Styles } from '@/src/ui/domData';
 import { ChatHeader } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -27,10 +27,10 @@ export class ChatHeaderAssertion<T extends ChatHeader> extends BaseAssertion {
     option.hasFullWidth
       ? expect
           .soft(headerTitleWidth[0], ExpectedMessages.elementWidthIsValid)
-          .toBe(Styles.none)
+          .toBe(StyleValues.none)
       : expect
           .soft(headerTitleWidth[0], ExpectedMessages.elementWidthIsValid)
-          .not.toBe(Styles.none);
+          .not.toBe(StyleValues.none);
   }
 
   public async assertClearButtonState(expectedState: ElementState) {
