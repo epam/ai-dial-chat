@@ -126,6 +126,7 @@ import {
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
@@ -420,16 +421,22 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             );
             const widgetsSchemaIds =
               WidgetsSelectors.selectWidgetsSchemaIds(state);
-            const widgetModelsRefs = models
-              .filter((model) =>
-                widgetsSchemaIds.has(model.applicationTypeSchemaId ?? ''),
+            const externalAppsSchemaId = DefaultsService.get(
+              'externalAppsSchemaId',
+              DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+            );
+            const hiddenModelsRefs = models
+              .filter(
+                (model) =>
+                  widgetsSchemaIds.has(model.applicationTypeSchemaId ?? '') ||
+                  model.applicationTypeSchemaId === externalAppsSchemaId,
               )
               .map((model) => model.reference);
             const recentModelReferences =
               ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
                 (reference) =>
                   modelReferences.includes(reference) &&
-                  !widgetModelsRefs.includes(reference),
+                  !hiddenModelsRefs.includes(reference),
               );
 
             const overlayDefaultModelReference =
