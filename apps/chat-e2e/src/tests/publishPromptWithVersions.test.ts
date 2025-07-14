@@ -49,14 +49,13 @@ dialTest(
       'EPMRTC-5902',
     );
     let prompt: Prompt;
-    const versionsArray = [
+    const sortedVersionsArray = SortingUtil.sortVersionsArray([
       GeneratorUtil.randomApplicationVersion(),
       GeneratorUtil.randomApplicationVersion(),
       GeneratorUtil.randomApplicationVersion(),
-    ];
-    const sortedVersionsArray = SortingUtil.sortVersionsArray(versionsArray);
+    ]);
     const promptVersionDataMap = new Map(
-      versionsArray.map((version) => [
+      sortedVersionsArray.map((version) => [
         version,
         {
           content: GeneratorUtil.randomString(7),
@@ -70,8 +69,8 @@ dialTest(
       async () => {
         //create init prompt
         prompt = promptData.preparePrompt(
-          promptVersionDataMap.get(versionsArray[0])!.content,
-          promptVersionDataMap.get(versionsArray[0])!.description,
+          promptVersionDataMap.get(sortedVersionsArray[0])!.content,
+          promptVersionDataMap.get(sortedVersionsArray[0])!.description,
         );
         await dataInjector.createPrompts([prompt]);
 
@@ -79,10 +78,10 @@ dialTest(
           if (i > 0) {
             //update 2nd and 3rd prompts via API
             prompt.content = promptVersionDataMap.get(
-              versionsArray[i],
+              sortedVersionsArray[i],
             )!.content;
             prompt.description = promptVersionDataMap.get(
-              versionsArray[i],
+              sortedVersionsArray[i],
             )!.description;
             await dataInjector.updatePrompts([prompt]);
           }
@@ -92,7 +91,7 @@ dialTest(
             .withPromptInFolderResource(
               prompt,
               PublishActions.ADD_IF_ABSENT,
-              versionsArray[i],
+              sortedVersionsArray[i],
             )
             .build();
           const publicationRequestModel =
