@@ -298,6 +298,7 @@ export const UserMessage = memo(function UserMessage({
         ) as unknown as FolderInterface[],
         selectedDialLinks,
       );
+
       const isAttachmentsSame = isEqual(
         message.custom_content?.attachments,
         attachments?.attachments,
@@ -380,14 +381,11 @@ export const UserMessage = memo(function UserMessage({
     [dispatch],
   );
 
-  const handleSelectAlreadyUploaded = useCallback((result: unknown) => {
-    if (typeof result === 'object') {
-      const selectedFilesIds = result as string[];
-      const uniqueFilesIds = uniq(selectedFilesIds);
-      setNewEditableAttachmentsIds(
-        uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
-      );
-    }
+  const handleSelectAlreadyUploaded = useCallback((result: string[]) => {
+    const uniqueFilesIds = uniq(result);
+    setNewEditableAttachmentsIds(
+      uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
+    );
   }, []);
 
   const handleUploadFromDevice = useCallback(

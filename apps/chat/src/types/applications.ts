@@ -105,6 +105,12 @@ export type ApiApplicationModel =
 export interface ApplicationInfo extends ShareEntity {
   version: string;
 }
+
+export type ApplicationPropertiesType =
+  | QuickAppConfig
+  | (Record<string, unknown> & ExternalAppConfig)
+  | null;
+
 export interface CustomApplicationModel
   extends DialAIEntityModel,
     ApplicationInfo {
@@ -118,7 +124,17 @@ export interface CustomApplicationModel
     env?: Record<string, string>;
   };
   version: string;
-  applicationProperties?: QuickAppConfig | Record<string, unknown>;
+  applicationProperties?: ApplicationPropertiesType;
+}
+
+export interface ExternalAppConfig {
+  external_url?: string;
+}
+
+export interface ExternalAppModel extends DialAIEntityModel, ApplicationInfo {
+  applicationTypeSchemaId?: string;
+  version: string;
+  applicationProperties?: ApplicationPropertiesType;
 }
 
 export interface ApplicationLogsType {
