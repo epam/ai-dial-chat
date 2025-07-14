@@ -12,6 +12,7 @@ import { ServerUtils } from '@/src/utils/server/server';
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { ApiKeys, CoreApiKeys, ParseOptions } from '@/src/types/common';
+import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
@@ -199,9 +200,11 @@ export class ApiUtils {
         if (!response.ok) {
           return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
             switchMap((errorMessage) => {
-              return throwError(
-                () => new Error(errorMessage || response.status + ''),
+              const error: HttpErrorStatus = new Error(
+                errorMessage || response.status + '',
               );
+              error.status = response.status;
+              return throwError(() => error);
             }),
           );
         }
