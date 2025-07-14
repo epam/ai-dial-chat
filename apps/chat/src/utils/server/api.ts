@@ -155,10 +155,10 @@ export const parseApplicationApiKey = (
     parts.length < 2
       ? [apiKey, '1.0.0'] // receive without postfix with version i.e. {name}
       : [
-          decodeModelId(
+          `${decodeModelId(
             parts.slice(0, parts.length - 1).join(pathKeySeparator),
-          ),
-          parts[parts.length - 1],
+          )}${parts.at(-1)?.startsWith('_') ? '_' : ''}`, // handle even underscore case
+          parts[parts.length - 1].replace(/^_/, ''),
         ]; // receive correct format {name}__{version}
   return {
     name,
@@ -332,6 +332,9 @@ export const getVersionFromId = (id: string) => {
   // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
   if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
     return NA_VERSION;
+  }
+  if (id.startsWith(`${ApiKeys.Applications}/`) && parts.length <= 2) {
+    return '1.0.0';
   }
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
