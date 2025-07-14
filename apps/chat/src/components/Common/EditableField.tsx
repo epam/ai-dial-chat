@@ -2,11 +2,7 @@ import { ChangeEvent, useCallback } from 'react';
 
 import classNames from 'classnames';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
-
 import { replaceSpacesFromString } from '@/src/utils/app/common';
-
-import { Translation } from '@/src/types/translation';
 
 import { ErrorTooltip } from './ErrorTooltip';
 import { Tooltip } from './Tooltip';
@@ -33,7 +29,6 @@ export const EditableField: React.FC<Props> = ({
   onChange,
 }) => {
   const isErrors = !!errors?.length;
-  const { t } = useTranslation(Translation.Chat);
   const onChangeHandler = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const cleanName = replaceSpacesFromString(event.target.value);
@@ -62,7 +57,7 @@ export const EditableField: React.FC<Props> = ({
         <ErrorTooltip
           hideTooltip={!isErrors}
           tooltip={(errors ?? []).map((error) => (
-            <p key={error}>{t(error)}</p>
+            <p key={error}>{error}</p>
           ))}
           triggerClassName={classNames('absolute', tooltipIconClassName)}
         />

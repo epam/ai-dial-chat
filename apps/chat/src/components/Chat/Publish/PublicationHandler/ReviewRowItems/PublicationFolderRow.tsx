@@ -13,6 +13,7 @@ import {
 import { getStringValidationErrors } from '@/src/utils/app/forms';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isFolderNameNotUniq } from '@/src/utils/app/publications';
 
 import { PublicationReviewItem } from '@/src/types/publication';
 
@@ -79,30 +80,34 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     PublicationSelectors.selectSelectedItemsToApprove,
   );
 
+  const folderEditState = useAppSelector(
+    PublicationSelectors.selectFoldersEditState,
+  );
+
   useEffect(() => {
     const cleanName = replaceSpacesFromString(currentFolder.name);
     setInputName(cleanName);
-    if (isEditMode) {
-      setErrors(() =>
-        getStringValidationErrors({
-          value: cleanName,
-          label: 'Folder name',
-          checkDotsInTheEnd: true,
-        }),
-      );
-    }
   }, [currentFolder.name, isEditMode]);
+
+  useEffect(() => {
+    const isNotUniqName = isFolderNameNotUniq(
+      inputName,
+      currentFolder,
+      folderEditState,
+    );
+
+    const nameErrors = getStringValidationErrors({
+      value: inputName,
+      label: 'Folder name',
+      checkDotsInTheEnd: true,
+      isNotUniqName,
+    });
+    setErrors(nameErrors);
+  }, [currentFolder, folderEditState, inputName]);
 
   const handleChangeName = useCallback(
     (name: string) => {
       setInputName(name);
-      setErrors(
-        getStringValidationErrors({
-          value: name,
-          label: 'Folder name',
-          checkDotsInTheEnd: true,
-        }),
-      );
 
       dispatch(
         PublicationActions.setEditFolderStateByFolderId({
