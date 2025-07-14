@@ -426,6 +426,7 @@ dialSharedWithMeTest(
   async ({
     dialHomePage,
     page,
+    appContainer,
     folderConversations,
     chatBarFolderAssertion,
     folderDropdownMenu,
@@ -525,6 +526,7 @@ dialSharedWithMeTest(
             .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
             .waitFor();
         }
+        await appContainer.getChatLoader().waitForState({ state: 'hidden' });
         await folderConversations.selectFolderEntity(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
