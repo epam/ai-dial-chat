@@ -83,10 +83,15 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   }, [defaultVersion, isEditMode]);
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
       setErrors(getValidationErrors(inputVersion));
     }
-  }, [getValidationErrors, inputVersion, isEditMode]);
+  }, [
+    getValidationErrors,
+    inputVersion,
+    isEditMode,
+    item.publicationInfo?.action,
+  ]);
 
   const handleChangeVersion = useCallback(
     (version: string) => {

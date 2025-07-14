@@ -408,16 +408,13 @@ export const ChatInputMessage = Inversify.register(
     );
 
     const handleSelectAlreadyUploaded = useCallback(
-      (result: unknown) => {
-        if (typeof result === 'object') {
-          const selectedFilesIds = result as string[];
-          dispatch(FilesActions.resetSelectedFiles());
-          dispatch(
-            FilesActions.selectFiles({
-              ids: selectedFilesIds,
-            }),
-          );
-        }
+      (result: string[]) => {
+        dispatch(FilesActions.resetSelectedFiles());
+        dispatch(
+          FilesActions.selectFiles({
+            ids: result,
+          }),
+        );
       },
       [dispatch],
     );
