@@ -35,7 +35,7 @@ export const ReviewExternalAppSection = ({
         href={externalUrl ?? ''}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex flex-nowrap items-center gap-1 text-accent-primary"
+        className="flex max-w-[414px] flex-nowrap items-center gap-1 break-all text-accent-primary"
       >
         {externalUrl} <IconExternalLink size={16}></IconExternalLink>
       </Link>
