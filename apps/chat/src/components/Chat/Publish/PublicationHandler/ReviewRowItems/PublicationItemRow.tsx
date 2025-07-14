@@ -11,6 +11,7 @@ import {
   isVersionExists,
   replaceSpacesFromString,
 } from '@/src/utils/app/common';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getStringValidationErrors,
   getVersionValidationErrors,
@@ -68,43 +69,34 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   }, [defaultVersion, isEditMode]);
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
       const isExistVersion = isVersionExists(
-        defaultVersion,
+        inputVersion,
         item.id,
         publicVersionGroups,
         item.name,
       );
-      setErrors(
-        getVersionValidationErrors(
-          defaultVersion,
-          isExistVersion,
-          isApplication,
-        ),
+
+      const validationErrors = getVersionValidationErrors(
+        inputVersion,
+        isExistVersion,
+        isApplication,
       );
+      setErrors(validationErrors);
     }
   }, [
-    defaultVersion,
+    inputVersion,
     isApplication,
     isEditMode,
     item.id,
     item.name,
+    item.publicationInfo?.action,
     publicVersionGroups,
   ]);
 
   const handleChangeVersion = useCallback(
     (version: string) => {
       setInputVersion(version);
-
-      const isExistVersion = isVersionExists(
-        version,
-        item.id,
-        publicVersionGroups,
-        item.name,
-      );
-      setErrors(
-        getVersionValidationErrors(version, isExistVersion, isApplication),
-      );
 
       dispatch(
         PublicationActions.setEntityEditStateByReviewUrl({
@@ -114,14 +106,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         }),
       );
     },
-    [
-      item.id,
-      item.name,
-      publicVersionGroups,
-      isApplication,
-      dispatch,
-      editState?.name,
-    ],
+    [dispatch, editState?.name, item.id, item.name],
   );
 
   const publicVersionGroupId = usePublicVersionGroupId(item);
@@ -208,6 +193,9 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const selectedPublicationResources = useAppSelector(
     PublicationSelectors.selectSelectedItemsToApprove,
   );
+  const editState = useAppSelector(
+    PublicationSelectors.selectEntitiesEditState,
+  );
 
   const isSelected = useMemo(
     () => selectedPublicationResources.includes(item.id),
@@ -221,25 +209,31 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   useEffect(() => {
     const cleanName = replaceSpacesFromString(item.name);
     setInputName(cleanName);
+  }, [item.name, isEditMode]);
+
+  useEffect(() => {
+    const isNotUniqName = Object.entries(editState).some(
+      ([key, { name: editStateName }]) => {
+        const keyFolderId = getFolderIdFromEntityId(key);
+        return (
+          item.id !== key &&
+          item.folderId === keyFolderId &&
+          inputName.trim() === editStateName.trim()
+        );
+      },
+    );
     const nameErrors = getStringValidationErrors({
-      value: cleanName,
+      value: inputName,
       label: `${itemTypeName} name`,
       checkDotsInTheEnd: true,
+      isNotUniqName,
     });
     setErrors(nameErrors);
-  }, [item.name, isEditMode, itemTypeName]);
+  }, [editState, inputName, item.folderId, item.id, itemTypeName]);
 
   const handleChangeName = useCallback(
     (name: string) => {
       setInputName(name);
-
-      setErrors(
-        getStringValidationErrors({
-          value: name,
-          label: `${itemTypeName} name`,
-          checkDotsInTheEnd: true,
-        }),
-      );
 
       dispatch(
         PublicationActions.setEntityEditStateByReviewUrl({
@@ -253,11 +247,10 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       );
     },
     [
-      itemTypeName,
       dispatch,
+      entityEditState?.version,
       item.id,
       item.publicationInfo?.version,
-      entityEditState?.version,
     ],
   );
 

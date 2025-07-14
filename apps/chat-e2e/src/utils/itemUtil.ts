@@ -26,14 +26,18 @@ export class ItemUtil {
 
   public static getApiPromptId(prompt: Prompt, bucket?: string) {
     const bucketPath = ItemUtil.getPromptBucketPath(bucket);
-    return `${bucketPath}/${prompt.id}`;
+    return prompt.id.includes(bucketPath)
+      ? prompt.id
+      : `${bucketPath}/${prompt.id}`;
   }
 
   public static getApiPromptFolderId(prompt: Prompt, bucket?: string) {
     const promptBucket = ItemUtil.getPromptBucketPath(bucket);
     return prompt.folderId?.length === 0
       ? promptBucket
-      : `${promptBucket}/${prompt.folderId}`;
+      : prompt.folderId.includes(promptBucket)
+        ? prompt.folderId
+        : `${promptBucket}/${prompt.folderId}`;
   }
 
   public static getApiConversationFolderId(

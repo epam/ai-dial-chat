@@ -6,7 +6,10 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isApplicationPublic } from '@/src/utils/app/application';
+import {
+  isApplicationPublic,
+  isExternalApp,
+} from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
@@ -69,6 +72,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
           featureType={FeatureType.Application}
           iconClassName="bg-layer-3"
           isMyEntity={isMyApp}
+          isExternal={isExternalApp(entity)}
         >
           <ModelIcon
             enableShrinking
