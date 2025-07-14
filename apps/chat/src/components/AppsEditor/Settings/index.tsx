@@ -58,8 +58,8 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
