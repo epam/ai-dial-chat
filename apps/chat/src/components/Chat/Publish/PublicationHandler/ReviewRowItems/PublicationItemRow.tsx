@@ -64,33 +64,34 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
   const isApplication = useMemo(() => isApplicationId(item.id), [item.id]);
 
-  const getValidationErrors = useCallback(
-    (version: string) => {
-      const isExistVersion = isVersionExists(
-        version,
-        item.id,
-        publicVersionGroups,
-        item.name,
-      );
-
-      return getVersionValidationErrors(version, isExistVersion, isApplication);
-    },
-    [isApplication, item.id, item.name, publicVersionGroups],
-  );
-
   useEffect(() => {
     setInputVersion(defaultVersion);
   }, [defaultVersion, isEditMode]);
 
   useEffect(() => {
     if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
-      setErrors(getValidationErrors(inputVersion));
+      const isExistVersion = isVersionExists(
+        inputVersion,
+        item.id,
+        publicVersionGroups,
+        item.name,
+      );
+
+      const validationErrors = getVersionValidationErrors(
+        inputVersion,
+        isExistVersion,
+        isApplication,
+      );
+      setErrors(validationErrors);
     }
   }, [
-    getValidationErrors,
     inputVersion,
+    isApplication,
     isEditMode,
+    item.id,
+    item.name,
     item.publicationInfo?.action,
+    publicVersionGroups,
   ]);
 
   const handleChangeVersion = useCallback(
@@ -205,37 +206,30 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const getValidationErrors = useCallback(
-    (name: string) => {
-      const isNotUniqName = Object.entries(editState).some(
-        ([key, { name: editStateName }]) => {
-          const keyFolderId = getFolderIdFromEntityId(key);
-          return (
-            item.id !== key &&
-            item.folderId === keyFolderId &&
-            name.trim() === editStateName.trim()
-          );
-        },
-      );
-      const nameErrors = getStringValidationErrors({
-        value: name,
-        label: `${itemTypeName} name`,
-        checkDotsInTheEnd: true,
-        isNotUniqName,
-      });
-      return nameErrors;
-    },
-    [editState, item.folderId, item.id, itemTypeName],
-  );
-
   useEffect(() => {
     const cleanName = replaceSpacesFromString(item.name);
     setInputName(cleanName);
   }, [item.name, isEditMode]);
 
   useEffect(() => {
-    setErrors(getValidationErrors(inputName));
-  }, [getValidationErrors, inputName]);
+    const isNotUniqName = Object.entries(editState).some(
+      ([key, { name: editStateName }]) => {
+        const keyFolderId = getFolderIdFromEntityId(key);
+        return (
+          item.id !== key &&
+          item.folderId === keyFolderId &&
+          inputName.trim() === editStateName.trim()
+        );
+      },
+    );
+    const nameErrors = getStringValidationErrors({
+      value: inputName,
+      label: `${itemTypeName} name`,
+      checkDotsInTheEnd: true,
+      isNotUniqName,
+    });
+    setErrors(nameErrors);
+  }, [editState, inputName, item.folderId, item.id, itemTypeName]);
 
   const handleChangeName = useCallback(
     (name: string) => {

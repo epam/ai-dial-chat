@@ -84,33 +84,26 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     PublicationSelectors.selectFoldersEditState,
   );
 
-  const getValidationErrors = useCallback(
-    (name: string) => {
-      const isNotUniqName = isFolderNameNotUniq(
-        name,
-        currentFolder,
-        folderEditState,
-      );
-
-      const nameErrors = getStringValidationErrors({
-        value: name,
-        label: 'Folder name',
-        checkDotsInTheEnd: true,
-        isNotUniqName,
-      });
-      return nameErrors;
-    },
-    [currentFolder, folderEditState],
-  );
-
   useEffect(() => {
     const cleanName = replaceSpacesFromString(currentFolder.name);
     setInputName(cleanName);
   }, [currentFolder.name, isEditMode]);
 
   useEffect(() => {
-    setErrors(getValidationErrors(inputName));
-  }, [getValidationErrors, inputName]);
+    const isNotUniqName = isFolderNameNotUniq(
+      inputName,
+      currentFolder,
+      folderEditState,
+    );
+
+    const nameErrors = getStringValidationErrors({
+      value: inputName,
+      label: 'Folder name',
+      checkDotsInTheEnd: true,
+      isNotUniqName,
+    });
+    setErrors(nameErrors);
+  }, [currentFolder, folderEditState, inputName]);
 
   const handleChangeName = useCallback(
     (name: string) => {
