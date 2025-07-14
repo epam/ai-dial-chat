@@ -9,6 +9,7 @@ import classNames from 'classnames';
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isExternalApp } from '@/src/utils/app/application';
 import {
   getConversationModelParams,
   isPlaybackConversation,
@@ -152,6 +153,7 @@ const TalkToModalView = ({
   const displayedModels = useMemo(() => {
     const filteredModels = sortedModels.filter(
       (entity) =>
+        !isExternalApp(entity) &&
         !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
         !!searchedModels.find((m) => m.reference === entity.reference),
     );

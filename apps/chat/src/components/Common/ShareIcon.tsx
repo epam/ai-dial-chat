@@ -1,5 +1,5 @@
-import { IconPencil } from '@tabler/icons-react';
-import { ReactNode } from 'react';
+import { IconExternalLink, IconPencil } from '@tabler/icons-react';
+import { ReactNode, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -26,6 +26,7 @@ interface ShareIconProps extends ShareInterface {
   iconClassName?: string;
   iconWrapperClassName?: string;
   isMyEntity?: boolean;
+  isExternal?: boolean;
 }
 
 export function ShareIcon({
@@ -39,6 +40,7 @@ export function ShareIcon({
   iconClassName,
   iconWrapperClassName,
   isMyEntity,
+  isExternal,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isApplication = featureType === FeatureType.Application;
@@ -53,22 +55,23 @@ export function ShareIcon({
     containerClassName,
   );
 
+  const isMyEntityIcon = isMyEntity && !isPublished && !isShared;
+
+  const [AdditionalIcon, dataQA] = useMemo(() => {
+    if (isPublished && isPublishingEnabled) return [World, 'world-icon'];
+    if (isExternal) return [IconExternalLink, 'external-icon'];
+    if (isShared) return [ArrowUpRight, 'arrow-icon'];
+    return [IconPencil, 'pencil-icon'];
+  }, [isPublished, isPublishingEnabled, isExternal, isShared]);
+
   if (
     (!isSharingEnabled || !isShared) &&
     (!isPublishingEnabled || !isPublished) &&
-    !isMyEntity
+    !isMyEntity &&
+    !isExternal
   ) {
     return <div className={containerClass}>{children}</div>;
   }
-
-  const AdditionalIcon =
-    isPublished && isPublishingEnabled
-      ? World
-      : isShared
-        ? ArrowUpRight
-        : IconPencil;
-
-  const isMyEntityIcon = isMyEntity && !isPublished && !isShared;
 
   return (
     <div className={containerClass}>
@@ -82,13 +85,7 @@ export function ShareIcon({
             : '-bottom-1 -left-1 rounded-sm stroke-[1.5]',
           iconWrapperClassName,
         )}
-        data-qa={
-          isPublished && isPublishingEnabled
-            ? 'world-icon'
-            : isMyEntityIcon
-              ? 'pencil-icon'
-              : 'arrow-icon'
-        }
+        data-qa={dataQA}
       >
         <Tooltip
           tooltip={

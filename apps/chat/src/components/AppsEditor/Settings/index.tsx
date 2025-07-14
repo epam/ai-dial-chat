@@ -25,6 +25,7 @@ import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
@@ -57,16 +58,19 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
 import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
+import { GeneralInfoPreview } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoPreview';
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';
+import { ExternalAppView } from './ExternalAppView';
 import { ApplicationPreviewChat } from './Previews/ApplicationPreviewChat';
 import { QuickAppView } from './QuickAppView';
 import {
@@ -75,6 +79,7 @@ import {
   QuickAppFormData,
   getCodeAppDefaultValues,
   getCustomApplicationDefaultValues,
+  getExternalAppDefaultValues,
   getQuickAppDefaultValues,
 } from './form';
 
@@ -171,10 +176,30 @@ export const ApplicationSettings: React.FC<Props> = ({
     [modelFromState],
   );
 
+  const quickAppSchemaId = useMemo(() => {
+    return DefaultsService.get(
+      'quickAppsSchemaId',
+      DEFAULT_QUICK_APPS_SCHEMA_ID,
+    );
+  }, []);
+
+  const externalAppsSchemaId = useMemo(() => {
+    return DefaultsService.get(
+      'externalAppsSchemaId',
+      DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+    );
+  }, []);
+
   const getDefaultValues = useCallback(
     (type: string) => {
-      if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+      if (quickAppSchemaId.endsWith(type)) {
         return getQuickAppDefaultValues({
+          app: applicationData,
+        });
+      }
+
+      if (externalAppsSchemaId.endsWith(type)) {
+        return getExternalAppDefaultValues({
           app: applicationData,
         });
       }
@@ -193,7 +218,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       };
       return defaultValues[type] ?? null;
     },
-    [applicationData, pythonVersions],
+    [applicationData, externalAppsSchemaId, pythonVersions, quickAppSchemaId],
   );
 
   const getFormView = (type: string) => {
@@ -201,13 +226,23 @@ export const ApplicationSettings: React.FC<Props> = ({
       ? decodeURIComponent(router.query.publicationUrl.toString())
       : undefined;
 
-    if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+    if (quickAppSchemaId.endsWith(type)) {
       return (
         <QuickAppView
           schema={schema}
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
           oldApplication={applicationData}
           isShared={modelFromState?.isShared ?? false}
+          publicationUrl={publicationUrl}
+        />
+      );
+    }
+
+    if (externalAppsSchemaId.endsWith(type)) {
+      return (
+        <ExternalAppView
+          schema={schema}
+          oldApplication={applicationData}
           publicationUrl={publicationUrl}
         />
       );
@@ -471,13 +506,22 @@ export const ApplicationSettings: React.FC<Props> = ({
               className="flex-1 overflow-auto"
               onFocus={handleSaveOnChatFocus}
             >
-              <ApplicationPreviewChat
-                isAppDeploymentInProgress={isAppDeploymentInProgress}
-                isApplicationValid={methods.formState.isValid}
-                applicationId={applicationData.id}
-                type={type}
-                isAppDeployed={isAppDeployed}
-              />
+              {!externalAppsSchemaId.endsWith(type) ? (
+                <ApplicationPreviewChat
+                  isAppDeploymentInProgress={isAppDeploymentInProgress}
+                  isApplicationValid={methods.formState.isValid}
+                  applicationId={applicationData.id}
+                  type={type}
+                  isAppDeployed={isAppDeployed}
+                />
+              ) : (
+                <GeneralInfoPreview
+                  entity={applicationData}
+                  onClosePreview={() =>
+                    handlePreviewModeChange(PreviewMode.closed)
+                  }
+                />
+              )}
             </div>
           )}
         </div>
