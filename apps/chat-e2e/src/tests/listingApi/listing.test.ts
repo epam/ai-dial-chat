@@ -12,7 +12,7 @@ const expectedAddons = process.env.ADDONS_LIST_FOR_TESTS
 
 test('Models API listing', async () => {
   test.skip(process.env.MODELS_LIST_FOR_TESTS === undefined, skipReason);
-  const models = ModelsUtil.getModels();
+  const models = ModelsUtil.getModels(false);
 
   expect
     .soft(models.length, ExpectedMessages.entitiesCountIsValid)
@@ -21,7 +21,10 @@ test('Models API listing', async () => {
   expectedModels.forEach((model) => {
     const actualModel = ModelsUtil.getModel(model.entityId);
     expect
-      .soft(actualModel, `${model}: ${ExpectedMessages.modelIsAvailable}`)
+      .soft(
+        actualModel,
+        `${model.entityId}: ${ExpectedMessages.modelIsAvailable}`,
+      )
       .toBeDefined();
   });
 });

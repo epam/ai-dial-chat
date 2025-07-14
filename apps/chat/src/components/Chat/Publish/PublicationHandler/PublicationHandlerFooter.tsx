@@ -54,7 +54,11 @@ import {
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { Conversation, FeatureType } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  FeatureType,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -97,10 +101,12 @@ export const PublicationHandlerFooter = ({
   const displayAuthorEditState = useAppSelector(
     PublicationSelectors.selectDisplayAuthorEditState,
   );
-  const itemsToPublish = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+  const itemsToApprove = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToApprove,
   );
-
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
@@ -272,7 +278,7 @@ export const PublicationHandlerFooter = ({
   );
 
   const handleApprovePublication = useCallback(() => {
-    if (itemsToPublish.length !== publication.resources.length) {
+    if (itemsToApprove.length !== publication.resources.length) {
       dispatch(PublicationActions.updateAndApprovePublicationRequest());
     } else {
       dispatch(
@@ -283,7 +289,7 @@ export const PublicationHandlerFooter = ({
     }
   }, [
     dispatch,
-    itemsToPublish.length,
+    itemsToApprove.length,
     publication.resources.length,
     publication.url,
   ]);
@@ -296,10 +302,21 @@ export const PublicationHandlerFooter = ({
     ([key, { version, name }]) => {
       const isInvalidName = !isEntityNameValid(name);
 
+      const resource = publication.resources.find(
+        ({ reviewUrl }) => reviewUrl === key,
+      );
+
       const isValidVersion =
+        resource?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
-          !isVersionExists(version, key, publicVersionGroups, name) &&
+          !isVersionExists(
+            version,
+            key,
+            publicVersionGroups,
+            name,
+            publication.targetFolder,
+          ) &&
           (!isApplicationId(key) || isVersionPartSizeValid(version)));
 
       return isInvalidName || !isValidVersion;
@@ -320,14 +337,15 @@ export const PublicationHandlerFooter = ({
   const isApproveDisabled =
     !isAllResourcesReviewed ||
     !!invalidEntities.length ||
-    someReviewedConversationHaveNoMessages;
+    someReviewedConversationHaveNoMessages ||
+    isPublicationUpdating;
 
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
   return (
     <div
       className={classNames(
-        'flex w-full items-center gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4',
+        'flex w-full items-center gap-3 rounded-t bg-layer-2 px-3 py-4 md:gap-5 md:px-4',
         isOnlyFilesPublication ? 'justify-end' : 'justify-between',
       )}
     >
@@ -399,7 +417,9 @@ export const PublicationHandlerFooter = ({
                   ? "Request can't be approved as some conversations are unpublished"
                   : someReviewedConversationHaveNoMessages
                     ? "Request can't be approved as some conversations have no messages"
-                    : "It's required to review all resources",
+                    : isPublicationUpdating
+                      ? 'Request is updating'
+                      : "It's required to review all resources",
               )}
             >
               <button
@@ -408,7 +428,7 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {isSmallScreen ? t('Approve') : t('Approve selected')}
+                {t(isSmallScreen ? 'Approve' : 'Approve selected')}
               </button>
             </Tooltip>
           </>

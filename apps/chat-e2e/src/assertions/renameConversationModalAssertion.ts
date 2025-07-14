@@ -27,15 +27,6 @@ export class RenameConversationModalAssertion extends BaseAssertion {
       .toHaveText(expectedTitle);
   }
 
-  async assertInputValue(expectedValue: string) {
-    await expect
-      .soft(
-        this.renameModal.nameInput.getElementLocator(),
-        'Rename Conversation Modal input value should match',
-      )
-      .toHaveText(expectedValue);
-  }
-
   async assertSaveButtonIsEnabled() {
     await expect
       .soft(

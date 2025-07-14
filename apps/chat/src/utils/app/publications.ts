@@ -307,6 +307,7 @@ export const getFilesFromPublicResources = ({
 
     return {
       id: r.reviewUrl,
+      absolutePath: folderId,
       folderId,
       name: splitEntityId(r.targetUrl).name,
       contentLength: 0,

@@ -63,8 +63,10 @@ import {
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
+  getEntityBucket,
   isEntityIdExternal,
   isEntityIdLocal,
+  isMyBucket,
 } from '@/src/utils/app/id';
 import {
   mergeMessages,
@@ -718,6 +720,8 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
+      const selectedPublicationUrl =
+        PublicationSelectors.selectSelectedPublicationUrl(state$.value);
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const overlayNewConversationsFolder =
         state$.value.overlay.newConversationsFolder;
@@ -753,7 +757,11 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             selectedIdToReplaceWithNewOne: conversation.id,
           }),
         ),
-        of(PublicationActions.selectPublication(null)),
+        iif(
+          () => !!selectedPublicationUrl,
+          of(PublicationActions.selectPublication(null)),
+          EMPTY,
+        ),
       );
     }),
   );
@@ -1233,6 +1241,24 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         overlaySystemPrompt,
         isOverlay,
       }) => {
+        const publicationUrl =
+          payload.conversation.publicationInfo?.publicationUrl;
+        if (
+          publicationUrl &&
+          payload.message.custom_content?.attachments?.some((attachment) =>
+            isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
+          )
+        ) {
+          return of(
+            PublicationActions.updatePublicationConversationAttachmentsAndSendMessage(
+              {
+                publicationUrl,
+                sendMessagePayload: payload,
+              },
+            ),
+          );
+        }
+
         const actions: Observable<AppAction>[] = [];
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
@@ -1720,6 +1746,15 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
             newMessages = messages.filter(
               (_, index) =>
                 index !== payload.index && index !== payload.index + 1,
+            );
+          } else if (
+            payload.index !== 0 &&
+            messages[payload.index].role === Role.Assistant &&
+            messages[payload.index - 1].role === Role.User
+          ) {
+            newMessages = messages.filter(
+              (_, index) =>
+                index !== payload.index && index !== payload.index - 1,
             );
           } else {
             newMessages = messages.filter(
@@ -2357,28 +2392,82 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const saveConversationEpic: AppEpic = (action$) =>
+const saveConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.saveConversation.type),
     filter((action) => !action.payload.conversation.isMessageStreaming), // shouldn't save during streaming
     concatMap(({ payload }) => {
-      const newConversation = payload.conversation;
-      const requestMetadata = !!payload.requestMetadataAfter;
+      const { conversation, requestMetadataAfter, selectSavedOptions } =
+        payload;
 
-      if (isEntityIdLocal(newConversation)) {
+      if (isEntityIdLocal(conversation)) {
         return of(ConversationsActions.saveConversationSuccess());
       }
 
-      return ConversationService.updateConversation(newConversation).pipe(
+      return ConversationService.updateConversation(conversation).pipe(
         switchMap((conversationInfo) => {
           if (!conversationInfo) {
             return of(ConversationsActions.saveConversationSuccess());
           }
 
+          const actions: Observable<AppAction>[] = [];
+          const state = state$.value;
+
+          if (requestMetadataAfter) {
+            actions.push(
+              of(
+                ConversationsActions.getConversationMetadata({
+                  conversationId: conversation.id,
+                }),
+              ),
+            );
+          }
+
+          if (selectSavedOptions?.selectSaved) {
+            const { compareConversationId } = selectSavedOptions;
+
+            if (compareConversationId) {
+              const selectedConversationIds =
+                ConversationsSelectors.selectSelectedConversationsIds(state);
+              const haveSelectedConversationsCompareConversation =
+                selectedConversationIds.includes(compareConversationId);
+
+              if (haveSelectedConversationsCompareConversation) {
+                actions.push(
+                  of(
+                    ConversationsActions.selectConversations({
+                      conversationIds: selectedConversationIds.map((id) =>
+                        id === selectSavedOptions.compareConversationId
+                          ? selectSavedOptions.compareConversationId
+                          : conversation.id,
+                      ),
+                    }),
+                  ),
+                );
+              } else {
+                actions.push(
+                  of(
+                    ConversationsActions.selectConversations({
+                      conversationIds: [compareConversationId, conversation.id],
+                    }),
+                  ),
+                );
+              }
+            } else {
+              actions.push(
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [conversation.id],
+                  }),
+                ),
+              );
+            }
+          }
+
           return concat(
             of(
               ConversationsActions.updateConversationSuccess({
-                id: newConversation.id,
+                id: conversation.id,
                 conversation: {
                   createdAt: conversationInfo?.createdAt,
                   updatedAt: conversationInfo?.updatedAt,
@@ -2386,15 +2475,7 @@ const saveConversationEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.saveConversationSuccess()),
-            iif(
-              () => requestMetadata,
-              of(
-                ConversationsActions.getConversationMetadata({
-                  conversationId: newConversation.id,
-                }),
-              ),
-              EMPTY,
-            ),
+            ...actions,
           );
         }),
         catchError((err) => {
@@ -2407,7 +2488,7 @@ const saveConversationEpic: AppEpic = (action$) =>
                 ),
               ),
             ),
-            of(ConversationsActions.saveConversationFail(newConversation)),
+            of(ConversationsActions.saveConversationFail(conversation)),
           );
         }),
       );
@@ -2499,6 +2580,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             of(
               ConversationsActions.saveConversation({
                 conversation: newConversation,
+                selectSavedOptions: {
+                  selectSaved: payload.selectUpdatedOptions?.selectUpdated,
+                  compareConversationId:
+                    payload.selectUpdatedOptions?.compareConversationId,
+                },
               }),
             ),
             EMPTY,
