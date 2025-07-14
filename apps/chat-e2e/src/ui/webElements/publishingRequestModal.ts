@@ -1,5 +1,6 @@
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import {
   IconSelectors,
   PublishingApprovalModalSelectors,
@@ -123,6 +124,9 @@ export class PublishingRequestModal extends BaseElement {
 
   public requestName = this.getChildElementBySelector(
     PublishingModalSelectors.requestName,
+  ).getChildElementBySelector(Tags.input);
+  public requestNameErrorMessage = this.getChildElementBySelector(
+    PublishingModalSelectors.requestNameErrorMessage(),
   );
   public author = this.getChildElementBySelector(
     PublishingModalSelectors.author,

@@ -10,6 +10,7 @@ import { RootState } from '@/src/types/store';
 
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
@@ -179,6 +180,9 @@ const selectQuickAppsModel = (state: RootState) =>
 const selectQuickAppsSchemaId = (state: RootState) =>
   rootSelector(state).quickAppsSchemaId ?? DEFAULT_QUICK_APPS_SCHEMA_ID;
 
+const selectExternalAppsSchemaId = (state: RootState) =>
+  rootSelector(state).externalAppsSchemaId ?? DEFAULT_EXTERNAL_APPS_SCHEMA_ID;
+
 const FALLBACK_STRING_VALUE = '';
 
 const selectDialApiHost = (state: RootState) =>
@@ -193,6 +197,7 @@ const selectDefaults = createSelector(
     selectQuickAppsHost,
     selectQuickAppsModel,
     selectQuickAppsSchemaId,
+    selectExternalAppsSchemaId,
     selectDialApiHost,
     selectDefaultSystemPrompt,
   ],
@@ -201,6 +206,7 @@ const selectDefaults = createSelector(
     quickAppsHost,
     quickAppsModel,
     quickAppsSchemaId,
+    externalAppsSchemaId,
     dialApiHost,
     defaultSystemPrompt,
   ) =>
@@ -209,6 +215,7 @@ const selectDefaults = createSelector(
       quickAppsHost,
       quickAppsModel,
       quickAppsSchemaId,
+      externalAppsSchemaId,
       dialApiHost,
       defaultSystemPrompt,
     }) as Defaults,

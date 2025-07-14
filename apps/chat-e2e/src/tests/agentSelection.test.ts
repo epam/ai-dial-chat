@@ -609,6 +609,7 @@ dialTest(
     navigationPanel,
     chat,
     talkToAgentDialog,
+    marketplacePage,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -643,12 +644,14 @@ dialTest(
       async () => {
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
         const firstModelElement =
           await marketplaceAgentsSection.findAgentElement(firstModel);
         await firstModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
+        await dialHomePage.waitForPageLoaded();
       },
     );
 
