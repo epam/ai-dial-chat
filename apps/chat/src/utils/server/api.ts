@@ -333,9 +333,6 @@ export const getVersionFromId = (id: string) => {
   if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
     return NA_VERSION;
   }
-  if (id.startsWith(`${ApiKeys.Applications}/`) && parts.length <= 2) {
-    return '1.0.0';
-  }
 
   return version && validVersionRegEx.test(version) ? version : NA_VERSION;
 };
