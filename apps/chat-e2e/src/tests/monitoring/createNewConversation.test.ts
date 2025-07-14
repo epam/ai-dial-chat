@@ -25,9 +25,9 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    agentSettings,
     temperatureSlider,
     chat,
+    agentSettingAssertion,
     chatMessages,
     talkToAgents,
     talkToAgentDialog,
@@ -59,13 +59,9 @@ dialTest(
         await talkToAgentDialog.cancelButton.click();
 
         await chat.configureSettingsButton.click();
-        const defaultSystemPrompt = await agentSettings.getSystemPrompt();
-        expect
-          .soft(
-            defaultSystemPrompt,
-            ExpectedMessages.defaultSystemPromptIsEmpty,
-          )
-          .toBe(ExpectedConstants.emptyString);
+        await agentSettingAssertion.assertSystemPromptValue(
+          ExpectedConstants.emptyString,
+        );
 
         const defaultTemperature = await temperatureSlider.getTemperature();
         expect

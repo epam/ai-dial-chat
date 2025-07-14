@@ -103,5 +103,9 @@ export const filterIdsByFeatureType = (
   return [];
 };
 
+export const isRootEntity = (id: string) => {
+  return id.split('/').length === 3;
+};
+
 export const getIdWithoutFeatureType = (id: string) =>
   id.split('/').slice(1).join('/');

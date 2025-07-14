@@ -13,12 +13,17 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 
 import { FeatureType } from '@/src/types/common';
-import { DialFile, DialLink } from '@/src/types/files';
+import { DialFile, DialLink, FileSourceType } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
+import {
+  AuthSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
@@ -26,27 +31,37 @@ import { AttachLinkDialog } from './AttachLinkDialog';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
 
+const myFilesFilter = new Set([FileSourceType.MY_FILES]);
+
 interface Props {
   selectedFilesIds?: string[];
-  onSelectAlreadyUploaded: (result: unknown) => void;
+  TriggerCustomRenderer?: JSX.Element;
+  contextMenuPlacement?: Placement;
+  onSelectAlreadyUploaded: (result: string[]) => void;
   onUploadFromDevice: (
     selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
     folderPath: string | undefined,
   ) => void;
   onAddLinkToMessage: (link: DialLink) => void;
-  TriggerCustomRenderer?: JSX.Element;
-  contextMenuPlacement?: Placement;
 }
 
 export const AttachButton = ({
   selectedFilesIds,
+  TriggerCustomRenderer,
+  contextMenuPlacement,
   onSelectAlreadyUploaded,
   onUploadFromDevice,
   onAddLinkToMessage,
-  TriggerCustomRenderer,
-  contextMenuPlacement,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const selectedConversationIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const resourcesToReview = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -66,6 +81,7 @@ export const AttachButton = ({
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
   );
+
   const [isPreUploadDialogOpened, setIsPreUploadDialogOpened] = useState(false);
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -75,12 +91,36 @@ export const AttachButton = ({
   const handleOpenAttachmentsModal = useCallback(() => {
     setIsSelectFilesDialogOpened(true);
   }, []);
+
   const handleAttachFromComputer = useCallback(() => {
     setIsPreUploadDialogOpened(true);
   }, []);
+
   const handleAttachLink = useCallback(() => {
     setIsAttachLinkDialogOpened(true);
   }, []);
+
+  const handleCloseFileManagerModal = useCallback(
+    (result: boolean | string[]) => {
+      if (typeof result !== 'boolean') {
+        onSelectAlreadyUploaded(result);
+      }
+
+      setIsSelectFilesDialogOpened(false);
+    },
+    [onSelectAlreadyUploaded],
+  );
+
+  const isApproveRequiredEntity = useMemo(
+    () =>
+      resourcesToReview.some((r) =>
+        selectedConversationIds.includes(r.reviewUrl),
+      ),
+    [resourcesToReview, selectedConversationIds],
+  );
+
+  const sourceFilters =
+    isApproveRequiredEntity && isAdmin ? myFilesFilter : undefined;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () =>
@@ -144,16 +184,14 @@ export const AttachButton = ({
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen
+          sourceFilters={sourceFilters}
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
           customButtonLabel={t('Attach')}
           initialSelectedFilesIds={selectedFilesIds}
           showTooltip
-          onClose={(result: unknown) => {
-            onSelectAlreadyUploaded(result);
-            setIsSelectFilesDialogOpened(false);
-          }}
+          onClose={handleCloseFileManagerModal}
         />
       )}
       {isPreUploadDialogOpened && (

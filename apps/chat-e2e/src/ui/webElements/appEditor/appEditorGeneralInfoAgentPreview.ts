@@ -1,5 +1,8 @@
 import { Tags } from '@/src/ui/domData';
-import { AppEditorGeneralInfoPreviewSelectors } from '@/src/ui/selectors';
+import {
+  AppEditorGeneralInfoPreviewSelectors,
+  ChatSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -13,13 +16,15 @@ export class AppEditorGeneralInfoAgentPreview extends BaseElement {
   }
 
   public generalInfoContainer = this.getChildElementBySelector(
-    AppEditorGeneralInfoPreviewSelectors.containerGeneralInfo,
+    AppEditorGeneralInfoPreviewSelectors.appPreviewGeneralInfoContainer,
   );
 
   public previewIconContainer =
     this.generalInfoContainer.getChildElementBySelector(
       AppEditorGeneralInfoPreviewSelectors.previewIconContainer,
     );
+
+  public previewSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
 
   public previewIcon = this.previewIconContainer.getChildElementBySelector(
     Tags.img,
@@ -31,6 +36,10 @@ export class AppEditorGeneralInfoAgentPreview extends BaseElement {
 
   public version = this.generalInfoContainer.getChildElementBySelector(
     AppEditorGeneralInfoPreviewSelectors.version,
+  );
+
+  public releaseDate = this.generalInfoContainer.getChildElementBySelector(
+    AppEditorGeneralInfoPreviewSelectors.releaseDate,
   );
 
   public previewTopicsContainer =

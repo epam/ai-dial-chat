@@ -16,7 +16,13 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationPropertiesType,
+  CustomApplicationModel,
+  ExternalAppConfig,
+  ExternalAppModel,
+  Toolsets,
+} from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModelsMap } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
@@ -49,26 +55,25 @@ export interface CustomApplicationFormData extends ApplicationGeneralInfo {
   inputAttachmentTypes: string[];
   completionUrl: string;
   features: string | null;
-  id: string;
-  reference: string;
   maxInputAttachments?: number | '';
-  applicationProperties: Record<string, unknown> | null | QuickAppConfig;
+  applicationProperties: ApplicationPropertiesType;
+}
+
+export interface ExternalAppFormData extends ApplicationGeneralInfo {
+  externalUrl: string;
+  applicationProperties: ApplicationPropertiesType;
 }
 
 export interface QuickAppFormData extends ApplicationGeneralInfo {
-  id: string;
-  reference: string;
   instructions: string;
   temperature: number;
-  toolset: string;
-  mcpToolset?: string;
+  [Toolsets.WebApiToolset]: string;
+  [Toolsets.McpToolset]?: string;
   documentRelativeUrl?: string[];
   model: string;
 }
 
 export interface CodeAppFormData extends ApplicationGeneralInfo {
-  id: string;
-  reference: string;
   inputAttachmentTypes: string[];
   sources: string;
   sourceFiles?: string[];
@@ -81,7 +86,8 @@ export interface CodeAppFormData extends ApplicationGeneralInfo {
 export type FormDataType =
   | CustomApplicationFormData
   | QuickAppFormData
-  | CodeAppFormData;
+  | CodeAppFormData
+  | ExternalAppFormData;
 
 const getMappingsKeyOptions = (name: 'endpoints' | 'env') => ({
   validate: (v: string, data: CodeAppFormData) => {
@@ -250,20 +256,38 @@ export const getQuickAppDefaultValues = ({
       typeof app.applicationProperties?.temperature === 'number'
         ? app.applicationProperties.temperature
         : DEFAULT_TEMPERATURE,
-    toolset:
+    [Toolsets.WebApiToolset]:
       getWebAPIToolsetStr({
         web_api_toolset: app.applicationProperties?.web_api_toolset ?? [],
       } as QuickAppConfig) ?? '',
 
-    mcpToolset:
+    [Toolsets.McpToolset]:
       getMcpToolsetStr({
         mcp_toolset: app.applicationProperties?.mcp_toolset ?? [],
       } as QuickAppConfig) ?? '',
   };
 };
 
+export const getExternalAppDefaultValues = ({
+  app,
+}: {
+  app: CustomApplicationModel;
+}): ExternalAppFormData => {
+  return {
+    ...getApplicationGeneralDefaultValues(app),
+    externalUrl:
+      (app.applicationProperties as ExternalAppConfig)?.external_url ?? '',
+    completionUrl: app.completionUrl ?? '',
+    applicationProperties: app.applicationProperties ?? null,
+  };
+};
+
 const getGeneralApplicationData = (
-  formData: CustomApplicationFormData | QuickAppFormData | CodeAppFormData,
+  formData:
+    | CustomApplicationFormData
+    | QuickAppFormData
+    | CodeAppFormData
+    | ExternalAppFormData,
 ) => ({
   type: EntityType.Application,
   name: formData.name,
@@ -328,6 +352,21 @@ export const getCustomApplicationData = (
   return preparedData;
 };
 
+export const getExternalAppData = (
+  formData: ExternalAppFormData,
+): Omit<ExternalAppModel, 'id' | 'reference'> => {
+  const preparedData: Omit<ExternalAppModel, 'id' | 'reference'> = {
+    ...getGeneralApplicationData(formData),
+
+    isDefault: false,
+    folderId: '',
+    applicationProperties: {
+      external_url: formData.externalUrl,
+    },
+  };
+  return preparedData;
+};
+
 export const getQuickAppData = (
   formData: QuickAppFormData,
   modelsMap: ModelsMap,
@@ -337,9 +376,9 @@ export const getQuickAppData = (
     applicationProperties: {
       instructions: formData.instructions,
       temperature: formData.temperature,
-      web_api_toolset: JSON.parse(formData.toolset),
-      ...(formData.mcpToolset && {
-        mcp_toolset: JSON.parse(formData.mcpToolset),
+      web_api_toolset: JSON.parse(formData[Toolsets.WebApiToolset]),
+      ...(formData[Toolsets.McpToolset] && {
+        mcp_toolset: JSON.parse(formData[Toolsets.McpToolset]),
       }),
       model: modelsMap[formData.model]?.id ?? formData.model,
       document_relative_url: formData.documentRelativeUrl,

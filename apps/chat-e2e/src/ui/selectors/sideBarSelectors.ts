@@ -23,7 +23,7 @@ export const SideBarSelectors = {
   noData: '[data-qa="no-data-placeholder"]',
   noDataIcon: '[data-qa="no-data-icon"]',
   closeSidebar: '[data-qa="close-sidebar"]',
-  selectedEntity: '[name="selected-entity"]',
+  selectedEntity: '[data-qa="selected-entity"]',
 };
 
 export const ChatBarSelectors = {

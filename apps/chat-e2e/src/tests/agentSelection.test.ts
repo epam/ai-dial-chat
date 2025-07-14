@@ -90,7 +90,7 @@ dialTest(
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(initialModel2, marketplacePage);
+        await talkToAgentDialog.selectAgent(initialModel2);
         await agentInfoAssertion.assertAgentName(initialModel2.name);
         const expectedModelIcon = iconApiHelper.getEntityIcon(initialModel2);
         await agentInfoAssertion.assertAgentIcon(expectedModelIcon);
@@ -609,6 +609,7 @@ dialTest(
     navigationPanel,
     chat,
     talkToAgentDialog,
+    marketplacePage,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -643,12 +644,14 @@ dialTest(
       async () => {
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
+        await marketplacePage.waitForPageLoaded();
         const firstModelElement =
           await marketplaceAgentsSection.findAgentElement(firstModel);
         await firstModelElement.click();
         await agentDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
+        await dialHomePage.waitForPageLoaded();
       },
     );
 

@@ -12,6 +12,8 @@ export {
 } from '@epam/ai-dial-shared';
 export type {
   ChatOverlayOptions,
+  MessageButton,
+  MessageButtons,
   OverlayConversation,
   SendMessageResponse,
   SetSystemPromptResponse,
@@ -19,7 +21,14 @@ export type {
   GetConversationsResponse,
   CreateConversationResponse,
   SelectConversationResponse,
+  CreatePlaybackConversationResponse,
+  RenameConversationResponse,
+  StopSelectedPlaybackConversationResponse,
+  ExportConversationResponse,
+  ImportConversationResponse,
   SelectedConversationLoadedResponse,
+  MessageCustomButtonResponse,
+  UpdateMessageResponse,
   ImageMIMEType,
   MIMEType,
   Attachment,
