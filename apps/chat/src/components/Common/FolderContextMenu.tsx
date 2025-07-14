@@ -38,6 +38,7 @@ import { ContextMenu } from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface FolderContextMenuProps {
   folder: FolderInterface;
@@ -89,15 +90,28 @@ export const FolderContextMenu = ({
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
   const folders = useAppSelector(FilesSelectors.selectFolders);
-  const reviewEntities = useAppSelector(
-    PublicationSelectors.selectResourcesToReview,
+  const publication = useAppSelector((state) =>
+    additionalItemData?.publicationUrl
+      ? PublicationSelectors.selectPublicationByUrl(
+          state,
+          additionalItemData?.publicationUrl,
+        )
+      : undefined,
   );
 
-  const isPublicationReviewFolder = useMemo(() => {
-    return reviewEntities.some((entity) =>
-      entity.reviewUrl.startsWith(`${folder.id}/`),
-    );
-  }, [folder.id, reviewEntities]);
+  const { isPublicationReviewFolder, isUnpublishFolder } = useMemo(() => {
+    const reviewChildren =
+      publication?.resources?.filter((entity) =>
+        entity.reviewUrl.startsWith(`${folder.id}/`),
+      ) ?? [];
+
+    return {
+      isPublicationReviewFolder: !!reviewChildren.length,
+      isUnpublishFolder: reviewChildren.some(
+        ({ action }) => action === PublishActions.DELETE,
+      ),
+    };
+  }, [folder.id, publication?.resources]);
 
   const isExternal = isEntityIdExternal(folder);
   const isNameInvalid = isEntityNameInvalid(folder.name);
@@ -138,7 +152,8 @@ export const FolderContextMenu = ({
         name: t('Rename'),
         display:
           !!onRename &&
-          (!isExternal || isPublicationReviewFolder || !!folder.temporary),
+          (!isExternal || isPublicationReviewFolder || !!folder.temporary) &&
+          !isUnpublishFolder,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -245,6 +260,7 @@ export const FolderContextMenu = ({
       additionalItemData?.isChangePathFolder,
       onDelete,
       onAddFolder,
+      isUnpublishFolder,
     ],
   );
 
