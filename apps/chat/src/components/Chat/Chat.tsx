@@ -460,10 +460,15 @@ const ChatView = memo(() => {
         return;
       }
 
+      let finalIndex = index;
+      const conv = selectedConversations.find((conv) => conv.id === convId);
+      if (conv?.messages.at(0)?.role === Role.System) {
+        finalIndex += 1;
+      }
       dispatch(
         ConversationsActions.updateMessage({
           conversationId: convId,
-          messageIndex: index,
+          messageIndex: finalIndex,
           values: editedMessage,
         }),
       );

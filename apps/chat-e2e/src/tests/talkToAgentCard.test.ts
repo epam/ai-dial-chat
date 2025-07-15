@@ -414,13 +414,13 @@ dialTest(
     await dialTest.step(
       'Set model and application from the config to the recent',
       async () => {
-        const configModels = ModelsUtil.getLatestModels();
-        randomModel =
-          configModels.length !== 0
-            ? GeneratorUtil.randomArrayElement(
-                configModels.filter((cm) => !cm.description?.includes('<')),
-              )
-            : undefined;
+        const configModelsWithSimpleDescr =
+          ModelsUtil.getAgentsWithSimpleDescription(
+            ModelsUtil.getLatestModels(),
+          );
+        configModelsWithSimpleDescr.length !== 0
+          ? GeneratorUtil.randomArrayElement(configModelsWithSimpleDescr)
+          : undefined;
         if (randomModel !== undefined) {
           await localStorageManager.setRecentModelsIdsAndUseLastModel(
             randomModel,
