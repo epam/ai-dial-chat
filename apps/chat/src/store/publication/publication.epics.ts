@@ -2008,6 +2008,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
               }
 
               return concat(
+                ...actions,
                 getSetUpdatedItemsToApproveAction(
                   state,
                   oldPublicationResources,
