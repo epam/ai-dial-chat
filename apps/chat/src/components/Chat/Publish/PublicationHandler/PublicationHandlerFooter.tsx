@@ -372,7 +372,7 @@ export const PublicationHandlerFooter = ({
           </p>
         </div>
       ) : (
-        !isOnlyFilesPublication && resourcesToReview.length > 0 && (
+        !isOnlyFilesPublication && !!resourcesToReview.length && (
           <button
             className="text-accent-primary"
             onClick={handlePublicationReview}
