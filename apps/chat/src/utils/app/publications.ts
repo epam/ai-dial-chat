@@ -39,6 +39,7 @@ import { SharingType } from '@/src/types/share';
 import {
   EDITED_FOLDER_NAME_KEY,
   FolderEditTree,
+  FolderNode,
 } from '@/src/store/publication/publication.types';
 
 import {
@@ -565,6 +566,21 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
     const value = (obj as Record<string, string>)[key];
 
     if (typeof value === 'object' && value !== null) {
+      // Check for the duplicated names
+      const seenNames = new Set<string>();
+      for (const sibling of Object.values(value as FolderNode)) {
+        if (
+          typeof sibling === 'object' &&
+          sibling !== null &&
+          sibling[EDITED_FOLDER_NAME_KEY]
+        ) {
+          const name = sibling[EDITED_FOLDER_NAME_KEY].trim();
+
+          if (seenNames.has(name)) return false;
+          seenNames.add(name);
+        }
+      }
+
       if (EDITED_FOLDER_NAME_KEY in value) {
         if (!value[EDITED_FOLDER_NAME_KEY]) {
           return false;
@@ -584,3 +600,44 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
 
   return true;
 };
+
+/**
+ * Checks if a given folder name conflicts with any edited names of sibling folders.
+ *
+ * @param name - The proposed name to check for conflicts
+ * @param currentFolder - The current folder being checked
+ * @param folderEditState - The folder state tree
+ * @returns True if there's a naming conflict among siblings
+ */
+export function isFolderNameNotUniq(
+  name: string,
+  currentFolder: { folderId: string; name: string },
+  folderEditState: FolderEditTree,
+): boolean {
+  // Navigate to find siblings folder
+  const segments = currentFolder.folderId.split('/');
+  const siblingsFolders = segments.reduce<
+    FolderNode | FolderEditTree | string | undefined
+  >((current, segment) => {
+    if (!current || typeof current !== 'object' || !(segment in current)) {
+      return undefined;
+    }
+    return current[segment];
+  }, folderEditState);
+
+  // Check for name conflicts among siblings
+  return (
+    !!siblingsFolders &&
+    Object.entries(siblingsFolders).some(([key, folderNode]) => {
+      if (
+        typeof folderNode !== 'object' ||
+        key === EDITED_FOLDER_NAME_KEY ||
+        currentFolder.name === key
+      ) {
+        return false;
+      }
+      const { [EDITED_FOLDER_NAME_KEY]: editStateName } = folderNode;
+      return name.trim() === editStateName.trim();
+    })
+  );
+}

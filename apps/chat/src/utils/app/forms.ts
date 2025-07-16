@@ -144,12 +144,14 @@ export const getStringValidationErrors = ({
   checkDotsInTheEnd,
   maxLength = MAX_ENTITY_LENGTH,
   minLength = MIN_ENTITY_LENGTH,
+  isNotUniqName,
 }: {
   value: string;
   label: string;
   maxLength?: number;
   minLength?: number;
   checkDotsInTheEnd?: boolean;
+  isNotUniqName?: boolean;
 }) => {
   const errors: string[] = [];
   const trimmedValue = value.trim();
@@ -165,6 +167,10 @@ export const getStringValidationErrors = ({
 
   if (checkDotsInTheEnd && doesHaveDotsInTheEnd(trimmedValue)) {
     errors.push(formErrors.noDotInTheEnd(label));
+  }
+
+  if (isNotUniqName) {
+    errors.push(formErrors.notUniqName(label, value));
   }
 
   return errors;
