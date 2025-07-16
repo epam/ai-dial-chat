@@ -1,5 +1,5 @@
 import { IconArrowsMaximize } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -39,11 +39,15 @@ export const GeneralInfoView: React.FC<Props> = ({
   applicationData,
   schema,
 }) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const [pythonVersion] = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
+
+  const screenState = useScreenState();
 
   const modelFromState = applicationData
     ? modelsMap[applicationData.reference]
@@ -60,27 +64,25 @@ export const GeneralInfoView: React.FC<Props> = ({
   const isAppDeployed =
     applicationData?.functionStatus === ApplicationStatus.DEPLOYED;
 
-  const getAppDataValues = useCallback(() => {
-    return getDefaultValues(
+  const methods = useForm<ApplicationGeneralInfoFormData>({
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues: getDefaultValues(
       applicationData,
       BucketService.getBucket(),
       pythonVersion,
       modelsWithFolderId,
-    );
-  }, [applicationData, modelsWithFolderId, pythonVersion]);
-
-  const methods = useForm<ApplicationGeneralInfoFormData>({
-    mode: 'onChange',
-    reValidateMode: 'onChange',
-    defaultValues: getAppDataValues(),
-    values: getAppDataValues(),
+    ),
   });
-
-  const { t } = useTranslation(Translation.Chat);
-
   const formData = methods.watch();
 
-  const screenState = useScreenState();
+  useEffect(() => {
+    // sourceFolder could be updated by core in case of publication update, if we change application id
+    // core updates sourceFolder bucket along with application id, targetUrl and reviewUrl
+    if (applicationData?.function?.sourceFolder) {
+      methods.setValue('sources', applicationData.function.sourceFolder);
+    }
+  }, [applicationData?.function?.sourceFolder, methods]);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
