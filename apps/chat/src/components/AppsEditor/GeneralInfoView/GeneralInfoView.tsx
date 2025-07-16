@@ -1,5 +1,5 @@
 import { IconArrowsMaximize } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -39,11 +39,15 @@ export const GeneralInfoView: React.FC<Props> = ({
   applicationData,
   schema,
 }) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const [pythonVersion] = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
+
+  const screenState = useScreenState();
 
   const modelFromState = applicationData
     ? modelsMap[applicationData.reference]
@@ -79,10 +83,6 @@ export const GeneralInfoView: React.FC<Props> = ({
       methods.setValue('sources', applicationData.function.sourceFolder);
     }
   }, [applicationData?.function?.sourceFolder, methods]);
-
-  const { t } = useTranslation(Translation.Chat);
-
-  const screenState = useScreenState();
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
