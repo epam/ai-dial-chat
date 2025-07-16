@@ -63,8 +63,10 @@ import {
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
+  getEntityBucket,
   isEntityIdExternal,
   isEntityIdLocal,
+  isMyBucket,
 } from '@/src/utils/app/id';
 import {
   mergeMessages,
@@ -124,6 +126,7 @@ import {
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
@@ -418,16 +421,22 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             );
             const widgetsSchemaIds =
               WidgetsSelectors.selectWidgetsSchemaIds(state);
-            const widgetModelsRefs = models
-              .filter((model) =>
-                widgetsSchemaIds.has(model.applicationTypeSchemaId ?? ''),
+            const externalAppsSchemaId = DefaultsService.get(
+              'externalAppsSchemaId',
+              DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+            );
+            const hiddenModelsRefs = models
+              .filter(
+                (model) =>
+                  widgetsSchemaIds.has(model.applicationTypeSchemaId ?? '') ||
+                  model.applicationTypeSchemaId === externalAppsSchemaId,
               )
               .map((model) => model.reference);
             const recentModelReferences =
               ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
                 (reference) =>
                   modelReferences.includes(reference) &&
-                  !widgetModelsRefs.includes(reference),
+                  !hiddenModelsRefs.includes(reference),
               );
 
             const overlayDefaultModelReference =
@@ -718,6 +727,8 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
+      const selectedPublicationUrl =
+        PublicationSelectors.selectSelectedPublicationUrl(state$.value);
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const overlayNewConversationsFolder =
         state$.value.overlay.newConversationsFolder;
@@ -753,7 +764,11 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             selectedIdToReplaceWithNewOne: conversation.id,
           }),
         ),
-        of(PublicationActions.selectPublication(null)),
+        iif(
+          () => !!selectedPublicationUrl,
+          of(PublicationActions.selectPublication(null)),
+          EMPTY,
+        ),
       );
     }),
   );
@@ -1233,6 +1248,24 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         overlaySystemPrompt,
         isOverlay,
       }) => {
+        const publicationUrl =
+          payload.conversation.publicationInfo?.publicationUrl;
+        if (
+          publicationUrl &&
+          payload.message.custom_content?.attachments?.some((attachment) =>
+            isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
+          )
+        ) {
+          return of(
+            PublicationActions.updatePublicationConversationAttachmentsAndSendMessage(
+              {
+                publicationUrl,
+                sendMessagePayload: payload,
+              },
+            ),
+          );
+        }
+
         const actions: Observable<AppAction>[] = [];
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
@@ -1720,6 +1753,15 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
             newMessages = messages.filter(
               (_, index) =>
                 index !== payload.index && index !== payload.index + 1,
+            );
+          } else if (
+            payload.index !== 0 &&
+            messages[payload.index].role === Role.Assistant &&
+            messages[payload.index - 1].role === Role.User
+          ) {
+            newMessages = messages.filter(
+              (_, index) =>
+                index !== payload.index && index !== payload.index - 1,
             );
           } else {
             newMessages = messages.filter(

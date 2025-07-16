@@ -8,6 +8,7 @@ export enum Translation {
   Files = 'files',
   Marketplace = 'marketplace',
   Header = 'header',
+  Errors = 'errors',
 }
 
 export type TranslationOptions = Record<string, unknown> & {

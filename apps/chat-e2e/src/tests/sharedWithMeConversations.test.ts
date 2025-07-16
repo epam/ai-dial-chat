@@ -426,6 +426,7 @@ dialSharedWithMeTest(
   async ({
     dialHomePage,
     page,
+    appContainer,
     folderConversations,
     chatBarFolderAssertion,
     folderDropdownMenu,
@@ -519,9 +520,13 @@ dialSharedWithMeTest(
         const updatedFolderName = GeneratorUtil.randomString(7);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandFolder(nestedFolder.name);
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await folderConversations.expandFolder(nestedFolders[i].name);
+          await folderConversations
+            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
+            .waitFor();
         }
+        await appContainer.getChatLoader().waitForState({ state: 'hidden' });
         await folderConversations.selectFolderEntity(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
