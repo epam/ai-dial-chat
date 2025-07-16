@@ -68,7 +68,7 @@ const ReviewBucketFilesSectionView: FC<ReviewBucketFilesSectionViewProps> = ({
       dataQa="review-files"
       folders={reviewBucketFolders}
       files={reviewBucketFiles}
-      sourceType={FileSourceType.MY_FILES}
+      sourceType={FileSourceType.REVIEW_FILES}
     >
       <div className="flex flex-col gap-1 overflow-auto">
         {rootReviewBucketFolders.map((folder) => {
