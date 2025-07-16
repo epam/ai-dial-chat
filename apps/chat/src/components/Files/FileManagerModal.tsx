@@ -50,7 +50,7 @@ import { Folder } from '@/src/components/Folder/Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { FilesSectionWrapper } from './FilesSectionWrapper';
 import { PreUploadDialog } from './PreUploadModal';
-import ReviewBucketFilesSection from './ReviewBucketFilesSection';
+import { ReviewBucketFilesSection } from './ReviewBucketFilesSection';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import uniq from 'lodash-es/uniq';
