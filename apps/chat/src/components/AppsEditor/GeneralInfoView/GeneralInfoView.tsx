@@ -73,12 +73,18 @@ export const GeneralInfoView: React.FC<Props> = ({
     mode: 'onChange',
     reValidateMode: 'onChange',
     defaultValues: getAppDataValues(),
-    values: getAppDataValues(),
   });
+  const formData = methods.watch();
+
+  useEffect(() => {
+    // sourceFolder could be updated by core in case of publication update, if we change application id
+    // core updates sourceFolder bucket along with application id, targetUrl and reviewUrl
+    if (applicationData?.function?.sourceFolder) {
+      methods.setValue('sources', applicationData.function.sourceFolder);
+    }
+  }, [applicationData?.function?.sourceFolder, methods]);
 
   const { t } = useTranslation(Translation.Chat);
-
-  const formData = methods.watch();
 
   const screenState = useScreenState();
 
