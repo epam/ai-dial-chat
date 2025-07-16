@@ -123,7 +123,7 @@ const ReviewQuickAppSectionView = ({
       {config.web_api_toolset && (
         <div className="flex gap-4">
           <span className="w-[122px] shrink-0 text-secondary">
-            {t('We Api toolset: ')}
+            {t('Web API toolset: ')}
           </span>
           <MonacoEditor
             language="json"

@@ -26,6 +26,7 @@ import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
+import { getSetUpdatedItemsToApproveAction } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
@@ -528,7 +529,6 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
             }
 
             // we do not need to review files
-
             const existingReviewedResources =
               PublicationSelectors.selectResourcesToReviewByPublicationUrl(
                 state$.value,
@@ -1513,11 +1513,42 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
                 }),
           );
 
+          const clearOldStateAction$ = of(
+            isConversationResource
+              ? ConversationsActions.setConversations({
+                  conversations: ConversationsSelectors.selectConversations(
+                    state,
+                  ).filter(
+                    (conversation) =>
+                      conversation.id !== payload.resourceToUpdateUrl,
+                  ),
+                })
+              : PromptsActions.setPrompts({
+                  prompts: PromptsSelectors.selectPrompts(state).filter(
+                    (prompt) => prompt.id !== payload.resourceToUpdateUrl,
+                  ),
+                }),
+          );
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
           return concat(
             updateEntityAction$,
+            clearOldStateAction$,
             of(
               PublicationActions.uploadPublication({
                 url: payload.publicationUrl,
+              }),
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: payload.publicationUrl,
+                ids: itemsToApprove.map((id) =>
+                  id === payload.resourceToUpdateUrl
+                    ? payload.newEntity.id
+                    : id,
+                ),
               }),
             ),
           );
@@ -1538,6 +1569,7 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
         state,
         payload.publicationUrl,
       );
+      const oldPublicationResources = publication?.resources ?? [];
 
       if (!publication) {
         return of(
@@ -1589,20 +1621,58 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
         publicationData,
         url: payload.publicationUrl,
       }).pipe(
-        switchMap(() => {
+        switchMap((response) => {
+          const actions: Observable<AppAction>[] = [];
+
+          const newPublicationResources = response.resources.map(
+            (resource) => ({
+              ...resource,
+              sourceUrl: ApiUtils.decodeApiUrl(resource.sourceUrl ?? ''),
+              targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+              reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl ?? ''),
+            }),
+          );
           const updateFolderPayload = {
             folderId: payload.newFolder.id,
             values: payload.newFolder,
           };
 
-          const updateFolderAction$ = of(
-            isConversationId(payload.folderIdToUpdate)
-              ? ConversationsActions.updateFolder(updateFolderPayload)
-              : PromptsActions.updateFolder(updateFolderPayload),
-          );
+          if (isConversationId(payload.folderIdToUpdate)) {
+            actions.push(
+              of(ConversationsActions.updateFolder(updateFolderPayload)),
+              of(
+                ConversationsActions.setConversations({
+                  conversations: ConversationsSelectors.selectConversations(
+                    state,
+                  ).filter(
+                    (conv) =>
+                      !conv.id.startsWith(`${payload.folderIdToUpdate}/`),
+                  ),
+                }),
+              ),
+            );
+          } else {
+            actions.push(
+              of(PromptsActions.updateFolder(updateFolderPayload)),
+              of(
+                PromptsActions.setPrompts({
+                  prompts: PromptsSelectors.selectPrompts(state).filter(
+                    (prompt) =>
+                      !prompt.id.startsWith(`${payload.folderIdToUpdate}/`),
+                  ),
+                }),
+              ),
+            );
+          }
 
           return concat(
-            updateFolderAction$,
+            ...actions,
+            getSetUpdatedItemsToApproveAction(
+              state,
+              oldPublicationResources,
+              newPublicationResources,
+              payload.publicationUrl,
+            ),
             of(
               PublicationActions.uploadPublication({
                 url: payload.publicationUrl,
@@ -1751,9 +1821,6 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
               const applications = results.applications.filter(
                 Boolean,
               ) as CustomApplicationModel[];
-
-              const selectedItemsToApprove =
-                PublicationSelectors.selectSelectedItemsToApprove(state);
 
               const updateBasePublicationValues = (entity: ShareEntity) => ({
                 name: entity.name,
@@ -1940,32 +2007,14 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                 }
               }
 
-              // Save checkbox state for new resources
-              const previousSourceUrlsToApprove = oldPublicationResources
-                .filter((resource) =>
-                  selectedItemsToApprove.includes(resource.reviewUrl),
-                )
-                .map((resource) => resource.sourceUrl ?? '');
-              const newSelectedItemsToApprove = newPublicationResources.filter(
-                (resource) =>
-                  previousSourceUrlsToApprove.includes(resource.sourceUrl),
-              );
-
-              if (newSelectedItemsToApprove.length) {
-                actions.push(
-                  of(
-                    PublicationActions.setItemsToApprove({
-                      publicationUrl: url,
-                      ids: newSelectedItemsToApprove.map(
-                        (resource) => resource.reviewUrl,
-                      ),
-                    }),
-                  ),
-                );
-              }
-
               return concat(
                 ...actions,
+                getSetUpdatedItemsToApproveAction(
+                  state,
+                  oldPublicationResources,
+                  newPublicationResources,
+                  url,
+                ),
                 of(PublicationActions.uploadPublication({ url })),
               );
             }),
@@ -1986,17 +2035,20 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
       const state = state$.value;
       const selectedPublication =
         PublicationSelectors.selectSelectedPublication(state);
+
       if (!selectedPublication) {
         return of(PublicationActions.approvePublicationFail());
       }
+
       const resourcesToApproveIds =
-        PublicationSelectors.selectSelectedItemsToPublish(state);
+        PublicationSelectors.selectSelectedItemsToApprove(state);
       const filteredResources = selectedPublication.resources
         .filter(({ reviewUrl }) => resourcesToApproveIds.includes(reviewUrl))
         .map((resource) => ({
           ...resource,
           sourceUrl: resource.sourceUrl ?? '',
         }));
+
       return PublicationService.updatePublicationRequest({
         url: selectedPublication.url,
         publicationData: {
@@ -2029,8 +2081,9 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
         .type,
     ),
     switchMap(({ payload }) => {
+      const state = state$.value;
       const publication = PublicationSelectors.selectPublicationByUrl(
-        state$.value,
+        state,
         payload.publicationUrl,
       );
 
@@ -2058,7 +2111,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
       messageAttachmentsToAdd.forEach(({ url }) => {
         if (url) {
           publicationResources.push({
-            action: PublishActions.ADD,
+            action: PublishActions.ADD_IF_ABSENT,
             sourceUrl: ApiUtils.decodeApiUrl(url),
             targetUrl: ApiUtils.decodeApiUrl(
               constructPath(
@@ -2083,39 +2136,61 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
       }).pipe(
         switchMap((response) => {
           const { sendMessagePayload } = payload;
+          const newFilesReviewUrls = response.resources
+            .filter((resource) =>
+              messageAttachmentsToAdd.some(
+                (attachment) => attachment.url === resource.sourceUrl,
+              ),
+            )
+            .map((resource) => ApiUtils.decodeApiUrl(resource.reviewUrl));
+          const selectedItemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
 
-          return of(
-            ConversationsActions.sendMessage({
-              ...sendMessagePayload,
-              message: {
-                ...sendMessagePayload.message,
-                custom_content: {
-                  ...sendMessagePayload.message.custom_content,
-                  attachments:
-                    sendMessagePayload.message.custom_content?.attachments?.map(
-                      (attachment) => {
-                        const addedResource = response.resources.find(
-                          (resource) => resource.sourceUrl === attachment.url,
-                        );
+          return concat(
+            of(
+              ConversationsActions.sendMessage({
+                ...sendMessagePayload,
+                message: {
+                  ...sendMessagePayload.message,
+                  custom_content: {
+                    ...sendMessagePayload.message.custom_content,
+                    attachments:
+                      sendMessagePayload.message.custom_content?.attachments?.map(
+                        (attachment) => {
+                          const addedResource = response.resources.find(
+                            (resource) => resource.sourceUrl === attachment.url,
+                          );
 
-                        if (
-                          !isMyBucket(
-                            getEntityBucket({ id: attachment.url ?? '' }),
-                          ) ||
-                          !addedResource
-                        ) {
-                          return attachment;
-                        }
+                          if (
+                            !isMyBucket(
+                              getEntityBucket({ id: attachment.url ?? '' }),
+                            ) ||
+                            !addedResource
+                          ) {
+                            return attachment;
+                          }
 
-                        return {
-                          ...attachment,
-                          url: addedResource.reviewUrl,
-                        };
-                      },
-                    ),
+                          return {
+                            ...attachment,
+                            url: addedResource.reviewUrl,
+                          };
+                        },
+                      ),
+                  },
                 },
-              },
-            }),
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: response.url,
+              }),
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: response.url,
+                ids: [...selectedItemsToApprove, ...newFilesReviewUrls],
+              }),
+            ),
           );
         }),
         catchError((err) => {
