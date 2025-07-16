@@ -2035,17 +2035,20 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
       const state = state$.value;
       const selectedPublication =
         PublicationSelectors.selectSelectedPublication(state);
+
       if (!selectedPublication) {
         return of(PublicationActions.approvePublicationFail());
       }
+
       const resourcesToApproveIds =
-        PublicationSelectors.selectSelectedItemsToPublish(state);
+        PublicationSelectors.selectSelectedItemsToApprove(state);
       const filteredResources = selectedPublication.resources
         .filter(({ reviewUrl }) => resourcesToApproveIds.includes(reviewUrl))
         .map((resource) => ({
           ...resource,
           sourceUrl: resource.sourceUrl ?? '',
         }));
+
       return PublicationService.updatePublicationRequest({
         url: selectedPublication.url,
         publicationData: {
