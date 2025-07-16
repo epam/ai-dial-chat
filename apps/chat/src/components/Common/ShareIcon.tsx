@@ -57,11 +57,13 @@ export function ShareIcon({
 
   const isMyEntityIcon = isMyEntity && !isPublished && !isShared;
 
-  const [AdditionalIcon, dataQA] = useMemo(() => {
-    if (isPublished && isPublishingEnabled) return [World, 'world-icon'];
-    if (isExternal) return [IconExternalLink, 'external-icon'];
-    if (isShared) return [ArrowUpRight, 'arrow-icon'];
-    return [IconPencil, 'pencil-icon'];
+  const [AdditionalIcon, dataQA, tooltip] = useMemo(() => {
+    if (isPublished && isPublishingEnabled)
+      return [World, 'world-icon', 'Published'];
+    if (isExternal)
+      return [IconExternalLink, 'external-icon', 'External application'];
+    if (isShared) return [ArrowUpRight, 'arrow-icon', 'Shared'];
+    return [IconPencil, 'pencil-icon', 'Created by me'];
   }, [isPublished, isPublishingEnabled, isExternal, isShared]);
 
   if (
@@ -87,15 +89,7 @@ export function ShareIcon({
         )}
         data-qa={dataQA}
       >
-        <Tooltip
-          tooltip={
-            isPublished
-              ? t('Published')
-              : isShared
-                ? t('Shared')
-                : t('Created by me')
-          }
-        >
+        <Tooltip tooltip={t(tooltip)}>
           <AdditionalIcon
             size={size}
             width={size}
@@ -107,7 +101,7 @@ export function ShareIcon({
               isApplication
                 ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
                 : 'rounded-sm stroke-[1.5]',
-              isMyEntityIcon && '!stroke-[1.5]',
+              (isExternal || isMyEntityIcon) && '!stroke-[1.5]',
               iconClassName,
             )}
           />
