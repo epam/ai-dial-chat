@@ -124,7 +124,7 @@ interface Props {
   onToggleFolder: (folderId: string) => void;
 }
 
-const ReviewBucketFilesSection: FC<Props> = ({
+export const ReviewBucketFilesSection: FC<Props> = ({
   searchQuery,
   highlightFolderIds,
   additionalItemData,
@@ -142,7 +142,7 @@ const ReviewBucketFilesSection: FC<Props> = ({
     () =>
       selectedConversations.length > 0 &&
       selectedConversations.every(
-        (conversation) => !!conversation.publicationInfo,
+        (conversation) => !!conversation.publicationInfo?.publicationUrl,
       ),
     [selectedConversations],
   );
@@ -175,5 +175,3 @@ const ReviewBucketFilesSection: FC<Props> = ({
     />
   );
 };
-
-export default ReviewBucketFilesSection;
