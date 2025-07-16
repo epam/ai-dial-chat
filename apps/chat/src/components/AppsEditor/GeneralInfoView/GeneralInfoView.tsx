@@ -60,19 +60,15 @@ export const GeneralInfoView: React.FC<Props> = ({
   const isAppDeployed =
     applicationData?.functionStatus === ApplicationStatus.DEPLOYED;
 
-  const getAppDataValues = useCallback(() => {
-    return getDefaultValues(
+  const methods = useForm<ApplicationGeneralInfoFormData>({
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues: getDefaultValues(
       applicationData,
       BucketService.getBucket(),
       pythonVersion,
       modelsWithFolderId,
-    );
-  }, [applicationData, modelsWithFolderId, pythonVersion]);
-
-  const methods = useForm<ApplicationGeneralInfoFormData>({
-    mode: 'onChange',
-    reValidateMode: 'onChange',
-    defaultValues: getAppDataValues(),
+    ),
   });
   const formData = methods.watch();
 
