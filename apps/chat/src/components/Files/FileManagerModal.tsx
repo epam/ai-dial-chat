@@ -60,6 +60,8 @@ import { ReviewBucketFilesSection } from './ReviewBucketFilesSection';
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import uniq from 'lodash-es/uniq';
 
+const sectionWrapperToggleClasses = 'sticky top-0 z-10 bg-layer-3';
+
 interface Props {
   isOpen: boolean;
   initialSelectedFilesIds?: string[];
@@ -720,6 +722,7 @@ export const FileManagerModal = ({
                 files={organizationRootFiles}
                 sourceType={FileSourceType.PUBLIC}
                 filters={sourceFilters}
+                toggleClassName={sectionWrapperToggleClasses}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {organizationRootFolders.map((folder) => {
@@ -796,6 +799,7 @@ export const FileManagerModal = ({
                 files={sharedWithMeRootFiles}
                 sourceType={FileSourceType.SHARED_WITH_ME}
                 filters={sourceFilters}
+                toggleClassName={sectionWrapperToggleClasses}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {sharedWithMeRootFolders.map((folder) => {
@@ -874,6 +878,7 @@ export const FileManagerModal = ({
                 files={myRootFiles}
                 sourceType={FileSourceType.MY_FILES}
                 filters={sourceFilters}
+                toggleClassName={sectionWrapperToggleClasses}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {myRootFolders.map((folder) => {
