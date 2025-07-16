@@ -269,6 +269,11 @@ dialAdminTest(
         await adminApproveRequiredPrompts.expandApproveRequiredFolder(
           secondRequestName,
         );
+        await adminApproveRequiredPromptsAssertion.assertFolderEntityState(
+          { name: secondRequestName },
+          { name: prompt.name },
+          'visible',
+        );
         await adminPublishingApprovalModalAssertion.assertElementState(
           adminPublishingApprovalModal,
           'visible',
