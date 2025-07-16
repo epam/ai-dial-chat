@@ -1,5 +1,5 @@
 import { IconArrowsMaximize } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -40,32 +40,40 @@ export const GeneralInfoView: React.FC<Props> = ({
   schema,
 }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelFromState = applicationData
-    ? modelsMap[applicationData.reference]
-    : null;
-
   const [pythonVersion] = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
-
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const modelsWithFolderId = models.map((model) => ({
-    ...model,
-    folderId: '',
-  }));
+
+  const modelFromState = applicationData
+    ? modelsMap[applicationData.reference]
+    : null;
+  const modelsWithFolderId = useMemo(
+    () =>
+      models.map((model) => ({
+        ...model,
+        folderId: '',
+      })),
+    [models],
+  );
 
   const isAppDeployed =
     applicationData?.functionStatus === ApplicationStatus.DEPLOYED;
 
-  const methods = useForm<ApplicationGeneralInfoFormData>({
-    mode: 'onChange',
-    reValidateMode: 'onChange',
-    defaultValues: getDefaultValues(
+  const getAppDataValues = useCallback(() => {
+    return getDefaultValues(
       applicationData,
       BucketService.getBucket(),
       pythonVersion,
       modelsWithFolderId,
-    ),
+    );
+  }, [applicationData, modelsWithFolderId, pythonVersion]);
+
+  const methods = useForm<ApplicationGeneralInfoFormData>({
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues: getAppDataValues(),
+    values: getAppDataValues(),
   });
 
   const { t } = useTranslation(Translation.Chat);
