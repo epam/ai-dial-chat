@@ -349,6 +349,10 @@ dialAdminTest(
           { name: firstRequestName },
           'hidden',
         );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
       },
     );
 
@@ -361,6 +365,10 @@ dialAdminTest(
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSecondary),
         );
         await adminApproveRequiredPrompts.selectFolder(secondRequestName);
+        await adminPublishingApprovalModalAssertion.assertElementText(
+          adminPublishingApprovalModal.publishName,
+          secondRequestName,
+        );
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.duplicatedUnpublishingError,
           ExpectedConstants.duplicatedUnpublishingError(prompt.name),
