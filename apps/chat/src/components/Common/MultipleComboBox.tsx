@@ -292,6 +292,7 @@ export function MultipleComboBox<T>({
                         className={disabled ? 'cursor-not-allowed' : ''}
                         onClick={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
                           removeSelectedItem(selectedItemForRender);
                         }}
                       >
