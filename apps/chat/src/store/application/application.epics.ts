@@ -314,14 +314,12 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
                   });
                 }
 
-                return concat(
-                  of(
-                    ApplicationActions.updateSuccess(updatedCustomApplication),
-                    ModelsActions.updateModel({
-                      model: updatedCustomApplication,
-                      oldApplicationId: payload.oldApplication.id,
-                    }),
-                  ),
+                return of(
+                  ApplicationActions.updateSuccess(updatedCustomApplication),
+                  ModelsActions.updateModel({
+                    model: updatedCustomApplication,
+                    oldApplicationId: payload.oldApplication.id,
+                  }),
                 );
               }),
               catchError((err) => {
