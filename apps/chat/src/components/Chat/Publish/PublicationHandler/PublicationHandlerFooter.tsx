@@ -346,7 +346,9 @@ export const PublicationHandlerFooter = ({
     <div
       className={classNames(
         'flex w-full items-center gap-3 rounded-t bg-layer-2 px-3 py-4 md:gap-5 md:px-4',
-        isOnlyFilesPublication ? 'justify-end' : 'justify-between',
+        isOnlyFilesPublication || !resourcesToReview.length
+          ? 'justify-end'
+          : 'justify-between',
       )}
     >
       {invalidEntities.length ? (
@@ -372,7 +374,8 @@ export const PublicationHandlerFooter = ({
           </p>
         </div>
       ) : (
-        !isOnlyFilesPublication && (
+        !isOnlyFilesPublication &&
+        !!resourcesToReview.length && (
           <button
             className="text-accent-primary"
             onClick={handlePublicationReview}
