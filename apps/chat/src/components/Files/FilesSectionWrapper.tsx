@@ -16,6 +16,7 @@ interface FilesSectionProps {
   folders: FolderInterface[];
   sourceType: FileSourceType;
   filters?: Set<FileSourceType>;
+  toggleClassName?: string;
 }
 
 export const FilesSectionWrapper = ({
@@ -26,6 +27,7 @@ export const FilesSectionWrapper = ({
   children,
   sourceType,
   filters,
+  toggleClassName,
 }: FilesSectionProps) => {
   const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.File);
 
@@ -41,6 +43,7 @@ export const FilesSectionWrapper = ({
       dataQa={dataQa}
       className="!p-0"
       togglerClassName="ml-0.5"
+      togglerWrapperClassName={toggleClassName}
     >
       <div
         className="flex flex-col overflow-auto"
