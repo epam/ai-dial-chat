@@ -179,18 +179,22 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         );
       }
 
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
       reset(data);
     },
     [
+      dispatch,
+      exitAfterSave,
+      isAppDeployed,
       isAppPublic,
-      router,
-      schema,
+      isFormChanged,
+      isSharedWithMe,
       oldApplication,
       reset,
-      isFormChanged,
-      isAppDeployed,
-      dispatch,
-      isSharedWithMe,
+      router,
+      schema,
       t,
     ],
   );
@@ -220,7 +224,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     t,
     submitWrapper,
     handleSubmit,
-    router,
     isValid,
     hasBeenTouched,
   ]);
