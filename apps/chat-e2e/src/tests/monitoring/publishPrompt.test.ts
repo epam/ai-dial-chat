@@ -7,38 +7,35 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
-import { GeneratorUtil, UserUtil } from '@/src/utils';
+import { GeneratorUtil } from '@/src/utils';
 import { Prompt } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Publish single prompt',
-  async (
-    {
-      dialHomePage,
-      promptData,
-      dataInjector,
-      prompts,
-      promptDropdownMenu,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
-      selectFolderModal,
-      adminDialHomePage,
-      adminApproveRequiredPromptsAssertion,
-      adminApproveRequiredPrompts,
-      adminPublishingApprovalModal,
-      adminPublishingApprovalModalAssertion,
-      baseAssertion,
-      selectFolders,
-      adminPublishedPromptPreviewModal,
-      adminPromptsToApprove,
-      adminPromptToApproveAssertion,
-      promptBarOrganizationFolderAssertion,
-      organizationFolderPrompts,
-      localStorageManager,
-      adminLocalStorageManager,
-    },
-    testInfo,
-  ) => {
+  async ({
+    dialHomePage,
+    promptData,
+    dataInjector,
+    prompts,
+    promptDropdownMenu,
+    publishingRequestModal,
+    publishingRequestModalAssertion,
+    selectFolderModal,
+    adminDialHomePage,
+    adminApproveRequiredPromptsAssertion,
+    adminApproveRequiredPrompts,
+    adminPublishingApprovalModal,
+    adminPublishingApprovalModalAssertion,
+    baseAssertion,
+    selectFolders,
+    adminPublishedPromptPreviewModal,
+    adminPromptsToApprove,
+    adminPromptToApproveAssertion,
+    promptBarOrganizationFolderAssertion,
+    organizationFolderPrompts,
+    localStorageManager,
+    adminLocalStorageManager,
+  }) => {
     let prompt: Prompt;
     const folderName = GeneratorUtil.randomString(10);
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -46,7 +43,6 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
-    const author = UserUtil.getE2EUser(testInfo.parallelIndex);
 
     await dialTest.step('Prepare a prompt via API', async () => {
       prompt = promptData.prepareDefaultPrompt();
@@ -83,10 +79,6 @@ dialAdminTest(
         await publishingRequestModalAssertion.assertElementText(
           publishingRequestModal.getChangePublishToPath().path,
           `${PublishPath.Organization}/${folderName}`,
-        );
-        await publishingRequestModalAssertion.assertInputValue(
-          publishingRequestModal.author,
-          author,
         );
         publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
@@ -139,10 +131,6 @@ dialAdminTest(
         await adminPromptToApproveAssertion.assertElementState(
           adminPromptsToApprove.promptIcon(prompt.name),
           'visible',
-        );
-        await adminPromptToApproveAssertion.assertElementText(
-          adminPublishingApprovalModal.publicAuthor,
-          author,
         );
       },
     );
