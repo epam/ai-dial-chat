@@ -1,6 +1,8 @@
 import { IconPencilMinus } from '@tabler/icons-react';
 import { Fragment, useCallback } from 'react';
 
+import classNames from 'classnames';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -45,6 +47,13 @@ function ReviewApplicationDialogContent() {
   );
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
+  );
+
+  const isUnpublishRequest = useAppSelector((state) =>
+    PublicationSelectors.selectIsUnpublishRequest(
+      state,
+      selectedPublicationUrl || '',
+    ),
   );
 
   const isCodeApp = application && isExecutableApp(application);
@@ -191,13 +200,20 @@ function ReviewApplicationDialogContent() {
 
         <ReviewExternalAppSection application={application} />
       </div>
-      <div className="flex w-full items-center justify-between border-t border-tertiary px-3 py-4 md:px-5">
-        <IconButton
-          name={t('Edit application')}
-          dataQa="admin-edit-application"
-          Icon={IconPencilMinus}
-          onClick={handleEditApplication}
-        />
+      <div
+        className={classNames(
+          'flex w-full items-center border-t border-tertiary px-3 py-4 md:px-5',
+          isUnpublishRequest ? 'justify-end' : 'justify-between',
+        )}
+      >
+        {!isUnpublishRequest && (
+          <IconButton
+            name={t('Edit application')}
+            dataQa="admin-edit-application"
+            Icon={IconPencilMinus}
+            onClick={handleEditApplication}
+          />
+        )}
 
         {controlsEntity && (
           <PublicationControls
