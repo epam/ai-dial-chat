@@ -154,6 +154,16 @@ const createApplicationEpic: AppEpic = (action$) =>
         }),
 
         catchError((err) => {
+          if (err.status === 412) {
+            return of(
+              UIActions.showErrorToast(
+                translate(
+                  'An application with this name and this version already exists.',
+                ),
+              ),
+            );
+          }
+
           console.error('Failed to create application:', err);
           return of(ApplicationActions.createFail());
         }),
@@ -242,6 +252,21 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
             .pipe(
               map(() => ({ success: true as const })),
               catchError((err) => {
+                if (err.status === 412) {
+                  return of({
+                    success: false as const,
+                    actions: [
+                      ApplicationActions.updateFail({
+                        oldApplication: payload.oldApplication,
+                      }),
+                      UIActions.showErrorToast(
+                        translate(
+                          'An application with this name and this version already exists.',
+                        ),
+                      ),
+                    ],
+                  });
+                }
                 console.error('Failed to move application:', err);
                 return of({
                   success: false as const,

@@ -70,20 +70,23 @@ export const ApplicationDetailsFooter = ({
 
   const screenState = useScreenState();
 
+  const showContextMenu =
+    entity.reference !== entity.id && screenState === ScreenState.SM;
+
   const agentMenuItemsParams = useMemo(
     () => ({
       entity,
       disabledActions: {
         copyLink: screenState !== ScreenState.SM,
+        share: !showContextMenu,
+        unshare: !showContextMenu,
       },
     }),
-    [entity, screenState],
+    [entity, screenState, showContextMenu],
   );
 
   const menuItems = useAgentMenuItems(agentMenuItemsParams);
 
-  const showContextMenu =
-    entity.reference !== entity.id && screenState === ScreenState.SM;
   const isPublicApp = isApplicationPublic(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppLoading = useAppSelector(
