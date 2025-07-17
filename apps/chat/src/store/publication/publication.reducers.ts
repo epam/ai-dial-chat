@@ -476,6 +476,13 @@ export const publicationSlice = createSlice({
         sendMessagePayload: SendMessagePayload;
       }>,
     ) => state,
+    updatePublicationAndConversationLastMessageAttachments: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        conversationId: string;
+      }>,
+    ) => state,
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;
     },

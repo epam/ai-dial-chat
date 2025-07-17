@@ -2071,6 +2071,136 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    ofType(
+      PublicationActions.updatePublicationAndConversationLastMessageAttachments
+        .type,
+    ),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state,
+        payload.publicationUrl,
+      );
+
+      if (!publication) {
+        console.error(
+          'Publication not found, cannot update conversation attachments and send message',
+        );
+        return EMPTY;
+      }
+
+      const messageAttachments =
+        payload.message.custom_content?.attachments ?? [];
+      const messageAttachmentsToAdd = messageAttachments.filter((attachment) =>
+        isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
+      );
+
+      const publicationResources = (publication.resources ?? []).map(
+        (resource) => ({
+          action: resource.action,
+          sourceUrl: resource.sourceUrl ?? '',
+          targetUrl: resource.targetUrl,
+        }),
+      );
+
+      messageAttachmentsToAdd.forEach(({ url }) => {
+        if (url) {
+          publicationResources.push({
+            action: PublishActions.ADD_IF_ABSENT,
+            sourceUrl: ApiUtils.decodeApiUrl(url),
+            targetUrl: ApiUtils.decodeApiUrl(
+              constructPath(
+                url.split('/')[0],
+                publication.targetFolder,
+                getIdWithoutRootPathSegments(
+                  getFolderIdFromEntityId(payload.conversationId),
+                ),
+                url.split('/').at(-1),
+              ),
+            ),
+          });
+        }
+      });
+
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources: publicationResources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const conversation = ConversationsSelectors.selectConversationById(
+            state,
+            payload.conversationId,
+          ) as Conversation;
+
+          if (!conversation) {
+            console.error(
+              'Conversation not found, cannot update conversation attachments',
+            );
+
+            return EMPTY;
+          }
+
+          const lastMessage = conversation.messages.at(-1);
+
+          if (!lastMessage) {
+            console.error(
+              'Last message not found, cannot update conversation attachments',
+            );
+
+            return EMPTY;
+          }
+
+          const responseResourcesSourceUrls = response.resources.map(
+            (resource) => resource.sourceUrl,
+          );
+          const updatedLastMessage = {
+            ...lastMessage,
+            custom_content: {
+              ...lastMessage?.custom_content,
+              attachments: lastMessage?.custom_content?.attachments?.map(
+                (attachment) =>
+                  responseResourcesSourceUrls.includes(attachment.url ?? '')
+                    ? {
+                        ...attachment,
+                        url:
+                          response.resources.find(
+                            (resource) => resource.sourceUrl === attachment.url,
+                          )?.reviewUrl ?? attachment.url,
+                      }
+                    : attachment,
+              ),
+            },
+          };
+
+          return concat(
+            of(
+              ConversationsActions.updateConversation({
+                id: conversation.id,
+                values: {
+                  ...conversation,
+                  isMessageStreaming: false,
+                  messages: [
+                    ...conversation.messages.slice(0, -1),
+                    updatedLastMessage,
+                  ],
+                },
+              }),
+            ),
+            of(PublicationActions.uploadPublication({ url: response.url })),
+          );
+        }),
+      );
+    }),
+  );
+
 const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
   action$,
   state$,
@@ -2269,6 +2399,7 @@ export const PublicationEpics = combineEpics(
   updatePublicationRequestAndEntityEpic,
   updatePublicationRequestAndFolderEpic,
   updatePublicationConversationAttachmentsAndSendMessageEpic,
+  updatePublicationAndConversationLastMessageAttachmentsEpic,
 
   // on select publication
   onSelectPublicationEffectEpic,
