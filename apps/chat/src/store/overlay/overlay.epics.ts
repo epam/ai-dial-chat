@@ -1072,9 +1072,10 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
 
       return concat(
         of(
-          OverlayActions.deleteMessageEffect({
+          OverlayActions.updateMessageEffect({
             index,
             requestId,
+            updatedMessageFields,
           }),
         ),
         of(
