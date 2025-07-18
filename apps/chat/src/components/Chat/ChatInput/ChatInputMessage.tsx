@@ -167,6 +167,15 @@ export const ChatInputMessage = Inversify.register(
       }
     }, [dispatch, shouldFocusAndScroll, textareaRef]);
 
+    useEffect(() => {
+      if (!canAttachLinks) {
+        setSelectedDialLinks([]);
+      }
+      if (!canAttachFiles) {
+        dispatch(FilesActions.resetSelectedFiles());
+      }
+    }, [canAttachFiles, canAttachLinks, dispatch]);
+
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
     const modelTokenizer =
