@@ -3,6 +3,7 @@ import { DragEvent, useCallback, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -20,7 +21,11 @@ import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions, PublicationActions } from '@/src/store/actions';
@@ -214,6 +219,12 @@ export const ConversationComponent = ({
 
   const [isContextMenu, setIsContextMenu] = useState(false);
 
+  const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
+  const shouldShowPadding = isSmallScreen
+    ? isContextMenu && conversation.status !== UploadStatus.LOADED
+    : isContextMenu;
+
   const conversationRef = useRef<HTMLDivElement>(null);
 
   const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
@@ -284,7 +295,7 @@ export const ConversationComponent = ({
         className={classNames(
           'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
-          isContextMenu && 'pr-9',
+          shouldShowPadding && 'pr-9',
         )}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
