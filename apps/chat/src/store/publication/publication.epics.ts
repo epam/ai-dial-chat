@@ -1261,8 +1261,10 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return of(
-        PublicationActions.uploadPublication({ url: publications[0].url }),
+      return ConversationService.setSelectedConversationsIds([]).pipe(
+        map(() =>
+          PublicationActions.uploadPublication({ url: publications[0].url }),
+        ),
       );
     }),
   );
