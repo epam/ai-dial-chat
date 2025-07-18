@@ -38,7 +38,12 @@ export const ButtonsSchemaModal: React.FC<Props> = ({
       containerClassName="h-fit flex flex-col md:py-6 py-4 md:px-6 px-3 max-h-full inline-block w-full max-w-[768px]"
       onClose={onClose}
     >
-      <div className={classNames('flex-1 !overflow-auto', containerClassName)}>
+      <div
+        className={classNames(
+          'flex-1 !justify-start !overflow-auto',
+          containerClassName,
+        )}
+      >
         {options.map((option) => (
           <SchemaButton
             key={option.title}
