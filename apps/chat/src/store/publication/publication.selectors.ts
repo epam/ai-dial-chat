@@ -71,14 +71,6 @@ const selectPublicationByUrl = createSelector(
   },
 );
 
-const selectIsUnpublishRequest = createSelector(
-  [selectPublicationByUrl],
-  (publication) =>
-    !!publication?.resources?.some(
-      (resource) => resource.action === PublishActions.DELETE,
-    ),
-);
-
 const selectResourcesToReview = (state: RootState) =>
   rootSelector(state).resourcesToReview;
 
@@ -334,7 +326,6 @@ export const PublicationSelectors = {
   selectSelectedPublicationUrl,
   selectSelectedPublication,
   selectPublicationByUrl,
-  selectIsUnpublishRequest,
   selectResourcesToReview,
   selectResourceToReviewByReviewUrl,
   selectResourceToReviewByReviewAndPublicationUrls,

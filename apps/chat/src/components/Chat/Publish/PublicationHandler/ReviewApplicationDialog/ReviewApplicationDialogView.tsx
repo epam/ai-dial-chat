@@ -49,10 +49,11 @@ function ReviewApplicationDialogContent() {
     PublicationSelectors.selectSelectedPublicationUrl,
   );
 
-  const isUnpublishRequest = useAppSelector((state) =>
-    PublicationSelectors.selectIsUnpublishRequest(
+  const isResourceUnpublishing = useAppSelector((state) =>
+    PublicationSelectors.selectIsResourceUnpublishing(
       state,
-      selectedPublicationUrl || '',
+      selectedPublicationUrl ?? '',
+      application?.id ?? '',
     ),
   );
 
@@ -203,10 +204,10 @@ function ReviewApplicationDialogContent() {
       <div
         className={classNames(
           'flex w-full items-center border-t border-tertiary px-3 py-4 md:px-5',
-          isUnpublishRequest ? 'justify-end' : 'justify-between',
+          isResourceUnpublishing ? 'justify-end' : 'justify-between',
         )}
       >
-        {!isUnpublishRequest && (
+        {!isResourceUnpublishing && (
           <IconButton
             name={t('Edit application')}
             dataQa="admin-edit-application"
