@@ -49,6 +49,7 @@ export interface ContextMenuProps extends MenuProps {
   triggerIconSize?: number;
   triggerIconHighlight?: boolean;
   triggerIconClassName?: string;
+  hideTriggerIcon?: boolean;
   triggerTooltip?: string;
   TriggerCustomRenderer?: JSX.Element;
   isLoading?: boolean;

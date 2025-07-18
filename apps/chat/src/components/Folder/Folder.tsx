@@ -18,6 +18,7 @@ import {
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -53,7 +54,11 @@ import { getPublishFolderResources } from '@/src/utils/app/publications';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DraggedInterface, FolderInterface } from '@/src/types/folder';
 import { PublicationFolderPayload } from '@/src/types/modal';
@@ -188,6 +193,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
 
   const checkboxRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -1157,7 +1165,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
-                isContextMenu && 'pr-5',
+                isContextMenu && !isSmallScreen && 'pr-5',
               )}
               data-qa="folder-name"
             >
