@@ -312,11 +312,6 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
                     pathname: payload.redirectUrl,
                     query,
                   });
-                } else if (state$.value.application.exitAfterSave) {
-                  Router.push({
-                    pathname: Routes.Marketplace,
-                    query: { tab: MarketplaceTabs.MY_WORKSPACE },
-                  });
                 }
 
                 return of(
