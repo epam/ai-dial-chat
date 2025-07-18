@@ -26,7 +26,11 @@ import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
-import { getSetUpdatedItemsToApproveAction } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
+import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import {
+  addMessageAttachmentsToPublication,
+  getSetUpdatedItemsToApproveAction,
+} from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
@@ -38,12 +42,9 @@ import {
 } from '@/src/utils/app/folders';
 import {
   filterIdsByFeatureType,
-  getEntityBucket,
-  getIdWithoutRootPathSegments,
   isApplicationId,
   isConversationId,
   isFileId,
-  isMyBucket,
   isPromptId,
   isRootEntity,
   isRootId,
@@ -56,7 +57,7 @@ import {
   mapPublishedItems,
   processPublicationResources,
 } from '@/src/utils/app/publications';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -2082,64 +2083,26 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
     ),
     switchMap(({ payload }) => {
       const state = state$.value;
-      const publication = PublicationSelectors.selectPublicationByUrl(
-        state,
+
+      return addMessageAttachmentsToPublication(
+        payload.message,
+        getFolderIdFromEntityId(payload.conversationId),
         payload.publicationUrl,
-      );
-
-      if (!publication) {
-        console.error(
-          'Publication not found, cannot update conversation attachments and send message',
-        );
-        return EMPTY;
-      }
-
-      const messageAttachments =
-        payload.message.custom_content?.attachments ?? [];
-      const messageAttachmentsToAdd = messageAttachments.filter((attachment) =>
-        isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
-      );
-
-      const publicationResources = (publication.resources ?? []).map(
-        (resource) => ({
-          action: resource.action,
-          sourceUrl: resource.sourceUrl ?? '',
-          targetUrl: resource.targetUrl,
-        }),
-      );
-
-      messageAttachmentsToAdd.forEach(({ url }) => {
-        if (url) {
-          publicationResources.push({
-            action: PublishActions.ADD_IF_ABSENT,
-            sourceUrl: ApiUtils.decodeApiUrl(url),
-            targetUrl: ApiUtils.decodeApiUrl(
-              constructPath(
-                url.split('/')[0],
-                publication.targetFolder,
-                getIdWithoutRootPathSegments(
-                  getFolderIdFromEntityId(payload.conversationId),
-                ),
-                url.split('/').at(-1),
-              ),
-            ),
+        state,
+      ).pipe(
+        switchMap(({ updatedPublication, newItemsToSelect }) => {
+          return forkJoin({
+            updatedPublication: of(updatedPublication),
+            newItemsToSelect: of(newItemsToSelect),
+            conversation: getOrUploadConversation(
+              {
+                id: payload.conversationId,
+              },
+              state,
+            ).pipe(map(({ conversation }) => conversation)),
           });
-        }
-      });
-
-      return PublicationService.updatePublicationRequest({
-        publicationData: {
-          ...publication,
-          resources: publicationResources,
-        },
-        url: payload.publicationUrl,
-      }).pipe(
-        switchMap((response) => {
-          const conversation = ConversationsSelectors.selectConversationById(
-            state,
-            payload.conversationId,
-          ) as Conversation;
-
+        }),
+        switchMap(({ updatedPublication, newItemsToSelect, conversation }) => {
           if (!conversation) {
             console.error(
               'Conversation not found, cannot update conversation attachments',
@@ -2149,7 +2112,6 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
           }
 
           const lastMessage = conversation.messages.at(-1);
-
           if (!lastMessage) {
             console.error(
               'Last message not found, cannot update conversation attachments',
@@ -2158,7 +2120,7 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
             return EMPTY;
           }
 
-          const responseResourcesSourceUrls = response.resources.map(
+          const responseResourcesSourceUrls = updatedPublication.resources.map(
             (resource) => resource.sourceUrl,
           );
           const updatedLastMessage = {
@@ -2171,7 +2133,7 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
                     ? {
                         ...attachment,
                         url:
-                          response.resources.find(
+                          updatedPublication.resources.find(
                             (resource) => resource.sourceUrl === attachment.url,
                           )?.reviewUrl ?? attachment.url,
                       }
@@ -2194,7 +2156,17 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
                 },
               }),
             ),
-            of(PublicationActions.uploadPublication({ url: response.url })),
+            of(
+              PublicationActions.uploadPublication({
+                url: updatedPublication.url,
+              }),
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: updatedPublication.url,
+                ids: newItemsToSelect,
+              }),
+            ),
           );
         }),
       );
@@ -2212,70 +2184,15 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
     ),
     switchMap(({ payload }) => {
       const state = state$.value;
-      const publication = PublicationSelectors.selectPublicationByUrl(
+      const { sendMessagePayload, publicationUrl } = payload;
+
+      return addMessageAttachmentsToPublication(
+        sendMessagePayload.message,
+        sendMessagePayload.conversation.folderId,
+        publicationUrl,
         state,
-        payload.publicationUrl,
-      );
-
-      if (!publication) {
-        console.error(
-          'Publication not found, cannot update conversation attachments and send message',
-        );
-        return EMPTY;
-      }
-
-      const messageAttachments =
-        payload.sendMessagePayload.message.custom_content?.attachments ?? [];
-      const messageAttachmentsToAdd = messageAttachments.filter((attachment) =>
-        isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
-      );
-
-      const publicationResources = (publication.resources ?? []).map(
-        (resource) => ({
-          action: resource.action,
-          sourceUrl: resource.sourceUrl ?? '',
-          targetUrl: resource.targetUrl,
-        }),
-      );
-
-      messageAttachmentsToAdd.forEach(({ url }) => {
-        if (url) {
-          publicationResources.push({
-            action: PublishActions.ADD_IF_ABSENT,
-            sourceUrl: ApiUtils.decodeApiUrl(url),
-            targetUrl: ApiUtils.decodeApiUrl(
-              constructPath(
-                url.split('/')[0],
-                publication.targetFolder,
-                getIdWithoutRootPathSegments(
-                  payload.sendMessagePayload.conversation.folderId,
-                ),
-                url.split('/').at(-1),
-              ),
-            ),
-          });
-        }
-      });
-
-      return PublicationService.updatePublicationRequest({
-        publicationData: {
-          ...publication,
-          resources: publicationResources,
-        },
-        url: payload.publicationUrl,
-      }).pipe(
-        switchMap((response) => {
-          const { sendMessagePayload } = payload;
-          const newFilesReviewUrls = response.resources
-            .filter((resource) =>
-              messageAttachmentsToAdd.some(
-                (attachment) => attachment.url === resource.sourceUrl,
-              ),
-            )
-            .map((resource) => ApiUtils.decodeApiUrl(resource.reviewUrl));
-          const selectedItemsToApprove =
-            PublicationSelectors.selectSelectedItemsToApprove(state);
-
+      ).pipe(
+        switchMap(({ updatedPublication, newItemsToSelect }) => {
           return concat(
             of(
               ConversationsActions.sendMessage({
@@ -2287,13 +2204,16 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
                     attachments:
                       sendMessagePayload.message.custom_content?.attachments?.map(
                         (attachment) => {
-                          const addedResource = response.resources.find(
-                            (resource) => resource.sourceUrl === attachment.url,
-                          );
+                          const addedResource =
+                            updatedPublication.resources.find(
+                              (resource) =>
+                                resource.sourceUrl === attachment.url,
+                            );
 
                           if (
-                            !isMyBucket(
-                              getEntityBucket({ id: attachment.url ?? '' }),
+                            !isMyEntity(
+                              { id: attachment.url ?? '' },
+                              FeatureType.File,
                             ) ||
                             !addedResource
                           ) {
@@ -2310,15 +2230,11 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
                 },
               }),
             ),
-            of(
-              PublicationActions.uploadPublication({
-                url: response.url,
-              }),
-            ),
+            of(PublicationActions.uploadPublication({ url: publicationUrl })),
             of(
               PublicationActions.setItemsToApprove({
-                publicationUrl: response.url,
-                ids: [...selectedItemsToApprove, ...newFilesReviewUrls],
+                publicationUrl,
+                ids: newItemsToSelect,
               }),
             ),
           );
