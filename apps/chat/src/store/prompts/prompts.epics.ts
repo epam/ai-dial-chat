@@ -587,6 +587,15 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
           of(PromptsActions.updatePromptSuccess({ id: prompt.id, prompt })),
           EMPTY,
         ),
+        iif(
+          () => isEntityIdExternal(prompt),
+          of(
+            PublicationActions.resetSelectedVersionForPublicVersionGroup({
+              versionGroupId: getVersionGroupFromId(prompt.id).versionGroupId,
+            }),
+          ),
+          EMPTY,
+        ),
       );
     }),
   );
