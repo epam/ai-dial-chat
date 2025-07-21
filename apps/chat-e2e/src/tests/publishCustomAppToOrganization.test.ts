@@ -3,14 +3,16 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment, PublishPath } from '@/src/testData';
+import { API, Attachment, MenuOptions, PublishPath } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
+import { Conversation } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Publish custom app from Application pop-up form on DIAL Marketplace page.\n' +
     'Publish custom application to new folder in Change path.\n' +
-    '[Admin view]: "Author" field is displayed on publish request form',
+    '[Admin view]: "Author" field is displayed on publish request form.\n' +
+    'Folder where was published app is available in Change path form for publish requests',
   async (
     {
       marketplacePage,
@@ -42,10 +44,17 @@ dialAdminTest(
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
+      adminDataInjector,
+      conversationData,
+      adminConversations,
+      adminConversationDropdownMenu,
+      adminPublishingRequestModal,
+      adminSelectFolderModal,
+      adminSelectFoldersAssertion,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-4450', 'EPMRTC-4496', 'EPMRTC-5858');
+    setTestIds('EPMRTC-4450', 'EPMRTC-4496', 'EPMRTC-5858', 'EPMRTC-5736');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
     const orgFolder = GeneratorUtil.randomString(7);
@@ -63,6 +72,16 @@ dialAdminTest(
     let appElement: BaseElement;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
     const filename = `${GeneratorUtil.randomString(7)}.svg`;
+
+    let conversation: Conversation;
+
+    await dialTest.step(
+      'Create a simple conversation by admin via API',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation();
+        await adminDataInjector.createConversations([conversation]);
+      },
+    );
 
     await dialTest.step(
       'Upload a svg file with custom name via API',
@@ -251,6 +270,31 @@ dialAdminTest(
           { name: filename },
           'visible',
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify a new publication request can be created to published Organization folder',
+      async () => {
+        await adminConversations.openEntityDropdownMenu(conversation.name);
+        await adminConversationDropdownMenu.selectMenuOption(
+          MenuOptions.publish,
+        );
+        await adminPublishingRequestModal.waitForState();
+        await adminPublishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await adminSelectFoldersAssertion.assertFolderState(
+          { name: orgFolder },
+          'visible',
+        );
+        await adminSelectFolderModal.selectFolder(orgFolder);
+        await adminSelectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.publicationRulesList,
+        });
+        await adminPublishingRequestModal.requestName.fillInInput(requestName);
+        await adminPublishingRequestModal.sendPublicationRequest();
+        await adminPublishingRequestModal.waitForState({ state: 'hidden' });
       },
     );
   },

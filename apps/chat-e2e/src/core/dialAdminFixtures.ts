@@ -16,6 +16,7 @@ import {
   PublicationReviewControl,
   PublishingApprovalModal,
   PublishingRequestModal,
+  SelectFolderModal,
   Toast,
   VariableModalDialog,
 } from '../ui/webElements';
@@ -152,9 +153,11 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
   adminAgentDetailsModal: AgentDetailsModal;
+  adminSelectFolderModal: SelectFolderModal;
   adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
   adminMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   adminAgentDetailsModalAssertion: AgentDetailsModalAssertion;
+  adminSelectFoldersAssertion: FolderAssertion<Folders>;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -613,6 +616,10 @@ const dialAdminTest = dialTest.extend<{
     );
     await use(adminManageAttachmentsAssertion);
   },
+  adminSelectFolderModal: async ({ adminPage }, use) => {
+    const adminSelectFolderModal = new SelectFolderModal(adminPage);
+    await use(adminSelectFolderModal);
+  },
   adminMarketplaceAgentsAssertion: async ({ adminMarketplaceAgents }, use) => {
     const adminMarketplaceAgentsAssertion = new MarketplaceAgentsAssertion(
       adminMarketplaceAgents,
@@ -624,6 +631,12 @@ const dialAdminTest = dialTest.extend<{
       adminAgentDetailsModal,
     );
     await use(adminAgentDetailsModalAssertion);
+  },
+  adminSelectFoldersAssertion: async ({ adminSelectFolderModal }, use) => {
+    const adminSelectFoldersAssertion = new FolderAssertion(
+      adminSelectFolderModal.getSelectFolders(),
+    );
+    await use(adminSelectFoldersAssertion);
   },
 });
 
