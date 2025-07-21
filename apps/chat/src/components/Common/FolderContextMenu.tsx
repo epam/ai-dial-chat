@@ -122,9 +122,7 @@ export const FolderContextMenu = ({
     return canEditSharedFolderOrParent(folders, folder.folderId);
   }, [folder.folderId, folders]);
 
-  const isMyFolder = useMemo(() => {
-    return isMyEntity(folder, featureType);
-  }, [featureType, folder]);
+  const isMyFolder = useMemo(() => isMyEntity(folder), [folder]);
 
   const isMyOrCanEdit = isMyFolder || canEditShared;
 
@@ -214,8 +212,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Delete'),
-        display:
-          !!onDelete && (isMyEntity(folder, featureType) || !!folder.temporary),
+        display: !!onDelete && (isMyEntity(folder) || !!folder.temporary),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,

@@ -42,9 +42,11 @@ import {
 } from '@/src/utils/app/folders';
 import {
   filterIdsByFeatureType,
+  getIdWithoutRootPathSegments,
   isApplicationId,
   isConversationId,
   isFileId,
+  isMyEntity,
   isPromptId,
   isRootEntity,
   isRootId,
@@ -57,7 +59,7 @@ import {
   mapPublishedItems,
   processPublicationResources,
 } from '@/src/utils/app/publications';
-import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -1563,6 +1565,123 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state,
+        payload.publicationUrl,
+      );
+
+      if (!publication) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update application icon, publication not found'),
+          ),
+        );
+      }
+
+      const resources: PublicationUpdateRequestModel['resources'] =
+        publication.resources?.map((resource) => ({
+          ...resource,
+          sourceUrl: resource.sourceUrl ?? '',
+        })) ?? [];
+
+      const newIconUrl = payload.newIconUrl.split('/');
+      resources.push({
+        action: PublishActions.ADD_IF_ABSENT,
+        sourceUrl: payload.newIconUrl ?? '',
+        targetUrl: ApiUtils.decodeApiUrl(
+          constructPath(
+            newIconUrl[0],
+            publication.targetFolder,
+            getFolderIdFromEntityId(
+              getIdWithoutRootPathSegments(payload.application.id),
+            ),
+            newIconUrl.at(-1),
+          ),
+        ),
+      });
+
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const newApplication = {
+            ...payload.application,
+            iconUrl:
+              response.resources.find(
+                (resource) => resource.sourceUrl === payload.newIconUrl,
+              )?.reviewUrl ?? '',
+          };
+
+          let updateApplicationAction$: Observable<AppAction>;
+          if (payload.application.applicationTypeSchemaId) {
+            updateApplicationAction$ =
+              ApplicationTypesSchemasService.getApplicationTypeSchema(
+                payload.application.applicationTypeSchemaId,
+              ).pipe(
+                switchMap((schema) => {
+                  return of(
+                    ApplicationActions.update({
+                      oldApplication: payload.application,
+                      applicationData: newApplication,
+                      schema,
+                    }),
+                  );
+                }),
+                catchError((err) => {
+                  console.error(err);
+                  return of(
+                    UIActions.showErrorToast(
+                      translate(
+                        'Cannot fetch application schema. Please try again later.',
+                      ),
+                    ),
+                  );
+                }),
+              );
+          } else {
+            updateApplicationAction$ = of(
+              ApplicationActions.update({
+                oldApplication: payload.application,
+                applicationData: newApplication,
+              }),
+            );
+          }
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
+          return concat(
+            updateApplicationAction$,
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: payload.publicationUrl,
+                ids: [...itemsToApprove, newApplication.iconUrl],
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: payload.publicationUrl,
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndFolder.type),
@@ -2213,10 +2332,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
                             );
 
                           if (
-                            !isMyEntity(
-                              { id: attachment.url ?? '' },
-                              FeatureType.File,
-                            ) ||
+                            !isMyEntity({ id: attachment.url ?? '' }) ||
                             !addedResource
                           ) {
                             return attachment;
@@ -2318,6 +2434,7 @@ export const PublicationEpics = combineEpics(
   updatePublicationRequestAndFolderEpic,
   updatePublicationConversationAttachmentsAndSendMessageEpic,
   updatePublicationAndConversationLastMessageAttachmentsEpic,
+  updatePublicationRequestAndApplicationIconEpic,
 
   // on select publication
   onSelectPublicationEffectEpic,

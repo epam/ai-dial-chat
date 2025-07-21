@@ -11,7 +11,7 @@ import { RootState } from '@/src/types/store';
 import { PublicationActions } from '@/src/store/actions';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { FeatureType, Message, PublishActions } from '@epam/ai-dial-shared';
+import { Message, PublishActions } from '@epam/ai-dial-shared';
 
 export const getSetUpdatedItemsToApproveAction = (
   state: RootState,
@@ -62,7 +62,7 @@ export const addMessageAttachmentsToPublication = (
 
   const messageAttachments = message.custom_content?.attachments ?? [];
   const messageAttachmentsToAdd = messageAttachments.filter((attachment) =>
-    isMyEntity({ id: attachment.url ?? '' }, FeatureType.File),
+    isMyEntity({ id: attachment.url ?? '' }),
   );
 
   const publicationResources = (publication.resources ?? []).map(
@@ -75,15 +75,16 @@ export const addMessageAttachmentsToPublication = (
 
   messageAttachmentsToAdd.forEach(({ url }) => {
     if (url) {
+      const splittedUrl = url.split('/');
       publicationResources.push({
         action: PublishActions.ADD_IF_ABSENT,
         sourceUrl: ApiUtils.decodeApiUrl(url),
         targetUrl: ApiUtils.decodeApiUrl(
           constructPath(
-            url.split('/')[0],
+            splittedUrl[0],
             publication.targetFolder,
             getIdWithoutRootPathSegments(conversationFolderId),
-            url.split('/').at(-1),
+            splittedUrl.at(-1),
           ),
         ),
       });

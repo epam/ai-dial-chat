@@ -35,7 +35,11 @@ import { getLastPathSegment } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
+import {
+  isEntityIdExternal,
+  isEntityIdLocal,
+  isMyEntity,
+} from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
@@ -242,6 +246,19 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      if (
+        payload.publicationUrl &&
+        isMyEntity({ id: updatedCustomApplication.iconUrl ?? '' })
+      ) {
+        return of(
+          PublicationActions.updatePublicationRequestAndApplicationIcon({
+            publicationUrl: payload.publicationUrl,
+            application: payload.oldApplication,
+            newIconUrl: updatedCustomApplication.iconUrl ?? '',
+          }),
+        );
+      }
+
       const move$ = isMoved
         ? DataService.getDataStorage()
             .move({
@@ -352,28 +369,28 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
         state$.value,
         payload.publicationUrl as string,
       );
+
       if (!publication || !publication?.resources) {
         return EMPTY;
       }
+
       const { name } = splitEntityId(payload.newApplicationId);
+
+      const resources = publication.resources.map((resource) => ({
+        action: resource.action,
+        sourceUrl: resource.sourceUrl ?? '',
+        targetUrl:
+          resource.reviewUrl === payload.oldApplicationId
+            ? resource.targetUrl.split('/').slice(0, -1).concat(name).join('/')
+            : resource.targetUrl,
+      }));
 
       return of(
         PublicationActions.updatePublicationRequest({
           url: publication.url,
           dataToUpdate: {
             targetFolder: publication.targetFolder,
-            resources: publication.resources.map((resource) => ({
-              action: resource.action,
-              sourceUrl: resource.sourceUrl ?? '',
-              targetUrl:
-                resource.reviewUrl === payload.oldApplicationId
-                  ? resource.targetUrl
-                      .split('/')
-                      .slice(0, -1)
-                      .concat(name)
-                      .join('/')
-                  : resource.targetUrl,
-            })),
+            resources,
           },
         }),
       );
