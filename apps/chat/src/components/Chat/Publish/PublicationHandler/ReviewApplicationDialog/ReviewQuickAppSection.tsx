@@ -100,14 +100,7 @@ const ReviewQuickAppSectionView = ({
 
   const handleTabChange = (id: string) => {
     setActiveTabId(id as Toolsets);
-    setEditorTabs((prevTabs) => {
-      return prevTabs.map((tab) => {
-        if (tab.id === id) {
-          return tab;
-        }
-        return tab;
-      });
-    });
+    setEditorTabs((prevTabs) => [...prevTabs]);
   };
 
   return (
