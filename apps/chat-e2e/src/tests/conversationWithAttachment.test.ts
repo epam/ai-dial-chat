@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
   CheckboxState,
   ExpectedConstants,
@@ -741,6 +742,7 @@ dialTest(
       async () => {
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         await attachedAllFiles.getFolderName(folderName).hoverOver();
         const folderCheckboxElement =
@@ -750,6 +752,10 @@ dialTest(
           CheckboxState.unchecked,
         );
         await folderCheckboxElement.click();
+        await manageAttachmentsAssertion.assertCheckboxState(
+          folderCheckboxElement,
+          CheckboxState.checked,
+        );
         await manageAttachmentsAssertion.assertElementActionabilityState(
           attachFilesModal.attachFilesButton,
           'enabled',
