@@ -20,7 +20,7 @@ import {
 } from '@/src/constants/folders';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
-import { isFolderId } from './shared-utils';
+import { isFolderId, isMyEntity } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -504,4 +504,12 @@ export const getFilesFromDataTransferItems = (
   return Array.from(items)
     .filter((item) => item.webkitGetAsEntry()?.isFile)
     .map((item) => item.getAsFile()) as File[];
+};
+
+export const getMyBucketAttachments = (
+  attachments: Attachment[],
+): Attachment[] => {
+  return attachments.filter((attachment) =>
+    isMyEntity({ id: attachment.url ?? '' }, FeatureType.File),
+  );
 };

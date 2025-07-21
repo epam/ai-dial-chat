@@ -74,8 +74,9 @@ const selectFilteredFolders = createSelector(
     selectFiles,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm: string) => searchTerm,
+    (_state, _filters, _searchTerm, showHidden?: boolean) => showHidden,
   ],
-  (allFolders, allFiles, filters, searchTerm) => {
+  (allFolders, allFiles, filters, searchTerm, showHidden) => {
     const filteredFiles = allFiles.filter((file) =>
       doesEntityContainSearchTerm(file, searchTerm),
     );
@@ -86,6 +87,7 @@ const selectFilteredFolders = createSelector(
       filters,
       entities: filteredFiles,
       searchTerm,
+      includeHiddenFolders: showHidden,
     });
   },
 );
