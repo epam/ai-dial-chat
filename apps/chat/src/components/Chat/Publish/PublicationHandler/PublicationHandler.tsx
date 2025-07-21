@@ -444,6 +444,7 @@ export function PublicationHandler({ publication }: Props) {
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
           isFormChanged={isFormChanged}
+          areRulesChanged={hasUserChangedRules}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (
