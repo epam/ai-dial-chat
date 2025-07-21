@@ -51,6 +51,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -63,14 +65,16 @@ import uniq from 'lodash-es/uniq';
 
 interface Props {
   publication: Publication;
-  onUpdateRequest: () => void;
   isFormChanged: boolean;
+  areRulesChanged: boolean;
+  onUpdateRequest: () => void;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
-  onUpdateRequest,
   isFormChanged,
+  areRulesChanged,
+  onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -148,7 +152,7 @@ export const PublicationHandlerFooter = ({
     [resourcesToReview],
   );
 
-  const publicationConversationsWithUploadedMessages = useMemo(
+  const uploadedPublicationConversations = useMemo(
     () =>
       conversations.filter(
         (conversation) =>
@@ -330,16 +334,17 @@ export const PublicationHandlerFooter = ({
 
   const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
-  const someReviewedConversationHaveNoMessages =
-    publicationConversationsWithUploadedMessages.some(
-      (conversation) => !conversation.messages.length,
-    );
+  const someReviewedConversationHasNotMessages =
+    uploadedPublicationConversations.some(({ messages }) => !messages.length);
+  const areNoChanges =
+    !itemsToApprove.length &&
+    (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
   const isApproveDisabled =
     !isAllResourcesReviewed ||
     !!invalidEntities.length ||
-    someReviewedConversationHaveNoMessages ||
-    isPublicationUpdating;
-
+    someReviewedConversationHasNotMessages ||
+    isPublicationUpdating ||
+    areNoChanges;
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
   return (
@@ -418,11 +423,13 @@ export const PublicationHandlerFooter = ({
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
-                  : someReviewedConversationHaveNoMessages
+                  : someReviewedConversationHasNotMessages
                     ? "Request can't be approved as some conversations have no messages"
                     : isPublicationUpdating
                       ? 'Request is updating'
-                      : "It's required to review all resources",
+                      : areNoChanges
+                        ? 'There are no changes to approve'
+                        : "It's required to review all resources",
               )}
             >
               <button
