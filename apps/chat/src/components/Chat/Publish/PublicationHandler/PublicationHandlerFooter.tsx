@@ -339,9 +339,13 @@ export const PublicationHandlerFooter = ({
   const areNoChanges =
     !itemsToApprove.length &&
     (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
+  const selectedInvalidEntities = useMemo(
+    () => invalidEntities.filter((e) => itemsToApprove.includes(e.id)),
+    [invalidEntities, itemsToApprove],
+  );
   const isApproveDisabled =
     !isAllResourcesReviewed ||
-    !!invalidEntities.length ||
+    !!selectedInvalidEntities.length ||
     someReviewedConversationHasNoMessages ||
     isPublicationUpdating ||
     areNoChanges;
@@ -356,7 +360,7 @@ export const PublicationHandlerFooter = ({
           : 'justify-between',
       )}
     >
-      {invalidEntities.length ? (
+      {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
             size={24}
@@ -364,13 +368,13 @@ export const PublicationHandlerFooter = ({
             stroke="1.5"
           />
           <p className="text-sm text-error" data-qa="duplicate-unpublishing">
-            {invalidEntities.map((e, idx) => (
+            {selectedInvalidEntities.map((e, idx) => (
               <span key={e.id} className="italic">
                 &quot;
                 {e.name.substring(0, 50) === e.name
                   ? e.name
                   : `${e.name.substring(0, 50)}...`}
-                &quot;{idx === invalidEntities.length - 1 ? ' ' : ', '}
+                &quot;{idx === selectedInvalidEntities.length - 1 ? ' ' : ', '}
               </span>
             ))}
             {t(
@@ -397,7 +401,7 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            {!invalidEntities.length && (
+            {!selectedInvalidEntities.length && (
               <IconButton
                 name={t('Edit')}
                 dataQa="edit"
@@ -421,8 +425,8 @@ export const PublicationHandlerFooter = ({
             <Tooltip
               hideTooltip={!isApproveDisabled}
               tooltip={t(
-                invalidEntities.length
-                  ? "Request can't be approved as some conversations are unpublished"
+                selectedInvalidEntities.length
+                  ? "Request can't be approved as some items are unpublished"
                   : someReviewedConversationHasNoMessages
                     ? "Request can't be approved as some conversations have no messages"
                     : isPublicationUpdating
