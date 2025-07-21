@@ -1,5 +1,5 @@
 import { IconDownload, IconFile } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -79,20 +79,22 @@ const ReviewQuickAppSectionView = ({
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const [editorTabs, setEditorTabs] = useState([
-    {
-      id: Toolsets.WebApiToolset,
-      label: 'Web API',
-      value: getWebAPIToolsetStr(config),
-      language: 'json',
-    },
-    {
-      id: Toolsets.McpToolset,
-      label: 'MCP',
-      value: getMcpToolsetStr(config),
-      language: 'json',
-    },
-  ]);
+  const editorTabs = useMemo(() => {
+    return [
+      {
+        id: Toolsets.WebApiToolset,
+        label: 'Web API',
+        value: getWebAPIToolsetStr(config),
+        language: 'json',
+      },
+      {
+        id: Toolsets.McpToolset,
+        label: 'MCP',
+        value: getMcpToolsetStr(config),
+        language: 'json',
+      },
+    ];
+  }, [config]);
 
   const [activeTabId, setActiveTabId] = useState<Toolsets | undefined>(
     () => editorTabs[0]?.id,
@@ -100,7 +102,6 @@ const ReviewQuickAppSectionView = ({
 
   const handleTabChange = (id: string) => {
     setActiveTabId(id as Toolsets);
-    setEditorTabs((prevTabs) => [...prevTabs]);
   };
 
   return (
