@@ -334,7 +334,7 @@ export const PublicationHandlerFooter = ({
 
   const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
-  const someReviewedConversationHasNotMessages =
+  const someReviewedConversationHasNoMessages =
     uploadedPublicationConversations.some(({ messages }) => !messages.length);
   const areNoChanges =
     !itemsToApprove.length &&
@@ -342,7 +342,7 @@ export const PublicationHandlerFooter = ({
   const isApproveDisabled =
     !isAllResourcesReviewed ||
     !!invalidEntities.length ||
-    someReviewedConversationHasNotMessages ||
+    someReviewedConversationHasNoMessages ||
     isPublicationUpdating ||
     areNoChanges;
   const isEditDisabled = isEditInvalid || !isFormChanged;
@@ -423,7 +423,7 @@ export const PublicationHandlerFooter = ({
               tooltip={t(
                 invalidEntities.length
                   ? "Request can't be approved as some conversations are unpublished"
-                  : someReviewedConversationHasNotMessages
+                  : someReviewedConversationHasNoMessages
                     ? "Request can't be approved as some conversations have no messages"
                     : isPublicationUpdating
                       ? 'Request is updating'
