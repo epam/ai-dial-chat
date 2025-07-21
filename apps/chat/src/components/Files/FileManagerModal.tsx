@@ -1,5 +1,10 @@
 import { useId } from '@floating-ui/react';
-import { IconDownload, IconTrashX } from '@tabler/icons-react';
+import {
+  IconDownload,
+  IconEye,
+  IconEyeOff,
+  IconTrashX,
+} from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
@@ -99,6 +104,7 @@ export const FileManagerModal = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isUnshare, setIsUnshare] = useState(false);
+  const [isHiddenItemsVisible, setIsHiddenItemsVisible] = useState(false);
 
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
@@ -106,15 +112,9 @@ export const FileManagerModal = ({
   );
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const files = useAppSelector(FilesSelectors.selectFiles);
+
   const myRootFiles = useAppSelector((state) =>
     FilesSelectors.selectFilteredFiles(
-      state,
-      defaultMyItemsFilters,
-      searchQuery,
-    ),
-  );
-  const myRootFolders = useAppSelector((state) =>
-    FilesSelectors.selectFilteredFolders(
       state,
       defaultMyItemsFilters,
       searchQuery,
@@ -127,24 +127,33 @@ export const FileManagerModal = ({
       searchQuery,
     ),
   );
+  const sharedWithMeRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(state, SharedWithMeFilters, searchQuery),
+  );
+
+  const myRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      defaultMyItemsFilters,
+      searchQuery,
+      isHiddenItemsVisible,
+    ),
+  );
   const organizationRootFolders = useAppSelector((state) =>
     FilesSelectors.selectFilteredFolders(
       state,
       PublishedWithMeFilter,
       searchQuery,
+      isHiddenItemsVisible,
     ),
   );
-
   const sharedWithMeRootFolders = useAppSelector((state) =>
     FilesSelectors.selectFilteredFolders(
       state,
       SharedWithMeFilters,
       searchQuery,
+      isHiddenItemsVisible,
     ),
-  );
-
-  const sharedWithMeRootFiles = useAppSelector((state) =>
-    FilesSelectors.selectFilteredFiles(state, SharedWithMeFilters, searchQuery),
   );
 
   const areFoldersLoading = useAppSelector(
@@ -641,6 +650,11 @@ export const FileManagerModal = ({
     dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
   }, [dispatch, selectedFilesIds]);
 
+  const handleToggleHiddenItems = useCallback(
+    () => setIsHiddenItemsVisible((prev) => !prev),
+    [],
+  );
+
   return (
     <Modal
       portalId="theme-main"
@@ -965,6 +979,17 @@ export const FileManagerModal = ({
               <FolderPlus height={24} width={24} />
             </button>
           )}
+          <button
+            onClick={handleToggleHiddenItems}
+            className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+            data-qa="show-hidden-folders"
+          >
+            {isHiddenItemsVisible ? (
+              <IconEyeOff height={24} width={24} />
+            ) : (
+              <IconEye height={24} width={24} />
+            )}
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <button
