@@ -98,6 +98,13 @@ const selectConversationsByFolderId = createSelector(
   },
 );
 
+const selectConversationById = createSelector(
+  [selectConversations, (_state, id: string) => id],
+  (conversations, id) => {
+    return conversations.find((conv) => conv.id === id);
+  },
+);
+
 const selectFilteredConversations = (
   filters: EntityFilters,
   searchTerm?: string,
@@ -862,6 +869,7 @@ const selectAction = (state: RootState) =>
 export const ConversationsSelectors = {
   selectConversations,
   selectConversationsByFolderId,
+  selectConversationById,
   selectFilteredConversations,
   selectFolders,
   selectMyFolders,
