@@ -22,7 +22,6 @@ import {
   updateMessagesAttachmentsTitles,
 } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
-import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
@@ -30,6 +29,7 @@ import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conve
 import {
   addMessageAttachmentsToPublication,
   getSetUpdatedItemsToApproveAction,
+  getUpdateApplicationAction,
 } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import { constructPath } from '@/src/utils/app/file';
 import {
@@ -80,7 +80,6 @@ import {
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
-  ApplicationActions,
   ConversationsActions,
   FilesActions,
   ModelsActions,
@@ -1565,6 +1564,42 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updateApplicationPublicationUrls.type),
+    switchMap(({ payload }) => {
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state$.value,
+        payload.publicationUrl as string,
+      );
+
+      if (!publication || !publication?.resources) {
+        return EMPTY;
+      }
+
+      const { name } = splitEntityId(payload.newApplicationId);
+
+      const resources = publication.resources.map((resource) => ({
+        action: resource.action,
+        sourceUrl: resource.sourceUrl ?? '',
+        targetUrl:
+          resource.reviewUrl === payload.oldApplicationId
+            ? resource.targetUrl.split('/').slice(0, -1).concat(name).join('/')
+            : resource.targetUrl,
+      }));
+
+      return of(
+        PublicationActions.updatePublicationRequest({
+          url: publication.url,
+          dataToUpdate: {
+            targetFolder: publication.targetFolder,
+            resources,
+          },
+        }),
+      );
+    }),
+  );
+
 const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
   action$,
   state$,
@@ -1625,46 +1660,11 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
               )?.reviewUrl ?? '',
           };
 
-          let updateApplicationAction$: Observable<AppAction>;
-          if (payload.application.applicationTypeSchemaId) {
-            updateApplicationAction$ =
-              ApplicationTypesSchemasService.getApplicationTypeSchema(
-                payload.application.applicationTypeSchemaId,
-              ).pipe(
-                switchMap((schema) => {
-                  return of(
-                    ApplicationActions.update({
-                      oldApplication: payload.application,
-                      applicationData: newApplication,
-                      schema,
-                    }),
-                  );
-                }),
-                catchError((err) => {
-                  console.error(err);
-                  return of(
-                    UIActions.showErrorToast(
-                      translate(
-                        'Cannot fetch application schema. Please try again later.',
-                      ),
-                    ),
-                  );
-                }),
-              );
-          } else {
-            updateApplicationAction$ = of(
-              ApplicationActions.update({
-                oldApplication: payload.application,
-                applicationData: newApplication,
-              }),
-            );
-          }
-
           const itemsToApprove =
             PublicationSelectors.selectSelectedItemsToApprove(state);
 
           return concat(
-            updateApplicationAction$,
+            getUpdateApplicationAction(payload.application, newApplication),
             of(
               PublicationActions.setItemsToApprove({
                 publicationUrl: payload.publicationUrl,
@@ -2073,37 +2073,9 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                       version: getVersionFromId(application.id),
                     };
 
-                    if (newApplication.applicationTypeSchemaId) {
-                      return ApplicationTypesSchemasService.getApplicationTypeSchema(
-                        newApplication.applicationTypeSchemaId,
-                      ).pipe(
-                        switchMap((schema) => {
-                          return of(
-                            ApplicationActions.update({
-                              oldApplication: application,
-                              applicationData: newApplication,
-                              schema,
-                            }),
-                          );
-                        }),
-                        catchError((err) => {
-                          console.error(err);
-                          return of(
-                            UIActions.showErrorToast(
-                              translate(
-                                'Cannot fetch application schema. Please try again later.',
-                              ),
-                            ),
-                          );
-                        }),
-                      );
-                    }
-
-                    return of(
-                      ApplicationActions.update({
-                        oldApplication: application,
-                        applicationData: newApplication,
-                      }),
+                    return getUpdateApplicationAction(
+                      application,
+                      newApplication,
                     );
                   }),
                 );
@@ -2435,6 +2407,7 @@ export const PublicationEpics = combineEpics(
   updatePublicationConversationAttachmentsAndSendMessageEpic,
   updatePublicationAndConversationLastMessageAttachmentsEpic,
   updatePublicationRequestAndApplicationIconEpic,
+  updateApplicationPublicationUrlsEpic,
 
   // on select publication
   onSelectPublicationEffectEpic,

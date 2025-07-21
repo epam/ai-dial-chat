@@ -1,14 +1,21 @@
-import { EMPTY, map, of } from 'rxjs';
+import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 
+import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { constructPath, isMyEntity } from '@/src/utils/app/shared-utils';
+import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
-import { PublicationActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import { Message, PublishActions } from '@epam/ai-dial-shared';
@@ -113,6 +120,43 @@ export const addMessageAttachmentsToPublication = (
         updatedPublication: response,
         newItemsToSelect: [...selectedItemsToApprove, ...newFilesReviewUrls],
       };
+    }),
+  );
+};
+
+export const getUpdateApplicationAction = (
+  oldApplication: CustomApplicationModel,
+  newApplication: CustomApplicationModel,
+) => {
+  if (newApplication.applicationTypeSchemaId) {
+    return ApplicationTypesSchemasService.getApplicationTypeSchema(
+      newApplication.applicationTypeSchemaId,
+    ).pipe(
+      switchMap((schema) => {
+        return of(
+          ApplicationActions.update({
+            oldApplication,
+            applicationData: newApplication,
+            schema,
+          }),
+        );
+      }),
+      catchError((err) => {
+        console.error(err);
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'Cannot fetch application schema. Please try again later.',
+            ),
+          ),
+        );
+      }),
+    );
+  }
+  return of(
+    ApplicationActions.update({
+      oldApplication,
+      applicationData: newApplication,
     }),
   );
 };

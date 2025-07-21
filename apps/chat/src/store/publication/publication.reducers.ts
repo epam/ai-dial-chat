@@ -394,6 +394,14 @@ export const publicationSlice = createSlice({
     ) => {
       state.isPublicationUpdating = true;
     },
+    updateApplicationPublicationUrls: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl?: string;
+        oldApplicationId: string;
+        newApplicationId: string;
+      }>,
+    ) => state,
     updatePublicationRequestAndApplicationIcon: (
       state,
       _action: PayloadAction<{
