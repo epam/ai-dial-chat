@@ -334,9 +334,15 @@ export const PublicationHandlerFooter = ({
     publicationConversationsWithUploadedMessages.some(
       (conversation) => !conversation.messages.length,
     );
+
+  const selectedInvalidEntities = useMemo(
+    () => invalidEntities.filter((e) => itemsToApprove.includes(e.id)),
+    [invalidEntities, itemsToApprove],
+  );
+
   const isApproveDisabled =
     !isAllResourcesReviewed ||
-    !!invalidEntities.length ||
+    !!selectedInvalidEntities.length ||
     someReviewedConversationHaveNoMessages ||
     isPublicationUpdating;
 
@@ -346,10 +352,12 @@ export const PublicationHandlerFooter = ({
     <div
       className={classNames(
         'flex w-full items-center gap-3 rounded-t bg-layer-2 px-3 py-4 md:gap-5 md:px-4',
-        isOnlyFilesPublication ? 'justify-end' : 'justify-between',
+        isOnlyFilesPublication || !resourcesToReview.length
+          ? 'justify-end'
+          : 'justify-between',
       )}
     >
-      {invalidEntities.length ? (
+      {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
             size={24}
@@ -357,13 +365,13 @@ export const PublicationHandlerFooter = ({
             stroke="1.5"
           />
           <p className="text-sm text-error" data-qa="duplicate-unpublishing">
-            {invalidEntities.map((e, idx) => (
+            {selectedInvalidEntities.map((e, idx) => (
               <span key={e.id} className="italic">
                 &quot;
                 {e.name.substring(0, 50) === e.name
                   ? e.name
                   : `${e.name.substring(0, 50)}...`}
-                &quot;{idx === invalidEntities.length - 1 ? ' ' : ', '}
+                &quot;{idx === selectedInvalidEntities.length - 1 ? ' ' : ', '}
               </span>
             ))}
             {t(
@@ -372,7 +380,8 @@ export const PublicationHandlerFooter = ({
           </p>
         </div>
       ) : (
-        !isOnlyFilesPublication && (
+        !isOnlyFilesPublication &&
+        !!resourcesToReview.length && (
           <button
             className="text-accent-primary"
             onClick={handlePublicationReview}
@@ -389,7 +398,7 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            {!invalidEntities.length && (
+            {!selectedInvalidEntities.length && (
               <IconButton
                 name={t('Edit')}
                 dataQa="edit"
@@ -413,8 +422,8 @@ export const PublicationHandlerFooter = ({
             <Tooltip
               hideTooltip={!isApproveDisabled}
               tooltip={t(
-                invalidEntities.length
-                  ? "Request can't be approved as some conversations are unpublished"
+                selectedInvalidEntities.length
+                  ? "Request can't be approved as some items are unpublished"
                   : someReviewedConversationHaveNoMessages
                     ? "Request can't be approved as some conversations have no messages"
                     : isPublicationUpdating

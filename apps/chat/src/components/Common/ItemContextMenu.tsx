@@ -67,6 +67,7 @@ interface ItemContextMenuProps {
   isLoading?: boolean;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
   onShowInfo?: () => void;
+  hideTriggerIcon?: boolean;
 }
 
 export function ItemContextMenu({
@@ -96,6 +97,7 @@ export function ItemContextMenu({
   onUse,
   onShowInfo,
   TriggerIcon,
+  hideTriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -317,6 +319,7 @@ export function ItemContextMenu({
       menuItems={menuItems}
       isLoading={isLoading}
       TriggerIcon={TriggerIcon ?? IconDots}
+      hideTriggerIcon={hideTriggerIcon}
       triggerIconSize={18}
       className={className}
       featureType={featureType}
