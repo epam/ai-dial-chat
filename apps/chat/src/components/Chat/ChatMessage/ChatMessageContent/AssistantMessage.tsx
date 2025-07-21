@@ -11,13 +11,14 @@ import {
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 
 import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
@@ -91,6 +92,9 @@ export const AssistantMessage = memo(function AssistantMessage({
   const [shouldScroll, setShouldScroll] = useState(false);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const resourcesToReview = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
   const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
   const isEditLastMessageEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.EditLastAssistantContent),
@@ -102,6 +106,12 @@ export const AssistantMessage = memo(function AssistantMessage({
   const isShowResponseLoader =
     !!conversation.isMessageStreaming && isLastMessage;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
+
+  const isReadOnlyConversation = isEntityReadOnly(conversation);
+  const isPublishingConversation = useMemo(
+    () => !!resourcesToReview.find((r) => r.reviewUrl === conversation.id),
+    [conversation.id, resourcesToReview],
+  );
 
   const codeRegEx =
     /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
@@ -311,8 +321,9 @@ export const AssistantMessage = memo(function AssistantMessage({
             onLike={(likeStatus) => onLike?.(likeStatus)}
             onRegenerate={onRegenerate}
             onToggleEditing={
-              isAllLastMessageEnabled ||
-              (isLastMessage && isEditLastMessageEnabled)
+              (isAllLastMessageEnabled ||
+                (isLastMessage && isEditLastMessageEnabled)) &&
+              (!isReadOnlyConversation || isPublishingConversation)
                 ? handleToggleEditing
                 : undefined
             }
