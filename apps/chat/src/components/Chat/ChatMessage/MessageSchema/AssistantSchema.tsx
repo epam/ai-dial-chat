@@ -6,7 +6,7 @@ import {
   getMessageSchema,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
-import { isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Translation } from '@/src/types/translation';
 
@@ -43,7 +43,7 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
   );
   const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
-  const isExternalConversation = selectedConversations.some(isEntityIdExternal);
+  const isReadOnlyConversation = selectedConversations.some(isEntityReadOnly);
   const isPublishingConversation = useMemo(
     () =>
       selectedConversations.some((conv) =>
@@ -76,7 +76,7 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
         schema={schema}
         onChange={handleChange}
         formValue={formValue}
-        disabled={isExternalConversation && !isPublishingConversation}
+        disabled={isReadOnlyConversation && !isPublishingConversation}
         showSelected
       />
     </div>

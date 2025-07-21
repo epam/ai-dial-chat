@@ -11,7 +11,7 @@ import {
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
-import { isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 
 import { Conversation } from '@/src/types/chat';
@@ -107,7 +107,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     !!conversation.isMessageStreaming && isLastMessage;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
-  const isExternalConversation = isEntityIdExternal(conversation);
+  const isReadOnlyConversation = isEntityReadOnly(conversation);
   const isPublishingConversation = useMemo(
     () => !!resourcesToReview.find((r) => r.reviewUrl === conversation.id),
     [conversation.id, resourcesToReview],
@@ -323,7 +323,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             onToggleEditing={
               (isAllLastMessageEnabled ||
                 (isLastMessage && isEditLastMessageEnabled)) &&
-              (!isExternalConversation || isPublishingConversation)
+              (!isReadOnlyConversation || isPublishingConversation)
                 ? handleToggleEditing
                 : undefined
             }
