@@ -32,6 +32,22 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
     );
   }
 
+  public async assertAuthorLabelState(expectedState: ElementState) {
+    await this.assertElementState(
+      this.publishingApprovalModal.authorLabel,
+      expectedState,
+      PublishingExpectedMessages.publishAuthorIsValid,
+    );
+  }
+
+  public async assertPublicAuthorLabelState(expectedState: ElementState) {
+    await this.assertElementState(
+      this.publishingApprovalModal.publicAuthorLabel,
+      expectedState,
+      PublishingExpectedMessages.publishAuthorPublicNameIsValid,
+    );
+  }
+
   public async assertRequestCreationDate(publicationRequest: Publication) {
     await this.assertElementText(
       this.publishingApprovalModal.creationDate,

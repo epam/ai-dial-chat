@@ -85,13 +85,13 @@ function ReviewApplicationDialogContent() {
         </div>
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Name: ')}</span>
-          <span className="max-w-[414px] text-primary">
+          <span className="max-w-[414px] text-primary" data-qa="app-name">
             {application?.name}
           </span>
         </div>
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Version: ')}</span>
-          <span className="max-w-[414px] text-primary">
+          <span className="max-w-[414px] text-primary" data-qa="app-version">
             {application?.version}
           </span>
         </div>
@@ -110,7 +110,7 @@ function ReviewApplicationDialogContent() {
             <span className="w-[122px] shrink-0 text-secondary">
               {t('Description: ')}
             </span>
-            <span className="grow text-primary">
+            <span className="grow text-primary" data-qa="app-description">
               {getModelDescription(application)}
             </span>
           </div>
@@ -133,7 +133,10 @@ function ReviewApplicationDialogContent() {
                 {t('Features data:')}
               </span>
               <div className="flex flex-col justify-start break-all">
-                <div className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary">
+                <div
+                  className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary"
+                  data-qa="app-feature"
+                >
                   {Object.entries(application?.features || {}).map(
                     ([key, value], index, array) => (
                       <Fragment key={key}>
@@ -156,6 +159,7 @@ function ReviewApplicationDialogContent() {
                   <span
                     key={item}
                     className="m-1 h-[31] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
+                    data-qa="app-attach-type"
                   >
                     {item}
                   </span>
@@ -168,7 +172,10 @@ function ReviewApplicationDialogContent() {
             <span className="w-[122px] text-secondary">
               {t(' Max. attachments number:')}
             </span>
-            <span className="max-w-[414px] text-primary">
+            <span
+              className="max-w-[414px] text-primary"
+              data-qa="app-max-attach"
+            >
               {application?.maxInputAttachments}
             </span>
           </div>
@@ -179,7 +186,10 @@ function ReviewApplicationDialogContent() {
               <span className="w-[122px] text-secondary">
                 {t('Completion URL:')}
               </span>
-              <span className="max-w-[414px] break-all text-primary">
+              <span
+                className="max-w-[414px] break-all text-primary"
+                data-qa="app-completion-url"
+              >
                 {application.completionUrl}
               </span>
             </div>

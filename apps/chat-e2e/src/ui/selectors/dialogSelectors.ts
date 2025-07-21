@@ -66,7 +66,14 @@ export const ModelDialog = {
 
 export const ReviewApplicationDialog = {
   reviewDialog: '[data-qa="review-application-dialog"]',
-  entityIcon: '[data-qa="entity-icon"]',
+  name: '[data-qa="app-name"]',
+  version: '[data-qa="app-version"]',
+  description: '[data-qa="app-description"]',
+  topics: '[data-qa="app-topic"]',
+  featuresData: '[data-qa="app-feature"]',
+  attachmentTypes: '[data-qa="app-attach-type"]',
+  maxAttachmentsNumber: '[data-qa="app-max-attach"]',
+  completionUrl: '[data-qa="app-completion-url"]',
 };
 
 export const AddonDialog = {
@@ -180,6 +187,7 @@ export const PublishingApprovalModalSelectors = {
   publishToPath: '[data-qa="publish-to-path"]',
   publishToPathLabel: '[data-qa="publish-to-label"]',
   creationDate: '[data-qa="creation-date"]',
+  authorLabel: '[data-qa="publication-author-label"]',
   author: '[data-qa="publication-author"]',
   publicAuthor: '[data-qa="publication-display-author"]',
   publicAuthorLabel: '[data-qa="publication-display-author-label"]',

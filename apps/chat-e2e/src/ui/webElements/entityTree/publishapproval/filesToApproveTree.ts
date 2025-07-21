@@ -1,5 +1,6 @@
 import {
   EntitySelectors,
+  IconSelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree';
@@ -14,4 +15,9 @@ export class FilesToApproveTree extends PublishFilesTree {
       EntitySelectors.file,
     );
   }
+
+  public fileIcon = (name: string) =>
+    this.getTreeEntity(name, { exactMatch: true }).locator(
+      IconSelectors.fileIcon,
+    );
 }

@@ -6,7 +6,7 @@ export class PublishFilesTree extends EntitiesTree {
   public getFileDownloadIcon = (filename: string) =>
     this.getEntityByName(filename).locator(`~${FileSelectors.downloadIcon}`);
 
-  public async getFileDownloadIUrl(filename: string) {
+  public async getFileDownloadUrl(filename: string) {
     const link = await this.getFileDownloadIcon(filename).getAttribute(
       Attributes.href,
     );

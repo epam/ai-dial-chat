@@ -153,7 +153,7 @@ dialAdminTest(
           'visible',
         );
         publishFileAssertion.assertValue(
-          await filesToPublishTree.getFileDownloadIUrl(
+          await filesToPublishTree.getFileDownloadUrl(
             Attachment.cloudImageName,
           ),
           ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
