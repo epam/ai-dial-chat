@@ -1,6 +1,6 @@
 import { Editor, EditorProps } from '@monaco-editor/react';
 import { IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -114,6 +114,14 @@ export const MonacoEditor = memo(function MonacoEditor(
       },
     };
   }, [activeFile, fileMap, props]);
+
+  useEffect(() => {
+    const map: Record<string, MonacoFile> = {};
+    props.files?.forEach((f) => {
+      map[f.id] = { ...f };
+    });
+    setFileMap(map);
+  }, [props.files]);
 
   return (
     <div
