@@ -51,7 +51,10 @@ import {
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
 import { getPublishFolderResources } from '@/src/utils/app/publications';
-import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import {
+  doesEntityContainSearchItem,
+  isHiddenEntity,
+} from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import {
@@ -147,6 +150,7 @@ export interface FolderProps<T, P = unknown> {
     type,
     action,
   }: PublicationFolderPayload) => void;
+  showTechnicalFolders?: boolean;
 }
 
 export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -189,6 +193,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   canManageOnlyTemporaryFolders = false,
   onShowError,
   onPublication,
+  showTechnicalFolders = false,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -419,9 +424,13 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, [openedFoldersIds, currentFolder.id]);
   const filteredChildFolders = useMemo(() => {
     return sortByName(
-      allFolders.filter((folder) => folder.folderId === currentFolder.id),
+      allFolders.filter(
+        (folder) =>
+          folder.folderId === currentFolder.id &&
+          (showTechnicalFolders || !isHiddenEntity(folder)),
+      ),
     );
-  }, [currentFolder, allFolders]);
+  }, [allFolders, currentFolder.id, showTechnicalFolders]);
   const filteredChildItems = useMemo(() => {
     return sortByName(
       allItems?.filter(

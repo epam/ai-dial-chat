@@ -728,6 +728,7 @@ export const FileManagerModal = ({
                   {organizationRootFolders.map((folder) => {
                     return (
                       <Folder
+                        showTechnicalFolders={isHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -805,6 +806,7 @@ export const FileManagerModal = ({
                   {sharedWithMeRootFolders.map((folder) => {
                     return (
                       <Folder
+                        showTechnicalFolders={isHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -884,6 +886,7 @@ export const FileManagerModal = ({
                   {myRootFolders.map((folder) => {
                     return (
                       <Folder
+                        showTechnicalFolders={isHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
