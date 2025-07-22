@@ -1,6 +1,7 @@
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
@@ -45,6 +46,7 @@ dialTest(
             MenuOptions.duplicate,
             {
               triggeredHttpMethod: 'POST',
+              apiHost: API.promptHost,
             },
           );
           await promptAssertion.assertEntityState(
