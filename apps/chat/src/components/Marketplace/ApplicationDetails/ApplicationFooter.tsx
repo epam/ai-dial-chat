@@ -79,7 +79,7 @@ export const ApplicationDetailsFooter = ({
       disabledActions: {
         copyLink: screenState !== ScreenState.SM,
         share: !showContextMenu,
-        unshare: !showContextMenu,
+        unshare: !entity?.sharedWithMe,
       },
     }),
     [entity, screenState, showContextMenu],
