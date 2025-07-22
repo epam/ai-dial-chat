@@ -45,7 +45,6 @@ import {
   ApplicationActions,
   CodeEditorActions,
   ConversationsActions,
-  ModelsActions,
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -358,13 +357,6 @@ export const ApplicationSettings: React.FC<Props> = ({
       !areSelectedConversationsLoaded
     )
       return;
-    if (!isAdminPreviewMode) {
-      dispatch(
-        ModelsActions.updateRecentModels({
-          modelId: applicationData.reference,
-        }),
-      );
-    }
     if (previewConversationId) {
       dispatch(
         ConversationsActions.selectConversations({
