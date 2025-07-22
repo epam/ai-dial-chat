@@ -116,7 +116,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     formState: { errors, defaultValues, isValid: isFormValid },
     getFieldState,
     getValues,
-    watch,
   } = useFormContext<QuickAppFormData>();
 
   const lastSubmittedValuesRef = useRef<QuickAppFormData | undefined>(
@@ -240,23 +239,6 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     [isAppPublic],
   );
 
-  const editorTabs = useMemo(() => {
-    return [
-      {
-        id: Toolsets.WebApiToolset,
-        label: 'Web API',
-        value: watch(Toolsets.WebApiToolset) ?? '',
-        language: 'json',
-      },
-      {
-        id: Toolsets.McpToolset,
-        label: 'MCP',
-        value: watch(Toolsets.McpToolset) ?? '',
-        language: 'json',
-      },
-    ];
-  }, [watch]);
-
   const [activeTabId, setActiveTabId] = useState(Toolsets.WebApiToolset);
 
   const toolsetController = useController({
@@ -269,6 +251,23 @@ export const QuickAppView: React.FC<QuickAppViewProps> = ({
     control,
     rules: validators[Toolsets.McpToolset],
   });
+
+  const editorTabs = useMemo(() => {
+    return [
+      {
+        id: Toolsets.WebApiToolset,
+        label: 'Web API',
+        value: toolsetController.field.value ?? '',
+        language: 'json',
+      },
+      {
+        id: Toolsets.McpToolset,
+        label: 'MCP',
+        value: mcpToolsetController.field.value ?? '',
+        language: 'json',
+      },
+    ];
+  }, [toolsetController.field.value, mcpToolsetController.field.value]);
 
   const fieldControllers = useMemo(
     () => ({
