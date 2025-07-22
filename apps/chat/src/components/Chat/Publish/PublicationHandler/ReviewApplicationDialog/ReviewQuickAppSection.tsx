@@ -1,4 +1,5 @@
 import { IconDownload, IconFile } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -12,7 +13,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import { CustomApplicationModel, Toolsets } from '@/src/types/applications';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
@@ -78,6 +79,31 @@ const ReviewQuickAppSectionView = ({
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  const editorTabs = useMemo(() => {
+    return [
+      {
+        id: Toolsets.WebApiToolset,
+        label: 'Web API',
+        value: getWebAPIToolsetStr(config),
+        language: 'json',
+      },
+      {
+        id: Toolsets.McpToolset,
+        label: 'MCP',
+        value: getMcpToolsetStr(config),
+        language: 'json',
+      },
+    ];
+  }, [config]);
+
+  const [activeTabId, setActiveTabId] = useState<Toolsets | undefined>(
+    () => editorTabs[0]?.id,
+  );
+
+  const handleTabChange = (id: string) => {
+    setActiveTabId(id as Toolsets);
+  };
+
   return (
     <>
       {modelsMap[config.model] && (
@@ -120,32 +146,18 @@ const ReviewQuickAppSectionView = ({
         </div>
       )}
 
-      {config.web_api_toolset && (
+      {(config.web_api_toolset || config.mcp_toolset) && (
         <div className="flex gap-4">
           <span className="w-[122px] shrink-0 text-secondary">
-            {t('Web API toolset: ')}
+            {t('Toolsets: ')}
           </span>
           <MonacoEditor
-            language="json"
-            value={getWebAPIToolsetStr(config)}
-            options={editorOptions}
             height={400}
-            allowFullScreen
-          />
-        </div>
-      )}
-
-      {config.mcp_toolset && (
-        <div className="flex gap-4">
-          <span className="w-[122px] shrink-0 text-secondary">
-            {t('MCP toolset: ')}
-          </span>
-          <MonacoEditor
-            language="json"
-            value={getMcpToolsetStr(config)}
             options={editorOptions}
-            height={400}
             allowFullScreen
+            files={editorTabs}
+            activeFileId={activeTabId}
+            onTabChange={handleTabChange}
           />
         </div>
       )}
