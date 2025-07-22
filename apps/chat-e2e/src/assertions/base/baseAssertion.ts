@@ -373,6 +373,19 @@ export class BaseAssertion {
       .toBeGreaterThan(expectedNumber);
   }
 
+  public assertNumberIsGreaterThanOrEqual(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeGreaterThanOrEqual(expectedNumber);
+  }
+
   public assertValue(
     actualValue: string | number | undefined | null,
     expectedValue: string | number,

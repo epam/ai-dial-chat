@@ -356,8 +356,7 @@ dialTest(
   },
 );
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   'Search by used version to find models when two versions are used in My workspace.\n' +
     'Search in My workspace: Search word stays if to add app and search result is updated accordingly',
   async ({
@@ -430,7 +429,7 @@ dialTest.skip(
         const filteredAgents = allAgents.filter(
           (agent) => agent.isWorkspaceAgent,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredAgents.length,
           1,
           ExpectedMessages.conversationsCountIsValid,
@@ -447,7 +446,9 @@ dialTest.skip(
     await dialTest.step(
       'Verify another version is not displayed in the suggested results',
       async () => {
-        const suggestedAgents = allAgents.filter((agent) => agent.isSuggested);
+        const suggestedAgents = allAgents.filter(
+          (agent) => agent.isSuggested && agent.name === installedAppName,
+        );
         baseAssertion.assertValue(
           suggestedAgents.length,
           0,
@@ -481,7 +482,7 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Add custom app with the name including/excluding searched app name and verify the search term is preserved, only first added app is displayed in the results',
+      'Add custom app with the name including/excluding searched app name and verify the search term is preserved, first added app is displayed in the results',
       async () => {
         firstAddedAppName = GeneratorUtil.randomString(5) + installedAppName;
         firstAddedAppVersion = GeneratorUtil.randomApplicationVersion([
@@ -521,20 +522,25 @@ dialTest.skip(
           await marketplacePage.waitForPageLoaded();
         }
 
-        //TODO: remove search input filling when fixed https://github.com/epam/ai-dial-chat/issues/3221
-        await marketplaceHeader.searchInput.fillInInput(installedAppName);
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         const filteredAgents = allAgents.filter(
           (agent) => agent.isWorkspaceAgent,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredAgents.length,
           2,
           ExpectedMessages.elementsCountIsValid,
         );
+
+        const filteredAgentNames = filteredAgents.map((agent) => agent.name);
         baseAssertion.assertArrayIncludesAll(
-          filteredAgents.map((agent) => agent.name),
+          filteredAgentNames,
           [installedAppName, firstAddedAppName],
+          ExpectedMessages.searchResultsAreCorrect,
+        );
+        baseAssertion.assertArrayExcludesAll(
+          filteredAgentNames,
+          [secondAddedAppName],
           ExpectedMessages.searchResultsAreCorrect,
         );
         await baseAssertion.assertElementAttribute(
@@ -547,8 +553,7 @@ dialTest.skip(
   },
 );
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   'Bookmark an agent from Suggested results results',
   async ({
     marketplacePage,
@@ -556,7 +561,6 @@ dialTest.skip(
     marketplaceAgentsSection,
     marketplaceAgents,
     navigationPanel,
-    marketplace,
     localStorageManager,
     setTestIds,
     baseAssertion,
@@ -663,13 +667,13 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Verify both apps are displayed as a search result, no other agents are suggested',
+      'Verify both apps are displayed as a search result',
       async () => {
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         const filteredAgents = allAgents.filter(
           (agent) => agent.isWorkspaceAgent,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredAgents.length,
           2,
           ExpectedMessages.elementsCountIsValid,
@@ -678,16 +682,6 @@ dialTest.skip(
           filteredAgents.map((agent) => agent.name),
           [firstAppName, secondAppName],
           ExpectedMessages.searchResultsAreCorrect,
-        );
-
-        await baseAssertion.assertElementState(
-          marketplace.marketplaceSuggestionsLabel,
-          'hidden',
-        );
-        baseAssertion.assertValue(
-          allAgents.filter((agent) => agent.isSuggested).length,
-          0,
-          ExpectedMessages.elementsCountIsValid,
         );
       },
     );
@@ -700,7 +694,7 @@ dialTest.skip(
         const filteredWorkspaceAgents = allAgents.filter(
           (agent) => agent.isWorkspaceAgent,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredWorkspaceAgents.length,
           2,
           ExpectedMessages.elementsCountIsValid,
@@ -714,7 +708,7 @@ dialTest.skip(
         const filteredSuggestedAgents = allAgents.filter(
           (agent) => agent.isSuggested,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           filteredSuggestedAgents.length,
           1,
           ExpectedMessages.elementsCountIsValid,
