@@ -11,7 +11,7 @@ import {
   PublishingExpectedMessages,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { BaseElement, PublicationReviewControl } from '@/src/ui/webElements';
+import { PublicationReviewControl } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -67,9 +67,6 @@ dialAdminTest(
     const unpublishAuthor = username.substring(0, username.indexOf('@'));
     let orderedPrompts: string[] = [];
     let publicationReviewControls: PublicationReviewControl;
-    let backToPublicationRequestButton: BaseElement;
-    let nextButton: BaseElement;
-    let previousButton: BaseElement;
     const expectedErrorColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textError,
     );
@@ -157,16 +154,15 @@ dialAdminTest(
       'Verify folder with both prompts is displayed on "Publication approval" modal, "Approve" button is disabled',
       async () => {
         for (const prompt of folderPrompt.prompts) {
-          await adminFolderPromptsToApproveAssertion.assertFolderEntityState(
+          await adminFolderPromptsToApproveAssertion.assertFolderEntityToPublish(
             { name: folderName },
             { name: prompt.name },
-            'visible',
+            { expectedState: 'visible' },
           );
         }
-        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.approveButton,
-          'disabled',
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          approveButtonState: 'disabled',
+        });
       },
     );
 
@@ -178,9 +174,9 @@ dialAdminTest(
           (f) => f.toLowerCase(),
           'asc',
         );
-        await adminPublishingApprovalModalAssertion.assertReviewButtonTitle(
-          ExpectedConstants.goToReviewButtonTitle,
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          reviewButtonTitle: ExpectedConstants.goToReviewButtonTitle,
+        });
         await adminPublishingApprovalModal.goToEntityReview();
         await adminApproveRequiredPromptsAssertion.assertFolderEntitySelectedState(
           { name: folderName },
@@ -192,33 +188,17 @@ dialAdminTest(
         );
         publicationReviewControls =
           adminPublishedPromptPreviewModal.getPublicationReviewControl();
-        backToPublicationRequestButton =
-          publicationReviewControls.backToPublicationRequestButton;
-        nextButton = publicationReviewControls.nextButton;
-        previousButton = publicationReviewControls.previousButton;
-        await adminPublishedPromptPreviewModalAssertion.assertElementState(
-          backToPublicationRequestButton,
-          'visible',
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertElementActionabilityState(
-          backToPublicationRequestButton,
-          'enabled',
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertElementActionabilityState(
-          nextButton,
-          'enabled',
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertElementActionabilityState(
-          previousButton,
-          'disabled',
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptName(
-          orderedPrompts[0],
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
-          folderPrompt.prompts.find((p) => p.name === orderedPrompts[0])!
-            .content!,
-        );
+        await adminPublishedPromptPreviewModalAssertion.assertButtonsState({
+          backToPublicationRequestButtonState: 'enabled',
+          nextButtonState: 'enabled',
+          previousButtonState: 'disabled',
+        });
+        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+          name: orderedPrompts[0],
+          content: folderPrompt.prompts.find(
+            (p) => p.name === orderedPrompts[0],
+          )!.content!,
+        });
       },
     );
 
@@ -231,25 +211,17 @@ dialAdminTest(
           { name: orderedPrompts[1] },
           true,
         );
-        await adminApproveRequiredPromptsAssertion.assertElementState(
-          backToPublicationRequestButton,
-          'visible',
-        );
-        await adminApproveRequiredPromptsAssertion.assertElementActionabilityState(
-          nextButton,
-          'disabled',
-        );
-        await adminApproveRequiredPromptsAssertion.assertElementActionabilityState(
-          previousButton,
-          'enabled',
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptName(
-          orderedPrompts[1],
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
-          folderPrompt.prompts.find((p) => p.name === orderedPrompts[1])!
-            .content!,
-        );
+        await adminPublishedPromptPreviewModalAssertion.assertButtonsState({
+          backToPublicationRequestButtonState: 'enabled',
+          nextButtonState: 'disabled',
+          previousButtonState: 'enabled',
+        });
+        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+          name: orderedPrompts[1],
+          content: folderPrompt.prompts.find(
+            (p) => p.name === orderedPrompts[1],
+          )!.content!,
+        });
       },
     );
 
@@ -261,13 +233,10 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertReviewButtonTitle(
-          ExpectedConstants.continueReviewButtonTitle,
-        );
-        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.approveButton,
-          'enabled',
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
+          approveButtonState: 'enabled',
+        });
       },
     );
 
@@ -315,25 +284,15 @@ dialAdminTest(
           publishingRequestModal,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityState(
+        await promptToPublishAssertion.assertEntityToPublish(
           { name: folderPrompt.prompts[0].name },
-          'visible',
-        );
-        await promptToPublishAssertion.assertEntityColor(
-          { name: folderPrompt.prompts[0].name },
-          expectedErrorColor,
-        );
-        await promptToPublishAssertion.assertEntityCheckboxState(
-          { name: folderPrompt.prompts[0].name },
-          CheckboxState.checked,
-        );
-        await promptToPublishAssertion.assertEntityVersion(
-          { name: folderPrompt.prompts[0].name },
-          ExpectedConstants.defaultAppVersion,
-        );
-        await promptToPublishAssertion.assertEntityVersionColor(
-          { name: folderPrompt.prompts[0].name },
-          expectedErrorColor,
+          {
+            expectedState: 'visible',
+            expectedColor: expectedErrorColor,
+            expectedCheckboxState: CheckboxState.checked,
+            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersionColor: expectedErrorColor,
+          },
         );
         await promptToPublishAssertion.assertElementState(
           promptsToPublishTree.promptIcon(folderPrompt.prompts[0].name),
@@ -387,41 +346,21 @@ dialAdminTest(
           { name: folderPrompt.prompts[0].name },
           expectedErrorColor,
         );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
-          PublishPath.Organization,
-        );
-        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
-          unpublishApiModels.response,
-        );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.author,
-          unpublishAuthor,
-        );
-        await adminFolderPromptsToApproveAssertion.assertFolderEntityState(
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          publishTo: PublishPath.Organization,
+          requestCreated: unpublishApiModels.response,
+          author: unpublishAuthor,
+        });
+        await adminFolderPromptsToApproveAssertion.assertFolderEntityToPublish(
           { name: folderName },
           { name: folderPrompt.prompts[0].name },
-          'visible',
-        );
-        await adminFolderPromptsToApproveAssertion.assertFolderEntityColor(
-          { name: folderName },
-          { name: folderPrompt.prompts[0].name },
-          expectedErrorColor,
-        );
-        await adminFolderPromptsToApproveAssertion.assertFolderEntityCheckboxState(
-          { name: folderName },
-          { name: folderPrompt.prompts[0].name },
-          CheckboxState.checked,
-        );
-        await adminFolderPromptsToApproveAssertion.assertFolderEntityVersion(
-          { name: folderName },
-          { name: folderPrompt.prompts[0].name },
-          ExpectedConstants.defaultAppVersion,
-        );
-        await adminFolderPromptsToApproveAssertion.assertFolderEntityVersionColor(
-          { name: folderName },
-          { name: folderPrompt.prompts[0].name },
-          expectedErrorColor,
+          {
+            expectedState: 'visible',
+            expectedColor: expectedErrorColor,
+            expectedCheckboxState: CheckboxState.checked,
+            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersionColor: expectedErrorColor,
+          },
         );
       },
     );

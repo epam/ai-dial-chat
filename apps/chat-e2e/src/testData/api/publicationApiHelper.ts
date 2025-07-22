@@ -164,13 +164,10 @@ export class PublicationApiHelper extends BaseApiHelper {
         targetUrl: resource.targetUrl,
       });
     }
-    const requestName = publicationRequest.name ?? '';
     const data: PublicationRequestModel = {
       displayAuthor: publicationRequest.displayAuthor ?? '',
       name:
-        requestName.length > 0
-          ? requestName
-          : GeneratorUtil.randomUnpublishRequestName(),
+        publicationRequest.name || GeneratorUtil.randomUnpublishRequestName(),
       targetFolder: publicationRequest.targetFolder,
       resources: unpublishResources,
       rules: publicationRequest.rules,

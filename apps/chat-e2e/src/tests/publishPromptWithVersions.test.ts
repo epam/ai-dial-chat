@@ -63,6 +63,9 @@ dialTest(
         },
       ]),
     );
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textError,
+    );
 
     await dialTest.step(
       'Publish three versions of prompt via API',
@@ -130,16 +133,13 @@ dialTest(
         await promptPreviewModalAssertion.assertPromptPreviewModalTitle(
           ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await promptPreviewModalAssertion.assertPromptName(prompt.name);
-        await promptPreviewModalAssertion.assertPromptContent(
-          promptVersionDataMap.get(sortedVersionsArray[0])!.content,
-        );
-        await promptPreviewModalAssertion.assertPromptDescription(
-          promptVersionDataMap.get(sortedVersionsArray[0])!.description,
-        );
-        await promptPreviewModalAssertion.assertPromptVersion(
-          sortedVersionsArray[0],
-        );
+        await promptPreviewModalAssertion.assertPromptFields({
+          name: prompt.name,
+          content: promptVersionDataMap.get(sortedVersionsArray[0])!.content,
+          description: promptVersionDataMap.get(sortedVersionsArray[0])!
+            .description,
+          version: sortedVersionsArray[0],
+        });
         for (const button of [
           promptPreviewModal.promptDuplicateButton,
           promptPreviewModal.promptExportButton,
@@ -178,16 +178,13 @@ dialTest(
             triggeredHttpMethod: 'GET',
           },
         );
-        await promptPreviewModalAssertion.assertPromptName(prompt.name);
-        await promptPreviewModalAssertion.assertPromptContent(
-          promptVersionDataMap.get(sortedVersionsArray[2])!.content,
-        );
-        await promptPreviewModalAssertion.assertPromptDescription(
-          promptVersionDataMap.get(sortedVersionsArray[2])!.description,
-        );
-        await promptPreviewModalAssertion.assertPromptVersion(
-          sortedVersionsArray[2],
-        );
+        await promptPreviewModalAssertion.assertPromptFields({
+          name: prompt.name,
+          content: promptVersionDataMap.get(sortedVersionsArray[2])!.content,
+          description: promptVersionDataMap.get(sortedVersionsArray[2])!
+            .description,
+          version: sortedVersionsArray[2],
+        });
       },
     );
 
@@ -202,9 +199,9 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.view, {
           triggeredHttpMethod: 'GET',
         });
-        await promptPreviewModalAssertion.assertPromptVersion(
-          sortedVersionsArray[0],
-        );
+        await promptPreviewModalAssertion.assertPromptFields({
+          version: sortedVersionsArray[0],
+        });
       },
     );
 
@@ -219,13 +216,12 @@ dialTest(
           },
         );
         await promptPreviewModal.duplicatePrompt();
-        await promptPreviewModalAssertion.assertPromptName(`${prompt.name} 1`);
-        await promptPreviewModalAssertion.assertPromptContent(
-          promptVersionDataMap.get(sortedVersionsArray[1])!.content,
-        );
-        await promptPreviewModalAssertion.assertPromptDescription(
-          promptVersionDataMap.get(sortedVersionsArray[1])!.description,
-        );
+        await promptPreviewModalAssertion.assertPromptFields({
+          name: `${prompt.name} 1`,
+          content: promptVersionDataMap.get(sortedVersionsArray[1])!.content,
+          description: promptVersionDataMap.get(sortedVersionsArray[1])!
+            .description,
+        });
         await promptPreviewModal.closeButton.click();
         await promptAssertion.assertEntityState(
           { name: `${prompt.name} 1` },
@@ -271,13 +267,12 @@ dialTest(
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await promptPreviewModalAssertion.assertPromptName(`${prompt.name} 2`);
-        await promptPreviewModalAssertion.assertPromptContent(
-          promptVersionDataMap.get(sortedVersionsArray[0])!.content,
-        );
-        await promptPreviewModalAssertion.assertPromptDescription(
-          promptVersionDataMap.get(sortedVersionsArray[0])!.description,
-        );
+        await promptPreviewModalAssertion.assertPromptFields({
+          name: `${prompt.name} 2`,
+          content: promptVersionDataMap.get(sortedVersionsArray[0])!.content,
+          description: promptVersionDataMap.get(sortedVersionsArray[0])!
+            .description,
+        });
         await promptPreviewModal.closeButton.click();
       },
     );
@@ -303,17 +298,14 @@ dialTest(
           publishingRequestModal,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityColor(
+        await promptToPublishAssertion.assertEntityToPublish(
           { name: prompt.name },
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
-        );
-        await promptToPublishAssertion.assertEntityVersion(
-          { name: prompt.name },
-          sortedVersionsArray[2],
-        );
-        await promptToPublishAssertion.assertEntityVersionColor(
-          { name: prompt.name },
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+          {
+            expectedState: 'visible',
+            expectedColor: expectedColor,
+            expectedVersion: sortedVersionsArray[2],
+            expectedVersionColor: expectedColor,
+          },
         );
         await publishingRequestModal.cancelButton.click();
         await promptPreviewModal.closeButton.click();
@@ -329,17 +321,14 @@ dialTest(
           publishingRequestModal,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityColor(
+        await promptToPublishAssertion.assertEntityToPublish(
           { name: prompt.name },
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
-        );
-        await promptToPublishAssertion.assertEntityVersion(
-          { name: prompt.name },
-          sortedVersionsArray[0],
-        );
-        await promptToPublishAssertion.assertEntityVersionColor(
-          { name: prompt.name },
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+          {
+            expectedState: 'visible',
+            expectedColor: expectedColor,
+            expectedVersion: sortedVersionsArray[0],
+            expectedVersionColor: expectedColor,
+          },
         );
       },
     );

@@ -110,7 +110,7 @@ dialAdminTest(
         );
         await baseAssertion.assertElementText(
           publishingRequestModal.unpublishFromLabel,
-          ExpectedConstants.unpublishFrom,
+          ExpectedConstants.unpublishFromLabel,
         );
         await baseAssertion.assertElementText(
           publishingRequestModal.unpublishFrom,

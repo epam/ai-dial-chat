@@ -27,7 +27,6 @@ dialAdminTest(
       folderDropdownMenu,
       publishingRequestModal,
       publishingRequestModalAssertion,
-      promptToPublishAssertion,
       publishingRequestFolderPromptAssertion,
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
@@ -100,29 +99,19 @@ dialAdminTest(
           publishingRequestModal,
           'visible',
         );
-        await promptToPublishAssertion.assertElementText(
-          publishingRequestModal.unpublishFrom,
-          PublishPath.Organization,
-        );
-        await promptToPublishAssertion.assertElementState(
-          publishingRequestModal.author,
-          'hidden',
-        );
+        await publishingRequestModalAssertion.assertGeneralInfo({
+          unpublishFrom: PublishPath.Organization,
+          authorLabel: 'hidden',
+        });
         for (const prompt of folderPrompt.prompts) {
-          await publishingRequestFolderPromptAssertion.assertFolderEntityState(
+          await publishingRequestFolderPromptAssertion.assertFolderEntityToPublish(
             { name: folderPrompt.folders.name },
             { name: prompt.name },
-            'visible',
-          );
-          await publishingRequestFolderPromptAssertion.assertFolderEntityColor(
-            { name: folderPrompt.folders.name },
-            { name: prompt.name },
-            expectedErrorColor,
-          );
-          await publishingRequestFolderPromptAssertion.assertFolderEntityCheckboxState(
-            { name: folderPrompt.folders.name },
-            { name: prompt.name },
-            CheckboxState.checked,
+            {
+              expectedState: 'visible',
+              expectedColor: expectedErrorColor,
+              expectedCheckboxState: CheckboxState.checked,
+            },
           );
         }
       },
@@ -182,42 +171,22 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
-          PublishPath.Organization,
-        );
-        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
-          unpublishApiModels.response,
-        );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.author,
-          author,
-        );
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          publishTo: PublishPath.Organization,
+          requestCreated: unpublishApiModels.response,
+          author: author,
+        });
         for (const prompt of folderPrompt.prompts) {
-          await adminFolderPromptsToApproveAssertion.assertFolderEntityState(
+          await adminFolderPromptsToApproveAssertion.assertFolderEntityToPublish(
             { name: folderPrompt.folders.name },
             { name: prompt.name },
-            'visible',
-          );
-          await adminFolderPromptsToApproveAssertion.assertFolderEntityColor(
-            { name: folderPrompt.folders.name },
-            { name: prompt.name },
-            expectedErrorColor,
-          );
-          await adminFolderPromptsToApproveAssertion.assertFolderEntityCheckboxState(
-            { name: folderPrompt.folders.name },
-            { name: prompt.name },
-            CheckboxState.checked,
-          );
-          await adminFolderPromptsToApproveAssertion.assertFolderEntityVersion(
-            { name: folderPrompt.folders.name },
-            { name: prompt.name },
-            ExpectedConstants.defaultAppVersion,
-          );
-          await adminFolderPromptsToApproveAssertion.assertFolderEntityVersionColor(
-            { name: folderPrompt.folders.name },
-            { name: prompt.name },
-            expectedErrorColor,
+            {
+              expectedState: 'visible',
+              expectedColor: expectedErrorColor,
+              expectedCheckboxState: CheckboxState.checked,
+              expectedVersion: ExpectedConstants.defaultAppVersion,
+              expectedVersionColor: expectedErrorColor,
+            },
           );
         }
       },
