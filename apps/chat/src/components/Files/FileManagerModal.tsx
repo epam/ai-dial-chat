@@ -984,11 +984,20 @@ export const FileManagerModal = ({
             className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
             data-qa="show-hidden-folders"
           >
-            {isHiddenItemsVisible ? (
-              <IconEyeOff height={24} width={24} />
-            ) : (
-              <IconEye height={24} width={24} />
-            )}
+            <Tooltip
+              tooltip={
+                isHiddenItemsVisible
+                  ? t('Hide technical items')
+                  : t('Show technical items')
+              }
+              isTriggerClickable
+            >
+              {isHiddenItemsVisible ? (
+                <IconEyeOff height={24} width={24} />
+              ) : (
+                <IconEye height={24} width={24} />
+              )}
+            </Tooltip>
           </button>
         </div>
         <div className="flex items-center gap-3">
