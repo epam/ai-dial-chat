@@ -515,6 +515,15 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
         return;
       }
+
+      if (newName.startsWith('.')) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the start of a name is not permitted.'),
+          ),
+        );
+        return;
+      }
     }
 
     if (currentFolder.isShared && newName && newName !== currentFolder.name) {
