@@ -63,6 +63,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const secondRequestName = GeneratorUtil.randomUnpublishRequestName();
     let secondUnpublishResponse: PublicationProps;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
       ModelsUtil.getDefaultAgent()!,
@@ -109,7 +110,7 @@ dialAdminTest(
         );
         await baseAssertion.assertElementText(
           publishingRequestModal.unpublishFromLabel,
-          ExpectedConstants.unpublishFrom,
+          ExpectedConstants.unpublishFromLabel,
         );
         await baseAssertion.assertElementText(
           publishingRequestModal.unpublishFrom,
@@ -177,6 +178,7 @@ dialAdminTest(
     await dialTest.step(
       'Create duplicated unpublish request for the same conversation',
       async () => {
+        publishApiModels.response.name = secondRequestName;
         secondUnpublishResponse =
           await publicationApiHelper.createUnpublishRequest(
             publishApiModels.response,

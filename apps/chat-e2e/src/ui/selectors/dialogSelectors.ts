@@ -151,7 +151,9 @@ export const SelectFolderModalSelectors = {
 export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
   requestName: '[data-qa="publishRequestName"]',
+  authorLabel: '[data-qa="publicationAuthor-label"]',
   author: '#publicationAuthor',
+  publishToLabel: '[data-qa="publish-to-label"]',
   publishTo: '[data-qa="change-path-container"]',
   unpublishFromLabel: '[data-qa="unpublish-from-label"]',
   unpublishFromPath: '[data-qa="unpublish-from-path"]',
@@ -180,6 +182,7 @@ export const PublishingApprovalModalSelectors = {
   publishToPath: '[data-qa="publish-to-path"]',
   publishToPathLabel: '[data-qa="publish-to-label"]',
   creationDate: '[data-qa="creation-date"]',
+  authorLabel: '[data-qa="publication-author-label"]',
   author: '[data-qa="publication-author"]',
   publicAuthor: '[data-qa="publication-display-author"]',
   publicAuthorLabel: '[data-qa="publication-display-author-label"]',

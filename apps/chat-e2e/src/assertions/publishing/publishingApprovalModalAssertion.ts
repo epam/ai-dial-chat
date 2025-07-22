@@ -1,14 +1,13 @@
 import { Publication } from '@/chat/types/publication';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
+  ElementActionabilityState,
   ElementState,
   ExpectedConstants,
-  ExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
 import { PublishingApprovalModal } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 export class PublishingApprovalModalAssertion extends BaseAssertion {
   readonly publishingApprovalModal: PublishingApprovalModal;
@@ -27,23 +26,19 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
   }
 
   public async assertPublishToPath(expectedPath: string) {
-    expect
-      .soft(
-        await this.publishingApprovalModal.publishToPath.getElementInnerContent(),
-        PublishingExpectedMessages.publishToPathIsValid,
-      )
-      .toBe(expectedPath);
+    await this.assertElementText(
+      this.publishingApprovalModal.publishToPath,
+      expectedPath,
+      PublishingExpectedMessages.publishToPathIsValid,
+    );
   }
 
   public async assertRequestCreationDate(publicationRequest: Publication) {
-    expect
-      .soft(
-        await this.publishingApprovalModal.creationDate.getElementInnerContent(),
-        PublishingExpectedMessages.publishToPathIsValid,
-      )
-      .toBe(
-        DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
-      );
+    await this.assertElementText(
+      this.publishingApprovalModal.creationDate,
+      DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
+      PublishingExpectedMessages.publishCreationDateIsValid,
+    );
   }
 
   public async assertRequestCreatedLabelState(expectedState: ElementState) {
@@ -79,11 +74,152 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
   }
 
   public async assertReviewButtonTitle(expectedTitle: string) {
-    expect
-      .soft(
-        await this.publishingApprovalModal.goToReviewButton.getElementInnerContent(),
-        ExpectedMessages.entityIsVisible,
-      )
-      .toBe(expectedTitle);
+    await this.assertElementText(
+      this.publishingApprovalModal.goToReviewButton,
+      expectedTitle,
+    );
+  }
+
+  public async assertGeneralInfo(fieldsToVerify: {
+    requestName?: string;
+    publishToLabel?: ElementState;
+    publishTo?: string;
+    authorLabel?: ElementState;
+    author?: string;
+    publicAuthorLabel?: ElementState;
+    publicAuthor?: string;
+    requestCreatedLabel?: ElementState;
+    requestCreated?: Publication;
+    allowAccessLabel?: ElementState;
+    availabilityLabel?: ElementState;
+    noChangesLabel?: ElementState;
+  }) {
+    if (fieldsToVerify.requestName) {
+      await this.assertElementText(
+        this.publishingApprovalModal.publishName,
+        fieldsToVerify.requestName,
+      );
+    }
+    if (fieldsToVerify.publishToLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.publishToPathLabel,
+        fieldsToVerify.publishToLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.publishToPathLabel,
+        ExpectedConstants.publishToLabel,
+      );
+    }
+    if (fieldsToVerify.publishTo) {
+      await this.assertElementText(
+        this.publishingApprovalModal.publishToPath,
+        fieldsToVerify.publishTo,
+      );
+    }
+    if (fieldsToVerify.authorLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.authorLabel,
+        fieldsToVerify.authorLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.authorLabel,
+        ExpectedConstants.authorLabel,
+      );
+    }
+    if (fieldsToVerify.author) {
+      await this.assertElementText(
+        this.publishingApprovalModal.author,
+        fieldsToVerify.author,
+      );
+    }
+    if (fieldsToVerify.publicAuthorLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.publicAuthorLabel,
+        fieldsToVerify.publicAuthorLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.publicAuthorLabel,
+        ExpectedConstants.unpublishFromLabel,
+      );
+    }
+    if (fieldsToVerify.publicAuthor) {
+      await this.assertElementText(
+        this.publishingApprovalModal.publicAuthor,
+        fieldsToVerify.publicAuthor,
+      );
+    }
+
+    if (fieldsToVerify.requestCreatedLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.requestCreatedLabel,
+        fieldsToVerify.requestCreatedLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.requestCreatedLabel,
+        ExpectedConstants.requestCreationDateLabel,
+      );
+    }
+    if (fieldsToVerify.requestCreated) {
+      await this.assertRequestCreationDate(fieldsToVerify.requestCreated);
+    }
+    if (fieldsToVerify.allowAccessLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.allowAccessLabel,
+        fieldsToVerify.allowAccessLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.allowAccessLabel,
+        ExpectedConstants.allowAccessLabel,
+      );
+    }
+    if (fieldsToVerify.availabilityLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.availabilityLabel,
+        fieldsToVerify.availabilityLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.availabilityLabel,
+        ExpectedConstants.availabilityLabel,
+      );
+    }
+    if (fieldsToVerify.noChangesLabel) {
+      await this.assertElementState(
+        this.publishingApprovalModal.noChangesLabel,
+        fieldsToVerify.noChangesLabel,
+      );
+      await this.assertElementText(
+        this.publishingApprovalModal.noChangesLabel,
+        ExpectedConstants.noChangesLabel,
+      );
+    }
+  }
+
+  public async assertButtonsState(buttonsToVerify: {
+    reviewButtonState?: ElementState;
+    reviewButtonTitle?: string;
+    rejectButtonState?: ElementActionabilityState;
+    approveButtonState?: ElementActionabilityState;
+  }) {
+    if (buttonsToVerify.reviewButtonState) {
+      await this.assertElementState(
+        this.publishingApprovalModal.goToReviewButton,
+        buttonsToVerify.reviewButtonState,
+      );
+    }
+    if (buttonsToVerify.reviewButtonTitle) {
+      await this.assertReviewButtonTitle(buttonsToVerify.reviewButtonTitle);
+    }
+    if (buttonsToVerify.rejectButtonState) {
+      await this.assertElementActionabilityState(
+        this.publishingApprovalModal.rejectButton,
+        buttonsToVerify.rejectButtonState,
+      );
+    }
+    if (buttonsToVerify.approveButtonState) {
+      await this.assertElementActionabilityState(
+        this.publishingApprovalModal.approveButton,
+        buttonsToVerify.approveButtonState,
+      );
+    }
   }
 }
