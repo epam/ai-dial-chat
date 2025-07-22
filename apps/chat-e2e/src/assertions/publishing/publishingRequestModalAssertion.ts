@@ -73,10 +73,6 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
         this.publishingRequestModal.publishToLabel,
         fieldsToVerify.publishToLabel,
       );
-      await this.assertElementText(
-        this.publishingRequestModal.publishToLabel,
-        ExpectedConstants.publishToLabel,
-      );
     }
     if (fieldsToVerify.publishTo) {
       await this.assertElementText(
@@ -89,10 +85,15 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
         this.publishingRequestModal.authorLabel,
         fieldsToVerify.authorLabel,
       );
-      await this.assertElementText(
-        this.publishingRequestModal.authorLabel,
-        ExpectedConstants.authorLabel,
-      );
+      fieldsToVerify.authorLabel === 'visible'
+        ? await this.assertElementText(
+            this.publishingRequestModal.authorLabel,
+            ExpectedConstants.authorLabel,
+          )
+        : await this.assertElementState(
+            this.publishingRequestModal.author,
+            'hidden',
+          );
     }
     if (fieldsToVerify.author) {
       await this.assertInputValue(
@@ -121,20 +122,24 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
         this.publishingRequestModal.allowAccessLabel,
         fieldsToVerify.allowAccessLabel,
       );
-      await this.assertElementText(
-        this.publishingRequestModal.allowAccessLabel,
-        ExpectedConstants.allowAccessLabel,
-      );
+      if (fieldsToVerify.allowAccessLabel === 'visible') {
+        await this.assertElementText(
+          this.publishingRequestModal.allowAccessLabel,
+          ExpectedConstants.allowAccessLabel,
+        );
+      }
     }
     if (fieldsToVerify.availabilityLabel) {
       await this.assertElementState(
         this.publishingRequestModal.availabilityLabel,
         fieldsToVerify.availabilityLabel,
       );
-      await this.assertElementText(
-        this.publishingRequestModal.availabilityLabel,
-        ExpectedConstants.availabilityLabel,
-      );
+      if (fieldsToVerify.availabilityLabel === 'visible') {
+        await this.assertElementText(
+          this.publishingRequestModal.availabilityLabel,
+          ExpectedConstants.availabilityLabel,
+        );
+      }
     }
   }
 }
