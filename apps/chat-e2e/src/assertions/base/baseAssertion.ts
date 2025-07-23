@@ -140,6 +140,20 @@ export class BaseAssertion {
       .toHaveText(expectedText);
   }
 
+  public async assertElementContainsText(
+    element: BaseElement | Locator,
+    expectedText: string | RegExp | (string | RegExp)[],
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+      )
+      .toContainText(expectedText);
+  }
+
   public async assertElementInnerHtml(
     element: BaseElement | Locator,
     expectedHtml: string | RegExp,
