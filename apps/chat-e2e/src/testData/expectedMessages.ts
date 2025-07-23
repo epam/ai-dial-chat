@@ -438,7 +438,9 @@ export const ExpectedMessages = {
 export enum PublishingExpectedMessages {
   noFilesToPublishRequested = 'No files to publish requested',
   publishToPathIsValid = 'Publish to path is valid',
+  publishCreationDateIsValid = 'Publishing request creation date is valid',
   entityVersionIsValid = 'Publish entity version is valid',
+  folderIsNotPublished = 'Folder is not published',
 }
 
 export enum MarketplaceExpectedMessages {

@@ -22,6 +22,7 @@ export const Label: FC<LabelProps> = ({
 }) => (
   <label
     className="mb-1 flex items-center gap-1 text-xs text-secondary"
+    data-qa={htmlFor?.concat('-label')}
     htmlFor={htmlFor}
   >
     {children}
