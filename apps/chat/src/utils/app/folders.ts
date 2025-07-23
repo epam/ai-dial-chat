@@ -7,6 +7,7 @@ import {
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
+import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
@@ -216,6 +217,7 @@ export const getFilteredFolders = ({
   entities,
   searchTerm,
   includeEmptyFolders,
+  includeHiddenFolders = false,
 }: {
   allFolders: FolderInterface[];
   emptyFolderIds: string[];
@@ -223,6 +225,7 @@ export const getFilteredFolders = ({
   entities: Conversation[] | Prompt[];
   searchTerm?: string;
   includeEmptyFolders?: boolean;
+  includeHiddenFolders?: boolean;
 }) => {
   // Get roots of section filtered items
   const sectionFilteredFolders = allFolders.filter(
@@ -236,8 +239,10 @@ export const getFilteredFolders = ({
     ),
   );
   // Map back to folders objects
-  const childAndCurrentSectionFilteredFolders = allFolders.filter((folder) =>
-    childAndCurrentSectionFilteredIds.has(folder.id),
+  const childAndCurrentSectionFilteredFolders = allFolders.filter(
+    (folder) =>
+      childAndCurrentSectionFilteredIds.has(folder.id) &&
+      (!isHiddenEntity(folder) || includeHiddenFolders),
   );
 
   // Apply search filters to section folders
@@ -319,6 +324,10 @@ export const validateFolderRenaming = (
 
   if (doesHaveDotsInTheEnd(newName)) {
     return 'Using a dot at the end of a name is not permitted.';
+  }
+
+  if (newName.startsWith('.')) {
+    return 'Using a dot at the start of a name is not permitted.';
   }
 };
 

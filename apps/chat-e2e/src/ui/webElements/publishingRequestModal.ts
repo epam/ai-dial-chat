@@ -140,6 +140,12 @@ export class PublishingRequestModal extends BaseElement {
   public unpublishFrom = this.getChildElementBySelector(
     PublishingModalSelectors.unpublishFromPath,
   );
+  public publishToLabel = this.getChildElementBySelector(
+    PublishingModalSelectors.publishToLabel,
+  );
+  public authorLabel = this.getChildElementBySelector(
+    PublishingModalSelectors.authorLabel,
+  );
 
   public async sendPublicationRequest() {
     const respPromise = this.page.waitForResponse((resp) =>
