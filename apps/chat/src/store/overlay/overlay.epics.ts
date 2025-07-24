@@ -1392,6 +1392,42 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
     }),
   );
 
+const sendEditMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.editMessage.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.editMessage,
+          eventParams: {
+            hostDomain,
+            payload,
+          },
+        }),
+      );
+    }),
+  );
+const sendRegenerateLastMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.regenerateLastMessage.type),
+    switchMap(() => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.regenerateMessage,
+          eventParams: {
+            hostDomain,
+          },
+        }),
+      );
+    }),
+  );
+
 const sendCustomMessageEvent: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.sendCustomMessageEvent.type),
@@ -1542,4 +1578,6 @@ export const OverlayEpics = combineEpics(
   sendSelectedConversationLoaded,
   sendReadyToInteract,
   sendConversationUpdated,
+  sendEditMessageEvent,
+  sendRegenerateLastMessageEvent,
 );
