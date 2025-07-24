@@ -297,9 +297,9 @@ export function PublicationHandler({ publication }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    const initialRules = publication.rules ?? [];
+    const initialRules = filteredRuleEntries ?? [];
     return !isEqual(initialRules, rulesOnEdit);
-  }, [publication.rules, rulesOnEdit]);
+  }, [filteredRuleEntries, rulesOnEdit]);
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
