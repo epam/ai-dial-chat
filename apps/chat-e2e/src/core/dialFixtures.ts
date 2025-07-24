@@ -333,7 +333,7 @@ const dialTest = test.extend<{
   marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
-  publishingRequestFolderPromptAssertion: FolderAssertion<PublishFolder>;
+  publishingRequestFolderPromptAssertion: PublishFolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   conversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
   publishFileAssertion: EntityTreeAssertion<FilesToPublishTree>;
@@ -350,6 +350,7 @@ const dialTest = test.extend<{
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
   adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
+  organizationFolderPromptAssertions: FolderAssertion<Folders>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -1241,7 +1242,7 @@ const dialTest = test.extend<{
     { publishingRequestModal },
     use,
   ) => {
-    const publishingRequestFolderPromptAssertion = new FolderAssertion(
+    const publishingRequestFolderPromptAssertion = new PublishFolderAssertion(
       publishingRequestModal.getFolderPromptsToPublish(),
     );
     await use(publishingRequestFolderPromptAssertion);
@@ -1343,6 +1344,15 @@ const dialTest = test.extend<{
         adminPublicationApiHelper,
       );
     await use(adminCustomApplicationPublishingUtil);
+  },
+  organizationFolderPromptAssertions: async (
+    { organizationFolderPrompts },
+    use,
+  ) => {
+    const organizationFolderPromptAssertions = new FolderAssertion(
+      organizationFolderPrompts,
+    );
+    await use(organizationFolderPromptAssertions);
   },
 });
 

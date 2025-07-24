@@ -521,7 +521,10 @@ export function PublishModal<
               <h2 className="mb-4 font-semibold">{t('General info')}</h2>
               {publishAction !== PublishActions.DELETE ? (
                 <section className="mb-3">
-                  <h3 className="mb-1 flex text-xs text-secondary">
+                  <h3
+                    className="mb-1 flex text-xs text-secondary"
+                    data-qa="publish-to-label"
+                  >
                     {t('Publish to')}
                   </h3>
                   <div

@@ -162,7 +162,8 @@
   "overrides": {
     "js-yaml": "4.1.0",
     "argparse": "2.0.1",
-    "esbuild": "0.25.1"
+    "esbuild": "0.25.1",
+    "stylus": "0.0.1-security"
   },
   "optionalDependencies": {
     "@nx/playwright": "21.2.2",
