@@ -1,7 +1,6 @@
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages, MenuOptions } from '@/src/testData';
-import { expect } from '@playwright/test';
 
 const newName = 'test prompt';
 const newDescr = 'test description';
@@ -16,6 +15,7 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     promptModalDialog,
+    promptModalAssertion,
     promptAssertion,
     promptPreviewModal,
     promptPreviewModalAssertion,
@@ -70,24 +70,9 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(newName);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        expect
-          .soft(
-            await promptModalDialog.getName(),
-            ExpectedMessages.promptNameUpdated,
-          )
-          .toBe(newName);
-        expect
-          .soft(
-            await promptModalDialog.getDescription(),
-            ExpectedMessages.promptDescriptionUpdated,
-          )
-          .toBe(newDescr);
-        expect
-          .soft(
-            await promptModalDialog.getPrompt(),
-            ExpectedMessages.promptValueUpdated,
-          )
-          .toBe(newValue);
+        await promptModalAssertion.assertPromptName(newName);
+        await promptModalAssertion.assertPromptDescription(newDescr);
+        await promptModalAssertion.assertPromptContent(newValue);
       },
     );
   },
