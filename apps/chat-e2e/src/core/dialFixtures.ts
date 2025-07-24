@@ -50,6 +50,7 @@ import {
   PromptListAssertion,
   PromptModalAssertion,
   PublishEntityAssertion,
+  PublishFileAssertion,
   PublishFolderAssertion,
   PublishingRequestModalAssertion,
   SendMessageAssertion,
@@ -71,7 +72,6 @@ import { ManageAttachmentFoldersAssertion } from '@/src/assertions/manageAttachm
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
-import { PublishFileAssertion } from '@/src/assertions/publishing/trees/publishFileAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';

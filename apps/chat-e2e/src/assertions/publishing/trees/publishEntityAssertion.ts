@@ -5,7 +5,7 @@ import {
   PublishingExpectedMessages,
   TreeEntity,
 } from '@/src/testData';
-import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree/publishEntitiesTree';
+import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree';
 
 export class PublishEntityAssertion<
   T extends PublishEntitiesTree,

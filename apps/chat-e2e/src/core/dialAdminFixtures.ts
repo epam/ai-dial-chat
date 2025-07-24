@@ -29,19 +29,19 @@ import {
   ManageAttachmentsAssertion,
   MarketplaceAgentsAssertion,
   MenuAssertion,
+  PublicationReviewControlAssertion,
   PublishEntityAssertion,
+  PublishFileAssertion,
   PublishFolderAssertion,
+  PublishedAppReviewModalAssertion,
+  PublishedPromptPreviewModalAssertion,
+  PublishingApprovalModalAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
-import { PublicationReviewControlAssertion } from '@/src/assertions/publishing/publicationReviewControlAssertion';
-import { PublishedAppReviewModalAssertion } from '@/src/assertions/publishing/publishedAppReviewModalAssertion';
-import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishing/publishedPromptPreviewModalAssertion';
-import { PublishingApprovalModalAssertion } from '@/src/assertions/publishing/publishingApprovalModalAssertion';
-import { PublishFileAssertion } from '@/src/assertions/publishing/trees/publishFileAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
