@@ -245,7 +245,7 @@ export function ShareModalView() {
             </div>
           </div>
           <div className="relative mt-2">
-            <Tooltip tooltip={url} contentClassName="max-w-[400px] break-words">
+            <Tooltip tooltip={url} contentClassName="break-words">
               <input
                 type="text"
                 readOnly

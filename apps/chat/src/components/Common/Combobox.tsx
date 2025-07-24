@@ -247,8 +247,7 @@ export const Combobox = <T,>({
                       : getItemLabel(item)
                   }
                   triggerClassName="w-full"
-                  contentClassName="max-w-[300px] break-words"
-                  //
+                  contentClassName="break-words"
                 >
                   {itemRow
                     ? createElement(itemRow, { item })
