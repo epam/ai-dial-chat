@@ -133,7 +133,7 @@ export const ModelIcon = ({
       hideTooltip={isCustomTooltip}
       tooltip={<ModelTooltip entity={entity} entityId={entityId} />}
       triggerClassName="flex shrink-0 relative select-none"
-      contentClassName="max-w-[300px] break-words"
+      contentClassName="break-words"
     >
       <ModelIconTemplate
         entity={entity}

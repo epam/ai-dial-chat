@@ -166,7 +166,7 @@ export const Combobox = <T,>({
               }
               hideTooltip={!!isOpen}
               triggerClassName="w-full"
-              contentClassName="max-w-[300px] break-words"
+              contentClassName="break-words"
               isTriggerClickable
             >
               <input
@@ -248,6 +248,7 @@ export const Combobox = <T,>({
                   }
                   triggerClassName="w-full"
                   contentClassName="max-w-[300px] break-words"
+                  //
                 >
                   {itemRow
                     ? createElement(itemRow, { item })

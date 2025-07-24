@@ -133,7 +133,7 @@ function ModalView({
                   )}
                 >
                   <Tooltip
-                    contentClassName="max-w-[400px] break-words"
+                    contentClassName="break-words"
                     tooltip={heading}
                     hideTooltip={!showHeadingTooltip}
                   >

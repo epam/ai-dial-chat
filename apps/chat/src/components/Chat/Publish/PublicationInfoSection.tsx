@@ -53,7 +53,6 @@ export function PublicationInfoSection({
           <Tooltip
             tooltip={infoTooltip}
             triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-            contentClassName="max-w-[220px]"
             placement="top"
           >
             <IconHelp size={18} />
@@ -86,6 +85,7 @@ export function PublicationInfoSection({
         (tooltip ? (
           <Tooltip
             contentClassName="max-w-[400px] break-all my-1 text-sm"
+            //
             triggerClassName="truncate whitespace-pre"
             tooltip={<div className="flex break-words">{tooltip}</div>}
             dataQa={valueDataQa}
