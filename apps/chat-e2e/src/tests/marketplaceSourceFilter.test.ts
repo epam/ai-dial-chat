@@ -352,6 +352,7 @@ dialSharedWithMeTest(
     additionalShareUserAgentDetailsModal,
     setTestIds,
     baseAssertion,
+    page,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-5237', 'EPMRTC-5233', 'EPMRTC-5276');
@@ -496,6 +497,8 @@ dialSharedWithMeTest(
               publicSourceFilterElement,
               CheckboxState.checked,
             );
+            // eslint-disable-next-line playwright/no-wait-for-timeout
+            await page.waitForTimeout(500);
             actualAgents =
               await additionalShareUserMarketplaceAgentsSection.getAllAgents();
           } else {
@@ -540,7 +543,7 @@ dialSharedWithMeTest(
             expect
               .soft(
                 actualAgents.find((agent) => agent.name === expectedAgentName),
-                MarketplaceExpectedMessages.filteredAgentsAreValid,
+                MarketplaceExpectedMessages.agentIsVisible(expectedAgentName),
               )
               .toBeDefined();
           }

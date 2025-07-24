@@ -443,8 +443,8 @@ export enum PublishingExpectedMessages {
   folderIsNotPublished = 'Folder is not published',
 }
 
-export enum MarketplaceExpectedMessages {
-  agentIsVisible = 'Agent is visible in Marketplace',
-  filteredAgentsAreValid = 'Filtered agents are valid',
-  filterOptionsAreValid = 'Filter options are valid',
-}
+export const MarketplaceExpectedMessages = {
+  agentIsVisible: (name: string) => `Agent ${name} is visible in Marketplace`,
+  filteredAgentsAreValid: 'Filtered agents are valid',
+  filterOptionsAreValid: 'Filter options are valid',
+};
