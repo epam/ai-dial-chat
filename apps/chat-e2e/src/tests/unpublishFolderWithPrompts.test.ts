@@ -27,7 +27,6 @@ dialAdminTest(
       folderDropdownMenu,
       publishingRequestModal,
       publishingRequestModalAssertion,
-      promptToPublishAssertion,
       publishingRequestFolderPromptAssertion,
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
