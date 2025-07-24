@@ -165,7 +165,7 @@
     "esbuild": "0.25.1"
   },
   "optionalDependencies": {
-    "@nx/playwright": "21.2.2",
+    "@nx/playwright": "21.3.5",
     "@playwright/test": "^1.54.0",
     "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^3.2.2",
