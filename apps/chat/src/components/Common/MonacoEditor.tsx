@@ -58,16 +58,10 @@ export const MonacoEditor = memo(function MonacoEditor(
 
   const [isFullScreen, setIsFullScreen] = useState(false);
 
-  const [fileMap, setFileMap] = useState<Record<string, MonacoFile>>(() => {
-    const map: Record<string, MonacoFile> = {};
-    props.files?.forEach((f) => {
-      map[f.id] = { ...f };
-    });
-    return map;
-  });
-
   const activeFileId = props.activeFileId ?? props.files?.[0]?.id ?? '';
-  const activeFile = fileMap[activeFileId];
+  const activeFile = useMemo(() => {
+    return props.files?.find((f) => f.id === activeFileId);
+  }, [props.files, activeFileId]);
 
   const wrapperStyles = useMemo(
     () =>
@@ -99,21 +93,13 @@ export const MonacoEditor = memo(function MonacoEditor(
     if (!activeFile) return {};
 
     return {
-      value: fileMap[activeFile.id]?.value ?? '',
+      value: activeFile.value ?? '',
       language: activeFile.language ?? 'json',
       onChange: (v: string | undefined) => {
-        const updated = {
-          ...fileMap[activeFile.id],
-          value: v ?? '',
-        };
-        setFileMap((prev) => ({
-          ...prev,
-          [activeFile.id]: updated,
-        }));
-        props.onChangeFile?.(activeFile.id, v ?? '');
+        props.onChangeFile?.(activeFileId, v ?? '');
       },
     };
-  }, [activeFile, fileMap, props]);
+  }, [activeFile, activeFileId, props]);
 
   return (
     <div

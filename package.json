@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.34.0-rc",
+  "version": "0.35.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -162,15 +162,16 @@
   "overrides": {
     "js-yaml": "4.1.0",
     "argparse": "2.0.1",
-    "esbuild": "0.25.1"
+    "esbuild": "0.25.1",
+    "stylus": "0.0.1-security"
   },
   "optionalDependencies": {
     "@nx/playwright": "21.2.2",
-    "@playwright/test": "^1.53.1",
+    "@playwright/test": "^1.54.0",
     "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^3.2.2",
     "eslint-plugin-playwright": "^2.2.0",
-    "playwright-chromium": "^1.53.1"
+    "playwright-chromium": "^1.54.0"
   },
   "engines": {
     "node": ">=22.2.0",

@@ -10,6 +10,7 @@ import {
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
+import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -137,7 +138,7 @@ export function PublicationHandler({ publication }: Props) {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
-          path: publication.targetFolder.split('/').slice(1).join('/'),
+          path: getIdWithoutFeatureType(publication.targetFolder),
         }),
       );
     }
@@ -158,6 +159,14 @@ export function PublicationHandler({ publication }: Props) {
         targets: rule.targets,
       })) ?? [],
     [publication.rules],
+  );
+
+  const isPublicationHasOnlyUnpublishEntities = useMemo(
+    () =>
+      publication.resources.every(
+        (resource) => resource.action === PublishActions.DELETE,
+      ),
+    [publication.resources],
   );
 
   const handleUpdateRequest = useCallback(() => {
@@ -288,14 +297,14 @@ export function PublicationHandler({ publication }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    const initialRules = publication.rules ?? [];
+    const initialRules = filteredRuleEntries ?? [];
     return !isEqual(initialRules, rulesOnEdit);
-  }, [publication.rules, rulesOnEdit]);
+  }, [filteredRuleEntries, rulesOnEdit]);
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
       <div
-        className="relative flex size-full flex-col justify-center gap-px rounded 2xl:max-w-[1000px]"
+        className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
         data-qa="publish-approval-modal"
       >
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
@@ -339,19 +348,21 @@ export function PublicationHandler({ publication }: Props) {
                     valueToDisplay={publicationAuthor}
                   />
 
-                  <PublicationInfoSection
-                    labelDataQa="publication-display-author-label"
-                    label={t("Author's public name: ")}
-                    valueDataQa="publication-display-author"
-                    valueToDisplay={publication.displayAuthor ?? ''}
-                    infoTooltip={t(
-                      `This name will be displayed instead of the author's name for this publication.`,
-                    )}
-                    editValue={displayAuthorEditState}
-                    onChangeValue={handleChangeDisplayAuthor}
-                    isEditMode={isEditMode}
-                    errors={errors}
-                  />
+                  {!isPublicationHasOnlyUnpublishEntities && (
+                    <PublicationInfoSection
+                      labelDataQa="publication-display-author-label"
+                      label={t("Author's public name: ")}
+                      valueDataQa="publication-display-author"
+                      valueToDisplay={publication.displayAuthor ?? ''}
+                      infoTooltip={t(
+                        `This name will be displayed instead of the author's name for this publication.`,
+                      )}
+                      editValue={displayAuthorEditState}
+                      onChangeValue={handleChangeDisplayAuthor}
+                      isEditMode={isEditMode}
+                      errors={errors}
+                    />
+                  )}
 
                   <PublicationInfoSection
                     labelDataQa="creation-date-label"
@@ -433,6 +444,7 @@ export function PublicationHandler({ publication }: Props) {
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
           isFormChanged={isFormChanged}
+          areRulesChanged={hasUserChangedRules}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (

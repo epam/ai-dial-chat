@@ -53,6 +53,7 @@ import {
   OrganizationConversationsTree,
   OrganizationPromptsTree,
   PromptsToApproveTree,
+  PromptsToPublishTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
@@ -87,9 +88,11 @@ const dialAdminTest = dialTest.extend<{
   adminPublishingRequestModal: PublishingRequestModal;
   adminToast: Toast;
   adminShareModal: ShareModal;
+  adminPromptsToPublishTree: PromptsToPublishTree;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
   adminApproveRequiredPromptsAssertion: FolderAssertion<ApproveRequiredPrompts>;
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
+  adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminConversationToApproveAssertion: PublishEntityAssertion<ConversationsToApproveTree>;
   adminFilesToApproveAssertion: EntityTreeAssertion<FilesToApproveTree>;
@@ -352,6 +355,11 @@ const dialAdminTest = dialTest.extend<{
       : adminBrowserStorageInjector;
     await use(adminDataInjector);
   },
+  adminPromptsToPublishTree: async ({ adminPublishingRequestModal }, use) => {
+    const adminPromptsToPublishTree =
+      adminPublishingRequestModal.getPromptsToPublishTree();
+    await use(adminPromptsToPublishTree);
+  },
   adminApproveRequiredConversationsAssertion: async (
     { adminApproveRequiredConversations },
     use,
@@ -378,6 +386,15 @@ const dialAdminTest = dialTest.extend<{
       adminOrganizationFolderConversations,
     );
     await use(adminOrganizationFolderConversationAssertions);
+  },
+  adminOrganizationFolderPromptAssertions: async (
+    { adminOrganizationFolderPrompts },
+    use,
+  ) => {
+    const adminOrganizationFolderPromptAssertions = new FolderAssertion(
+      adminOrganizationFolderPrompts,
+    );
+    await use(adminOrganizationFolderPromptAssertions);
   },
   adminPublishingApprovalModalAssertion: async (
     { adminPublishingApprovalModal },

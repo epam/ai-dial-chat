@@ -17,7 +17,10 @@ import {
   PublicationActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { TEntity } from './view-props';
 
@@ -40,6 +43,10 @@ function PublicationControlsView({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const isMessageStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
 
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
@@ -186,7 +193,13 @@ function PublicationControlsView({
       <button
         onClick={handleBackToPublication}
         data-qa="back-to-publication"
-        className="button button-primary flex max-h-[38px] items-center"
+        disabled={isMessageStreaming}
+        className={classNames(
+          'button button-primary flex max-h-[38px] items-center',
+          {
+            'cursor-not-allowed': isMessageStreaming,
+          },
+        )}
       >
         {t('Back to publication request')}
       </button>

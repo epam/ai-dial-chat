@@ -51,22 +51,30 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { Conversation, FeatureType } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  FeatureType,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
   publication: Publication;
-  onUpdateRequest: () => void;
   isFormChanged: boolean;
+  areRulesChanged: boolean;
+  onUpdateRequest: () => void;
 }
 
 export const PublicationHandlerFooter = ({
   publication,
-  onUpdateRequest,
   isFormChanged,
+  areRulesChanged,
+  onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -100,7 +108,9 @@ export const PublicationHandlerFooter = ({
   const itemsToApprove = useAppSelector(
     PublicationSelectors.selectSelectedItemsToApprove,
   );
-
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
@@ -142,7 +152,7 @@ export const PublicationHandlerFooter = ({
     [resourcesToReview],
   );
 
-  const publicationConversationsWithUploadedMessages = useMemo(
+  const uploadedPublicationConversations = useMemo(
     () =>
       conversations.filter(
         (conversation) =>
@@ -296,10 +306,21 @@ export const PublicationHandlerFooter = ({
     ([key, { version, name }]) => {
       const isInvalidName = !isEntityNameValid(name);
 
+      const resource = publication.resources.find(
+        ({ reviewUrl }) => reviewUrl === key,
+      );
+
       const isValidVersion =
+        resource?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
-          !isVersionExists(version, key, publicVersionGroups, name) &&
+          !isVersionExists(
+            version,
+            key,
+            publicVersionGroups,
+            name,
+            publication.targetFolder,
+          ) &&
           (!isApplicationId(key) || isVersionPartSizeValid(version)));
 
       return isInvalidName || !isValidVersion;
@@ -313,25 +334,33 @@ export const PublicationHandlerFooter = ({
 
   const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
-  const someReviewedConversationHaveNoMessages =
-    publicationConversationsWithUploadedMessages.some(
-      (conversation) => !conversation.messages.length,
-    );
+  const someReviewedConversationHasNoMessages =
+    uploadedPublicationConversations.some(({ messages }) => !messages.length);
+  const areNoChanges =
+    !itemsToApprove.length &&
+    (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
+  const selectedInvalidEntities = useMemo(
+    () => invalidEntities.filter((e) => itemsToApprove.includes(e.id)),
+    [invalidEntities, itemsToApprove],
+  );
   const isApproveDisabled =
     !isAllResourcesReviewed ||
-    !!invalidEntities.length ||
-    someReviewedConversationHaveNoMessages;
-
+    !!selectedInvalidEntities.length ||
+    someReviewedConversationHasNoMessages ||
+    isPublicationUpdating ||
+    areNoChanges;
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
   return (
     <div
       className={classNames(
         'flex w-full items-center gap-3 rounded-t bg-layer-2 px-3 py-4 md:gap-5 md:px-4',
-        isOnlyFilesPublication ? 'justify-end' : 'justify-between',
+        isOnlyFilesPublication || !resourcesToReview.length
+          ? 'justify-end'
+          : 'justify-between',
       )}
     >
-      {invalidEntities.length ? (
+      {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
             size={24}
@@ -339,13 +368,13 @@ export const PublicationHandlerFooter = ({
             stroke="1.5"
           />
           <p className="text-sm text-error" data-qa="duplicate-unpublishing">
-            {invalidEntities.map((e, idx) => (
+            {selectedInvalidEntities.map((e, idx) => (
               <span key={e.id} className="italic">
                 &quot;
                 {e.name.substring(0, 50) === e.name
                   ? e.name
                   : `${e.name.substring(0, 50)}...`}
-                &quot;{idx === invalidEntities.length - 1 ? ' ' : ', '}
+                &quot;{idx === selectedInvalidEntities.length - 1 ? ' ' : ', '}
               </span>
             ))}
             {t(
@@ -354,7 +383,8 @@ export const PublicationHandlerFooter = ({
           </p>
         </div>
       ) : (
-        !isOnlyFilesPublication && (
+        !isOnlyFilesPublication &&
+        !!resourcesToReview.length && (
           <button
             className="text-accent-primary"
             onClick={handlePublicationReview}
@@ -371,7 +401,7 @@ export const PublicationHandlerFooter = ({
       <div className="flex items-center gap-3">
         {!isEditMode ? (
           <>
-            {!invalidEntities.length && (
+            {!selectedInvalidEntities.length && (
               <IconButton
                 name={t('Edit')}
                 dataQa="edit"
@@ -395,11 +425,15 @@ export const PublicationHandlerFooter = ({
             <Tooltip
               hideTooltip={!isApproveDisabled}
               tooltip={t(
-                invalidEntities.length
-                  ? "Request can't be approved as some conversations are unpublished"
-                  : someReviewedConversationHaveNoMessages
+                selectedInvalidEntities.length
+                  ? "Request can't be approved as some items are unpublished"
+                  : someReviewedConversationHasNoMessages
                     ? "Request can't be approved as some conversations have no messages"
-                    : "It's required to review all resources",
+                    : isPublicationUpdating
+                      ? 'Request is updating'
+                      : areNoChanges
+                        ? 'There are no changes to approve'
+                        : "It's required to review all resources",
               )}
             >
               <button
@@ -408,7 +442,7 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {isSmallScreen ? t('Approve') : t('Approve selected')}
+                {t(isSmallScreen ? 'Approve' : 'Approve selected')}
               </button>
             </Tooltip>
           </>

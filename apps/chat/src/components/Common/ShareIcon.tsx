@@ -1,5 +1,5 @@
-import { IconPencil } from '@tabler/icons-react';
-import { ReactNode } from 'react';
+import { IconExternalLink, IconPencil } from '@tabler/icons-react';
+import { ReactNode, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -26,6 +26,7 @@ interface ShareIconProps extends ShareInterface {
   iconClassName?: string;
   iconWrapperClassName?: string;
   isMyEntity?: boolean;
+  isExternal?: boolean;
 }
 
 export function ShareIcon({
@@ -39,6 +40,7 @@ export function ShareIcon({
   iconClassName,
   iconWrapperClassName,
   isMyEntity,
+  isExternal,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isApplication = featureType === FeatureType.Application;
@@ -53,22 +55,25 @@ export function ShareIcon({
     containerClassName,
   );
 
+  const isMyEntityIcon = isMyEntity && !isPublished && !isShared;
+
+  const [AdditionalIcon, dataQA, tooltip] = useMemo(() => {
+    if (isPublished && isPublishingEnabled)
+      return [World, 'world-icon', 'Published'];
+    if (isExternal)
+      return [IconExternalLink, 'external-icon', 'External application'];
+    if (isShared) return [ArrowUpRight, 'arrow-icon', 'Shared'];
+    return [IconPencil, 'pencil-icon', 'Created by me'];
+  }, [isPublished, isPublishingEnabled, isExternal, isShared]);
+
   if (
     (!isSharingEnabled || !isShared) &&
     (!isPublishingEnabled || !isPublished) &&
-    !isMyEntity
+    !isMyEntity &&
+    !isExternal
   ) {
     return <div className={containerClass}>{children}</div>;
   }
-
-  const AdditionalIcon =
-    isPublished && isPublishingEnabled
-      ? World
-      : isShared
-        ? ArrowUpRight
-        : IconPencil;
-
-  const isMyEntityIcon = isMyEntity && !isPublished && !isShared;
 
   return (
     <div className={containerClass}>
@@ -82,23 +87,9 @@ export function ShareIcon({
             : '-bottom-1 -left-1 rounded-sm stroke-[1.5]',
           iconWrapperClassName,
         )}
-        data-qa={
-          isPublished && isPublishingEnabled
-            ? 'world-icon'
-            : isMyEntityIcon
-              ? 'pencil-icon'
-              : 'arrow-icon'
-        }
+        data-qa={dataQA}
       >
-        <Tooltip
-          tooltip={
-            isPublished
-              ? t('Published')
-              : isShared
-                ? t('Shared')
-                : t('Created by me')
-          }
-        >
+        <Tooltip tooltip={t(tooltip)}>
           <AdditionalIcon
             size={size}
             width={size}
@@ -110,7 +101,7 @@ export function ShareIcon({
               isApplication
                 ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
                 : 'rounded-sm stroke-[1.5]',
-              isMyEntityIcon && '!stroke-[1.5]',
+              (isExternal || isMyEntityIcon) && '!stroke-[1.5]',
               iconClassName,
             )}
           />

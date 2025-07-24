@@ -12,6 +12,7 @@ import { ServerUtils } from '@/src/utils/server/server';
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { ApiKeys, CoreApiKeys, ParseOptions } from '@/src/types/common';
+import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
@@ -155,10 +156,10 @@ export const parseApplicationApiKey = (
     parts.length < 2
       ? [apiKey, '1.0.0'] // receive without postfix with version i.e. {name}
       : [
-          decodeModelId(
+          `${decodeModelId(
             parts.slice(0, parts.length - 1).join(pathKeySeparator),
-          ),
-          parts[parts.length - 1],
+          )}${parts.at(-1)?.startsWith('_') ? '_' : ''}`, // handle even underscore case
+          parts[parts.length - 1].replace(/^_/, ''),
         ]; // receive correct format {name}__{version}
   return {
     name,
@@ -199,9 +200,11 @@ export class ApiUtils {
         if (!response.ok) {
           return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
             switchMap((errorMessage) => {
-              return throwError(
-                () => new Error(errorMessage || response.status + ''),
+              const error: HttpErrorStatus = new Error(
+                errorMessage || response.status + '',
               );
+              error.status = response.status;
+              return throwError(() => error);
             }),
           );
         }

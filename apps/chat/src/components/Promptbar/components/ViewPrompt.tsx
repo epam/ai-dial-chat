@@ -139,6 +139,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                   prompt.publicationInfo?.action === PublishActions.DELETE &&
                     'text-error',
                 )}
+                data-qa="version"
               >
                 {t('v.')} {prompt.publicationInfo?.version}
               </p>

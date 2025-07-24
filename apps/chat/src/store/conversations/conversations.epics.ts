@@ -126,6 +126,7 @@ import {
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
@@ -420,16 +421,22 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             );
             const widgetsSchemaIds =
               WidgetsSelectors.selectWidgetsSchemaIds(state);
-            const widgetModelsRefs = models
-              .filter((model) =>
-                widgetsSchemaIds.has(model.applicationTypeSchemaId ?? ''),
+            const externalAppsSchemaId = DefaultsService.get(
+              'externalAppsSchemaId',
+              DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+            );
+            const hiddenModelsRefs = models
+              .filter(
+                (model) =>
+                  widgetsSchemaIds.has(model.applicationTypeSchemaId ?? '') ||
+                  model.applicationTypeSchemaId === externalAppsSchemaId,
               )
               .map((model) => model.reference);
             const recentModelReferences =
               ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
                 (reference) =>
                   modelReferences.includes(reference) &&
-                  !widgetModelsRefs.includes(reference),
+                  !hiddenModelsRefs.includes(reference),
               );
 
             const overlayDefaultModelReference =
@@ -1513,47 +1520,68 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         }),
         // TODO: get rid of this https://github.com/epam/ai-dial-chat/issues/115
         timeout(120000),
-        mergeMap((resp) =>
-          iif(
-            () => resp.done,
-            concat(
-              of(
-                ConversationsActions.updateConversation({
-                  id: payload.conversation.id,
-                  values: {
-                    isMessageStreaming: false,
-                  },
-                }),
+        mergeMap((resp) => {
+          if (resp.done) {
+            const publicationUrl =
+              payload.conversation.publicationInfo?.publicationUrl;
+
+            const needToMapReviewAttachments =
+              !!publicationUrl &&
+              !!message.custom_content?.attachments?.some((attachment) =>
+                isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
+              );
+
+            return concat(
+              iif(
+                () => needToMapReviewAttachments,
+                of(
+                  PublicationActions.updatePublicationAndConversationLastMessageAttachments(
+                    {
+                      publicationUrl: publicationUrl ?? '',
+                      conversationId: payload.conversation.id,
+                      message,
+                    },
+                  ),
+                ),
+                of(
+                  ConversationsActions.updateConversation({
+                    id: payload.conversation.id,
+                    values: {
+                      isMessageStreaming: false,
+                    },
+                  }),
+                ),
               ),
               of(ConversationsActions.streamMessageSuccess()),
+            );
+          }
+
+          return of(resp).pipe(
+            tap((resp) => {
+              const decodedValue = decoder.decode(resp.value);
+              eventData += decodedValue;
+            }),
+            filter(() => eventData[eventData.length - 1] === '\0'),
+            map((resp) => {
+              const chunkValue = parseStreamMessages(eventData);
+              return {
+                updatedMessage: mergeMessages(message, chunkValue),
+                isCompleted: resp.done,
+              };
+            }),
+            tap(({ updatedMessage }) => {
+              eventData = '';
+              message = updatedMessage;
+            }),
+            map(({ updatedMessage }) =>
+              ConversationsActions.updateMessage({
+                conversationId: payload.conversation.id,
+                messageIndex: payload.conversation.messages.length - 1,
+                values: updatedMessage,
+              }),
             ),
-            of(resp).pipe(
-              tap((resp) => {
-                const decodedValue = decoder.decode(resp.value);
-                eventData += decodedValue;
-              }),
-              filter(() => eventData[eventData.length - 1] === '\0'),
-              map((resp) => {
-                const chunkValue = parseStreamMessages(eventData);
-                return {
-                  updatedMessage: mergeMessages(message, chunkValue),
-                  isCompleted: resp.done,
-                };
-              }),
-              tap(({ updatedMessage }) => {
-                eventData = '';
-                message = updatedMessage;
-              }),
-              map(({ updatedMessage }) =>
-                ConversationsActions.updateMessage({
-                  conversationId: payload.conversation.id,
-                  messageIndex: payload.conversation.messages.length - 1,
-                  values: updatedMessage,
-                }),
-              ),
-            ),
-          ),
-        ),
+          );
+        }),
         catchError((error: Error) => {
           if (error.name === 'AbortError') {
             return of(

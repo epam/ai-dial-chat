@@ -53,7 +53,7 @@ import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Mess
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
-import { MessageCustomButtons } from './MessageCustomButtons';
+import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
 
 import {
   Feature,
@@ -298,6 +298,7 @@ export const UserMessage = memo(function UserMessage({
         ) as unknown as FolderInterface[],
         selectedDialLinks,
       );
+
       const isAttachmentsSame = isEqual(
         message.custom_content?.attachments,
         attachments?.attachments,
@@ -380,14 +381,11 @@ export const UserMessage = memo(function UserMessage({
     [dispatch],
   );
 
-  const handleSelectAlreadyUploaded = useCallback((result: unknown) => {
-    if (typeof result === 'object') {
-      const selectedFilesIds = result as string[];
-      const uniqueFilesIds = uniq(selectedFilesIds);
-      setNewEditableAttachmentsIds(
-        uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
-      );
-    }
+  const handleSelectAlreadyUploaded = useCallback((result: string[]) => {
+    const uniqueFilesIds = uniq(result);
+    setNewEditableAttachmentsIds(
+      uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
+    );
   }, []);
 
   const handleUploadFromDevice = useCallback(
@@ -632,7 +630,7 @@ export const UserMessage = memo(function UserMessage({
         <MessageAttachments attachments={message.custom_content?.attachments} />
 
         {isOverlay && (
-          <MessageCustomButtons
+          <OverlayMessageCustomButtons
             messageIndex={messageIndex}
             isSystemMessagePresented={isFirstMessageSystem}
           />

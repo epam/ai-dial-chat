@@ -167,6 +167,15 @@ export const ChatInputMessage = Inversify.register(
       }
     }, [dispatch, shouldFocusAndScroll, textareaRef]);
 
+    useEffect(() => {
+      if (!canAttachLinks) {
+        setSelectedDialLinks([]);
+      }
+      if (!canAttachFiles) {
+        dispatch(FilesActions.resetSelectedFiles());
+      }
+    }, [canAttachFiles, canAttachLinks, dispatch]);
+
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
     const modelTokenizer =
@@ -408,16 +417,13 @@ export const ChatInputMessage = Inversify.register(
     );
 
     const handleSelectAlreadyUploaded = useCallback(
-      (result: unknown) => {
-        if (typeof result === 'object') {
-          const selectedFilesIds = result as string[];
-          dispatch(FilesActions.resetSelectedFiles());
-          dispatch(
-            FilesActions.selectFiles({
-              ids: selectedFilesIds,
-            }),
-          );
-        }
+      (result: string[]) => {
+        dispatch(FilesActions.resetSelectedFiles());
+        dispatch(
+          FilesActions.selectFiles({
+            ids: result,
+          }),
+        );
       },
       [dispatch],
     );

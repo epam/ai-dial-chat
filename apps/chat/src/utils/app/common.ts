@@ -215,12 +215,13 @@ export const isVersionExists = (
   entityId: string,
   publicVersionGroups: PublicVersionGroups,
   newName: string,
+  rootFolder = PUBLIC_URL_PREFIX,
 ) => {
   const { apiKey, parentPath, name: oldName } = splitEntityId(entityId);
   const modelName = oldName.split(pathKeySeparator)[0];
   const newEntityId = constructPath(
     apiKey,
-    PUBLIC_URL_PREFIX,
+    rootFolder,
     parentPath,
     `${modelName}${pathKeySeparator}${newName}`,
   );

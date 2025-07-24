@@ -182,12 +182,13 @@ export const ExpectedConstants = {
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
   publishToLabel: 'Publish to',
+  authorLabel: 'Author',
   requestCreationDateLabel: 'Request created:',
   allowAccessLabel: 'Allow access if all match',
   noChangesLabel: 'No changes',
   availabilityLabel:
     'This publication will be available to all users in the organization',
-  unpublishFrom: 'Unpublish from',
+  unpublishFromLabel: 'Unpublish from',
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
   defaultAppVersion: '0.0.1',
@@ -264,7 +265,10 @@ export const ExpectedConstants = {
     'Request name should be at most 160 characters long',
   publishRequestNameMinLengthErrorMessage:
     'Request name should be at least 2 characters long',
+  defaultAgentLabel: 'Default agent',
+  lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
+  noAvailableItemsLabel: 'No available items',
 };
 
 export enum Types {
