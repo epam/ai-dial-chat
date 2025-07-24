@@ -8,6 +8,9 @@ export interface FilesState {
   selectedFilesIds: string[];
   filesStatus: UploadStatus;
 
+  chosenFileIds: string[];
+  chosenEmptyFoldersIds: string[];
+
   folders: FileFolderInterface[];
   foldersStatus: UploadStatus;
   loadingFolderId?: string;

@@ -9,7 +9,6 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { useEntitiesSelectState } from '@/src/hooks/useEntitiesSelectState';
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -19,7 +18,6 @@ import {
 } from '@/src/utils/app/file';
 import {
   getParentFolderIdsFromFolderId,
-  updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
@@ -169,6 +167,11 @@ export const FileManagerModal = ({
   const lastRenamedParentFolder = useAppSelector(
     FilesSelectors.selectLastRenamedParentFolder,
   );
+  const {
+    partialChosenFolderIds: partiallySelectedFolderIds,
+    fullyChosenFolderIds: selectedFolderIds,
+  } = useAppSelector(FilesSelectors.selectChosenFolderIds);
+  const selectedFilesIds = useAppSelector(FilesSelectors.selectChosenItems);
 
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
@@ -183,43 +186,22 @@ export const FileManagerModal = ({
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
   const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
 
-  const {
-    selectedEntityIds: selectedFilesIds,
-    selectedFolderIds,
-    partiallySelectedFolderIds,
-
-    handleSelectEntities: selectFiles,
-    setSelectedEntityIds: setSelectedFilesIds,
-    handleSelectFolder: selectFolder,
-  } = useEntitiesSelectState(files, initialSelectedFilesIds);
+  const handleSelectFiles = useCallback(
+    (ids: string[]) => {
+      dispatch(FilesActions.setChosenFiles({ ids }));
+    },
+    [dispatch],
+  );
 
   const handleSelectFolder = useCallback(
     (folderId: string) => {
-      selectFolder(folderId);
-
-      dispatch(
-        FilesActions.getFilesWithFolders({
-          id: folderId.endsWith('/') ? folderId.slice(0, -1) : folderId,
-        }),
-      );
+      dispatch(FilesActions.setChosenFolder({ folderId }));
     },
-    [dispatch, selectFolder],
+    [dispatch],
   );
 
   useEffect(() => {
     if (lastRenamedParentFolder?.newId) {
-      setSelectedFilesIds((prev) =>
-        prev.map((id) => {
-          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`)) {
-            return updateMovedEntityId(
-              lastRenamedParentFolder.oldId,
-              lastRenamedParentFolder.newId,
-              id,
-            );
-          }
-          return id;
-        }),
-      );
       setOpenedFoldersIds((prev) =>
         prev.map((id) => {
           if (id === lastRenamedParentFolder.oldId)
@@ -235,7 +217,7 @@ export const FileManagerModal = ({
       );
       dispatch(FilesActions.resetLastRenamedParentFolder());
     }
-  }, [dispatch, lastRenamedParentFolder, setSelectedFilesIds]);
+  }, [dispatch, lastRenamedParentFolder]);
 
   const highlightFolderIds = useMemo(() => {
     return uniq(
@@ -301,11 +283,20 @@ export const FileManagerModal = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(FilesActions.resetAllFoldersStatus());
-
       dispatch(FilesActions.getFilesWithFolders({}));
       dispatch(FilesActions.resetNewFolderId());
+    } else {
+      dispatch(FilesActions.resetChosenFiles());
     }
   }, [dispatch, isOpen]);
+
+  useEffect(() => {
+    if (isOpen && initialSelectedFilesIds.length) {
+      dispatch(
+        FilesActions.setChosenFilesAndFolders({ ids: initialSelectedFilesIds }),
+      );
+    }
+  }, [isOpen, initialSelectedFilesIds, dispatch]);
 
   const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -359,7 +350,7 @@ export const FileManagerModal = ({
             const parentFolderIds = getParentFolderIdsFromFolderId(data)
               .slice(0, -1)
               .map((fid) => `${fid}/`);
-            selectFiles([data]);
+            handleSelectFiles([data]);
 
             if (
               selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
@@ -403,7 +394,13 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [dispatch, files, selectFiles, selectedFolderIds, selectedNoDeleteFilesIds],
+    [
+      dispatch,
+      files,
+      handleSelectFiles,
+      selectedFolderIds,
+      selectedNoDeleteFilesIds,
+    ],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -475,7 +472,7 @@ export const FileManagerModal = ({
       folderPath: string | undefined,
     ) => {
       if (canAttachFiles || forceShowSelectCheckBox) {
-        selectFiles(selectedFiles.map((f) => f.id));
+        handleSelectFiles(selectedFiles.map((f) => f.id));
       }
 
       selectedFiles.forEach((file) => {
@@ -489,7 +486,7 @@ export const FileManagerModal = ({
         );
       });
     },
-    [canAttachFiles, dispatch, selectFiles, forceShowSelectCheckBox],
+    [canAttachFiles, dispatch, handleSelectFiles, forceShowSelectCheckBox],
   );
 
   const handleDiscardSharedWithMeFolder = useCallback(
@@ -524,7 +521,7 @@ export const FileManagerModal = ({
       }
       dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
       if (selectedFilesIds === deletingFileIds) {
-        setSelectedFilesIds([]);
+        dispatch(FilesActions.resetChosenFiles());
       }
     }
     if (deletingFolderIds.length) {
@@ -547,7 +544,6 @@ export const FileManagerModal = ({
     deletingFolderIds,
     dispatch,
     selectedFilesIds,
-    setSelectedFilesIds,
     sharedWithMeRootFiles,
     sharedWithMeRootFolders,
   ]);
