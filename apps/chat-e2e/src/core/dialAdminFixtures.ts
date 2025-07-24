@@ -26,7 +26,6 @@ import {
   ChatHeaderAssertion,
   ChatMessagesAssertion,
   ConversationAssertion,
-  EntityTreeAssertion,
   ManageAttachmentsAssertion,
   MarketplaceAgentsAssertion,
   MenuAssertion,
@@ -38,9 +37,11 @@ import {
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
+import { PublicationReviewControlAssertion } from '@/src/assertions/publishing/publicationReviewControlAssertion';
 import { PublishedAppReviewModalAssertion } from '@/src/assertions/publishing/publishedAppReviewModalAssertion';
 import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishing/publishedPromptPreviewModalAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishing/publishingApprovalModalAssertion';
+import { PublishFileAssertion } from '@/src/assertions/publishing/trees/publishFileAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
@@ -117,8 +118,8 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminConversationToApproveAssertion: PublishEntityAssertion<ConversationsToApproveTree>;
-  adminAppToApproveAssertion: PublishEntityAssertion<ConversationsToApproveTree>;
-  adminFilesToApproveAssertion: EntityTreeAssertion<FilesToApproveTree>;
+  adminAppToApproveAssertion: PublishEntityAssertion<ApplicationsToApproveTree>;
+  adminFilesToApproveAssertion: PublishFileAssertion<FilesToApproveTree>;
   adminPromptToApproveAssertion: PublishEntityAssertion<PromptsToApproveTree>;
   adminFolderConversationsToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
   adminFolderPromptsToApproveAssertion: PublishFolderAssertion<FolderPromptsToApprove>;
@@ -143,12 +144,14 @@ const dialAdminTest = dialTest.extend<{
   adminTooltipAssertion: TooltipAssertion;
   adminOrganizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
+  adminPublishedPromptPreviewModalControlsAssertion: PublicationReviewControlAssertion;
   adminVariableModalAssertion: VariableModalAssertion;
   adminConversationAssertion: ConversationAssertion;
   adminConversationsToPublishTree: ConversationsToPublishTree;
   adminConversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
   adminPublishedApplicationReviewModal: PublishedApplicationReviewModal;
   adminPublishedAppReviewModalAssertion: PublishedAppReviewModalAssertion;
+  adminPublishedAppReviewModalControlsAssertion: PublicationReviewControlAssertion;
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
@@ -181,6 +184,16 @@ const dialAdminTest = dialTest.extend<{
         adminPublishedPromptPreviewModal,
       );
     await use(adminPublishedPromptPreviewModalAssertion);
+  },
+  adminPublishedPromptPreviewModalControlsAssertion: async (
+    { adminPublishedPromptPreviewModal },
+    use,
+  ) => {
+    const adminPublishedPromptPreviewModalControlsAssertion =
+      new PublicationReviewControlAssertion(
+        adminPublishedPromptPreviewModal.getPublicationReviewControl(),
+      );
+    await use(adminPublishedPromptPreviewModalControlsAssertion);
   },
   adminPublishedApplicationReviewModal: async ({ adminPage }, use) => {
     const adminPublishedApplicationReviewModal =
@@ -486,7 +499,7 @@ const dialAdminTest = dialTest.extend<{
     await use(adminAppToApproveAssertion);
   },
   adminFilesToApproveAssertion: async ({ adminFilesToApprove }, use) => {
-    const adminFilesToApproveAssertion = new EntityTreeAssertion(
+    const adminFilesToApproveAssertion = new PublishFileAssertion(
       adminFilesToApprove,
     );
     await use(adminFilesToApproveAssertion);
@@ -585,6 +598,16 @@ const dialAdminTest = dialTest.extend<{
         adminPublishedApplicationReviewModal,
       );
     await use(adminPublishedAppReviewModalAssertion);
+  },
+  adminPublishedAppReviewModalControlsAssertion: async (
+    { adminPublishedApplicationReviewModal },
+    use,
+  ) => {
+    const adminPublishedAppReviewModalControlsAssertion =
+      new PublicationReviewControlAssertion(
+        adminPublishedApplicationReviewModal.getPublicationReviewControl(),
+      );
+    await use(adminPublishedAppReviewModalControlsAssertion);
   },
   adminOrganizationPrompts: async ({ adminPromptBar }, use) => {
     const adminOrganizationPrompts =

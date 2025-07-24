@@ -1,9 +1,8 @@
 import {
   EntitySelectors,
-  IconSelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
-import { PublishFilesTree } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publishFilesTree';
 import { Locator, Page } from '@playwright/test';
 
 export class FilesToApproveTree extends PublishFilesTree {
@@ -15,9 +14,4 @@ export class FilesToApproveTree extends PublishFilesTree {
       EntitySelectors.file,
     );
   }
-
-  public fileIcon = (name: string) =>
-    this.getTreeEntity(name, { exactMatch: true }).locator(
-      IconSelectors.fileIcon,
-    );
 }

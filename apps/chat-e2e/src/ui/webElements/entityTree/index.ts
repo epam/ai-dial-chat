@@ -1,7 +1,6 @@
 export * from './entitiesTree';
 export * from './folders';
-export * from './publishFilesTree';
-export * from './publishEntitiesTree';
+
 export * from './publishFolder';
 
 export * from './sidebar/sideBarEntitiesTree';

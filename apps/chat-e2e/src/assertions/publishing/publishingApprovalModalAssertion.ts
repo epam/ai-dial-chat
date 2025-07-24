@@ -123,7 +123,7 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
       );
       await this.assertElementText(
         this.publishingApprovalModal.authorLabel,
-        ExpectedConstants.authorLabel,
+        new RegExp(`^${ExpectedConstants.authorLabel}(: )?$`),
       );
     }
     if (fieldsToVerify.author) {
@@ -139,7 +139,7 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
       );
       await this.assertElementText(
         this.publishingApprovalModal.publicAuthorLabel,
-        ExpectedConstants.unpublishFromLabel,
+        ExpectedConstants.publicAuthorLabel,
       );
     }
     if (fieldsToVerify.publicAuthor) {

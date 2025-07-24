@@ -12,11 +12,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import {
-  BaseElement,
-  FileModalSection,
-  PublicationReviewControl,
-} from '@/src/ui/webElements';
+import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
@@ -49,7 +45,7 @@ dialAdminTest(
       adminDialHomePage,
       adminApproveRequiredConversations,
       adminPublishingApprovalModal,
-      adminFilesToApprove,
+      adminPublishedAppReviewModalControlsAssertion,
       adminPublishedApplicationReviewModal,
       adminPublishedAppReviewModalAssertion,
       adminApproveRequiredConversationsAssertion,
@@ -104,7 +100,6 @@ dialAdminTest(
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
     const updatedAuthor = GeneratorUtil.randomString(7);
     const filename = `${GeneratorUtil.randomString(7)}.svg`;
-    let publicationReviewControl: PublicationReviewControl;
 
     await dialTest.step(
       'Upload a svg file with custom name via API',
@@ -167,37 +162,20 @@ dialAdminTest(
           publishingRequestModal,
           'visible',
         );
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
-          PublishPath.Organization,
-        );
-        await publishingRequestModalAssertion.assertInputValue(
-          publishingRequestModal.author,
-          defaultAuthor,
-        );
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.allowAccessLabel,
-          ExpectedConstants.allowAccessLabel,
-        );
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal.availabilityLabel,
-          'visible',
-        );
-        await appToPublishAssertion.assertEntityState(
+        await publishingRequestModalAssertion.assertGeneralInfo({
+          publishTo: PublishPath.Organization,
+          author: defaultAuthor,
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+        });
+        await appToPublishAssertion.assertEntityToPublish(
           { name: appName },
-          'visible',
-        );
-        await appToPublishAssertion.assertEntityCheckboxState(
-          { name: appName },
-          CheckboxState.checked,
-        );
-        await appToPublishAssertion.assertEntityVersion(
-          { name: appName },
-          appVersion,
-        );
-        await appToPublishAssertion.assertTreeEntityIcon(
-          { name: appName },
-          expectedIconUrl,
+          {
+            expectedState: 'visible',
+            expectedCheckboxState: CheckboxState.checked,
+            expectedVersion: appVersion,
+            expectedIcon: expectedIconUrl,
+          },
         );
       },
     );
@@ -274,106 +252,43 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify data on "Publication approval" modal',
       async () => {
-        //assert main data
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishName,
-          requestName,
-        );
-        await adminPublishingApprovalModalAssertion.assertPublishToLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertPublishToPath(
-          PublishPath.Organization,
-        );
-        await adminPublishingApprovalModalAssertion.assertAuthorLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.author,
-          defaultAuthor,
-        );
-        await adminPublishingApprovalModalAssertion.assertPublicAuthorLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publicAuthor,
-          updatedAuthor,
-        );
-        await adminPublishingApprovalModalAssertion.assertRequestCreatedLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
-          publishApiModels.response,
-        );
-        await adminPublishingApprovalModalAssertion.assertAllowAccessLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertNoChangesLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
-          'visible',
-        );
-        //assert app data
-        await adminAppToApproveAssertion.assertEntityState(
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          requestName: requestName,
+          publishToLabel: 'visible',
+          publishTo: PublishPath.Organization,
+          authorLabel: 'visible',
+          author: defaultAuthor,
+          publicAuthorLabel: 'visible',
+          publicAuthor: updatedAuthor,
+          requestCreatedLabel: 'visible',
+          requestCreated: publishApiModels.response,
+          allowAccessLabel: 'visible',
+          noChangesLabel: 'visible',
+          availabilityLabel: 'visible',
+        });
+        await adminAppToApproveAssertion.assertEntityToPublish(
           { name: appName },
-          'visible',
+          {
+            expectedState: 'visible',
+            expectedVersion: appVersion,
+            expectedCheckboxState: CheckboxState.checked,
+            //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2699
+            // expectedIcon: expectedIconUrl
+          },
         );
-        await adminAppToApproveAssertion.assertEntityVersion(
-          { name: appName },
-          appVersion,
-        );
-        await adminAppToApproveAssertion.assertEntityCheckboxState(
-          { name: appName },
-          CheckboxState.checked,
-        );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2699
-        // await adminAppToApproveAssertion.assertTreeEntityIcon(
-        //   { name: appName },
-        //   expectedIconUrl,
-        // );
-        //assert file data
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminFilesToApproveAssertion.assertFileToPublish(
           { name: filename },
-          'visible',
+          {
+            expectedState: 'visible',
+            expectedCheckboxState: CheckboxState.checked,
+            expectedDownloadUrl: expectedIconReviewUrl,
+          },
         );
-        await adminFilesToApproveAssertion.assertEntityCheckboxState(
-          { name: filename },
-          CheckboxState.checked,
-        );
-        await adminFilesToApproveAssertion.assertElementState(
-          adminFilesToApprove.fileIcon(filename),
-          'visible',
-        );
-        await adminFilesToApproveAssertion.assertElementState(
-          adminFilesToApprove.getFileDownloadIcon(filename),
-          'visible',
-        );
-        adminFilesToApproveAssertion.assertValue(
-          await adminFilesToApprove.getFileDownloadUrl(filename),
-          expectedIconReviewUrl,
-        );
-        //assert buttons state
-        await adminPublishingApprovalModalAssertion.assertElementState(
-          adminPublishingApprovalModal.goToReviewButton,
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertElementState(
-          adminPublishingApprovalModal.approveButton,
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.approveButton,
-          'disabled',
-        );
-        await adminPublishingApprovalModalAssertion.assertElementState(
-          adminPublishingApprovalModal.rejectButton,
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.rejectButton,
-          'enabled',
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          reviewButtonState: 'visible',
+          approveButtonState: 'disabled',
+          rejectButtonState: 'enabled',
+        });
       },
     );
 
@@ -396,70 +311,36 @@ dialAdminTest(
           adminPublishedApplicationReviewModal,
           'visible',
         );
-        await adminPublishedAppReviewModalAssertion.assertElementText(
-          adminPublishedApplicationReviewModal.name,
-          appName,
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementText(
-          adminPublishedApplicationReviewModal.version,
-          appVersion,
-        );
-        await adminPublishedAppReviewModalAssertion.assertEntityIcon(
-          adminPublishedApplicationReviewModal.getApplicationIcon(),
-          expectedIconReviewUrl,
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementText(
-          adminPublishedApplicationReviewModal.description,
-          appDescription,
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementInnerText(
-          adminPublishedApplicationReviewModal.topics,
-          [firstTopic, secondTopic],
-        );
-        await adminPublishedAppReviewModalAssertion.assertAppFeaturesData(
-          features,
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementInnerText(
-          adminPublishedApplicationReviewModal.attachmentTypes,
-          [attachmentType],
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementText(
-          adminPublishedApplicationReviewModal.maxAttachmentsNumber,
-          maxAttachments,
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementText(
-          adminPublishedApplicationReviewModal.completionUrl,
-          applicationModel.endpoint,
-        );
-
-        publicationReviewControl =
-          adminPublishedApplicationReviewModal.getPublicationReviewControl();
-        await adminPublishedAppReviewModalAssertion.assertElementActionabilityState(
-          publicationReviewControl.nextButton,
-          'disabled',
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementActionabilityState(
-          publicationReviewControl.previousButton,
-          'disabled',
-        );
-        await adminPublishedAppReviewModalAssertion.assertElementActionabilityState(
-          publicationReviewControl.backToPublicationRequestButton,
-          'enabled',
-        );
+        await adminPublishedAppReviewModalAssertion.assertAppAttributes({
+          expectedName: appName,
+          expectedVersion: appVersion,
+          expectedIcon: expectedIconReviewUrl,
+          expectedDescription: appDescription,
+          expectedTopics: [firstTopic, secondTopic],
+          expectedFeatures: features,
+          expectedAttachmentTypes: [attachmentType],
+          expectedMaxAttachmentNumbers: maxAttachments,
+          expectedCompletionUrl: applicationModel.endpoint,
+        });
+        await adminPublishedAppReviewModalControlsAssertion.assertButtonsState({
+          backToPublicationRequestButtonState: 'enabled',
+          nextButtonState: 'disabled',
+          previousButtonState: 'disabled',
+        });
       },
     );
 
     await dialAdminTest.step(
       'Click on "Back to publication request", approve it and verify app icon appears under "Organization" section on "Manage Attachments" modal',
       async () => {
-        await publicationReviewControl.backToPublicationRequest();
-        await adminPublishingApprovalModalAssertion.assertReviewButtonTitle(
-          ExpectedConstants.continueReviewButtonTitle,
-        );
-        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.approveButton,
-          'enabled',
-        );
+        await adminPublishedApplicationReviewModal
+          .getPublicationReviewControl()
+          .backToPublicationRequest();
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          reviewButtonState: 'visible',
+          reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
+          approveButtonState: 'enabled',
+        });
         await adminPublishingApprovalModal.approveRequest();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
           { name: requestName },

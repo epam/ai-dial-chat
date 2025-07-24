@@ -181,17 +181,11 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertPublishToPath(
-          publicationPath,
-        );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.author,
-          defaultAuthor,
-        );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publicAuthor,
-          defaultAuthor,
-        );
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          publishTo: publicationPath,
+          author: defaultAuthor,
+          publicAuthor: defaultAuthor,
+        });
       },
     );
 

@@ -71,6 +71,7 @@ import { ManageAttachmentFoldersAssertion } from '@/src/assertions/manageAttachm
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
+import { PublishFileAssertion } from '@/src/assertions/publishing/trees/publishFileAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -341,7 +342,7 @@ const dialTest = test.extend<{
   publishingRequestFolderPromptAssertion: PublishFolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   conversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
-  publishFileAssertion: EntityTreeAssertion<FilesToPublishTree>;
+  publishFileAssertion: PublishFileAssertion<FilesToPublishTree>;
   promptToPublishAssertion: PublishEntityAssertion<PromptsToPublishTree>;
   appToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
   folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
@@ -1283,9 +1284,7 @@ const dialTest = test.extend<{
     await use(conversationToPublishAssertion);
   },
   publishFileAssertion: async ({ filesToPublishTree }, use) => {
-    const publishFileAssertion = new EntityTreeAssertion<FilesToPublishTree>(
-      filesToPublishTree,
-    );
+    const publishFileAssertion = new PublishFileAssertion(filesToPublishTree);
     await use(publishFileAssertion);
   },
   promptToPublishAssertion: async ({ promptsToPublishTree }, use) => {
