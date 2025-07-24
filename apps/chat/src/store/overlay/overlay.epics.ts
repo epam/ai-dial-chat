@@ -79,8 +79,10 @@ import {
   CreatePlaybackConversationRequest,
   CreatePlaybackConversationResponse,
   DeleteConversationRequest,
+  DeleteMessageEventResponse,
   DeleteMessageRequest,
   DeleteMessageResponse,
+  EditMessageEventResponse,
   ExportConversationRequest,
   ExportConversationResponse,
   Feature,
@@ -97,7 +99,7 @@ import {
   Role,
   SelectConversationRequest,
   SelectConversationResponse,
-  SelectedConversationLoadedResponse,
+  SelectedConversationLoadedEventResponse,
   SendMessageRequest,
   SetInputContentRequest,
   SetSystemPromptRequest,
@@ -1385,7 +1387,7 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
             hostDomain,
             payload: {
               selectedConversationIds: currentConvIds,
-            } as SelectedConversationLoadedResponse,
+            } as SelectedConversationLoadedEventResponse,
           },
         }),
       );
@@ -1404,7 +1406,7 @@ const sendEditMessageEvent: AppEpic = (action$, state$) =>
           type: OverlayEvents.editMessage,
           eventParams: {
             hostDomain,
-            payload,
+            payload: payload as EditMessageEventResponse,
           },
         }),
       );
@@ -1422,6 +1424,25 @@ const sendRegenerateLastMessageEvent: AppEpic = (action$, state$) =>
           type: OverlayEvents.regenerateMessage,
           eventParams: {
             hostDomain,
+          },
+        }),
+      );
+    }),
+  );
+
+const sendDeleteMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.deleteMessage.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.deleteMessage,
+          eventParams: {
+            hostDomain,
+            payload: payload as DeleteMessageEventResponse,
           },
         }),
       );
@@ -1580,4 +1601,5 @@ export const OverlayEpics = combineEpics(
   sendConversationUpdated,
   sendEditMessageEvent,
   sendRegenerateLastMessageEvent,
+  sendDeleteMessageEvent,
 );

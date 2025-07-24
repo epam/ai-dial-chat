@@ -71,6 +71,10 @@ export enum OverlayEvents {
    * Chat dispatch this event when last message regenerated
    */
   regenerateMessage = 'REGENERATE_MESSAGE',
+  /**
+   * Chat dispatch this event when user message deleted
+   */
+  deleteMessage = 'DELETE_MESSAGE',
 }
 
 export const overlayLibName = 'ChatOverlay';
