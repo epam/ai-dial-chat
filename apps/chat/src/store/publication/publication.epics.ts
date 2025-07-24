@@ -29,7 +29,7 @@ import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conve
 import {
   addMessageAttachmentsToPublication,
   getSetUpdatedItemsToApproveAction,
-  getUpdateApplicationAction,
+  getUpdateApplicationGeneralInfoAction,
 } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import { constructPath } from '@/src/utils/app/file';
 import {
@@ -1573,28 +1573,64 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
         payload.publicationUrl as string,
       );
 
-      if (!publication || !publication?.resources) {
-        return EMPTY;
+      if (!publication || !publication?.resources || !payload.publicationUrl) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update application, publication not found'),
+          ),
+        );
       }
 
-      const { name } = splitEntityId(payload.newApplicationId);
+      const { oldApplication, newApplication } = payload;
 
       const resources = publication.resources.map((resource) => ({
         action: resource.action,
         sourceUrl: resource.sourceUrl ?? '',
         targetUrl:
-          resource.reviewUrl === payload.oldApplicationId
-            ? resource.targetUrl.split('/').slice(0, -1).concat(name).join('/')
+          resource.reviewUrl === oldApplication.id
+            ? constructPath(
+                getFolderIdFromEntityId(resource.targetUrl),
+                splitEntityId(newApplication.id).name,
+              )
             : resource.targetUrl,
       }));
 
-      return of(
-        PublicationActions.updatePublicationRequest({
-          url: publication.url,
-          dataToUpdate: {
-            targetFolder: publication.targetFolder,
-            resources,
-          },
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const state = state$.value;
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
+          return concat(
+            getUpdateApplicationGeneralInfoAction(
+              // oldApplication is not exist after update, so we need to replace it with newApplication.id
+              { ...oldApplication, id: newApplication.id },
+              newApplication,
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: response.url,
+                ids: itemsToApprove.map((id) =>
+                  id === oldApplication.id ? newApplication.id : id,
+                ),
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: response.url,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
         }),
       );
     }),
@@ -1664,7 +1700,10 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
             PublicationSelectors.selectSelectedItemsToApprove(state);
 
           return concat(
-            getUpdateApplicationAction(payload.application, newApplication),
+            getUpdateApplicationGeneralInfoAction(
+              payload.application,
+              newApplication,
+            ),
             of(
               PublicationActions.setItemsToApprove({
                 publicationUrl: payload.publicationUrl,
@@ -1677,6 +1716,9 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
               }),
             ),
           );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
         }),
       );
     }),
@@ -2073,7 +2115,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                       version: getVersionFromId(application.id),
                     };
 
-                    return getUpdateApplicationAction(
+                    return getUpdateApplicationGeneralInfoAction(
                       application,
                       newApplication,
                     );
@@ -2261,6 +2303,9 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
               }),
             ),
           );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
         }),
       );
     }),

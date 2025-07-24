@@ -1,5 +1,6 @@
 import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
@@ -124,39 +125,54 @@ export const addMessageAttachmentsToPublication = (
   );
 };
 
-export const getUpdateApplicationAction = (
+export const getUpdateApplicationGeneralInfoAction = (
   oldApplication: CustomApplicationModel,
   newApplication: CustomApplicationModel,
 ) => {
-  if (newApplication.applicationTypeSchemaId) {
-    return ApplicationTypesSchemasService.getApplicationTypeSchema(
-      newApplication.applicationTypeSchemaId,
-    ).pipe(
-      switchMap((schema) => {
-        return of(
-          ApplicationActions.update({
-            oldApplication,
-            applicationData: newApplication,
-            schema,
+  return ApplicationService.get(newApplication.id).pipe(
+    switchMap((application) => {
+      const applicationData = newApplication;
+
+      // function and applicationProperties could be updated by core automatically, if id was changed
+      if (application?.function) {
+        applicationData.function = application.function;
+      } else if (application?.applicationProperties) {
+        applicationData.applicationProperties =
+          application.applicationProperties;
+      }
+
+      if (newApplication.applicationTypeSchemaId) {
+        return ApplicationTypesSchemasService.getApplicationTypeSchema(
+          newApplication.applicationTypeSchemaId,
+        ).pipe(
+          switchMap((schema) => {
+            return of(
+              ApplicationActions.update({
+                oldApplication,
+                applicationData,
+                schema,
+              }),
+            );
+          }),
+          catchError((err) => {
+            console.error(err);
+            return of(
+              UIActions.showErrorToast(
+                translate(
+                  'Cannot fetch application schema. Please try again later.',
+                ),
+              ),
+            );
           }),
         );
-      }),
-      catchError((err) => {
-        console.error(err);
-        return of(
-          UIActions.showErrorToast(
-            translate(
-              'Cannot fetch application schema. Please try again later.',
-            ),
-          ),
-        );
-      }),
-    );
-  }
-  return of(
-    ApplicationActions.update({
-      oldApplication,
-      applicationData: newApplication,
+      }
+
+      return of(
+        ApplicationActions.update({
+          oldApplication,
+          applicationData,
+        }),
+      );
     }),
   );
 };

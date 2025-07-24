@@ -238,8 +238,8 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
         return of(
           PublicationActions.updateApplicationPublicationUrls({
             publicationUrl: payload.publicationUrl,
-            oldApplicationId: payload.oldApplication.id,
-            newApplicationId: updatedCustomApplication.id,
+            oldApplication: payload.oldApplication,
+            newApplication: updatedCustomApplication,
           }),
         );
       }

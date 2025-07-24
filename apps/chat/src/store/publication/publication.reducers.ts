@@ -398,8 +398,8 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         publicationUrl?: string;
-        oldApplicationId: string;
-        newApplicationId: string;
+        oldApplication: CustomApplicationModel;
+        newApplication: CustomApplicationModel;
       }>,
     ) => state,
     updatePublicationRequestAndApplicationIcon: (
