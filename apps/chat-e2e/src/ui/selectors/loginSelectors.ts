@@ -10,11 +10,11 @@ export const Auth0Selectors = {
 };
 
 export const KeycloakSelectors = {
-  keycloakContainer: '.card-pf',
+  keycloakContainer: '[id="kc-form"]',
   email: '#username',
   password: '#password',
   nextButton: '[value="Next"]',
-  signiInButton: '[value="Sign In"]',
+  signiInButton: '[type="submit"]',
 };
 
 export const AzureADSelectors = {
