@@ -179,7 +179,7 @@ export const PromptComponent = ({
         }),
       );
 
-      if (additionalItemData?.publicationUrl || selectedPublicationUrl) {
+      if (additionalItemData?.publicationUrl) {
         dispatch(
           PublicationActions.selectPublication(
             additionalItemData?.publicationUrl ?? null,
@@ -192,7 +192,6 @@ export const PromptComponent = ({
       dispatch,
       isApproveRequiredResource,
       prompt.id,
-      selectedPublicationUrl,
     ],
   );
 
