@@ -158,7 +158,9 @@ export const SelectFolderModalSelectors = {
 export const PublishingModalSelectors = {
   modalContainer: '[data-qa="publish-modal"]',
   requestName: '[data-qa="publishRequestName"]',
+  authorLabel: '[data-qa="publicationAuthor-label"]',
   author: '#publicationAuthor',
+  publishToLabel: '[data-qa="publish-to-label"]',
   publishTo: '[data-qa="change-path-container"]',
   unpublishFromLabel: '[data-qa="unpublish-from-label"]',
   unpublishFromPath: '[data-qa="unpublish-from-path"]',
