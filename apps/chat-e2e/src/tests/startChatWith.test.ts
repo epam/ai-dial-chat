@@ -496,8 +496,8 @@ dialTest(
       async () => {
         await settingsModal.startChatWithSearchInput.typeInInput('1');
         await settingsModal.startChatWithListboxOptions
-          .getNthElement(1)
-          .waitFor();
+          .getNthElement(2)
+          .waitFor({ state: 'hidden' });
         const allOptions = await settingsModal.getAllOptions();
         settingsModalAssertion.assertValuesAreEqual(allOptions, [
           {
