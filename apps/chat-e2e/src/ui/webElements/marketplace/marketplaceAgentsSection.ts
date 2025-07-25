@@ -222,6 +222,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       }
       scrollPosition = await this.getScrollPosition();
       //by default 2 agent rows are out of view but available in DOM
+      console.log('scrollHeight: ', scrollHeight);
       shouldProceed =
         Math.ceil(scrollHeight - scrollPosition.scrollTop) >
         2 * scrollPosition.clientHeight;
@@ -241,6 +242,8 @@ export class MarketplaceAgentsSection extends BaseElement {
   private async getScrollPosition() {
     const scrollTop = await this.rootLocator.evaluate((p) => p.scrollTop);
     const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
+    console.log('scrollTop: ', scrollTop);
+    console.log('clientHeight: ', clientHeight);
     return {
       scrollTop: Math.ceil(scrollTop),
       clientHeight: Math.ceil(clientHeight),
