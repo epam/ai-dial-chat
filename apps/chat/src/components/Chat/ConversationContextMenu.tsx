@@ -404,7 +404,7 @@ export const ConversationContextMenu = ({
           onSelect={isHeaderMenu ? undefined : handleSelect}
           useStandardColor={isHeaderMenu}
           onShowInfo={handleOpenInfoModal}
-          hideTriggerIcon={isMobileOrTablet}
+          hideTriggerIcon={!isHeaderMenu && isMobileOrTablet}
         />
       </button>
 
