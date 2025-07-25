@@ -310,7 +310,7 @@ export function PublicationHandler({ publication }: Props) {
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
             tooltip={publicationName}
-            contentClassName="max-w-[400px] break-all"
+            contentClassName="break-all"
             triggerClassName="truncate"
           >
             <h4
