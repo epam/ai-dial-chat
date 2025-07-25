@@ -42,8 +42,8 @@ const DocumentField = ({ url }: DocumentFieldProps) => {
 
           <Tooltip
             tooltip={urlParts.name}
-            contentClassName="sm:max-w-[400px] max-w-[250px] break-all z-[100]"
             triggerClassName="truncate whitespace-pre"
+            contentClassName="break-all"
             dataQa="entity-name"
           >
             {urlParts.name}
