@@ -2,11 +2,15 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { HiddenItemsToggler } from '@/src/components/Common/Buttons/HiddenItemsToggler';
+
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
 interface Props {
   onCreateNewFolder: () => void;
   onSelectFolderClick: () => void;
+  onToggleHiddenFolders?: () => void;
+  areHiddenFoldersVisible?: boolean;
   disableSelect?: boolean;
   selectBtnText?: string;
 }
@@ -14,6 +18,8 @@ interface Props {
 export const SelectFolderFooter = ({
   onCreateNewFolder,
   onSelectFolderClick,
+  onToggleHiddenFolders,
+  areHiddenFoldersVisible = false,
   disableSelect,
   selectBtnText = 'Select folder',
 }: Props) => {
@@ -29,6 +35,13 @@ export const SelectFolderFooter = ({
         >
           <FolderPlus height={24} width={24} />
         </button>
+
+        {!!onToggleHiddenFolders && (
+          <HiddenItemsToggler
+            onClick={onToggleHiddenFolders}
+            areItemsVisible={areHiddenFoldersVisible}
+          />
+        )}
       </div>
       <div>
         <button
