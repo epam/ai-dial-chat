@@ -942,11 +942,26 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const clearConversationsEpic: AppEpic = (action$) =>
+const clearConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.clearConversations.type),
     switchMap(() => {
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+
       return concat(
+        iif(
+          () =>
+            !selectedConversations.every(
+              (conv) => isEntityIdLocal(conv) || isEntityIdExternal(conv),
+            ),
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+          EMPTY,
+        ),
         of(
           ConversationsActions.deleteFolder({
             folderId: getConversationRootId(),
