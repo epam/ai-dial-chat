@@ -117,7 +117,9 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
-        await conversations.getEntityByName(replayConversation.name).waitFor();
+        await conversationAssertion.assertSelectedEntity(
+          replayConversation.name,
+        );
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,

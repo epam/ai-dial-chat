@@ -811,6 +811,7 @@ dialTest(
             ? [initRandomModel.iconUrl]
             : undefined,
         });
+        await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await expect

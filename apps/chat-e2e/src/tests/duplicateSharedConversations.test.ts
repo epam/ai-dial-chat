@@ -307,6 +307,7 @@ dialSharedWithMeTest(
           secondComparedConversation.name,
         );
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
+        await additionalShareUserCompare.duplicateButton.waitForState();
       },
     );
 

@@ -1,4 +1,4 @@
-import { Styles, Tags } from '@/src/ui/domData';
+import { Tags } from '@/src/ui/domData';
 import {
   AttachFilesModalSelectors,
   EntitySelectors,
@@ -19,15 +19,9 @@ export class AttachFilesTree extends EntitiesTree {
     );
 
   getAttachedFileArrowIcon(name: string, index?: number) {
-    return this.getEntityByName(name, index).locator(
-      AttachFilesModalSelectors.arrowAdditionalIcon,
-    );
-  }
-
-  getAttachedFileArrowIconColor(name: string, index?: number) {
-    return this.createElementFromLocator(
-      this.getAttachedFileArrowIcon(name, index).locator(Tags.svg),
-    ).getComputedStyleProperty(Styles.color);
+    return this.getEntityByName(name, index)
+      .locator(AttachFilesModalSelectors.arrowAdditionalIcon)
+      .locator(Tags.svg);
   }
 
   public attachedFileLoadingIndicator = (filename: string) =>
