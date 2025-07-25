@@ -16,7 +16,7 @@ import {
   ExportConversationRequest,
   ImportConversationRequest,
   MessageButtons,
-  MessageCustomButtonResponse,
+  MessageCustomButtonEventResponse,
   OverlayEvents,
   OverlayRequests,
   RenameConversationRequest,
@@ -183,7 +183,7 @@ export const overlaySlice = createSlice({
     },
     sendCustomMessageEvent: (
       state,
-      _action: PayloadAction<MessageCustomButtonResponse>,
+      _action: PayloadAction<MessageCustomButtonEventResponse>,
     ) => state,
   },
 });
