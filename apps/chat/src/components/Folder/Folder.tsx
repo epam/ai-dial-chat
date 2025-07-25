@@ -200,7 +200,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const dispatch = useAppDispatch();
 
   const screenState = useScreenState();
-  const isSmallScreen = screenState === ScreenState.SM;
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const checkboxRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -1183,7 +1184,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
-                isContextMenu && !isSmallScreen && 'pr-5',
+                isContextMenu && !isMobileOrTablet && 'pr-5',
               )}
               data-qa="folder-name"
             >
@@ -1277,6 +1278,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onSelect={onSelectFolder && onSelect}
                     canSelectFolders={canSelectFolders}
                     additionalItemData={additionalItemData}
+                    hideTriggerIcon={isMobileOrTablet}
                   />
                 </div>
               )}
