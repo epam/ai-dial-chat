@@ -639,6 +639,7 @@ dialTest(
         await conversationAssertion.assertSelectedEntity(
           replayConversation.name,
         );
+        await chat.replay.waitForState();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         replayConversation.name = GeneratorUtil.randomString(7);
