@@ -1,6 +1,5 @@
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages, MenuOptions } from '@/src/testData';
-import { expect } from '@playwright/test';
+import { MenuOptions } from '@/src/testData';
 
 dialTest(
   'Delete folder with conversation inside',
@@ -10,9 +9,9 @@ dialTest(
     folderConversations,
     dataInjector,
     conversationDropdownMenu,
-    conversations,
     confirmationDialog,
     chatBarFolderAssertion,
+    conversationAssertion,
     localStorageManager,
   }) => {
     const conversationInFolder =
@@ -34,10 +33,6 @@ dialTest(
       { name: conversationInFolder.folders.name },
       'hidden',
     );
-
-    const todayConversationsCount = await conversations.getEntitiesCount();
-    expect
-      .soft(todayConversationsCount, ExpectedMessages.entitiesCountIsValid)
-      .toBe(0);
+    await conversationAssertion.assertEntitiesCount(0);
   },
 );

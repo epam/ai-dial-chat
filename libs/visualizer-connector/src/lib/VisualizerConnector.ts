@@ -90,6 +90,8 @@ export class VisualizerConnector {
     iframe.sandbox.add('allow-downloads');
     iframe.sandbox.add('allow-popups');
 
+    iframe.allow = 'clipboard-write';
+
     iframe.style.height = '100%';
     iframe.style.width = '100%';
     iframe.style.border = 'none';
