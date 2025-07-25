@@ -1,11 +1,8 @@
-import { IconEye, IconEyeOff } from '@tabler/icons-react';
-import { useMemo } from 'react';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { HiddenItemsToggler } from '@/src/components/Common/Buttons/HiddenItemsToggler';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
@@ -28,14 +25,6 @@ export const SelectFolderFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [HiddenItemsIcon, hiddenItemsTooltip] = useMemo(
-    () =>
-      areHiddenFoldersVisible
-        ? [IconEyeOff, 'Hide technical items']
-        : [IconEye, 'Show technical items'],
-    [areHiddenFoldersVisible],
-  );
-
   return (
     <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6">
       <div className="flex items-center justify-center">
@@ -48,15 +37,10 @@ export const SelectFolderFooter = ({
         </button>
 
         {!!onToggleHiddenFolders && (
-          <button
+          <HiddenItemsToggler
             onClick={onToggleHiddenFolders}
-            className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-            data-qa="show-hidden-folders"
-          >
-            <Tooltip tooltip={t(hiddenItemsTooltip)} isTriggerClickable>
-              <HiddenItemsIcon height={24} width={24} />
-            </Tooltip>
-          </button>
+            areItemsVisible={areHiddenFoldersVisible}
+          />
         )}
       </div>
       <div>

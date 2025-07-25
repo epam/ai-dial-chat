@@ -1,10 +1,5 @@
 import { useId } from '@floating-ui/react';
-import {
-  IconDownload,
-  IconEye,
-  IconEyeOff,
-  IconTrashX,
-} from '@tabler/icons-react';
+import { IconDownload, IconTrashX } from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
@@ -43,6 +38,7 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
+import { HiddenItemsToggler } from '@/src/components/Common/Buttons/HiddenItemsToggler';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
@@ -301,14 +297,6 @@ export const FileManagerModal = ({
     !sharedWithMeRootFiles.length;
 
   const showNoResult = searchQuery !== '' && isNothingExists;
-
-  const [HiddenItemsIcon, hiddenItemsTooltip] = useMemo(
-    () =>
-      areHiddenItemsVisible
-        ? [IconEyeOff, 'Hide technical items']
-        : [IconEye, 'Show technical items'],
-    [areHiddenItemsVisible],
-  );
 
   useEffect(() => {
     if (isOpen) {
@@ -990,15 +978,10 @@ export const FileManagerModal = ({
               <FolderPlus height={24} width={24} />
             </button>
           )}
-          <button
+          <HiddenItemsToggler
             onClick={handleToggleHiddenItems}
-            className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-            data-qa="show-hidden-folders"
-          >
-            <Tooltip tooltip={t(hiddenItemsTooltip)} isTriggerClickable>
-              <HiddenItemsIcon height={24} width={24} />
-            </Tooltip>
-          </button>
+            areItemsVisible={areHiddenItemsVisible}
+          />
         </div>
         <div className="flex items-center gap-3">
           <button
