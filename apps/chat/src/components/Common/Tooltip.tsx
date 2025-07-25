@@ -197,7 +197,7 @@ export const TooltipContent = forwardRef<
         }}
         {...context.getFloatingProps(props)}
         className={classNames(
-          'z-50 whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+          'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
           context.getFloatingProps(props).className as string,
         )}
         data-qa="tooltip"
@@ -244,7 +244,14 @@ export function Tooltip({
       <TooltipTrigger className={triggerClassName} data-qa={dataQa}>
         {children}
       </TooltipTrigger>
-      <TooltipContent className={contentClassName}>{tooltip}</TooltipContent>
+      <TooltipContent
+        className={classNames(
+          'max-w-[250px] break-words sm:max-w-[400px]',
+          contentClassName,
+        )}
+      >
+        {tooltip}
+      </TooltipContent>
     </TooltipContainer>
   );
 }

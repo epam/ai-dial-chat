@@ -59,6 +59,7 @@ interface FolderContextMenuProps {
   onUpload?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
   isSelected?: boolean;
+  hideTriggerIcon?: boolean;
 }
 
 export const FolderContextMenu = ({
@@ -80,6 +81,7 @@ export const FolderContextMenu = ({
   isEmpty,
   additionalItemData,
   isSelected,
+  hideTriggerIcon,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -272,6 +274,7 @@ export const FolderContextMenu = ({
     <ContextMenu
       menuItems={menuItems}
       TriggerIcon={IconDots}
+      hideTriggerIcon={hideTriggerIcon}
       triggerIconSize={18}
       className="m-0 justify-self-end p-2"
       featureType={featureType}
