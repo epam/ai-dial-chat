@@ -6,11 +6,14 @@ import {
   extractNameFromEmail,
   formatDate,
   prepareEntityName,
+  replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getStringValidationErrors } from '@/src/utils/app/forms';
+import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
-  getPublicationDefaultName,
+  getDefaultAllEditEntities,
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
@@ -87,8 +90,6 @@ export function PublicationHandler({ publication }: Props) {
 
   const { t } = useTranslation(Translation.Chat);
 
-  const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
-
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
@@ -113,15 +114,31 @@ export function PublicationHandler({ publication }: Props) {
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
 
+  const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  const [isFormChanged, setIsFormChanged] = useState(false);
+
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
   }, [publication.author, t]);
 
   useEffect(() => {
+    if (isEditMode) {
+      setErrors(() =>
+        getStringValidationErrors({
+          value: replaceSpacesFromString(publication.displayAuthor),
+          label: 'Author',
+        }),
+      );
+    }
+  }, [isEditMode, publication.displayAuthor]);
+
+  useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
-          path: publication.targetFolder.split('/').slice(1).join('/'),
+          path: getIdWithoutFeatureType(publication.targetFolder),
         }),
       );
     }
@@ -144,13 +161,19 @@ export function PublicationHandler({ publication }: Props) {
     [publication.rules],
   );
 
+  const isPublicationHasOnlyUnpublishEntities = useMemo(
+    () =>
+      publication.resources.every(
+        (resource) => resource.action === PublishActions.DELETE,
+      ),
+    [publication.resources],
+  );
+
   const handleUpdateRequest = useCallback(() => {
     dispatch(
       PublicationActions.updatePublicationRequest({
         url: publication.url,
         dataToUpdate: {
-          name:
-            publication.name ?? getPublicationDefaultName(publication.author),
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
@@ -181,7 +204,7 @@ export function PublicationHandler({ publication }: Props) {
               const newApiKey = regenerateApiKeyNameAndVersionParts(
                 reviewUrl,
                 name,
-                version,
+                version.trim(),
               );
 
               return {
@@ -200,8 +223,6 @@ export function PublicationHandler({ publication }: Props) {
     displayAuthorEditState,
     entitiesEditState,
     foldersEditState,
-    publication.author,
-    publication.name,
     publication.resources,
     publication.targetFolder,
     publication.url,
@@ -210,11 +231,18 @@ export function PublicationHandler({ publication }: Props) {
 
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
+      const cleanedValue = replaceSpacesFromString(value);
+      setErrors(() =>
+        getStringValidationErrors({
+          value: cleanedValue,
+          label: 'Author',
+        }),
+      );
       if (
         value.length <= MAX_ENTITY_LENGTH ||
         value.length < displayAuthorEditState.length
       ) {
-        dispatch(PublicationActions.setDisplayAuthorEditState(value));
+        dispatch(PublicationActions.setDisplayAuthorEditState(cleanedValue));
       }
     },
     [dispatch, displayAuthorEditState.length],
@@ -224,22 +252,61 @@ export function PublicationHandler({ publication }: Props) {
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
-  const areRulesChanged =
-    !isRulesLoading &&
-    publication.rules &&
-    !isEqual(publication.rules, rules[publication.targetFolder] || []);
+
+  const initialState = useMemo(() => {
+    const { entities, folders } = getDefaultAllEditEntities(
+      publication.resources,
+    );
+    const initialRules = publication.rules ?? [];
+    const initialDisplayAuthor = publication.displayAuthor ?? '';
+
+    return {
+      entities,
+      folders,
+      rules: initialRules,
+      displayAuthor: initialDisplayAuthor,
+    };
+  }, [publication]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const entitiesChanged = !isEqual(
+        initialState.entities,
+        entitiesEditState,
+      );
+      const foldersChanged = !isEqual(initialState.folders, foldersEditState);
+      const rulesChanged = !isEqual(initialState.rules, rulesOnEdit);
+      const authorChanged =
+        initialState.displayAuthor !== displayAuthorEditState;
+
+      const result =
+        entitiesChanged || foldersChanged || rulesChanged || authorChanged;
+
+      setIsFormChanged(result);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [
+    initialState,
+    entitiesEditState,
+    foldersEditState,
+    rulesOnEdit,
+    displayAuthorEditState,
+  ]);
+
+  const hasUserChangedRules = useMemo(() => {
+    const initialRules = filteredRuleEntries ?? [];
+    return !isEqual(initialRules, rulesOnEdit);
+  }, [filteredRuleEntries, rulesOnEdit]);
 
   return (
-    <div className="size-full justify-center overflow-y-auto p-0 md:px-5 md:pt-5">
+    <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
       <div
-        className="relative flex size-full flex-col justify-center gap-px rounded 2xl:max-w-[1000px]"
+        className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
         data-qa="publish-approval-modal"
       >
-        {isPublicationUpdating && (
-          <div className="absolute inset-0 z-30 flex size-full items-center justify-center bg-layer-1 opacity-50">
-            <Spinner size={32} />
-          </div>
-        )}
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
             tooltip={publicationName}
@@ -255,119 +322,129 @@ export function PublicationHandler({ publication }: Props) {
           </Tooltip>
         </div>
         <div className="flex w-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
-          <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
-            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
-              <div className="flex flex-col px-3 pb-4 md:px-5">
-                <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                <PublicationInfoSection
-                  labelDataQa="publish-to-label"
-                  label={t('Publish to')}
-                  valueDataQa="publish-to-path"
-                  valueToDisplay={publishToUrl}
-                  tooltip={
-                    <div className="flex break-words">{publishToUrl}</div>
-                  }
-                />
+          {isPublicationUpdating ? (
+            <div className="flex h-[300px] items-center justify-center bg-layer-2 py-10">
+              <Spinner size={32} />
+            </div>
+          ) : (
+            <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
+              <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
+                <div className="flex flex-col px-3 pb-4 md:px-5">
+                  <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+                  <PublicationInfoSection
+                    labelDataQa="publish-to-label"
+                    label={t('Publish to')}
+                    valueDataQa="publish-to-path"
+                    valueToDisplay={publishToUrl}
+                    tooltip={
+                      <div className="flex break-words">{publishToUrl}</div>
+                    }
+                  />
 
-                <PublicationInfoSection
-                  labelDataQa="publication-author-label"
-                  label={t('Author: ')}
-                  valueDataQa="publication-author"
-                  valueToDisplay={publicationAuthor}
-                />
+                  <PublicationInfoSection
+                    labelDataQa="publication-author-label"
+                    label={t('Author: ')}
+                    valueDataQa="publication-author"
+                    valueToDisplay={publicationAuthor}
+                  />
 
-                <PublicationInfoSection
-                  labelDataQa="publication-display-author-label"
-                  label={t("Author's public name: ")}
-                  valueDataQa="publication-display-author"
-                  valueToDisplay={publication.displayAuthor ?? ''}
-                  infoTooltip={t(
-                    'The name will be displayed instead of the author name for this publication.',
+                  {!isPublicationHasOnlyUnpublishEntities && (
+                    <PublicationInfoSection
+                      labelDataQa="publication-display-author-label"
+                      label={t("Author's public name: ")}
+                      valueDataQa="publication-display-author"
+                      valueToDisplay={publication.displayAuthor ?? ''}
+                      infoTooltip={t(
+                        `This name will be displayed instead of the author's name for this publication.`,
+                      )}
+                      editValue={displayAuthorEditState}
+                      onChangeValue={handleChangeDisplayAuthor}
+                      isEditMode={isEditMode}
+                      errors={errors}
+                    />
                   )}
-                  editValue={displayAuthorEditState}
-                  onChangeValue={handleChangeDisplayAuthor}
-                  inputClassName={
-                    !displayAuthorEditState ? 'border-b-error' : ''
-                  }
-                  isEditMode={isEditMode}
-                />
 
-                <PublicationInfoSection
-                  labelDataQa="creation-date-label"
-                  label={t('Request created: ')}
-                  valueDataQa="creation-date"
-                  valueToDisplay={formatDate(publication.createdAt)}
-                />
+                  <PublicationInfoSection
+                    labelDataQa="creation-date-label"
+                    label={t('Request created: ')}
+                    valueDataQa="creation-date"
+                    valueToDisplay={formatDate(publication.createdAt)}
+                  />
+                </div>
+                <section className="px-3 py-4 md:px-5">
+                  <h2 className="mb-4 flex items-center gap-2 text-sm">
+                    <div className="flex w-full justify-between">
+                      <p data-qa="allow-access-label">
+                        {t('Allow access if all match')}
+                      </p>
+                      {hasUserChangedRules ? (
+                        <span
+                          onClick={() => setIsCompareModalOpened(true)}
+                          className="cursor-pointer text-accent-primary"
+                        >
+                          {t('See changes')}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-secondary"
+                          data-qa="no-changes-label"
+                        >
+                          {t('No changes')}
+                        </span>
+                      )}
+                    </div>
+                  </h2>
+                  <PublicationFilters
+                    isRulesLoading={isRulesLoading}
+                    filteredRuleEntries={filteredRuleEntries}
+                    newRules={newRules}
+                    publication={publication}
+                  />
+                </section>
               </div>
-              <section className="px-3 py-4 md:px-5">
-                <h2 className="mb-4 flex items-center gap-2 text-sm">
-                  <div className="flex w-full justify-between">
-                    <p data-qa="allow-access-label">
-                      {t('Allow access if all match')}
-                    </p>
-                    {areRulesChanged ? (
-                      <span
-                        onClick={() => setIsCompareModalOpened(true)}
-                        className="cursor-pointer text-accent-primary"
-                      >
-                        {t('See changes')}
-                      </span>
-                    ) : (
-                      <span
-                        className="text-secondary"
-                        data-qa="no-changes-label"
-                      >
-                        {t('No changes')}
-                      </span>
-                    )}
-                  </div>
-                </h2>
-                <PublicationFilters
-                  isRulesLoading={isRulesLoading}
-                  filteredRuleEntries={filteredRuleEntries}
-                  newRules={newRules}
-                  publication={publication}
-                />
-              </section>
-            </div>
-            <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
-              {publication.resources.length ? (
-                sections.map(
-                  ({ dataQa, sectionName, Component, featureType }) =>
-                    publication.resourceTypes.includes(
-                      EnumMapper.getBackendResourceTypeByFeatureType(
-                        featureType,
+              <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
+                {publication.resources.length ? (
+                  sections.map(
+                    ({ dataQa, sectionName, Component, featureType }) =>
+                      publication.resourceTypes.includes(
+                        EnumMapper.getBackendResourceTypeByFeatureType(
+                          featureType,
+                        ),
+                      ) && (
+                        <CollapsibleSection
+                          key={featureType}
+                          name={sectionName}
+                          openByDefault
+                          dataQa={dataQa}
+                          togglerClassName="!text-sm !text-primary"
+                          sectionTooltip={
+                            <>
+                              {t('Publish')},
+                              <span className="text-error">
+                                {' '}
+                                {t('Unpublish')}
+                              </span>
+                            </>
+                          }
+                        >
+                          <Component resources={publication.resources} />
+                        </CollapsibleSection>
                       ),
-                    ) && (
-                      <CollapsibleSection
-                        key={featureType}
-                        name={sectionName}
-                        openByDefault
-                        dataQa={dataQa}
-                        togglerClassName="!text-sm !text-primary"
-                        sectionTooltip={
-                          <>
-                            {t('Publish')},
-                            <span className="text-error">
-                              {' '}
-                              {t('Unpublish')}
-                            </span>
-                          </>
-                        }
-                      >
-                        <Component resources={publication.resources} />
-                      </CollapsibleSection>
-                    ),
-                )
-              ) : (
-                <p className="my-3">{t('This publication has no resources')}</p>
-              )}
+                  )
+                ) : (
+                  <p className="my-3">
+                    {t('This publication has no resources')}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
+          isFormChanged={isFormChanged}
+          areRulesChanged={hasUserChangedRules}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (

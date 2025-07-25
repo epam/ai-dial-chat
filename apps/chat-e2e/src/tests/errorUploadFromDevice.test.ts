@@ -4,12 +4,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
 } from '@/src/testData';
-import {
-  Attributes,
-  Colors,
-  Styles,
-  ThemeColorAttributes,
-} from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -145,24 +140,14 @@ dialTest(
           () => attachFilesModal.uploadFromDevice(),
         );
         await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(Attachment.heartImageName),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
-        const attachmentNameColor = await attachFilesModal
-          .getAllFilesTree()
-          .getEntityName(Attachment.sunImageName)
-          .getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            attachmentNameColor[0],
-            ExpectedMessages.attachmentNameColorIsValid,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+        await attachAllFilesTreeAssertion.assertEntityState(
+          { name: Attachment.heartImageName },
+          'visible',
+        );
+        await attachAllFilesTreeAssertion.assertEntityColor(
+          { name: Attachment.sunImageName },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
   },

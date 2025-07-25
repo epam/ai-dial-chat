@@ -25,6 +25,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import {
   doesHaveDotsInTheEnd,
+  getLastPathSegment,
   isEntityNameOnSameLevelUnique,
   parseCommaSeparatedList,
 } from '@/src/utils/app/common';
@@ -32,6 +33,7 @@ import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conve
 import { constructPath } from '@/src/utils/app/file';
 import {
   getActionsAddFoldersFromFolderId,
+  getFolderIdFromEntityId,
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -100,6 +102,7 @@ import {
   SetInputContentRequest,
   SetSystemPromptRequest,
   StopSelectedPlaybackConversationResponse,
+  UpdateMessageRequest,
   overlayAppName,
   validateFeature,
 } from '@epam/ai-dial-shared';
@@ -234,6 +237,18 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
               const { index } = payload as DeleteMessageRequest;
 
               return of(OverlayActions.deleteMessage({ index, requestId }));
+            }
+            case OverlayRequests.updateMessage: {
+              const { index, updatedMessageFields } =
+                payload as UpdateMessageRequest;
+
+              return of(
+                OverlayActions.updateMessage({
+                  index,
+                  requestId,
+                  updatedMessageFields,
+                }),
+              );
             }
             case OverlayRequests.setInputContent: {
               const { content } = payload as SetInputContentRequest;
@@ -636,8 +651,8 @@ const stopSelectedPlaybackConversationEpic: AppEpic = (action$, state$) =>
       }
 
       return concat(
-        of(ConversationsActions.playbackCancel()),
         of(OverlayActions.stopSelectedPlaybackConversationEffect(payload)),
+        of(ConversationsActions.playbackCancel()),
       );
     }),
   );
@@ -647,7 +662,7 @@ const stopSelectedPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
     ofType(OverlayActions.stopSelectedPlaybackConversationEffect.type),
     switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        ofType(ConversationsActions.updateConversation.type),
+        ofType(ConversationsActions.updateConversationSuccess.type),
         takeUntil(timer(10000)),
         filter(Boolean),
         mergeMap(({ payload: { id } }) => {
@@ -841,9 +856,9 @@ const importConversationEpic: AppEpic = (action$, state$) =>
 
         if (!importConversation.history?.length) return EMPTY;
 
-        const convIdLastItem = importConversation.history[0].id
-          .split('/')
-          .pop();
+        const convIdLastItem = getLastPathSegment(
+          importConversation.history[0].id,
+        );
         importConversation.history[0].folderId =
           state$.value.overlay.newConversationsFolder;
         importConversation.history[0].id = constructPath(
@@ -851,14 +866,10 @@ const importConversationEpic: AppEpic = (action$, state$) =>
           convIdLastItem,
         );
         importConversation.folders = parentIds.map((item): FolderInterface => {
-          const splittedEntityId = item.split('/');
-          const name = splittedEntityId.pop();
-          const folderId = splittedEntityId.join('/');
-
           return {
             id: item,
-            name: name!,
-            folderId,
+            name: getLastPathSegment(item),
+            folderId: getFolderIdFromEntityId(item),
             type: FeatureType.Chat,
           };
         });
@@ -1048,6 +1059,66 @@ const deleteMessageEffectEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updateMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.updateMessage.type),
+    switchMap(({ payload: { index, requestId, updatedMessageFields } }) => {
+      const selectedConversation =
+        ConversationsSelectors.selectSelectedConversations(state$.value)?.[0];
+
+      if (!selectedConversation) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          OverlayActions.updateMessageEffect({
+            index,
+            requestId,
+            updatedMessageFields,
+          }),
+        ),
+        of(
+          ConversationsActions.updateMessage({
+            messageIndex: index,
+            conversationId: selectedConversation.id,
+            values: updatedMessageFields,
+          }),
+        ),
+      );
+    }),
+  );
+
+const updateMessageEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.updateMessageEffect.type),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        ofType(ConversationsActions.updateConversationSuccess.type),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        mergeMap(({ payload: { conversation } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          return concat(
+            of(
+              OverlayActions.sendPMResponse({
+                type: OverlayRequests.updateMessage,
+                requestParams: {
+                  requestId,
+                  hostDomain,
+                  payload: {
+                    messages: conversation.messages,
+                  } as DeleteMessageResponse,
+                },
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.setOverlayOptions.type),
@@ -1061,6 +1132,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         signInOptions,
         overlayConversationId,
         signInInSameWindow,
+        messageButtons,
       } = options;
 
       const availableThemes = UISelectors.selectAvailableThemes(state$.value);
@@ -1181,6 +1253,12 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         actions.push(of(OverlayActions.signInOptionsSet({ signInOptions })));
       }
 
+      if (isOptionChanged('messageButtons')) {
+        actions.push(
+          of(OverlayActions.setCustomMessages(messageButtons ?? [])),
+        );
+      }
+
       // after all actions will send notify that settings are set
       actions.push(
         of(OverlayActions.setOverlayOptionsSuccess(options)),
@@ -1286,18 +1364,14 @@ const sendReadyToInteract: AppEpic = (action$, state$) =>
 
 const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
   state$.pipe(
-    filter(
-      (state) =>
-        !!ConversationsSelectors.selectAreSelectedConversationsLoaded(state) &&
-        !AuthSelectors.selectIsShouldLogin(state),
-    ),
+    filter((state) => !AuthSelectors.selectIsShouldLogin(state)),
     distinctUntilChanged((prev, state) => {
-      const prevConvIds =
-        ConversationsSelectors.selectSelectedConversationsIds(prev);
-      const currentConvId =
-        ConversationsSelectors.selectSelectedConversationsIds(state);
+      const prevLoaded =
+        ConversationsSelectors.selectAreSelectedConversationsLoaded(prev);
+      const currentLoaded =
+        ConversationsSelectors.selectAreSelectedConversationsLoaded(state);
 
-      return isEqual(prevConvIds, currentConvId);
+      return currentLoaded && prevLoaded !== currentLoaded;
     }),
     switchMap((state) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state);
@@ -1315,6 +1389,19 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
           },
         }),
       );
+    }),
+  );
+
+const sendCustomMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(OverlayActions.sendCustomMessageEvent.type),
+    map(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return OverlayActions.sendPMEvent({
+        type: OverlayEvents.messageCustomButton,
+        eventParams: { hostDomain, payload: payload },
+      });
     }),
   );
 
@@ -1440,11 +1527,14 @@ export const OverlayEpics = combineEpics(
   initOverlayEpic,
   sendPMEventEpic,
   sendPMResponseEpic,
+  sendCustomMessageEvent,
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,
   deleteMessageEpic,
   deleteMessageEffectEpic,
+  updateMessageEpic,
+  updateMessageEffectEpic,
   notifyHostGPTMessageStatus,
   setOverlayOptionsSuccessEpic,
   signInOptionsSet,

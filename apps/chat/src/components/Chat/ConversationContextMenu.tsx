@@ -85,13 +85,6 @@ export const ConversationContextMenu = ({
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const isUnpublishingResource = useAppSelector((state) =>
-    PublicationSelectors.selectIsResourceUnpublishing(
-      state,
-      publicationUrl ?? '',
-      conversation.id,
-    ),
-  );
 
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
@@ -381,7 +374,7 @@ export const ConversationContextMenu = ({
           featureType={FeatureType.Chat}
           onOpenMoveToModal={() => setIsShowMoveToModal(true)}
           onDelete={handleOpenDeleteModal}
-          onRename={!isUnpublishingResource ? handleOpenRenameModal : undefined}
+          onRename={handleOpenRenameModal}
           onExport={handleExport}
           onOpenExportModal={handleOpenExportModal}
           onCompare={

@@ -30,6 +30,7 @@ import {
   PublicationRequestModel,
   PublicationResource,
   PublicationRule,
+  PublicationUpdateRequestModel,
   ResourceToReview,
   TargetAudienceFilter,
 } from '@/src/types/publication';
@@ -38,6 +39,7 @@ import { SharingType } from '@/src/types/share';
 import {
   EDITED_FOLDER_NAME_KEY,
   FolderEditTree,
+  FolderNode,
 } from '@/src/store/publication/publication.types';
 
 import {
@@ -46,7 +48,7 @@ import {
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
 
-import { isVersionValid, prepareEntityName } from './common';
+import { isEntityNameValid, isVersionValid, prepareEntityName } from './common';
 import { BucketService } from './data/bucket-service';
 import { FileService } from './data/file-service';
 import { constructPath } from './file';
@@ -306,6 +308,7 @@ export const getFilesFromPublicResources = ({
 
     return {
       id: r.reviewUrl,
+      absolutePath: folderId,
       folderId,
       name: splitEntityId(r.targetUrl).name,
       contentLength: 0,
@@ -380,10 +383,12 @@ export const getVersionGroupFromId = (id: string) => {
 /**
  * Process publication resources and handle file validation
  */
-export const processPublicationResources = (
-  payload: PublicationRequestModel,
+export const processPublicationResources = <
+  T extends PublicationRequestModel | PublicationUpdateRequestModel,
+>(
+  payload: T,
 ): Observable<{
-  publicationData: PublicationRequestModel;
+  publicationData: T;
   isPublishingExternalFiles: boolean;
 }> => {
   return forkJoin({
@@ -422,7 +427,7 @@ export const processPublicationResources = (
         return resource;
       });
 
-      const publicationData: PublicationRequestModel = {
+      const publicationData: T = {
         ...payload,
         resources,
       };
@@ -561,13 +566,30 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
     const value = (obj as Record<string, string>)[key];
 
     if (typeof value === 'object' && value !== null) {
-      if (
-        EDITED_FOLDER_NAME_KEY in value &&
-        (!value[EDITED_FOLDER_NAME_KEY] ||
-          prepareEntityName(value[EDITED_FOLDER_NAME_KEY] as string).trim() ===
-            '')
-      ) {
-        return false;
+      // Check for the duplicated names
+      const seenNames = new Set<string>();
+      for (const sibling of Object.values(value as FolderNode)) {
+        if (
+          typeof sibling === 'object' &&
+          sibling !== null &&
+          sibling[EDITED_FOLDER_NAME_KEY]
+        ) {
+          const name = sibling[EDITED_FOLDER_NAME_KEY].trim();
+
+          if (seenNames.has(name)) return false;
+          seenNames.add(name);
+        }
+      }
+
+      if (EDITED_FOLDER_NAME_KEY in value) {
+        if (!value[EDITED_FOLDER_NAME_KEY]) {
+          return false;
+        }
+        const folderName = (value[EDITED_FOLDER_NAME_KEY] as string).trim();
+
+        if (!isEntityNameValid(folderName)) {
+          return false;
+        }
       }
 
       if (!allEditedFoldersAreValid(value)) {
@@ -578,3 +600,44 @@ export const allEditedFoldersAreValid = (obj: unknown) => {
 
   return true;
 };
+
+/**
+ * Checks if a given folder name conflicts with any edited names of sibling folders.
+ *
+ * @param name - The proposed name to check for conflicts
+ * @param currentFolder - The current folder being checked
+ * @param folderEditState - The folder state tree
+ * @returns True if there's a naming conflict among siblings
+ */
+export function isFolderNameNotUniq(
+  name: string,
+  currentFolder: { folderId: string; name: string },
+  folderEditState: FolderEditTree,
+): boolean {
+  // Navigate to find siblings folder
+  const segments = currentFolder.folderId.split('/');
+  const siblingsFolders = segments.reduce<
+    FolderNode | FolderEditTree | string | undefined
+  >((current, segment) => {
+    if (!current || typeof current !== 'object' || !(segment in current)) {
+      return undefined;
+    }
+    return current[segment];
+  }, folderEditState);
+
+  // Check for name conflicts among siblings
+  return (
+    !!siblingsFolders &&
+    Object.entries(siblingsFolders).some(([key, folderNode]) => {
+      if (
+        typeof folderNode !== 'object' ||
+        key === EDITED_FOLDER_NAME_KEY ||
+        currentFolder.name === key
+      ) {
+        return false;
+      }
+      const { [EDITED_FOLDER_NAME_KEY]: editStateName } = folderNode;
+      return name.trim() === editStateName.trim();
+    })
+  );
+}

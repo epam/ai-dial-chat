@@ -4,6 +4,7 @@ export enum OverlayRequests {
   getMessages = 'GET_MESSAGES',
   sendMessage = 'SEND_MESSAGE',
   deleteMessage = 'DELETE_MESSAGE',
+  updateMessage = 'UPDATE_MESSAGE',
   setInputContent = 'SET_INPUT_CONTENT',
   setSystemPrompt = 'SET_SYSTEM_PROMPT',
   setOverlayOptions = 'SET_OVERLAY_OPTIONS',
@@ -57,6 +58,11 @@ export enum OverlayEvents {
    * Chat dispatch this event when any of conversations updated, added or removed
    */
   conversationsUpdated = 'CONVERSATIONS_UPDATED',
+  /**
+   * Chat dispatch this event when events occured on custom message buttons
+   * Can include different events like mouseover, mousedown, etc.
+   */
+  messageCustomButton = 'MESSAGE_CUSTOM_BUTTON',
 }
 
 export const overlayLibName = 'ChatOverlay';

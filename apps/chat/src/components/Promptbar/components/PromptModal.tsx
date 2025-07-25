@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
-  arePromptsFieldsTheSame,
+  areSomePromptsFieldsChanged,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 
@@ -58,7 +58,7 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
         );
         dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
       } else {
-        if (arePromptsFieldsTheSame(editedPrompt, prompt)) {
+        if (areSomePromptsFieldsChanged(editedPrompt, prompt)) {
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,

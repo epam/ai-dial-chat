@@ -16,6 +16,7 @@ import {
   ImportConversationRequest,
   ImportConversationResponse,
   LatestExportConversationsFormat,
+  Message,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
@@ -31,6 +32,8 @@ import {
   StopSelectedPlaybackConversationResponse,
   Styles,
   Task,
+  UpdateMessageRequest,
+  UpdateMessageResponse,
   overlayAppName,
   overlayLibName,
   setStyles,
@@ -559,7 +562,7 @@ export class ChatOverlay {
   /**
    * Delete message in current selected conversation by index
    * @param index {number} index of message in conversation
-   * NOTE: if message on index is user message it will also remove answer from assistant
+   * NOTE: if message on index is user message or assistant it will also remove paired answer or question message
    */
   public async deleteMessage(index: number): Promise<DeleteMessageResponse> {
     const request: DeleteMessageRequest = {
@@ -570,6 +573,26 @@ export class ChatOverlay {
       OverlayRequests.deleteMessage,
       request,
     ) as Promise<DeleteMessageResponse>;
+  }
+
+  /**
+   * Update message in current selected conversation by index
+   * @param index {number} index of message in conversation
+   * @param updatedMessageFields {Partial<Message>} index of message in conversation
+   */
+  public async updateMessage(
+    index: number,
+    updatedMessageFields: Partial<Message>,
+  ): Promise<UpdateMessageResponse> {
+    const request: UpdateMessageRequest = {
+      index,
+      updatedMessageFields,
+    };
+
+    return this.send(
+      OverlayRequests.updateMessage,
+      request,
+    ) as Promise<UpdateMessageResponse>;
   }
 
   /**

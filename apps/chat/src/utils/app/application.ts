@@ -22,6 +22,7 @@ import { Translation } from '@/src/types/translation';
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -213,7 +214,12 @@ export const convertApplicationFromApi = (
 };
 
 export const isQuickApp = (entity: DialAIEntityModel) =>
-  entity.applicationTypeSchemaId === DEFAULT_QUICK_APPS_SCHEMA_ID;
+  entity.applicationTypeSchemaId ===
+  DefaultsService.get('quickAppsSchemaId', DEFAULT_QUICK_APPS_SCHEMA_ID);
+
+export const isExternalApp = (entity: DialAIEntityModel) =>
+  entity.applicationTypeSchemaId ===
+  DefaultsService.get('externalAppsSchemaId', DEFAULT_EXTERNAL_APPS_SCHEMA_ID);
 
 export const getModelDescription = (entity: DialAIEntityModel) => {
   return entity.description ?? '';

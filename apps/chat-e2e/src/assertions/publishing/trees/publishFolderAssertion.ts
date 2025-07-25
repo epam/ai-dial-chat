@@ -1,5 +1,10 @@
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
-import { PublishingExpectedMessages, TreeEntity } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementState,
+  PublishingExpectedMessages,
+  TreeEntity,
+} from '@/src/testData';
 import { PublishFolder } from '@/src/ui/webElements/entityTree';
 
 export class PublishFolderAssertion<
@@ -43,5 +48,53 @@ export class PublishFolderAssertion<
       ),
       expectedColor,
     );
+  }
+
+  public async assertFolderEntityToPublish(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    folderEntityAttributes: {
+      expectedState: ElementState;
+      expectedColor?: string;
+      expectedCheckboxState?: CheckboxState;
+      expectedVersion?: string;
+      expectedVersionColor?: string;
+    },
+  ) {
+    await this.assertFolderEntityState(
+      folder,
+      folderEntity,
+      folderEntityAttributes.expectedState,
+    );
+    if (folderEntityAttributes.expectedState === 'visible') {
+      if (folderEntityAttributes.expectedColor) {
+        await this.assertFolderEntityColor(
+          folder,
+          folderEntity,
+          folderEntityAttributes.expectedColor,
+        );
+      }
+      if (folderEntityAttributes.expectedCheckboxState) {
+        await this.assertFolderEntityCheckboxState(
+          folder,
+          folderEntity,
+          folderEntityAttributes.expectedCheckboxState,
+        );
+      }
+      if (folderEntityAttributes.expectedVersion) {
+        await this.assertFolderEntityVersion(
+          folder,
+          folderEntity,
+          folderEntityAttributes.expectedVersion,
+        );
+      }
+      if (folderEntityAttributes.expectedVersionColor) {
+        await this.assertFolderEntityVersionColor(
+          folder,
+          folderEntity,
+          folderEntityAttributes.expectedVersionColor,
+        );
+      }
+    }
   }
 }

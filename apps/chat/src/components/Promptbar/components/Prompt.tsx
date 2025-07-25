@@ -92,9 +92,6 @@ export const PromptComponent = ({
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
 
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -129,6 +126,7 @@ export const PromptComponent = ({
   useContextMenuTrigger(handleContextMenuOpen, promptRef);
 
   const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
 
   const {
     handleExport,
@@ -184,7 +182,7 @@ export const PromptComponent = ({
       if (additionalItemData?.publicationUrl) {
         dispatch(
           PublicationActions.selectPublication(
-            additionalItemData?.publicationUrl,
+            additionalItemData?.publicationUrl ?? null,
           ),
         );
       }
@@ -218,7 +216,9 @@ export const PromptComponent = ({
   );
 
   const disableUsePrompt =
-    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput ||
+    !areModelsInstalled ||
+    !selectedConversations.length;
 
   useEffect(() => {
     if (isSelectMode) {
@@ -245,7 +245,7 @@ export const PromptComponent = ({
         className={classNames(
           'group relative flex size-full shrink-0 select-none items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
-          isContextMenu && 'pr-9',
+          isContextMenu && !isSmallScreen && 'pr-9',
           !isSelectMode && isHighlighted
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
@@ -262,7 +262,6 @@ export const PromptComponent = ({
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
-        name={isSelected ? 'selected-entity' : undefined}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}
@@ -276,6 +275,7 @@ export const PromptComponent = ({
           })}
           draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
+          data-qa={isSelected ? 'selected-entity' : undefined}
         >
           <div
             className={classNames(
@@ -330,10 +330,7 @@ export const PromptComponent = ({
             />
           </ShareIcon>
 
-          <div
-            className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left"
-            data-qa="entity-name"
-          >
+          <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
             <Tooltip
               tooltip={t(
                 getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -347,6 +344,7 @@ export const PromptComponent = ({
                   prompt.publicationInfo?.action === PublishActions.DELETE &&
                   'text-error',
               )}
+              dataQa="entity-name"
             >
               {prompt.name}
             </Tooltip>
@@ -366,12 +364,7 @@ export const PromptComponent = ({
               entity={prompt}
               featureType={FeatureType.Prompt}
               onDelete={handleDelete}
-              onRename={
-                additionalItemData?.publicationUrl &&
-                prompt.publicationInfo?.action === PublishActions.DELETE
-                  ? undefined
-                  : handleOpenEditModal
-              }
+              onRename={handleOpenEditModal}
               onExport={handleExport}
               onOpenMoveToModal={handleMoveToFolder}
               onShare={handleShare}
@@ -388,6 +381,7 @@ export const PromptComponent = ({
               onUse={handleUse}
               onShowInfo={handleInfo}
               className="p-2"
+              hideTriggerIcon={isSmallScreen}
             />
           </div>
         )}

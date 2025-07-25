@@ -12,8 +12,11 @@ import {
   PublicationInfo,
   PublicationRequestModel,
   PublicationRule,
+  PublicationUpdateRequestModel,
   ResourceToReview,
 } from '@/src/types/publication';
+
+import { SendMessagePayload } from '@/src/store/conversations/conversations.types';
 
 import {
   EDITED_FOLDER_NAME_KEY,
@@ -25,6 +28,7 @@ import {
 import {
   Conversation,
   FolderInterface,
+  Message,
   Prompt,
   PublishActions,
   ShareEntity,
@@ -53,6 +57,7 @@ const initialState: PublicationState = {
   publishModel: undefined,
 
   // Review edit mode
+  selectedItemsToApprove: {},
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
@@ -222,12 +227,27 @@ export const publicationSlice = createSlice({
     ) => {
       state.selectedItemsToPublish = payload.ids;
     },
+    setItemsToApprove: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedItemsToApprove[payload.publicationUrl] = payload.ids;
+    },
     selectItemsToPublish: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
       state.selectedItemsToPublish = xor(
         state.selectedItemsToPublish,
+        payload.ids,
+      );
+    },
+    selectItemsToApprove: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedItemsToApprove[payload.publicationUrl] = xor(
+        state.selectedItemsToApprove[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },
@@ -386,7 +406,7 @@ export const publicationSlice = createSlice({
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{
-        dataToUpdate: PublicationRequestModel;
+        dataToUpdate: PublicationUpdateRequestModel;
         url: string;
       }>,
     ) => {
@@ -450,6 +470,21 @@ export const publicationSlice = createSlice({
     updateAndApprovePublicationRequest: (state) => {
       state.isPublicationUpdating = true;
     },
+    updatePublicationConversationAttachmentsAndSendMessage: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        sendMessagePayload: SendMessagePayload;
+      }>,
+    ) => state,
+    updatePublicationAndConversationLastMessageAttachments: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        conversationId: string;
+        message: Message;
+      }>,
+    ) => state,
     setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
       state.rulesOnEdit = payload;
     },

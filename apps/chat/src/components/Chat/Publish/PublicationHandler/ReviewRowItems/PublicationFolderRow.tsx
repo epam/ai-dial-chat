@@ -3,15 +3,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { prepareEntityName } from '@/src/utils/app/common';
+import { replaceSpacesFromString } from '@/src/utils/app/common';
 import {
   getSelectedEntitiesByFolderId,
   isFolderPartialSelected,
   isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
+import { getStringValidationErrors } from '@/src/utils/app/forms';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isFolderNameNotUniq } from '@/src/utils/app/publications';
 
 import { PublicationReviewItem } from '@/src/types/publication';
 
@@ -57,32 +59,56 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   const [isFocused, setIsFocused] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isPartialSelected, setIsPartialSelected] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
 
-  const collapsedSectionsSelector = useMemo(
-    () => PublicationSelectors.selectChosenFolderIds(allFolders, allItems),
+  const chosenFoldersSelector = useMemo(
+    () =>
+      PublicationSelectors.selectChosenFolderIdsToApprove(allFolders, allItems),
     [allFolders, allItems],
   );
   const {
     fullyChosenFolderIds: selectedFolderIds,
     partialChosenFolderIds: partialSelectedFolderIds,
-  } = useAppSelector(collapsedSectionsSelector);
+  } = useAppSelector(chosenFoldersSelector);
 
   const chosenItemsIds = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+    PublicationSelectors.selectSelectedItemsToApprove,
+  );
+
+  const folderEditState = useAppSelector(
+    PublicationSelectors.selectFoldersEditState,
   );
 
   useEffect(() => {
-    setInputName(currentFolder.name);
+    const cleanName = replaceSpacesFromString(currentFolder.name);
+    setInputName(cleanName);
   }, [currentFolder.name, isEditMode]);
+
+  useEffect(() => {
+    const isNotUniqName = isFolderNameNotUniq(
+      inputName,
+      currentFolder,
+      folderEditState,
+    );
+
+    const nameErrors = getStringValidationErrors({
+      value: inputName,
+      label: 'Folder name',
+      checkDotsInTheEnd: true,
+      isNotUniqName,
+    });
+    setErrors(nameErrors);
+  }, [currentFolder, folderEditState, inputName]);
 
   const handleChangeName = useCallback(
     (name: string) => {
       setInputName(name);
+
       dispatch(
         PublicationActions.setEditFolderStateByFolderId({
           folderId: currentFolder.id,
@@ -109,7 +135,8 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     });
 
     dispatch(
-      PublicationActions.selectItemsToPublish({
+      PublicationActions.selectItemsToApprove({
+        publicationUrl: selectedPublication?.url ?? '',
         ids: entitiesToSelect,
       }),
     );
@@ -119,6 +146,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     currentFolder.id,
     dispatch,
     partialSelectedFolderIds,
+    selectedPublication?.url,
   ]);
 
   useEffect(() => {
@@ -184,8 +212,10 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
               onChange={handleChangeName}
               inputClassName={classNames(
                 'w-full',
-                !prepareEntityName(inputName).trim() && '!border-b-error',
+                errors.length && '!border-b-error pr-5',
               )}
+              tooltipIconClassName="right-1"
+              errors={errors}
             />
           </div>
         </div>

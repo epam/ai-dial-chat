@@ -51,9 +51,8 @@ dialTest(
     dataInjector,
     conversations,
     setTestIds,
-    marketplacePage,
     talkToAgents,
-    agentSettings,
+    agentSettingAssertion,
     temperatureSlider,
     addons,
     conversationDropdownMenu,
@@ -146,12 +145,9 @@ dialTest(
     await dialTest.step(
       'Select some model and verify it has the same settings as parent model',
       async () => {
-        await talkToAgentDialog.selectAgent(defaultModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(defaultModel);
         await chat.configureSettingsButton.click();
-        const newModelSystemPrompt = await agentSettings.getSystemPrompt();
-        expect
-          .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
-          .toBe(replayPrompt);
+        await agentSettingAssertion.assertSystemPromptValue(replayPrompt);
 
         const newModelTemperature = await temperatureSlider.getTemperature();
         expect
@@ -262,7 +258,6 @@ dialTest(
     chatHeader,
     agentSettings,
     temperatureSlider,
-    marketplacePage,
     modelInfoTooltip,
     errorPopup,
     iconApiHelper,
@@ -304,7 +299,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(replayModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(replayModel);
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
@@ -715,7 +710,6 @@ dialTest(
     agentInfoAssertion,
     conversations,
     dataInjector,
-    marketplacePage,
     chatAssertion,
     apiAssertion,
     talkToAgentDialog,
@@ -756,7 +750,7 @@ dialTest(
         );
         //TODO: add conversation screen verification when fixed https://github.com/epam/ai-dial-chat/issues/2697
         await chatAssertion.assertReplayButtonState('hidden');
-        await chatAssertion.assertNotAllowedModelLabelContent();
+        await chatAssertion.assertNotAllowedModelLabelContent(notAllowedModel);
       },
     );
 
@@ -773,7 +767,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await talkToAgentDialog.selectAgent(defaultModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(defaultModel);
         const replayRequest = await chat.startReplay();
         apiAssertion.assertRequestModelId(replayRequest, defaultModel);
       },
@@ -794,7 +788,6 @@ dialTest(
     chat,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     conversations,
     localStorageManager,
   }) => {
@@ -846,7 +839,7 @@ dialTest(
           );
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.chatAgent.click();
-          await talkToAgentDialog.selectAgent(newModel, marketplacePage);
+          await talkToAgentDialog.selectAgent(newModel);
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);
         }

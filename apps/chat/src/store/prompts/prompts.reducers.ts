@@ -110,7 +110,10 @@ export const promptsSlice = createSlice({
         (prompt) => prompt.id !== payload.prompt.id,
       );
     },
-    savePrompt: (state, _action: PayloadAction<Prompt>) => state,
+    savePrompt: (
+      state,
+      _action: PayloadAction<{ prompt: Prompt; selectSaved?: boolean }>,
+    ) => state,
     movePrompt: (
       state,
       _action: PayloadAction<{
@@ -137,12 +140,19 @@ export const promptsSlice = createSlice({
     },
     updatePrompt: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         id: string;
         values: Partial<Prompt>;
         publicationUrl?: string | null;
+        selectUpdated?: boolean;
       }>,
-    ) => state,
+    ) => {
+      if (payload.selectUpdated) {
+        state.isPromptLoading = true;
+      }
+    },
     updatePromptSuccess: (
       state,
       { payload }: PayloadAction<{ prompt: Partial<Prompt>; id: string }>,

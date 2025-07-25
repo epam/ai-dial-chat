@@ -66,6 +66,7 @@ export const ExpectedMessages = {
   promptNameInvalid: 'Prompt name is not valid',
   promptDescriptionValid: 'Prompt description is valid',
   promptContentValid: 'Prompt content is valid',
+  promptVersionValid: 'Prompt version is valid',
   promptVariablePlaceholderValid: 'Prompt variable placeholder is valid',
   promptNameUpdated: 'Prompt name is updated',
   promptDescriptionUpdated: 'Prompt description is updated',
@@ -363,6 +364,7 @@ export const ExpectedMessages = {
   entityIsNotVisible: 'Entity is not visible',
   entityIsVisible: 'Entity is visible',
   entityBackgroundColorIsValid: 'Entity background color is valid',
+  elementTextIsSelected: 'Element text is selected',
   featureIsToggledOff: 'Feature is toggled-off',
   featureIsToggledOn: 'Feature is toggled-on',
   elementColorIsValid: 'Element color is valid',
@@ -414,14 +416,31 @@ export const ExpectedMessages = {
   authorIsValid: 'Author in preview is valid',
   selectedTopicsAreValid: 'Selected topics are displayed in preview',
   numberOfTopicsIsCorrect: 'Number of topics in preview is correct',
+  attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
+  navigationPanelShouldBeVisible: 'Navigation panel should be visible',
+  navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
+  defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
+  defaultAppNameShouldBeFilled:
+    'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+  releaseDateShouldBeValid: 'Release date should be valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
+  LogoShouldBeCentered: (
+    expectedLogoCenterX: number,
+    actualLogoCenterX: number,
+  ) =>
+    `Logo should be centered. Expected center around ${expectedLogoCenterX}, got ${actualLogoCenterX}`,
+  myAgentsListIsValid: 'My Agents list is valid',
+  allAgentsListIsValid: 'All Agents list is valid',
+  valuesAreEqual: 'Values are equal',
 };
 
 export enum PublishingExpectedMessages {
   noFilesToPublishRequested = 'No files to publish requested',
   publishToPathIsValid = 'Publish to path is valid',
+  publishCreationDateIsValid = 'Publishing request creation date is valid',
   entityVersionIsValid = 'Publish entity version is valid',
+  folderIsNotPublished = 'Folder is not published',
 }
 
 export enum MarketplaceExpectedMessages {

@@ -1,5 +1,5 @@
 import { IconArrowsMaximize } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -39,20 +39,27 @@ export const GeneralInfoView: React.FC<Props> = ({
   applicationData,
   schema,
 }) => {
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelFromState = applicationData
-    ? modelsMap[applicationData.reference]
-    : null;
+  const { t } = useTranslation(Translation.Chat);
 
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const [pythonVersion] = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
-
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const modelsWithFolderId = models.map((model) => ({
-    ...model,
-    folderId: '',
-  }));
+
+  const screenState = useScreenState();
+
+  const modelFromState = applicationData
+    ? modelsMap[applicationData.reference]
+    : null;
+  const modelsWithFolderId = useMemo(
+    () =>
+      models.map((model) => ({
+        ...model,
+        folderId: '',
+      })),
+    [models],
+  );
 
   const isAppDeployed =
     applicationData?.functionStatus === ApplicationStatus.DEPLOYED;
@@ -67,12 +74,15 @@ export const GeneralInfoView: React.FC<Props> = ({
       modelsWithFolderId,
     ),
   });
-
-  const { t } = useTranslation(Translation.Chat);
-
   const formData = methods.watch();
 
-  const screenState = useScreenState();
+  useEffect(() => {
+    // sourceFolder could be updated by core in case of publication update, if we change application id
+    // core updates sourceFolder bucket along with application id, targetUrl and reviewUrl
+    if (applicationData?.function?.sourceFolder) {
+      methods.setValue('sources', applicationData.function.sourceFolder);
+    }
+  }, [applicationData?.function?.sourceFolder, methods]);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
