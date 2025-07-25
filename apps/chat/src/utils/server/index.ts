@@ -191,7 +191,7 @@ export const OpenAIStream = async ({
                 displayMessage: json.error.display_message,
               });
             }
-            if (!idSend) {
+            if (!idSend && json.id) {
               appendChunk(controller, { responseId: json.id });
               idSend = true;
             }
