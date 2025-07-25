@@ -1092,6 +1092,9 @@ export function Chat({ isPreview }: ChatProps) {
   const isConfigurationSchemaLoading = useAppSelector(
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1139,12 +1142,10 @@ export function Chat({ isPreview }: ChatProps) {
   }
 
   if (
-    (!areSelectedConversationsLoaded &&
-      selectedConversations.some(
-        (conv) => conv.status !== UploadStatus.LOADED,
-      )) ||
+    !areSelectedConversationsLoaded ||
     !isInstalledModelsInitialized ||
-    isConfigurationSchemaLoading
+    isConfigurationSchemaLoading ||
+    isPublicationUpdating
   ) {
     return <Loader />;
   }
