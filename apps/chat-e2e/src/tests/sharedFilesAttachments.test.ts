@@ -17,6 +17,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { loadingTimeout } from '@/src/ui/pages';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -54,6 +55,7 @@ dialSharedWithMeTest(
     additionalShareUserAttachFilesModal,
     additionalShareUserToastAssertion,
     conversations,
+    appContainer,
     attachmentDropdownMenu,
     attachFilesModal,
     confirmationDialog,
@@ -345,6 +347,7 @@ dialSharedWithMeTest(
         await conversations
           .selectedEntity(conversationWithTwoResponses.name)
           .waitFor();
+        await appContainer.waitForAppLoaded(loadingTimeout);
       },
     );
 

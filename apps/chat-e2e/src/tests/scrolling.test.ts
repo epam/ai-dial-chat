@@ -140,6 +140,7 @@ dialTest(
     setTestIds,
     conversationData,
     conversations,
+    chatMessages,
     dataInjector,
     sendMessage,
     localStorageManager,
@@ -161,6 +162,8 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
+        await conversations.selectedEntity(conversation.name).waitFor();
+        await chatMessages.waitForState();
         await chat.goToContentPosition(ScrollState.top);
         await sendMessage.scrollDownButton.click();
         await expect
