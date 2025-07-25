@@ -166,7 +166,6 @@ export const Combobox = <T,>({
               }
               hideTooltip={!!isOpen}
               triggerClassName="w-full"
-              contentClassName="break-words"
               isTriggerClickable
             >
               <input
@@ -247,7 +246,6 @@ export const Combobox = <T,>({
                       : getItemLabel(item)
                   }
                   triggerClassName="w-full"
-                  contentClassName="break-words"
                 >
                   {itemRow
                     ? createElement(itemRow, { item })

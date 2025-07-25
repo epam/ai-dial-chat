@@ -246,7 +246,7 @@ export function Tooltip({
       </TooltipTrigger>
       <TooltipContent
         className={classNames(
-          'max-w-[250px] break-all sm:max-w-[400px]',
+          'max-w-[250px] break-words sm:max-w-[400px]',
           contentClassName,
         )}
       >

@@ -1183,6 +1183,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )
                 }
                 isTriggerClickable
+                contentClassName="break-all"
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&

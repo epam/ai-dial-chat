@@ -535,6 +535,7 @@ export function PublishModal<
                       <Tooltip
                         tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
                         triggerClassName="truncate whitespace-pre"
+                        contentClassName="break-all"
                         dataQa="path"
                       >
                         {constructPath(ORGANIZATION_SECTION_NAME, path)}

@@ -230,6 +230,7 @@ export const FileItem = ({
           tooltip={item.name}
           isTriggerClickable={isContextMenu}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
+          contentClassName="break-all"
         >
           <span
             className={classNames(

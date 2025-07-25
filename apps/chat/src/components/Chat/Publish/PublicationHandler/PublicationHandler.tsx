@@ -308,7 +308,11 @@ export function PublicationHandler({ publication }: Props) {
         data-qa="publish-approval-modal"
       >
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
-          <Tooltip tooltip={publicationName} triggerClassName="truncate">
+          <Tooltip
+            tooltip={publicationName}
+            contentClassName="break-all"
+            triggerClassName="truncate"
+          >
             <h4
               data-qa="publish-name"
               className="truncate whitespace-pre break-all text-base font-semibold"

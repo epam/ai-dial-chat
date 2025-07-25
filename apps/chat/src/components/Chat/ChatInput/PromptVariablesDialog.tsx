@@ -165,6 +165,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         <Tooltip
           tooltip={prompt.name}
           triggerClassName="mb-4 truncate whitespace-pre text-base font-bold block"
+          contentClassName="break-all"
           dataQa="variable-prompt-name"
         >
           {prompt.name}

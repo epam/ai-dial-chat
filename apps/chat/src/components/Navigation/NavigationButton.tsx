@@ -54,7 +54,6 @@ export const NavigationButton = ({
           ? 'cursor-not-allowed'
           : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
-      contentClassName="break-words"
     >
       <button
         data-qa={dataQa}

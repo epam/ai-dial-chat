@@ -43,6 +43,7 @@ const DocumentField = ({ url }: DocumentFieldProps) => {
           <Tooltip
             tooltip={urlParts.name}
             triggerClassName="truncate whitespace-pre"
+            contentClassName="break-all"
             dataQa="entity-name"
           >
             {urlParts.name}
