@@ -30,7 +30,8 @@
             "output": "."
           }
         ],
-        "buildableProjectDepsInPackageJsonType": true
+        "buildableProjectDepsInPackageJsonType": true,
+        "useLegacyTypescriptPlugin": false
       }
     },
     "publish": {
