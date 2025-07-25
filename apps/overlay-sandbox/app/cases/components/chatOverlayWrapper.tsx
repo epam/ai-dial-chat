@@ -170,6 +170,24 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         console.info('Conversations updated');
       },
     );
+    const editMessageEvent = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.editMessage}`,
+      async (payload) => {
+        console.info('Message edited', { payload });
+      },
+    );
+    const regenerateLastMessageEvent = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.regenerateMessage}`,
+      async () => {
+        console.info('Message regenerated');
+      },
+    );
+    const deleteMessageEvent = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.deleteMessage}`,
+      async (payload) => {
+        console.info('Message deleted', { payload });
+      },
+    );
     const subMessageCustomButton = overlay.current?.subscribe(
       `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
       async (info) => {
@@ -190,6 +208,9 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       subSelectedConversationLoaded,
       subConversationUpdated,
       subMessageCustomButton,
+      editMessageEvent,
+      regenerateLastMessageEvent,
+      deleteMessageEvent,
     ];
     return () => {
       subs.forEach((sub) => {
