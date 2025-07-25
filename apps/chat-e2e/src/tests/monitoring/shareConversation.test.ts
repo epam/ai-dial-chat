@@ -2,14 +2,13 @@ import { Conversation } from '@/chat/types/chat';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
-import { expect } from '@playwright/test';
+import { ExpectedConstants } from '@/src/testData';
 
 dialSharedWithMeTest(
   'Share single chat in Today section',
   async ({
     additionalShareUserDialHomePage,
-    additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationAssertion,
     conversationData,
     dataInjector,
     dialHomePage,
@@ -18,6 +17,7 @@ dialSharedWithMeTest(
     shareModal,
     shareModalAssertion,
     localStorageManager,
+    additionalShareUserLocalStorageManager,
   }) => {
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -48,6 +48,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open share link by another user and verify chat stays under Shared with me and is selected automatically',
       async () => {
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareByLinkResponse.invitationLink,
@@ -55,16 +56,14 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded({
           selectedSharedConversationName: conversation.name,
-          skipSidebars: true,
         });
-        await expect
-          .soft(
-            additionalShareUserSharedWithMeConversations.selectedEntity(
-              conversation.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await additionalShareUserSharedWithMeConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+        await additionalShareUserSharedWithMeConversationAssertion.assertSelectedEntity(
+          conversation.name,
+        );
       },
     );
   },

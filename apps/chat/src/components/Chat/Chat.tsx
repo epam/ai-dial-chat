@@ -420,16 +420,8 @@ const ChatView = memo(() => {
   );
 
   const handleRegenerateMessage = useCallback(() => {
-    const lastUserMessageIndex = selectedConversations[0].messages
-      .map((msg) => msg.role)
-      .lastIndexOf(Role.User);
     dispatch(
-      ConversationsActions.sendMessages({
-        conversations: selectedConversations,
-        message: selectedConversations[0].messages[lastUserMessageIndex],
-        deleteCount:
-          selectedConversations[0].messages.length - lastUserMessageIndex,
-        activeReplayIndex: 0,
+      ConversationsActions.regenerateLastMessage({
         skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
       }),
     );
@@ -440,46 +432,20 @@ const ChatView = memo(() => {
         behavior: 'smooth',
       });
     }
-  }, [dispatch, selectedConversations, isAdminPreview, areModelsInstalled]);
+  }, [dispatch, isAdminPreview, areModelsInstalled]);
 
   const handleEditMessage = useCallback(
     (editedMessage: Message, index: number, convId: string) => {
-      dispatch(ConversationsActions.stopStreamMessage());
-
-      if (editedMessage.role === Role.User) {
-        dispatch(
-          ConversationsActions.sendMessages({
-            conversations: selectedConversations,
-            message: editedMessage,
-            deleteCount: mergedMessages.length - index,
-            activeReplayIndex: 0,
-            skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
-          }),
-        );
-
-        return;
-      }
-
-      let finalIndex = index;
-      const conv = selectedConversations.find((conv) => conv.id === convId);
-      if (conv?.messages.at(0)?.role === Role.System) {
-        finalIndex += 1;
-      }
       dispatch(
-        ConversationsActions.updateMessage({
-          conversationId: convId,
-          messageIndex: finalIndex,
-          values: editedMessage,
+        ConversationsActions.editMessage({
+          editedMessage,
+          index,
+          convId,
+          skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
         }),
       );
     },
-    [
-      dispatch,
-      mergedMessages.length,
-      selectedConversations,
-      isAdminPreview,
-      areModelsInstalled,
-    ],
+    [dispatch, isAdminPreview, areModelsInstalled],
   );
 
   const handleApplyChatSettings = useCallback(() => {
