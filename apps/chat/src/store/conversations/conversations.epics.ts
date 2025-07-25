@@ -1125,6 +1125,81 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const regenerateLastMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ConversationsActions.regenerateLastMessage.type),
+    switchMap(({ payload }) => {
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+
+      const lastUserMessageIndex = selectedConversations[0].messages
+        .map((msg) => msg.role)
+        .lastIndexOf(Role.User);
+
+      return of(
+        ConversationsActions.sendMessages({
+          conversations: selectedConversations,
+          message: selectedConversations[0].messages[lastUserMessageIndex],
+          deleteCount:
+            selectedConversations[0].messages.length - lastUserMessageIndex,
+          activeReplayIndex: 0,
+          skipRecentModelsUpdate: payload.skipRecentModelsUpdate,
+        }),
+      );
+    }),
+  );
+
+const editMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ConversationsActions.editMessage.type),
+    switchMap(
+      ({
+        payload: { convId, editedMessage, index, skipRecentModelsUpdate },
+      }) => {
+        const actions: Observable<AppAction>[] = [];
+        const selectedConversations =
+          ConversationsSelectors.selectSelectedConversations(state$.value);
+        let finalIndex = index;
+        const conv = selectedConversations.find((conv) => conv.id === convId);
+        if (conv?.messages.at(0)?.role === Role.System) {
+          finalIndex += 1;
+        }
+
+        if (!conv) return EMPTY;
+
+        actions.push(of(ConversationsActions.stopStreamMessage()));
+
+        if (editedMessage.role === Role.User) {
+          actions.push(
+            of(
+              ConversationsActions.sendMessages({
+                conversations: selectedConversations,
+                message: editedMessage,
+                deleteCount: conv?.messages.length - index,
+                activeReplayIndex: 0,
+                skipRecentModelsUpdate,
+              }),
+            ),
+          );
+
+          return concat(...actions);
+        }
+
+        actions.push(
+          of(
+            ConversationsActions.updateMessage({
+              conversationId: convId,
+              messageIndex: finalIndex,
+              values: editedMessage,
+            }),
+          ),
+        );
+
+        return concat(...actions);
+      },
+    ),
+  );
+
 const updateMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.updateMessage.type),
@@ -3502,6 +3577,8 @@ export const ConversationsEpics = combineEpics(
   deleteConversationsEpic,
   deleteChosenConversationsEpic,
   updateMessageEpic,
+  editMessageEpic,
+  regenerateLastMessageEpic,
   rateMessageEpic,
   rateMessageSuccessEpic,
   sendMessageEpic,

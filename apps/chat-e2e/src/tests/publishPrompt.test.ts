@@ -157,14 +157,10 @@ dialAdminTest(
         await publishingRequestModal.requestName.fillInInput(
           requestName1WithSpaces,
         );
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
-          `${PublishPath.Organization}/${orgFolderName}`,
-        );
-        await publishingRequestModalAssertion.assertInputValue(
-          publishingRequestModal.author,
-          author,
-        );
+        await publishingRequestModalAssertion.assertGeneralInfo({
+          publishTo: `${PublishPath.Organization}/${orgFolderName}`,
+          author: author,
+        });
         publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
@@ -199,57 +195,32 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
-          `Organization/${orgFolderName}`,
-        );
-        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
-          publishApiModels.response,
-        );
-        await adminPromptToApproveAssertion.assertEntityState(
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          publishTo: `${PublishPath.Organization}/${orgFolderName}`,
+          requestCreated: publishApiModels.response,
+          publicAuthor: author,
+        });
+        await adminPromptToApproveAssertion.assertEntityToPublish(
           { name: prompt1.name },
-          'visible',
-        );
-        await adminPromptToApproveAssertion.assertEntityColor(
-          { name: prompt1.name },
-          expectedColor,
-        );
-        await adminPromptToApproveAssertion.assertEntityVersion(
-          { name: prompt1.name },
-          ExpectedConstants.defaultAppVersion,
-        );
-        await adminPromptToApproveAssertion.assertEntityVersionColor(
-          { name: prompt1.name },
-          expectedColor,
+          {
+            expectedState: 'visible',
+            expectedColor: expectedColor,
+            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersionColor: expectedColor,
+          },
         );
         await adminPromptToApproveAssertion.assertElementState(
           adminPromptsToApprove.promptIcon(prompt1.name),
           'visible',
         );
-        await adminPromptToApproveAssertion.assertElementText(
-          adminPublishingApprovalModal.publicAuthor,
-          author,
-        );
         await adminPromptToApproveAssertion.assertElementState(
           adminPublishingApprovalModal.goToReviewButton,
           'visible',
         );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPublishingApprovalModal.approveButton,
-          'visible',
-        );
-        await adminPromptToApproveAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.approveButton,
-          'disabled',
-        );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPublishingApprovalModal.rejectButton,
-          'visible',
-        );
-        await adminPromptToApproveAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.rejectButton,
-          'enabled',
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          approveButtonState: 'disabled',
+          rejectButtonState: 'enabled',
+        });
       },
     );
 
@@ -299,12 +270,10 @@ dialAdminTest(
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptName(
-          prompt1.name,
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
-          prompt1.content!,
-        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+          name: prompt1.name,
+          content: prompt1.content!,
+        });
         for (const element of [
           adminPublishedPromptPreviewModal.getPublicationReviewControl()
             .previousButton,
@@ -325,9 +294,9 @@ dialAdminTest(
         await adminPublishedPromptPreviewModal
           .getPublicationReviewControl()
           .backToPublicationRequestButton.click();
-        await adminPublishingApprovalModalAssertion.assertReviewButtonTitle(
-          ExpectedConstants.continueReviewButtonTitle,
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
+        });
       },
     );
 
@@ -343,7 +312,7 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'by user1 reload page and check prompt in Organization section inside folder1',
+      'By user1 reload page and check prompt in Organization section inside folder1',
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
@@ -416,49 +385,24 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
-          `Organization/${orgFolderName}`,
-        );
-        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
-          publishApiModels.response,
-        );
-        await adminPromptToApproveAssertion.assertEntityState(
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          publishTo: `${PublishPath.Organization}/${orgFolderName}`,
+          requestCreated: publishApiModels.response,
+        });
+        await adminPromptToApproveAssertion.assertEntityToPublish(
           { name: prompt2.name },
-          'visible',
+          {
+            expectedState: 'visible',
+            expectedColor: expectedColor,
+            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersionColor: expectedColor,
+          },
         );
-        await adminPromptToApproveAssertion.assertEntityColor(
-          { name: prompt2.name },
-          expectedColor,
-        );
-        await adminPromptToApproveAssertion.assertEntityVersion(
-          { name: prompt2.name },
-          ExpectedConstants.defaultAppVersion,
-        );
-        await adminPromptToApproveAssertion.assertEntityVersionColor(
-          { name: prompt2.name },
-          expectedColor,
-        );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPublishingApprovalModal.goToReviewButton,
-          'visible',
-        );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPublishingApprovalModal.approveButton,
-          'visible',
-        );
-        await adminPromptToApproveAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.approveButton,
-          'disabled',
-        );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPublishingApprovalModal.rejectButton,
-          'visible',
-        );
-        await adminPromptToApproveAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.rejectButton,
-          'enabled',
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          reviewButtonState: 'visible',
+          approveButtonState: 'disabled',
+          rejectButtonState: 'enabled',
+        });
       },
     );
 
@@ -474,12 +418,10 @@ dialAdminTest(
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptName(
-          prompt2.name,
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
-          prompt2.content!,
-        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+          name: prompt2.name,
+          content: prompt2.content!,
+        });
         for (const element of [
           adminPublishedPromptPreviewModal.getPublicationReviewControl()
             .previousButton,
@@ -676,10 +618,9 @@ dialAdminTest(
           requestNameWithTabs,
         );
         await publishingRequestModal.author.fillInInput(publicAuthor);
-        await baseAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
-          publicationPath,
-        );
+        await publishingRequestModalAssertion.assertGeneralInfo({
+          publishTo: publicationPath,
+        });
         publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
@@ -714,21 +655,14 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPromptToApproveAssertion.assertEntityState(
+        await adminPromptToApproveAssertion.assertEntityToPublish(
           { name: prompt1.name },
-          'visible',
-        );
-        await adminPromptToApproveAssertion.assertEntityColor(
-          { name: prompt1.name },
-          expectedColor,
-        );
-        await adminPromptToApproveAssertion.assertEntityVersion(
-          { name: prompt1.name },
-          ExpectedConstants.defaultAppVersion,
-        );
-        await adminPromptToApproveAssertion.assertEntityVersionColor(
-          { name: prompt1.name },
-          expectedColor,
+          {
+            expectedState: 'visible',
+            expectedColor: expectedColor,
+            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersionColor: expectedColor,
+          },
         );
       },
     );
@@ -736,14 +670,10 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify author fields are correct and has a tooltip on hovering "?" sign',
       async () => {
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.author,
-          author,
-        );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publicAuthor,
-          publicAuthor,
-        );
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          author: author,
+          publicAuthor: publicAuthor,
+        });
         await adminPublishingApprovalModal.publicAuthorHelpIcon.hoverOver();
         await adminTooltipAssertion.assertTooltipContent(
           ExpectedConstants.publicAuthorTooltip,
@@ -763,12 +693,10 @@ dialAdminTest(
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptName(
-          prompt1.name,
-        );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
-          prompt1.content!,
-        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+          name: prompt1.name,
+          content: prompt1.content!,
+        });
         await adminPublishedPromptPreviewModal
           .getPublicationReviewControl()
           .backToPublicationRequestButton.click();
@@ -959,9 +887,14 @@ dialAdminTest(
           publishingRequestModal,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityColor(
+        await promptToPublishAssertion.assertEntityToPublish(
           { name: prompt.name },
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+          {
+            expectedState: 'visible',
+            expectedColor: ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.textError,
+            ),
+          },
         );
         await publishingRequestModal.cancelButton.click();
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
@@ -1060,10 +993,9 @@ dialAdminTest(
           { name: prompt.name },
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
-          adminPublishingApprovalModal.rejectButton,
-          'enabled',
-        );
+        await adminPublishingApprovalModalAssertion.assertButtonsState({
+          rejectButtonState: 'enabled',
+        });
       },
     );
 
