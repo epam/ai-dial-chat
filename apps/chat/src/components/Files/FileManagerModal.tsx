@@ -104,7 +104,7 @@ export const FileManagerModal = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isUnshare, setIsUnshare] = useState(false);
-  const [isHiddenItemsVisible, setIsHiddenItemsVisible] = useState(false);
+  const [areHiddenItemsVisible, setAreHiddenItemsVisible] = useState(false);
 
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
@@ -136,7 +136,7 @@ export const FileManagerModal = ({
       state,
       defaultMyItemsFilters,
       searchQuery,
-      isHiddenItemsVisible,
+      areHiddenItemsVisible,
     ),
   );
   const organizationRootFolders = useAppSelector((state) =>
@@ -144,7 +144,7 @@ export const FileManagerModal = ({
       state,
       PublishedWithMeFilter,
       searchQuery,
-      isHiddenItemsVisible,
+      areHiddenItemsVisible,
     ),
   );
   const sharedWithMeRootFolders = useAppSelector((state) =>
@@ -152,7 +152,7 @@ export const FileManagerModal = ({
       state,
       SharedWithMeFilters,
       searchQuery,
-      isHiddenItemsVisible,
+      areHiddenItemsVisible,
     ),
   );
 
@@ -301,6 +301,14 @@ export const FileManagerModal = ({
     !sharedWithMeRootFiles.length;
 
   const showNoResult = searchQuery !== '' && isNothingExists;
+
+  const [HiddenItemsIcon, hiddenItemsTooltip] = useMemo(
+    () =>
+      areHiddenItemsVisible
+        ? [IconEyeOff, 'Hide technical items']
+        : [IconEye, 'Show technical items'],
+    [areHiddenItemsVisible],
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -651,7 +659,7 @@ export const FileManagerModal = ({
   }, [dispatch, selectedFilesIds]);
 
   const handleToggleHiddenItems = useCallback(
-    () => setIsHiddenItemsVisible((prev) => !prev),
+    () => setAreHiddenItemsVisible((prev) => !prev),
     [],
   );
 
@@ -728,7 +736,7 @@ export const FileManagerModal = ({
                   {organizationRootFolders.map((folder) => {
                     return (
                       <Folder
-                        showTechnicalFolders={isHiddenItemsVisible}
+                        showTechnicalFolders={areHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -806,7 +814,7 @@ export const FileManagerModal = ({
                   {sharedWithMeRootFolders.map((folder) => {
                     return (
                       <Folder
-                        showTechnicalFolders={isHiddenItemsVisible}
+                        showTechnicalFolders={areHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -886,7 +894,7 @@ export const FileManagerModal = ({
                   {myRootFolders.map((folder) => {
                     return (
                       <Folder
-                        showTechnicalFolders={isHiddenItemsVisible}
+                        showTechnicalFolders={areHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -987,19 +995,8 @@ export const FileManagerModal = ({
             className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
             data-qa="show-hidden-folders"
           >
-            <Tooltip
-              tooltip={
-                isHiddenItemsVisible
-                  ? t('Hide technical items')
-                  : t('Show technical items')
-              }
-              isTriggerClickable
-            >
-              {isHiddenItemsVisible ? (
-                <IconEyeOff height={24} width={24} />
-              ) : (
-                <IconEye height={24} width={24} />
-              )}
+            <Tooltip tooltip={t(hiddenItemsTooltip)} isTriggerClickable>
+              <HiddenItemsIcon height={24} width={24} />
             </Tooltip>
           </button>
         </div>
