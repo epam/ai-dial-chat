@@ -15,10 +15,9 @@ DIAL Overlay is a library designed for using AI DIAL Chat in an overlay format. 
 - `ALLOWED_IFRAME_ORIGINS`: list all hosts where you are using the Overlay library. Note: For development purposes you can set `*`.
 
 ```
-<!-- IS_IFRAME=true -->
+IS_IFRAME=true
 ALLOWED_IFRAME_ORIGINS=http://localhost:8000
 ```
-
 
 ## Integration with AI DIAL Chat
 
