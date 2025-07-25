@@ -488,6 +488,7 @@ dialTest(
     dialHomePage,
     chat,
     chatMessages,
+    chatMessagesAssertion,
     setTestIds,
     conversationData,
     dataInjector,
@@ -625,11 +626,11 @@ dialTest(
       async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
         await chatMessages.rateCompareRowMessage(Side.left, rate, 2);
-        const isComparedMessageRated =
-          await chatMessages.isComparedRowMessageRated(Side.left, rate, 2);
-        expect
-          .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
-          .toBeTruthy();
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getCompareRowMessageRate(Side.left, rate, 2),
+          'visible',
+          ExpectedMessages.chatMessageIsRated,
+        );
 
         await conversations.selectEntity(firstConversation.name);
         await chatMessages.getChatMessageRate(2, rate).waitFor();
@@ -1001,11 +1002,9 @@ dialTest(
         });
 
         for (const side of sides) {
-          const jumpingIcon =
-            await chatMessages.getCompareMessageJumpingIcon(side);
+          const jumpingIcon = chatMessages.getCompareMessageJumpingIcon(side);
           await jumpingIcon.waitFor();
         }
-
         await sendMessage.stopGenerating.click();
       },
     );
@@ -1027,7 +1026,7 @@ dialTest(
         const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
         for (const side of sides) {
           await chatMessagesAssertion.assertEntityIcon(
-            await chatMessages.getIconAttributesForCompareMessage(side),
+            chatMessages.getIconAttributesForCompareMessage(side),
             expectedModelIcon,
           );
         }
@@ -1604,7 +1603,7 @@ dialTest(
           (firstConversationRequests.length - 1) * 4,
         );
 
-        const firstComparedMessage = await chatMessages.getCompareRowMessage(
+        const firstComparedMessage = chatMessages.getCompareRowMessage(
           Side.left,
           1,
         );
@@ -1669,7 +1668,7 @@ dialTest(
         );
 
         for (const side of Object.values(Side)) {
-          const firstComparedMessage = await chatMessages.getCompareRowMessage(
+          const firstComparedMessage = chatMessages.getCompareRowMessage(
             side,
             1,
           );

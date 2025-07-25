@@ -783,6 +783,12 @@ const ChatView = memo(() => {
                                       ? 'compare-message-row'
                                       : 'message-row'
                                   }
+                                  itemID={i.toString()}
+                                  itemProp={
+                                    i === mergedMessages.length - 1
+                                      ? 'last-row'
+                                      : undefined
+                                  }
                                 >
                                   {mergedStr.map(
                                     ([conv, message, index, filteredMessages]: [
