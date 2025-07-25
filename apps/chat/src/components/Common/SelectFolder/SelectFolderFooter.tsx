@@ -42,7 +42,7 @@ export const SelectFolderFooter = ({
           <button
             onClick={onToggleHiddenFolders}
             className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-            data-qa="new-folder"
+            data-qa="show-hidden-folders"
           >
             <Tooltip
               tooltip={
