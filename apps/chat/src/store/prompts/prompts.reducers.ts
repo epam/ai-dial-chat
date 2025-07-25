@@ -159,13 +159,6 @@ export const promptsSlice = createSlice({
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
-          if (state.isPromptModalOpen) {
-            const isPromptSelected = payload.id === state.selectedPromptId;
-            state.selectedPromptId = isPromptSelected
-              ? payload.prompt.id
-              : payload.id;
-          }
-
           return {
             ...prompt,
             ...payload.prompt,
@@ -174,6 +167,13 @@ export const promptsSlice = createSlice({
 
         return prompt;
       });
+      if (state.isPromptModalOpen) {
+        const isPromptSelected = payload.id === state.selectedPromptId;
+        state.selectedPromptId =
+          isPromptSelected && payload.prompt.id
+            ? payload.prompt.id
+            : payload.id;
+      }
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     applyPrompt: (state, _action: PayloadAction<PromptInfo>) => state,
