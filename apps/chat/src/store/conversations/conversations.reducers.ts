@@ -396,6 +396,7 @@ export const conversationsSlice = createSlice({
       state.folders = state.folders.filter((folder) =>
         isEntityIdExternal(folder),
       );
+      state.areSelectedConversationsLoaded = true;
     },
     createFolder: (
       state,
