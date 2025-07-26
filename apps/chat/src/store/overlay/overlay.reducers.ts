@@ -15,12 +15,15 @@ import {
   DeleteMessageRequest,
   ExportConversationRequest,
   ImportConversationRequest,
+  MessageButtons,
+  MessageCustomButtonEventResponse,
   OverlayEvents,
   OverlayRequests,
   RenameConversationRequest,
   SelectConversationRequest,
   SendMessageRequest,
   SetSystemPromptRequest,
+  UpdateMessageRequest,
 } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
@@ -28,6 +31,7 @@ type WithRequestId<T> = T & { requestId: string };
 const initialState: OverlayState = {
   _savedOverlayOptions: undefined,
   hostDomain: '*',
+  customMessageButtons: [],
 
   systemPrompt: null,
   newConversationsFolder: null,
@@ -145,6 +149,14 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
     ) => state,
+    updateMessage: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
+    ) => state,
+    updateMessageEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
+    ) => state,
     sendPMEvent: (
       state,
       _action: PayloadAction<{
@@ -163,6 +175,16 @@ export const overlaySlice = createSlice({
     sendReadyToInteract: (state) => {
       state.readyToInteractSent = true;
     },
+    setCustomMessages: (
+      state,
+      { payload }: PayloadAction<MessageButtons[]>,
+    ) => {
+      state.customMessageButtons = payload;
+    },
+    sendCustomMessageEvent: (
+      state,
+      _action: PayloadAction<MessageCustomButtonEventResponse>,
+    ) => state,
   },
 });
 

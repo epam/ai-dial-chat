@@ -35,6 +35,7 @@ export interface PublicationState {
     | undefined;
 
   // Review edit mode
+  selectedItemsToApprove: Record<string, string[]>;
   isEditMode: boolean;
   entitiesEditState: Record<string, { name: string; version: string }>;
   foldersEditState: FolderEditTree;

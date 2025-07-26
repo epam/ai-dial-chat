@@ -5,7 +5,10 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getModelShortDescription,
+  isExternalApp,
+} from '@/src/utils/app/application';
 import {
   isOldConversationReplay,
   isPlaybackConversation,
@@ -112,7 +115,7 @@ export const TalkToCard = ({
           className="xl:invisible group-hover:xl:visible"
         />
       </div>
-      <div className="flex items-end gap-4 overflow-hidden">
+      <div className="flex items-center gap-4 overflow-hidden">
         <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
           {entity.reference === PseudoModel.Playback && (
             <span
@@ -137,6 +140,7 @@ export const TalkToCard = ({
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
                 isMyEntity={isMyEntity}
+                isExternal={isExternalApp(entity)}
               >
                 <ModelIcon
                   entityId={entity.id}

@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
+import { getLastPathSegment } from '@/src/utils/app/common';
 import { isMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
@@ -178,18 +179,22 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         );
       }
 
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
       reset(data);
     },
     [
+      dispatch,
+      exitAfterSave,
+      isAppDeployed,
       isAppPublic,
-      router,
-      schema,
+      isFormChanged,
+      isSharedWithMe,
       oldApplication,
       reset,
-      isFormChanged,
-      isAppDeployed,
-      dispatch,
-      isSharedWithMe,
+      router,
+      schema,
       t,
     ],
   );
@@ -219,7 +224,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     t,
     submitWrapper,
     handleSubmit,
-    router,
     isValid,
     hasBeenTouched,
   ]);
@@ -281,7 +285,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               <LogoSelector
                 id="icon"
                 label={t('Icon')}
-                localLogo={field.value?.split('/')?.pop()}
+                localLogo={getLastPathSegment(field.value)}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
                 onDeleteLocalLogoHandler={() => field.onChange('')}
                 customPlaceholder={t('No icon')}

@@ -22,6 +22,7 @@ export const Label: FC<LabelProps> = ({
 }) => (
   <label
     className="mb-1 flex items-center gap-1 text-xs text-secondary"
+    data-qa={htmlFor?.concat('-label')}
     htmlFor={htmlFor}
   >
     {children}
@@ -30,7 +31,6 @@ export const Label: FC<LabelProps> = ({
       <Tooltip
         tooltip={info}
         triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-        contentClassName="max-w-[220px]"
         placement="top-end"
       >
         <IconHelp size={18} />
@@ -52,7 +52,7 @@ export function withLabel<T extends object, R>(
 ) {
   const LabelWrapper = forwardRef<R, WithLabelProps & T>(
     ({ info, mandatory, ...props }, ref) => (
-      <div className="flex flex-col">
+      <div className="flex flex-col" data-qa={props.id}>
         <Label htmlFor={props?.id} mandatory={mandatory} info={info}>
           {props.label}
         </Label>

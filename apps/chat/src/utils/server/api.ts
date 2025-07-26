@@ -12,6 +12,7 @@ import { ServerUtils } from '@/src/utils/server/server';
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { ApiKeys, CoreApiKeys, ParseOptions } from '@/src/types/common';
+import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
@@ -155,10 +156,10 @@ export const parseApplicationApiKey = (
     parts.length < 2
       ? [apiKey, '1.0.0'] // receive without postfix with version i.e. {name}
       : [
-          decodeModelId(
+          `${decodeModelId(
             parts.slice(0, parts.length - 1).join(pathKeySeparator),
-          ),
-          parts[parts.length - 1],
+          )}${parts.at(-1)?.startsWith('_') ? '_' : ''}`, // handle even underscore case
+          parts[parts.length - 1].replace(/^_/, ''),
         ]; // receive correct format {name}__{version}
   return {
     name,
@@ -199,9 +200,11 @@ export class ApiUtils {
         if (!response.ok) {
           return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
             switchMap((errorMessage) => {
-              return throwError(
-                () => new Error(errorMessage || response.status + ''),
+              const error: HttpErrorStatus = new Error(
+                errorMessage || response.status + '',
               );
+              error.status = response.status;
+              return throwError(() => error);
             }),
           );
         }
@@ -281,8 +284,14 @@ export class ApiUtils {
   }
 }
 
-export const getModelIdWithoutVersion = (id: string) =>
-  id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+export const getModelIdWithoutVersion = (id: string) => {
+  const parts = id.split(pathKeySeparator);
+  const name = parts.slice(0, -1).join(pathKeySeparator);
+  if (parts.at(-1)?.startsWith('_')) {
+    return `${name}_`;
+  }
+  return name;
+};
 
 export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
   if (version === NA_VERSION) {
@@ -321,7 +330,7 @@ export const getIdWithoutVersionFromApiKey = (
 
 export const getVersionFromId = (id: string) => {
   const parts = id.split(pathKeySeparator);
-  const version = parts.at(-1);
+  const version = parts.at(-1)?.replace(/^_/, '');
 
   // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
   if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {

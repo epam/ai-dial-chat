@@ -53,6 +53,8 @@ import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Mess
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
+import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
+
 import {
   Feature,
   Message,
@@ -67,13 +69,18 @@ interface UserMessageProps {
   conversation: Conversation;
   messageIndex: number;
   allMessages: Message[];
+  isFirstMessageSystem: boolean;
   isEditing: boolean;
   isEditingTemplates: boolean;
   withButtons?: boolean;
   editDisabled?: boolean;
   onToggleEditing: (value: boolean) => void;
   onToggleEditingTemplates: (value: boolean) => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onDelete?: () => void;
 }
 
@@ -82,6 +89,7 @@ export const UserMessage = memo(function UserMessage({
   conversation,
   messageIndex,
   allMessages,
+  isFirstMessageSystem,
   isEditing,
   isEditingTemplates,
   withButtons,
@@ -290,6 +298,7 @@ export const UserMessage = memo(function UserMessage({
         ) as unknown as FolderInterface[],
         selectedDialLinks,
       );
+
       const isAttachmentsSame = isEqual(
         message.custom_content?.attachments,
         attachments?.attachments,
@@ -327,6 +336,7 @@ export const UserMessage = memo(function UserMessage({
               ).filter(([key]) => messageContent.includes(key)),
             },
             messageIndex,
+            conversation.id,
           );
           setSelectedDialLinks([]);
         }
@@ -345,12 +355,15 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
-  const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
-      e.preventDefault();
-      handleEditMessage(formValue, messageContent);
-    }
-  };
+  const handlePressEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+        e.preventDefault();
+        handleEditMessage(formValue, messageContent);
+      }
+    },
+    [formValue, handleEditMessage, isTyping, messageContent],
+  );
 
   const handleUnselectFile = useCallback(
     (fileId: string) => {
@@ -368,14 +381,11 @@ export const UserMessage = memo(function UserMessage({
     [dispatch],
   );
 
-  const handleSelectAlreadyUploaded = useCallback((result: unknown) => {
-    if (typeof result === 'object') {
-      const selectedFilesIds = result as string[];
-      const uniqueFilesIds = uniq(selectedFilesIds);
-      setNewEditableAttachmentsIds(
-        uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
-      );
-    }
+  const handleSelectAlreadyUploaded = useCallback((result: string[]) => {
+    const uniqueFilesIds = uniq(result);
+    setNewEditableAttachmentsIds(
+      uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
+    );
   }, []);
 
   const handleUploadFromDevice = useCallback(
@@ -616,7 +626,16 @@ export const UserMessage = memo(function UserMessage({
             {message.content}
           </div>
         )}
+
         <MessageAttachments attachments={message.custom_content?.attachments} />
+
+        {isOverlay && (
+          <OverlayMessageCustomButtons
+            messageIndex={messageIndex}
+            isSystemMessagePresented={isFirstMessageSystem}
+          />
+        )}
+
         <div
           ref={anchorRef}
           className="absolute bottom-[-140px] select-none"

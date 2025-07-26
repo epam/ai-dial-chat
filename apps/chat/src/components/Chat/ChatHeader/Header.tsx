@@ -62,7 +62,7 @@ interface Props {
   isShowChatInfo: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
-  onClearConversation: () => void;
+  onClearConversation: (conversation: Conversation) => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
   onModelClick: (conversationId: string) => void;
@@ -181,10 +181,12 @@ export const ChatHeader = Inversify.register(
 
     const disallowChangeAgent =
       isChangeAgentDisallowed ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
     const disallowChangeSettings =
       isReplayAsIsConversation(conversation) ||
       isPlayback ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
 
     return (
@@ -465,7 +467,7 @@ export const ChatHeader = Inversify.register(
           onClose={(result) => {
             setIsClearConversationModalOpen(false);
             if (result) {
-              onClearConversation();
+              onClearConversation(conversation);
             }
           }}
         />
