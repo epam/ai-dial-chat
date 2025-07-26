@@ -18,7 +18,6 @@ export const getBytesTokensSize = (str: string): number => {
 // Note: This cache stores Tiktoken instances indefinitely. Consider implementing
 // a cleanup mechanism if memory usage becomes a concern in long-running processes.
 const encodings: Partial<Record<TiktokenEncoding, Tiktoken | undefined>> = {};
-
 export function limitMessagesByTokens({
   promptToSend,
   messages,
@@ -63,8 +62,8 @@ export function limitMessagesByTokens({
   // Limit processing to 1000 messages to prevent excessive computation
   const length = Math.min(messages.length, 1000);
   for (let i = length - 1; i >= 0; i--) {
-    if (!messages[i] || !messages[i].content) {
-      continue;
+    if (!messages[i]) {
+      break;
     }
     const currentMessageTokensSize =
       calculateTokensSize(messages[i].content) + tokensPerMessage;
