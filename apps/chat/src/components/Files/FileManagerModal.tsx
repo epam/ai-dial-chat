@@ -1,10 +1,5 @@
 import { useId } from '@floating-ui/react';
-import {
-  IconDownload,
-  IconEye,
-  IconEyeOff,
-  IconTrashX,
-} from '@tabler/icons-react';
+import { IconDownload, IconTrashX } from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
@@ -42,6 +37,7 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
+import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
@@ -103,7 +99,7 @@ export const FileManagerModal = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isUnshare, setIsUnshare] = useState(false);
-  const [isHiddenItemsVisible, setIsHiddenItemsVisible] = useState(false);
+  const [areHiddenItemsVisible, setAreHiddenItemsVisible] = useState(false);
 
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
@@ -135,7 +131,7 @@ export const FileManagerModal = ({
       state,
       defaultMyItemsFilters,
       searchQuery,
-      isHiddenItemsVisible,
+      areHiddenItemsVisible,
     ),
   );
   const organizationRootFolders = useAppSelector((state) =>
@@ -143,7 +139,7 @@ export const FileManagerModal = ({
       state,
       PublishedWithMeFilter,
       searchQuery,
-      isHiddenItemsVisible,
+      areHiddenItemsVisible,
     ),
   );
   const sharedWithMeRootFolders = useAppSelector((state) =>
@@ -151,7 +147,7 @@ export const FileManagerModal = ({
       state,
       SharedWithMeFilters,
       searchQuery,
-      isHiddenItemsVisible,
+      areHiddenItemsVisible,
     ),
   );
 
@@ -557,7 +553,7 @@ export const FileManagerModal = ({
   }, [dispatch, selectedFilesIds]);
 
   const handleToggleHiddenItems = useCallback(
-    () => setIsHiddenItemsVisible((prev) => !prev),
+    () => setAreHiddenItemsVisible((prev) => !prev),
     [],
   );
 
@@ -650,6 +646,7 @@ export const FileManagerModal = ({
                   {organizationRootFolders.map((folder) => {
                     return (
                       <Folder
+                        showTechnicalFolders={areHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -717,6 +714,7 @@ export const FileManagerModal = ({
                   {sharedWithMeRootFolders.map((folder) => {
                     return (
                       <Folder
+                        showTechnicalFolders={areHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -786,6 +784,7 @@ export const FileManagerModal = ({
                   {myRootFolders.map((folder) => {
                     return (
                       <Folder
+                        showTechnicalFolders={areHiddenItemsVisible}
                         key={folder.id}
                         searchTerm={searchQuery}
                         currentFolder={folder}
@@ -871,17 +870,10 @@ export const FileManagerModal = ({
               <FolderPlus height={24} width={24} />
             </button>
           )}
-          <button
+          <HiddenItemsToggler
             onClick={handleToggleHiddenItems}
-            className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-            data-qa="show-hidden-folders"
-          >
-            {isHiddenItemsVisible ? (
-              <IconEyeOff height={24} width={24} />
-            ) : (
-              <IconEye height={24} width={24} />
-            )}
-          </button>
+            areItemsVisible={areHiddenItemsVisible}
+          />
         </div>
         <div className="flex items-center gap-3">
           <button

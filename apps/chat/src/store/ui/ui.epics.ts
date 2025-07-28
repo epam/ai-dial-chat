@@ -85,7 +85,10 @@ const initEpic: AppEpic = (action$, state$) =>
       }) => {
         const actions = [];
 
-        if (theme) {
+        if (
+          theme &&
+          availableThemes.some((availableTheme) => availableTheme.id === theme)
+        ) {
           actions.push(UIActions.setTheme(theme));
         } else if (typeof availableThemes[0] !== 'undefined') {
           actions.push(UIActions.setTheme(availableThemes[0]?.id));
