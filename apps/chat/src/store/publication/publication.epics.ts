@@ -22,7 +22,6 @@ import {
   updateMessagesAttachmentsTitles,
 } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
-import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
@@ -30,6 +29,7 @@ import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conve
 import {
   addMessageAttachmentsToPublication,
   getSetUpdatedItemsToApproveAction,
+  getUpdateApplicationGeneralInfoAction,
 } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import { constructPath } from '@/src/utils/app/file';
 import {
@@ -42,9 +42,11 @@ import {
 } from '@/src/utils/app/folders';
 import {
   filterIdsByFeatureType,
+  getIdWithoutRootPathSegments,
   isApplicationId,
   isConversationId,
   isFileId,
+  isMyEntity,
   isPromptId,
   isRootEntity,
   isRootId,
@@ -57,7 +59,7 @@ import {
   mapPublishedItems,
   processPublicationResources,
 } from '@/src/utils/app/publications';
-import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -78,7 +80,6 @@ import {
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
-  ApplicationActions,
   ConversationsActions,
   FilesActions,
   ModelsActions,
@@ -1563,6 +1564,166 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updateApplicationPublicationUrls.type),
+    switchMap(({ payload }) => {
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state$.value,
+        payload.publicationUrl as string,
+      );
+
+      if (!publication || !publication?.resources || !payload.publicationUrl) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update application, publication not found'),
+          ),
+        );
+      }
+
+      const { oldApplication, newApplication } = payload;
+
+      const resources = publication.resources.map((resource) => ({
+        action: resource.action,
+        sourceUrl: resource.sourceUrl ?? '',
+        targetUrl:
+          resource.reviewUrl === oldApplication.id
+            ? constructPath(
+                getFolderIdFromEntityId(resource.targetUrl),
+                splitEntityId(newApplication.id).name,
+              )
+            : resource.targetUrl,
+      }));
+
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const state = state$.value;
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
+          return concat(
+            getUpdateApplicationGeneralInfoAction(
+              // oldApplication is not exist after update, so we need to replace it with newApplication.id
+              { ...oldApplication, id: newApplication.id },
+              newApplication,
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: response.url,
+                ids: itemsToApprove.map((id) =>
+                  id === oldApplication.id ? newApplication.id : id,
+                ),
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: response.url,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state,
+        payload.publicationUrl,
+      );
+
+      if (!publication) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update application icon, publication not found'),
+          ),
+        );
+      }
+
+      const resources: PublicationUpdateRequestModel['resources'] =
+        publication.resources?.map((resource) => ({
+          ...resource,
+          sourceUrl: resource.sourceUrl ?? '',
+        })) ?? [];
+
+      const newIconUrl = payload.newIconUrl.split('/');
+      resources.push({
+        action: PublishActions.ADD_IF_ABSENT,
+        sourceUrl: payload.newIconUrl ?? '',
+        targetUrl: ApiUtils.decodeApiUrl(
+          constructPath(
+            newIconUrl[0],
+            publication.targetFolder,
+            getFolderIdFromEntityId(
+              getIdWithoutRootPathSegments(payload.application.id),
+            ),
+            newIconUrl.at(-1),
+          ),
+        ),
+      });
+
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const newApplication = {
+            ...payload.application,
+            iconUrl:
+              response.resources.find(
+                (resource) => resource.sourceUrl === payload.newIconUrl,
+              )?.reviewUrl ?? '',
+          };
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
+          return concat(
+            getUpdateApplicationGeneralInfoAction(
+              payload.application,
+              newApplication,
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: payload.publicationUrl,
+                ids: [...itemsToApprove, newApplication.iconUrl],
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: payload.publicationUrl,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
 const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndFolder.type),
@@ -1954,37 +2115,9 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                       version: getVersionFromId(application.id),
                     };
 
-                    if (newApplication.applicationTypeSchemaId) {
-                      return ApplicationTypesSchemasService.getApplicationTypeSchema(
-                        newApplication.applicationTypeSchemaId,
-                      ).pipe(
-                        switchMap((schema) => {
-                          return of(
-                            ApplicationActions.update({
-                              oldApplication: application,
-                              applicationData: newApplication,
-                              schema,
-                            }),
-                          );
-                        }),
-                        catchError((err) => {
-                          console.error(err);
-                          return of(
-                            UIActions.showErrorToast(
-                              translate(
-                                'Cannot fetch application schema. Please try again later.',
-                              ),
-                            ),
-                          );
-                        }),
-                      );
-                    }
-
-                    return of(
-                      ApplicationActions.update({
-                        oldApplication: application,
-                        applicationData: newApplication,
-                      }),
+                    return getUpdateApplicationGeneralInfoAction(
+                      application,
+                      newApplication,
                     );
                   }),
                 );
@@ -2171,6 +2304,9 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
             ),
           );
         }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
       );
     }),
   );
@@ -2213,10 +2349,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
                             );
 
                           if (
-                            !isMyEntity(
-                              { id: attachment.url ?? '' },
-                              FeatureType.File,
-                            ) ||
+                            !isMyEntity({ id: attachment.url ?? '' }) ||
                             !addedResource
                           ) {
                             return attachment;
@@ -2318,6 +2451,8 @@ export const PublicationEpics = combineEpics(
   updatePublicationRequestAndFolderEpic,
   updatePublicationConversationAttachmentsAndSendMessageEpic,
   updatePublicationAndConversationLastMessageAttachmentsEpic,
+  updatePublicationRequestAndApplicationIconEpic,
+  updateApplicationPublicationUrlsEpic,
 
   // on select publication
   onSelectPublicationEffectEpic,

@@ -159,11 +159,6 @@
     "vite": "^6.3.4",
     "vitest": "^3.0.9"
   },
-  "overrides": {
-    "js-yaml": "4.1.0",
-    "argparse": "2.0.1",
-    "esbuild": "0.25.1"
-  },
   "optionalDependencies": {
     "@nx/playwright": "21.3.5",
     "@playwright/test": "^1.54.0",
