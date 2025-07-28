@@ -495,6 +495,19 @@ export class BaseAssertion {
       .toEqual(expectedValue);
   }
 
+  public async assertScrollPosition(
+    element: BaseElement | Locator,
+    scrollProperty: Properties,
+    expectedValue: number,
+  ) {
+    await expect
+      .soft(
+        this.getElementLocator(element),
+        ExpectedMessages.scrollPositionIsCorrect,
+      )
+      .toHaveJSProperty(scrollProperty, expectedValue);
+  }
+
   private getElementLocator(element: BaseElement | Locator) {
     return element instanceof BaseElement
       ? element.getElementLocator()

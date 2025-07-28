@@ -318,18 +318,14 @@ export class ChatMessages extends BaseElement {
   }
 
   public getCompareMessageRow(rowIndex?: number) {
-    // const rowsCount = await this.compareChatMessageRows.getElementsCount();
     return rowIndex
       ? this.compareChatMessageRows.getNthElement(rowIndex)
       : this.lastCompareChatMessageRows.getElementLocator();
-    // return this.compareChatMessageRows.getNthElement(rowIndex ?? rowsCount);
   }
 
   public getCompareRowMessage(comparedMessageSide: Side, rowIndex?: number) {
     const compareChatMessageRow = this.getCompareMessageRow(rowIndex);
     const messageIndex = comparedMessageSide === Side.left ? 0 : 1;
-    // return rowIndex ? this.getChildElementBySelector(ChatSelectors.chatMessage).getNthElement(rowIndex)
-
     return compareChatMessageRow
       .locator(ChatSelectors.chatMessage)
       .nth(messageIndex);
