@@ -1,5 +1,5 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -20,7 +20,7 @@ import {
 } from '@/src/constants/folders';
 
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
-import { isFolderId, isMyEntity } from './shared-utils';
+import { isFolderId } from './shared-utils';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -510,6 +510,6 @@ export const getMyBucketAttachments = (
   attachments: Attachment[],
 ): Attachment[] => {
   return attachments.filter((attachment) =>
-    isMyEntity({ id: attachment.url ?? '' }, FeatureType.File),
+    isMyEntity({ id: attachment.url ?? '' }),
   );
 };
