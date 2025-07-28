@@ -38,22 +38,9 @@ import escapeRegExp from 'lodash-es/escapeRegExp';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
-export const getFoldersDepth = (
-  childFolder: FolderInterface,
-  allFolders: FolderInterface[],
-): number => {
-  const childFolders = allFolders.filter(
-    (folder) => folder.folderId === childFolder.id,
-  );
-
-  const childDepths = childFolders.length
-    ? childFolders.map((childFolder) =>
-        getFoldersDepth(childFolder, allFolders),
-      )
-    : [0];
-  const maxDepth = Math.max(...childDepths);
-
-  return 1 + maxDepth;
+export const getFoldersDepth = (entityId: string): number => {
+  // -3 because of API key, bucket, name
+  return entityId.split('/').length - 3;
 };
 
 export const getParentAndCurrentFoldersById = (

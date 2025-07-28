@@ -586,7 +586,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         return;
       }
 
-      const foldersDepth = getFoldersDepth(droppedFolder, allFolders);
+      const foldersDepth = getFoldersDepth(droppedFolder.id);
 
       if (maxDepth && level + foldersDepth > maxDepth) {
         dispatch(
