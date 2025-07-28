@@ -2,7 +2,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { HiddenItemsToggler } from '@/src/components/Common/Buttons/HiddenItemsToggler';
+import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 
