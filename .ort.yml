@@ -56,7 +56,3 @@ resolutions:
         'NPM::rslog:1\\.2\\.3'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
-    - message: "No license information is available for dependency \
-        'NPM::stylus:0\\.0\\.1-security'\\."
-      reason: 'CANT_FIX_EXCEPTION'
-      comment: 'The dependency has MIT license in github repo'

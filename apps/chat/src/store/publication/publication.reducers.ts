@@ -4,6 +4,7 @@ import { sortItemsVersions } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import {
   PublicVersionGroups,
@@ -389,6 +390,24 @@ export const publicationSlice = createSlice({
         resourceToUpdateUrl: string;
         newEntity: Conversation | Prompt;
         publicationUrl: string;
+      }>,
+    ) => {
+      state.isPublicationUpdating = true;
+    },
+    updateApplicationPublicationUrls: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl?: string;
+        oldApplication: CustomApplicationModel;
+        newApplication: CustomApplicationModel;
+      }>,
+    ) => state,
+    updatePublicationRequestAndApplicationIcon: (
+      state,
+      _action: PayloadAction<{
+        publicationUrl: string;
+        application: CustomApplicationModel;
+        newIconUrl: string;
       }>,
     ) => {
       state.isPublicationUpdating = true;

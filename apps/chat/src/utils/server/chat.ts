@@ -10,13 +10,14 @@ import { logger } from './logger';
 import { Message, Role } from '@epam/ai-dial-shared';
 import { Tiktoken, TiktokenEncoding, get_encoding } from 'tiktoken';
 
-// This is very conservative calculations of tokens (1 token = 1 byte)
+// This is a very conservative calculation of tokens (1 token = 1 byte)
 export const getBytesTokensSize = (str: string): number => {
   return new Blob([str]).size;
 };
 
+// Note: This cache stores Tiktoken instances indefinitely. Consider implementing
+// a cleanup mechanism if memory usage becomes a concern in long-running processes.
 const encodings: Partial<Record<TiktokenEncoding, Tiktoken | undefined>> = {};
-
 export function limitMessagesByTokens({
   promptToSend,
   messages,
@@ -58,6 +59,7 @@ export function limitMessagesByTokens({
   let fullTokensSize = promptTokensSize;
   let messagesToSend: Message[] = [];
 
+  // Limit processing to 1000 messages to prevent excessive computation
   const length = Math.min(messages.length, 1000);
   for (let i = length - 1; i >= 0; i--) {
     if (!messages[i]) {
@@ -75,7 +77,7 @@ export function limitMessagesByTokens({
 
   if (messagesToSend.length === 0) {
     throw new DialAIError(
-      'User sended messages cannot be empty after limit messages by tokens process',
+      'User sent messages cannot be empty after limiting messages by tokens',
       400,
       request,
     );
@@ -145,6 +147,21 @@ const getResponseBody = (
   };
 };
 
+type ErrorMessageKeys = keyof typeof errorsMessages;
+
+const ERROR_CONFIG: Record<
+  string,
+  { status: number; messageKey: ErrorMessageKeys }
+> = {
+  '400': { status: 400, messageKey: 400 },
+  '401': { status: 401, messageKey: 401 },
+  '403': { status: 403, messageKey: 403 },
+  '404': { status: 404, messageKey: 404 },
+  '429': { status: 429, messageKey: 429 },
+  '504': { status: 504, messageKey: 'timeoutError' },
+  content_filter: { status: 400, messageKey: 'contentFiltering' },
+};
+
 export const chatErrorHandler = ({
   error,
   res,
@@ -163,16 +180,14 @@ export const chatErrorHandler = ({
 
   logger.error(error, msg);
 
-  if (error instanceof DialAIError) {
-    // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
-    if (['429', '504'].includes(error.code)) {
-      fallbackErrorMessage = errorsMessages[429];
-    } else if (error.code === 'content_filter') {
-      fallbackErrorMessage = errorsMessages.contentFiltering;
-    } else if (['404'].includes(error.code)) {
-      statusCode = 404;
-      fallbackErrorMessage = errorsMessages[404];
-    }
+  if (error instanceof DialAIError && ERROR_CONFIG[error.code]) {
+    const config = ERROR_CONFIG[error.code];
+    statusCode = config.status;
+    const errorMessage = errorsMessages[config.messageKey];
+    fallbackErrorMessage =
+      typeof errorMessage === 'function'
+        ? errorMessage('entity')
+        : errorMessage;
   }
 
   const responseBody = getResponseBody(
