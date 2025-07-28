@@ -255,7 +255,7 @@ export const ExpectedConstants = {
   informationModalTitle: 'Information',
   informationModalLastUpdatedLabel: 'Last updated:',
   informationModalCreatedDateLabel: 'Creation date:',
-  informationModalAuthorLabel: 'Author',
+  informationModalAuthorLabel: 'Author:',
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
   pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
