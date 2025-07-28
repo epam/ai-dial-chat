@@ -11,7 +11,7 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
-import { ToggleSidebarButton } from '@/src/components/Common/Buttons/ToggleSidebarButton';
+import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';

@@ -77,12 +77,22 @@ export const GeneralInfoView: React.FC<Props> = ({
   const formData = methods.watch();
 
   useEffect(() => {
-    // sourceFolder could be updated by core in case of publication update, if we change application id
+    // sourceFolder and document_relative_url fields could be updated by core in case of publication update, if we change application id
     // core updates sourceFolder bucket along with application id, targetUrl and reviewUrl
     if (applicationData?.function?.sourceFolder) {
       methods.setValue('sources', applicationData.function.sourceFolder);
+    } else if (applicationData?.applicationProperties?.document_relative_url) {
+      methods.setValue('applicationProperties', {
+        ...applicationData.applicationProperties,
+        document_relative_url:
+          applicationData.applicationProperties.document_relative_url,
+      });
     }
-  }, [applicationData?.function?.sourceFolder, methods]);
+  }, [
+    applicationData?.function?.sourceFolder,
+    applicationData?.applicationProperties,
+    methods,
+  ]);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
