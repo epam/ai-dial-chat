@@ -16,7 +16,11 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId } from '@/src/utils/app/id';
+import {
+  areBucketsTheSame,
+  getFileRootId,
+  isFolderId,
+} from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -30,7 +34,11 @@ import { Translation } from '@/src/types/translation';
 
 import { FilesActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors, FilesSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import {
@@ -101,7 +109,9 @@ export const FileManagerModal = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isUnshare, setIsUnshare] = useState(false);
   const [areHiddenItemsVisible, setAreHiddenItemsVisible] = useState(false);
-
+  const selectedPublicationBucket = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationReviewBucket,
+  );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
@@ -651,6 +661,14 @@ export const FileManagerModal = ({
     [],
   );
 
+  const someReviewBucketFileSelected =
+    selectedPublicationBucket &&
+    selectedFilesIds.some((id) =>
+      areBucketsTheSame(id, selectedPublicationBucket),
+    );
+  const isDeleteDisabled =
+    !!selectedNoDeleteFilesIds.length || !!someReviewBucketFileSelected;
+
   return (
     <Modal
       portalId="theme-main"
@@ -942,16 +960,16 @@ export const FileManagerModal = ({
           {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
               onClick={() => handleStartDeleteMultipleFiles()}
-              disabled={!!selectedNoDeleteFilesIds.length}
+              disabled={isDeleteDisabled}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
               data-qa="delete-files"
             >
               <Tooltip
-                tooltip={
+                tooltip={t(
                   selectedNoDeleteFilesIds.length
-                    ? t('It is forbidden to delete files from Organization')
-                    : t('Delete files')
-                }
+                    ? 'It is forbidden to delete files from Organization'
+                    : 'Delete files',
+                )}
                 isTriggerClickable
               >
                 <IconTrashX size={24} />
