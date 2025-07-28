@@ -435,13 +435,13 @@ export const ExpectedMessages = {
   valuesAreEqual: 'Values are equal',
 };
 
-export enum PublishingExpectedMessages {
-  noFilesToPublishRequested = 'No files to publish requested',
-  publishToPathIsValid = 'Publish to path is valid',
-  publishCreationDateIsValid = 'Publishing request creation date is valid',
-  entityVersionIsValid = 'Publish entity version is valid',
-  folderIsNotPublished = 'Folder is not published',
-}
+export const PublishingExpectedMessages = {
+  noFilesToPublishRequested: 'No files to publish requested',
+  publishToPathIsValid: 'Publish to path is valid',
+  publishCreationDateIsValid: 'Publishing request creation date is valid',
+  entityVersionIsValid: 'Publish entity version is valid',
+  folderIsNotPublished: 'Folder is not published',
+};
 
 export const MarketplaceExpectedMessages = {
   agentIsVisible: (name: string) => `Agent ${name} is visible in Marketplace`,
