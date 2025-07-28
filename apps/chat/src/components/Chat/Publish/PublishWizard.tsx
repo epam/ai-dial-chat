@@ -22,10 +22,8 @@ import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
-  getRootId,
   isApplicationId,
 } from '@/src/utils/app/id';
-import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
   getApplicationPublishResources,
@@ -174,14 +172,6 @@ export function PublishModal<
   const entitiesArray = useMemo(
     () => (entities ? entities : [entity]),
     [entities, entity],
-  );
-  const publicRootIdSegment = useMemo(
-    () =>
-      getRootId({
-        featureType: EnumMapper.getFeatureTypeBySharingType(type),
-        bucket: PUBLIC_URL_PREFIX,
-      }),
-    [type],
   );
 
   const {
@@ -633,9 +623,7 @@ export function PublishModal<
           initiallySelectedFolderId={entity.id}
           isOpen
           onClose={handleClose}
-          type={type}
           depth={depth}
-          rootFolderId={publicRootIdSegment}
         />
       )}
     </Modal>

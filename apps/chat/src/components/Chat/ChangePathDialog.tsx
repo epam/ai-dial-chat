@@ -12,27 +12,27 @@ import {
   updateChildAndCurrentFoldersIds,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
-import { getIdWithoutFeatureType } from '@/src/utils/app/id';
+import {
+  getIdWithoutFeatureType,
+  getIdWithoutRootPathSegments,
+} from '@/src/utils/app/id';
 import { isHiddenEntity } from '@/src/utils/app/search';
 
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  PromptsActions,
-  UIActions,
-} from '@/src/store/actions';
+import { PublicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ConversationsSelectors,
   FilesSelectors,
   PromptsSelectors,
+  PublicationSelectors,
 } from '@/src/store/selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { TEMPORARY_PUBLICATION_FOLDER_ID } from '@/src/constants/publication';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
@@ -40,15 +40,14 @@ import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectF
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
+import { FolderInterface } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
 interface Props {
-  type: SharingType;
   isOpen: boolean;
-  onClose: (path?: string) => void;
   initiallySelectedFolderId: string;
-  rootFolderId: string;
   depth?: number;
+  onClose: (path?: string) => void;
 }
 
 const additionalItemData = {
@@ -57,11 +56,9 @@ const additionalItemData = {
 
 export const ChangePathDialog = ({
   isOpen,
-  onClose,
-  type,
   initiallySelectedFolderId,
-  rootFolderId,
   depth = 0,
+  onClose,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -72,31 +69,29 @@ export const ChangePathDialog = ({
   const [areHiddenFoldersVisible, setAreHiddenFoldersVisible] = useState(false);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    rootFolderId,
+    TEMPORARY_PUBLICATION_FOLDER_ID,
   );
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
-  const { selectors, actions } =
-    type === SharingType.Conversation || type === SharingType.ConversationFolder
-      ? { selectors: ConversationsSelectors, actions: ConversationsActions }
-      : { selectors: PromptsSelectors, actions: PromptsActions };
-
-  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
+  const [errorMessage, setErrorMessage] = useState<string>();
+  const [newFolderId, setNewFolderId] = useState<string>();
 
   const conversationFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectTemporaryAndPublishedFolders(
+    ConversationsSelectors.selectFilteredPublicFolders(state, searchQuery),
+  );
+  const promptFolders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredPublicFolders(state, searchQuery),
+  );
+  const applicationFolders = useAppSelector((state) =>
+    ApplicationSelectors.selectFilteredPublicFolders(state, searchQuery),
+  );
+  const fileFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredPublicFolders(state, searchQuery),
+  );
+  const publicationFolders = useAppSelector((state) =>
+    PublicationSelectors.selectTemporaryPublishFoldersWithSearchTerm(
       state,
       searchQuery,
     ),
   );
-  const promptFolders = useAppSelector((state) =>
-    PromptsSelectors.selectTemporaryAndPublishedFolders(state, searchQuery),
-  );
-  const applicationFolders = useAppSelector(
-    ApplicationSelectors.selectPublicFolders,
-  );
-  const fileFolders = useAppSelector(FilesSelectors.selectPublicFolders);
-  const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   const folders = useMemo(() => {
     const filteredFolders = uniqBy(
@@ -105,16 +100,30 @@ export const ChangePathDialog = ({
         ...promptFolders,
         ...applicationFolders,
         ...fileFolders,
+        ...publicationFolders,
       ],
       ({ id }) => getIdWithoutFeatureType(id),
-    ).filter((f) => areHiddenFoldersVisible || !isHiddenEntity(f));
+    )
+      .filter((folder) => areHiddenFoldersVisible || !isHiddenEntity(folder))
+      .map((folder) => ({
+        ...folder,
+        id: constructPath(
+          TEMPORARY_PUBLICATION_FOLDER_ID,
+          getIdWithoutRootPathSegments(folder.id),
+        ),
+        folderId: constructPath(
+          TEMPORARY_PUBLICATION_FOLDER_ID,
+          getIdWithoutRootPathSegments(folder.folderId),
+        ),
+      }));
 
-    return sortByName(filteredFolders);
+    return sortByName(filteredFolders) as FolderInterface[];
   }, [
     conversationFolders,
     promptFolders,
     applicationFolders,
     fileFolders,
+    publicationFolders,
     areHiddenFoldersVisible,
   ]);
 
@@ -122,17 +131,14 @@ export const ChangePathDialog = ({
     if (!isOpen) {
       setSearchQuery('');
       setErrorMessage(undefined);
-      dispatch(actions.resetNewFolderId());
+      setNewFolderId(undefined);
     }
-  }, [actions, dispatch, isOpen]);
+  }, [isOpen]);
 
-  const handleSearch = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-      dispatch(actions.resetNewFolderId());
-    },
-    [actions, dispatch],
-  );
+  const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setNewFolderId(undefined);
+  }, []);
 
   const handleToggleHiddenFolders = useCallback(() => {
     setAreHiddenFoldersVisible((prev) => !prev);
@@ -148,8 +154,6 @@ export const ChangePathDialog = ({
         return;
       }
 
-      dispatch(actions.uploadFoldersIfNotLoaded({ ids: [folderId] }));
-
       if (openedFoldersIds.includes(folderId)) {
         const childFoldersIds = getChildAndCurrentFoldersIdsById(
           folderId,
@@ -162,7 +166,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [actions, dispatch, folders, openedFoldersIds],
+    [folders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(
@@ -193,7 +197,9 @@ export const ChangePathDialog = ({
         return;
       }
 
-      dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
+      dispatch(
+        PublicationActions.renameTemporaryFolder({ folderId, name: newName }),
+      );
       setOpenedFoldersIds(
         updateChildAndCurrentFoldersIds(
           openedFoldersIds,
@@ -202,11 +208,11 @@ export const ChangePathDialog = ({
         ),
       );
     },
-    [actions, dispatch, folders, t, openedFoldersIds, setOpenedFoldersIds],
+    [folders, dispatch, openedFoldersIds, t],
   );
 
   const handleAddFolder = useCallback(
-    (parentFolderId = rootFolderId) => {
+    (parentFolderId = TEMPORARY_PUBLICATION_FOLDER_ID) => {
       const folderName = getNextDefaultName(
         t(DEFAULT_FOLDER_NAME),
         folders.filter((f) => f.folderId === parentFolderId),
@@ -219,28 +225,34 @@ export const ChangePathDialog = ({
       setSelectedFolderId(id);
 
       dispatch(
-        actions.createTemporaryFolder({
+        PublicationActions.createTemporaryFolder({
           folderId: parentFolderId,
           name: folderName,
           id,
         }),
+      );
+      setNewFolderId(
+        constructPath(
+          TEMPORARY_PUBLICATION_FOLDER_ID,
+          getIdWithoutRootPathSegments(id),
+        ),
       );
 
       if (parentFolderId && !openedFoldersIds.includes(parentFolderId)) {
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
       }
     },
-    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t],
+    [dispatch, folders, openedFoldersIds, t],
   );
 
   const handleDeleteFolder = useCallback(
     (folderId: string) =>
       dispatch(
-        actions.deleteTemporaryFolder({
+        PublicationActions.deleteTemporaryFolder({
           folderId,
         }),
       ),
-    [actions, dispatch],
+    [dispatch],
   );
 
   const getPath = useCallback(() => {
@@ -276,7 +288,7 @@ export const ChangePathDialog = ({
           isInitialRenameEnabled
           openedFoldersIds={openedFoldersIds}
           newAddedFolderId={newFolderId}
-          loadingFolderIds={loadingFolderIds}
+          loadingFolderIds={[]}
           additionalItemData={additionalItemData}
           onClickFolder={handleFolderSelect}
           onRenameFolder={handleRenameFolder}
@@ -288,7 +300,7 @@ export const ChangePathDialog = ({
           selectedFolderId={selectedFolderId}
           highlightTemporaryFolders
           rootFolderName={ORGANIZATION_SECTION_NAME}
-          rootFolderId={rootFolderId}
+          rootFolderId={TEMPORARY_PUBLICATION_FOLDER_ID}
           showAllRootFolders
           onShowError={setErrorMessage}
         />

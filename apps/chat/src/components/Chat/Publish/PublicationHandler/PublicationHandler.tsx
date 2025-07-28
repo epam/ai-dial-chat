@@ -13,7 +13,7 @@ import {
   getFoldersDepth,
 } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
-import { getIdWithoutFeatureType, getRootId } from '@/src/utils/app/id';
+import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -23,9 +23,8 @@ import {
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
@@ -345,12 +344,6 @@ export function PublicationHandler({ publication }: Props) {
     return !isEqual(initialRules, rulesOnEdit);
   }, [filteredRuleEntries, rulesOnEdit]);
 
-  const type = publication.resourceTypes.includes(
-    BackendResourceType.CONVERSATION,
-  )
-    ? SharingType.Conversation
-    : SharingType.Prompt;
-
   const maxDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
       return Math.max(max, getFoldersDepth(resource.targetUrl));
@@ -527,16 +520,7 @@ export function PublicationHandler({ publication }: Props) {
           initiallySelectedFolderId={publication.targetFolder}
           isOpen
           onClose={handleClose}
-          type={
-            publication.resourceTypes.includes(BackendResourceType.CONVERSATION)
-              ? SharingType.Conversation
-              : SharingType.Prompt
-          }
           depth={maxDepth}
-          rootFolderId={getRootId({
-            featureType: EnumMapper.getFeatureTypeBySharingType(type),
-            bucket: PUBLIC_URL_PREFIX,
-          })}
         />
       )}
     </>

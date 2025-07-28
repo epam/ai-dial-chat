@@ -136,9 +136,13 @@ export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface FolderInterface extends ShareEntity {
   type: FeatureType;
-  temporary?: boolean;
   serverSynced?: boolean;
   isPublicationFolder?: boolean;
+}
+
+export interface TemporaryFolderInterface
+  extends Omit<FolderInterface, 'type'> {
+  temporary: true;
 }
 
 export interface ConversationInfo extends ShareEntity {

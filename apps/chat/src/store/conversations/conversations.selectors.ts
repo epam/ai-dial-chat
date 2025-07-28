@@ -14,7 +14,6 @@ import {
 } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
-  getChildAndCurrentFoldersById,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
@@ -24,7 +23,6 @@ import {
   getParentFolderIdsFromEntityId,
   getPartialAndFullyChosenFolders,
   isFolderEmpty,
-  sortByName,
 } from '@/src/utils/app/folders';
 import {
   isConversationWithFormSchema,
@@ -39,8 +37,8 @@ import {
 import { checkIsNotAllowedModelUtil } from '@/src/utils/app/models';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
-  PublishedWithMeFilter,
   doesEntityContainSearchTerm,
   getMyItemsFilters,
   isSearchTermMatched,
@@ -516,48 +514,15 @@ const selectCanAttachFile = createSelector(
   },
 );
 
-const selectTemporaryFolders = (state: RootState) =>
-  rootSelector(state).temporaryFolders;
+const _selectPublicFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
+});
 
-const selectTemporaryFoldersWithSearchTerm = createSelector(
-  [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
-  (folders, searchTerm) => {
-    const filtered = folders.filter((folder) =>
-      doesEntityContainSearchTerm(folder, searchTerm),
-    );
-
-    return getParentAndChildFolders(folders, filtered);
-  },
-);
-
-const selectPublishedWithMeFolders = createSelector(
-  [selectFolders],
-  (folders) => {
-    return folders.filter(
-      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? folder,
-    );
-  },
-);
-
-const selectTemporaryAndPublishedFolders = createSelector(
-  [
-    selectFolders,
-    selectPublishedWithMeFolders,
-    selectTemporaryFolders,
-    (_state, searchTerm?: string) => searchTerm,
-  ],
-  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
-    const allPublishedFolders = publishedFolders.flatMap((folder) =>
-      getChildAndCurrentFoldersById(folder.id, allFolders),
-    );
-    const filteredFolders = [
-      ...sortByName(allPublishedFolders),
-      ...temporaryFolders,
-    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
-
-    return getParentAndChildFolders(
-      sortByName([...allFolders, ...temporaryFolders]),
-      filteredFolders,
+const selectFilteredPublicFolders = createSelector(
+  [_selectPublicFolders, (_state, searchTerm?: string) => searchTerm],
+  (publicFolders, searchTerm) => {
+    return publicFolders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm ?? ''),
     );
   },
 );
@@ -915,9 +880,7 @@ export const ConversationsSelectors = {
   selectIsStartedCustomViewerConversation,
   selectCanAttachFolders,
   selectCanAttachFile,
-  selectTemporaryFolders,
-  selectTemporaryFoldersWithSearchTerm,
-  selectTemporaryAndPublishedFolders,
+  selectFilteredPublicFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   selectIsCompareLoading,
