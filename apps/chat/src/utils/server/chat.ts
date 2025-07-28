@@ -149,14 +149,17 @@ const getResponseBody = (
 
 type ErrorMessageKeys = keyof typeof errorsMessages;
 
-const ERROR_CONFIG: Record<string, { status: number; messageKey: ErrorMessageKeys }> = {
+const ERROR_CONFIG: Record<
+  string,
+  { status: number; messageKey: ErrorMessageKeys }
+> = {
   '400': { status: 400, messageKey: 400 },
   '401': { status: 401, messageKey: 401 },
   '403': { status: 403, messageKey: 403 },
   '404': { status: 404, messageKey: 404 },
   '429': { status: 429, messageKey: 429 },
   '504': { status: 504, messageKey: 'timeoutError' },
-  'content_filter': { status: 400, messageKey: 'contentFiltering' },
+  content_filter: { status: 400, messageKey: 'contentFiltering' },
 };
 
 export const chatErrorHandler = ({
@@ -181,9 +184,10 @@ export const chatErrorHandler = ({
     const config = ERROR_CONFIG[error.code];
     statusCode = config.status;
     const errorMessage = errorsMessages[config.messageKey];
-    fallbackErrorMessage = typeof errorMessage === 'function' 
-      ? errorMessage('entity') 
-      : errorMessage;
+    fallbackErrorMessage =
+      typeof errorMessage === 'function'
+        ? errorMessage('entity')
+        : errorMessage;
   }
 
   const responseBody = getResponseBody(
