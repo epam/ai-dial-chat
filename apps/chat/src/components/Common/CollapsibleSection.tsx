@@ -86,7 +86,6 @@ export function CollapsibleSection({
           <Tooltip
             tooltip={sectionTooltip}
             triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-            contentClassName="max-w-[220px]"
             placement="top"
           >
             <IconHelp size={18} />

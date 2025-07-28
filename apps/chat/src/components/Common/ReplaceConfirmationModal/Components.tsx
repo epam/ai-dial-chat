@@ -213,7 +213,7 @@ const ConversationView = ({
       </ShareIcon>
       <Tooltip
         tooltip={conversation.name}
-        contentClassName="max-w-[400px] break-all"
+        contentClassName="break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
           conversation.publicationInfo?.isNotExist && 'text-secondary',
@@ -304,7 +304,7 @@ const PromptView = ({
       </span>
       <Tooltip
         tooltip={prompt.name}
-        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        contentClassName="break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
           prompt.publicationInfo?.isNotExist && 'text-secondary',
@@ -389,7 +389,7 @@ const FileView = ({
       </span>
       <Tooltip
         tooltip={file.name}
-        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        contentClassName="break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
           file.publicationInfo?.isNotExist &&
@@ -494,7 +494,7 @@ const ApplicationView = ({
       </span>
       <Tooltip
         tooltip={application.name}
-        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        contentClassName="break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
           application.publicationInfo?.isNotExist && 'text-secondary',
