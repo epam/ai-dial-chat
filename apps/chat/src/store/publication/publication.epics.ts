@@ -541,36 +541,22 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
               (resource) => !isFileId(resource.targetUrl),
             );
 
-            const resourcesToReviewIds = resourcesToReview.map(
-              (resource) => resource.reviewUrl,
-            );
-            const uploadedUnpublishEntitiesToReview =
-              uploadedUnpublishEntities.filter((entity) =>
-                resourcesToReviewIds.includes(entity.id),
-              );
-
             return concat(
-              iif(
-                () =>
-                  uploadedUnpublishEntitiesToReview.length ===
-                  unpublishResources.length,
-                of(
-                  PublicationActions.setPublicationsToReview({
-                    items: resourcesToReview.map((resource) => {
-                      const matched = existingReviewedResources.find(
-                        (r) => r.sourceUrl === resource.sourceUrl,
-                      );
+              of(
+                PublicationActions.setPublicationsToReview({
+                  items: resourcesToReview.map((resource) => {
+                    const matched = existingReviewedResources.find(
+                      (r) => r.sourceUrl === resource.sourceUrl,
+                    );
 
-                      return {
-                        reviewed: matched?.reviewed ?? false,
-                        reviewUrl: resource.reviewUrl,
-                        sourceUrl: resource.sourceUrl!,
-                      };
-                    }),
-                    publicationUrl: publication.url,
+                    return {
+                      reviewed: matched?.reviewed ?? false,
+                      reviewUrl: resource.reviewUrl,
+                      sourceUrl: resource.sourceUrl!,
+                    };
                   }),
-                ),
-                EMPTY,
+                  publicationUrl: publication.url,
+                }),
               ),
               of(
                 PublicationActions.uploadPublicationSuccess({
