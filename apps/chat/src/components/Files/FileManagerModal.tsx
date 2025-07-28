@@ -38,7 +38,7 @@ import {
   SHARED_WITH_ME_SECTION_NAME,
 } from '@/src/constants/sections';
 
-import { HiddenItemsToggler } from '@/src/components/Common/Buttons/HiddenItemsToggler';
+import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
