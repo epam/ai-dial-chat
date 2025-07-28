@@ -240,16 +240,6 @@ export const applicationSlice = createSlice({
     setLogsEntityId(state, { payload }: PayloadAction<string | undefined>) {
       state.logsEntityId = payload;
     },
-    updateApplicationPublicationUrls(
-      state,
-      _action: PayloadAction<{
-        publicationUrl?: string;
-        oldApplicationId: string;
-        newApplicationId: string;
-      }>,
-    ) {
-      return state;
-    },
   },
 });
 
