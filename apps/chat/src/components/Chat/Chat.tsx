@@ -555,6 +555,12 @@ const ChatView = memo(() => {
       isConversationWithFormSchema(conv),
   );
 
+  const isChatReadyForInput =
+    areModelsInstalled ||
+    isIsolatedView ||
+    isAdminPreview ||
+    isApproveRequiredEntity;
+
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
@@ -890,11 +896,7 @@ const ChatView = memo(() => {
                               isWideLayout={isWideLayout}
                               isNotEmptyConversations={isNotEmptyConversations}
                               showReplayControls={showReplayControls}
-                              areModelsInstalled={
-                                areModelsInstalled ||
-                                isIsolatedView ||
-                                isAdminPreview
-                              }
+                              isChatReadyForInput={isChatReadyForInput}
                               isConversationWithSchema={
                                 isConversationWithSchema
                               }
