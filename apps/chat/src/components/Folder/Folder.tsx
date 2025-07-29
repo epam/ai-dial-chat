@@ -930,7 +930,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const isMobileCheckboxVisible =
     canSelectFolders && isContextMenu && isTabletScreen();
-  const isTemporaryFolder = 'temporary' in currentFolder;
+  const isTemporaryFolder =
+    'temporary' in currentFolder && currentFolder.temporary;
 
   return (
     <div
