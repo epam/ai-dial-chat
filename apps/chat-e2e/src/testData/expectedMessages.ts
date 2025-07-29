@@ -441,10 +441,10 @@ export const PublishingExpectedMessages = {
   publishCreationDateIsValid: 'Publishing request creation date is valid',
   entityVersionIsValid: 'Publish entity version is valid',
   folderIsNotPublished: 'Folder is not published',
-  publishAuthorIsValid = 'Publish author is valid',
-  publishAuthorPublicNameIsValid = 'Publish author public name is valid',
-  publicationFeaturesDataIsValid = 'Publication features data is valid',
-  publicationTopicsAreValid = 'Publication topics are valid',
+  publishAuthorIsValid: 'Publish author is valid',
+  publishAuthorPublicNameIsValid: 'Publish author public name is valid',
+  publicationFeaturesDataIsValid: 'Publication features data is valid',
+  publicationTopicsAreValid: 'Publication topics are valid',
 };
 
 export const MarketplaceExpectedMessages = {
