@@ -28,6 +28,8 @@ export type {
   ImportConversationResponse,
   SelectedConversationLoadedEventResponse as SelectedConversationLoadedResponse,
   MessageCustomButtonEventResponse as MessageCustomButtonResponse,
+  PrevMessagePlaybackEventResponse,
+  NextMessagePlaybackEventResponse,
   EditMessageEventResponse,
   DeleteMessageEventResponse,
   UpdateMessageResponse,
