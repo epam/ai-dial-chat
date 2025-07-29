@@ -116,6 +116,18 @@ const ChatView = memo(() => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const isEditUserMessageDisabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisableEditUserMessage),
+  );
+  const isRegenerateAssistantMessageDisabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(
+      state,
+      Feature.DisableRegenerateAssistantMessage,
+    ),
+  );
+  const isDeleteMessageDisabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisableDeleteUserMessage),
+  );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
@@ -821,20 +833,28 @@ const ChatView = memo(() => {
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
-                                              (!!notAvailableEntityType ||
+                                              ((!!notAvailableEntityType ||
                                                 isReadOnly ||
                                                 isReplay ||
                                                 isPlayback) &&
-                                              (!isValidApproveRequiredConversation ||
-                                                !!notAvailableEntityType)
+                                                (!isValidApproveRequiredConversation ||
+                                                  !!notAvailableEntityType)) ||
+                                              (message.role === Role.User &&
+                                                isEditUserMessageDisabled)
                                             }
                                             onEdit={handleEditMessage}
                                             onLike={handleLike}
-                                            onDelete={handleDeleteMessage}
+                                            onDelete={
+                                              !isDeleteMessageDisabled
+                                                ? handleDeleteMessage
+                                                : undefined
+                                            }
                                             onRegenerate={
                                               index ===
                                                 mergedMessages.length - 1 &&
-                                              showLastMessageRegenerate
+                                              showLastMessageRegenerate &&
+                                              (!isRegenerateAssistantMessageDisabled ||
+                                                message.role !== Role.Assistant)
                                                 ? handleRegenerateMessage
                                                 : undefined
                                             }

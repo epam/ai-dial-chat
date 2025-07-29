@@ -12,6 +12,7 @@ export {
 } from '@epam/ai-dial-shared';
 export type {
   ChatOverlayOptions,
+  MessageButtonPlacement as MessageButtonType,
   MessageButton,
   MessageButtons,
   OverlayConversation,
