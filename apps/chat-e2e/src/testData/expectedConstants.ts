@@ -270,6 +270,8 @@ export const ExpectedConstants = {
   lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
   noAvailableItemsLabel: 'No available items',
+  appDefaultCompletionUrl: 'http://test.example.com',
+  appRateEndpointDefaultFeature: 'http://application1/rate',
 };
 
 export enum Types {

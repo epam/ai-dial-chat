@@ -81,7 +81,9 @@ dialAdminTest(
     const appDescription = GeneratorUtil.randomString(10);
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);
-    const features = { rate_endpoint: 'http://application1/rate' };
+    const features = {
+      rate_endpoint: ExpectedConstants.appRateEndpointDefaultFeature,
+    };
     const attachmentType = 'image/png';
     const maxAttachments = 3;
 
