@@ -1629,6 +1629,10 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
     switchMap(({ payload }) => {
+      if (!payload.newApplication.iconUrl) {
+        return EMPTY;
+      }
+
       const state = state$.value;
 
       const publication = PublicationSelectors.selectPublicationByUrl(
@@ -1649,10 +1653,6 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           ...resource,
           sourceUrl: resource.sourceUrl ?? '',
         })) ?? [];
-
-      if (!payload.newApplication.iconUrl) {
-        return EMPTY;
-      }
 
       const newIconUrl = payload.newApplication.iconUrl.split('/');
       resources.push({
