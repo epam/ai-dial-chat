@@ -18,6 +18,7 @@ import {
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, UIActions } from '@/src/store/actions';
@@ -70,6 +71,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   const dispatch = useAppDispatch();
 
   const router = useRouter();
+  const { slug, publicationUrl } = router.query;
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
@@ -128,7 +130,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         return;
       }
 
-      const { slug, publicationUrl } = router.query;
       if (!slug) return;
 
       const slugStr = slug.toString();
@@ -192,9 +193,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       isFormChanged,
       isSharedWithMe,
       oldApplication,
+      publicationUrl,
       reset,
       router,
       schema,
+      slug,
       t,
     ],
   );
@@ -229,6 +232,14 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   ]);
 
   const isMobileView = isMobile();
+
+  const sourceFilters = useMemo(
+    () =>
+      publicationUrl
+        ? new Set([FileSourceType.MY_FILES, FileSourceType.REVIEW_FILES])
+        : undefined,
+    [publicationUrl],
+  );
 
   return (
     <div className="size-full overflow-hidden bg-layer-2">
@@ -301,6 +312,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 }
                 confirmDialogValues={confirmIconValues}
                 warningMessage={iconWarning}
+                sourceFilters={sourceFilters}
               />
             )}
           />
