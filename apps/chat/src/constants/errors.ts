@@ -8,7 +8,8 @@ export const errorsMessages = {
   403: 'Forbidden',
   400: 'Invalid request',
   404: 'Not found',
-  410: 'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
+  ModelDeprecated:
+    'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
   noAssistantModelSelected:
     'No assistant model selected. Please select an assistant model and try again.',
   contentFiltering:
