@@ -95,6 +95,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       scrollTop: 0,
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
     };
+    let rowHeight = 0;
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     await this.moveToAgentsSection();
     let agentElement;
@@ -141,10 +142,10 @@ export class MarketplaceAgentsSection extends BaseElement {
           return agentElement;
         }
       }
-      await this.scrollIntoLastRow();
+      rowHeight = await this.scrollIntoLastRow();
     } while (
       Math.ceil(scrollHeight - scrollPosition.scrollTop) >
-      2 * scrollPosition.clientHeight
+      2 * scrollPosition.clientHeight - rowHeight
     );
     if (agentElement === undefined) {
       throw new Error(`Agent : ${JSON.stringify(agent)} is not found!`);
@@ -163,11 +164,12 @@ export class MarketplaceAgentsSection extends BaseElement {
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
     };
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
+    let rowHeight = 0;
     let iteration = 1;
     let shouldProceed = true;
     while (shouldProceed) {
       if (iteration !== 1) {
-        await this.scrollIntoLastRow();
+        rowHeight = await this.scrollIntoLastRow();
       }
       const visibleAgents = this.getAgents();
       const visibleAgentNames = await visibleAgents.getAgentNames();
@@ -224,7 +226,7 @@ export class MarketplaceAgentsSection extends BaseElement {
       //by default 2 agent rows are out of view but available in DOM
       shouldProceed =
         Math.ceil(scrollHeight - scrollPosition.scrollTop) >
-        2 * scrollPosition.clientHeight;
+        2 * scrollPosition.clientHeight - rowHeight;
       iteration++;
     }
     return allAgents;
@@ -256,9 +258,11 @@ export class MarketplaceAgentsSection extends BaseElement {
       lastRowBounding!.x + lastRowBounding!.width,
       lastRowBounding!.y + lastRowBounding!.height,
     );
+    const rowHeight = lastRowBounding!.height;
     //need to wait the scrolling is finished
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(200);
+    return rowHeight;
   }
 
   private async moveToAgentsSection() {

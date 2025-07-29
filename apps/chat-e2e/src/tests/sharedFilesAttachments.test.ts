@@ -16,9 +16,11 @@ import {
   TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { loadingTimeout } from '@/src/ui/pages';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialSharedWithMeTest(
@@ -53,10 +55,13 @@ dialSharedWithMeTest(
     additionalShareUserAttachFilesModal,
     additionalShareUserToastAssertion,
     conversations,
+    appContainer,
     attachmentDropdownMenu,
     attachFilesModal,
     confirmationDialog,
     conversationDropdownMenu,
+    agentInfo,
+    chatMessages,
     chatHeader,
     talkToAgentDialog,
     additionalSecondUserShareApiHelper,
@@ -237,6 +242,9 @@ dialSharedWithMeTest(
         });
 
         await attachFilesModal.closeButton.hoverOver();
+        const expectedArrowColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textAccentPrimary,
+        );
 
         const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
@@ -245,7 +253,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           firstImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         const secondImageEntity: TreeEntity = {
@@ -257,7 +265,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           secondImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         const thirdImageEntity: TreeEntity = {
@@ -269,13 +277,13 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           thirdImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         //TODO EPMRTC-4135 blocked by the #1076
         // const fourthImageEntity: TreeEntity = { name: Attachment.heartImageName };
         // await manageAttachmentsAssertion.assertSharedFileArrowIconState(fourthImageEntity, 'visible');
-        // await manageAttachmentsAssertion.assertEntityArrowIconColor(fourthImageEntity, Colors.controlsBackgroundAccent);
+        // await manageAttachmentsAssertion.assertEntityArrowIconColor(fourthImageEntity, expectedArrowColor);
 
         const specialCharsImageEntity: TreeEntity = {
           name: Attachment.specialSymbolsName,
@@ -286,7 +294,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           specialCharsImageEntity,
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
         await attachFilesModal.closeButton.click();
       },
@@ -306,6 +314,7 @@ dialSharedWithMeTest(
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
 
         await additionalShareUserManageAttachmentsAssertion.assertEntityState(
@@ -335,6 +344,10 @@ dialSharedWithMeTest(
         );
         await toast.closeToast();
         await conversations.selectEntity(conversationWithTwoResponses.name);
+        await conversations
+          .selectedEntity(conversationWithTwoResponses.name)
+          .waitFor();
+        await appContainer.waitForAppLoaded(loadingTimeout);
       },
     );
 
@@ -350,6 +363,7 @@ dialSharedWithMeTest(
             await renameConversationModal.editConversationNameWithSaveButton(
               conversationWithTwoResponses.name,
             );
+            await chatMessages.waitForState();
             break;
           case 'model change':
             await chatHeader.chatAgent.click();
@@ -360,6 +374,7 @@ dialSharedWithMeTest(
                 ),
               ),
             );
+            await chatMessages.waitForState();
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
@@ -369,6 +384,7 @@ dialSharedWithMeTest(
             await confirmationDialog.confirm({
               triggeredHttpMethod: 'DELETE',
             });
+            await agentInfo.waitForState();
             break;
         }
       });
@@ -379,9 +395,18 @@ dialSharedWithMeTest(
           await chatBar.openManageAttachmentsModal();
           await attachedAllFiles.waitForState();
 
-          await attachedAllFiles.expandFolder(AttachFilesFolders.appdata);
-          await attachedAllFiles.expandFolder(defaultModelId);
-          await attachedAllFiles.expandFolder(AttachFilesFolders.images);
+          await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
+            isHttpMethodTriggered: true,
+            httpHost: API.filesListingHost(),
+          });
+          await attachedAllFiles.expandFolder(defaultModelId, {
+            isHttpMethodTriggered: true,
+            httpHost: API.filesListingHost(),
+          });
+          await attachedAllFiles.expandFolder(AttachFilesFolders.images, {
+            isHttpMethodTriggered: true,
+            httpHost: API.filesListingHost(),
+          });
 
           await attachFilesModal.closeButton.hoverOver();
           await manageAttachmentsAssertion.assertSharedFileArrowIconState(
@@ -414,12 +439,23 @@ dialSharedWithMeTest(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversationWithSpecialChars.name);
+        await conversations
+          .selectedEntity(conversationWithSpecialChars.name)
+          .waitFor();
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          {
+            isHttpMethodTriggered: true,
+            triggeredHttpMethod: 'GET',
+            apiHost: API.filesListingHost(),
+          },
         );
 
-        await attachedAllFiles.expandFolder(specialCharsFolder);
+        await attachedAllFiles.expandFolder(specialCharsFolder, {
+          isHttpMethodTriggered: true,
+          httpHost: API.filesListingHost(),
+        });
         await attachFilesModal.closeButton.hoverOver();
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
@@ -444,12 +480,23 @@ dialSharedWithMeTest(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversationWithSpecialChars.name);
+        await conversations
+          .selectedEntity(conversationWithSpecialChars.name)
+          .waitFor();
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          {
+            isHttpMethodTriggered: true,
+            triggeredHttpMethod: 'GET',
+            apiHost: API.filesListingHost(),
+          },
         );
 
-        await attachedAllFiles.expandFolder(specialCharsFolder);
+        await attachedAllFiles.expandFolder(specialCharsFolder, {
+          isHttpMethodTriggered: true,
+          httpHost: API.filesListingHost(),
+        });
         await attachFilesModal.closeButton.hoverOver();
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
