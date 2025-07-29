@@ -94,6 +94,7 @@ export default function Signin({
               onClick={() => {
                 handleSignIn(provider);
               }}
+              data-qa={provider.id}
             >
               <span>Sign in with {provider.name}</span>
             </button>
