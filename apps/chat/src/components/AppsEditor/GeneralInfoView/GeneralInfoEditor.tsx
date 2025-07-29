@@ -233,9 +233,13 @@ export const GeneralInfoEditor: React.FC<Props> = ({
 
   const isMobileView = isMobile();
 
-  const sourceFilters = publicationUrl
-    ? new Set([FileSourceType.MY_FILES, FileSourceType.REVIEW_FILES])
-    : undefined;
+  const sourceFilters = useMemo(
+    () =>
+      publicationUrl
+        ? new Set([FileSourceType.MY_FILES, FileSourceType.REVIEW_FILES])
+        : undefined,
+    [publicationUrl],
+  );
 
   return (
     <div className="size-full overflow-hidden bg-layer-2">
