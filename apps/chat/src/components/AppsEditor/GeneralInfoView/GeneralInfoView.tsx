@@ -88,10 +88,16 @@ export const GeneralInfoView: React.FC<Props> = ({
           applicationData.applicationProperties.document_relative_url,
       });
     }
+
+    // iconUrl may be updated by chat in case of replace url with reviewUrl if iconUrl was changed on application review stage (publication flow)
+    if (applicationData?.iconUrl) {
+      methods.setValue('iconUrl', applicationData.iconUrl);
+    }
   }, [
     applicationData?.function?.sourceFolder,
     applicationData?.applicationProperties,
     methods,
+    applicationData?.iconUrl,
   ]);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(

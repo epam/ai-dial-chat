@@ -406,8 +406,8 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         publicationUrl: string;
-        application: CustomApplicationModel;
-        newIconUrl: string;
+        oldApplication: CustomApplicationModel;
+        newApplication: CustomApplicationModel;
       }>,
     ) => {
       state.isPublicationUpdating = true;
