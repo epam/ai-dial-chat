@@ -12,9 +12,10 @@ import {
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Attributes, Colors } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 const chatResponseIndex = 2;
@@ -653,6 +654,9 @@ dialSharedWithMeTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
+        const expectedArrowColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textAccentPrimary,
+        );
 
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.sunImageName },
@@ -660,7 +664,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           { name: Attachment.sunImageName },
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
 
         for (const segment of pathSegment) {
@@ -676,7 +680,7 @@ dialSharedWithMeTest(
         );
         await manageAttachmentsAssertion.assertEntityArrowIconColor(
           { name: Attachment.cloudImageName },
-          Colors.controlsBackgroundAccent,
+          expectedArrowColor,
         );
       },
     );
