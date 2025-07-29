@@ -26,7 +26,9 @@ export class TalkToAgentDialogAssertion extends BaseAssertion {
     await super.assertElementState(
       this.talkToAgentDialog.getTalkToAgent(agent),
       expectedState,
-      MarketplaceExpectedMessages.agentIsVisible,
+      MarketplaceExpectedMessages.agentIsVisible(
+        typeof agent === 'string' ? agent : agent.name,
+      ),
     );
   }
 }
