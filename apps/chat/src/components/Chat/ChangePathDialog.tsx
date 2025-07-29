@@ -31,8 +31,10 @@ import {
 } from '@/src/store/selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
-import { TEMPORARY_PUBLICATION_FOLDER_ID } from '@/src/constants/publication';
+import {
+  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
+  TEMPORARY_FOLDER_ROOT_ID,
+} from '@/src/constants/folders';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
@@ -69,7 +71,7 @@ export const ChangePathDialog = ({
   const [areHiddenFoldersVisible, setAreHiddenFoldersVisible] = useState(false);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    TEMPORARY_PUBLICATION_FOLDER_ID,
+    TEMPORARY_FOLDER_ROOT_ID,
   );
   const [errorMessage, setErrorMessage] = useState<string>();
   const [newFolderId, setNewFolderId] = useState<string>();
@@ -102,11 +104,11 @@ export const ChangePathDialog = ({
         ...folder,
         // Mark root path segments as temporary to avoid featureType binding
         id: constructPath(
-          TEMPORARY_PUBLICATION_FOLDER_ID,
+          TEMPORARY_FOLDER_ROOT_ID,
           getIdWithoutRootPathSegments(folder.id),
         ),
         folderId: constructPath(
-          TEMPORARY_PUBLICATION_FOLDER_ID,
+          TEMPORARY_FOLDER_ROOT_ID,
           getIdWithoutRootPathSegments(folder.folderId),
         ),
       }));
@@ -211,7 +213,7 @@ export const ChangePathDialog = ({
   );
 
   const handleAddFolder = useCallback(
-    (parentFolderId = TEMPORARY_PUBLICATION_FOLDER_ID) => {
+    (parentFolderId = TEMPORARY_FOLDER_ROOT_ID) => {
       const folderName = getNextDefaultName(
         t(DEFAULT_FOLDER_NAME),
         allFolders.filter((f) => f.folderId === parentFolderId),
@@ -232,7 +234,7 @@ export const ChangePathDialog = ({
       );
       setNewFolderId(
         constructPath(
-          TEMPORARY_PUBLICATION_FOLDER_ID,
+          TEMPORARY_FOLDER_ROOT_ID,
           getIdWithoutRootPathSegments(id),
         ),
       );
@@ -301,7 +303,7 @@ export const ChangePathDialog = ({
           selectedFolderId={selectedFolderId}
           highlightTemporaryFolders
           rootFolderName={ORGANIZATION_SECTION_NAME}
-          rootFolderId={TEMPORARY_PUBLICATION_FOLDER_ID}
+          rootFolderId={TEMPORARY_FOLDER_ROOT_ID}
           showAllRootFolders
           onShowError={setErrorMessage}
         />
