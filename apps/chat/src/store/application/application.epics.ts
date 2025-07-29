@@ -234,27 +234,26 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
 
-      if (isMoved && payload.publicationUrl) {
-        return of(
-          PublicationActions.updateApplicationPublicationUrls({
-            publicationUrl: payload.publicationUrl,
-            oldApplication: payload.oldApplication,
-            newApplication: updatedCustomApplication,
-          }),
-        );
-      }
+      if (payload.publicationUrl) {
+        const payloadToUpdatePublication = {
+          publicationUrl: payload.publicationUrl,
+          oldApplication: payload.oldApplication,
+          newApplication: updatedCustomApplication,
+        };
 
-      if (
-        payload.publicationUrl &&
-        isMyEntity({ id: updatedCustomApplication.iconUrl ?? '' })
-      ) {
-        return of(
-          PublicationActions.updatePublicationRequestAndApplicationIcon({
-            publicationUrl: payload.publicationUrl,
-            application: payload.oldApplication,
-            newIconUrl: updatedCustomApplication.iconUrl ?? '',
-          }),
-        );
+        if (isMoved) {
+          return of(
+            PublicationActions.updateApplicationPublicationUrls(
+              payloadToUpdatePublication,
+            ),
+          );
+        } else if (isMyEntity({ id: updatedCustomApplication.iconUrl ?? '' })) {
+          return of(
+            PublicationActions.updatePublicationRequestAndApplicationIcon(
+              payloadToUpdatePublication,
+            ),
+          );
+        }
       }
 
       const move$ = isMoved

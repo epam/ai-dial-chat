@@ -1629,6 +1629,10 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
     switchMap(({ payload }) => {
+      if (!payload.newApplication.iconUrl) {
+        return EMPTY;
+      }
+
       const state = state$.value;
 
       const publication = PublicationSelectors.selectPublicationByUrl(
@@ -1650,16 +1654,16 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           sourceUrl: resource.sourceUrl ?? '',
         })) ?? [];
 
-      const newIconUrl = payload.newIconUrl.split('/');
+      const newIconUrl = payload.newApplication.iconUrl.split('/');
       resources.push({
         action: PublishActions.ADD_IF_ABSENT,
-        sourceUrl: payload.newIconUrl ?? '',
+        sourceUrl: payload.newApplication.iconUrl,
         targetUrl: ApiUtils.decodeApiUrl(
           constructPath(
             newIconUrl[0],
             publication.targetFolder,
             getFolderIdFromEntityId(
-              getIdWithoutRootPathSegments(payload.application.id),
+              getIdWithoutRootPathSegments(payload.newApplication.id),
             ),
             newIconUrl.at(-1),
           ),
@@ -1674,12 +1678,14 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
         url: payload.publicationUrl,
       }).pipe(
         switchMap((response) => {
-          const newApplication = {
-            ...payload.application,
-            iconUrl:
-              response.resources.find(
-                (resource) => resource.sourceUrl === payload.newIconUrl,
-              )?.reviewUrl ?? '',
+          const newIconUrl =
+            response.resources.find(
+              (resource) =>
+                resource.sourceUrl === payload.newApplication.iconUrl,
+            )?.reviewUrl ?? '';
+          const newApplicationWithMappedIconUrl = {
+            ...payload.newApplication,
+            iconUrl: newIconUrl,
           };
 
           const itemsToApprove =
@@ -1687,13 +1693,13 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
 
           return concat(
             getUpdateApplicationGeneralInfoAction(
-              payload.application,
-              newApplication,
+              payload.oldApplication,
+              newApplicationWithMappedIconUrl,
             ),
             of(
               PublicationActions.setItemsToApprove({
                 publicationUrl: payload.publicationUrl,
-                ids: [...itemsToApprove, newApplication.iconUrl],
+                ids: [...itemsToApprove, newIconUrl],
               }),
             ),
             of(
