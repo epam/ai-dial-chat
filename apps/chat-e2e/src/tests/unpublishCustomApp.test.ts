@@ -1,7 +1,6 @@
 import { BackendEntity } from '@/chat/types/common';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
-import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   CheckboxState,
@@ -22,7 +21,8 @@ dialAdminTest(
     'Custom app: Admin review unpublish request for app.\n' +
     '[Admin view]: "Author" field is displayed on unpublish request form.\n' +
     `[Admin view]: "Author's public name" field is not displayed in unpublish request.\n` +
-    'Custom app: Admin review custom app details in unpublish request',
+    'Custom app: Admin review custom app details in unpublish request.\n' +
+    'Error hint displayed instead of "Got to a review" link for unpublish request if app was already unpublished',
   async (
     {
       marketplacePage,
@@ -60,6 +60,7 @@ dialAdminTest(
       'EPMRTC-5859',
       'EPMRTC-5861',
       'EPMRTC-4825',
+      'EPMRTC-5827',
     );
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
@@ -180,7 +181,7 @@ dialAdminTest(
       },
     );
 
-    await dialTest.step(
+    await dialAdminTest.step(
       'Create one more unpublishing request via API',
       async () => {
         const unpublishRequestModel = publishRequestBuilder

@@ -158,6 +158,9 @@ export class MarketplaceAgentsSection extends BaseElement {
     if (!(await this.rootLocator.isVisible())) {
       return allAgents;
     }
+    //wait for available cards are displayed
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(200);
     await this.moveToAgentsSection();
     let scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
