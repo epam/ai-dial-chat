@@ -222,18 +222,9 @@ const selectDoesAnyMyItemExist = createSelector(
   },
 );
 
-const _selectPublicFolders = createSelector([selectFolders], (folders) => {
+const selectPublicFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
 });
-
-const selectFilteredPublicFolders = createSelector(
-  [_selectPublicFolders, (_state, searchTerm?: string) => searchTerm],
-  (publicFolders, searchTerm) => {
-    return publicFolders.filter((folder) =>
-      doesEntityContainSearchTerm(folder, searchTerm ?? ''),
-    );
-  },
-);
 
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
@@ -374,7 +365,7 @@ export const PromptsSelectors = {
   selectMyItemsFilters,
   selectIsEmptySearchFilter,
   selectDoesAnyMyItemExist,
-  selectFilteredPublicFolders,
+  selectPublicFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   arePromptsUploaded,

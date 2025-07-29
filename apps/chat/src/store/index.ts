@@ -32,6 +32,7 @@ import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
 import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
+import { foldersSlice } from './folders/folders.reducers';
 import { ImportExportEpics } from './import-export/importExport.epics';
 import { importExportSlice } from './import-export/importExport.reducers';
 import { MarketplaceEpics } from './marketplace/marketplace.epics';
@@ -96,6 +97,7 @@ export const rootReducer = combineReducers({
   codeEditor: codeEditorSlice.reducer,
   applicationTypesSchemas: applicationTypesSchemasSlice.reducer,
   chat: chatSlice.reducer,
+  folders: foldersSlice.reducer,
 });
 
 const getMiddleware = (

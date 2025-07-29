@@ -3,7 +3,6 @@ import { createSelector } from '@reduxjs/toolkit';
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -323,18 +322,6 @@ const selectIsResourceUnpublishing = createSelector(
   },
 );
 
-const _selectTemporaryPublishFolders = (state: RootState) =>
-  rootSelector(state).temporaryPublishFolders;
-
-const selectTemporaryPublishFoldersWithSearchTerm = createSelector(
-  [_selectTemporaryPublishFolders, (_state, searchTerm: string) => searchTerm],
-  (temporaryPublishFolders, searchTerm) => {
-    return temporaryPublishFolders.filter((folder) =>
-      doesEntityContainSearchTerm(folder, searchTerm ?? ''),
-    );
-  },
-);
-
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -372,5 +359,4 @@ export const PublicationSelectors = {
   selectDisplayAuthorEditState,
   selectPublishToUrl,
   selectIsResourceUnpublishing,
-  selectTemporaryPublishFoldersWithSearchTerm,
 };

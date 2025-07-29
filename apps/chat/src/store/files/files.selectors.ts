@@ -135,26 +135,17 @@ const selectNewAddedFolderId = (state: RootState) =>
 const selectFoldersWithSearchTerm = createSelector(
   [selectFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
-    const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+    const filteredFolders = folders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
-    return getParentAndChildFolders(folders, filtered);
+    return getParentAndChildFolders(folders, filteredFolders);
   },
 );
 
-const _selectPublicFolders = createSelector([_selectFolders], (folders) => {
+const selectPublicFolders = createSelector([_selectFolders], (folders) => {
   return folders.filter((f) => isEntityIdPublic(f));
 });
-
-const selectFilteredPublicFolders = createSelector(
-  [_selectPublicFolders, (_state, searchTerm?: string) => searchTerm],
-  (publicFolders, searchTerm) => {
-    return publicFolders.filter((folder) =>
-      doesEntityContainSearchTerm(folder, searchTerm ?? ''),
-    );
-  },
-);
 
 const selectReviewBucketFolders = createSelector(
   [
@@ -192,7 +183,7 @@ export const FilesSelectors = {
   selectFilesByIds,
   selectFileById,
   selectFoldersWithSearchTerm,
-  selectFilteredPublicFolders,
+  selectPublicFolders,
   selectInitialized,
   selectAreFilesLoading,
   selectLastRenamedParentFolder,

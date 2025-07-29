@@ -1,7 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-
 import { RootState } from '@/src/types/store';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -46,17 +44,8 @@ const selectShouldSaveApplication = (state: RootState) =>
 const selectExitAfterSave = (state: RootState) =>
   rootSelector(state).exitAfterSave;
 
-const _selectPublicFolders = (state: RootState) =>
+const selectPublicFolders = (state: RootState) =>
   rootSelector(state).publicFolders;
-
-const selectFilteredPublicFolders = createSelector(
-  [_selectPublicFolders, (_state, searchTerm?: string) => searchTerm],
-  (publicFolders, searchTerm) => {
-    return publicFolders.filter((folder) =>
-      doesEntityContainSearchTerm(folder, searchTerm ?? ''),
-    );
-  },
-);
 
 const selectReturnConversationIds = (state: RootState) =>
   rootSelector(state).returnConversationIds;
@@ -80,7 +69,7 @@ export const ApplicationSelectors = {
   selectShouldSaveApplication,
   selectExitAfterSave,
   selectApplicationLogs,
-  selectFilteredPublicFolders,
+  selectPublicFolders,
   selectReturnConversationIds,
   selectHasUnsavedChanges,
   selectInitialized,

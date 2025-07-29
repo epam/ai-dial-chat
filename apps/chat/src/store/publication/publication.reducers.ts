@@ -1,11 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
-import {
-  getFolderIdFromEntityId,
-  renameFolderAndMoveEntity,
-} from '@/src/utils/app/folders';
-import { constructPath } from '@/src/utils/app/shared-utils';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -22,8 +18,6 @@ import {
 } from '@/src/types/publication';
 
 import { SendMessagePayload } from '@/src/store/conversations/conversations.types';
-
-import { TEMPORARY_PUBLICATION_FOLDER_ID } from '@/src/constants/publication';
 
 import {
   EDITED_FOLDER_NAME_KEY,
@@ -62,8 +56,6 @@ const initialState: PublicationState = {
   isApplicationReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
-
-  temporaryPublishFolders: [],
 
   // Review edit mode
   selectedItemsToApprove: {},
@@ -523,45 +515,6 @@ export const publicationSlice = createSlice({
     },
     setPublishToUrl: (state, { payload }: PayloadAction<string>) => {
       state.publishToUrl = payload;
-    },
-    createTemporaryFolder: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        name: string;
-        id: string;
-        folderId?: string;
-      }>,
-    ) => {
-      state.temporaryPublishFolders.push({
-        id: payload.id,
-        name: payload.name,
-        folderId: payload.folderId ?? TEMPORARY_PUBLICATION_FOLDER_ID,
-        temporary: true,
-      });
-    },
-    deleteTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string }>,
-    ) => {
-      state.temporaryPublishFolders = state.temporaryPublishFolders.filter(
-        ({ id }) => id !== payload.folderId,
-      );
-    },
-    clearTemporaryFolders: (state) => {
-      state.temporaryPublishFolders = [];
-    },
-    renameTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const parentId = getFolderIdFromEntityId(payload.folderId);
-      const newId = constructPath(parentId, payload.name);
-
-      state.temporaryPublishFolders = state.temporaryPublishFolders.map((f) =>
-        renameFolderAndMoveEntity(f, payload.folderId, newId),
-      );
     },
   },
 });

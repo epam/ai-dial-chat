@@ -17,3 +17,4 @@ export { ServiceActions } from '@/src/store/service/service.reducer';
 export { SettingsActions } from '@/src/store/settings/settings.reducers';
 export { ShareActions } from '@/src/store/share/share.reducers';
 export { UIActions } from '@/src/store/ui/ui.reducers';
+export { FoldersActions } from '@/src/store/folders/folders.reducers';

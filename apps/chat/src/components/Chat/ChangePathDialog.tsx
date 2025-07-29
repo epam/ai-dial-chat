@@ -20,14 +20,14 @@ import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions, UIActions } from '@/src/store/actions';
+import { FoldersActions, UIActions } from '@/src/store/actions';
+import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ConversationsSelectors,
   FilesSelectors,
   PromptsSelectors,
-  PublicationSelectors,
 } from '@/src/store/selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -74,39 +74,33 @@ export const ChangePathDialog = ({
   const [errorMessage, setErrorMessage] = useState<string>();
   const [newFolderId, setNewFolderId] = useState<string>();
 
-  const conversationFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredPublicFolders(state, searchQuery),
+  const conversationFolders = useAppSelector(
+    ConversationsSelectors.selectPublicFolders,
   );
-  const promptFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPublicFolders(state, searchQuery),
+  const promptFolders = useAppSelector(PromptsSelectors.selectPublicFolders);
+  const applicationFolders = useAppSelector(
+    ApplicationSelectors.selectPublicFolders,
   );
-  const applicationFolders = useAppSelector((state) =>
-    ApplicationSelectors.selectFilteredPublicFolders(state, searchQuery),
-  );
-  const fileFolders = useAppSelector((state) =>
-    FilesSelectors.selectFilteredPublicFolders(state, searchQuery),
-  );
-  const publicationFolders = useAppSelector((state) =>
-    PublicationSelectors.selectTemporaryPublishFoldersWithSearchTerm(
-      state,
-      searchQuery,
-    ),
+  const fileFolders = useAppSelector(FilesSelectors.selectPublicFolders);
+  const temporaryFolders = useAppSelector(
+    FoldersSelectors.selectTemporaryFolders,
   );
 
-  const folders = useMemo(() => {
+  const allFolders = useMemo(() => {
     const filteredFolders = uniqBy(
       [
         ...conversationFolders,
         ...promptFolders,
         ...applicationFolders,
         ...fileFolders,
-        ...publicationFolders,
+        ...temporaryFolders,
       ],
       ({ id }) => getIdWithoutFeatureType(id),
     )
       .filter((folder) => areHiddenFoldersVisible || !isHiddenEntity(folder))
       .map((folder) => ({
         ...folder,
+        // Mark root path segments as temporary to avoid featureType binding
         id: constructPath(
           TEMPORARY_PUBLICATION_FOLDER_ID,
           getIdWithoutRootPathSegments(folder.id),
@@ -123,7 +117,7 @@ export const ChangePathDialog = ({
     promptFolders,
     applicationFolders,
     fileFolders,
-    publicationFolders,
+    temporaryFolders,
     areHiddenFoldersVisible,
   ]);
 
@@ -157,7 +151,7 @@ export const ChangePathDialog = ({
       if (openedFoldersIds.includes(folderId)) {
         const childFoldersIds = getChildAndCurrentFoldersIdsById(
           folderId,
-          folders,
+          allFolders,
         );
         setOpenedFoldersIds(
           openedFoldersIds.filter((id) => !childFoldersIds.includes(id)),
@@ -166,7 +160,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [folders, openedFoldersIds],
+    [allFolders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(
@@ -179,12 +173,17 @@ export const ChangePathDialog = ({
 
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
-      const error = validateFolderRenaming(folders, newName, folderId, false);
+      const error = validateFolderRenaming(
+        allFolders,
+        newName,
+        folderId,
+        false,
+      );
       const newFolderId = constructPath(
         getFolderIdFromEntityId(folderId),
         newName,
       );
-      const mappedFolderIds = folders.map(({ id }) => id);
+      const mappedFolderIds = allFolders.map(({ id }) => id);
 
       if (mappedFolderIds.some((id) => id === newFolderId)) {
         return;
@@ -198,7 +197,7 @@ export const ChangePathDialog = ({
       }
 
       dispatch(
-        PublicationActions.renameTemporaryFolder({ folderId, name: newName }),
+        FoldersActions.renameTemporaryFolder({ folderId, name: newName }),
       );
       setOpenedFoldersIds(
         updateChildAndCurrentFoldersIds(
@@ -208,14 +207,14 @@ export const ChangePathDialog = ({
         ),
       );
     },
-    [folders, dispatch, openedFoldersIds, t],
+    [allFolders, dispatch, openedFoldersIds, t],
   );
 
   const handleAddFolder = useCallback(
     (parentFolderId = TEMPORARY_PUBLICATION_FOLDER_ID) => {
       const folderName = getNextDefaultName(
         t(DEFAULT_FOLDER_NAME),
-        folders.filter((f) => f.folderId === parentFolderId),
+        allFolders.filter((f) => f.folderId === parentFolderId),
         0,
         false,
         true,
@@ -225,7 +224,7 @@ export const ChangePathDialog = ({
       setSelectedFolderId(id);
 
       dispatch(
-        PublicationActions.createTemporaryFolder({
+        FoldersActions.createTemporaryFolder({
           folderId: parentFolderId,
           name: folderName,
           id,
@@ -242,13 +241,13 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
       }
     },
-    [dispatch, folders, openedFoldersIds, t],
+    [dispatch, allFolders, openedFoldersIds, t],
   );
 
   const handleDeleteFolder = useCallback(
     (folderId: string) =>
       dispatch(
-        PublicationActions.deleteTemporaryFolder({
+        FoldersActions.deleteTemporaryFolder({
           folderId,
         }),
       ),
@@ -256,7 +255,10 @@ export const ChangePathDialog = ({
   );
 
   const getPath = useCallback(() => {
-    const { path, pathDepth } = getPathToFolderById(folders, selectedFolderId);
+    const { path, pathDepth } = getPathToFolderById(
+      allFolders,
+      selectedFolderId,
+    );
 
     if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
@@ -268,7 +270,7 @@ export const ChangePathDialog = ({
     }
 
     return onClose(path);
-  }, [depth, dispatch, folders, onClose, selectedFolderId, t]);
+  }, [depth, dispatch, allFolders, onClose, selectedFolderId, t]);
 
   return (
     <SelectFolder
@@ -284,11 +286,10 @@ export const ChangePathDialog = ({
       >
         <SelectFolderList
           searchTerm={searchQuery}
-          allFolders={folders}
+          allFolders={allFolders}
           isInitialRenameEnabled
           openedFoldersIds={openedFoldersIds}
           newAddedFolderId={newFolderId}
-          loadingFolderIds={[]}
           additionalItemData={additionalItemData}
           onClickFolder={handleFolderSelect}
           onRenameFolder={handleRenameFolder}

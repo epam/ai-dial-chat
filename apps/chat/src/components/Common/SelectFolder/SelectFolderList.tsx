@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
+import { getParentAndChildFolders } from '@/src/utils/app/folders';
 import { isConversationId, isFileId, isRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
@@ -72,12 +73,12 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   }, [onFolderSelect, rootFolderId]);
 
   const filteredFolders = useMemo(() => {
-    if (!searchTerm) return allFolders;
-
-    return allFolders.filter((folder) =>
+    const filteredFolders = allFolders.filter((folder) =>
       doesEntityContainSearchTerm(folder, searchTerm),
     );
-  }, [searchTerm, allFolders]);
+
+    return getParentAndChildFolders(allFolders, filteredFolders);
+  }, [allFolders, searchTerm]);
 
   const noFolders = !filteredFolders.length;
   const isSearching = !!searchTerm;
