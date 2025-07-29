@@ -160,6 +160,7 @@ const ERROR_CONFIG: Record<
   '429': { status: 429, messageKey: 429 },
   '504': { status: 504, messageKey: 'timeoutError' },
   content_filter: { status: 400, messageKey: 'contentFiltering' },
+  '410': { status: 410, messageKey: 410 },
 };
 
 export const chatErrorHandler = ({

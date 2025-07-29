@@ -107,6 +107,10 @@ dialTest(
         { path: Attachment.sunImageName, dataType: 'upload' },
         () => attachFilesModal.uploadFromDevice(),
       );
+      await attachAllFilesTreeAssertion.assertElementState(
+        uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
+        'visible',
+      );
     });
 
     await dialTest.step(
@@ -138,6 +142,10 @@ dialTest(
         await dialHomePage.uploadData(
           { path: Attachment.heartImageName, dataType: 'upload' },
           () => attachFilesModal.uploadFromDevice(),
+        );
+        await attachAllFilesTreeAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.heartImageName),
+          'visible',
         );
         await uploadFromDeviceModal.uploadButton.click();
         await attachAllFilesTreeAssertion.assertEntityState(
