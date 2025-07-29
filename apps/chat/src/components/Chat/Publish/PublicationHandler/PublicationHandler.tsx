@@ -400,7 +400,7 @@ export function PublicationHandler({ publication }: Props) {
 
                     <PublicationInfoSection
                       labelDataQa="publication-author-label"
-                      label={t('Author: ')}
+                      label={t('Author')}
                       valueDataQa="publication-author"
                       valueToDisplay={publicationAuthor}
                     />
@@ -408,7 +408,7 @@ export function PublicationHandler({ publication }: Props) {
                     {!isPublicationHasOnlyUnpublishEntities && (
                       <PublicationInfoSection
                         labelDataQa="publication-display-author-label"
-                        label={t("Author's public name: ")}
+                        label={t("Author's public name")}
                         valueDataQa="publication-display-author"
                         valueToDisplay={publication.displayAuthor ?? ''}
                         infoTooltip={t(
@@ -423,7 +423,7 @@ export function PublicationHandler({ publication }: Props) {
 
                     <PublicationInfoSection
                       labelDataQa="creation-date-label"
-                      label={t('Request created: ')}
+                      label={t('Request created')}
                       valueDataQa="creation-date"
                       valueToDisplay={formatDate(publication.createdAt)}
                     />
