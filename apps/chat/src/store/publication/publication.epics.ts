@@ -1650,10 +1650,14 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           sourceUrl: resource.sourceUrl ?? '',
         })) ?? [];
 
-      const newIconUrl = payload.newApplication.iconUrl?.split('/') ?? '';
+      if (!payload.newApplication.iconUrl) {
+        return EMPTY;
+      }
+
+      const newIconUrl = payload.newApplication.iconUrl.split('/');
       resources.push({
         action: PublishActions.ADD_IF_ABSENT,
-        sourceUrl: payload.newApplication.iconUrl ?? '',
+        sourceUrl: payload.newApplication.iconUrl,
         targetUrl: ApiUtils.decodeApiUrl(
           constructPath(
             newIconUrl[0],
