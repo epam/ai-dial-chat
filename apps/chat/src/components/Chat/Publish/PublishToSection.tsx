@@ -1,14 +1,39 @@
+import { useCallback, useState } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { ChangePathDialog } from '../ChangePathDialog';
+
 interface Props {
   path: string;
-  handleFolderChange: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  maxDepth: number;
+  onSelect: (folderId?: string) => void;
 }
 
-export const PublishToSection = ({ path, handleFolderChange }: Props) => {
+export const PublishToSection = ({ path, maxDepth, onSelect }: Props) => {
   const { t } = useTranslation();
+
+  const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
+    useState(false);
+
+  const handleFolderChange = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsChangeFolderModalOpened(true);
+    },
+    [],
+  );
+
+  const handleSelect = useCallback(
+    (folderId?: string) => {
+      onSelect(folderId);
+      setIsChangeFolderModalOpened(false);
+    },
+    [onSelect],
+  );
 
   return (
     <section className="mb-3">
@@ -41,6 +66,14 @@ export const PublishToSection = ({ path, handleFolderChange }: Props) => {
           </button>
         </div>
       </div>
+      {isChangeFolderModalOpened && (
+        <ChangePathDialog
+          initiallySelectedFolderId={path}
+          isOpen
+          onClose={handleSelect}
+          depth={maxDepth}
+        />
+      )}
     </section>
   );
 };

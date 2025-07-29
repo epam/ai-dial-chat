@@ -38,7 +38,6 @@ import { PublicationSelectors } from '@/src/store/selectors';
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
-import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -126,8 +125,6 @@ export function PublicationHandler({ publication }: Props) {
   const [errors, setErrors] = useState<string[]>([]);
 
   const [isFormChanged, setIsFormChanged] = useState(false);
-  const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
-    useState(false);
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
@@ -240,7 +237,7 @@ export function PublicationHandler({ publication }: Props) {
     foldersEditState,
   ]);
 
-  const handleClose = useCallback(
+  const handleSelectPublishToFolder = useCallback(
     (folderId?: string) => {
       if (typeof folderId === 'string') {
         dispatch(
@@ -249,19 +246,8 @@ export function PublicationHandler({ publication }: Props) {
           ),
         );
       }
-
-      setIsChangeFolderModalOpened(false);
     },
     [dispatch],
-  );
-
-  const handleFolderChange = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsChangeFolderModalOpened(true);
-    },
-    [],
   );
 
   const handleChangeDisplayAuthor = useCallback(
@@ -344,7 +330,7 @@ export function PublicationHandler({ publication }: Props) {
     return !isEqual(initialRules, rulesOnEdit);
   }, [filteredRuleEntries, rulesOnEdit]);
 
-  const maxDepth = useMemo(() => {
+  const maxPublishToDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
       return Math.max(max, getFoldersDepth(resource.targetUrl));
     }, 0);
@@ -384,7 +370,8 @@ export function PublicationHandler({ publication }: Props) {
                     {isEditMode ? (
                       <PublishToSection
                         path={publishToUrl}
-                        handleFolderChange={handleFolderChange}
+                        maxDepth={maxPublishToDepth}
+                        onSelect={handleSelectPublishToFolder}
                       />
                     ) : (
                       <PublicationInfoSection
@@ -515,14 +502,6 @@ export function PublicationHandler({ publication }: Props) {
         )}
         {isApplicationReview && <ReviewApplicationDialog />}
       </div>
-      {isChangeFolderModalOpened && (
-        <ChangePathDialog
-          initiallySelectedFolderId={publication.targetFolder}
-          isOpen
-          onClose={handleClose}
-          depth={maxDepth}
-        />
-      )}
     </>
   );
 }

@@ -1,11 +1,4 @@
-import {
-  MouseEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -62,7 +55,6 @@ import {
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
-import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { Modal } from '@/src/components/Common/Modal';
@@ -91,11 +83,11 @@ interface Props<
   entity: T;
   type: SharingType;
   isOpen: boolean;
-  onClose: () => void;
   publishAction: PublishActions;
   entities?: T[];
   depth?: number;
   defaultPath?: string;
+  onClose: () => void;
 }
 
 export function PublishModal<
@@ -103,12 +95,12 @@ export function PublishModal<
 >({
   entity,
   isOpen,
-  onClose,
   type,
-  depth,
-  entities,
   publishAction,
+  entities,
+  depth = 0,
   defaultPath,
+  onClose,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -117,8 +109,6 @@ export function PublishModal<
   const [path, setPath] = useState(defaultPath ?? '');
   const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
   const [isSomeVersionInvalid, setIsSomeVersionInvalid] = useState(false);
-  const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
-    useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
@@ -228,12 +218,6 @@ export function PublishModal<
   useEffect(() => {
     trigger();
   }, [trigger]);
-
-  const handleFolderChange = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsChangeFolderModalOpened(true);
-  }, []);
 
   const handlePublish = useCallback(
     (data: PublicationRequestFormData) => {
@@ -413,8 +397,6 @@ export function PublishModal<
     if (typeof folderId === 'string') {
       setPath(folderId);
     }
-
-    setIsChangeFolderModalOpened(false);
   }, []);
 
   const isNothingSelectedAndNoRuleChanges =
@@ -508,7 +490,8 @@ export function PublishModal<
               {publishAction !== PublishActions.DELETE ? (
                 <PublishToSection
                   path={constructPath(ORGANIZATION_SECTION_NAME, path)}
-                  handleFolderChange={handleFolderChange}
+                  maxDepth={depth}
+                  onSelect={handleClose}
                 />
               ) : (
                 <PublicationInfoSection
@@ -618,14 +601,6 @@ export function PublishModal<
           </Tooltip>
         </div>
       </form>
-      {isChangeFolderModalOpened && (
-        <ChangePathDialog
-          initiallySelectedFolderId={entity.id}
-          isOpen
-          onClose={handleClose}
-          depth={depth}
-        />
-      )}
     </Modal>
   );
 }
