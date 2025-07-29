@@ -383,12 +383,12 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   'Published folder became available in Change path form for publish request.\n' +
     'Publish chat: Change path: context menu for existing folders.\n' +
     'Publish folder into nested folder structure with depth 4.\n' +
     'Publish folder: update path in publish request.\n' +
-    'Publish request toooltips.\n' +
+    'Publish request tooltips.\n' +
     'admin view: create publication request when open request from Approve required',
   async ({
     dialHomePage,

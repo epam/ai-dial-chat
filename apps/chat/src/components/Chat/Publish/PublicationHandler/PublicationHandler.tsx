@@ -332,7 +332,10 @@ export function PublicationHandler({ publication }: Props) {
 
   const maxPublishToDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
-      return Math.max(max, getFoldersDepth(resource.targetUrl));
+      return Math.max(
+        max,
+        getFoldersDepth(getFolderIdFromEntityId(resource.targetUrl)),
+      );
     }, 0);
   }, [publication.resources]);
 

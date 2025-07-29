@@ -39,8 +39,8 @@ import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 export const getFoldersDepth = (entityId: string): number => {
-  // -3 because of API key, bucket, name
-  return entityId.split('/').length - 3;
+  // -2 because of API key and bucket
+  return entityId.split('/').length - 2;
 };
 
 export const getParentAndCurrentFoldersById = (
