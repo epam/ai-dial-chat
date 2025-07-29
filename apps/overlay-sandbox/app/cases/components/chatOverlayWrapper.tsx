@@ -197,6 +197,21 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         );
       },
     );
+    const subPrevPlaybackMessage = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.prevPlaybackMessage}`,
+      async (info) => {
+        console.info(
+          'Previous playback message',
+          JSON.stringify(info, null, 2),
+        );
+      },
+    );
+    const subNextPlaybackMessage = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.nextPlaybackMessage}`,
+      async (info) => {
+        console.info('Next playback message', JSON.stringify(info, null, 2));
+      },
+    );
 
     overlay.current?.getMessages().then((messages) => {
       console.info(messages);
@@ -211,6 +226,8 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       editMessageEvent,
       regenerateLastMessageEvent,
       deleteMessageEvent,
+      subPrevPlaybackMessage,
+      subNextPlaybackMessage,
     ];
     return () => {
       subs.forEach((sub) => {

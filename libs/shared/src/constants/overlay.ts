@@ -75,6 +75,14 @@ export enum OverlayEvents {
    * Chat dispatch this event when user message deleted
    */
   deleteMessage = 'DELETE_MESSAGE',
+  /**
+   * Chat dispatch this event when user change playback to previous message
+   */
+  prevPlaybackMessage = 'PREV_PLAYBACK_MESSAGE',
+  /**
+   * Chat dispatch this event when user change playback to next message
+   */
+  nextPlaybackMessage = 'NEXT_PLAYBACK_MESSAGE',
 }
 
 export const overlayLibName = 'ChatOverlay';

@@ -1,4 +1,4 @@
-import { Message } from '../chat';
+import { Message, Playback } from '../chat';
 
 export interface SelectedConversationLoadedEventResponse {
   selectedConversationIds: string[];
@@ -15,4 +15,14 @@ export interface EditMessageEventResponse {
 }
 export interface DeleteMessageEventResponse {
   index: number;
+}
+export interface PrevMessagePlaybackEventResponse {
+  newActiveIndex: number;
+  updatedMessages: Message[];
+  playbackState: Playback;
+}
+export interface NextMessagePlaybackEventResponse {
+  newActiveIndex: number;
+  updatedMessages: Message[];
+  playbackState: Playback;
 }

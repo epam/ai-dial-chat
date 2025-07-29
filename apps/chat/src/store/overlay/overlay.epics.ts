@@ -91,9 +91,11 @@ import {
   GetMessagesResponse,
   ImportConversationRequest,
   ImportConversationResponse,
+  NextMessagePlaybackEventResponse,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  PrevMessagePlaybackEventResponse,
   RenameConversationRequest,
   RenameConversationResponse,
   Role,
@@ -1470,6 +1472,46 @@ const sendRegenerateLastMessageEvent: AppEpic = (action$, state$) =>
     }),
   );
 
+const sendPrevPlaybackMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(OverlayActions.sendPrevPlaybackEvent.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const payloadResponse: PrevMessagePlaybackEventResponse = payload;
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.prevPlaybackMessage,
+          eventParams: {
+            hostDomain,
+            payload: payloadResponse,
+          },
+        }),
+      );
+    }),
+  );
+
+const sendNextPlaybackMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(OverlayActions.sendNextPlaybackEvent.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const payloadResponse: NextMessagePlaybackEventResponse = payload;
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.nextPlaybackMessage,
+          eventParams: {
+            hostDomain,
+            payload: payloadResponse,
+          },
+        }),
+      );
+    }),
+  );
+
 const sendDeleteMessageEvent: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
@@ -1644,4 +1686,6 @@ export const OverlayEpics = combineEpics(
   sendEditMessageEvent,
   sendRegenerateLastMessageEvent,
   sendDeleteMessageEvent,
+  sendPrevPlaybackMessageEvent,
+  sendNextPlaybackMessageEvent,
 );
