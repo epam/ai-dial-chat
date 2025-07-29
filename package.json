@@ -163,7 +163,7 @@
     "@nx/playwright": "21.3.5",
     "@playwright/test": "^1.54.0",
     "@types/tinycolor2": "^1.4.6",
-    "allure-playwright": "^3.2.2",
+    "allure-playwright": "^3.3.2",
     "eslint-plugin-playwright": "^2.2.0",
     "playwright-chromium": "^1.54.0"
   },
