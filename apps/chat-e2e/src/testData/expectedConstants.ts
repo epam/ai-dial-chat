@@ -183,7 +183,7 @@ export const ExpectedConstants = {
   exportedFileExtension: '.json',
   publishToLabel: 'Publish to',
   authorLabel: 'Author',
-  requestCreationDateLabel: 'Request created:',
+  requestCreationDateLabel: 'Request created',
   allowAccessLabel: 'Allow access if all match',
   noChangesLabel: 'No changes',
   availabilityLabel:

@@ -555,6 +555,12 @@ const ChatView = memo(() => {
       isConversationWithFormSchema(conv),
   );
 
+  const isChatReadyForInput =
+    areModelsInstalled ||
+    isIsolatedView ||
+    isAdminPreview ||
+    isApproveRequiredEntity;
+
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
@@ -783,6 +789,12 @@ const ChatView = memo(() => {
                                       ? 'compare-message-row'
                                       : 'message-row'
                                   }
+                                  itemID={i.toString()}
+                                  itemProp={
+                                    i === mergedMessages.length - 1
+                                      ? 'last-row'
+                                      : undefined
+                                  }
                                 >
                                   {mergedStr.map(
                                     ([conv, message, index, filteredMessages]: [
@@ -890,11 +902,7 @@ const ChatView = memo(() => {
                               isWideLayout={isWideLayout}
                               isNotEmptyConversations={isNotEmptyConversations}
                               showReplayControls={showReplayControls}
-                              areModelsInstalled={
-                                areModelsInstalled ||
-                                isIsolatedView ||
-                                isAdminPreview
-                              }
+                              isChatReadyForInput={isChatReadyForInput}
                               isConversationWithSchema={
                                 isConversationWithSchema
                               }
@@ -1086,6 +1094,9 @@ export function Chat({ isPreview }: ChatProps) {
   const isConfigurationSchemaLoading = useAppSelector(
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1133,12 +1144,10 @@ export function Chat({ isPreview }: ChatProps) {
   }
 
   if (
-    (!areSelectedConversationsLoaded &&
-      selectedConversations.some(
-        (conv) => conv.status !== UploadStatus.LOADED,
-      )) ||
+    !areSelectedConversationsLoaded ||
     !isInstalledModelsInitialized ||
-    isConfigurationSchemaLoading
+    isConfigurationSchemaLoading ||
+    isPublicationUpdating
   ) {
     return <Loader />;
   }
