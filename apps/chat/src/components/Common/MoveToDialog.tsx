@@ -69,7 +69,7 @@ export const MoveToDialog: React.FC<Props> = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  const myFolders = useAppSelector(selectors.selectFolders);
+  const myFolders = useAppSelector(selectors.selectMyFolders);
   const tempFolders = useAppSelector(FoldersSelectors.selectTemporaryFolders);
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
 
