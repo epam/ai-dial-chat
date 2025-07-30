@@ -65,8 +65,19 @@ export default function Signin({
       session.data
     ) {
       const { callbackUrl } = router.query;
-      const safeUrl = callbackUrl ? callbackUrl.toString() : '/';
-      window.location.href = safeUrl;
+
+      let safeUrl = '/';
+      if (callbackUrl) {
+        try {
+          const url = new URL(callbackUrl.toString(), window.location.origin);
+          if (url.origin === window.location.origin) {
+            safeUrl = url.href;
+          }
+        } catch (e) {
+          console.error('Invalid callbackUrl:', e);
+        }
+      }
+      window.location.href = encodeURIComponent(safeUrl);
     }
   }, [defaultAuthProvider, router.query, session, status]);
 
