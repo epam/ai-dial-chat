@@ -114,6 +114,7 @@ export default function Signin({
               onClick={() => {
                 handleSignIn(provider);
               }}
+              data-qa={provider.id}
             >
               <span className="flex shrink-0 flex-wrap content-center justify-center">
                 <Image
