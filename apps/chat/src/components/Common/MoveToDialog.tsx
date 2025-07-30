@@ -71,7 +71,9 @@ export const MoveToDialog: React.FC<Props> = ({
 
   const myFolders = useAppSelector(selectors.selectMyFolders);
   const tempFolders = useAppSelector(FoldersSelectors.selectTemporaryFolders);
-  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
+  const newAddedTemporaryFolderId = useAppSelector(
+    FoldersSelectors.selectNewAddedTemporaryFolderId,
+  );
 
   const rootFolderId = getRootId({ featureType });
 
@@ -190,8 +192,7 @@ export const MoveToDialog: React.FC<Props> = ({
 
   const clearState = useCallback(() => {
     dispatch(FoldersActions.clearTemporaryFolders());
-    dispatch(actions.resetNewFolderId());
-  }, [actions, dispatch]);
+  }, [dispatch]);
 
   const handleSelect = useCallback(() => {
     if (selectedFolderId) {
@@ -247,7 +248,7 @@ export const MoveToDialog: React.FC<Props> = ({
           allFolders={folders}
           isInitialRenameEnabled
           openedFoldersIds={openedFoldersIds}
-          newAddedFolderId={newFolderId}
+          newAddedFolderId={newAddedTemporaryFolderId}
           onClickFolder={handleFolderSelect}
           onRenameFolder={handleRenameFolder}
           onDeleteFolder={handleDeleteFolder}

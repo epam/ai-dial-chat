@@ -74,7 +74,6 @@ export const ChangePathDialog = ({
     TEMPORARY_FOLDER_ROOT_ID,
   );
   const [errorMessage, setErrorMessage] = useState<string>();
-  const [newFolderId, setNewFolderId] = useState<string>();
 
   const conversationFolders = useAppSelector(
     ConversationsSelectors.selectPublicFolders,
@@ -86,6 +85,9 @@ export const ChangePathDialog = ({
   const fileFolders = useAppSelector(FilesSelectors.selectPublicFolders);
   const temporaryFolders = useAppSelector(
     FoldersSelectors.selectTemporaryFolders,
+  );
+  const newAddedTemporaryFolderId = useAppSelector(
+    FoldersSelectors.selectNewAddedTemporaryFolderId,
   );
 
   const allFolders = useMemo(() => {
@@ -127,14 +129,17 @@ export const ChangePathDialog = ({
     if (!isOpen) {
       setSearchQuery('');
       setErrorMessage(undefined);
-      setNewFolderId(undefined);
+      dispatch(FoldersActions.resetNewTemporaryFolderId());
     }
-  }, [isOpen]);
+  }, [dispatch, isOpen]);
 
-  const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setNewFolderId(undefined);
-  }, []);
+  const handleSearch = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      dispatch(FoldersActions.resetNewTemporaryFolderId());
+    },
+    [dispatch],
+  );
 
   const handleToggleHiddenFolders = useCallback(() => {
     setAreHiddenFoldersVisible((prev) => !prev);
@@ -232,12 +237,6 @@ export const ChangePathDialog = ({
           id,
         }),
       );
-      setNewFolderId(
-        constructPath(
-          TEMPORARY_FOLDER_ROOT_ID,
-          getIdWithoutRootPathSegments(id),
-        ),
-      );
 
       if (parentFolderId && !openedFoldersIds.includes(parentFolderId)) {
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
@@ -291,7 +290,7 @@ export const ChangePathDialog = ({
           allFolders={allFolders}
           isInitialRenameEnabled
           openedFoldersIds={openedFoldersIds}
-          newAddedFolderId={newFolderId}
+          newAddedFolderId={newAddedTemporaryFolderId}
           additionalItemData={additionalItemData}
           onClickFolder={handleFolderSelect}
           onRenameFolder={handleRenameFolder}

@@ -12,6 +12,7 @@ import { TemporaryFolderInterface } from '@epam/ai-dial-shared';
 
 const initialState: FoldersState = {
   temporaryFolders: [],
+  newAddedTemporaryFolderId: '',
 };
 
 export const foldersSlice = createSlice({
@@ -29,6 +30,8 @@ export const foldersSlice = createSlice({
         folderId: payload.folderId,
         temporary: true,
       });
+
+      state.newAddedTemporaryFolderId = payload.id;
     },
     deleteTemporaryFolder: (
       state,
@@ -37,9 +40,14 @@ export const foldersSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.filter(
         ({ id }) => id !== payload.folderId,
       );
+
+      if (state.newAddedTemporaryFolderId === payload.folderId) {
+        state.newAddedTemporaryFolderId = '';
+      }
     },
     clearTemporaryFolders: (state) => {
       state.temporaryFolders = [];
+      state.newAddedTemporaryFolderId = '';
     },
     renameTemporaryFolder: (
       state,
@@ -51,6 +59,13 @@ export const foldersSlice = createSlice({
       state.temporaryFolders = state.temporaryFolders.map((f) =>
         renameFolderAndMoveEntity(f, payload.folderId, newId),
       );
+
+      if (state.newAddedTemporaryFolderId === payload.folderId) {
+        state.newAddedTemporaryFolderId = newId;
+      }
+    },
+    resetNewTemporaryFolderId: (state) => {
+      state.newAddedTemporaryFolderId = '';
     },
   },
 });
