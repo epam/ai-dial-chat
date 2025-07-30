@@ -183,6 +183,7 @@ export const MessageAssistantButtons = ({
         <OverlayMessageCustomButton
           key={item.buttonKey}
           button={item}
+          defaultClassName="text-secondary hover:text-accent-primary"
           realMessageIndex={realMessageIndex}
         />
       ))}

@@ -45,6 +45,7 @@ export type {
   EntityPublicationInfo,
   ShareInterface,
   ShareEntity,
+  SharePermission,
   ConversationInfo,
   TemplateMapping,
   Message,
