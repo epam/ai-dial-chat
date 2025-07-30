@@ -67,10 +67,15 @@ export default function Signin({
       const { callbackUrl } = router.query;
 
       let safeUrl = '/';
+
       if (callbackUrl) {
         try {
+          const allowedUrls = ['/', '/marketplace'];
           const url = new URL(callbackUrl.toString(), window.location.origin);
-          if (url.origin === window.location.origin) {
+          if (
+            url.origin === window.location.origin &&
+            allowedUrls.includes(url.pathname)
+          ) {
             safeUrl = url.href;
           }
         } catch (e) {
