@@ -55,6 +55,10 @@ export enum OverlayEvents {
    */
   gptEndGenerating = 'GPT_END_GENERATING',
   /**
+   * Chat dispatch this event when user stop streaming explicitly or something happened
+   */
+  stopGenerating = 'STOP_GENERATING',
+  /**
    * Chat dispatch this event when any of conversations updated, added or removed
    */
   conversationsUpdated = 'CONVERSATIONS_UPDATED',

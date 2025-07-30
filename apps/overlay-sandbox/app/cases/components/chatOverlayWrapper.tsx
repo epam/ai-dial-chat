@@ -212,6 +212,12 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         console.info('Next playback message', JSON.stringify(info, null, 2));
       },
     );
+    const subStopGenerating = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.stopGenerating}`,
+      async () => {
+        console.info('Stop generating by user');
+      },
+    );
 
     overlay.current?.getMessages().then((messages) => {
       console.info(messages);
@@ -228,6 +234,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       deleteMessageEvent,
       subPrevPlaybackMessage,
       subNextPlaybackMessage,
+      subStopGenerating,
     ];
     return () => {
       subs.forEach((sub) => {

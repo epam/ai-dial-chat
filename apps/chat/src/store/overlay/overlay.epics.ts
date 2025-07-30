@@ -1471,6 +1471,23 @@ const sendRegenerateLastMessageEvent: AppEpic = (action$, state$) =>
       );
     }),
   );
+const sendStopGeneratingEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.stopStreamMessage.type),
+    switchMap(() => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.stopGenerating,
+          eventParams: {
+            hostDomain,
+          },
+        }),
+      );
+    }),
+  );
 
 const sendPrevPlaybackMessageEvent: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -1669,6 +1686,7 @@ export const OverlayEpics = combineEpics(
   sendPMEventEpic,
   sendPMResponseEpic,
   sendCustomMessageEvent,
+  sendStopGeneratingEvent,
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,

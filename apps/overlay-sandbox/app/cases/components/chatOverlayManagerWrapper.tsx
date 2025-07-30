@@ -254,6 +254,13 @@ export const ChatOverlayManagerWrapper: React.FC<
         console.info('Next playback message', JSON.stringify(info, null, 2));
       },
     );
+    const subStopGenerating = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.stopGenerating}`,
+      async () => {
+        console.info('Stop generating by user');
+      },
+    );
 
     overlayManager.current
       ?.getMessages(overlayManagerOptions.id)
@@ -272,6 +279,7 @@ export const ChatOverlayManagerWrapper: React.FC<
       deleteMessageEvent,
       subPrevPlaybackMessage,
       subNextPlaybackMessage,
+      subStopGenerating,
     ];
     return () => {
       subs.forEach((sub) => {
