@@ -26,7 +26,7 @@ import {
   getGeneratedFolderId,
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { getFileRootId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -408,11 +408,7 @@ const setChosenFolderEpic: AppEpic = (action$, state$) =>
           addTrailingSlashIfAbsent(id) === addTrailingSlashIfAbsent(folderId),
       );
 
-      if (
-        targetFolder &&
-        isEntityIdExternal(targetFolder) &&
-        targetFolder.status !== UploadStatus.LOADED
-      ) {
+      if (targetFolder && targetFolder.status !== UploadStatus.LOADED) {
         return of(
           FilesActions.getFilesWithFolders({
             id: folderId.endsWith('/') ? folderId.slice(0, -1) : folderId,
