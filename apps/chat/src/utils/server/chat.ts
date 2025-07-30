@@ -193,9 +193,7 @@ export const chatErrorHandler = ({
 
   const responseBody = getResponseBody(
     fieldName,
-    error instanceof DialAIError
-      ? (error.displayMessage ?? error.message)
-      : undefined,
+    error instanceof DialAIError ? error.displayMessage : undefined,
     fallbackErrorMessage,
   );
 
