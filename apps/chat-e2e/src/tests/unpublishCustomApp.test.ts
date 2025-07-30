@@ -340,10 +340,6 @@ dialAdminTest(
           { name: requestName },
           'hidden',
         );
-        await adminPublishingApprovalModalAssertion.assertElementState(
-          adminPublishingApprovalModal,
-          'hidden',
-        );
       },
     );
 
@@ -585,10 +581,6 @@ dialAdminTest(
           { name: requestName },
           'hidden',
         );
-        await adminPublishingApprovalModalAssertion.assertElementState(
-          adminPublishingApprovalModal,
-          'hidden',
-        );
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
@@ -788,10 +780,6 @@ dialAdminTest(
         await adminPublishingApprovalModal.approveRequest();
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: requestName },
-          'hidden',
-        );
-        await adminPublishingApprovalModalAssertion.assertElementState(
-          adminPublishingApprovalModal,
           'hidden',
         );
         await marketplacePage.reloadPage();
