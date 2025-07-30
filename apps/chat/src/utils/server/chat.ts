@@ -160,6 +160,7 @@ const ERROR_CONFIG: Record<
   '429': { status: 429, messageKey: 429 },
   '504': { status: 504, messageKey: 'timeoutError' },
   content_filter: { status: 400, messageKey: 'contentFiltering' },
+  ModelDeprecated: { status: 410, messageKey: 'ModelDeprecated' },
 };
 
 export const chatErrorHandler = ({
@@ -192,7 +193,9 @@ export const chatErrorHandler = ({
 
   const responseBody = getResponseBody(
     fieldName,
-    error instanceof DialAIError ? error.displayMessage : undefined,
+    error instanceof DialAIError
+      ? (error.displayMessage ?? error.message)
+      : undefined,
     fallbackErrorMessage,
   );
 

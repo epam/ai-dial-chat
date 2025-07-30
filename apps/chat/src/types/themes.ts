@@ -2,6 +2,7 @@ export interface Theme {
   displayName: string;
   colors: Record<string, string>;
   topicColors: Record<string, string>;
+  authColors: Record<string, string>;
   'app-logo': string;
   'font-family'?: string;
   'font-codeblock'?: string;
