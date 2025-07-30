@@ -189,6 +189,10 @@ export const chatErrorHandler = ({
       typeof errorMessage === 'function'
         ? errorMessage('entity')
         : errorMessage;
+
+    if (error.code === '429' && error.message) {
+      console.error(error.message);
+    }
   }
 
   const responseBody = getResponseBody(
