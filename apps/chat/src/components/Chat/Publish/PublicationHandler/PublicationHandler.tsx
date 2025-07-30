@@ -8,12 +8,12 @@ import {
   prepareEntityName,
   replaceSpacesFromString,
 } from '@/src/utils/app/common';
-import {
-  getFolderIdFromEntityId,
-  getFoldersDepth,
-} from '@/src/utils/app/folders';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
-import { getIdWithoutFeatureType } from '@/src/utils/app/id';
+import {
+  getIdWithoutFeatureType,
+  getIdWithoutRootPathSegments,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -334,7 +334,7 @@ export function PublicationHandler({ publication }: Props) {
     return publication.resources.reduce((max, resource) => {
       return Math.max(
         max,
-        getFoldersDepth(getFolderIdFromEntityId(resource.targetUrl)),
+        getIdWithoutRootPathSegments(resource.targetUrl).split('/').length,
       );
     }, 0);
   }, [publication.resources]);

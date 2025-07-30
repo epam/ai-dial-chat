@@ -325,7 +325,7 @@ const PromptFolderTemplate = ({
           isOpen={!!publication}
           onClose={handlePublicationClose}
           publishAction={publication.action}
-          depth={getFoldersDepth(publication.entity.id)}
+          depth={getFoldersDepth(publication.entity, allFolders)}
           defaultPath={
             publication.action === PublishActions.DELETE &&
             !isRootId(publication.entity.folderId)
