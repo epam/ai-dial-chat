@@ -2,7 +2,7 @@ import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMobile } from '@/src/utils/app/mobile';
 
 import { OverlayActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -29,7 +29,6 @@ export const OverlayMessageCustomButton = ({
   const ref = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const isMobile = isSmallScreen();
 
   const handleOnButtonEvent = useCallback(
     (eventName: keyof WindowEventMap) => {
@@ -93,7 +92,7 @@ export const OverlayMessageCustomButton = ({
   if (!button.iconSvg && !button.title) return null;
 
   return (
-    <Tooltip tooltip={button.tooltip} isTriggerClickable>
+    <Tooltip tooltip={button.tooltip} placement="top" isTriggerClickable>
       <button
         ref={ref}
         disabled={button.disabled}
@@ -126,7 +125,7 @@ export const OverlayMessageCustomButton = ({
         {button.title &&
           (button.placement !==
             MessageButtonPlacement.PREPEND_DEFAULT_BUTTONS ||
-            isMobile) && <span>{button.title}</span>}
+            isMobile()) && <span>{button.title}</span>}
       </button>
     </Tooltip>
   );
