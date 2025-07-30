@@ -38,6 +38,7 @@ declare global {
       TMS_URL?: string;
       ISSUE_URL?: string;
       THEMES_CONFIG_HOST?: string;
+      THEME_DEFAULT_ID?: string;
       FOOTER_HTML_MESSAGE?: string;
       ANNOUNCEMENT_HTML_MESSAGE?: string;
       AZURE_FUNCTIONS_API_HOST?: string;

@@ -144,7 +144,7 @@ export function FileItemContextMenu({
         name: t('Delete'),
         dataQa: 'delete',
         display:
-          isMyEntity(file, FeatureType.File) ||
+          isMyEntity(file) ||
           canEditSharedFolderOrParent(folders, file.folderId),
         Icon: IconTrashX,
         onClick: onDelete,

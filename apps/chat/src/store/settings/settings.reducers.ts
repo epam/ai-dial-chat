@@ -35,6 +35,7 @@ export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
+    preInitApp: (state) => state,
     initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
     setEnabledFeatures: (
       state,
@@ -73,6 +74,9 @@ export const settingsSlice = createSlice({
       { payload }: PayloadAction<string[]>,
     ) => {
       state.defaultRecentModelsIds = payload;
+    },
+    setThemesHostDefined: (state, { payload }: PayloadAction<boolean>) => {
+      state.themesHostDefined = payload;
     },
   },
 });
