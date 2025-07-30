@@ -2,8 +2,7 @@ import { AuthProvider } from '@/src/testData';
 
 export const Auth0Selectors = {
   auth0Container: '.auth0-lock-widget-container',
-  ssoSignIn: (authProvider: AuthProvider) =>
-    `form[action$=${authProvider}] > button`,
+  ssoSignIn: (authProvider: AuthProvider) => `[data-qa="${authProvider}"]`,
   username: '[name="email"]',
   password: '[name="password"]',
   login: '[name="submit"]',

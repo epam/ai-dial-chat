@@ -67,14 +67,17 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   hasCustomEditor,
 }) => {
   const dispatch = useAppDispatch();
+
   const {
     query: { id = '', slug = '', add, publicationUrl },
     pathname,
     push,
   } = useRouter();
+
   const { t } = useTranslation(Translation.Chat);
 
   const [menuOpen, setMenuOpen] = useState(false);
+
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
