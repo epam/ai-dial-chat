@@ -45,6 +45,9 @@ export class AgentDetailsModal extends BaseElement {
   public publishButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.publishButton,
   );
+  public unpublishButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.unpublishButton,
+  );
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
   );
@@ -137,6 +140,17 @@ export class AgentDetailsModal extends BaseElement {
       (resp) => resp.request().method() === 'GET' && resp.status() === 200,
     );
     await this.publishButton.click();
+    await respPromise;
+  }
+
+  public async clickUnpublishButton() {
+    const respPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().method() === 'GET' &&
+        resp.url().includes(API.applicationCreateHost) &&
+        resp.status() === 200,
+    );
+    await this.unpublishButton.click();
     await respPromise;
   }
 }

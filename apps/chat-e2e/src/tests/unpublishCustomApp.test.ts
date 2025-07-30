@@ -1,4 +1,5 @@
 import { BackendEntity } from '@/chat/types/common';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import {
@@ -11,9 +12,9 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
-import { GeneratorUtil, UserUtil } from '@/src/utils';
+import { GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { PublishActions } from '@epam/ai-dial-shared';
+import { Conversation, PublishActions } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Unpublish custom app from context menu on card view.\n' +
@@ -387,6 +388,440 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.duplicatedUnpublishingError,
           ExpectedConstants.duplicatedUnpublishingError(appName),
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'Unpublish latest version of the application.\n' +
+    'Create chat with published custom app and then unpublish it',
+  async ({
+    adminMarketplacePage,
+    adminMarketplaceHeader,
+    adminMarketplaceAgentsSection,
+    adminMarketplaceAgents,
+    adminPublishingRequestModal,
+    adminPublishingRequestModalAssertion,
+    adminAppToPublishAssertion,
+    adminAgentDetailsModal,
+    adminAgentDetailsModalAssertion,
+    adminLocalStorageManager,
+    adminApproveRequiredPromptsAssertion,
+    adminDialHomePage,
+    adminApproveRequiredPrompts,
+    adminPublishingApprovalModal,
+    adminPublishingApprovalModalAssertion,
+    adminAppToApproveAssertion,
+    adminPublishedApplicationReviewModal,
+    adminPublishedAppReviewModalAssertion,
+    adminNavigationPanel,
+    setTestIds,
+    publishRequestBuilder,
+    customApplicationBuilder,
+    adminApplicationApiHelper,
+    adminPublicationApiHelper,
+    conversationData,
+    dataInjector,
+    dialHomePage,
+    localStorageManager,
+    fileApiHelper,
+    conversations,
+    modelApiHelper,
+    chat,
+    chatAssertion,
+    chatMessages,
+    chatMessagesAssertion,
+    toastAssertion,
+  }) => {
+    setTestIds('EPMRTC-5785', 'EPMRTC-5891');
+    const appName = GeneratorUtil.randomApplicationName();
+    const sortedAppVersions = SortingUtil.sortVersionsArray([
+      GeneratorUtil.randomApplicationVersion(),
+      GeneratorUtil.randomApplicationVersion(),
+    ]);
+    let appElement: BaseElement;
+    const requestName = GeneratorUtil.randomUnpublishRequestName();
+    let majorVersionApp: DialAIEntityModel;
+    let conversation: Conversation;
+
+    await dialAdminTest.step(
+      'Prepare and publish a custom application with two versions via API',
+      async () => {
+        for (const version of sortedAppVersions) {
+          const appModel = customApplicationBuilder
+            .withDisplayName(appName)
+            .withDisplayVersion(version)
+            .build();
+          const app =
+            await adminApplicationApiHelper.createApplication(appModel);
+          const publishRequest = publishRequestBuilder
+            .withName(GeneratorUtil.randomPublicationRequestName())
+            .withApplicationResource(app, PublishActions.ADD)
+            .build();
+          const appPublication =
+            await adminPublicationApiHelper.createPublishRequest(
+              publishRequest,
+            );
+          await adminPublicationApiHelper.approveRequest(appPublication);
+        }
+      },
+    );
+
+    await dialAdminTest.step(
+      'By the main user create a new conversation with the latest app version via API ans select it',
+      async () => {
+        majorVersionApp = await modelApiHelper.getAgentByNameAndVersion({
+          name: appName,
+          version: sortedAppVersions[0],
+        });
+        conversation =
+          conversationData.prepareDefaultConversation(majorVersionApp);
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+        await fileApiHelper.updateInstalledDeployments([majorVersionApp]);
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await conversations.selectedEntity(conversation.name).waitFor();
+      },
+    );
+
+    await dialAdminTest.step(
+      'By admin find created application on the "Marketplace" tab, hover over the card, open dropdown menu and select "Unpublish" option',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminMarketplacePage.openMarketplacePage();
+        await adminMarketplacePage.waitForPageLoaded();
+        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        appElement = await adminMarketplaceAgentsSection.findAgentElement(
+          appName,
+          {
+            isWorkspaceAgent: false,
+            isEditable: false,
+          },
+        );
+        await appElement.hoverOver();
+        await adminMarketplaceAgents
+          .getAgentElementDotsMenu(appElement)
+          .click();
+        await adminMarketplaceAgents
+          .getAgentDropdownMenu()
+          .selectMenuOption(MenuOptions.unpublish, {
+            triggeredHttpMethod: 'GET',
+            apiHost: API.applicationCreateHost,
+          });
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify the latest version is displayed on Unpublish request modal',
+      async () => {
+        await adminPublishingRequestModalAssertion.assertElementState(
+          adminPublishingRequestModal,
+          'visible',
+        );
+        await adminAppToPublishAssertion.assertEntityToPublish(
+          { name: appName },
+          {
+            expectedState: 'visible',
+            expectedVersion: sortedAppVersions[0],
+          },
+        );
+      },
+    );
+
+    await dialAdminTest.step('Set the request name and send', async () => {
+      await adminPublishingRequestModal.requestName.fillInInput(requestName);
+      await adminPublishingRequestModal.sendPublicationRequest();
+      await adminPublishingRequestModalAssertion.assertElementState(
+        adminPublishingRequestModal,
+        'hidden',
+      );
+    });
+
+    await dialAdminTest.step(
+      'Review the request and verify the latest version is displayed on the modals',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: requestName },
+          'visible',
+        );
+        await adminApproveRequiredPrompts.selectRequest(requestName);
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminAppToApproveAssertion.assertEntityToPublish(
+          { name: appName },
+          {
+            expectedState: 'visible',
+            expectedVersion: sortedAppVersions[0],
+          },
+        );
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublishedAppReviewModalAssertion.assertElementState(
+          adminPublishedApplicationReviewModal,
+          'visible',
+        );
+        await adminPublishedAppReviewModalAssertion.assertAppAttributes({
+          expectedName: appName,
+          expectedVersion: sortedAppVersions[0],
+        });
+        await adminPublishedApplicationReviewModal
+          .getPublicationReviewControl()
+          .backToPublicationRequest();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approve the request and then find the app in the "Marketplace"',
+      async () => {
+        await adminPublishingApprovalModal.approveRequest();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: requestName },
+          'hidden',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'hidden',
+        );
+        await adminNavigationPanel.goToMarketplaceHome();
+        await adminMarketplacePage.waitForPageLoaded();
+        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        appElement = await adminMarketplaceAgentsSection.findAgentElement(
+          appName,
+          {
+            isWorkspaceAgent: false,
+            isEditable: false,
+          },
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open the app card and verify only the minor version is displayed',
+      async () => {
+        await appElement.click();
+        await adminAgentDetailsModalAssertion.assertElementState(
+          adminAgentDetailsModal,
+          'visible',
+        );
+        await adminAgentDetailsModalAssertion.assertApplicationVersion(
+          sortedAppVersions[1],
+        );
+        await adminAgentDetailsModalAssertion.assertElementState(
+          adminAgentDetailsModal.getVersionDropdownMenu(),
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Back to the conversation with unpublished app, send a new message and verify error popup is shown',
+      async () => {
+        await chat.sendRequestWithButton(GeneratorUtil.randomString(5), false);
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.agentNotFoundToastError,
+        );
+        await chatAssertion.assertElementState(
+          chat.notAllowedModelLabel,
+          'visible',
+        );
+        await chatAssertion.assertElementText(
+          chat.notAllowedModelLabel,
+          ExpectedConstants.notAllowedAgentError(majorVersionApp.reference),
+        );
+        await chatMessagesAssertion.assertElementText(
+          chatMessages.getChatMessageError(conversation.messages.length + 2),
+          ExpectedConstants.agentNotFoundToastError,
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'Unpublish specific version of application.\n' +
+    'Unpublish custom app from card details pop-up',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceAgentsSection,
+    agentDetailsModal,
+    marketplaceAgents,
+    publishingRequestModal,
+    publishingRequestModalAssertion,
+    appToPublishAssertion,
+    adminDialHomePage,
+    adminLocalStorageManager,
+    adminApproveRequiredPromptsAssertion,
+    adminApproveRequiredPrompts,
+    adminPublishingApprovalModal,
+    adminPublishingApprovalModalAssertion,
+    adminAppToApproveAssertion,
+    adminPublishedApplicationReviewModal,
+    adminPublishedAppReviewModalAssertion,
+    setTestIds,
+    marketplaceAgentsAssertion,
+    agentDetailsModalAssertion,
+    adminCustomApplicationPublishingUtil,
+  }) => {
+    setTestIds('EPMRTC-5786', 'EPMRTC-5942');
+    const appName = GeneratorUtil.randomApplicationName();
+    let appFirstVersion: string;
+    let appSecondVersion: string;
+    let sortedAppVersions: string[];
+    let appElement: BaseElement;
+    const requestName = GeneratorUtil.randomUnpublishRequestName();
+
+    await dialAdminTest.step(
+      'Prepare and publish a custom application with two versions via API',
+      async () => {
+        for (let i = 1; i <= 2; i++) {
+          const appAttributes =
+            await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
+              appName,
+            );
+          if (i === 1) {
+            appFirstVersion = appAttributes.version;
+          } else {
+            appSecondVersion = appAttributes.version;
+          }
+        }
+        sortedAppVersions = SortingUtil.sortVersionsArray([
+          appFirstVersion,
+          appSecondVersion,
+        ]);
+      },
+    );
+
+    await dialAdminTest.step(
+      'On the "Marketplace" tab find published application, open the card, switch the version and click on "Unpublish" btn',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appName);
+        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
+          isWorkspaceAgent: false,
+          isEditable: false,
+        });
+        await appElement.click();
+        await agentDetailsModal.versionMenuTrigger.click();
+        await agentDetailsModal
+          .getVersionDropdownMenu()
+          .selectMenuOption(sortedAppVersions[1]);
+        await agentDetailsModal.clickUnpublishButton();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify the minor version is displayed on Unpublish request modal',
+      async () => {
+        await publishingRequestModalAssertion.assertElementState(
+          publishingRequestModal,
+          'visible',
+        );
+        await appToPublishAssertion.assertEntityToPublish(
+          { name: appName },
+          {
+            expectedState: 'visible',
+            expectedVersion: sortedAppVersions[1],
+          },
+        );
+      },
+    );
+
+    await dialAdminTest.step('Set the request name and send', async () => {
+      await publishingRequestModal.requestName.fillInInput(requestName);
+      await publishingRequestModal.sendPublicationRequest();
+      await publishingRequestModalAssertion.assertElementState(
+        publishingRequestModal,
+        'hidden',
+      );
+    });
+
+    await dialAdminTest.step(
+      'Review the request and verify the minor version is displayed on the modals',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: requestName },
+          'visible',
+        );
+        await adminApproveRequiredPrompts.selectRequest(requestName);
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminAppToApproveAssertion.assertEntityToPublish(
+          { name: appName },
+          {
+            expectedState: 'visible',
+            expectedVersion: sortedAppVersions[1],
+          },
+        );
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublishedAppReviewModalAssertion.assertElementState(
+          adminPublishedApplicationReviewModal,
+          'visible',
+        );
+        await adminPublishedAppReviewModalAssertion.assertAppAttributes({
+          expectedName: appName,
+          expectedVersion: sortedAppVersions[1],
+        });
+        await adminPublishedApplicationReviewModal
+          .getPublicationReviewControl()
+          .backToPublicationRequest();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approve the request and then find the app in the "Marketplace"',
+      async () => {
+        await adminPublishingApprovalModal.approveRequest();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: requestName },
+          'hidden',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'hidden',
+        );
+        await marketplacePage.reloadPage();
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.searchInput.fillInInput(appName);
+        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
+          isWorkspaceAgent: false,
+          isEditable: false,
+        });
+        await marketplaceAgentsAssertion.assertElementText(
+          marketplaceAgents.getAgentVersion(appElement),
+          sortedAppVersions[0],
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open the app card and verify only the major version is displayed',
+      async () => {
+        await appElement.click();
+        await agentDetailsModalAssertion.assertElementState(
+          agentDetailsModal,
+          'visible',
+        );
+        await agentDetailsModalAssertion.assertApplicationVersion(
+          sortedAppVersions[0],
+        );
+        await agentDetailsModalAssertion.assertElementState(
+          agentDetailsModal.getVersionDropdownMenu(),
+          'hidden',
         );
       },
     );

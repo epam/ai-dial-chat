@@ -252,7 +252,7 @@ export const ExpectedConstants = {
     "Input the MIME type and press 'Enter' to add",
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
-  agentNotFoundPopupError: 'Not found',
+  agentNotFoundToastError: 'Chat Server error: Not Found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
   informationModalTitle: 'Information',
   informationModalLastUpdatedLabel: 'Last updated:',

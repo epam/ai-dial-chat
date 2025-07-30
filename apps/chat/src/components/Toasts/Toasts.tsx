@@ -71,7 +71,6 @@ export const Toasts = () => (
               <div
                 style={{ wordBreak: 'break-word' }}
                 className="mx-0.5 whitespace-pre-wrap text-sm leading-[21px] text-primary *:!whitespace-pre-wrap"
-                data-qa="error-popup"
               >
                 {message}
               </div>
