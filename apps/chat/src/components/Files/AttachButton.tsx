@@ -181,19 +181,17 @@ export const AttachButton = ({
         triggerIconHighlight
         featureType={FeatureType.File}
       />
-      {isSelectFilesDialogOpened && (
-        <FileManagerModal
-          isOpen
-          sourceFilters={sourceFilters}
-          allowedTypes={availableAttachmentsTypes}
-          maximumAttachmentsAmount={maximumAttachmentsAmount}
-          headerLabel={t(label)}
-          customButtonLabel={t('Attach')}
-          initialSelectedFilesIds={selectedFilesIds}
-          showTooltip
-          onClose={handleCloseFileManagerModal}
-        />
-      )}
+      <FileManagerModal
+        isOpen={isSelectFilesDialogOpened}
+        sourceFilters={sourceFilters}
+        allowedTypes={availableAttachmentsTypes}
+        maximumAttachmentsAmount={maximumAttachmentsAmount}
+        headerLabel={t(label)}
+        customButtonLabel={t('Attach')}
+        initialSelectedFilesIds={selectedFilesIds}
+        showTooltip
+        onClose={handleCloseFileManagerModal}
+      />
       {isPreUploadDialogOpened && (
         <PreUploadDialog
           isOpen
