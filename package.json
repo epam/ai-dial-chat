@@ -167,6 +167,9 @@
     "eslint-plugin-playwright": "^2.2.0",
     "playwright-chromium": "^1.54.0"
   },
+  "overrides": {
+    "koa": "3.0.1"
+  },
   "engines": {
     "node": ">=22.2.0",
     "npm": ">=10.7.0"
