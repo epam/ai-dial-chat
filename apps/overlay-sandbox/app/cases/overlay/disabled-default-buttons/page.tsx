@@ -12,9 +12,9 @@ const overlayOptions = {
   enabledFeatures: [
     Feature.Header,
     Feature.ConversationsSection,
-    Feature.DisableEditUserMessage,
-    Feature.DisableRegenerateAssistantMessage,
-    Feature.DisableDeleteUserMessage,
+    Feature.HideEditUserMessage,
+    Feature.HideRegenerateAssistantMessage,
+    Feature.HideDeleteUserMessage,
   ],
 };
 

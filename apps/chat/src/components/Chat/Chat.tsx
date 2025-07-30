@@ -116,17 +116,17 @@ const ChatView = memo(() => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const isEditUserMessageDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.DisableEditUserMessage),
+  const isEditUserMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideEditUserMessage),
   );
-  const isRegenerateAssistantMessageDisabled = useAppSelector((state) =>
+  const isRegenerateAssistantMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(
       state,
-      Feature.DisableRegenerateAssistantMessage,
+      Feature.HideRegenerateAssistantMessage,
     ),
   );
-  const isDeleteMessageDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.DisableDeleteUserMessage),
+  const isDeleteMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideDeleteUserMessage),
   );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
@@ -840,12 +840,12 @@ const ChatView = memo(() => {
                                                 (!isValidApproveRequiredConversation ||
                                                   !!notAvailableEntityType)) ||
                                               (message.role === Role.User &&
-                                                isEditUserMessageDisabled)
+                                                isEditUserMessageHided)
                                             }
                                             onEdit={handleEditMessage}
                                             onLike={handleLike}
                                             onDelete={
-                                              !isDeleteMessageDisabled
+                                              !isDeleteMessageHided
                                                 ? handleDeleteMessage
                                                 : undefined
                                             }
@@ -853,7 +853,7 @@ const ChatView = memo(() => {
                                               index ===
                                                 mergedMessages.length - 1 &&
                                               showLastMessageRegenerate &&
-                                              (!isRegenerateAssistantMessageDisabled ||
+                                              (!isRegenerateAssistantMessageHided ||
                                                 message.role !== Role.Assistant)
                                                 ? handleRegenerateMessage
                                                 : undefined
