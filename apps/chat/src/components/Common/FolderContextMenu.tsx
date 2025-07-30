@@ -127,7 +127,7 @@ export const FolderContextMenu = ({
   const isMyFolder = useMemo(() => isMyEntity(folder), [folder]);
 
   const isMyOrCanEdit = isMyFolder || canEditShared;
-  const isTemporaryFolder = 'temporary' in folder;
+  const isTemporaryFolder = 'temporary' in folder && folder.temporary;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
