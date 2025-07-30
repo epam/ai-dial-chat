@@ -169,6 +169,23 @@ export function PublicationHandler({ publication }: Props) {
     [publication.resources],
   );
 
+  const initialState = useMemo(() => {
+    const { entities, folders } = getDefaultAllEditEntities(
+      publication.resources,
+    );
+    const initialRules = publication.rules ?? [];
+    const initialDisplayAuthor = publication.displayAuthor ?? '';
+
+    return {
+      entities,
+      folders,
+      rules: initialRules,
+      displayAuthor: initialDisplayAuthor,
+    };
+  }, [publication]);
+
+  const [currentRules, setCurrentRules] = useState(initialState.rules);
+
   const handleUpdateRequest = useCallback(() => {
     dispatch(
       PublicationActions.updatePublicationRequest({
@@ -229,6 +246,10 @@ export function PublicationHandler({ publication }: Props) {
     rulesOnEdit,
   ]);
 
+  const handleSaveCurrentRules = useCallback(() => {
+    setCurrentRules(initialState.rules);
+  }, [initialState.rules]);
+
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
       const cleanedValue = replaceSpacesFromString(value);
@@ -252,21 +273,6 @@ export function PublicationHandler({ publication }: Props) {
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
-
-  const initialState = useMemo(() => {
-    const { entities, folders } = getDefaultAllEditEntities(
-      publication.resources,
-    );
-    const initialRules = publication.rules ?? [];
-    const initialDisplayAuthor = publication.displayAuthor ?? '';
-
-    return {
-      entities,
-      folders,
-      rules: initialRules,
-      displayAuthor: initialDisplayAuthor,
-    };
-  }, [publication]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -297,9 +303,9 @@ export function PublicationHandler({ publication }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    const initialRules = filteredRuleEntries ?? [];
+    const initialRules = currentRules ?? filteredRuleEntries;
     return !isEqual(initialRules, rulesOnEdit);
-  }, [filteredRuleEntries, rulesOnEdit]);
+  }, [currentRules, filteredRuleEntries, rulesOnEdit]);
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
@@ -442,6 +448,7 @@ export function PublicationHandler({ publication }: Props) {
         </div>
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
+          handleSaveCurrentRules={handleSaveCurrentRules}
           publication={publication}
           isFormChanged={isFormChanged}
           areRulesChanged={hasUserChangedRules}
@@ -450,8 +457,8 @@ export function PublicationHandler({ publication }: Props) {
       {isCompareModalOpened && publication.targetFolder && (
         <CompareRulesModal
           allRuleEntries={filteredRuleEntries}
-          newRulesToCompare={newRules}
-          oldRulesToCompare={rules[publication.targetFolder]}
+          newRulesToCompare={rulesOnEdit}
+          oldRulesToCompare={currentRules}
           onClose={() => setIsCompareModalOpened(false)}
           newRulesPath={publication.targetFolder}
         />
