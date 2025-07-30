@@ -61,7 +61,7 @@ export const foldersSlice = createSlice({
       );
 
       if (state.newAddedTemporaryFolderId === payload.folderId) {
-        state.newAddedTemporaryFolderId = newId;
+        state.newAddedTemporaryFolderId = '';
       }
     },
     resetNewTemporaryFolderId: (state) => {
