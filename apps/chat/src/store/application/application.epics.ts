@@ -242,15 +242,24 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
         };
 
         if (isMoved) {
-          return of(
-            PublicationActions.updateApplicationPublicationUrls(
-              payloadToUpdatePublication,
+          return concat(
+            initialActions$,
+            of(
+              PublicationActions.updateApplicationPublicationUrls(
+                payloadToUpdatePublication,
+              ),
             ),
           );
-        } else if (isMyEntity({ id: updatedCustomApplication.iconUrl ?? '' })) {
-          return of(
-            PublicationActions.updatePublicationRequestAndApplicationIcon(
-              payloadToUpdatePublication,
+        } else if (
+          updatedCustomApplication.iconUrl &&
+          isMyEntity({ id: updatedCustomApplication.iconUrl })
+        ) {
+          return concat(
+            initialActions$,
+            of(
+              PublicationActions.updatePublicationRequestAndApplicationIcon(
+                payloadToUpdatePublication,
+              ),
             ),
           );
         }

@@ -1,10 +1,11 @@
 import { getProviders, signIn, useSession } from 'next-auth/react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { Provider } from 'next-auth/providers';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
@@ -35,6 +36,15 @@ export default function Signin({
 }: PageProps) {
   const dispatch = useAppDispatch();
   const { status, ...session } = useSession();
+  const router = useRouter();
+  const logoImgSrc = useMemo(() => {
+    if (themesHostDefined) {
+      return constructPath(
+        process.env.APP_BASE_PATH || '',
+        getThemeIconUrl('favicon'),
+      );
+    }
+  }, [themesHostDefined]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -47,7 +57,34 @@ export default function Signin({
     ) {
       signIn(defaultAuthProvider ?? undefined);
     }
-  }, [defaultAuthProvider, session, status]);
+
+    if (
+      process.env.IS_IFRAME &&
+      status === 'authenticated' &&
+      isClientSessionValid(session) &&
+      session.data
+    ) {
+      const { callbackUrl } = router.query;
+
+      let safeUrl = '/';
+
+      if (callbackUrl) {
+        try {
+          const allowedUrls = ['/', '/marketplace'];
+          const url = new URL(callbackUrl.toString(), window.location.origin);
+          if (
+            url.origin === window.location.origin &&
+            allowedUrls.includes(url.pathname)
+          ) {
+            safeUrl = url.href;
+          }
+        } catch (e) {
+          console.error('Invalid callbackUrl:', e);
+        }
+      }
+      window.location.href = encodeURIComponent(safeUrl);
+    }
+  }, [defaultAuthProvider, router.query, session, status]);
 
   useEffect(() => {
     dispatch(SettingsActions.setThemesHostDefined(themesHostDefined));
@@ -68,35 +105,45 @@ export default function Signin({
     return null;
   }
 
+  if (
+    process.env.IS_IFRAME &&
+    status === 'authenticated' &&
+    isClientSessionValid(session) &&
+    session.data
+  ) {
+    return null;
+  }
+
   return (
     <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
       <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
         <div className="my-5 flex justify-center">
-          <Image
-            src={
-              process.env.THEMES_CONFIG_HOST
-                ? constructPath(
-                    process.env.APP_BASE_PATH || '',
-                    getThemeIconUrl('favicon'),
-                  )
-                : ''
-            }
-            alt="Brand"
-            width={70}
-            height={70}
-          />
+          {!!logoImgSrc && (
+            <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
+          )}
         </div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
             <button
               key={provider.id + provider.name}
-              className="button button-secondary justify-center"
+              className="button button-secondary flex h-16 content-center justify-center gap-4 px-4 py-3"
               onClick={() => {
                 handleSignIn(provider);
               }}
               data-qa={provider.id}
             >
-              <span>Sign in with {provider.name}</span>
+              <span className="flex shrink-0 flex-wrap content-center justify-center">
+                <Image
+                  className="h-6"
+                  src={`https://authjs.dev/img/providers/${provider.id}.svg`}
+                  alt="Provider icon"
+                  width={24}
+                  height={24}
+                />
+              </span>
+              <div className="flex flex-wrap content-center">
+                <span className="text-lg">Sign in with {provider.name}</span>
+              </div>
             </button>
           ))}
         </div>
@@ -111,8 +158,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-
-  if (session && res && isServerSessionValid(session)) {
+  if (session && isServerSessionValid(session)) {
     return {
       redirect: {
         permanent: false,
