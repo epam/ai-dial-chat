@@ -25,7 +25,7 @@ export const EditableField: React.FC<Props> = ({
   inputClassName,
   tooltipIconClassName,
   placeholder,
-  errors,
+  errors = [],
   onChange,
 }) => {
   const isErrors = !!errors?.length;
@@ -39,13 +39,10 @@ export const EditableField: React.FC<Props> = ({
 
   if (isEditMode) {
     return (
-      <div
-        className={classNames('flex w-full flex-row items-center bg-layer-2')}
-      >
+      <div className="flex w-full flex-row items-center bg-layer-2">
         <input
           className={classNames(
             'h-[24px] border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none',
-
             isErrors && '!border-b-error',
             inputClassName,
           )}
@@ -56,7 +53,7 @@ export const EditableField: React.FC<Props> = ({
 
         <ErrorTooltip
           hideTooltip={!isErrors}
-          tooltip={(errors ?? []).map((error) => (
+          tooltip={errors.map((error) => (
             <p key={error}>{error}</p>
           ))}
           triggerClassName={classNames('absolute', tooltipIconClassName)}
