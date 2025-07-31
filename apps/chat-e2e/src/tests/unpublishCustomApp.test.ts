@@ -10,7 +10,7 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
-import { ThemeColorAttributes } from '@/src/ui/domData';
+import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -400,6 +400,7 @@ dialAdminTest(
     adminMarketplaceAgents,
     adminPublishingRequestModal,
     adminPublishingRequestModalAssertion,
+    baseAssertion,
     adminAppToPublishAssertion,
     adminAgentDetailsModal,
     adminAgentDetailsModalAssertion,
@@ -580,6 +581,10 @@ dialAdminTest(
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: requestName },
           'hidden',
+        );
+        await baseAssertion.assertElementCursor(
+          adminNavigationPanel.marketplaceHomeButton,
+          Cursors.pointer,
         );
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
