@@ -222,17 +222,14 @@ export class AttachFilesModal extends BaseElement {
     }
   }
 
-  public static getFoldersTree(
-    attachFilesModal: AttachFilesModal,
-    section: FileModalSection,
-  ) {
+  public getFoldersTree(section: FileModalSection) {
     switch (section) {
       case FileModalSection.AllFiles:
-        return attachFilesModal.getAllFolderFiles();
+        return this.getAllFolderFiles();
       case FileModalSection.SharedWithMe:
-        return attachFilesModal.getSharedWithMeFoldersTree();
+        return this.getSharedWithMeFoldersTree();
       case FileModalSection.Organization:
-        return attachFilesModal.getOrganizationFoldersTree();
+        return this.getOrganizationFoldersTree();
       default:
         throw new Error(invalidSectionError(section));
     }
