@@ -40,9 +40,9 @@ import { isEqual } from 'lodash-es';
 
 interface AssistantMessageProps {
   messageIndex: number;
+  realMessageIndex: number;
   message: Message;
   allMessages: Message[];
-  isFirstMessageSystem: boolean;
   conversation: Conversation;
   isLastMessage: boolean;
   isLikesEnabled: boolean;
@@ -62,9 +62,9 @@ interface AssistantMessageProps {
 
 export const AssistantMessage = memo(function AssistantMessage({
   messageIndex,
+  realMessageIndex,
   message,
   allMessages,
-  isFirstMessageSystem,
   conversation,
   isLastMessage,
   isEditing,
@@ -304,10 +304,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         <ErrorMessage error={message.errorMessage}></ErrorMessage>
 
         {isOverlay && (
-          <OverlayMessageCustomButtons
-            messageIndex={messageIndex}
-            isSystemMessagePresented={isFirstMessageSystem}
-          />
+          <OverlayMessageCustomButtons realMessageIndex={realMessageIndex} />
         )}
       </div>
       {withButtons &&
@@ -317,6 +314,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             copyOnClick={() => onCopy?.()}
             isLikesEnabled={isLikesEnabled}
             message={message}
+            realMessageIndex={realMessageIndex}
             messageCopied={messageCopied}
             onLike={(likeStatus) => onLike?.(likeStatus)}
             onRegenerate={onRegenerate}
