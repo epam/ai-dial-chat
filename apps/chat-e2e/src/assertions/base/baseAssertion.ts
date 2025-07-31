@@ -128,10 +128,12 @@ export class BaseAssertion {
 
   public async assertElementText(
     element: BaseElement | Locator,
-    expectedText: string | RegExp,
+    expectedText: string | RegExp | number,
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
+    expectedText =
+      typeof expectedText === 'number' ? expectedText.toString() : expectedText;
     await expect
       .soft(
         elementLocator,

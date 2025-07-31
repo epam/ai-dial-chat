@@ -118,7 +118,7 @@ export class PublishingApprovalModal extends BaseElement {
     PublishingApprovalModalSelectors.creationDate,
   );
   public authorLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.author,
+    PublishingApprovalModalSelectors.authorLabel,
   );
   public author = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.author,
