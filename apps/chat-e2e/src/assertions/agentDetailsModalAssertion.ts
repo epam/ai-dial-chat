@@ -77,7 +77,7 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
     await this.assertElementText(
       this.agentDetailsModal.agentReleaseDate,
       DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
-      ExpectedMessages.releaseDateShouldBeValid,
+      ExpectedMessages.releaseDateIsValid,
     );
   }
 

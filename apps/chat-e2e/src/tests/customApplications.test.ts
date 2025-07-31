@@ -762,7 +762,7 @@ dialTest(
         await baseAssertion.assertElementText(
           releaseDateElement,
           DateUtil.getCurrentLocalDate(),
-          ExpectedMessages.releaseDateShouldBeValid,
+          ExpectedMessages.releaseDateIsValid,
         );
       },
     );
