@@ -83,6 +83,7 @@ import {
 } from './form';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { escapeRegExp } from 'lodash';
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
 import isEqual from 'lodash-es/isEqual';
@@ -251,7 +252,7 @@ export function PublishModal<
   const handlePublish = useCallback(
     (data: PublicationRequestFormData) => {
       const folderOldPathPartsRegExp = new RegExp(
-        getIdWithoutRootPathSegments(entity.folderId),
+        escapeRegExp(getIdWithoutRootPathSegments(entity.folderId)),
       );
 
       const trimmedPath = path.trim();
