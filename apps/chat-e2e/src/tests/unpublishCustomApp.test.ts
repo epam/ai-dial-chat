@@ -582,6 +582,7 @@ dialAdminTest(
           { name: requestName },
           'hidden',
         );
+        //need to wait the cursor of marketplaceHomeButton element is changed from 'not-allowed' to 'pointer'
         await baseAssertion.assertElementCursor(
           adminNavigationPanel.marketplaceHomeButton,
           Cursors.pointer,

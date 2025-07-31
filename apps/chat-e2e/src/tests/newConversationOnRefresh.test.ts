@@ -38,6 +38,7 @@ dialTest(
     chatHeaderAssertion,
     marketplacePage,
     conversations,
+    appContainer,
     iconApiHelper,
     sendMessage,
     baseAssertion,
@@ -119,7 +120,7 @@ dialTest(
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await navigationPanel.backToChat({ isHttpMethodTriggered: false });
+      await navigationPanel.backToChat();
     });
 
     await dialTest.step('Verify chat stays selected', async () => {
@@ -168,6 +169,7 @@ dialTest(
 
     await dialTest.step('Clear the history', async () => {
       await conversations.selectEntity(initialConversationName);
+      await appContainer.getChatLoader().waitForState({ state: 'hidden' });
       await chatHeader.clearConversation.click();
       await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
     });
