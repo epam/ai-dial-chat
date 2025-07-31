@@ -140,24 +140,36 @@ export class AgentDetailsModal extends BaseElement {
       expectedHttpStatus?: number;
     } = { expectedHttpStatus: 200 },
   ) {
+    await this.openPublishRequestModal(
+      () => this.publishButton.click(),
+      options,
+    );
+  }
+
+  public async clickUnpublishButton(
+    options: {
+      expectedHttpStatus?: number;
+    } = { expectedHttpStatus: 200 },
+  ) {
+    await this.openPublishRequestModal(
+      () => this.unpublishButton.click(),
+      options,
+    );
+  }
+
+  private async openPublishRequestModal(
+    method: () => Promise<void>,
+    options: {
+      expectedHttpStatus?: number;
+    },
+  ) {
     const respPromise = this.page.waitForResponse(
       (resp) =>
         resp.request().method() === 'GET' &&
         resp.url().includes(API.applicationCreateHost) &&
         resp.status() === options.expectedHttpStatus,
     );
-    await this.publishButton.click();
-    await respPromise;
-  }
-
-  public async clickUnpublishButton() {
-    const respPromise = this.page.waitForResponse(
-      (resp) =>
-        resp.request().method() === 'GET' &&
-        resp.url().includes(API.applicationCreateHost) &&
-        resp.status() === 200,
-    );
-    await this.unpublishButton.click();
+    await method();
     await respPromise;
   }
 }
