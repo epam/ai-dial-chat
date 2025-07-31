@@ -521,11 +521,11 @@ export enum ToggleState {
 
 export enum AuthProvider {
   auth0 = 'auth0',
-  azureAD = 'azureAD',
+  azureAD = 'azure-ad',
   gitlab = 'gitlab',
   google = 'google',
   keycloak = 'keycloak',
-  pingID = 'pingID',
+  pingID = 'pingid',
   cognito = 'cognito',
   okta = 'okta',
 }
