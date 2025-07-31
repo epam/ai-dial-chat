@@ -8,4 +8,5 @@ export const IconSelectors = {
   promptIcon: '.tabler-icon-bulb',
   listDetailsIcon: '.tabler-icon-list-details',
   helpIcon: '.tabler-icon-help',
+  fileIcon: '.tabler-icon-file',
 };
