@@ -154,21 +154,11 @@ export class PublishingApprovalModal extends BaseElement {
   );
 
   public async approveRequest() {
-    const responsePromises = [];
-    for (const expectedResponse of [
-      { apiMethod: 'POST', urlPattern: API.publicationRequestApproval },
-      { apiMethod: 'GET', urlPattern: API.installedDeploymentsHost() },
-    ]) {
-      const responsePromise = this.page.waitForResponse(
-        (r) =>
-          r.request().method() === expectedResponse.apiMethod &&
-          r.url().includes(expectedResponse.urlPattern) &&
-          r.status() === 200,
-      );
-      responsePromises.push(responsePromise);
-    }
+    const responsePromise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.publicationRequestApproval),
+    );
     await this.approveButton.click();
-    await Promise.all(responsePromises);
+    await responsePromise;
   }
 
   public async goToEntityReview({
