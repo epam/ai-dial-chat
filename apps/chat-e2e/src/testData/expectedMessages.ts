@@ -422,7 +422,7 @@ export const ExpectedMessages = {
   defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
   defaultAppNameShouldBeFilled:
     'Default app name should be pre-filled and match pattern "Untitled app <number>"',
-  releaseDateShouldBeValid: 'Release date should be valid',
+  releaseDateIsValid: 'Release date is valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
   LogoShouldBeCentered: (
@@ -435,16 +435,20 @@ export const ExpectedMessages = {
   valuesAreEqual: 'Values are equal',
 };
 
-export enum PublishingExpectedMessages {
-  noFilesToPublishRequested = 'No files to publish requested',
-  publishToPathIsValid = 'Publish to path is valid',
-  publishCreationDateIsValid = 'Publishing request creation date is valid',
-  entityVersionIsValid = 'Publish entity version is valid',
-  folderIsNotPublished = 'Folder is not published',
-}
+export const PublishingExpectedMessages = {
+  noFilesToPublishRequested: 'No files to publish requested',
+  publishToPathIsValid: 'Publish to path is valid',
+  publishCreationDateIsValid: 'Publishing request creation date is valid',
+  entityVersionIsValid: 'Publish entity version is valid',
+  folderIsNotPublished: 'Folder is not published',
+  publishAuthorIsValid: 'Publish author is valid',
+  publishAuthorPublicNameIsValid: 'Publish author public name is valid',
+  publicationFeaturesDataIsValid: 'Publication features data is valid',
+  publicationTopicsAreValid: 'Publication topics are valid',
+};
 
-export enum MarketplaceExpectedMessages {
-  agentIsVisible = 'Agent is visible in Marketplace',
-  filteredAgentsAreValid = 'Filtered agents are valid',
-  filterOptionsAreValid = 'Filter options are valid',
-}
+export const MarketplaceExpectedMessages = {
+  agentIsVisible: (name: string) => `Agent ${name} is visible in Marketplace`,
+  filteredAgentsAreValid: 'Filtered agents are valid',
+  filterOptionsAreValid: 'Filter options are valid',
+};

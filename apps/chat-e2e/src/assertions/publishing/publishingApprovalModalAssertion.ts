@@ -121,10 +121,15 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
         this.publishingApprovalModal.authorLabel,
         fieldsToVerify.authorLabel,
       );
-      await this.assertElementText(
-        this.publishingApprovalModal.authorLabel,
-        ExpectedConstants.authorLabel,
-      );
+      fieldsToVerify.authorLabel === 'visible'
+        ? await this.assertElementText(
+            this.publishingApprovalModal.authorLabel,
+            ExpectedConstants.authorLabel,
+          )
+        : await this.assertElementState(
+            this.publishingApprovalModal.authorLabel,
+            'hidden',
+          );
     }
     if (fieldsToVerify.author) {
       await this.assertElementText(
@@ -137,10 +142,15 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
         this.publishingApprovalModal.publicAuthorLabel,
         fieldsToVerify.publicAuthorLabel,
       );
-      await this.assertElementText(
-        this.publishingApprovalModal.publicAuthorLabel,
-        ExpectedConstants.unpublishFromLabel,
-      );
+      fieldsToVerify.publicAuthorLabel === 'visible'
+        ? await this.assertElementText(
+            this.publishingApprovalModal.publicAuthorLabel,
+            ExpectedConstants.publicAuthorLabel,
+          )
+        : await this.assertElementState(
+            this.publishingApprovalModal.publicAuthorLabel,
+            'hidden',
+          );
     }
     if (fieldsToVerify.publicAuthor) {
       await this.assertElementText(
@@ -148,7 +158,6 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
         fieldsToVerify.publicAuthor,
       );
     }
-
     if (fieldsToVerify.requestCreatedLabel) {
       await this.assertElementState(
         this.publishingApprovalModal.requestCreatedLabel,

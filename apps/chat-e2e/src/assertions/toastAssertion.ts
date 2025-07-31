@@ -29,7 +29,7 @@ export class ToastAssertion extends BaseAssertion {
 
   public async assertToastMessage(
     expectedMessage: string,
-    messageType?: ExpectedMessages,
+    messageType?: string,
   ) {
     await this.assertElementText(this.toast, expectedMessage, messageType);
   }

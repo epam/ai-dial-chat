@@ -740,6 +740,7 @@ dialTest(
           () =>
             conversationDropdownMenu.selectMenuOption(
               MenuOptions.withAttachments,
+              { triggeredHttpMethod: 'GET', apiHost: API.fileHost() },
             ),
           GeneratorUtil.exportedWithAttachmentsFilename(),
         );
@@ -752,12 +753,16 @@ dialTest(
         await fileApiHelper.deleteAllFiles();
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
         await conversationAssertion.assertEntityState(
           { name: replayConversation.name },
           'visible',
+        );
+        await conversationAssertion.assertSelectedEntity(
+          replayConversation.name,
         );
         await sendMessageAssertion.assertContinueReplayButtonState('visible');
       },

@@ -128,7 +128,23 @@ export class BaseAssertion {
 
   public async assertElementText(
     element: BaseElement | Locator,
-    expectedText: string | RegExp,
+    expectedText: string | RegExp | number,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    expectedText =
+      typeof expectedText === 'number' ? expectedText.toString() : expectedText;
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+      )
+      .toHaveText(expectedText);
+  }
+
+  public async assertElementContainsText(
+    element: BaseElement | Locator,
+    expectedText: string | RegExp | (string | RegExp)[],
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
@@ -137,7 +153,21 @@ export class BaseAssertion {
         elementLocator,
         expectedMessage ?? ExpectedMessages.fieldValueIsValid,
       )
-      .toHaveText(expectedText);
+      .toContainText(expectedText);
+  }
+
+  public async assertElementDoesNotContainText(
+    element: BaseElement | Locator,
+    expectedText: string | RegExp | (string | RegExp)[],
+    expectedMessage?: string,
+  ) {
+    const elementLocator = this.getElementLocator(element);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+      )
+      .not.toContainText(expectedText);
   }
 
   public async assertElementInnerHtml(
@@ -373,6 +403,19 @@ export class BaseAssertion {
       .toBeGreaterThan(expectedNumber);
   }
 
+  public assertNumberIsGreaterThanOrEqual(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeGreaterThanOrEqual(expectedNumber);
+  }
+
   public assertValue(
     actualValue: string | number | undefined | null,
     expectedValue: string | number,
@@ -452,6 +495,19 @@ export class BaseAssertion {
     expect
       .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreEqual)
       .toEqual(expectedValue);
+  }
+
+  public async assertScrollPosition(
+    element: BaseElement | Locator,
+    scrollProperty: Properties,
+    expectedValue: number,
+  ) {
+    await expect
+      .soft(
+        this.getElementLocator(element),
+        ExpectedMessages.scrollPositionIsCorrect,
+      )
+      .toHaveJSProperty(scrollProperty, expectedValue);
   }
 
   private getElementLocator(element: BaseElement | Locator) {
