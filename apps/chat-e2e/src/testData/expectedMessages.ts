@@ -422,7 +422,7 @@ export const ExpectedMessages = {
   defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
   defaultAppNameShouldBeFilled:
     'Default app name should be pre-filled and match pattern "Untitled app <number>"',
-  releaseDateShouldBeValid: 'Release date should be valid',
+  releaseDateIsValid: 'Release date is valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
   LogoShouldBeCentered: (

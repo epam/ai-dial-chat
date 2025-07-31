@@ -132,9 +132,16 @@ export class AgentDetailsModal extends BaseElement {
     }
   }
 
-  public async clickPublishButton() {
+  public async clickPublishButton(
+    options: {
+      expectedHttpStatus?: number;
+    } = { expectedHttpStatus: 200 },
+  ) {
     const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'GET' && resp.status() === 200,
+      (resp) =>
+        resp.request().method() === 'GET' &&
+        resp.url().includes(API.applicationCreateHost) &&
+        resp.status() === options.expectedHttpStatus,
     );
     await this.publishButton.click();
     await respPromise;

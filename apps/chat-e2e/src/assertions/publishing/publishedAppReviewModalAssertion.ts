@@ -6,10 +6,10 @@ export class PublishedAppReviewModalAssertion extends BaseAssertion {
   readonly publishedApplicationReviewModal: PublishedApplicationReviewModal;
 
   constructor(
-    PublishedApplicationReviewModal: PublishedApplicationReviewModal,
+    publishedApplicationReviewModal: PublishedApplicationReviewModal,
   ) {
     super();
-    this.publishedApplicationReviewModal = PublishedApplicationReviewModal;
+    this.publishedApplicationReviewModal = publishedApplicationReviewModal;
   }
 
   public async assertAppFeaturesData(expectedFeatures: Record<string, string>) {

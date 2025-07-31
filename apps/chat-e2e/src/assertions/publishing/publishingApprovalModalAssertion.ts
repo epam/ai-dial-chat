@@ -127,7 +127,7 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
             ExpectedConstants.authorLabel,
           )
         : await this.assertElementState(
-            this.publishingApprovalModal.author,
+            this.publishingApprovalModal.authorLabel,
             'hidden',
           );
     }

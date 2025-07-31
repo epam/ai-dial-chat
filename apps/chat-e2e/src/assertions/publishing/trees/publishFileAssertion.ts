@@ -6,13 +6,6 @@ import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publishFilesTr
 export class PublishFileAssertion<
   K extends PublishFilesTree,
 > extends PublishEntityAssertion<K> {
-  readonly publishFiles: K;
-
-  constructor(publishFiles: K) {
-    super(publishFiles);
-    this.publishFiles = publishFiles;
-  }
-
   public async assertFileToPublish(
     file: TreeEntity,
     fileAttributes: {
@@ -25,16 +18,16 @@ export class PublishFileAssertion<
     await this.assertEntityToPublish(file, fileAttributes);
     if (fileAttributes.expectedState === 'visible') {
       await this.assertElementState(
-        this.publishFiles.fileIcon(file.name),
+        this.publishEntities.fileIcon(file.name),
         'visible',
       );
       await this.assertElementState(
-        this.publishFiles.getFileDownloadIcon(file.name),
+        this.publishEntities.getFileDownloadIcon(file.name),
         'visible',
       );
       if (fileAttributes.expectedDownloadUrl) {
         await this.assertElementAttribute(
-          this.publishFiles.getFileDownloadUrl(file.name),
+          this.publishEntities.getFileDownloadIcon(file.name),
           Attributes.href,
           fileAttributes.expectedDownloadUrl,
         );
