@@ -116,6 +116,18 @@ const ChatView = memo(() => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const isEditUserMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideEditUserMessage),
+  );
+  const isRegenerateAssistantMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(
+      state,
+      Feature.HideRegenerateAssistantMessage,
+    ),
+  );
+  const isDeleteMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideDeleteUserMessage),
+  );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
@@ -827,20 +839,28 @@ const ChatView = memo(() => {
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
-                                              (!!notAvailableEntityType ||
+                                              ((!!notAvailableEntityType ||
                                                 isReadOnly ||
                                                 isReplay ||
                                                 isPlayback) &&
-                                              (!isValidApproveRequiredConversation ||
-                                                !!notAvailableEntityType)
+                                                (!isValidApproveRequiredConversation ||
+                                                  !!notAvailableEntityType)) ||
+                                              (message.role === Role.User &&
+                                                isEditUserMessageHided)
                                             }
                                             onEdit={handleEditMessage}
                                             onLike={handleLike}
-                                            onDelete={handleDeleteMessage}
+                                            onDelete={
+                                              !isDeleteMessageHided
+                                                ? handleDeleteMessage
+                                                : undefined
+                                            }
                                             onRegenerate={
                                               index ===
                                                 mergedMessages.length - 1 &&
-                                              showLastMessageRegenerate
+                                              showLastMessageRegenerate &&
+                                              (!isRegenerateAssistantMessageHided ||
+                                                message.role !== Role.Assistant)
                                                 ? handleRegenerateMessage
                                                 : undefined
                                             }
