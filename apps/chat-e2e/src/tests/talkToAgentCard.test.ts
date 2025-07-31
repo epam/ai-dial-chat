@@ -730,7 +730,7 @@ dialTest(
 
 dialTest(
   '[Select an agent for conversation] Red error appears if the custom app is deleted thru the menu.\n' +
-    `[Select an agent for conversation] 'All agents' tab doesn't contain 'not existed' card.\n` +
+    `[Select an agent for conversation] 'All agents' tab contains 'not existed' card.\n` +
     `[Select an agent for conversation] 'Go to My workspace' link on 'My agents' is changed to 'Go to DIAL Marketplace' on 'All agents' tab.\n` +
     `[Select an agent for conversation] 'All agents' tab contains al the cards from DIAL Marketplace with the same sorting order and grouping.\n` +
     `[Select an agent for conversation] 'All agents' tab doesn't contain 'Replay as is' card.\n` +
@@ -843,14 +843,22 @@ dialTest(
     );
 
     await dialTest.step(
-      'Switch to "All agents" tab and verify removed agent is not listed, only "Go to DIAL Marketplace" link is available',
+      'Switch to "All agents" tab and verify removed agent stays first, only "Go to DIAL Marketplace" link is available',
       async () => {
         await talkToAgentDialog.allAgentsTab.click();
-        actualAgentNames = await talkToAgentDialog.getAllAgentNames();
-        talkToAgentDialogAssertion.assertArrayExcludesAll(
-          actualAgentNames,
-          [appModel.reference!],
-          ExpectedMessages.elementIsNotVisible,
+        const actualVisibleAgentNames = await talkToAgentDialog
+          .getAgents()
+          .getAgentNames();
+        talkToAgentDialogAssertion.assertValue(
+          actualVisibleAgentNames[0],
+          appModel.reference!,
+          ExpectedMessages.elementIsVisible,
+        );
+        const notAvailableAgentElement =
+          talkToAgents.getNotAvailableAgentElement(appModel.reference!);
+        await talkToAgentDialogAssertion.assertElementText(
+          talkToAgents.getAgentDescription(notAvailableAgentElement),
+          ExpectedConstants.notAllowedModelError,
         );
         const goToDialMarketplaceBtn =
           talkToAgentDialog.goToDialMarketplaceButton;
@@ -872,6 +880,8 @@ dialTest(
     await dialTest.step(
       'Verify all available agents are displayed in ascending order',
       async () => {
+        actualAgentNames = await talkToAgentDialog.getAllAgentNames();
+        actualAgentNames = actualAgentNames.slice(1);
         const groupedConfigAgents = ModelsUtil.groupEntitiesByName(
           allConfigAgents.filter((a) => a.type !== EntityType.Application),
         );
