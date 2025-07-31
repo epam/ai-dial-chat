@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { RootState } from '@/src/types/store';
 
-import { MessageButton } from '@epam/ai-dial-shared';
+import { MessageButton, MessageButtonPlacement } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.overlay;
 
@@ -29,11 +29,39 @@ const selectCustomButtonsForMessage = createSelector(
   },
 );
 
+const selectContentAppendedButtonsForMessage = createSelector(
+  [
+    (state, messageIndex: number) =>
+      selectCustomButtonsForMessage(state, messageIndex),
+  ],
+  (customButtons) => {
+    return customButtons?.filter(
+      (button) =>
+        !button.placement ||
+        button.placement === MessageButtonPlacement.CONTENT_APPEND,
+    );
+  },
+);
+
+const selectPrependedDefaultButtonsForMessage = createSelector(
+  [
+    (state, messageIndex: number) =>
+      selectCustomButtonsForMessage(state, messageIndex),
+  ],
+  (customButtons) => {
+    return customButtons?.filter(
+      (button) =>
+        button.placement === MessageButtonPlacement.PREPEND_DEFAULT_BUTTONS,
+    );
+  },
+);
+
 export const OverlaySelectors = {
   selectHostDomain,
   selectOverlaySystemPrompt,
   selectOptionsReceived,
   selectReadyToInteractSent,
   selectCustomButtons,
-  selectCustomButtonsForMessage,
+  selectContentAppendedButtonsForMessage,
+  selectPrependedDefaultButtonsForMessage,
 };
