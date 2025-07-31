@@ -140,24 +140,13 @@ dialAdminTest(
           { name: conversation.name },
           'visible',
         );
-        await publishFileAssertion.assertEntityState(
+        await publishFileAssertion.assertFileToPublish(
           { name: Attachment.cloudImageName },
-          'visible',
-        );
-        await publishFileAssertion.assertEntityCheckboxState(
-          { name: Attachment.cloudImageName },
-          CheckboxState.checked,
-        );
-        await publishFileAssertion.assertElementState(
-          filesToPublishTree.getFileDownloadIcon(Attachment.cloudImageName),
-          'visible',
-        );
-        publishFileAssertion.assertValue(
-          await filesToPublishTree.getFileDownloadIUrl(
-            Attachment.cloudImageName,
-          ),
-          ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
-          ExpectedMessages.attachmentUrlIsValid,
+          {
+            expectedState: 'visible',
+            expectedCheckboxState: CheckboxState.checked,
+            expectedDownloadUrl: ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
+          },
         );
       },
     );
