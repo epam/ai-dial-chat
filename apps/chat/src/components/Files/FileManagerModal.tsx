@@ -151,7 +151,6 @@ export const FileManagerModal = ({
       areHiddenItemsVisible,
     ),
   );
-
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
   );
