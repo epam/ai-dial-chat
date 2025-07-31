@@ -70,19 +70,15 @@ export default function Signin({
 
       if (callbackUrl) {
         try {
-          const allowedUrls = ['/', '/marketplace'];
           const url = new URL(callbackUrl.toString(), window.location.origin);
-          if (
-            url.origin === window.location.origin &&
-            allowedUrls.includes(url.pathname)
-          ) {
+          if (url.origin === window.location.origin) {
             safeUrl = url.href;
           }
         } catch (e) {
           console.error('Invalid callbackUrl:', e);
         }
       }
-      window.location.href = encodeURIComponent(safeUrl);
+      window.location.href = safeUrl;
     }
   }, [defaultAuthProvider, router.query, session, status]);
 
@@ -158,7 +154,8 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-  if (session && isServerSessionValid(session)) {
+
+  if (isServerSessionValid(session, true)) {
     return {
       redirect: {
         permanent: false,
