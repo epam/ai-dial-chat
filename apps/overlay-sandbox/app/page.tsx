@@ -29,6 +29,7 @@ enum OverlayCases {
   enabledMarketplaceTableViewOverlay = '/cases/overlay/enabled-marketplace-table-view-sandbox',
   enabledAppSharingOverlay = '/cases/overlay/enabled-app-sharing-sandbox',
   editLastAssistantMessage = '/cases/overlay/edit-last-assistant-message',
+  disabledDefaultButtons = '/cases/overlay/disabled-default-buttons',
 }
 
 export default async function Index() {

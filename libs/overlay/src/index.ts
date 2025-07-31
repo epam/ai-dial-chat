@@ -12,6 +12,7 @@ export {
 } from '@epam/ai-dial-shared';
 export type {
   ChatOverlayOptions,
+  MessageButtonPlacement as MessageButtonType,
   MessageButton,
   MessageButtons,
   OverlayConversation,
@@ -28,6 +29,8 @@ export type {
   ImportConversationResponse,
   SelectedConversationLoadedEventResponse as SelectedConversationLoadedResponse,
   MessageCustomButtonEventResponse as MessageCustomButtonResponse,
+  PrevMessagePlaybackEventResponse,
+  NextMessagePlaybackEventResponse,
   EditMessageEventResponse,
   DeleteMessageEventResponse,
   UpdateMessageResponse,
@@ -42,6 +45,7 @@ export type {
   EntityPublicationInfo,
   ShareInterface,
   ShareEntity,
+  SharePermission,
   ConversationInfo,
   TemplateMapping,
   Message,
