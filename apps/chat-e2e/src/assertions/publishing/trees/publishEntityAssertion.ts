@@ -46,6 +46,7 @@ export class PublishEntityAssertion<
       expectedCheckboxState?: CheckboxState;
       expectedVersion?: string;
       expectedVersionColor?: string;
+      expectedIcon?: string;
     },
   ) {
     await this.assertEntityState(entity, entityAttributes.expectedState);
@@ -70,6 +71,9 @@ export class PublishEntityAssertion<
           entity,
           entityAttributes.expectedVersionColor,
         );
+      }
+      if (entityAttributes.expectedIcon) {
+        await this.assertTreeEntityIcon(entity, entityAttributes.expectedIcon);
       }
     }
   }
