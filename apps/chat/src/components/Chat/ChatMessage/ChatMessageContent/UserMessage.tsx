@@ -643,7 +643,7 @@ export const UserMessage = memo(function UserMessage({
           realMessageIndex={realMessageIndex}
           isMessageStreaming={!!conversation.isMessageStreaming}
           isEditAvailable={!!onEdit && !editDisabled}
-          onDelete={onDelete ? () => onDelete() : undefined}
+          onDelete={onDelete}
           onToggleEditing={handleToggleEditing}
           isEditTemplatesAvailable={
             (!isReadOnly || isApproveRequiredEntitySelected) &&

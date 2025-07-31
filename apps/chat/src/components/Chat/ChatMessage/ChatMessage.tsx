@@ -125,6 +125,12 @@ export const ChatMessage: FC<Props> = memo(
       onDelete?.(messageIndex, conversation);
     }, [onDelete, messageIndex, conversation]);
 
+    const handleDelete = useCallback(() => {
+      if (!onDelete) return;
+
+      setIsDeleteConfirmationOpened(true);
+    }, [onDelete]);
+
     return (
       <>
         {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
@@ -133,13 +139,7 @@ export const ChatMessage: FC<Props> = memo(
             messageIndex={messageIndex}
             realMessageIndex={realMessageIndex}
             onEdit={onEdit}
-            onDelete={
-              onDelete
-                ? () => {
-                    setIsDeleteConfirmationOpened(true);
-                  }
-                : undefined
-            }
+            onDelete={handleDelete}
             onToggleEditing={handleToggleEditing}
             isEditing={isEditing}
             editDisabled={editDisabled}
@@ -216,9 +216,7 @@ export const ChatMessage: FC<Props> = memo(
               messageCopied={messageCopied}
               editDisabled={editDisabled}
               onLike={handleLike}
-              onDelete={
-                onDelete ? () => setIsDeleteConfirmationOpened(true) : undefined
-              }
+              onDelete={handleDelete}
               isEditing={isEditing}
               onToggleEditing={handleToggleEditing}
               onRegenerate={onRegenerate}
