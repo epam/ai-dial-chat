@@ -251,6 +251,7 @@ dialAdminTest(
     'RecentModelIds updated when type new message to duplicated chat from Organization',
   async ({
     dialHomePage,
+    agentInfo,
     conversationData,
     dataInjector,
     adminPublicationApiHelper,
@@ -314,6 +315,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await agentInfo.waitForState();
         await organizationConversations.waitForState();
       },
     );

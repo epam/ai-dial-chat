@@ -141,18 +141,18 @@ dialTest(
         await attachedAllFiles.expandCollapseFolder(folderName, {
           isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.getFolderName(folderName).hoverOver();
-        await baseAssertion.assertElementText(
-          tooltip,
-          folderName,
-          ExpectedMessages.tooltipContentIsValid,
-        );
         await attachedAllFiles
           .getFolderEntity(folderName, Attachment.longImageName)
           .hover();
         await baseAssertion.assertElementText(
           tooltip,
           Attachment.longImageName,
+          ExpectedMessages.tooltipContentIsValid,
+        );
+        await attachedAllFiles.getFolderName(folderName).hoverOver();
+        await baseAssertion.assertElementText(
+          tooltip,
+          folderName,
           ExpectedMessages.tooltipContentIsValid,
         );
       },

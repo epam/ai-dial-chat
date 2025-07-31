@@ -313,6 +313,7 @@ dialTest(
     'Compare mode is closed on "x" button in chat2',
   async ({
     dialHomePage,
+    agentInfo,
     setTestIds,
     conversationData,
     dataInjector,
@@ -348,6 +349,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await agentInfo.waitForState();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await expect
@@ -1695,7 +1697,7 @@ dialTest(
     await dialTest.step(
       'Edit left chat title and verify it is updated in the header',
       async () => {
-        const newLeftChatName = GeneratorUtil.randomString(7);
+        const newLeftChatName = GeneratorUtil.randomConversationName();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModalAssertion.assertElementAttribute(
