@@ -489,7 +489,10 @@ dialAdminTest(
       'By admin find created application on the "Marketplace" tab, hover over the card, open dropdown menu and select "Unpublish" option',
       async () => {
         await adminLocalStorageManager.setShowSideBarPanels();
-        await adminMarketplacePage.openMarketplacePage();
+        await adminMarketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+        });
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
         appElement = await adminMarketplaceAgentsSection.findAgentElement(
