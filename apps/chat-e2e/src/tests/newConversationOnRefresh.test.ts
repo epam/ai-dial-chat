@@ -10,7 +10,7 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { loadingTimeout } from '@/src/ui/pages';
-import { ItemUtil, ModelsUtil } from '@/src/utils';
+import { BucketUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -57,20 +57,21 @@ dialTest(
     dialTest.slow();
     const initialConversationName = GeneratorUtil.randomString(7);
     let models: DialAIEntityModel[];
+    const expectedLocalConversation = (model: DialAIEntityModel) =>
+      `conversations/local/${model.id}${ItemUtil.entityIdSeparator}${ExpectedConstants.newConversationWithIndexTitle(1)}`;
+    const expectedSelectedConversation = (model: DialAIEntityModel) =>
+      `conversations/${BucketUtil.getBucket()}/${model.id}${ItemUtil.entityIdSeparator}${initialConversationName}`;
 
-    await dialTest.step(
-      'Set 2 random models to recent and create a conversation and playback conversation via API',
-      async () => {
-        models = GeneratorUtil.randomArrayElements(
-          ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
-          2,
-        );
-        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
-          ...models,
-        );
-        await localStorageManager.setShowSideBarPanels();
-      },
-    );
+    await dialTest.step('Set 2 random models to recent', async () => {
+      models = GeneratorUtil.randomArrayElements(
+        ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
+        2,
+      );
+      await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+        ...models,
+      );
+      await localStorageManager.setShowSideBarPanels();
+    });
 
     await dialTest.step(
       'Open the home page and verify initial state',
@@ -83,17 +84,20 @@ dialTest(
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoEntityIsSelected();
+        localStorageAssertion.assertValuesAreEqual(
+          await localStorageManager.getSelectedConversationIds(),
+          [expectedLocalConversation(models[0])],
+        );
       },
     );
 
     await dialTest.step('Navigate to Marketplace', async () => {
-      await chat.changeAgentButton.click();
-      await talkToAgentDialog.goToMyWorkspace();
+      await navigationPanel.goToMyWorkspace();
       await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step('Click "Back to Chat"', async () => {
-      await navigationPanel.backToChat({ isHttpMethodTriggered: false });
+      await navigationPanel.backToChat();
     });
 
     await dialTest.step(
@@ -103,6 +107,10 @@ dialTest(
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
         await conversationAssertion.assertNoEntityIsSelected();
+        localStorageAssertion.assertValuesAreEqual(
+          await localStorageManager.getSelectedConversationIds(),
+          [expectedLocalConversation(models[0])],
+        );
       },
     );
 
@@ -111,11 +119,14 @@ dialTest(
         MockedChatApiResponseBodies.simpleTextBody,
       );
       await chat.sendRequestWithButton(initialConversationName);
+      localStorageAssertion.assertValuesAreEqual(
+        await localStorageManager.getSelectedConversationIds(),
+        [expectedSelectedConversation(models[0])],
+      );
     });
 
     await dialTest.step('Navigate to Marketplace', async () => {
-      await chatHeader.chatAgent.click();
-      await talkToAgentDialog.goToMyWorkspace();
+      await navigationPanel.goToMyWorkspace();
       await marketplacePage.waitForPageLoaded();
     });
 
@@ -131,6 +142,10 @@ dialTest(
       );
       await chatMessagesAssertion.assertMessageContent(2, 'Response');
       await conversationAssertion.assertEntitiesCount(1);
+      localStorageAssertion.assertValuesAreEqual(
+        await localStorageManager.getSelectedConversationIds(),
+        [expectedSelectedConversation(models[0])],
+      );
     });
 
     await dialTest.step(
@@ -149,6 +164,10 @@ dialTest(
         await conversationAssertion.assertSelectedEntity(
           initialConversationName,
         );
+        localStorageAssertion.assertValuesAreEqual(
+          await localStorageManager.getSelectedConversationIds(),
+          [expectedSelectedConversation(models[1])],
+        );
       },
     );
 
@@ -163,6 +182,10 @@ dialTest(
         await baseAssertion.assertIsElementFocused(
           sendMessage.messageInput,
           true,
+        );
+        localStorageAssertion.assertValuesAreEqual(
+          await localStorageManager.getSelectedConversationIds(),
+          [expectedLocalConversation(models[0])],
         );
       },
     );
@@ -180,6 +203,10 @@ dialTest(
       await chat.configureSettingsButton.waitForState();
       await conversationAssertion.assertSelectedEntity(initialConversationName);
       await chat.getSendMessage().waitForState({ state: 'attached' });
+      localStorageAssertion.assertValuesAreEqual(
+        await localStorageManager.getSelectedConversationIds(),
+        [expectedSelectedConversation(models[1])],
+      );
     });
 
     await dialTest.step(
@@ -193,11 +220,15 @@ dialTest(
           initialConversationName,
         );
         await conversationAssertion.assertEntitiesCount(1);
+        localStorageAssertion.assertValuesAreEqual(
+          await localStorageManager.getSelectedConversationIds(),
+          [expectedSelectedConversation(models[1])],
+        );
       },
     );
 
     await dialTest.step(
-      'Clear selectedConversationIds, refresh the page and verify new conversation is created after the compare mode',
+      'Clear selectedConversationIds, refresh the page and verify new conversation is created',
       async () => {
         await localStorageManager.removeFromLocalStorage(
           'selectedConversationIds',
@@ -212,11 +243,9 @@ dialTest(
         await chat.configureSettingsButton.waitForState();
         await sendMessage.messageInput.waitForState();
         await agentInfoAssertion.assertAgentName(models[0].name);
-        const updatedConversationIds =
-          await localStorageManager.getSelectedConversationIds();
-        baseAssertion.assertValue(
-          updatedConversationIds[0],
-          `conversations/local/${models[0].id}${ItemUtil.entityIdSeparator}${ExpectedConstants.newConversationWithIndexTitle(1)}`,
+        localStorageAssertion.assertValuesAreEqual(
+          await localStorageManager.getSelectedConversationIds(),
+          [expectedLocalConversation(models[0])],
         );
         await conversationAssertion.assertNoEntityIsSelected();
       },
