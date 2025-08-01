@@ -67,7 +67,7 @@ export const EntitySelectors = {
   conversation: '[data-qa="conversation"]',
   prompt: '[data-qa="prompt"]',
   file: '[data-qa="file"]',
-  application: '[data-qa="agent"]',
+  application: '[data-qa="application"]',
   version: '[data-qa="version"]',
 };
 

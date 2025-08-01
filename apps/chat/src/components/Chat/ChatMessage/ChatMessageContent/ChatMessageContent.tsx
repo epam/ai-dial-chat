@@ -1,5 +1,5 @@
 import { IconUser } from '@tabler/icons-react';
-import { MouseEvent, RefObject, useMemo, useRef } from 'react';
+import { MouseEvent, RefObject, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -23,6 +23,7 @@ import { LikeState, Message, Role } from '@epam/ai-dial-shared';
 interface Props {
   message: Message;
   messageIndex: number;
+  realMessageIndex: number;
   conversation: Conversation;
   allMessages: Message[];
   isLikesEnabled: boolean;
@@ -55,6 +56,7 @@ const DEFAULT_ICON_SIZE = 28;
 
 export function ChatMessageContent({
   messageIndex,
+  realMessageIndex,
   isLastMessage,
   message,
   allMessages,
@@ -79,10 +81,6 @@ export function ChatMessageContent({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const messageRef = useRef<HTMLDivElement>(null);
-
-  const isFirstMessageSystem = useMemo(() => {
-    return conversation.messages[0]?.role === Role.System;
-  }, [conversation.messages]);
 
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
@@ -148,10 +146,10 @@ export function ChatMessageContent({
           {isUser ? (
             <UserMessage
               message={message}
-              allMessages={allMessages}
-              isFirstMessageSystem={isFirstMessageSystem}
-              conversation={conversation}
               messageIndex={messageIndex}
+              realMessageIndex={realMessageIndex}
+              allMessages={allMessages}
+              conversation={conversation}
               isEditing={isEditing}
               isEditingTemplates={isEditingTemplates}
               withButtons={withButtons}
@@ -164,9 +162,9 @@ export function ChatMessageContent({
           ) : (
             <AssistantMessage
               messageIndex={messageIndex}
+              realMessageIndex={realMessageIndex}
               message={message}
               allMessages={allMessages}
-              isFirstMessageSystem={isFirstMessageSystem}
               conversation={conversation}
               isEditing={isEditing}
               isLastMessage={isLastMessage}

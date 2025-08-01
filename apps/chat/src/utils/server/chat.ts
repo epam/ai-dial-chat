@@ -189,13 +189,15 @@ export const chatErrorHandler = ({
       typeof errorMessage === 'function'
         ? errorMessage('entity')
         : errorMessage;
+
+    if (error.code === '429' && error.message) {
+      console.error(error.message);
+    }
   }
 
   const responseBody = getResponseBody(
     fieldName,
-    error instanceof DialAIError
-      ? (error.displayMessage ?? error.message)
-      : undefined,
+    error instanceof DialAIError ? error.displayMessage : undefined,
     fallbackErrorMessage,
   );
 
