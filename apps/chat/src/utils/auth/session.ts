@@ -13,8 +13,14 @@ export function isClientSessionValid(session: unknown | null) {
   );
 }
 
-export function isServerSessionValid(session: Session | null) {
-  if (isAuthDisabled || process.env.IS_IFRAME === 'true') {
+export function isServerSessionValid(
+  session: Session | null,
+  checkForOverlay?: boolean,
+) {
+  if (
+    isAuthDisabled ||
+    (!checkForOverlay && process.env.IS_IFRAME === 'true')
+  ) {
     return true;
   }
 
