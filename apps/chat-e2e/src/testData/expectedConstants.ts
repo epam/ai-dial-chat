@@ -421,9 +421,13 @@ export const API = {
   publishedApplications: '/api/publication/applications/public',
   publishedFiles: () => `/api/publication/${API.filesHostSegment}/public`,
   applicationCreateHost: '/api/applications',
-  publishedApplicationsHost:
-    'api/publication/applications/public?recursive=true',
+  publishedConversationsHost: () =>
+    `${API.publishedConversations}?recursive=true`,
+  publishedPromptsHost: () => `${API.publishedPrompts}?recursive=true`,
+  publishedApplicationsHost: () =>
+    `${API.publishedApplications}?recursive=true`,
   pagePropsHost: '/en.json',
+  appSchemasHost: 'api/application-type-schemas/schemas',
 };
 
 export const Import = {
