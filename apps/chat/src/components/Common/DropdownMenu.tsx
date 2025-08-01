@@ -322,20 +322,31 @@ interface MenuItemProps {
 }
 
 export const MenuItem = forwardRef<
-  HTMLButtonElement,
-  MenuItemProps & ButtonHTMLAttributes<HTMLButtonElement>
+  HTMLButtonElement | HTMLDivElement,
+  MenuItemProps &
+    ButtonHTMLAttributes<HTMLButtonElement | HTMLDivElement> & {
+      isChildrenButton?: boolean;
+    }
 >(function MenuItem(
-  { className, label, item: ItemComponent, disabled, ...props },
+  {
+    className,
+    label,
+    item: ItemComponent,
+    disabled,
+    isChildrenButton,
+    ...props
+  },
   forwardedRef,
 ) {
   const menu = useContext(MenuContext);
   const item = useListItem({ label: disabled ? null : label });
   const tree = useFloatingTree();
   const isActive = item.index === menu.activeIndex;
+  const Tag = isChildrenButton ? 'div' : 'button';
 
   return (
     <div>
-      <button
+      <Tag
         {...props}
         ref={useMergeRefs([item.ref, forwardedRef])}
         type="button"
@@ -349,11 +360,11 @@ export const MenuItem = forwardRef<
         tabIndex={isActive ? 0 : -1}
         disabled={disabled}
         {...menu.getItemProps({
-          onClick(event: MouseEvent<HTMLButtonElement>) {
+          onClick(event: MouseEvent<HTMLDivElement | HTMLButtonElement>) {
             props.onClick?.(event);
             tree?.events.emit('click');
           },
-          onFocus(event: FocusEvent<HTMLButtonElement>) {
+          onFocus(event: FocusEvent<HTMLDivElement | HTMLButtonElement>) {
             props.onFocus?.(event);
             menu.setHasFocusInside(true);
           },
@@ -363,7 +374,7 @@ export const MenuItem = forwardRef<
         {!ItemComponent && label && (
           <span className="inline-block truncate">{label}</span>
         )}
-      </button>
+      </Tag>
     </div>
   );
 });
