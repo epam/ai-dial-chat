@@ -352,6 +352,7 @@ dialOverlayTest(
           const actualConversation = actualConversationsList[i];
           const parentPath = actualConversation.parentPath;
           const permissions = actualConversation.permissions;
+          const bucket = actualConversation.bucket;
           const shortConversation: ConversationInfo = {
             model: conversation.model,
             name: conversation.name,
@@ -367,6 +368,7 @@ dialOverlayTest(
             const expectedSelectedOverlayConversation = {
               ...shortConversation,
               ...(permissions && { permissions }),
+              ...(bucket && { bucket }),
             };
             expectedSelectedConversation = {
               conversation:
@@ -397,8 +399,7 @@ dialOverlayTest(
             //save expectedSelectedConversation for the next test step if it is the last listed one
             if (expectedConversation.id === todayConversation.id) {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { bucket, parentPath, ...conversationInfo } =
-                expectedConversation;
+              const { parentPath, ...conversationInfo } = expectedConversation;
               expectedSelectedConversation = {
                 conversation: conversationInfo as OverlayConversation,
               };

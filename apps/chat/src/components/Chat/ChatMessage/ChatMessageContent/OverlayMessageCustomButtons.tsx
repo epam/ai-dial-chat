@@ -1,11 +1,8 @@
-import {
-  CSSProperties,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+
+import classNames from 'classnames';
+
+import { isMobile } from '@/src/utils/app/mobile';
 
 import { OverlayActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -13,17 +10,38 @@ import { OverlaySelectors } from '@/src/store/selectors';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { MessageButton } from '@epam/ai-dial-shared';
+import { MessageButton, MessageButtonPlacement } from '@epam/ai-dial-shared';
 
 interface ButtonProps {
   button: MessageButton;
-  onEvent: (eventName: keyof WindowEventMap) => void;
+  realMessageIndex: number;
+  defaultClassName?: string;
+  defaultIconClassName?: string;
 }
 
-const OverlayMessageCustomButton = ({ button, onEvent }: ButtonProps) => {
+export const OverlayMessageCustomButton = ({
+  button,
+  defaultClassName,
+  defaultIconClassName,
+  realMessageIndex,
+}: ButtonProps) => {
+  const dispatch = useAppDispatch();
   const ref = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+
+  const handleOnButtonEvent = useCallback(
+    (eventName: keyof WindowEventMap) => {
+      dispatch(
+        OverlayActions.sendCustomMessageEvent({
+          buttonKey: button.buttonKey,
+          eventName: eventName,
+          messageIndex: realMessageIndex,
+        }),
+      );
+    },
+    [button.buttonKey, dispatch, realMessageIndex],
+  );
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
@@ -60,7 +78,7 @@ const OverlayMessageCustomButton = ({ button, onEvent }: ButtonProps) => {
       ref.current?.addEventListener(
         event,
         () => {
-          onEvent(event);
+          handleOnButtonEvent(event);
         },
         { signal: abortSignal.signal },
       ),
@@ -69,22 +87,18 @@ const OverlayMessageCustomButton = ({ button, onEvent }: ButtonProps) => {
     return () => {
       abortSignal.abort();
     };
-  }, [button.events, onEvent]);
+  }, [button.events, handleOnButtonEvent]);
 
   if (!button.iconSvg && !button.title) return null;
 
   return (
-    <Tooltip tooltip={button.tooltip}>
+    <Tooltip tooltip={button.tooltip} placement="top" isTriggerClickable>
       <button
         ref={ref}
         disabled={button.disabled}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={
-          button.skipDefaultStyles
-            ? undefined
-            : 'button button-secondary flex items-center gap-2 px-2 py-1'
-        }
+        className={classNames(!button.skipDefaultStyles && defaultClassName)}
         style={{
           ...(button.styles as CSSProperties),
           ...(isHovered && !button.disabled
@@ -100,47 +114,33 @@ const OverlayMessageCustomButton = ({ button, onEvent }: ButtonProps) => {
       >
         {button.iconSvg && (
           <span
+            className={classNames(
+              !button.skipDefaultStyles && defaultIconClassName,
+            )}
             dangerouslySetInnerHTML={
               button.iconSvg ? { __html: button.iconSvg } : undefined
             }
           ></span>
         )}
-        {button.title && <span>{button.title}</span>}
+        {button.title &&
+          (button.placement !==
+            MessageButtonPlacement.PREPEND_DEFAULT_BUTTONS ||
+            isMobile()) && <span>{button.title}</span>}
       </button>
     </Tooltip>
   );
 };
 
 interface Props {
-  messageIndex: number;
-  isSystemMessagePresented: boolean;
+  realMessageIndex: number;
 }
 
-export const OverlayMessageCustomButtons = ({
-  messageIndex,
-  isSystemMessagePresented,
-}: Props) => {
-  const dispatch = useAppDispatch();
-
-  const realMessageIndex = useMemo(() => {
-    return isSystemMessagePresented ? messageIndex + 1 : messageIndex;
-  }, [isSystemMessagePresented, messageIndex]);
-
+export const OverlayMessageCustomButtons = ({ realMessageIndex }: Props) => {
   const customMessageButtons = useAppSelector((state) =>
-    OverlaySelectors.selectCustomButtonsForMessage(state, realMessageIndex),
-  );
-
-  const handleOnButtonEvent = useCallback(
-    (eventName: keyof WindowEventMap, button: MessageButton) => {
-      dispatch(
-        OverlayActions.sendCustomMessageEvent({
-          buttonKey: button.buttonKey,
-          eventName: eventName,
-          messageIndex: realMessageIndex,
-        }),
-      );
-    },
-    [dispatch, realMessageIndex],
+    OverlaySelectors.selectContentAppendedButtonsForMessage(
+      state,
+      realMessageIndex,
+    ),
   );
 
   if (!customMessageButtons?.length) return null;
@@ -151,7 +151,8 @@ export const OverlayMessageCustomButtons = ({
         <OverlayMessageCustomButton
           key={button.buttonKey}
           button={button}
-          onEvent={(eventName) => handleOnButtonEvent(eventName, button)}
+          defaultClassName="button button-secondary flex items-center gap-2 px-2 py-1"
+          realMessageIndex={realMessageIndex}
         />
       ))}
     </div>
