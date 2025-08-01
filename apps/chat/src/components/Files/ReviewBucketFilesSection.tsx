@@ -28,11 +28,7 @@ interface ReviewBucketFilesSectionViewProps {
   openedFoldersIds: string[];
   additionalItemData: AdditionalItemData;
   canAttachFolders: boolean;
-  onItemEvent: (
-    eventId: string,
-    data: unknown,
-    options?: { deleteUnavailable?: boolean },
-  ) => void;
+  onItemEvent: (eventId: string, data: unknown) => void;
   onClickFolder: (folderId: string) => void;
   onToggleFolder: (folderId: string) => void;
 }
@@ -120,11 +116,7 @@ interface Props {
   additionalItemData: AdditionalItemData;
   openedFoldersIds: string[];
   canAttachFolders: boolean;
-  onItemEvent: (
-    eventId: string,
-    data: unknown,
-    options?: { deleteUnavailable?: boolean },
-  ) => void;
+  onItemEvent: (eventId: string, data: unknown) => void;
   onClickFolder: (folderId: string) => void;
   onToggleFolder: (folderId: string) => void;
 }
