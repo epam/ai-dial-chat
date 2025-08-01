@@ -33,6 +33,9 @@ export function ChatExternalControls({
   const approveRequiredResources = useAppSelector(
     PublicationSelectors.selectResourcesToReview,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
   );
@@ -50,7 +53,10 @@ export function ChatExternalControls({
   if (
     isOverlayConversationId ||
     conversations.some((c) =>
-      approveRequiredResources.some((r) => r.reviewUrl === c.id),
+      approveRequiredResources.some(
+        (r) =>
+          r.reviewUrl === c.id && r.publicationUrl === selectedPublicationUrl,
+      ),
     )
   ) {
     return null;
