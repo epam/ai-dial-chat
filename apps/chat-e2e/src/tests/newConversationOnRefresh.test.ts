@@ -155,6 +155,10 @@ dialTest(
         await talkToAgentDialog.selectAgent(models[1]);
         const expectedModelIcon = iconApiHelper.getEntityIcon(models[1]);
         await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: initialConversationName },
+          expectedModelIcon,
+        );
         await chatMessagesAssertion.assertMessageContent(
           1,
           initialConversationName,
@@ -192,6 +196,7 @@ dialTest(
 
     await dialTest.step('Clear the history', async () => {
       await conversations.selectEntity(initialConversationName);
+      await conversations.selectedEntity(initialConversationName).waitFor();
       await appContainer.getChatLoader().waitForState({ state: 'hidden' });
       await chatHeader.clearConversation.click();
       await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
