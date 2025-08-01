@@ -25,6 +25,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
 
@@ -176,7 +177,10 @@ export const filesSlice = createSlice({
       );
       state.filesStatus = UploadStatus.LOADED;
 
-      const idsToReselect = state.chosenEmptyFoldersIds.reduce(
+      const idsToReselect = state.chosenEmptyFoldersIds.reduce<{
+        folderIds: string[];
+        fileIds: string[];
+      }>(
         (acc, folderId) => {
           const fileIds = payload.files
             .filter(({ id }) => id.startsWith(folderId))
@@ -190,7 +194,7 @@ export const filesSlice = createSlice({
           }
           return acc;
         },
-        { folderIds: [] as string[], fileIds: [] as string[] },
+        { folderIds: [], fileIds: [] },
       );
 
       if (idsToReselect.folderIds.length) {
@@ -489,6 +493,7 @@ export const filesSlice = createSlice({
         payload.ids,
       );
     },
+    // set initial files and folders ids clearing all previous selection
     setChosenFilesAndFolders: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
@@ -508,11 +513,15 @@ export const filesSlice = createSlice({
           .map(({ id }) => id),
       ];
 
-      state.chosenEmptyFoldersIds = xor(
-        state.chosenEmptyFoldersIds,
-        emptyFolderIds,
-      );
-      state.chosenFileIds = xor(state.chosenFileIds, fileIdsToSelect);
+      if (
+        isEqual(emptyFolderIds, state.chosenEmptyFoldersIds) &&
+        isEqual(state.chosenFileIds, fileIdsToSelect)
+      ) {
+        return;
+      }
+
+      state.chosenEmptyFoldersIds = emptyFolderIds;
+      state.chosenFileIds = fileIdsToSelect;
     },
     setChosenFolder: (
       state,

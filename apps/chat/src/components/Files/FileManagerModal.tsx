@@ -15,10 +15,7 @@ import {
   getParentFolderIdsFromFolderId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import {
-  areBucketsTheSame,
-  getFileRootId,
-} from '@/src/utils/app/id';
+import { areBucketsTheSame, getFileRootId } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   PublishedWithMeFilter,
