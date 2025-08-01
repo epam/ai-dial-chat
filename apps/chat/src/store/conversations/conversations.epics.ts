@@ -102,6 +102,7 @@ import {
   FilesActions,
   MarketplaceActions,
   ModelsActions,
+  OverlayActions,
   PublicationActions,
   ShareActions,
   UIActions,
@@ -2357,19 +2358,32 @@ const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
 
       const updatedMessagesWithAssistant =
         messagesDeletedLastMessage.concat(assistantMessage);
+      const playbackState = {
+        ...selectedConversation.playback,
+        activePlaybackIndex: activeIndex + 1,
+      };
 
-      return of(
-        ConversationsActions.updateConversation({
-          id: selectedConversation.id,
-          values: {
-            messages: updatedMessagesWithAssistant,
-            isMessageStreaming: false,
-            playback: {
-              ...selectedConversation.playback,
-              activePlaybackIndex: activeIndex + 1,
+      return concat(
+        of(
+          OverlayActions.sendNextPlaybackEvent({
+            newActiveIndex: activeIndex,
+            playbackState,
+            updatedMessages: updatedMessagesWithAssistant,
+          }),
+        ),
+        of(
+          ConversationsActions.updateConversation({
+            id: selectedConversation.id,
+            values: {
+              messages: updatedMessagesWithAssistant,
+              isMessageStreaming: false,
+              playback: {
+                ...selectedConversation.playback,
+                activePlaybackIndex: activeIndex + 1,
+              },
             },
-          },
-        }),
+          }),
+        ),
       );
     }),
   );
@@ -2406,24 +2420,37 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
             : conv.model;
           const { prompt, temperature, selectedAddons, assistantModelId } =
             assistantMessage?.settings ? assistantMessage.settings : conv;
+          const playbackState = {
+            ...conv.playback,
+            activePlaybackIndex: activeIndex,
+          };
 
-          return of(
-            ConversationsActions.updateConversation({
-              id: conv.id,
-              values: {
-                messages: updatedMessages,
-                isMessageStreaming: false,
-                model,
-                prompt,
-                temperature: temperature,
-                selectedAddons: selectedAddons,
-                assistantModelId: assistantModelId,
-                playback: {
-                  ...conv.playback,
-                  activePlaybackIndex: activeIndex,
+          return concat(
+            of(
+              OverlayActions.sendPrevPlaybackEvent({
+                newActiveIndex: activeIndex,
+                playbackState,
+                updatedMessages,
+              }),
+            ),
+            of(
+              ConversationsActions.updateConversation({
+                id: conv.id,
+                values: {
+                  messages: updatedMessages,
+                  isMessageStreaming: false,
+                  model,
+                  prompt,
+                  temperature: temperature,
+                  selectedAddons: selectedAddons,
+                  assistantModelId: assistantModelId,
+                  playback: {
+                    ...conv.playback,
+                    activePlaybackIndex: activeIndex,
+                  },
                 },
-              },
-            }),
+              }),
+            ),
           );
         }),
       );
