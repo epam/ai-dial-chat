@@ -79,10 +79,15 @@ function defaultCookies(
 const isSecure =
   !!process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.startsWith('https:');
 
+const isDebugEnabled =
+  process.env.AUTH_DEBUG_ENABLED === 'true' ||
+  process.env.AUTH_DEBUG_ENABLED === '1';
+
 export const authOptions: AuthOptions = {
   providers: authProviders,
   cookies: defaultCookies(isSecure, isSecure ? 'none' : 'lax'),
   callbacks,
+  debug: isDebugEnabled,
   session: {
     strategy: 'jwt',
   },
