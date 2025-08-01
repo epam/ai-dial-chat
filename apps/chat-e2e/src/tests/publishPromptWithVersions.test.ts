@@ -230,20 +230,15 @@ dialTest(
       },
     );
 
-    //TODO: remove the step when the issue is fixed: https://github.com/epam/ai-dial-chat/issues/2302
     await dialTest.step(
-      'Open published prompt and set the version to the latest one',
+      'Open published prompt and verify the latest version is selected',
       async () => {
         await organizationPrompts.selectEntity(prompt.name, {
           isHttpMethodTriggered: true,
         });
-        await promptPreviewModal.version.click();
-        await promptPreviewVersionDropdownMenu.selectMenuOption(
-          sortedVersionsArray[0],
-          {
-            triggeredHttpMethod: 'GET',
-          },
-        );
+        await promptPreviewModalAssertion.assertPromptFields({
+          version: sortedVersionsArray[0],
+        });
         await promptPreviewModal.closeButton.click();
       },
     );

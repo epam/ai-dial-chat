@@ -1,6 +1,6 @@
 import { Tags } from '@/src/ui/domData';
 import { PublishEntitySelectors } from '@/src/ui/selectors';
-import { EntitiesTree } from '@/src/ui/webElements/entityTree';
+import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
 
 export class PublishEntitiesTree extends EntitiesTree {
   public getEntityVersion(entityName: string, entityIndex?: number) {

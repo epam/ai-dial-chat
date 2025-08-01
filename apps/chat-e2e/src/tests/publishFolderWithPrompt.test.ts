@@ -39,6 +39,7 @@ dialAdminTest(
       adminApproveRequiredPromptsAssertion,
       adminPublishedPromptPreviewModal,
       adminPublishedPromptPreviewModalAssertion,
+      adminPublishedPromptPreviewModalControlsAssertion,
       adminPublishingApprovalModalAssertion,
       adminFolderPromptsToApproveAssertion,
       publishingRequestModalAssertion,
@@ -188,11 +189,13 @@ dialAdminTest(
         );
         publicationReviewControls =
           adminPublishedPromptPreviewModal.getPublicationReviewControl();
-        await adminPublishedPromptPreviewModalAssertion.assertButtonsState({
-          backToPublicationRequestButtonState: 'enabled',
-          nextButtonState: 'enabled',
-          previousButtonState: 'disabled',
-        });
+        await adminPublishedPromptPreviewModalControlsAssertion.assertButtonsState(
+          {
+            backToPublicationRequestButtonState: 'enabled',
+            nextButtonState: 'enabled',
+            previousButtonState: 'disabled',
+          },
+        );
         await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
           name: orderedPrompts[0],
           content: folderPrompt.prompts.find(
@@ -211,11 +214,13 @@ dialAdminTest(
           { name: orderedPrompts[1] },
           true,
         );
-        await adminPublishedPromptPreviewModalAssertion.assertButtonsState({
-          backToPublicationRequestButtonState: 'enabled',
-          nextButtonState: 'disabled',
-          previousButtonState: 'enabled',
-        });
+        await adminPublishedPromptPreviewModalControlsAssertion.assertButtonsState(
+          {
+            backToPublicationRequestButtonState: 'enabled',
+            nextButtonState: 'disabled',
+            previousButtonState: 'enabled',
+          },
+        );
         await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
           name: orderedPrompts[1],
           content: folderPrompt.prompts.find(
