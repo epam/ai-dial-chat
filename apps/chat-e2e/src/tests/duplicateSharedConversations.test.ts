@@ -288,13 +288,15 @@ dialSharedWithMeTest(
       'Check "Show all conversations" check-box, expand the list and verify three conversations are displayed',
       async () => {
         await additionalShareUserCompareConversation.checkShowAllConversations();
-        const conversationsList =
-          await additionalShareUserCompareConversation.getCompareConversationNames();
-        baseAssertion.assertArrayIncludesAll(
-          conversationsList,
-          [secondComparedConversation.name, thirdComparedConversation.name],
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        );
+        for (const sharedConversation of [
+          secondComparedConversation,
+          thirdComparedConversation,
+        ]) {
+          await baseAssertion.assertElementContainsText(
+            additionalShareUserCompareConversation.compareConversationRowNames,
+            [sharedConversation.name],
+          );
+        }
       },
     );
 
@@ -305,6 +307,7 @@ dialSharedWithMeTest(
           secondComparedConversation.name,
         );
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
+        await additionalShareUserCompare.duplicateButton.waitForState();
       },
     );
 

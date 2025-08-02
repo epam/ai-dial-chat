@@ -11,13 +11,20 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, UIActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  ApplicationTypesSchemasActions,
+  ConversationsActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -26,6 +33,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
@@ -45,6 +53,8 @@ const myWorkspaceHref = {
   query: { tab: MarketplaceTabs.MY_WORKSPACE },
 };
 
+const anyRouteExceptAppEditorRegex = /^(?!\/apps-editor(?:\/|$)).*/;
+
 interface AppsEditorHeaderProps {
   applicationTypeDisplayName: string;
   isEditApplication?: boolean;
@@ -57,14 +67,17 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   hasCustomEditor,
 }) => {
   const dispatch = useAppDispatch();
+
   const {
     query: { id = '', slug = '', add, publicationUrl },
     pathname,
     push,
   } = useRouter();
+
   const { t } = useTranslation(Translation.Chat);
 
   const [menuOpen, setMenuOpen] = useState(false);
+
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
@@ -77,6 +90,9 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
     ApplicationSelectors.selectHasUnsavedChanges,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const returnConversationIds = useAppSelector(
+    ApplicationSelectors.selectReturnConversationIds,
+  );
 
   const tabs = useMemo(
     () => [
@@ -147,6 +163,38 @@ export const AppsEditorHeader: React.FC<AppsEditorHeaderProps> = ({
   };
 
   const agent = modelsMap[id as string];
+
+  const handleCustomViewerExit = useCallback(() => {
+    if (hasCustomEditor) {
+      dispatch(
+        ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+      );
+
+      if (publicationUrl) {
+        dispatch(
+          ConversationsActions.selectConversations({
+            conversationIds: [],
+          }),
+        );
+        dispatch(PublicationActions.setIsApplicationReview(true));
+      } else if (returnConversationIds?.length) {
+        dispatch(
+          ConversationsActions.selectConversations({
+            conversationIds: returnConversationIds,
+          }),
+        );
+        dispatch(ApplicationActions.setReturnConversationIds(undefined));
+      } else {
+        dispatch(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+          }),
+        );
+      }
+    }
+  }, [dispatch, hasCustomEditor, publicationUrl, returnConversationIds]);
+
+  useBeforeRedirect(handleCustomViewerExit, anyRouteExceptAppEditorRegex);
 
   return (
     <div

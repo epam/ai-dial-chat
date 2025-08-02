@@ -170,6 +170,24 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         console.info('Conversations updated');
       },
     );
+    const editMessageEvent = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.editMessage}`,
+      async (payload) => {
+        console.info('Message edited', { payload });
+      },
+    );
+    const regenerateLastMessageEvent = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.regenerateMessage}`,
+      async () => {
+        console.info('Message regenerated');
+      },
+    );
+    const deleteMessageEvent = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.deleteMessage}`,
+      async (payload) => {
+        console.info('Message deleted', { payload });
+      },
+    );
     const subMessageCustomButton = overlay.current?.subscribe(
       `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
       async (info) => {
@@ -177,6 +195,27 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
           'Custom message button event',
           JSON.stringify(info, null, 2),
         );
+      },
+    );
+    const subPrevPlaybackMessage = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.prevPlaybackMessage}`,
+      async (info) => {
+        console.info(
+          'Previous playback message',
+          JSON.stringify(info, null, 2),
+        );
+      },
+    );
+    const subNextPlaybackMessage = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.nextPlaybackMessage}`,
+      async (info) => {
+        console.info('Next playback message', JSON.stringify(info, null, 2));
+      },
+    );
+    const subStopGenerating = overlay.current?.subscribe(
+      `@DIAL_OVERLAY/${OverlayEvents.stopGenerating}`,
+      async () => {
+        console.info('Stop generating by user');
       },
     );
 
@@ -190,6 +229,12 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       subSelectedConversationLoaded,
       subConversationUpdated,
       subMessageCustomButton,
+      editMessageEvent,
+      regenerateLastMessageEvent,
+      deleteMessageEvent,
+      subPrevPlaybackMessage,
+      subNextPlaybackMessage,
+      subStopGenerating,
     ];
     return () => {
       subs.forEach((sub) => {

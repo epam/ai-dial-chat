@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useState } from 'react';
+import { FC, memo, useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -23,6 +23,7 @@ import {
   LikeState,
   Message,
   PublishActions,
+  Role,
 } from '@epam/ai-dial-shared';
 
 export interface Props {
@@ -38,7 +39,7 @@ export interface Props {
     conversation: Conversation,
     likeStatus: LikeState,
   ) => void;
-  onDelete: (messageIndex: number, conversation: Conversation) => void;
+  onDelete?: (messageIndex: number, conversation: Conversation) => void;
   onEdit: (
     editedMessage: Message,
     index: number,
@@ -82,6 +83,12 @@ export const ChatMessage: FC<Props> = memo(
     const isMessageTemplatesEnabled = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
     );
+    const isFirstMessageSystem = useMemo(() => {
+      return conversation.messages[0]?.role === Role.System;
+    }, [conversation.messages]);
+    const realMessageIndex = useMemo(() => {
+      return isFirstMessageSystem ? messageIndex + 1 : messageIndex;
+    }, [isFirstMessageSystem, messageIndex]);
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
@@ -115,8 +122,14 @@ export const ChatMessage: FC<Props> = memo(
     }, [message.content]);
 
     const handleDeleteMessage = useCallback(() => {
-      onDelete(messageIndex, conversation);
+      onDelete?.(messageIndex, conversation);
     }, [onDelete, messageIndex, conversation]);
+
+    const handleDelete = useCallback(() => {
+      if (!onDelete) return;
+
+      setIsDeleteConfirmationOpened(true);
+    }, [onDelete]);
 
     return (
       <>
@@ -124,10 +137,9 @@ export const ChatMessage: FC<Props> = memo(
           <ChatMessageContent
             isLastMessage={isLastMessage}
             messageIndex={messageIndex}
+            realMessageIndex={realMessageIndex}
             onEdit={onEdit}
-            onDelete={() => {
-              setIsDeleteConfirmationOpened(true);
-            }}
+            onDelete={onDelete && handleDelete}
             onToggleEditing={handleToggleEditing}
             isEditing={isEditing}
             editDisabled={editDisabled}
@@ -167,6 +179,7 @@ export const ChatMessage: FC<Props> = memo(
               <ChatMessageContent
                 isLastMessage={isLastMessage}
                 messageIndex={messageIndex}
+                realMessageIndex={realMessageIndex}
                 conversation={conversation}
                 allMessages={filteredMessages}
                 editDisabled={editDisabled}
@@ -196,13 +209,14 @@ export const ChatMessage: FC<Props> = memo(
             <MessageMobileButtons
               isMessageStreaming={!!conversation.isMessageStreaming}
               isLastMessage={isLastMessage}
+              realMessageIndex={realMessageIndex}
               message={message}
               isLikesEnabled={isLikesEnabled}
               onCopy={handleCopy}
               messageCopied={messageCopied}
               editDisabled={editDisabled}
               onLike={handleLike}
-              onDelete={() => setIsDeleteConfirmationOpened(true)}
+              onDelete={onDelete && handleDelete}
               isEditing={isEditing}
               onToggleEditing={handleToggleEditing}
               onRegenerate={onRegenerate}

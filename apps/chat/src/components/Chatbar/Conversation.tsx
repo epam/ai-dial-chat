@@ -220,8 +220,10 @@ export const ConversationComponent = ({
   const [isContextMenu, setIsContextMenu] = useState(false);
 
   const screenState = useScreenState();
-  const isSmallScreen = screenState === ScreenState.SM;
-  const shouldShowPadding = isSmallScreen
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
+
+  const shouldShowPadding = isMobileOrTablet
     ? isContextMenu && conversation.status !== UploadStatus.LOADED
     : isContextMenu;
 

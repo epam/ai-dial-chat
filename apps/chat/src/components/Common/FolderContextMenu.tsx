@@ -59,6 +59,7 @@ interface FolderContextMenuProps {
   onUpload?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
   isSelected?: boolean;
+  hideTriggerIcon?: boolean;
 }
 
 export const FolderContextMenu = ({
@@ -80,6 +81,7 @@ export const FolderContextMenu = ({
   isEmpty,
   additionalItemData,
   isSelected,
+  hideTriggerIcon,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -122,9 +124,7 @@ export const FolderContextMenu = ({
     return canEditSharedFolderOrParent(folders, folder.folderId);
   }, [folder.folderId, folders]);
 
-  const isMyFolder = useMemo(() => {
-    return isMyEntity(folder, featureType);
-  }, [featureType, folder]);
+  const isMyFolder = useMemo(() => isMyEntity(folder), [folder]);
 
   const isMyOrCanEdit = isMyFolder || canEditShared;
 
@@ -214,8 +214,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Delete'),
-        display:
-          !!onDelete && (isMyEntity(folder, featureType) || !!folder.temporary),
+        display: !!onDelete && (isMyEntity(folder) || !!folder.temporary),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -272,6 +271,7 @@ export const FolderContextMenu = ({
     <ContextMenu
       menuItems={menuItems}
       TriggerIcon={IconDots}
+      hideTriggerIcon={hideTriggerIcon}
       triggerIconSize={18}
       className="m-0 justify-self-end p-2"
       featureType={featureType}

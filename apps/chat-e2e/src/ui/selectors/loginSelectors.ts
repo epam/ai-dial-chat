@@ -2,19 +2,18 @@ import { AuthProvider } from '@/src/testData';
 
 export const Auth0Selectors = {
   auth0Container: '.auth0-lock-widget-container',
-  ssoSignIn: (authProvider: AuthProvider) =>
-    `form[action$=${authProvider}] > button`,
+  ssoSignIn: (authProvider: AuthProvider) => `[data-qa="${authProvider}"]`,
   username: '[name="email"]',
   password: '[name="password"]',
   login: '[name="submit"]',
 };
 
 export const KeycloakSelectors = {
-  keycloakContainer: '.card-pf',
+  keycloakContainer: '[id="kc-form"]',
   email: '#username',
   password: '#password',
   nextButton: '[value="Next"]',
-  signiInButton: '[value="Sign In"]',
+  signiInButton: '[type="submit"]',
 };
 
 export const AzureADSelectors = {

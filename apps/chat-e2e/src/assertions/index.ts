@@ -1,6 +1,5 @@
 export * from './api/apiAssertion';
 export * from './api/shareApiAssertion';
-
 export * from './accountSettingsAssertion';
 export * from './chatAssertion';
 export * from './chatHeaderAssertion';
@@ -37,3 +36,9 @@ export * from './addonsDialogAssertion';
 export * from './marketplaceAgentsAssertion';
 export * from './conversationToCompareAssertion';
 export * from '@/src/assertions/publishing/trees/publishFolderAssertion';
+export * from './publishing/trees/publishEntityAssertion';
+export * from './publishing/trees/publishFileAssertion';
+export * from './publishing/publishingApprovalModalAssertion';
+export * from './publishing/publishedPromptPreviewModalAssertion';
+export * from './publishing/publishedAppReviewModalAssertion';
+export * from './publishing/publicationReviewControlAssertion';

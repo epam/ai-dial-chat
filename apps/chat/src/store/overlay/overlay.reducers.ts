@@ -16,9 +16,11 @@ import {
   ExportConversationRequest,
   ImportConversationRequest,
   MessageButtons,
-  MessageCustomButtonResponse,
+  MessageCustomButtonEventResponse,
+  NextMessagePlaybackEventResponse,
   OverlayEvents,
   OverlayRequests,
+  PrevMessagePlaybackEventResponse,
   RenameConversationRequest,
   SelectConversationRequest,
   SendMessageRequest,
@@ -141,6 +143,14 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<SendMessageRequest>>,
     ) => state,
+    sendPrevPlaybackEvent: (
+      state,
+      _action: PayloadAction<PrevMessagePlaybackEventResponse>,
+    ) => state,
+    sendNextPlaybackEvent: (
+      state,
+      _action: PayloadAction<NextMessagePlaybackEventResponse>,
+    ) => state,
     deleteMessage: (
       state,
       _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
@@ -183,7 +193,7 @@ export const overlaySlice = createSlice({
     },
     sendCustomMessageEvent: (
       state,
-      _action: PayloadAction<MessageCustomButtonResponse>,
+      _action: PayloadAction<MessageCustomButtonEventResponse>,
     ) => state,
   },
 });

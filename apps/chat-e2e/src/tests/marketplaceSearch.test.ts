@@ -290,8 +290,7 @@ dialTest(
   },
 );
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   'Search by version. My custom application, published applications. Sorting. Suggested options.',
   async ({
     marketplacePage,
@@ -399,7 +398,7 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Search agents by the common version and verify 4 cards are found. Editable first agent card, editable and bookmarked second agent cards are found',
+      'Search agents by the common version and verify at least 4 cards are found. Editable first agent card, editable and bookmarked second agent cards are found',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(appCommonVersion);
         const allAgents = await marketplaceAgentsSection.getAllAgents();
@@ -408,7 +407,7 @@ dialTest.skip(
             (a.name === firstAppName || a.name === secondAppName) &&
             a.version === appCommonVersion,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           expectedAgents.length,
           4,
           ExpectedMessages.elementsCountIsValid,
@@ -457,7 +456,7 @@ dialTest.skip(
         const suggestedAgent = expectedAgents.filter(
           (agent) => agent.isSuggested,
         );
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           suggestedAgent.length,
           1,
           ExpectedMessages.elementsCountIsValid,
@@ -510,8 +509,7 @@ dialTest.skip(
   },
 );
 
-//TODO: test-cases need to be updated after new search mechanism implementation
-dialTest.skip(
+dialTest(
   'Search in DIAL Marketplace: Search word and other filters work together type and topics.\n' +
     '[Card view] Not published my custom application does not have bookmark icon.\n' +
     '[Detailed card view] Not published my custom application does not have bookmark icon',
@@ -532,7 +530,7 @@ dialTest.skip(
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     const thirdAppName = GeneratorUtil.randomApplicationName();
-    const appTopic = GeneratorUtil.randomString(5);
+    const appTopic = GeneratorUtil.randomString(10);
     let actualAgent: BaseElement;
 
     await dialTest.step(
@@ -606,18 +604,24 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Set first app name in the search field and verify only one app is filtered',
+      'Set first app name in the search field and verify at least one app is filtered',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(firstAppName);
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
-        baseAssertion.assertValue(
+        baseAssertion.assertNumberIsGreaterThanOrEqual(
           actualAgents.length,
           1,
           ExpectedMessages.elementsCountIsValid,
         );
+        const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayIncludesAll(
-          actualAgents.map((agent) => agent.name),
+          actualAgentNames,
           [firstAppName],
+          MarketplaceExpectedMessages.filteredAgentsAreValid,
+        );
+        baseAssertion.assertArrayExcludesAll(
+          actualAgentNames,
+          [secondAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,
         );
       },

@@ -51,7 +51,10 @@ import {
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
 import { getPublishFolderResources } from '@/src/utils/app/publications';
-import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import {
+  doesEntityContainSearchItem,
+  isHiddenEntity,
+} from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
 import {
@@ -147,6 +150,7 @@ export interface FolderProps<T, P = unknown> {
     type,
     action,
   }: PublicationFolderPayload) => void;
+  showTechnicalFolders?: boolean;
 }
 
 export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -189,13 +193,15 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   canManageOnlyTemporaryFolders = false,
   onShowError,
   onPublication,
+  showTechnicalFolders = false,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
   const screenState = useScreenState();
-  const isSmallScreen = screenState === ScreenState.SM;
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const checkboxRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -419,9 +425,13 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, [openedFoldersIds, currentFolder.id]);
   const filteredChildFolders = useMemo(() => {
     return sortByName(
-      allFolders.filter((folder) => folder.folderId === currentFolder.id),
+      allFolders.filter(
+        (folder) =>
+          folder.folderId === currentFolder.id &&
+          (showTechnicalFolders || !isHiddenEntity(folder)),
+      ),
     );
-  }, [currentFolder, allFolders]);
+  }, [allFolders, currentFolder.id, showTechnicalFolders]);
   const filteredChildItems = useMemo(() => {
     return sortByName(
       allItems?.filter(
@@ -502,6 +512,15 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         dispatch(
           UIActions.showErrorToast(
             t('Using a dot at the end of a name is not permitted.'),
+          ),
+        );
+        return;
+      }
+
+      if (newName.startsWith('.')) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the start of a name is not permitted.'),
           ),
         );
         return;
@@ -1165,7 +1184,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
-                isContextMenu && !isSmallScreen && 'pr-5',
+                isContextMenu && !isMobileOrTablet && 'pr-5',
               )}
               data-qa="folder-name"
             >
@@ -1182,8 +1201,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         ),
                       )
                 }
-                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                 isTriggerClickable
+                contentClassName="break-all"
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
@@ -1259,6 +1278,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onSelect={onSelectFolder && onSelect}
                     canSelectFolders={canSelectFolders}
                     additionalItemData={additionalItemData}
+                    hideTriggerIcon={isMobileOrTablet}
                   />
                 </div>
               )}

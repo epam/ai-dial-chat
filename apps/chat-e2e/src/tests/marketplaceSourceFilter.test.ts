@@ -18,7 +18,7 @@ import { Attributes } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { Locator, expect } from '@playwright/test';
+import { Locator } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -536,14 +536,11 @@ dialSharedWithMeTest(
           const expectedAgentNames = Array.from(
             groupedConfigAgents.keys(),
           ).filter((k) => k !== sharedAppName && k !== additionalUserAppName);
-          for (const expectedAgentName of expectedAgentNames) {
-            expect
-              .soft(
-                actualAgents.find((agent) => agent.name === expectedAgentName),
-                MarketplaceExpectedMessages.filteredAgentsAreValid,
-              )
-              .toBeDefined();
-          }
+          baseAssertion.assertArrayIncludesAll(
+            actualAgents.map((agent) => agent.name),
+            expectedAgentNames,
+            MarketplaceExpectedMessages.filteredAgentsAreValid,
+          );
         },
       );
     }

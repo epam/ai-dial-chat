@@ -11,6 +11,7 @@ import {
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { loadingTimeout } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -353,6 +354,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    appContainer,
     messageTemplateModal,
     messageTemplateModalAssertion,
     chatMessages,
@@ -391,6 +393,8 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
+        await conversations.selectedEntity(conversation.name).waitFor();
+        await appContainer.waitForAppLoaded(loadingTimeout);
         await chatMessages.openEditMessageMode(1);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,

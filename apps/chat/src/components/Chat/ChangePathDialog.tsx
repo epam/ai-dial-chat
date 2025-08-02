@@ -13,8 +13,8 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 import { getIdWithoutFeatureType } from '@/src/utils/app/id';
+import { isHiddenEntity } from '@/src/utils/app/search';
 
-import { FolderInterface } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -69,6 +69,7 @@ export const ChangePathDialog = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isAllFoldersOpened, setIsAllFoldersOpened] = useState(true);
+  const [areHiddenFoldersVisible, setAreHiddenFoldersVisible] = useState(false);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     rootFolderId,
@@ -97,21 +98,25 @@ export const ChangePathDialog = ({
   const fileFolders = useAppSelector(FilesSelectors.selectPublicFolders);
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
-  const folders = useMemo(
-    () =>
-      sortByName(
-        uniqBy(
-          [
-            ...conversationFolders,
-            ...promptFolders,
-            ...applicationFolders,
-            ...fileFolders,
-          ],
-          ({ id }) => getIdWithoutFeatureType(id),
-        ) as FolderInterface[],
-      ),
-    [conversationFolders, promptFolders, applicationFolders, fileFolders],
-  );
+  const folders = useMemo(() => {
+    const filteredFolders = uniqBy(
+      [
+        ...conversationFolders,
+        ...promptFolders,
+        ...applicationFolders,
+        ...fileFolders,
+      ],
+      ({ id }) => getIdWithoutFeatureType(id),
+    ).filter((f) => areHiddenFoldersVisible || !isHiddenEntity(f));
+
+    return sortByName(filteredFolders);
+  }, [
+    conversationFolders,
+    promptFolders,
+    applicationFolders,
+    fileFolders,
+    areHiddenFoldersVisible,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -128,6 +133,10 @@ export const ChangePathDialog = ({
     },
     [actions, dispatch],
   );
+
+  const handleToggleHiddenFolders = useCallback(() => {
+    setAreHiddenFoldersVisible((prev) => !prev);
+  }, []);
 
   const handleToggleFolder = useCallback(
     (folderId?: string) => {
@@ -287,6 +296,8 @@ export const ChangePathDialog = ({
       <SelectFolderFooter
         onCreateNewFolder={handleAddFolder}
         onSelectFolderClick={getPath}
+        onToggleHiddenFolders={handleToggleHiddenFolders}
+        areHiddenFoldersVisible={areHiddenFoldersVisible}
       />
     </SelectFolder>
   );

@@ -102,6 +102,7 @@ import {
   FilesActions,
   MarketplaceActions,
   ModelsActions,
+  OverlayActions,
   PublicationActions,
   ShareActions,
   UIActions,
@@ -942,11 +943,26 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const clearConversationsEpic: AppEpic = (action$) =>
+const clearConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.clearConversations.type),
     switchMap(() => {
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+
       return concat(
+        iif(
+          () =>
+            !selectedConversations.every(
+              (conv) => isEntityIdLocal(conv) || isEntityIdExternal(conv),
+            ),
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+          EMPTY,
+        ),
         of(
           ConversationsActions.deleteFolder({
             folderId: getConversationRootId(),
@@ -1123,6 +1139,81 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         }),
       );
     }),
+  );
+
+const regenerateLastMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ConversationsActions.regenerateLastMessage.type),
+    switchMap(({ payload }) => {
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+
+      const lastUserMessageIndex = selectedConversations[0].messages
+        .map((msg) => msg.role)
+        .lastIndexOf(Role.User);
+
+      return of(
+        ConversationsActions.sendMessages({
+          conversations: selectedConversations,
+          message: selectedConversations[0].messages[lastUserMessageIndex],
+          deleteCount:
+            selectedConversations[0].messages.length - lastUserMessageIndex,
+          activeReplayIndex: 0,
+          skipRecentModelsUpdate: payload.skipRecentModelsUpdate,
+        }),
+      );
+    }),
+  );
+
+const editMessageEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ConversationsActions.editMessage.type),
+    switchMap(
+      ({
+        payload: { convId, editedMessage, index, skipRecentModelsUpdate },
+      }) => {
+        const actions: Observable<AppAction>[] = [];
+        const selectedConversations =
+          ConversationsSelectors.selectSelectedConversations(state$.value);
+        let finalIndex = index;
+        const conv = selectedConversations.find((conv) => conv.id === convId);
+        if (conv?.messages.at(0)?.role === Role.System) {
+          finalIndex += 1;
+        }
+
+        if (!conv) return EMPTY;
+
+        actions.push(of(ConversationsActions.stopStreamMessage()));
+
+        if (editedMessage.role === Role.User) {
+          actions.push(
+            of(
+              ConversationsActions.sendMessages({
+                conversations: selectedConversations,
+                message: editedMessage,
+                deleteCount: conv?.messages.length - index,
+                activeReplayIndex: 0,
+                skipRecentModelsUpdate,
+              }),
+            ),
+          );
+
+          return concat(...actions);
+        }
+
+        actions.push(
+          of(
+            ConversationsActions.updateMessage({
+              conversationId: convId,
+              messageIndex: finalIndex,
+              values: editedMessage,
+            }),
+          ),
+        );
+
+        return concat(...actions);
+      },
+    ),
   );
 
 const updateMessageEpic: AppEpic = (action$, state$) =>
@@ -2267,19 +2358,32 @@ const playbackNextMessageEndEpic: AppEpic = (action$, state$) =>
 
       const updatedMessagesWithAssistant =
         messagesDeletedLastMessage.concat(assistantMessage);
+      const playbackState = {
+        ...selectedConversation.playback,
+        activePlaybackIndex: activeIndex + 1,
+      };
 
-      return of(
-        ConversationsActions.updateConversation({
-          id: selectedConversation.id,
-          values: {
-            messages: updatedMessagesWithAssistant,
-            isMessageStreaming: false,
-            playback: {
-              ...selectedConversation.playback,
-              activePlaybackIndex: activeIndex + 1,
+      return concat(
+        of(
+          OverlayActions.sendNextPlaybackEvent({
+            newActiveIndex: activeIndex,
+            playbackState,
+            updatedMessages: updatedMessagesWithAssistant,
+          }),
+        ),
+        of(
+          ConversationsActions.updateConversation({
+            id: selectedConversation.id,
+            values: {
+              messages: updatedMessagesWithAssistant,
+              isMessageStreaming: false,
+              playback: {
+                ...selectedConversation.playback,
+                activePlaybackIndex: activeIndex + 1,
+              },
             },
-          },
-        }),
+          }),
+        ),
       );
     }),
   );
@@ -2316,24 +2420,37 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
             : conv.model;
           const { prompt, temperature, selectedAddons, assistantModelId } =
             assistantMessage?.settings ? assistantMessage.settings : conv;
+          const playbackState = {
+            ...conv.playback,
+            activePlaybackIndex: activeIndex,
+          };
 
-          return of(
-            ConversationsActions.updateConversation({
-              id: conv.id,
-              values: {
-                messages: updatedMessages,
-                isMessageStreaming: false,
-                model,
-                prompt,
-                temperature: temperature,
-                selectedAddons: selectedAddons,
-                assistantModelId: assistantModelId,
-                playback: {
-                  ...conv.playback,
-                  activePlaybackIndex: activeIndex,
+          return concat(
+            of(
+              OverlayActions.sendPrevPlaybackEvent({
+                newActiveIndex: activeIndex,
+                playbackState,
+                updatedMessages,
+              }),
+            ),
+            of(
+              ConversationsActions.updateConversation({
+                id: conv.id,
+                values: {
+                  messages: updatedMessages,
+                  isMessageStreaming: false,
+                  model,
+                  prompt,
+                  temperature: temperature,
+                  selectedAddons: selectedAddons,
+                  assistantModelId: assistantModelId,
+                  playback: {
+                    ...conv.playback,
+                    activePlaybackIndex: activeIndex,
+                  },
                 },
-              },
-            }),
+              }),
+            ),
           );
         }),
       );
@@ -3502,6 +3619,8 @@ export const ConversationsEpics = combineEpics(
   deleteConversationsEpic,
   deleteChosenConversationsEpic,
   updateMessageEpic,
+  editMessageEpic,
+  regenerateLastMessageEpic,
   rateMessageEpic,
   rateMessageSuccessEpic,
   sendMessageEpic,

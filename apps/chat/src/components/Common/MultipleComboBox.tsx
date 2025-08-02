@@ -237,7 +237,7 @@ export function MultipleComboBox<T>({
     <Tooltip tooltip={tooltip}>
       <div
         className={classNames(
-          'relative w-full bg-transparent md:max-w-[205px]',
+          'relative w-full bg-transparent',
           disabled && 'cursor-not-allowed',
           className,
         )}

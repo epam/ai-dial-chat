@@ -51,10 +51,6 @@ export class ConversationToCompare extends BaseElement {
     ).getComputedStyleProperty(Styles.color);
   }
 
-  public async getCompareConversationNames() {
-    return this.compareConversationRowNames.getElementsInnerContent();
-  }
-
   public async selectCompareConversation(
     name: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},

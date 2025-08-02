@@ -83,6 +83,7 @@ import {
 } from './form';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { escapeRegExp } from 'lodash';
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
 import isEqual from 'lodash-es/isEqual';
@@ -251,7 +252,7 @@ export function PublishModal<
   const handlePublish = useCallback(
     (data: PublicationRequestFormData) => {
       const folderOldPathPartsRegExp = new RegExp(
-        getIdWithoutRootPathSegments(entity.folderId),
+        escapeRegExp(getIdWithoutRootPathSegments(entity.folderId)),
       );
 
       const trimmedPath = path.trim();
@@ -534,8 +535,8 @@ export function PublishModal<
                     <div className="flex w-full justify-between truncate whitespace-pre break-all">
                       <Tooltip
                         tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
-                        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                         triggerClassName="truncate whitespace-pre"
+                        contentClassName="break-all"
                         dataQa="path"
                       >
                         {constructPath(ORGANIZATION_SECTION_NAME, path)}

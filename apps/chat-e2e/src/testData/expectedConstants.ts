@@ -183,7 +183,8 @@ export const ExpectedConstants = {
   exportedFileExtension: '.json',
   publishToLabel: 'Publish to',
   authorLabel: 'Author',
-  requestCreationDateLabel: 'Request created:',
+  publicAuthorLabel: `Author's public name`,
+  requestCreationDateLabel: 'Request created',
   allowAccessLabel: 'Allow access if all match',
   noChangesLabel: 'No changes',
   availabilityLabel:
@@ -521,11 +522,11 @@ export enum ToggleState {
 
 export enum AuthProvider {
   auth0 = 'auth0',
-  azureAD = 'azureAD',
+  azureAD = 'azure-ad',
   gitlab = 'gitlab',
   google = 'google',
   keycloak = 'keycloak',
-  pingID = 'pingID',
+  pingID = 'pingid',
   cognito = 'cognito',
   okta = 'okta',
 }

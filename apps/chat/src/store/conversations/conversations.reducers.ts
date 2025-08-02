@@ -396,6 +396,7 @@ export const conversationsSlice = createSlice({
       state.folders = state.folders.filter((folder) =>
         isEntityIdExternal(folder),
       );
+      state.areSelectedConversationsLoaded = true;
     },
     createFolder: (
       state,
@@ -524,6 +525,21 @@ export const conversationsSlice = createSlice({
       state.searchTerm = '';
       state.searchFilters = SearchFilters.None;
     },
+    regenerateLastMessage: (
+      state,
+      _action: PayloadAction<{
+        skipRecentModelsUpdate: boolean;
+      }>,
+    ) => state,
+    editMessage: (
+      state,
+      _action: PayloadAction<{
+        editedMessage: Message;
+        index: number;
+        convId: string;
+        skipRecentModelsUpdate: boolean;
+      }>,
+    ) => state,
     updateMessage: (
       state,
       _action: PayloadAction<{

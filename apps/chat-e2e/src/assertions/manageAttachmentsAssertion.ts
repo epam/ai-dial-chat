@@ -48,12 +48,10 @@ export class ManageAttachmentsAssertion extends BaseAssertion {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const arrowIconColor = await this.attachFilesModal
+    const arrowIconElement = this.attachFilesModal
       .getAllFilesTree()
-      .getAttachedFileArrowIconColor(entity.name, entity.index);
-    expect
-      .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
-      .toBe(expectedColor);
+      .getAttachedFileArrowIcon(entity.name, entity.index);
+    await this.assertElementColor(arrowIconElement, expectedColor);
   }
 
   public async assertEntityState(

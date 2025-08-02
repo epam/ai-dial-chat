@@ -78,7 +78,6 @@ const Addon = ({
           <EntityMarkdownDescription>{description}</EntityMarkdownDescription>
         }
         triggerClassName="flex shrink-0"
-        contentClassName="max-w-[220px]"
         placement="top"
       >
         <AddonButton

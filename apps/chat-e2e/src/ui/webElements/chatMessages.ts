@@ -30,7 +30,11 @@ export class ChatMessages extends BaseElement {
   );
 
   public compareChatMessageRows = this.getChildElementBySelector(
-    ChatSelectors.compareChatMessage,
+    ChatSelectors.compareChatMessageRow,
+  );
+
+  public lastCompareChatMessageRows = this.getChildElementBySelector(
+    ChatSelectors.lastCompareChatMessageRow(),
   );
 
   public compareChatMessages =
@@ -274,8 +278,7 @@ export class ChatMessages extends BaseElement {
   public async waitForCompareMessageJumpingIconDisappears(
     comparedMessageSide: Side,
   ) {
-    const compareRowMessage =
-      await this.getCompareRowMessage(comparedMessageSide);
+    const compareRowMessage = this.getCompareRowMessage(comparedMessageSide);
     await this.getMessageJumpingIconLocator(compareRowMessage).waitFor({
       state: 'detached',
     });
@@ -288,22 +291,22 @@ export class ChatMessages extends BaseElement {
     );
   }
 
-  public async getCompareMessageJumpingIcon(
+  public getCompareMessageJumpingIcon(
     comparedMessageSide: Side,
     rowIndex?: number,
   ) {
-    const compareRowMessage = await this.getCompareRowMessage(
+    const compareRowMessage = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );
     return this.getMessageJumpingIconLocator(compareRowMessage);
   }
 
-  public async getIconAttributesForCompareMessage(
+  public getIconAttributesForCompareMessage(
     comparedMessageSide: Side,
     rowIndex?: number,
   ) {
-    const compareRowMessage = await this.getCompareRowMessage(
+    const compareRowMessage = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );
@@ -314,28 +317,26 @@ export class ChatMessages extends BaseElement {
     return this.compareChatMessages.getElementsCount();
   }
 
-  public async getCompareMessageRow(rowIndex?: number) {
-    const rowsCount = await this.compareChatMessageRows.getElementsCount();
-    return this.compareChatMessageRows.getNthElement(rowIndex ?? rowsCount);
+  public getCompareMessageRow(rowIndex?: number) {
+    return rowIndex
+      ? this.compareChatMessageRows.getNthElement(rowIndex)
+      : this.lastCompareChatMessageRows.getElementLocator();
   }
 
-  public async getCompareRowMessage(
-    comparedMessageSide: Side,
-    rowIndex?: number,
-  ) {
-    const compareChatMessageRow = await this.getCompareMessageRow(rowIndex);
+  public getCompareRowMessage(comparedMessageSide: Side, rowIndex?: number) {
+    const compareChatMessageRow = this.getCompareMessageRow(rowIndex);
     const messageIndex = comparedMessageSide === Side.left ? 0 : 1;
     return compareChatMessageRow
       .locator(ChatSelectors.chatMessage)
       .nth(messageIndex);
   }
 
-  public async getCompareRowMessageRate(
+  public getCompareRowMessageRate(
     comparedMessageSide: Side,
     rate: Rate,
     rowIndex?: number,
   ) {
-    const compareRowMessage = await this.getCompareRowMessage(
+    const compareRowMessage = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );
@@ -347,7 +348,7 @@ export class ChatMessages extends BaseElement {
     rate: Rate,
     rowIndex?: number,
   ) {
-    const thumb = await this.getCompareRowMessageRate(
+    const thumb = this.getCompareRowMessageRate(
       comparedMessageSide,
       rate,
       rowIndex,
@@ -360,19 +361,6 @@ export class ChatMessages extends BaseElement {
     );
     await thumb.click();
     return respPromise;
-  }
-
-  public async isComparedRowMessageRated(
-    comparedMessageSide: Side,
-    rate: Rate,
-    rowIndex?: number,
-  ) {
-    const thumb = await this.getCompareRowMessageRate(
-      comparedMessageSide,
-      rate,
-      rowIndex,
-    );
-    return thumb.isVisible();
   }
 
   public async openDeleteCompareRowMessageDialog(
@@ -413,7 +401,7 @@ export class ChatMessages extends BaseElement {
     comparedMessageSide: Side,
     rowIndex?: number,
   ) {
-    const messageToCopy = await this.getCompareRowMessage(
+    const messageToCopy = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );

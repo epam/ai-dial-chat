@@ -203,6 +203,30 @@ export const ChatOverlayManagerWrapper: React.FC<
         console.info('Conversations updated');
       },
     );
+    const editMessageEvent = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+
+      `@DIAL_OVERLAY/${OverlayEvents.editMessage}`,
+      async (payload) => {
+        console.info('Message edited', { payload });
+      },
+    );
+    const regenerateLastMessageEvent = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+
+      `@DIAL_OVERLAY/${OverlayEvents.regenerateMessage}`,
+      async () => {
+        console.info('Message regenerated');
+      },
+    );
+    const deleteMessageEvent = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+
+      `@DIAL_OVERLAY/${OverlayEvents.deleteMessage}`,
+      async (payload) => {
+        console.info('Message deleted', { payload });
+      },
+    );
     const subMessageCustomButton = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
@@ -211,6 +235,30 @@ export const ChatOverlayManagerWrapper: React.FC<
           'Custom message button event',
           JSON.stringify(info, null, 2),
         );
+      },
+    );
+    const subPrevPlaybackMessage = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.prevPlaybackMessage}`,
+      async (info) => {
+        console.info(
+          'Previous playback message',
+          JSON.stringify(info, null, 2),
+        );
+      },
+    );
+    const subNextPlaybackMessage = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.nextPlaybackMessage}`,
+      async (info) => {
+        console.info('Next playback message', JSON.stringify(info, null, 2));
+      },
+    );
+    const subStopGenerating = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.stopGenerating}`,
+      async () => {
+        console.info('Stop generating by user');
       },
     );
 
@@ -226,6 +274,12 @@ export const ChatOverlayManagerWrapper: React.FC<
       subSelectedConversationLoaded,
       subConversationUpdated,
       subMessageCustomButton,
+      editMessageEvent,
+      regenerateLastMessageEvent,
+      deleteMessageEvent,
+      subPrevPlaybackMessage,
+      subNextPlaybackMessage,
+      subStopGenerating,
     ];
     return () => {
       subs.forEach((sub) => {

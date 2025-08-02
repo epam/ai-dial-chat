@@ -342,7 +342,7 @@ export class Chat extends BaseElement {
   }
 
   public async goToContentPosition(state: ScrollState) {
-    const chatBounding = await this.getElementBoundingBox();
+    const chatBounding = await this.scrollableArea.getElementBoundingBox();
     await this.click({
       position: {
         x: chatBounding!.x + chatBounding!.width / 2,
@@ -359,6 +359,5 @@ export class Chat extends BaseElement {
         break;
     }
     await this.page.keyboard.press(keyToPress!);
-    await this.waitForScrollPosition(state);
   }
 }

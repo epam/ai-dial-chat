@@ -116,7 +116,7 @@ export function Layout({
     <>
       <Title settings={settings} />
       {shouldOverlayLogin ? (
-        <div className="grid size-full min-h-[100px] place-items-center bg-layer-1 text-sm text-primary">
+        <div className="grid h-screen w-full place-items-center bg-auth-layer-0 text-sm text-primary">
           <button
             onClick={handleOverlayAuth}
             className="button button-secondary"

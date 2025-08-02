@@ -79,8 +79,10 @@ import {
   CreatePlaybackConversationRequest,
   CreatePlaybackConversationResponse,
   DeleteConversationRequest,
+  DeleteMessageEventResponse,
   DeleteMessageRequest,
   DeleteMessageResponse,
+  EditMessageEventResponse,
   ExportConversationRequest,
   ExportConversationResponse,
   Feature,
@@ -89,15 +91,17 @@ import {
   GetMessagesResponse,
   ImportConversationRequest,
   ImportConversationResponse,
+  NextMessagePlaybackEventResponse,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  PrevMessagePlaybackEventResponse,
   RenameConversationRequest,
   RenameConversationResponse,
   Role,
   SelectConversationRequest,
   SelectConversationResponse,
-  SelectedConversationLoadedResponse,
+  SelectedConversationLoadedEventResponse,
   SendMessageRequest,
   SetInputContentRequest,
   SetSystemPromptRequest,
@@ -317,12 +321,14 @@ const getMessagesEpic: AppEpic = (action$, state$) =>
     map(({ requestId, currentConversation, hostDomain }) => {
       const messages = currentConversation?.messages || [];
 
+      const payload: GetMessagesResponse = { messages };
+
       return OverlayActions.sendPMResponse({
         type: OverlayRequests.getMessages,
         requestParams: {
           requestId,
           hostDomain,
-          payload: { messages } as GetMessagesResponse,
+          payload,
         },
       });
     }),
@@ -347,14 +353,16 @@ const getConversationsEpic: AppEpic = (action$, state$) =>
         };
       });
 
+      const payload: GetConversationsResponse = {
+        conversations: resultConversations,
+      };
+
       return OverlayActions.sendPMResponse({
         type: OverlayRequests.getConversations,
         requestParams: {
           requestId,
           hostDomain,
-          payload: {
-            conversations: resultConversations,
-          } as GetConversationsResponse,
+          payload,
         },
       });
     }),
@@ -379,14 +387,16 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
         };
       });
 
+      const payload: GetConversationsResponse = {
+        conversations: resultConversations,
+      };
+
       return OverlayActions.sendPMResponse({
         type: OverlayRequests.getSelectedConversations,
         requestParams: {
           requestId,
           hostDomain,
-          payload: {
-            conversations: resultConversations,
-          } as GetConversationsResponse,
+          payload,
         },
       });
     }),
@@ -476,6 +486,10 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
+          const payloadResponse: CreateConversationResponse = {
+            conversation: resultConversation,
+          };
+
           return concat(
             of(UIActions.setScrollToEntityId(conversation.id)),
             of(
@@ -484,9 +498,7 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    conversation: resultConversation,
-                  } as CreateConversationResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -517,6 +529,10 @@ const createLocalConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
+          const payloadResponse: CreateConversationResponse = {
+            conversation: resultConversation,
+          };
+
           return concat(
             of(UIActions.setScrollToEntityId(conversation.id)),
             of(
@@ -525,9 +541,7 @@ const createLocalConversationEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    conversation: resultConversation,
-                  } as CreateConversationResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -614,6 +628,10 @@ const createPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
+          const payloadResponse: CreatePlaybackConversationResponse = {
+            conversation: resultConversation,
+          };
+
           return concat(
             of(UIActions.setScrollToEntityId(newConversation.id)),
             of(
@@ -622,9 +640,7 @@ const createPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    conversation: resultConversation,
-                  } as CreatePlaybackConversationResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -683,6 +699,10 @@ const stopSelectedPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
+          const payloadResponse: StopSelectedPlaybackConversationResponse = {
+            conversation: resultConversation,
+          };
+
           return concat(
             of(
               OverlayActions.sendPMResponse({
@@ -690,9 +710,7 @@ const stopSelectedPlaybackConversationEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    conversation: resultConversation,
-                  } as StopSelectedPlaybackConversationResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -777,6 +795,10 @@ const renameConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
+          const payloadResponse: RenameConversationResponse = {
+            conversation: resultConversation,
+          };
+
           return concat(
             of(UIActions.setScrollToEntityId(conversation.id)),
             of(
@@ -785,9 +807,7 @@ const renameConversationEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    conversation: resultConversation,
-                  } as RenameConversationResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -830,15 +850,17 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         parentFolders,
       );
 
+      const payloadResponse: ExportConversationResponse = {
+        exportConversation: exportedConversation,
+      };
+
       return of(
         OverlayActions.sendPMResponse({
           type: OverlayRequests.exportConversation,
           requestParams: {
             requestId,
             hostDomain,
-            payload: {
-              exportConversation: exportedConversation,
-            } as ExportConversationResponse,
+            payload: payloadResponse,
           },
         }),
       );
@@ -908,6 +930,10 @@ const importConversationEffectEpic: AppEpic = (action$, state$) =>
             parentPath,
           };
 
+          const payloadResponse: ImportConversationResponse = {
+            conversation: resultConversation,
+          };
+
           return concat(
             of(UIActions.setScrollToEntityId(conversation.id)),
             of(
@@ -916,9 +942,7 @@ const importConversationEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    conversation: resultConversation,
-                  } as ImportConversationResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -946,6 +970,16 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
         getParentFolderIdsFromFolderId(conversation.folderId),
       );
 
+      const { bucket, parentPath } = splitEntityId(conversation.id);
+      const resultConversation = {
+        ...conversation,
+        bucket,
+        parentPath,
+      };
+      const payloadResponse: SelectConversationResponse = {
+        conversation: resultConversation,
+      };
+
       return concat(
         foldersPaths
           ? of(
@@ -967,9 +1001,7 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
             requestParams: {
               requestId,
               hostDomain,
-              payload: {
-                conversation: conversation,
-              } as SelectConversationResponse,
+              payload: payloadResponse,
             },
           }),
         ),
@@ -1040,6 +1072,12 @@ const deleteMessageEffectEpic: AppEpic = (action$, state$) =>
         mergeMap(({ payload: { conversation } }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
+          if (!conversation.messages) return EMPTY;
+
+          const payloadResponse: DeleteMessageResponse = {
+            messages: conversation.messages,
+          };
+
           return concat(
             of(
               OverlayActions.sendPMResponse({
@@ -1047,9 +1085,7 @@ const deleteMessageEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    messages: conversation.messages,
-                  } as DeleteMessageResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -1100,6 +1136,12 @@ const updateMessageEffectEpic: AppEpic = (action$, state$) =>
         mergeMap(({ payload: { conversation } }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
+          if (!conversation.messages) return EMPTY;
+
+          const payloadResponse: DeleteMessageResponse = {
+            messages: conversation.messages,
+          };
+
           return concat(
             of(
               OverlayActions.sendPMResponse({
@@ -1107,9 +1149,7 @@ const updateMessageEffectEpic: AppEpic = (action$, state$) =>
                 requestParams: {
                   requestId,
                   hostDomain,
-                  payload: {
-                    messages: conversation.messages,
-                  } as DeleteMessageResponse,
+                  payload: payloadResponse,
                 },
               }),
             ),
@@ -1378,14 +1418,132 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
       const currentConvIds =
         ConversationsSelectors.selectSelectedConversationsIds(state);
 
+      const payloadResponse: SelectedConversationLoadedEventResponse = {
+        selectedConversationIds: currentConvIds,
+      };
+
       return of(
         OverlayActions.sendPMEvent({
           type: OverlayEvents.selectedConversationLoaded,
           eventParams: {
             hostDomain,
-            payload: {
-              selectedConversationIds: currentConvIds,
-            } as SelectedConversationLoadedResponse,
+            payload: payloadResponse,
+          },
+        }),
+      );
+    }),
+  );
+
+const sendEditMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.editMessage.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      const payloadResponse: EditMessageEventResponse = payload;
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.editMessage,
+          eventParams: {
+            hostDomain,
+            payload: payloadResponse,
+          },
+        }),
+      );
+    }),
+  );
+const sendRegenerateLastMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.regenerateLastMessage.type),
+    switchMap(() => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.regenerateMessage,
+          eventParams: {
+            hostDomain,
+          },
+        }),
+      );
+    }),
+  );
+const sendStopGeneratingEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.stopStreamMessage.type),
+    switchMap(() => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.stopGenerating,
+          eventParams: {
+            hostDomain,
+          },
+        }),
+      );
+    }),
+  );
+
+const sendPrevPlaybackMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(OverlayActions.sendPrevPlaybackEvent.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const payloadResponse: PrevMessagePlaybackEventResponse = payload;
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.prevPlaybackMessage,
+          eventParams: {
+            hostDomain,
+            payload: payloadResponse,
+          },
+        }),
+      );
+    }),
+  );
+
+const sendNextPlaybackMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(OverlayActions.sendNextPlaybackEvent.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const payloadResponse: NextMessagePlaybackEventResponse = payload;
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.nextPlaybackMessage,
+          eventParams: {
+            hostDomain,
+            payload: payloadResponse,
+          },
+        }),
+      );
+    }),
+  );
+
+const sendDeleteMessageEvent: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    ofType(ConversationsActions.deleteMessage.type),
+    switchMap(({ payload }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      const payloadResponse: DeleteMessageEventResponse = payload;
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.deleteMessage,
+          eventParams: {
+            hostDomain,
+            payload: payloadResponse,
           },
         }),
       );
@@ -1528,6 +1686,7 @@ export const OverlayEpics = combineEpics(
   sendPMEventEpic,
   sendPMResponseEpic,
   sendCustomMessageEvent,
+  sendStopGeneratingEvent,
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,
@@ -1542,4 +1701,9 @@ export const OverlayEpics = combineEpics(
   sendSelectedConversationLoaded,
   sendReadyToInteract,
   sendConversationUpdated,
+  sendEditMessageEvent,
+  sendRegenerateLastMessageEvent,
+  sendDeleteMessageEvent,
+  sendPrevPlaybackMessageEvent,
+  sendNextPlaybackMessageEvent,
 );

@@ -34,6 +34,11 @@ interface OverlaySignInOptions {
   signInInNewWindow?: boolean;
 }
 
+export enum MessageButtonPlacement {
+  PREPEND_DEFAULT_BUTTONS = 'PREPEND_DEFAULT_BUTTONS', // Buttons to show before default buttons
+  CONTENT_APPEND = 'CONTENT_APPEND', // (Default) Buttons to show in separate block after all content, but before default message buttons
+}
+
 export interface MessageButton {
   buttonKey: string; // Unique key which will be exposed to host on click
   events: (keyof WindowEventMap)[];
@@ -45,6 +50,7 @@ export interface MessageButton {
   hoverStyles?: Styles;
   focusStyles?: Styles;
   disabledStyles?: Styles;
+  placement?: MessageButtonPlacement;
   disabled?: boolean;
 }
 

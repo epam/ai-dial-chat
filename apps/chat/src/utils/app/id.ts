@@ -75,16 +75,15 @@ export const isEntityIdExternal = (entity: { id: string }) => {
   return bucket !== LOCAL_BUCKET && bucket !== BucketService.getBucket();
 };
 
-export const isMyEntity = (entity: { id: string }, featureType: FeatureType) =>
-  entity.id.startsWith(getRootId({ featureType }));
-
-export const isMyApplication = (entity: { id: string }) =>
-  entity.id === DRAFT_APPLICATION_ID ||
-  isMyEntity(entity, FeatureType.Application);
-
 export const isMyBucket = (bucket: string) => {
   return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
 };
+
+export const isMyEntity = (entity: { id: string }) =>
+  isMyBucket(getEntityBucket(entity));
+
+export const isMyApplication = (entity: { id: string }) =>
+  entity.id === DRAFT_APPLICATION_ID || isMyEntity(entity);
 
 export const filterIdsByFeatureType = (
   ids: string[],
@@ -109,3 +108,7 @@ export const isRootEntity = (id: string) => {
 
 export const getIdWithoutFeatureType = (id: string) =>
   id.split('/').slice(1).join('/');
+
+export const areBucketsTheSame = (firstId: string, secondId: string) => {
+  return getEntityBucket({ id: firstId }) === getEntityBucket({ id: secondId });
+};

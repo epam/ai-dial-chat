@@ -6,7 +6,6 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 let recentModelIds: string[];
@@ -24,12 +23,13 @@ dialTest(
   'Create new conversation and send new message',
   async ({
     dialHomePage,
-    conversations,
+    conversationAssertion,
     temperatureSlider,
     chat,
+    chatMessagesAssertion,
     agentSettingAssertion,
-    chatMessages,
     talkToAgents,
+    talkToAgentDialogAssertion,
     talkToAgentDialog,
     conversationSettingsModal,
     addons,
@@ -52,26 +52,27 @@ dialTest(
             allEntities.find((e) => e.id === entity)!.name,
           );
         }
-        const actualAgents = await talkToAgents.getAgentNames();
-        expect
-          .soft(actualAgents, ExpectedMessages.recentEntitiesVisible)
-          .toEqual(expectedDefaultRecentEntities);
+        await talkToAgentDialogAssertion.assertElementInnerText(
+          talkToAgents.agentNames,
+          expectedDefaultRecentEntities,
+          ExpectedMessages.recentEntitiesVisible,
+        );
         await talkToAgentDialog.cancelButton.click();
 
         await chat.configureSettingsButton.click();
         await agentSettingAssertion.assertSystemPromptValue(
           ExpectedConstants.emptyString,
         );
-
-        const defaultTemperature = await temperatureSlider.getTemperature();
-        expect
-          .soft(defaultTemperature, ExpectedMessages.defaultTemperatureIsOne)
-          .toBe(ExpectedConstants.defaultTemperature);
-
-        const selectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-          .toEqual(defaultModel.selectedAddons ?? []);
+        await agentSettingAssertion.assertElementText(
+          temperatureSlider.slider,
+          ExpectedConstants.defaultTemperature,
+          ExpectedMessages.defaultTemperatureIsOne,
+        );
+        await agentSettingAssertion.assertElementInnerText(
+          addons.selectedAddons,
+          defaultModel.selectedAddons ?? [],
+          ExpectedMessages.noAddonsSelected,
+        );
 
         const expectedDefaultRecentAddons = [];
         for (const addonId of recentAddonIds) {
@@ -79,10 +80,11 @@ dialTest(
             expectedAddons.find((a) => a.id === addonId)?.name || addonId,
           );
         }
-        const recentAddons = await addons.getRecentAddons();
-        expect
-          .soft(recentAddons, ExpectedMessages.recentAddonsVisible)
-          .toEqual(expectedDefaultRecentAddons);
+        await agentSettingAssertion.assertElementInnerText(
+          addons.recentAddons,
+          expectedDefaultRecentAddons,
+          ExpectedMessages.recentAddonsVisible,
+        );
         await conversationSettingsModal.cancelButton.click();
       },
     );
@@ -94,27 +96,18 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.sendRequestWithKeyboard(request);
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(2);
+        await chatMessagesAssertion.assertMessagesCount(2);
       },
     );
 
     await dialTest.step(
       'Verify new conversation is moved under Today section in chat bar',
       async () => {
-        const todayConversations = await conversations.getTodayConversations();
-        expect
-          .soft(
-            todayConversations.length,
-            ExpectedMessages.newConversationCreated,
-          )
-          .toBe(1);
-        expect
-          .soft(todayConversations[0], ExpectedMessages.conversationOfToday)
-          .toBe(request);
+        await conversationAssertion.assertEntitiesCount(1);
+        await conversationAssertion.assertEntityState(
+          { name: request },
+          'visible',
+        );
       },
     );
   },

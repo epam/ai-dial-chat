@@ -126,7 +126,8 @@ export const PromptComponent = ({
   useContextMenuTrigger(handleContextMenuOpen, promptRef);
 
   const screenState = useScreenState();
-  const isSmallScreen = screenState === ScreenState.SM;
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const {
     handleExport,
@@ -245,7 +246,7 @@ export const PromptComponent = ({
         className={classNames(
           'group relative flex size-full shrink-0 select-none items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
-          isContextMenu && !isSmallScreen && 'pr-9',
+          isContextMenu && !isMobileOrTablet && 'pr-9',
           !isSelectMode && isHighlighted
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
@@ -381,7 +382,7 @@ export const PromptComponent = ({
               onUse={handleUse}
               onShowInfo={handleInfo}
               className="p-2"
-              hideTriggerIcon={isSmallScreen}
+              hideTriggerIcon={isMobileOrTablet}
             />
           </div>
         )}

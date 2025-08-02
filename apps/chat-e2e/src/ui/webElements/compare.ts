@@ -1,6 +1,10 @@
 import { BaseElement } from './baseElement';
 
-import { ChatSettingsSelectors, CompareSelectors } from '@/src/ui/selectors';
+import {
+  ChatSelectors,
+  ChatSettingsSelectors,
+  CompareSelectors,
+} from '@/src/ui/selectors';
 import { AgentInfo } from '@/src/ui/webElements/agentInfo';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { ChatMessages } from '@/src/ui/webElements/chatMessages';
@@ -17,6 +21,10 @@ export class Compare extends BaseElement {
   private conversationToCompare!: ConversationToCompare;
   private rightChatHeader!: ChatHeader;
   private leftChatHeader!: ChatHeader;
+
+  public duplicateButton = this.getChildElementBySelector(
+    ChatSelectors.duplicate,
+  );
 
   public leftConfigureSettingsButton = this.getChildElementBySelector(
     ChatSettingsSelectors.configureSettingsButton,

@@ -124,7 +124,7 @@ npm i
 nx e2e chat-e2e
 ```
 
-Image version should correspond Playwright version.
+The Playwright version in the Docker image should match the version in project/tests. For more details, refer to the Playwright official documentation: [Image tags](https://playwright.dev/docs/docker#image-tags)
 
 ## Run tests on CI
 

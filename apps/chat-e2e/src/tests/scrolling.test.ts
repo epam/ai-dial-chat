@@ -10,6 +10,7 @@ import {
   ScrollState,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
+import { Properties } from '@/src/ui/domData/properties';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -137,9 +138,11 @@ dialTest(
   async ({
     dialHomePage,
     chat,
+    chatAssertion,
     setTestIds,
     conversationData,
     conversations,
+    chatMessages,
     dataInjector,
     sendMessage,
     localStorageManager,
@@ -161,20 +164,24 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
+        await conversations.selectedEntity(conversation.name).waitFor();
+        await chatMessages.waitForState();
         await chat.goToContentPosition(ScrollState.top);
+        await chatAssertion.assertScrollPosition(
+          chat.scrollableArea,
+          Properties.scrollTop,
+          0,
+        );
         await sendMessage.scrollDownButton.click();
-        await expect
-          .soft(
-            sendMessage.scrollDownButton.getElementLocator(),
-            ExpectedMessages.scrollDownButtonIsNotVisible,
-          )
-          .toBeHidden();
-        expect
-          .soft(
-            await chat.scrollableArea.getVerticalScrollPosition(),
-            ExpectedMessages.scrollPositionIsCorrect,
-          )
-          .toBe(ScrollState.bottom);
+        await chatAssertion.assertElementState(
+          sendMessage.scrollDownButton,
+          'hidden',
+        );
+        chatAssertion.assertValue(
+          (await chat.scrollableArea.getVerticalScrollPosition()).toString(),
+          ScrollState.bottom,
+          ExpectedMessages.scrollPositionIsCorrect,
+        );
       },
     );
   },
@@ -188,6 +195,7 @@ dialTest(
   async ({
     dialHomePage,
     chat,
+    chatAssertion,
     setTestIds,
     conversationData,
     dataInjector,
@@ -229,6 +237,11 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(firstConversation.name);
         await chat.goToContentPosition(ScrollState.top);
+        await chatAssertion.assertScrollPosition(
+          chat.scrollableArea,
+          Properties.scrollTop,
+          0,
+        );
         await conversations.selectEntity(secondConversation.name);
         await expect
           .soft(

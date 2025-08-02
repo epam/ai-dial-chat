@@ -116,6 +116,18 @@ const ChatView = memo(() => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const isEditUserMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideEditUserMessage),
+  );
+  const isRegenerateAssistantMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(
+      state,
+      Feature.HideRegenerateAssistantMessage,
+    ),
+  );
+  const isDeleteMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideDeleteUserMessage),
+  );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
@@ -420,16 +432,8 @@ const ChatView = memo(() => {
   );
 
   const handleRegenerateMessage = useCallback(() => {
-    const lastUserMessageIndex = selectedConversations[0].messages
-      .map((msg) => msg.role)
-      .lastIndexOf(Role.User);
     dispatch(
-      ConversationsActions.sendMessages({
-        conversations: selectedConversations,
-        message: selectedConversations[0].messages[lastUserMessageIndex],
-        deleteCount:
-          selectedConversations[0].messages.length - lastUserMessageIndex,
-        activeReplayIndex: 0,
+      ConversationsActions.regenerateLastMessage({
         skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
       }),
     );
@@ -440,46 +444,20 @@ const ChatView = memo(() => {
         behavior: 'smooth',
       });
     }
-  }, [dispatch, selectedConversations, isAdminPreview, areModelsInstalled]);
+  }, [dispatch, isAdminPreview, areModelsInstalled]);
 
   const handleEditMessage = useCallback(
     (editedMessage: Message, index: number, convId: string) => {
-      dispatch(ConversationsActions.stopStreamMessage());
-
-      if (editedMessage.role === Role.User) {
-        dispatch(
-          ConversationsActions.sendMessages({
-            conversations: selectedConversations,
-            message: editedMessage,
-            deleteCount: mergedMessages.length - index,
-            activeReplayIndex: 0,
-            skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
-          }),
-        );
-
-        return;
-      }
-
-      let finalIndex = index;
-      const conv = selectedConversations.find((conv) => conv.id === convId);
-      if (conv?.messages.at(0)?.role === Role.System) {
-        finalIndex += 1;
-      }
       dispatch(
-        ConversationsActions.updateMessage({
-          conversationId: convId,
-          messageIndex: finalIndex,
-          values: editedMessage,
+        ConversationsActions.editMessage({
+          editedMessage,
+          index,
+          convId,
+          skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
         }),
       );
     },
-    [
-      dispatch,
-      mergedMessages.length,
-      selectedConversations,
-      isAdminPreview,
-      areModelsInstalled,
-    ],
+    [dispatch, isAdminPreview, areModelsInstalled],
   );
 
   const handleApplyChatSettings = useCallback(() => {
@@ -588,6 +566,12 @@ const ChatView = memo(() => {
         isFormSchemaValid(configurationSchema)) ||
       isConversationWithFormSchema(conv),
   );
+
+  const isChatReadyForInput =
+    areModelsInstalled ||
+    isIsolatedView ||
+    isAdminPreview ||
+    isApproveRequiredEntity;
 
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
@@ -817,6 +801,12 @@ const ChatView = memo(() => {
                                       ? 'compare-message-row'
                                       : 'message-row'
                                   }
+                                  itemID={i.toString()}
+                                  itemProp={
+                                    i === mergedMessages.length - 1
+                                      ? 'last-row'
+                                      : undefined
+                                  }
                                 >
                                   {mergedStr.map(
                                     ([conv, message, index, filteredMessages]: [
@@ -849,20 +839,28 @@ const ChatView = memo(() => {
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
-                                              (!!notAvailableEntityType ||
+                                              ((!!notAvailableEntityType ||
                                                 isReadOnly ||
                                                 isReplay ||
                                                 isPlayback) &&
-                                              (!isValidApproveRequiredConversation ||
-                                                !!notAvailableEntityType)
+                                                (!isValidApproveRequiredConversation ||
+                                                  !!notAvailableEntityType)) ||
+                                              (message.role === Role.User &&
+                                                isEditUserMessageHided)
                                             }
                                             onEdit={handleEditMessage}
                                             onLike={handleLike}
-                                            onDelete={handleDeleteMessage}
+                                            onDelete={
+                                              !isDeleteMessageHided
+                                                ? handleDeleteMessage
+                                                : undefined
+                                            }
                                             onRegenerate={
                                               index ===
                                                 mergedMessages.length - 1 &&
-                                              showLastMessageRegenerate
+                                              showLastMessageRegenerate &&
+                                              (!isRegenerateAssistantMessageHided ||
+                                                message.role !== Role.Assistant)
                                                 ? handleRegenerateMessage
                                                 : undefined
                                             }
@@ -924,11 +922,7 @@ const ChatView = memo(() => {
                               isWideLayout={isWideLayout}
                               isNotEmptyConversations={isNotEmptyConversations}
                               showReplayControls={showReplayControls}
-                              areModelsInstalled={
-                                areModelsInstalled ||
-                                isIsolatedView ||
-                                isAdminPreview
-                              }
+                              isChatReadyForInput={isChatReadyForInput}
                               isConversationWithSchema={
                                 isConversationWithSchema
                               }
@@ -1120,6 +1114,9 @@ export function Chat({ isPreview }: ChatProps) {
   const isConfigurationSchemaLoading = useAppSelector(
     ChatSelectors.selectIsConfigurationSchemaLoading,
   );
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1167,12 +1164,10 @@ export function Chat({ isPreview }: ChatProps) {
   }
 
   if (
-    (!areSelectedConversationsLoaded &&
-      selectedConversations.some(
-        (conv) => conv.status !== UploadStatus.LOADED,
-      )) ||
+    !areSelectedConversationsLoaded ||
     !isInstalledModelsInitialized ||
-    isConfigurationSchemaLoading
+    isConfigurationSchemaLoading ||
+    isPublicationUpdating
   ) {
     return <Loader />;
   }

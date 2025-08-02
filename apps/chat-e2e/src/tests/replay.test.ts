@@ -599,9 +599,12 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
+    chatAssertion,
     conversations,
+    conversationAssertion,
     dataInjector,
     chatMessages,
+    chatMessagesAssertion,
     setTestIds,
     conversationDropdownMenu,
     renameConversationModal,
@@ -633,7 +636,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
-
+        await conversationAssertion.assertSelectedEntity(
+          replayConversation.name,
+        );
+        await chat.replay.waitForState();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         replayConversation.name = GeneratorUtil.randomString(7);
@@ -644,11 +650,10 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-
-        const isStartReplayEnabled = await chat.replay.isElementEnabled();
-        expect
-          .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)
-          .toBeTruthy();
+        await chatAssertion.assertElementActionabilityState(
+          chat.replay,
+          'enabled',
+        );
       },
     );
 
@@ -659,12 +664,11 @@ dialTest(
           conversation.messages[0].content,
           true,
         );
-        expect
-          .soft(
-            replayRequest.model.id,
-            ExpectedMessages.chatRequestModelIsValid,
-          )
-          .toBe(conversation.model.id);
+        chatAssertion.assertValue(
+          replayRequest.model.id,
+          conversation.model.id,
+          ExpectedMessages.chatRequestModelIsValid,
+        );
       },
     );
 
@@ -672,11 +676,9 @@ dialTest(
       'Regenerate response and verify it regenerated',
       async () => {
         await chatMessages.regenerateResponse();
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(conversation.messages.length);
+        await chatMessagesAssertion.assertMessagesCount(
+          conversation.messages.length,
+        );
       },
     );
 
@@ -685,15 +687,16 @@ dialTest(
       async () => {
         const newMessage = '2+3';
         const newRequest = await chat.sendRequestWithButton(newMessage);
-        expect
-          .soft(newRequest.model.id, ExpectedMessages.chatRequestModelIsValid)
-          .toBe(conversation.model.id);
-        expect
-          .soft(
-            newRequest.messages[2].content,
-            ExpectedMessages.chatRequestMessageIsValid,
-          )
-          .toBe(newMessage);
+        chatAssertion.assertValue(
+          newRequest.model.id,
+          conversation.model.id,
+          ExpectedMessages.chatRequestModelIsValid,
+        );
+        chatAssertion.assertValue(
+          newRequest.messages[2].content,
+          newMessage,
+          ExpectedMessages.chatRequestMessageIsValid,
+        );
       },
     );
   },

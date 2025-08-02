@@ -1044,6 +1044,7 @@ dialTest(
     await folderPrompts.expandFolder(promptInFolder.folders.name);
     await chatBar.deleteAllEntities();
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+    await dialHomePage.waitForPageLoaded();
 
     let i = 2;
     while (i > 0) {

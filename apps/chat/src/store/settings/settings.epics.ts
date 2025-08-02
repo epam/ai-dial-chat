@@ -91,6 +91,17 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
   }
 };
 
+const preInitEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(SettingsActions.preInitApp.type),
+    switchMap(() => {
+      const storageType = SettingsSelectors.selectStorageType(state$.value);
+
+      DataService.init(storageType);
+      return of(UIActions.init());
+    }),
+  );
+
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(SettingsActions.initApp.type),
@@ -137,4 +148,4 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-export const SettingsEpics = combineEpics(initEpic);
+export const SettingsEpics = combineEpics(initEpic, preInitEpic);

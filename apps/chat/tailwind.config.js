@@ -18,6 +18,8 @@ const commonBgColors = {
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
   overlay: 'var(--bg-overlay, #090D13B3)',
+  'auth-layer-0': 'var(--bg-auth-layer-0, var(--bg-layer-1, #000000))',
+  'auth-layer-1': 'var(--bg-auth-layer-1, var(--bg-layer-3, #222932))',
 };
 
 const commonBorderColors = {

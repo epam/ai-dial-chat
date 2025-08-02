@@ -8,6 +8,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
+import { loadingTimeout } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -36,6 +37,7 @@ dialTest(
     chatHeader,
     iconApiHelper,
     conversationAssertion,
+    appContainer,
     chatMessagesAssertion,
     chatHeaderAssertion,
     conversationDropdownMenuAssertion,
@@ -117,7 +119,10 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
-        await conversations.getEntityByName(replayConversation.name).waitFor();
+        await conversationAssertion.assertSelectedEntity(
+          replayConversation.name,
+        );
+        await appContainer.waitForAppLoaded(loadingTimeout);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,

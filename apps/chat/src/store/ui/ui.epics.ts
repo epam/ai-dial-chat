@@ -56,7 +56,9 @@ const initEpic: AppEpic = (action$, state$) =>
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
             !isTabletScreenOrMobile(),
         ),
-        showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(),
+        showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(
+          enabledFeatures.has(Feature.Marketplace) && !isTabletScreenOrMobile(),
+        ),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
@@ -85,7 +87,10 @@ const initEpic: AppEpic = (action$, state$) =>
       }) => {
         const actions = [];
 
-        if (theme) {
+        if (
+          theme &&
+          availableThemes.some((availableTheme) => availableTheme.id === theme)
+        ) {
           actions.push(UIActions.setTheme(theme));
         } else if (typeof availableThemes[0] !== 'undefined') {
           actions.push(UIActions.setTheme(availableThemes[0]?.id));

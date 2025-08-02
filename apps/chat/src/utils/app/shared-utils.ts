@@ -1,12 +1,12 @@
 // SHARED UTILS (do not import other utils)
 import { Conversation } from '@/src/types/chat';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { ROOT_SECTION_NAME } from '@/src/constants/sections';
 
 import { BucketService } from './data/bucket-service';
-import { EnumMapper } from './mappers';
 
-import { ConversationInfo, FeatureType } from '@epam/ai-dial-shared';
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export const isPlaybackConversation = (conversation: ConversationInfo) =>
   (conversation as Conversation).playback?.isPlayback ??
@@ -60,22 +60,11 @@ export const splitEntityId = (
   };
 };
 
-export const getRootId = ({
-  featureType,
-  id,
-  bucket,
-}: {
-  featureType: FeatureType;
-  id?: string;
-  bucket?: string;
-}) => {
-  const splittedEntityId = id ? splitEntityId(id) : undefined;
-
-  return constructPath(
-    splittedEntityId?.apiKey ?? EnumMapper.getApiKeyByFeatureType(featureType),
-    splittedEntityId?.bucket ?? bucket ?? BucketService.getBucket(),
-  );
+export const getEntityBucket = (entity: { id: string }) =>
+  entity.id.split('/')[1];
+export const isMyBucket = (bucket: string) => {
+  return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
 };
 
-export const isMyEntity = (entity: { id: string }, featureType: FeatureType) =>
-  entity.id.startsWith(getRootId({ featureType }));
+export const isMyEntity = (entity: { id: string }) =>
+  isMyBucket(getEntityBucket(entity));

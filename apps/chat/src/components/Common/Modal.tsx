@@ -132,11 +132,7 @@ function ModalView({
                     headingClassName,
                   )}
                 >
-                  <Tooltip
-                    contentClassName="max-w-[400px] break-words"
-                    tooltip={heading}
-                    hideTooltip={!showHeadingTooltip}
-                  >
+                  <Tooltip tooltip={heading} hideTooltip={!showHeadingTooltip}>
                     <div
                       className="line-clamp-2 w-full break-words"
                       data-qa="modal-entity-name"

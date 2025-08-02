@@ -113,6 +113,8 @@ export const ConversationContextMenu = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   const screenState = useScreenState();
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const { refs, context } = useFloating({
     open: isOpen,
@@ -402,6 +404,7 @@ export const ConversationContextMenu = ({
           onSelect={isHeaderMenu ? undefined : handleSelect}
           useStandardColor={isHeaderMenu}
           onShowInfo={handleOpenInfoModal}
+          hideTriggerIcon={!isHeaderMenu && isMobileOrTablet}
         />
       </button>
 

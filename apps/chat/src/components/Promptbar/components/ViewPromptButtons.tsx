@@ -60,7 +60,7 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
 
   const screenState = useScreenState();
   const isPublic = isEntityIdPublic(prompt);
-  const isMyPrompt = isMyEntity(prompt, FeatureType.Prompt);
+  const isMyPrompt = isMyEntity(prompt);
 
   const promptItems = useMemo(
     () => [

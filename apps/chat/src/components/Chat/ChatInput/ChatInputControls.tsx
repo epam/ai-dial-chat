@@ -12,7 +12,7 @@ import { ChatExternalControls } from './ChatExternalControls';
 interface Props {
   isNotEmptyConversations: boolean;
   showReplayControls: boolean;
-  areModelsInstalled: boolean;
+  isChatReadyForInput: boolean;
   isConversationWithSchema: boolean;
   showScrollDownButton: boolean;
   isWideLayout?: boolean;
@@ -22,7 +22,7 @@ interface Props {
 export const ChatInputControls = ({
   isNotEmptyConversations,
   showReplayControls,
-  areModelsInstalled,
+  isChatReadyForInput,
   isConversationWithSchema,
   showScrollDownButton,
   isWideLayout,
@@ -61,7 +61,7 @@ export const ChatInputControls = ({
     );
   }
 
-  if (!areModelsInstalled) {
+  if (!isChatReadyForInput) {
     return (
       <AddModelsControl
         showScrollDownButton={showScrollDownButton}
