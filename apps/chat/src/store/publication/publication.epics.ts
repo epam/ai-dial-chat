@@ -1968,11 +1968,15 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
 
           const hasObservables = Object.keys(observables).length > 0;
 
-          if (!hasObservables) {
-            return of(PublicationActions.uploadPublication({ url }));
-          }
+          const fetchData$ = hasObservables
+            ? forkJoin(observables)
+            : of({
+                conversations: [],
+                prompts: [],
+                applications: [],
+              });
 
-          return forkJoin(observables).pipe(
+          return fetchData$.pipe(
             map((results) => {
               const conversations = results.conversations ?? [];
               const prompts = results.prompts ?? [];
