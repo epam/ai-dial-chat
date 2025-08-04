@@ -98,7 +98,7 @@ const preInitEpic: AppEpic = (action$, state$) =>
       const storageType = SettingsSelectors.selectStorageType(state$.value);
 
       DataService.init(storageType);
-      return of(UIActions.init());
+      return of(UIActions.initTheme());
     }),
   );
 
