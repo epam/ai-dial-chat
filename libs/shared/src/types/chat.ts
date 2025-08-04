@@ -141,6 +141,12 @@ export interface FolderInterface extends ShareEntity {
   isPublicationFolder?: boolean;
 }
 
+export interface TemporaryFolderInterface
+  extends Omit<FolderInterface, 'type'> {
+  temporary: true;
+  type?: FeatureType;
+}
+
 export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
   isPlayback?: boolean;
