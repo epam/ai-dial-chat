@@ -15,6 +15,7 @@ import { getRouteForSlug } from '@/src/utils/app/route';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
+  ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
@@ -110,6 +111,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         'After you add or change an icon, other users will see the default one immediately after confirmation. Share the link again so they can see the new icon.',
       )
     : '';
+
+  const isDeploying =
+    oldApplication?.functionStatus === ApplicationStatus.DEPLOYING ||
+    oldApplication?.functionStatus === ApplicationStatus.REDEPLOYING;
 
   useEffect(() => {
     if (isFormChanged && isValid) {
@@ -262,7 +267,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
-            disabled={isAppDeployed || isSharedWithMe || isAppPublic}
+            disabled={
+              isAppDeployed || isSharedWithMe || isAppPublic || isDeploying
+            }
             tooltip={
               (isAppPublic && PUBLIC_APP_TOOLTIP) ||
               (isSharedWithMe && getSharedTooltip('name')) ||
@@ -280,7 +287,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             name="version"
             rules={validators['version']}
-            disabled={isAppDeployed || isSharedWithMe || isAppPublic}
+            disabled={
+              isAppDeployed || isSharedWithMe || isAppPublic || isDeploying
+            }
             tooltip={
               (isAppPublic && PUBLIC_APP_TOOLTIP) ||
               (isSharedWithMe && getSharedTooltip('version')) ||
