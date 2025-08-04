@@ -1,14 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
-import {
-  addGeneratedFolderId,
-  getFolderIdFromEntityId,
-  isFolderEmpty,
-  renameFolderAndMoveEntity,
-} from '@/src/utils/app/folders';
-import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { addGeneratedFolderId, isFolderEmpty } from '@/src/utils/app/folders';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
@@ -229,50 +223,8 @@ export const promptsSlice = createSlice({
 
       state.folders = state.folders.concat(newFolder);
     },
-    createTemporaryFolder: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        name: string;
-        id: string;
-        folderId?: string;
-      }>,
-    ) => {
-      state.temporaryFolders.push({
-        id: payload.id,
-        name: payload.name,
-        type: FeatureType.Prompt,
-        folderId: payload.folderId || getPromptRootId(),
-        temporary: true,
-      });
-      state.newAddedFolderId = payload.id;
-    },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
-    },
-    deleteTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string }>,
-    ) => {
-      state.temporaryFolders = state.temporaryFolders.filter(
-        ({ id }) => id !== payload.folderId,
-      );
-    },
-    clearTemporaryFolders: (state) => {
-      state.temporaryFolders = [];
-    },
-    renameTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const parentId = getFolderIdFromEntityId(payload.folderId);
-      const newId = constructPath(parentId, payload.name);
-
-      state.temporaryFolders = state.temporaryFolders.map((f) =>
-        renameFolderAndMoveEntity(f, payload.folderId, newId),
-      );
-      state.newAddedFolderId = undefined;
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
