@@ -116,10 +116,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     oldApplication?.functionStatus === ApplicationStatus.DEPLOYING ||
     oldApplication?.functionStatus === ApplicationStatus.REDEPLOYING;
 
-  const isFieldDisabled = useMemo(
-    () => isAppDeployed || isSharedWithMe || isAppPublic || isDeploying,
-    [isAppDeployed, isSharedWithMe, isAppPublic, isDeploying],
-  );
+  const isFieldDisabled =
+    isAppDeployed || isSharedWithMe || isAppPublic || isDeploying;
 
   const nameTooltip = useMemo(() => {
     if (isAppPublic) return PUBLIC_APP_TOOLTIP;
