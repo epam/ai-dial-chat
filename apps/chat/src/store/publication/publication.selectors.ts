@@ -304,6 +304,9 @@ const selectIsPublicationUpdating = (state: RootState) =>
 const selectDisplayAuthorEditState = (state: RootState) =>
   rootSelector(state).displayAuthorEditState;
 
+const selectPublishToUrl = (state: RootState) =>
+  rootSelector(state).publishToUrl;
+
 const selectIsResourceUnpublishing = createSelector(
   [
     (state: RootState, publicationUrl: string) =>
@@ -354,5 +357,6 @@ export const PublicationSelectors = {
   selectRulesOnEdit,
   selectIsPublicationUpdating,
   selectDisplayAuthorEditState,
+  selectPublishToUrl,
   selectIsResourceUnpublishing,
 };

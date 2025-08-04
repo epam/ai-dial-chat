@@ -6,19 +6,17 @@ import {
   isVersionFilterMatched,
 } from '@/src/utils/app/common';
 import {
-  getChildAndCurrentFoldersById,
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getPartialAndFullyChosenFolders,
   isFolderEmpty,
-  sortByName,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
-  PublishedWithMeFilter,
   doesEntityContainSearchTerm,
   getMyItemsFilters,
   isSearchTermMatched,
@@ -224,51 +222,9 @@ const selectDoesAnyMyItemExist = createSelector(
   },
 );
 
-const selectTemporaryFolders = (state: RootState) =>
-  rootSelector(state).temporaryFolders;
-
-const selectTemporaryFoldersWithSearchTerm = createSelector(
-  [selectTemporaryFolders, (_state, searchTerm: string) => searchTerm],
-  (folders, searchTerm) => {
-    const filtered = folders.filter((folder) =>
-      doesEntityContainSearchTerm(folder, searchTerm),
-    );
-
-    return getParentAndChildFolders(folders, filtered);
-  },
-);
-
-const selectPublishedWithMeFolders = createSelector(
-  [selectFolders],
-  (folders) => {
-    return folders.filter(
-      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? true,
-    );
-  },
-);
-
-const selectTemporaryAndPublishedFolders = createSelector(
-  [
-    selectFolders,
-    selectPublishedWithMeFolders,
-    selectTemporaryFolders,
-    (_state, searchTerm?: string) => searchTerm,
-  ],
-  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
-    const allPublishedFolders = publishedFolders.flatMap((folder) =>
-      getChildAndCurrentFoldersById(folder.id, allFolders),
-    );
-    const filteredFolders = [
-      ...sortByName(allPublishedFolders),
-      ...temporaryFolders,
-    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
-
-    return getParentAndChildFolders(
-      sortByName([...allFolders, ...temporaryFolders]),
-      filteredFolders,
-    );
-  },
-);
+const selectPublicFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
+});
 
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
@@ -409,9 +365,7 @@ export const PromptsSelectors = {
   selectMyItemsFilters,
   selectIsEmptySearchFilter,
   selectDoesAnyMyItemExist,
-  selectTemporaryFolders,
-  selectTemporaryFoldersWithSearchTerm,
-  selectTemporaryAndPublishedFolders,
+  selectPublicFolders,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   arePromptsUploaded,
