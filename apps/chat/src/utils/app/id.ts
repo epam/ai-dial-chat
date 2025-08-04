@@ -109,6 +109,9 @@ export const isRootEntity = (id: string) => {
 export const getIdWithoutFeatureType = (id: string) =>
   id.split('/').slice(1).join('/');
 
-export const areBucketsTheSame = (firstId: string, secondId: string) => {
+export const areEntitiesBucketsTheSame = (
+  firstId: string,
+  secondId: string,
+) => {
   return getEntityBucket({ id: firstId }) === getEntityBucket({ id: secondId });
 };
