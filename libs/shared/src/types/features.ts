@@ -23,9 +23,18 @@ export enum Feature {
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
 
-  // Edit assistant
+  // Edit assistant message
   EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
   EditAllAssistantContent = 'edit-all-assistant-message', // allow edit all assistant messages
+
+  // Edit user message
+  HideEditUserMessage = 'hide-edit-user-message', // Hide editing button of user message
+
+  // Regenerate assistant message
+  HideRegenerateAssistantMessage = 'hide-regenerate-assistant-message', // Hide regenerate button of assistant message
+
+  // Delete user message
+  HideDeleteUserMessage = 'hide-delete-user-message', // Hide delete button of user message
 
   // Chat input
   SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
