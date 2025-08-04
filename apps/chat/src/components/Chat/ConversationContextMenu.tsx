@@ -362,7 +362,6 @@ export const ConversationContextMenu = ({
     applicationTypePlaybackSupport,
   ]);
 
-
   const handleOpenInfoModal = useCallback(() => {
     const { id, updatedAt, createdAt, author } = conversation;
 
