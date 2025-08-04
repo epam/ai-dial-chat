@@ -116,6 +116,31 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     oldApplication?.functionStatus === ApplicationStatus.DEPLOYING ||
     oldApplication?.functionStatus === ApplicationStatus.REDEPLOYING;
 
+  const isFieldDisabled = useMemo(
+    () => isAppDeployed || isSharedWithMe || isAppPublic || isDeploying,
+    [isAppDeployed, isSharedWithMe, isAppPublic, isDeploying],
+  );
+
+  const nameTooltip = useMemo(() => {
+    if (isAppPublic) return PUBLIC_APP_TOOLTIP;
+    if (isSharedWithMe) return getSharedTooltip('name');
+    if (isAppDeployed) return t('Undeploy application to edit name');
+    return '';
+  }, [isAppPublic, isSharedWithMe, isAppDeployed, t]);
+
+  const versionTooltip = useMemo(() => {
+    if (isAppPublic) return PUBLIC_APP_TOOLTIP;
+    if (isSharedWithMe) return getSharedTooltip('version');
+    if (isAppDeployed) return t('Undeploy application to edit version');
+    return '';
+  }, [isAppPublic, isSharedWithMe, isAppDeployed, t]);
+
+  const iconTooltip = useMemo(() => {
+    if (isAppPublic) return PUBLIC_APP_TOOLTIP;
+    if (isSharedWithMe) return getSharedTooltip('icon');
+    return '';
+  }, [isAppPublic, isSharedWithMe]);
+
   useEffect(() => {
     if (isFormChanged && isValid) {
       dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged));
@@ -267,15 +292,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
-            disabled={
-              isAppDeployed || isSharedWithMe || isAppPublic || isDeploying
-            }
-            tooltip={
-              (isAppPublic && PUBLIC_APP_TOOLTIP) ||
-              (isSharedWithMe && getSharedTooltip('name')) ||
-              (isAppDeployed && t('Undeploy application to edit name')) ||
-              ''
-            }
+            disabled={isFieldDisabled}
+            tooltip={nameTooltip}
           />
 
           <ControlledField
@@ -287,15 +305,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             name="version"
             rules={validators['version']}
-            disabled={
-              isAppDeployed || isSharedWithMe || isAppPublic || isDeploying
-            }
-            tooltip={
-              (isAppPublic && PUBLIC_APP_TOOLTIP) ||
-              (isSharedWithMe && getSharedTooltip('version')) ||
-              (isAppDeployed && t('Undeploy application to edit version')) ||
-              ''
-            }
+            disabled={isFieldDisabled}
+            tooltip={versionTooltip}
           />
 
           <Controller
@@ -314,11 +325,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe || isAppPublic}
-                tooltip={
-                  (isAppPublic && PUBLIC_APP_TOOLTIP) ||
-                  (isSharedWithMe && getSharedTooltip('icon')) ||
-                  ''
-                }
+                tooltip={iconTooltip}
                 confirmDialogValues={confirmIconValues}
                 warningMessage={iconWarning}
                 sourceFilters={sourceFilters}
