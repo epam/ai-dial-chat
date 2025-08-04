@@ -21,4 +21,23 @@ export class ToolsetService {
       method: HTTPMethod.GET,
     }).pipe(catchError(() => of(null)));
   }
+
+  public static getToolsetByPath(path: string): Observable<Toolset> {
+    return ApiUtils.request(`/api/toolsets/${path}`, {
+      method: HTTPMethod.GET,
+    });
+  }
+
+  public static deleteToolset(path: string): Observable<void> {
+    return ApiUtils.request(`/api/toolsets/${path}`, {
+      method: HTTPMethod.DELETE,
+    });
+  }
+
+  public static addToolset(data: Toolset, path: string): Observable<void> {
+    return ApiUtils.request(`/api/toolsets/${path}`, {
+      method: HTTPMethod.PUT,
+      body: JSON.stringify(data),
+    });
+  }
 }
