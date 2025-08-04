@@ -56,7 +56,9 @@ const initEpic: AppEpic = (action$, state$) =>
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
             !isTabletScreenOrMobile(),
         ),
-        showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(),
+        showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(
+          enabledFeatures.has(Feature.Marketplace) && !isTabletScreenOrMobile(),
+        ),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),

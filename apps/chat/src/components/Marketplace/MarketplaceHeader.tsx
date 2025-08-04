@@ -34,9 +34,9 @@ export const MarketplaceHeader = () => {
     dispatch(UIActions.setShowMarketplaceFilterbar(!showFilterbar));
   }, [dispatch, showFilterbar]);
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
-  };
+  }, [dispatch]);
 
   const headerIconSize = isOverlay
     ? OVERLAY_HEADER_ICON_SIZE

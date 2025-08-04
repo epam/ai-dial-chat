@@ -188,6 +188,9 @@ export const ChatHeader = Inversify.register(
       isPlayback ||
       conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
+    const isUnpublishing =
+      conversation.publicationInfo?.action === PublishActions.DELETE &&
+      isApproveRequiredEntitySelected;
 
     return (
       <>
@@ -206,8 +209,7 @@ export const ChatHeader = Inversify.register(
                   'truncate text-center',
                   isChatFullWidth &&
                     'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
-                  conversation.publicationInfo?.action ===
-                    PublishActions.DELETE && 'text-error',
+                  isUnpublishing && 'text-error',
                 )}
               >
                 <span
@@ -232,10 +234,7 @@ export const ChatHeader = Inversify.register(
                     />
                   ) : (
                     <p
-                      className={classNames(
-                        conversation.publicationInfo?.action ===
-                          PublishActions.DELETE && 'text-error',
-                      )}
+                      className={classNames(isUnpublishing && 'text-error')}
                       data-qa="version"
                     >
                       {t('v.')} {conversation.publicationInfo?.version}
