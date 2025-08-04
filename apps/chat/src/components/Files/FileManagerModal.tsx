@@ -17,7 +17,7 @@ import {
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
-  areBucketsTheSame,
+  areEntitiesBucketsTheSame,
   getFileRootId,
   isFolderId,
 } from '@/src/utils/app/id';
@@ -110,8 +110,8 @@ export const FileManagerModal = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isUnshare, setIsUnshare] = useState(false);
   const [areHiddenItemsVisible, setAreHiddenItemsVisible] = useState(false);
-  const selectedPublicationBucket = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationReviewBucket,
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
   );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
@@ -630,10 +630,12 @@ export const FileManagerModal = ({
     [],
   );
 
+  const firstPublicationResourceReviewUrl =
+    selectedPublication?.resources.at(0)?.reviewUrl;
   const someReviewBucketFileSelected =
-    !!selectedPublicationBucket &&
+    !!firstPublicationResourceReviewUrl &&
     selectedFilesIds.some((id) =>
-      areBucketsTheSame(id, selectedPublicationBucket),
+      areEntitiesBucketsTheSame(id, firstPublicationResourceReviewUrl),
     );
   const somePublicFileSelected = selectedFilesIds.some((id) =>
     isEntityIdPublic({ id }),
@@ -956,7 +958,9 @@ export const FileManagerModal = ({
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               data-qa="new-folder"
             >
-              <FolderPlus height={24} width={24} />
+              <Tooltip tooltip={t('Create new folder')} isTriggerClickable>
+                <FolderPlus height={24} width={24} />
+              </Tooltip>
             </button>
           )}
           <HiddenItemsToggler
