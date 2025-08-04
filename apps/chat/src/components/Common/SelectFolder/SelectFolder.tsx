@@ -26,6 +26,7 @@ export const SelectFolder = ({
   onClose,
 }: Props) => {
   const headingId = useId();
+
   const { t } = useTranslation(Translation.Chat);
 
   return (

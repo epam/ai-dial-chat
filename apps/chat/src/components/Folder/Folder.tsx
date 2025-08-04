@@ -930,6 +930,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const isMobileCheckboxVisible =
     canSelectFolders && isContextMenu && isTabletScreen();
+  const isTemporaryFolder =
+    'temporary' in currentFolder && currentFolder.temporary;
 
   return (
     <div
@@ -937,7 +939,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       className={classNames(
         'select-none',
         isDraggingOver && 'bg-accent-primary-alpha',
-        currentFolder.temporary && 'text-primary',
+        isTemporaryFolder && 'text-primary',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -1206,9 +1208,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
-                    (currentFolder.temporary
-                      ? 'text-primary'
-                      : 'text-secondary'),
+                    (isTemporaryFolder ? 'text-primary' : 'text-secondary'),
                   isNameOrPathInvalid
                     ? 'text-secondary'
                     : highlightedFolders?.includes(currentFolder.id) &&
@@ -1244,16 +1244,14 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onRename={
                       (onRenameFolder &&
                         !currentFolder.serverSynced &&
-                        ((canManageOnlyTemporaryFolders &&
-                          currentFolder.temporary) ||
+                        ((canManageOnlyTemporaryFolders && isTemporaryFolder) ||
                           !canManageOnlyTemporaryFolders) &&
                         onRename) ||
                       undefined
                     }
                     onDelete={
                       (onDeleteFolder &&
-                        ((canManageOnlyTemporaryFolders &&
-                          currentFolder.temporary) ||
+                        ((canManageOnlyTemporaryFolders && isTemporaryFolder) ||
                           !canManageOnlyTemporaryFolders) &&
                         onDelete) ||
                       undefined

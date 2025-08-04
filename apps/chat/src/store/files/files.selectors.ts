@@ -135,11 +135,11 @@ const selectNewAddedFolderId = (state: RootState) =>
 const selectFoldersWithSearchTerm = createSelector(
   [selectFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
-    const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+    const filteredFolders = folders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
-    return getParentAndChildFolders(folders, filtered);
+    return getParentAndChildFolders(folders, filteredFolders);
   },
 );
 

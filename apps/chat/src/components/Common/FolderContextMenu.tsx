@@ -127,6 +127,7 @@ export const FolderContextMenu = ({
   const isMyFolder = useMemo(() => isMyEntity(folder), [folder]);
 
   const isMyOrCanEdit = isMyFolder || canEditShared;
+  const isTemporaryFolder = 'temporary' in folder && folder.temporary;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -152,7 +153,7 @@ export const FolderContextMenu = ({
         name: t('Rename'),
         display:
           !!onRename &&
-          (!isExternal || isPublicationReviewFolder || !!folder.temporary) &&
+          (!isExternal || isPublicationReviewFolder || isTemporaryFolder) &&
           !isUnpublishFolder,
         dataQa: 'rename',
         Icon: IconPencilMinus,
@@ -214,7 +215,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Delete'),
-        display: !!onDelete && (isMyEntity(folder) || !!folder.temporary),
+        display: !!onDelete && (isMyEntity(folder) || isTemporaryFolder),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -245,12 +246,14 @@ export const FolderContextMenu = ({
       disableAll,
       onRename,
       isPublicationReviewFolder,
-      folder,
+      isTemporaryFolder,
+      isUnpublishFolder,
       isNameInvalid,
       isEmpty,
       isSharingEnabled,
       onShare,
       onUnshare,
+      folder,
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,
@@ -259,7 +262,6 @@ export const FolderContextMenu = ({
       additionalItemData?.isChangePathFolder,
       onDelete,
       onAddFolder,
-      isUnpublishFolder,
     ],
   );
 

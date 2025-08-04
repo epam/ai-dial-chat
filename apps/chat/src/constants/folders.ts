@@ -10,3 +10,5 @@ export const PROMPT_VARIABLE_REGEX_GLOBAL = new RegExp(
 );
 
 export const METADATA_PREFIX = 'metadata/';
+
+export const TEMPORARY_FOLDER_ROOT_ID = 'temporary/temporaryBucket';
