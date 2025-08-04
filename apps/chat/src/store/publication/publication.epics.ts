@@ -1914,14 +1914,10 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
           }
 
           const observables: {
-            conversations: Observable<(Conversation | null)[]>;
-            prompts: Observable<(Prompt | null)[]>;
-            applications: Observable<(CustomApplicationModel | null)[]>;
-          } = {
-            conversations: of([]),
-            prompts: of([]),
-            applications: of([]),
-          };
+            conversations?: Observable<(Conversation | null)[]>;
+            prompts?: Observable<(Prompt | null)[]>;
+            applications?: Observable<(CustomApplicationModel | null)[]>;
+          } = {};
 
           if (conversationsRequiresUpdate.length || filesToUpdate.length) {
             const resourcesNotRequiresUpdate = newPublicationResources
@@ -1941,13 +1937,15 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                 ]
               : conversationsRequiresUpdate;
 
-            observables.conversations = forkJoin(
-              conversationsToUpload.map((id) => {
-                return ConversationService.getConversation(
-                  getConversationInfoFromId(id, { parseVersion: true }),
-                );
-              }),
-            );
+            if (conversationsToUpload.length) {
+              observables.conversations = forkJoin(
+                conversationsToUpload.map((id) =>
+                  ConversationService.getConversation(
+                    getConversationInfoFromId(id, { parseVersion: true }),
+                  ),
+                ),
+              );
+            }
           }
 
           if (promptsRequiresUpdate.length) {
@@ -1968,17 +1966,32 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
             );
           }
 
-          return forkJoin(observables).pipe(
-            switchMap((results) => {
-              const actions: Observable<AppAction>[] = [];
+          const hasObservables = Object.keys(observables).length > 0;
 
-              const conversations = results.conversations.filter(
-                Boolean,
-              ) as Conversation[];
-              const prompts = results.prompts.filter(Boolean) as Prompt[];
-              const applications = results.applications.filter(
-                Boolean,
-              ) as CustomApplicationModel[];
+          const fetchData$ = hasObservables
+            ? forkJoin(observables)
+            : of({
+                conversations: [],
+                prompts: [],
+                applications: [],
+              });
+
+          return fetchData$.pipe(
+            map((results) => {
+              const conversations = results.conversations ?? [];
+              const prompts = results.prompts ?? [];
+              const applications = results.applications ?? [];
+
+              return {
+                conversations: conversations.filter(Boolean) as Conversation[],
+                prompts: prompts.filter(Boolean) as Prompt[],
+                applications: applications.filter(
+                  Boolean,
+                ) as CustomApplicationModel[],
+              };
+            }),
+            switchMap(({ conversations, prompts, applications }) => {
+              const actions: Observable<AppAction>[] = [];
 
               const updateBasePublicationValues = (entity: ShareEntity) => ({
                 name: entity.name,
