@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
+import { isTabletScreenOrMobile } from '@/src/utils/app/mobile';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { LastConversationSettings } from '@/src/types/settings';
@@ -128,12 +129,10 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
-  public static getShowMarketplaceFilterbar(
-    defaultValue: boolean,
-  ): Observable<boolean> {
+  public static getShowMarketplaceFilterbar(): Observable<boolean> {
     return BrowserStorage.getData(
       UIStorageKeys.ShowMarketplaceFilterbar,
-      defaultValue,
+      !isTabletScreenOrMobile(),
     );
   }
 
