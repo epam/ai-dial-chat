@@ -38,12 +38,10 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
   item: PublicationReviewItem;
-  isEditDisabled?: boolean;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
-  isEditDisabled,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -148,7 +146,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       >
         <EditableField
           value={inputVersion}
-          isEditMode={isDeleteAction || isEditDisabled ? false : isEditMode}
+          isEditMode={isDeleteAction ? false : isEditMode}
           onChange={handleChangeVersion}
           inputClassName={classNames(
             'w-[70px] text-right text-xs',
@@ -170,7 +168,6 @@ interface PublicationRowProps {
   item: PublicationReviewItem;
   dataQa: string;
   itemTypeName: BackendResourceTypeName;
-  isEditDisabled?: boolean;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -178,7 +175,6 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   Icon,
   item,
   dataQa,
-  isEditDisabled,
   itemTypeName,
 }) => {
   const dispatch = useAppDispatch();
@@ -289,7 +285,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <span className="flex">{Icon}</span>
         <EditableField
           value={inputName}
-          isEditMode={isEditDisabled || isDeleteAction ? false : isEditMode}
+          isEditMode={isDeleteAction ? false : isEditMode}
           onChange={handleChangeName}
           inputClassName={classNames('w-full', errors.length && 'pr-5')}
           className={classNames(
@@ -301,7 +297,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           errors={errors}
         />
       </span>
-      <PublicationVersionInfo item={item} isEditDisabled={isEditDisabled} />
+      <PublicationVersionInfo item={item} />
     </div>
   );
 };
