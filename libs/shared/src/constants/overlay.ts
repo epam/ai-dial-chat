@@ -55,6 +55,10 @@ export enum OverlayEvents {
    */
   gptEndGenerating = 'GPT_END_GENERATING',
   /**
+   * Chat dispatch this event when user stop streaming explicitly or something happened
+   */
+  stopGenerating = 'STOP_GENERATING',
+  /**
    * Chat dispatch this event when any of conversations updated, added or removed
    */
   conversationsUpdated = 'CONVERSATIONS_UPDATED',
@@ -75,6 +79,14 @@ export enum OverlayEvents {
    * Chat dispatch this event when user message deleted
    */
   deleteMessage = 'DELETE_MESSAGE',
+  /**
+   * Chat dispatch this event when user change playback to previous message
+   */
+  prevPlaybackMessage = 'PREV_PLAYBACK_MESSAGE',
+  /**
+   * Chat dispatch this event when user change playback to next message
+   */
+  nextPlaybackMessage = 'NEXT_PLAYBACK_MESSAGE',
 }
 
 export const overlayLibName = 'ChatOverlay';

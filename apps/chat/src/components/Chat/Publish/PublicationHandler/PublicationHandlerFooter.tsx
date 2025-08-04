@@ -130,6 +130,7 @@ export const PublicationHandlerFooter = ({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules ?? [],
         displayAuthor: replaceSpacesFromString(publication.displayAuthor),
+        publishToUrl: publication.targetFolder,
       }),
     );
   }, [
@@ -139,6 +140,7 @@ export const PublicationHandlerFooter = ({
     publication.rules,
     publication.displayAuthor,
     publication.author,
+    publication.targetFolder,
   ]);
 
   const notExistEntities = useMemo(

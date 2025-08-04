@@ -1,6 +1,7 @@
 import { Path, RegisterOptions } from 'react-hook-form';
 
 import { safeStringifyApplicationFeatures } from '@/src/utils/app/application';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -19,8 +20,15 @@ import {
   FEATURES_ENDPOINTS_DEFAULT_VALUES,
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
-import { DEFAULT_APPLICATION_NAME } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_APPLICATION_NAME,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
+import {
+  DEFAULT_QUICK_APPS_MODEL,
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
+} from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
@@ -162,6 +170,11 @@ export const getApplicationData = (
   type: string,
   schema: ApiDetailedApplicationTypeSchema | null,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+  const quickAppSchemaId = DefaultsService.get(
+    'quickAppsSchemaId',
+    DEFAULT_QUICK_APPS_SCHEMA_ID,
+  );
+
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
     applicationTypeSchemaId: schema?.$id ?? undefined,
@@ -207,6 +220,17 @@ export const getApplicationData = (
           }),
           {},
         ) ?? {},
+    };
+  }
+
+  if (quickAppSchemaId.endsWith(type) && !preparedData.applicationProperties) {
+    preparedData.applicationProperties = {
+      model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+      document_relative_url: [],
+      instructions: '',
+      temperature: DEFAULT_TEMPERATURE,
+      web_api_toolset: [],
+      mcp_toolset: [],
     };
   }
 

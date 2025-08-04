@@ -16,7 +16,12 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId } from '@/src/utils/app/id';
+import {
+  areEntitiesBucketsTheSame,
+  getFileRootId,
+  isFolderId,
+} from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -30,7 +35,11 @@ import { Translation } from '@/src/types/translation';
 
 import { FilesActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors, FilesSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import {
@@ -101,7 +110,9 @@ export const FileManagerModal = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isUnshare, setIsUnshare] = useState(false);
   const [areHiddenItemsVisible, setAreHiddenItemsVisible] = useState(false);
-
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
@@ -151,7 +162,6 @@ export const FileManagerModal = ({
       areHiddenItemsVisible,
     ),
   );
-
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
   );
@@ -177,9 +187,6 @@ export const FileManagerModal = ({
       ? initialSelectedFilesIds.filter((id) => !isFolderId(id))
       : [],
   );
-  const [selectedNoDeleteFilesIds, setSelectedNoDeleteFilesIds] = useState<
-    string[]
-  >([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState(
     canAttachFolders
       ? initialSelectedFilesIds.filter((id) => isFolderId(id))
@@ -402,11 +409,7 @@ export const FileManagerModal = ({
   );
 
   const handleItemCallback = useCallback(
-    (
-      eventId: string,
-      data: unknown,
-      options?: { deleteUnavailable?: boolean },
-    ) => {
+    (eventId: string, data: unknown) => {
       if (typeof data !== 'string') {
         return;
       }
@@ -424,20 +427,6 @@ export const FileManagerModal = ({
             if (
               selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
             ) {
-              if (options?.deleteUnavailable) {
-                setSelectedNoDeleteFilesIds((oldFileIds) =>
-                  oldFileIds.concat(
-                    files
-                      .filter((file) =>
-                        selectedNoDeleteFilesIds.some((parentId) =>
-                          file.id.startsWith(parentId),
-                        ),
-                      )
-                      .map((f) => f.id),
-                  ),
-                );
-              }
-
               setSelectedFilesIds((oldFileIds) =>
                 oldFileIds.concat(
                   files
@@ -465,16 +454,6 @@ export const FileManagerModal = ({
                   );
               });
             }
-            if (options?.deleteUnavailable) {
-              setSelectedNoDeleteFilesIds((oldValues) => {
-                if (oldValues.includes(data)) {
-                  return oldValues.filter((oldValue) => oldValue !== data);
-                }
-
-                return oldValues.concat(data);
-              });
-            }
-
             setSelectedFilesIds((oldValues) => {
               if (oldValues.includes(data)) {
                 return oldValues.filter((oldValue) => oldValue !== data);
@@ -498,7 +477,7 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [dispatch, files, folders, selectedFolderIds, selectedNoDeleteFilesIds],
+    [dispatch, files, folders, selectedFolderIds],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -651,6 +630,19 @@ export const FileManagerModal = ({
     [],
   );
 
+  const firstPublicationResourceReviewUrl =
+    selectedPublication?.resources.at(0)?.reviewUrl;
+  const someReviewBucketFileSelected =
+    !!firstPublicationResourceReviewUrl &&
+    selectedFilesIds.some((id) =>
+      areEntitiesBucketsTheSame(id, firstPublicationResourceReviewUrl),
+    );
+  const somePublicFileSelected = selectedFilesIds.some((id) =>
+    isEntityIdPublic({ id }),
+  );
+  const isDeleteDisabled =
+    somePublicFileSelected || someReviewBucketFileSelected;
+
   return (
     <Modal
       portalId="theme-main"
@@ -742,14 +734,7 @@ export const FileManagerModal = ({
                             canAttachFiles || forceShowSelectCheckBox,
                         }}
                         itemComponent={(props) => (
-                          <FileItem
-                            {...props}
-                            onEvent={(eventId, data) =>
-                              handleItemCallback(eventId, data, {
-                                deleteUnavailable: true,
-                              })
-                            }
-                          />
+                          <FileItem {...props} onEvent={handleItemCallback} />
                         )}
                         onClickFolder={handleFolderSelect}
                         onAddFolder={handleAddFolder}
@@ -778,11 +763,7 @@ export const FileManagerModal = ({
                           canAttachFiles:
                             canAttachFiles || forceShowSelectCheckBox,
                         }}
-                        onEvent={(eventId, data) =>
-                          handleItemCallback(eventId, data, {
-                            deleteUnavailable: true,
-                          })
-                        }
+                        onEvent={handleItemCallback}
                       />
                     );
                   })}
@@ -942,16 +923,18 @@ export const FileManagerModal = ({
           {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
               onClick={() => handleStartDeleteMultipleFiles()}
-              disabled={!!selectedNoDeleteFilesIds.length}
+              disabled={isDeleteDisabled}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
               data-qa="delete-files"
             >
               <Tooltip
-                tooltip={
-                  selectedNoDeleteFilesIds.length
-                    ? t('It is forbidden to delete files from Organization')
-                    : t('Delete files')
-                }
+                tooltip={t(
+                  somePublicFileSelected
+                    ? 'It is forbidden to delete files from Organization'
+                    : someReviewBucketFileSelected
+                      ? 'It is forbidden to delete files from the "Review files" section'
+                      : 'Delete files',
+                )}
                 isTriggerClickable
               >
                 <IconTrashX size={24} />
@@ -975,7 +958,9 @@ export const FileManagerModal = ({
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               data-qa="new-folder"
             >
-              <FolderPlus height={24} width={24} />
+              <Tooltip tooltip={t('Create new folder')} isTriggerClickable>
+                <FolderPlus height={24} width={24} />
+              </Tooltip>
             </button>
           )}
           <HiddenItemsToggler

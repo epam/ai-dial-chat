@@ -1,6 +1,7 @@
 import { FC, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import { getEntityBucket, isRootEntity } from '@/src/utils/app/id';
 
@@ -9,7 +10,11 @@ import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors, FilesSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { Folder } from '@/src/components/Folder/Folder';
 
@@ -23,11 +28,7 @@ interface ReviewBucketFilesSectionViewProps {
   openedFoldersIds: string[];
   additionalItemData: AdditionalItemData;
   canAttachFolders: boolean;
-  onItemEvent: (
-    eventId: string,
-    data: unknown,
-    options?: { deleteUnavailable?: boolean },
-  ) => void;
+  onItemEvent: (eventId: string, data: unknown) => void;
   onClickFolder: (folderId: string) => void;
   onToggleFolder: (folderId: string) => void;
 }
@@ -114,13 +115,9 @@ interface Props {
   highlightFolderIds: string[];
   additionalItemData: AdditionalItemData;
   openedFoldersIds: string[];
-  onItemEvent: (
-    eventId: string,
-    data: unknown,
-    options?: { deleteUnavailable?: boolean },
-  ) => void;
-  onClickFolder: (folderId: string) => void;
   canAttachFolders: boolean;
+  onItemEvent: (eventId: string, data: unknown) => void;
+  onClickFolder: (folderId: string) => void;
   onToggleFolder: (folderId: string) => void;
 }
 
@@ -134,8 +131,17 @@ export const ReviewBucketFilesSection: FC<Props> = ({
   onClickFolder,
   onToggleFolder,
 }) => {
+  const router = useRouter();
+  const { publicationUrl } = router.query;
+
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+  const publication = useAppSelector((state) =>
+    PublicationSelectors.selectPublicationByUrl(
+      state,
+      publicationUrl as string,
+    ),
   );
 
   const areAllReviewConversations = useMemo(
@@ -157,13 +163,20 @@ export const ReviewBucketFilesSection: FC<Props> = ({
     return buckets.every((bucket) => bucket === buckets[0]);
   }, [buckets]);
 
-  if (!areAllReviewConversations || !areBucketsSame) {
+  const isAllConversationsFromSamePublication =
+    areAllReviewConversations && areBucketsSame;
+  const publicationResources = publication?.resources ?? [];
+
+  if (!publicationResources.length && !isAllConversationsFromSamePublication) {
     return null;
   }
 
+  const reviewBucket =
+    getEntityBucket({ id: publicationResources[0].reviewUrl }) ?? buckets[0];
+
   return (
     <ReviewBucketFilesSectionView
-      bucket={buckets[0]}
+      bucket={reviewBucket}
       searchQuery={searchQuery}
       highlightFolderIds={highlightFolderIds}
       openedFoldersIds={openedFoldersIds}

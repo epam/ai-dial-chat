@@ -22,4 +22,26 @@ export class PublishedApplicationReviewModal extends BaseElement {
   public getApplicationIcon(): Locator {
     return this.getElementIcon(this.rootLocator);
   }
+  public name = this.getChildElementBySelector(ReviewApplicationDialog.name);
+  public version = this.getChildElementBySelector(
+    ReviewApplicationDialog.version,
+  );
+  public description = this.getChildElementBySelector(
+    ReviewApplicationDialog.description,
+  );
+  public topics = this.getChildElementBySelector(
+    ReviewApplicationDialog.topics,
+  );
+  public featuresData = this.getChildElementBySelector(
+    ReviewApplicationDialog.featuresData,
+  );
+  public attachmentTypes = this.getChildElementBySelector(
+    ReviewApplicationDialog.attachmentTypes,
+  );
+  public maxAttachmentsNumber = this.getChildElementBySelector(
+    ReviewApplicationDialog.maxAttachmentsNumber,
+  );
+  public completionUrl = this.getChildElementBySelector(
+    ReviewApplicationDialog.completionUrl,
+  );
 }

@@ -1678,11 +1678,13 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
         url: payload.publicationUrl,
       }).pipe(
         switchMap((response) => {
-          const newIconUrl =
+          const newIconUrl = ApiUtils.decodeApiUrl(
             response.resources.find(
               (resource) =>
-                resource.sourceUrl === payload.newApplication.iconUrl,
-            )?.reviewUrl ?? '';
+                ApiUtils.decodeApiUrl(resource.sourceUrl ?? '') ===
+                payload.newApplication.iconUrl,
+            )?.reviewUrl ?? '',
+          );
           const newApplicationWithMappedIconUrl = {
             ...payload.newApplication,
             iconUrl: newIconUrl,
