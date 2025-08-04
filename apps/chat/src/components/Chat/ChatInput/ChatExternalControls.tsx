@@ -4,6 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
 
@@ -41,7 +42,9 @@ export function ChatExternalControls({
   );
 
   const conversationsToDuplicate = conversations.filter(
-    (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
+    (conv) =>
+      (isEntityIdPublic(conv) || isEntityReadOnly(conv)) &&
+      isEntityIdExternal(conv),
   );
 
   const handleDuplicate = () => {
