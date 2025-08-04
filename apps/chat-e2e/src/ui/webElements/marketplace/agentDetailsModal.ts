@@ -30,6 +30,9 @@ export class AgentDetailsModal extends BaseElement {
   public agentTopics = this.getChildElementBySelector(
     MarketplaceAgentSelectors.topicsContainer,
   );
+  public agentTopic = this.agentTopics.getChildElementBySelector(
+    MarketplaceAgentSelectors.topic,
+  );
   public useButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.useButton,
   );
@@ -78,6 +81,13 @@ export class AgentDetailsModal extends BaseElement {
     this.applicationContent.getChildElementBySelector(
       MarketplaceDetailsModal.applicationInformation,
     );
+  public agentAuthor = this.applicationInformation.getChildElementBySelector(
+    MarketplaceDetailsModal.agentAuthor,
+  );
+  public agentReleaseDate =
+    this.applicationInformation.getChildElementBySelector(
+      MarketplaceDetailsModal.agentReleaseDate,
+    );
   public icon = this.getElementIcon(this.rootLocator);
 
   public async clickUseButton({
@@ -120,5 +130,20 @@ export class AgentDetailsModal extends BaseElement {
     } else {
       await this.editButton.click();
     }
+  }
+
+  public async clickPublishButton(
+    options: {
+      expectedHttpStatus?: number;
+    } = { expectedHttpStatus: 200 },
+  ) {
+    const respPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().method() === 'GET' &&
+        resp.url().includes(API.applicationCreateHost) &&
+        resp.status() === options.expectedHttpStatus,
+    );
+    await this.publishButton.click();
+    await respPromise;
   }
 }

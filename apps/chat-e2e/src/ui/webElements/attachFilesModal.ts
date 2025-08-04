@@ -19,6 +19,10 @@ export enum FileModalSection {
   SharedWithMe = 'Shared with me',
   Organization = 'Organization',
 }
+
+export const invalidSectionError = (section: FileModalSection) =>
+  `Unknown file modal section: ${section}`;
+
 export class AttachFilesModal extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
     super(page, AttachFilesModalSelectors.modalContainer, parentLocator);
@@ -30,7 +34,9 @@ export class AttachFilesModal extends BaseElement {
   private allFolderFiles!: Folders;
   private allFilesTree!: AttachFilesTree;
   private sharedWithMeTree!: AttachFilesTree;
+  private sharedWithMeFoldersTree!: Folders;
   private organizationTree!: AttachFilesTree;
+  private organizationFoldersTree!: Folders;
   private search!: Search;
   public modalError!: ModalError;
 
@@ -87,6 +93,7 @@ export class AttachFilesModal extends BaseElement {
       AttachFilesModalSelectors.allFilesContainer,
     );
   }
+
   getAllFolderFiles(): Folders {
     if (!this.allFolderFiles) {
       this.allFolderFiles = new Folders(
@@ -108,6 +115,18 @@ export class AttachFilesModal extends BaseElement {
       );
     }
     return this.organizationTree;
+  }
+
+  getOrganizationFoldersTree(): Folders {
+    if (!this.organizationFoldersTree) {
+      this.organizationFoldersTree = new Folders(
+        this.page,
+        this.rootLocator,
+        AttachFilesModalSelectors.organizationFilesContainer,
+        EntitySelectors.file,
+      );
+    }
+    return this.organizationFoldersTree;
   }
 
   getAllFilesTree(): AttachFilesTree {
@@ -151,6 +170,18 @@ export class AttachFilesModal extends BaseElement {
     return this.sharedWithMeTree;
   }
 
+  getSharedWithMeFoldersTree(): Folders {
+    if (!this.sharedWithMeFoldersTree) {
+      this.sharedWithMeFoldersTree = new Folders(
+        this.page,
+        this.rootLocator,
+        AttachFilesModalSelectors.sharedWithMeFilesContainer,
+        EntitySelectors.file,
+      );
+    }
+    return this.sharedWithMeFoldersTree;
+  }
+
   public attachFilesButton = this.getChildElementBySelector(
     AttachFilesModalSelectors.attachFilesButton,
   );
@@ -187,7 +218,20 @@ export class AttachFilesModal extends BaseElement {
       case FileModalSection.SharedWithMe:
         return this.getSharedWithMeTree();
       default:
-        throw new Error(`Unknown file modal section: ${section}`);
+        throw new Error(invalidSectionError(section));
+    }
+  }
+
+  public getFoldersTree(section: FileModalSection) {
+    switch (section) {
+      case FileModalSection.AllFiles:
+        return this.getAllFolderFiles();
+      case FileModalSection.SharedWithMe:
+        return this.getSharedWithMeFoldersTree();
+      case FileModalSection.Organization:
+        return this.getOrganizationFoldersTree();
+      default:
+        throw new Error(invalidSectionError(section));
     }
   }
 

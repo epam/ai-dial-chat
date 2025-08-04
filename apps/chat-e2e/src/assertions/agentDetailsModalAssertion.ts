@@ -1,6 +1,8 @@
+import { Publication } from '@/chat/types/publication';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages, PublishingExpectedMessages } from '@/src/testData';
 import { AgentDetailsModal } from '@/src/ui/webElements';
+import { DateUtil } from '@/src/utils';
 
 export class AgentDetailsModalAssertion extends BaseAssertion {
   readonly agentDetailsModal: AgentDetailsModal;
@@ -60,6 +62,30 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
       this.agentDetailsModal.agentVersion,
       expectedVersion,
       ExpectedMessages.agentVersionIsValid,
+    );
+  }
+
+  public async assertApplicationAuthor(author: string) {
+    await this.assertElementText(
+      this.agentDetailsModal.agentAuthor,
+      author,
+      ExpectedMessages.authorIsValid,
+    );
+  }
+
+  public async assertApplicationReleaseDate(publicationRequest: Publication) {
+    await this.assertElementText(
+      this.agentDetailsModal.agentReleaseDate,
+      DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
+      ExpectedMessages.releaseDateIsValid,
+    );
+  }
+
+  public async assertApplicationTopics(expectedTopics: string[]) {
+    await this.assertElementInnerText(
+      this.agentDetailsModal.agentTopic,
+      expectedTopics,
+      PublishingExpectedMessages.publicationTopicsAreValid,
     );
   }
 }
