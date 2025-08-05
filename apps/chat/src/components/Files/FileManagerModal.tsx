@@ -284,9 +284,11 @@ export const FileManagerModal = ({
       dispatch(FilesActions.resetAllFoldersStatus());
       dispatch(FilesActions.getFilesWithFolders({}));
       dispatch(FilesActions.resetNewFolderId());
-    } else {
-      dispatch(FilesActions.resetChosenFiles());
     }
+
+    return () => {
+      dispatch(FilesActions.resetChosenFiles());
+    };
   }, [dispatch, isOpen]);
 
   useEffect(() => {
@@ -337,6 +339,9 @@ export const FileManagerModal = ({
       }
 
       switch (eventId) {
+        case FileItemEventIds.Toggle:
+          handleSelectFiles([data]);
+          break;
         case FileItemEventIds.Retry:
           dispatch(FilesActions.reuploadFile({ fileId: data }));
           break;
@@ -354,7 +359,7 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [dispatch],
+    [dispatch, handleSelectFiles],
   );
 
   const handleAttachFiles = useCallback(() => {
