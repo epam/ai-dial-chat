@@ -43,8 +43,8 @@ import {
 } from '@/src/constants/marketplace';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature } from '@epam/ai-dial-shared';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
+import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;
