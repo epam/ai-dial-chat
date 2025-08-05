@@ -216,6 +216,7 @@ const TalkToModalView = ({
 
     return orderedModels;
   }, [
+    searchedModels,
     sortedModels,
     isPlayback,
     isReplay,
