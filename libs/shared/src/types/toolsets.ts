@@ -8,6 +8,7 @@ export interface Toolset {
   transport: ToolsetTransportType;
   allowed_tools: string[];
 
+  toolset?: string;
   display_name?: string;
   description?: string;
   icon_url?: string;
