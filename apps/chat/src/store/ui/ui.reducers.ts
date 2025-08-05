@@ -45,6 +45,7 @@ export const uiSlice = createSlice({
     initFinish: (state) => {
       state.initialized = true;
     },
+    initTheme: (state) => state,
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },
