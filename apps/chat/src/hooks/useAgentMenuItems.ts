@@ -44,6 +44,7 @@ import {
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature } from '@epam/ai-dial-shared';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -149,7 +150,7 @@ export const useAgentMenuItems = ({
           !!entity.sharedWithMe &&
           isApplicationsSharingEnabled &&
           disabledActions.unshare !== true,
-        Icon: IconUserShare,
+        Icon: IconUserUnshare,
         onClick: handleOpenUnshare,
       },
       {
