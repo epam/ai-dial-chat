@@ -167,6 +167,8 @@ export interface Playback {
   isPlayback?: boolean;
   messagesStack: Message[];
   activePlaybackIndex: number;
+  // Custom state for the viewer, can be used to store any additional data needed for the custom viewer
+  customViewState?: Record<string, any>;
 }
 
 export interface Conversation extends ShareEntity, ConversationInfo {
@@ -182,4 +184,6 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   assistantModelId?: string;
 
   isMessageStreaming?: boolean;
+  // Custom state for the viewer, can be used to store any additional data needed for the custom viewer
+  customViewState?: Record<string, any>;
 }
