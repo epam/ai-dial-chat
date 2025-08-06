@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   SettingsSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
 import {
@@ -54,6 +55,8 @@ export const VisualizerRenderer = ({
     ConversationsSelectors.selectCustomAttachmentLoading,
   );
 
+  const themeId = useAppSelector(UISelectors.selectThemeState);
+
   const customAttachmentData = useAppSelector((state) =>
     ConversationsSelectors.selectCustomAttachmentData(state, attachmentUrl),
   );
@@ -88,8 +91,9 @@ export const VisualizerRenderer = ({
           DEFAULT_CUSTOM_ATTACHMENT_WIDTH),
       height:
         customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+      themeId,
     };
-  }, [customAttachmentData?.layout, scrollWidth]);
+  }, [customAttachmentData?.layout, scrollWidth, themeId]);
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {
@@ -118,6 +122,7 @@ export const VisualizerRenderer = ({
         hostDomain: window.location.origin,
         visualizerName: visualizerTitle,
         loaderStyles: { display: 'none' },
+        themeId,
       });
 
       return () => {
@@ -125,7 +130,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-  }, [rendererUrl, visualizerTitle]);
+  }, [rendererUrl, themeId, visualizerTitle]);
 
   useEffect(() => {
     if (

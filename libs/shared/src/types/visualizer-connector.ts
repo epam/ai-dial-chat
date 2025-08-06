@@ -7,6 +7,7 @@ export interface VisualizerConnectorOptions {
   loaderStyles?: Styles;
   loaderClass?: string;
   loaderInnerHTML?: string;
+  themeId?: string;
 
   requestTimeout?: number;
 }
@@ -16,6 +17,7 @@ export type VisualizerConnectorRequest = DialLibRequest;
 export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
+  themeId?: string;
 }
 export interface CustomVisualizerData {
   layout: CustomVisualizerDataLayout;

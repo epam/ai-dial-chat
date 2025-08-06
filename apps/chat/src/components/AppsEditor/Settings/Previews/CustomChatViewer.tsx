@@ -123,6 +123,7 @@ export const CustomChatViewer: React.FC<Props> = ({
           containerClassName="w-full h-full border-none"
           conversationId={conversation?.id}
           onMessage={onMessage}
+          themeId={theme}
         />
       )}
     </div>
