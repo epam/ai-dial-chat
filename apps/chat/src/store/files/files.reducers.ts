@@ -1,13 +1,20 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { combineEntities } from '@/src/utils/app/common';
+import {
+  addTrailingSlashIfAbsent,
+  combineEntities,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getNextDefaultName,
+  getPartialAndFullyChosenFolders,
+  isFolderEmpty,
   renameFolderAndMoveEntity,
+  updateMovedEntityId,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getFileRootId } from '@/src/utils/app/id';
+import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -18,17 +25,22 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
+import xor from 'lodash-es/xor';
 
 const initialState: FilesState = {
   initialized: false,
   files: [],
-  filesStatus: UploadStatus.UNINITIALIZED,
-  selectedFilesIds: [],
-
   folders: [],
-  foldersStatus: UploadStatus.UNINITIALIZED,
+  selectedFilesIds: [],
   sharedFileIds: [],
+
+  chosenFileIds: [],
+  chosenEmptyFoldersIds: [],
+
+  filesStatus: UploadStatus.UNINITIALIZED,
+  foldersStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const filesSlice = createSlice({
@@ -164,6 +176,34 @@ export const filesSlice = createSlice({
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
+
+      const idsToReselect = state.chosenEmptyFoldersIds.reduce<{
+        folderIds: string[];
+        fileIds: string[];
+      }>(
+        (acc, folderId) => {
+          const fileIds = payload.files
+            .filter(({ id }) => id.startsWith(folderId))
+            .map(({ id }) => id);
+
+          if (fileIds.length) {
+            return {
+              folderIds: acc.folderIds.concat(folderId),
+              fileIds: acc.fileIds.concat(fileIds),
+            };
+          }
+          return acc;
+        },
+        { folderIds: [], fileIds: [] },
+      );
+
+      if (idsToReselect.folderIds.length) {
+        state.chosenEmptyFoldersIds = xor(
+          state.chosenEmptyFoldersIds,
+          idsToReselect.folderIds,
+        );
+        state.chosenFileIds = xor(state.chosenFileIds, idsToReselect.fileIds);
+      }
     },
     getFilesFail: (state) => {
       state.filesStatus = UploadStatus.FAILED;
@@ -201,6 +241,17 @@ export const filesSlice = createSlice({
         state.folders.map((f) =>
           f.id === payload.folderId ? { ...f, status: UploadStatus.LOADED } : f,
         ),
+      );
+
+      const folderIdsToSelect = payload.folders
+        .filter((f) =>
+          state.chosenEmptyFoldersIds.some((id) => f.id.startsWith(id)),
+        )
+        .map(({ id }) => addTrailingSlashIfAbsent(id));
+
+      state.chosenEmptyFoldersIds = xor(
+        state.chosenEmptyFoldersIds,
+        folderIdsToSelect,
       );
     },
     getFoldersFail: (
@@ -288,6 +339,12 @@ export const filesSlice = createSlice({
       state.files = state.files.map((f) =>
         renameFolderAndMoveEntity(f, payload.folderId, newFolderId),
       );
+      state.chosenFileIds = state.chosenFileIds.map((id) =>
+        updateMovedEntityId(payload.folderId, newFolderId, id),
+      );
+      state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.map((id) =>
+        updateMovedFolderId(payload.folderId, newFolderId, id),
+      );
       state.lastRenamedParentFolder = {
         newId: newFolderId,
         oldId: targetFolder.id,
@@ -306,6 +363,12 @@ export const filesSlice = createSlice({
       );
       state.files = state.files.map((f) =>
         renameFolderAndMoveEntity(f, payload.newId, payload.oldId),
+      );
+      state.chosenFileIds = state.chosenFileIds.map((id) =>
+        updateMovedEntityId(payload.newId, payload.oldId, id),
+      );
+      state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.map((id) =>
+        updateMovedFolderId(payload.newId, payload.oldId, id),
       );
       state.lastRenamedParentFolder = {
         newId: payload.oldId,
@@ -412,6 +475,96 @@ export const filesSlice = createSlice({
         status: UploadStatus.UNINITIALIZED,
         serverSynced: false,
       }));
+    },
+
+    setChosenFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
+      state.chosenFileIds = xor(state.chosenFileIds, payload.ids);
+    },
+    resetChosenFiles: (state) => {
+      state.chosenFileIds = [];
+      state.chosenEmptyFoldersIds = [];
+    },
+    setChosenEmptyFolders: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.chosenEmptyFoldersIds = xor(
+        state.chosenEmptyFoldersIds,
+        payload.ids,
+      );
+    },
+    // set initial files and folders ids clearing all previous selection
+    setChosenFilesAndFolders: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      const folderIds = payload.ids.filter(isFolderId);
+      const fileIds = payload.ids.filter((id) => !isFolderId(id));
+
+      const emptyFolderIds = folderIds.filter(
+        (id) => !state.files.some((f) => f.id.startsWith(id)),
+      );
+      const fileIdsToSelect = [
+        ...fileIds,
+        ...state.files
+          .filter(({ id }) =>
+            folderIds.some((folderId) => id.startsWith(folderId)),
+          )
+          .map(({ id }) => id),
+      ];
+
+      if (
+        isEqual(emptyFolderIds, state.chosenEmptyFoldersIds) &&
+        isEqual(state.chosenFileIds, fileIdsToSelect)
+      ) {
+        return;
+      }
+
+      state.chosenEmptyFoldersIds = emptyFolderIds;
+      state.chosenFileIds = fileIdsToSelect;
+    },
+    setChosenFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string }>,
+    ) => {
+      const { folderId } = payload;
+      const emptyFolderIds = state.folders
+        .filter(({ id }) =>
+          isFolderEmpty({ id, folders: state.folders, entities: state.files }),
+        )
+        .map(({ id }) => id);
+
+      if (emptyFolderIds.includes(folderId)) {
+        state.chosenEmptyFoldersIds = xor(state.chosenEmptyFoldersIds, [
+          folderId,
+        ]);
+        return;
+      }
+
+      const { partialChosenFolderIds } = getPartialAndFullyChosenFolders(
+        state.folders,
+        state.files,
+        state.chosenFileIds,
+        emptyFolderIds,
+        state.chosenEmptyFoldersIds,
+      );
+      const newChosenFileIds = state.files
+        .filter(
+          (file) =>
+            file.id.startsWith(folderId) &&
+            (!partialChosenFolderIds.includes(folderId) ||
+              !state.chosenFileIds.includes(file.id)),
+        )
+        .map(({ id }) => id);
+      const newChosenEmptyFolderIds = emptyFolderIds
+        .filter((id) => `${id}/`.startsWith(folderId))
+        .map((id) => `${id}/`);
+
+      state.chosenFileIds = xor(state.chosenFileIds, newChosenFileIds);
+      state.chosenEmptyFoldersIds = xor(
+        state.chosenEmptyFoldersIds,
+        newChosenEmptyFolderIds,
+      );
     },
   },
 });

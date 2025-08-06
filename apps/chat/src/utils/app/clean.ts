@@ -112,6 +112,7 @@ export const cleanConversation = (
           ) || [],
       },
     }),
+    customViewState: conversation.customViewState,
   };
 
   return cleanConversation;
