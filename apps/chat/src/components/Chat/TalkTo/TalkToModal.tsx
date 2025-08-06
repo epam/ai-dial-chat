@@ -225,7 +225,6 @@ const TalkToModalView = ({
     isMyWorkspace,
     searchTerm.length,
     widgetsSchemaIds,
-    searchedModels,
     t,
   ]);
 
