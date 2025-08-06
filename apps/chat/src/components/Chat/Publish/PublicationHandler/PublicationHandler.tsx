@@ -192,8 +192,6 @@ export function PublicationHandler({ publication }: Props) {
     };
   }, [publication]);
 
-  const [currentRules, setCurrentRules] = useState(initialState.rules);
-
   const handleUpdateRequest = useCallback(() => {
     dispatch(
       PublicationActions.updatePublicationRequest({
@@ -254,10 +252,6 @@ export function PublicationHandler({ publication }: Props) {
     entitiesEditState,
     foldersEditState,
   ]);
-
-  const handleSaveCurrentRules = useCallback(() => {
-    setCurrentRules(initialState.rules);
-  }, [initialState.rules]);
 
   const handleSelectPublishToFolder = useCallback(
     (folderId?: string) => {
@@ -332,9 +326,8 @@ export function PublicationHandler({ publication }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    const initialRules = currentRules ?? filteredRuleEntries;
-    return !isEqual(initialRules, rulesOnEdit);
-  }, [currentRules, filteredRuleEntries, rulesOnEdit]);
+    return !isEqual(rules[publication.targetFolder] ?? [], newRules ?? []);
+  }, [newRules, publication.targetFolder, rules]);
 
   const maxPublishToDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
@@ -494,7 +487,6 @@ export function PublicationHandler({ publication }: Props) {
         </div>
         <PublicationHandlerFooter
           onUpdateRequest={handleUpdateRequest}
-          handleSaveCurrentRules={handleSaveCurrentRules}
           publication={publication}
           isFormChanged={isFormChanged}
           areRulesChanged={hasUserChangedRules}
@@ -503,8 +495,8 @@ export function PublicationHandler({ publication }: Props) {
       {isCompareModalOpened && publication.targetFolder && (
         <CompareRulesModal
           allRuleEntries={filteredRuleEntries}
-          newRulesToCompare={rulesOnEdit}
-          oldRulesToCompare={currentRules}
+          newRulesToCompare={newRules}
+          oldRulesToCompare={rules[publication.targetFolder]}
           onClose={() => setIsCompareModalOpened(false)}
           newRulesPath={publication.targetFolder}
         />

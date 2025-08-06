@@ -68,7 +68,6 @@ interface Props {
   isFormChanged: boolean;
   areRulesChanged: boolean;
   onUpdateRequest: () => void;
-  handleSaveCurrentRules: () => void;
 }
 
 export const PublicationHandlerFooter = ({
@@ -76,7 +75,6 @@ export const PublicationHandlerFooter = ({
   isFormChanged,
   areRulesChanged,
   onUpdateRequest,
-  handleSaveCurrentRules,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -272,9 +270,8 @@ export const PublicationHandlerFooter = ({
   }, [dispatch, expandFoldersByFeatureType, publication, resourcesToReview]);
 
   const handleToggleEditMode = useCallback(() => {
-    handleSaveCurrentRules();
     dispatch(PublicationActions.setIsEditMode(!isEditMode));
-  }, [dispatch, handleSaveCurrentRules, isEditMode]);
+  }, [dispatch, isEditMode]);
 
   const invalidEntities = useMemo(
     () =>
