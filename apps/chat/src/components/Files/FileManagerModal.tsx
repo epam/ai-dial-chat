@@ -796,9 +796,9 @@ export const FileManagerModal = ({
       </div>
       <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6 md:py-4">
         <div className="flex items-center justify-center gap-2">
-          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
+          {selectedFilesIds.length > 0 && (
             <button
-              onClick={() => handleStartDeleteMultipleFiles()}
+              onClick={handleStartDeleteMultipleFiles}
               disabled={isDeleteDisabled}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
               data-qa="delete-files"
@@ -817,7 +817,7 @@ export const FileManagerModal = ({
               </Tooltip>
             </button>
           )}
-          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
+          {selectedFilesIds.length > 0 && (
             <button
               onClick={handleDownloadMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
