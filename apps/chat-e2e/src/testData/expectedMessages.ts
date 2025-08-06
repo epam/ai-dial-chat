@@ -339,6 +339,7 @@ export const ExpectedMessages = {
   uploadToPathIsValid: 'Upload to path is valid',
   uploadToPathIsTruncated: 'Upload to path is truncated',
   folderCheckboxIsNotVisible: 'Folder check-box is not visible',
+  folderCheckboxIsVisible: 'Folder check-box is visible',
   stopPlaybackButtonNotVisible: '"Stop playback" button is not visible',
   tableIsVisible: 'Table is visible in chat message',
   tableControlIconsNotVisible: 'Table control icons are not visible',

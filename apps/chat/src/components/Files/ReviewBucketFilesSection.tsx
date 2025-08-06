@@ -171,8 +171,11 @@ export const ReviewBucketFilesSection: FC<Props> = ({
     return null;
   }
 
-  const reviewBucket =
-    getEntityBucket({ id: publicationResources[0].reviewUrl }) ?? buckets[0];
+  // firstReviewUrl uses in case of apps-editor
+  const firstReviewUrl = publicationResources.at(0)?.reviewUrl;
+  const reviewBucket = firstReviewUrl
+    ? getEntityBucket({ id: firstReviewUrl })
+    : buckets[0];
 
   return (
     <ReviewBucketFilesSectionView
