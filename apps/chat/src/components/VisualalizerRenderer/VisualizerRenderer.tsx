@@ -122,7 +122,6 @@ export const VisualizerRenderer = ({
         hostDomain: window.location.origin,
         visualizerName: visualizerTitle,
         loaderStyles: { display: 'none' },
-        themeId,
       });
 
       return () => {
@@ -130,7 +129,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-  }, [rendererUrl, themeId, visualizerTitle]);
+  }, [rendererUrl, visualizerTitle]);
 
   useEffect(() => {
     if (

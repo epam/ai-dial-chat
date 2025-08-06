@@ -7,7 +7,6 @@ export interface VisualizerConnectorOptions {
   loaderStyles?: Styles;
   loaderClass?: string;
   loaderInnerHTML?: string;
-  themeId?: string;
 
   requestTimeout?: number;
 }

@@ -33,7 +33,6 @@ interface IframeRendererProps {
   containerStyle?: React.CSSProperties;
   containerClassName?: string;
   conversationId?: string;
-  themeId?: string;
 }
 
 export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
@@ -47,7 +46,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
       containerStyle = {},
       containerClassName = '',
       conversationId,
-      themeId,
     },
     ref: Ref<HTMLDivElement>,
   ) => {
@@ -74,7 +72,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           domain: iframeUrl,
           hostDomain: window.location.origin,
           visualizerName: title,
-          themeId,
         });
 
         return () => {
@@ -82,7 +79,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           visualizer.current = null;
         };
       }
-    }, [iframeUrl, themeId, title]);
+    }, [iframeUrl, title]);
 
     const handleMessage = useCallback(
       (event: MessageEvent<VisualizerConnectorRequest>) => {
