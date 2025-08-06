@@ -63,3 +63,4 @@ pnpm-lock.yaml
 # NX
 .nx
 tmp
+.rollup.cache

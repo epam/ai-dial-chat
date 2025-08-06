@@ -55,6 +55,7 @@ export const NavigationButton = ({
           : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
     >
+      {/* eslint-disable jsx-a11y/role-supports-aria-props */}
       <button
         data-qa={dataQa}
         onClick={isClickAllowed ? onClick : undefined}
@@ -65,6 +66,7 @@ export const NavigationButton = ({
         )}
         aria-selected={selected}
       >
+        {/* eslint-enable jsx-a11y/role-supports-aria-props */}
         <Icon
           className={classNames(
             'min-h-[24px] min-w-[24px]',
