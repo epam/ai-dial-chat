@@ -14,7 +14,6 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
-import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import {
   isSmallScreen,
   isTabletScreen,
@@ -45,8 +44,6 @@ const initEpic: AppEpic = (action$, state$) =>
       const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
 
       return forkJoin({
-        test: ToolsetService.getToolsets(),
-        test2: ToolsetService.getToolset('DeepWiki'),
         theme: DataService.getTheme(),
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()

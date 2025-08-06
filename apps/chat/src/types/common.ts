@@ -7,6 +7,7 @@ export enum EntityType {
   Application = 'application',
   Assistant = 'assistant',
   Addon = 'addon',
+  Toolset = 'toolset',
 }
 
 export enum BackendDataNodeType {

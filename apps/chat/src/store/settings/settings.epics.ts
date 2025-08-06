@@ -33,6 +33,7 @@ import {
   PromptsActions,
   PublicationActions,
   SettingsActions,
+  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import { AuthSelectors, SettingsSelectors } from '@/src/store/selectors';
@@ -52,6 +53,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(ApplicationTypesSchemasActions.init()),
         of(ConversationsActions.initShare()),
         of(MarketplaceActions.init()),
+        of(ToolsetActions.init()),
       ];
     case PageType.Chat:
       return [
@@ -65,6 +67,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
+        of(ToolsetActions.init()),
       ];
     case PageType.AppsEditorSettings:
     case PageType.AppsEditorGeneralInfo:
@@ -76,6 +79,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(PublicationActions.init()),
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
+        of(ToolsetActions.init()),
       ];
     default:
       return [
@@ -87,6 +91,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(PublicationActions.init()),
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
+        of(ToolsetActions.init()),
       ];
   }
 };
