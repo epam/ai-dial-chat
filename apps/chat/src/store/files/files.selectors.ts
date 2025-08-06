@@ -3,6 +3,8 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   getFilteredFolders,
   getParentAndChildFolders,
+  getPartialAndFullyChosenFolders,
+  isFolderEmpty,
   sortByName,
 } from '@/src/utils/app/folders';
 import { getEntityBucket } from '@/src/utils/app/id';
@@ -167,6 +169,40 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectLastRenamedParentFolder = (state: RootState) =>
   rootSelector(state).lastRenamedParentFolder;
 
+const selectChosenItems = (state: RootState) =>
+  rootSelector(state).chosenFileIds;
+
+const selectEmptyFolderIds = createSelector(
+  [selectFolders, selectFiles],
+  (folders, files) => {
+    return folders
+      .filter(({ id }) => isFolderEmpty({ id, folders, entities: files }))
+      .map(({ id }) => id);
+  },
+);
+
+const selectChosenEmptyFolderIds = (state: RootState) =>
+  rootSelector(state).chosenEmptyFoldersIds;
+
+const selectChosenFolderIds = createSelector(
+  [
+    selectFiles,
+    selectChosenItems,
+    selectFolders,
+    selectEmptyFolderIds,
+    selectChosenEmptyFolderIds,
+  ],
+  (files, chosenItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
+    return getPartialAndFullyChosenFolders(
+      folders,
+      files,
+      chosenItems,
+      emptyFolderIds,
+      chosenEmptyFolderIds,
+    );
+  },
+);
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -188,4 +224,8 @@ export const FilesSelectors = {
   selectAreFilesLoading,
   selectLastRenamedParentFolder,
   selectReviewBucketFolders,
+  selectChosenItems,
+  selectEmptyFolderIds,
+  selectChosenEmptyFolderIds,
+  selectChosenFolderIds,
 };
