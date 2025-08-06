@@ -121,6 +121,7 @@ export enum FeatureType {
   Prompt = 'prompt',
   File = 'file',
   Application = 'application',
+  Toolset = 'toolset',
 }
 
 export interface ShareInterface {

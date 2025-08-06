@@ -55,6 +55,8 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(MarketplaceActions.init()),
         of(ToolsetActions.init()),
       ];
+    case PageType.ToolsetEditor:
+      return [of(UIActions.init()), of(ToolsetActions.init())];
     case PageType.Chat:
       return [
         of(UIActions.init()),

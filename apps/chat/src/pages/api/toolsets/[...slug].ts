@@ -40,8 +40,11 @@ const handleRequest = async (req: NextApiRequest) => {
   const options = {
     headers: getApiHeaders({ jwt: token?.access_token as string }),
     method: req.method ?? HTTPMethod.GET,
-    body: req.body ? stringifyBody(req) : undefined,
   };
+
+  if (req.method === HTTPMethod.PUT || req.method === HTTPMethod.POST) {
+    options.body = req.body ? stringifyBody(req) : undefined;
+  }
 
   return await fetch(sanitizeUri(url), options);
 };

@@ -27,6 +27,9 @@ export const toolsetSlice = createSlice({
         {},
       );
     },
+    createToolset: (state, _action: PayloadAction<ToolsetModel>) => state,
+    createToolsetSuccess: (state, _action: PayloadAction<ToolsetModel>) =>
+      state,
   },
 });
 
