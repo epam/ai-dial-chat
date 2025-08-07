@@ -697,6 +697,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
           messagesStack: excludeSystemMessages(conversation.messages),
           activePlaybackIndex: 0,
           isPlayback: true,
+          customViewState: conversation.customViewState,
         },
         isReplay: false,
         isPlayback: true,

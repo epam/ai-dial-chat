@@ -46,4 +46,5 @@ export interface PublicationState {
   rulesOnEdit: PublicationRule[];
   isPublicationUpdating: boolean;
   displayAuthorEditState: string;
+  publishToUrl: string;
 }

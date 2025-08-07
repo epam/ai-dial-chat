@@ -1,12 +1,4 @@
-import {
-  ClipboardEvent,
-  MouseEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -23,10 +15,8 @@ import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
-  getRootId,
   isApplicationId,
 } from '@/src/utils/app/id';
-import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
   getApplicationPublishResources,
@@ -65,7 +55,6 @@ import {
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
-import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { Modal } from '@/src/components/Common/Modal';
@@ -74,6 +63,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublicationInfoSection } from './PublicationInfoSection';
 import { PublicationItemsList } from './PublicationItemsList';
+import { PublishToSection } from './PublishToSection';
 import { RuleListItem } from './RuleListItem';
 import {
   PublicationRequestFormData,
@@ -94,11 +84,11 @@ interface Props<
   entity: T;
   type: SharingType;
   isOpen: boolean;
-  onClose: () => void;
   publishAction: PublishActions;
   entities?: T[];
   depth?: number;
   defaultPath?: string;
+  onClose: () => void;
 }
 
 export function PublishModal<
@@ -106,12 +96,12 @@ export function PublishModal<
 >({
   entity,
   isOpen,
-  onClose,
   type,
-  depth,
-  entities,
   publishAction,
+  entities,
+  depth = 0,
   defaultPath,
+  onClose,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -120,8 +110,6 @@ export function PublishModal<
   const [path, setPath] = useState(defaultPath ?? '');
   const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
   const [isSomeVersionInvalid, setIsSomeVersionInvalid] = useState(false);
-  const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
-    useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
@@ -175,14 +163,6 @@ export function PublishModal<
   const entitiesArray = useMemo(
     () => (entities ? entities : [entity]),
     [entities, entity],
-  );
-  const publicRootIdSegment = useMemo(
-    () =>
-      getRootId({
-        featureType: EnumMapper.getFeatureTypeBySharingType(type),
-        bucket: PUBLIC_URL_PREFIX,
-      }),
-    [type],
   );
 
   const {
@@ -239,15 +219,6 @@ export function PublishModal<
   useEffect(() => {
     trigger();
   }, [trigger]);
-
-  const handleFolderChange = useCallback(
-    (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsChangeFolderModalOpened(true);
-    },
-    [],
-  );
 
   const handlePublish = useCallback(
     (data: PublicationRequestFormData) => {
@@ -427,8 +398,6 @@ export function PublishModal<
     if (typeof folderId === 'string') {
       setPath(folderId);
     }
-
-    setIsChangeFolderModalOpened(false);
   }, []);
 
   const isNothingSelectedAndNoRuleChanges =
@@ -458,29 +427,28 @@ export function PublishModal<
 
   const tooltipText = useMemo(() => {
     if (!isValid && !!errors.publishRequestName?.message) {
-      return t('Enter a valid name for the publish request');
+      return 'Enter a valid name for the publish request';
     }
 
     if (!isValid && !!errors.publicationAuthor?.message) {
-      return t("Enter a valid publication's author name");
+      return "Enter a valid publication's author name";
     }
 
     if (isRuleSetterOpened) {
-      return t('Accept or reject rule changes');
+      return 'Accept or reject rule changes';
     }
 
     if (isSomeVersionInvalid) {
-      return t('All versions should be valid');
+      return 'All versions should be valid';
     }
 
-    return t('Nothing is selected and rules have not changed');
+    return 'Nothing is selected and rules have not changed';
   }, [
     isValid,
     errors.publishRequestName?.message,
     errors.publicationAuthor?.message,
     isRuleSetterOpened,
     isSomeVersionInvalid,
-    t,
   ]);
 
   return (
@@ -521,37 +489,11 @@ export function PublishModal<
             <div className="flex w-full shrink flex-col px-3 py-4 md:px-5">
               <h2 className="mb-4 font-semibold">{t('General info')}</h2>
               {publishAction !== PublishActions.DELETE ? (
-                <section className="mb-3">
-                  <h3
-                    className="mb-1 flex text-xs text-secondary"
-                    data-qa="publish-to-label"
-                  >
-                    {t('Publish to')}
-                  </h3>
-                  <div
-                    className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
-                    data-qa="change-path-container"
-                  >
-                    <div className="flex w-full justify-between truncate whitespace-pre break-all">
-                      <Tooltip
-                        tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
-                        triggerClassName="truncate whitespace-pre"
-                        contentClassName="break-all"
-                        dataQa="path"
-                      >
-                        {constructPath(ORGANIZATION_SECTION_NAME, path)}
-                      </Tooltip>
-
-                      <button
-                        className="h-full cursor-pointer text-accent-primary"
-                        data-qa="change-button"
-                        onClick={handleFolderChange}
-                      >
-                        {t('Change')}
-                      </button>
-                    </div>
-                  </div>
-                </section>
+                <PublishToSection
+                  path={constructPath(ORGANIZATION_SECTION_NAME, path)}
+                  maxDepth={depth}
+                  onSelect={handleClose}
+                />
               ) : (
                 <PublicationInfoSection
                   labelDataQa={'unpublish-from-label'}
@@ -645,7 +587,10 @@ export function PublishModal<
         </div>
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
-          <Tooltip hideTooltip={isSendBtnTooltipHidden} tooltip={tooltipText}>
+          <Tooltip
+            hideTooltip={isSendBtnTooltipHidden}
+            tooltip={t(tooltipText)}
+          >
             <button
               className="button button-primary py-2"
               type="submit"
@@ -657,14 +602,6 @@ export function PublishModal<
           </Tooltip>
         </div>
       </form>
-      <ChangePathDialog
-        initiallySelectedFolderId={entity.id}
-        isOpen={isChangeFolderModalOpened}
-        onClose={handleClose}
-        type={type}
-        depth={depth}
-        rootFolderId={publicRootIdSegment}
-      />
     </Modal>
   );
 }

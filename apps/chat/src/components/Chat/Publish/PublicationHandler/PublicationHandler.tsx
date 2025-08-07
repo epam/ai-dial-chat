@@ -9,7 +9,10 @@ import {
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
-import { getIdWithoutFeatureType } from '@/src/utils/app/id';
+import {
+  getIdWithoutFeatureType,
+  getIdWithoutRootPathSegments,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   calculateNewFolderId,
@@ -37,6 +40,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublicationInfoSection } from '../PublicationInfoSection';
+import { PublishToSection } from '../PublishToSection';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
@@ -105,6 +109,9 @@ export function PublicationHandler({ publication }: Props) {
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
+  const editedPublishToUrl = useAppSelector(
+    PublicationSelectors.selectPublishToUrl,
+  );
   const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
   const displayAuthorEditState = useAppSelector(
     PublicationSelectors.selectDisplayAuthorEditState,
@@ -170,6 +177,22 @@ export function PublicationHandler({ publication }: Props) {
     [publication.resources],
   );
 
+  const initialState = useMemo(() => {
+    const { entities, folders } = getDefaultAllEditEntities(
+      publication.resources,
+    );
+    const initialRules = publication.rules ?? [];
+    const initialDisplayAuthor = publication.displayAuthor ?? '';
+
+    return {
+      entities,
+      folders,
+      rules: initialRules,
+      displayAuthor: initialDisplayAuthor,
+      publishToUrl: publication.targetFolder,
+    };
+  }, [publication]);
+
   const updatePublicationResources = useMemo(() => {
     if (!isEditMode) return;
 
@@ -233,7 +256,7 @@ export function PublicationHandler({ publication }: Props) {
       PublicationActions.updatePublicationRequest({
         url: publication.url,
         dataToUpdate: {
-          targetFolder: publication.targetFolder,
+          targetFolder: editedPublishToUrl,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
           resources: updatePublicationResources!,
@@ -243,12 +266,28 @@ export function PublicationHandler({ publication }: Props) {
     dispatch(PublicationActions.setIsEditMode(false));
   }, [
     dispatch,
-    displayAuthorEditState,
-    publication.targetFolder,
     publication.url,
+    publication.resources,
+    publication.targetFolder,
+    editedPublishToUrl,
     rulesOnEdit,
-    updatePublicationResources,
+    displayAuthorEditState,
+    entitiesEditState,
+    foldersEditState,
   ]);
+
+  const handleSelectPublishToFolder = useCallback(
+    (folderId?: string) => {
+      if (typeof folderId === 'string') {
+        dispatch(
+          PublicationActions.setPublishToUrl(
+            constructPath(PUBLIC_URL_PREFIX, folderId),
+          ),
+        );
+      }
+    },
+    [dispatch],
+  );
 
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
@@ -269,25 +308,10 @@ export function PublicationHandler({ publication }: Props) {
     [dispatch, displayAuthorEditState.length],
   );
 
-  const publishToUrl = publication.targetFolder
-    ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
+  const publishToUrl = editedPublishToUrl
+    ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
-
-  const initialState = useMemo(() => {
-    const { entities, folders } = getDefaultAllEditEntities(
-      publication.resources,
-    );
-    const initialRules = publication.rules ?? [];
-    const initialDisplayAuthor = publication.displayAuthor ?? '';
-
-    return {
-      entities,
-      folders,
-      rules: initialRules,
-      displayAuthor: initialDisplayAuthor,
-    };
-  }, [publication]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -299,9 +323,15 @@ export function PublicationHandler({ publication }: Props) {
       const rulesChanged = !isEqual(initialState.rules, rulesOnEdit);
       const authorChanged =
         initialState.displayAuthor !== displayAuthorEditState;
+      const publishToUrlChanged =
+        initialState.publishToUrl !== editedPublishToUrl;
 
       const result =
-        entitiesChanged || foldersChanged || rulesChanged || authorChanged;
+        entitiesChanged ||
+        foldersChanged ||
+        rulesChanged ||
+        authorChanged ||
+        publishToUrlChanged;
 
       setIsFormChanged(result);
     }, 500);
@@ -315,12 +345,21 @@ export function PublicationHandler({ publication }: Props) {
     foldersEditState,
     rulesOnEdit,
     displayAuthorEditState,
+    editedPublishToUrl,
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    const initialRules = filteredRuleEntries ?? [];
-    return !isEqual(initialRules, rulesOnEdit);
-  }, [filteredRuleEntries, rulesOnEdit]);
+    return !isEqual(rules[publication.targetFolder] ?? [], newRules ?? []);
+  }, [newRules, publication.targetFolder, rules]);
+
+  const maxPublishToDepth = useMemo(() => {
+    return publication.resources.reduce((max, resource) => {
+      return Math.max(
+        max,
+        getIdWithoutRootPathSegments(resource.targetUrl).split('/').length,
+      );
+    }, 0);
+  }, [publication.resources]);
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
@@ -352,15 +391,23 @@ export function PublicationHandler({ publication }: Props) {
               <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                 <div className="flex flex-col px-3 pb-4 md:px-5">
                   <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                  <PublicationInfoSection
-                    labelDataQa="publish-to-label"
-                    label={t('Publish to')}
-                    valueDataQa="publish-to-path"
-                    valueToDisplay={publishToUrl}
-                    tooltip={
-                      <div className="flex break-words">{publishToUrl}</div>
-                    }
-                  />
+                  {isEditMode ? (
+                    <PublishToSection
+                      path={publishToUrl}
+                      maxDepth={maxPublishToDepth}
+                      onSelect={handleSelectPublishToFolder}
+                    />
+                  ) : (
+                    <PublicationInfoSection
+                      labelDataQa="publish-to-label"
+                      label={t('Publish to')}
+                      valueDataQa="publish-to-path"
+                      valueToDisplay={publishToUrl}
+                      tooltip={
+                        <div className="flex break-words">{publishToUrl}</div>
+                      }
+                    />
+                  )}
 
                   <PublicationInfoSection
                     labelDataQa="publication-author-label"

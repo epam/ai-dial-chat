@@ -4,6 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
 
@@ -33,12 +34,17 @@ export function ChatExternalControls({
   const approveRequiredResources = useAppSelector(
     PublicationSelectors.selectResourcesToReview,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
   );
 
   const conversationsToDuplicate = conversations.filter(
-    (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
+    (conv) =>
+      (isEntityIdPublic(conv) || isEntityReadOnly(conv)) &&
+      isEntityIdExternal(conv),
   );
 
   const handleDuplicate = () => {
@@ -50,7 +56,10 @@ export function ChatExternalControls({
   if (
     isOverlayConversationId ||
     conversations.some((c) =>
-      approveRequiredResources.some((r) => r.reviewUrl === c.id),
+      approveRequiredResources.some(
+        (r) =>
+          r.reviewUrl === c.id && r.publicationUrl === selectedPublicationUrl,
+      ),
     )
   ) {
     return null;

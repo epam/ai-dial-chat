@@ -1,4 +1,8 @@
 import { constructPath } from '@/src/utils/app/file';
+import {
+  getIdWithoutFeatureType,
+  getIdWithoutRootPathSegments,
+} from '@/src/utils/app/id';
 import { isConversationId } from '@/src/utils/app/id';
 import {
   getConversationIdWithoutModel,
@@ -38,11 +42,11 @@ export const usePublicVersionGroupId = (entity: ShareEntity) => {
       constructPath(
         entity.id.split('/')[0],
         PUBLIC_URL_PREFIX,
-        ...(selectedPublication &&
-        entity.publicationInfo?.action !== PublishActions.DELETE
-          ? selectedPublication.targetFolder.split('/').slice(1)
-          : ''),
-        ...idWithoutModel.split('/').slice(2),
+        selectedPublication &&
+          entity.publicationInfo?.action !== PublishActions.DELETE
+          ? getIdWithoutFeatureType(selectedPublication.targetFolder)
+          : '',
+        getIdWithoutRootPathSegments(idWithoutModel),
       ),
     );
   }

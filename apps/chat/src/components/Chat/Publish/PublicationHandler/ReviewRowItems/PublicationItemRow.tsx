@@ -34,14 +34,12 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
   item: PublicationReviewItem;
-  isEditDisabled?: boolean;
   publicVersionGroupId: string;
   errors: string[];
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
-  isEditDisabled,
   publicVersionGroupId,
   errors,
 }) => {
@@ -109,14 +107,14 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       )}
       <span
         className={classNames(
-          'shrink-0 text-xs',
+          'relative shrink-0 text-xs',
           isDeleteAction && 'text-error',
         )}
         data-qa="version"
       >
         <EditableField
           value={inputVersion}
-          isEditMode={isDeleteAction || isEditDisabled ? false : isEditMode}
+          isEditMode={isDeleteAction ? false : isEditMode}
           onChange={handleChangeVersion}
           inputClassName={classNames(
             'w-[70px] text-right text-xs',
@@ -138,7 +136,6 @@ interface PublicationRowProps {
   item: PublicationReviewItem;
   dataQa: string;
   itemTypeName: BackendResourceTypeName;
-  isEditDisabled?: boolean;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -146,7 +143,6 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   Icon,
   item,
   dataQa,
-  isEditDisabled,
   itemTypeName,
 }) => {
   const dispatch = useAppDispatch();
@@ -300,7 +296,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <span className="flex">{Icon}</span>
         <EditableField
           value={inputName}
-          isEditMode={isEditDisabled || isDeleteAction ? false : isEditMode}
+          isEditMode={isDeleteAction ? false : isEditMode}
           onChange={handleChangeName}
           inputClassName={classNames('w-full', nameErrors.length && 'pr-5')}
           className={classNames(
@@ -314,7 +310,6 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       </span>
       <PublicationVersionInfo
         item={item}
-        isEditDisabled={isEditDisabled}
         errors={versionErrors}
         publicVersionGroupId={publicVersionGroupId}
       />
