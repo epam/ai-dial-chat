@@ -25,6 +25,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
+  PublicVersionGroup,
   PublicVersionGroups,
   Publication,
   PublicationRequestModel,
@@ -38,6 +39,7 @@ import { SharingType } from '@/src/types/share';
 
 import {
   EDITED_FOLDER_NAME_KEY,
+  EntitiesEditState,
   FolderEditTree,
   FolderNode,
 } from '@/src/store/publication/publication.types';
@@ -53,6 +55,7 @@ import { BucketService } from './data/bucket-service';
 import { FileService } from './data/file-service';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, sortByName } from './folders';
+import { getStringValidationErrors, getVersionValidationErrors } from './forms';
 import {
   getEntityBucket,
   getRootId,
@@ -140,6 +143,20 @@ export const findLatestVersion = (versions: string[]) => {
   return sortedVersions[0];
 };
 
+export const getNameWithoutModel = (itemName: string) => {
+  const nameWithoutModel = itemName.slice(
+    itemName.indexOf(pathKeySeparator) + 2,
+  );
+
+  return nameWithoutModel;
+};
+
+export const getConversationIdWithoutModel = (itemId: string) => {
+  const nameWithoutModel = getNameWithoutModel(itemId);
+  return itemId
+    .slice(0, itemId.lastIndexOf('/'))
+    .concat(`/${nameWithoutModel}`);
+};
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
   items: { id: string; updatedAt?: number }[],
   featureType: FeatureType,
@@ -153,16 +170,25 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
         featureType === FeatureType.Chat
           ? parseConversationApiKey
           : parsePromptApiKey;
-      const parsedApiKey = parseMethod(splitEntityId(item.id).name, {
+
+      const itemName = splitEntityId(item.id).name;
+
+      const idWithoutModel =
+        featureType === FeatureType.Chat
+          ? getConversationIdWithoutModel(item.id)
+          : item.id;
+
+      const parsedApiKey = parseMethod(itemName, {
         parseVersion: true,
       });
 
       if (parsedApiKey.publicationInfo?.version) {
-        const idWithoutVersion = getPublicItemIdWithoutVersion(
+        const versionGroupKey = getPublicItemIdWithoutVersion(
           parsedApiKey.publicationInfo.version,
-          item.id,
+          idWithoutModel,
         );
-        const currentVersionGroup = acc.publicVersionGroups[idWithoutVersion];
+
+        const currentVersionGroup = acc.publicVersionGroups[versionGroupKey];
 
         const newVersion = {
           version: parsedApiKey.publicationInfo.version,
@@ -170,7 +196,7 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
         };
 
         if (!currentVersionGroup) {
-          acc.publicVersionGroups[idWithoutVersion] = {
+          acc.publicVersionGroups[versionGroupKey] = {
             selectedVersion: newVersion,
             allVersions: [newVersion],
           };
@@ -182,7 +208,7 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
             allVersions.map(({ version }) => version),
           );
 
-          acc.publicVersionGroups[idWithoutVersion] = {
+          acc.publicVersionGroups[versionGroupKey] = {
             selectedVersion:
               latestVersion === currentVersionGroup.selectedVersion.version
                 ? currentVersionGroup.selectedVersion
@@ -641,3 +667,127 @@ export function isFolderNameNotUniq(
     })
   );
 }
+
+export const calculateNewFolderId = (
+  entityId: string,
+  foldersEditState: FolderEditTree,
+  targetFolder: string,
+): string => {
+  const folderSegments = getFolderIdFromEntityId(entityId).split('/');
+  const newFolderSegments: string[] = [];
+  let currentFolder = foldersEditState as FolderNode;
+
+  folderSegments.forEach((segment, i) => {
+    currentFolder = currentFolder[segment] as FolderNode;
+    const folderName =
+      i > 1
+        ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
+        : currentFolder[EDITED_FOLDER_NAME_KEY];
+    newFolderSegments.push(folderName);
+  });
+
+  newFolderSegments[1] = targetFolder;
+  return newFolderSegments.join('/');
+};
+
+export const checkVersionExists = (
+  versionGroup: PublicVersionGroup | undefined,
+  version: string,
+  editState: EntitiesEditState,
+  currentEntityId: string,
+  folderId: string,
+  name: string,
+): boolean => {
+  // Check public versions first
+  const publicVersionExists = versionGroup?.allVersions?.some(
+    (versionItem) => version === versionItem.version,
+  );
+
+  if (publicVersionExists) return true;
+
+  // Check edit state versions
+  return Object.entries(editState).some(
+    ([key, { name: editName, version: editVersion }]) => {
+      return (
+        key !== currentEntityId &&
+        getFolderIdFromEntityId(key) ===
+          getFolderIdFromEntityId(currentEntityId) &&
+        name === editName.trim() &&
+        version === editVersion.trim()
+      );
+    },
+  );
+};
+
+interface ValidationResult {
+  versionExists: boolean;
+  nameErrors: string[];
+  versionErrors: string[];
+}
+
+export const getEditEntityValidation = ({
+  entityId,
+  name,
+  version,
+  editState,
+  publicVersionGroups,
+  versionGroupKey,
+  newPublicFolderId,
+  itemTypeName,
+  action,
+}: {
+  entityId: string;
+  name: string;
+  version: string;
+  editState: EntitiesEditState;
+  publicVersionGroups: PublicVersionGroups;
+  versionGroupKey: string;
+  newPublicFolderId: string;
+  itemTypeName: string;
+  action?: PublishActions;
+}): ValidationResult => {
+  if (action === PublishActions.DELETE) {
+    return {
+      versionExists: false,
+      nameErrors: [],
+      versionErrors: [],
+    };
+  }
+
+  const trimmedName = name.trim();
+  const trimmedVersion = version.trim();
+
+  const newFolderSegments = newPublicFolderId.split('/');
+  newFolderSegments[1] = entityId.split('/')[1];
+  const newFolderId = newFolderSegments.join('/');
+
+  // Check version existence
+  const versionExists = checkVersionExists(
+    publicVersionGroups[versionGroupKey],
+    trimmedVersion,
+    editState,
+    entityId,
+    newFolderId,
+    trimmedName,
+  );
+
+  // Validate name
+  const nameErrors = getStringValidationErrors({
+    value: name,
+    label: `${itemTypeName}`,
+    checkDotsAtTheEnd: true,
+    isNotUniqName: versionExists,
+    isPublic: true,
+  });
+
+  // Validate version
+  const versionErrors = !isFileId(entityId)
+    ? getVersionValidationErrors(
+        trimmedVersion,
+        versionExists,
+        isApplicationId(entityId),
+      )
+    : [];
+
+  return { versionExists, nameErrors, versionErrors };
+};

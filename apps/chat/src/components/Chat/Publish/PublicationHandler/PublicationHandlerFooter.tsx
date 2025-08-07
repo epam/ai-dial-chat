@@ -9,9 +9,6 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import {
   isEntityNameValid,
-  isVersionExists,
-  isVersionPartSizeValid,
-  isVersionValid,
   replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import {
@@ -67,6 +64,7 @@ interface Props {
   publication: Publication;
   isFormChanged: boolean;
   areRulesChanged: boolean;
+  isEntityEditErrors: boolean;
   onUpdateRequest: () => void;
 }
 
@@ -74,6 +72,7 @@ export const PublicationHandlerFooter = ({
   publication,
   isFormChanged,
   areRulesChanged,
+  isEntityEditErrors,
   onUpdateRequest,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -302,30 +301,7 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
-    ([key, { version, name }]) => {
-      const isInvalidName = !isEntityNameValid(name);
 
-      const resource = publication.resources.find(
-        ({ reviewUrl }) => reviewUrl === key,
-      );
-
-      const isValidVersion =
-        resource?.action === PublishActions.DELETE ||
-        isFileId(key) ||
-        (isVersionValid(version.trim()) &&
-          !isVersionExists(
-            version,
-            key,
-            publicVersionGroups,
-            name,
-            publication.targetFolder,
-          ) &&
-          (!isApplicationId(key) || isVersionPartSizeValid(version)));
-
-      return isInvalidName || !isValidVersion;
-    },
-  );
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
   const isDisplayAuthorInvalid = !isEntityNameValid(
     displayAuthorEditState,
@@ -333,7 +309,7 @@ export const PublicationHandlerFooter = ({
   );
 
   const isEditInvalid =
-    isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
+    isEntityEditErrors || isFoldersInvalid || isDisplayAuthorInvalid;
   const someReviewedConversationHasNoMessages =
     uploadedPublicationConversations.some(({ messages }) => !messages.length);
   const areNoChanges =

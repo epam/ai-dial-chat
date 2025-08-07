@@ -1,15 +1,11 @@
 import type { MouseEvent } from 'react';
 
 import {
-  constructPath,
   notAllowedSpacesRegex,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import {
-  getPublicItemIdWithoutVersion,
-  pathKeySeparator,
-} from '@/src/utils/server/api';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import {
@@ -22,7 +18,7 @@ import {
   MAX_ENTITY_LENGTH,
   MIN_ENTITY_LENGTH,
 } from '@/src/constants/default-ui-settings';
-import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import {
   Entity,
@@ -88,6 +84,8 @@ export const isImportEntityNameOnSameLevelUnique = ({
 };
 
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
+export const doesHaveDotsAtTheStart = (name: string) =>
+  name.trim().startsWith('.');
 
 export const isEntityNameInvalid = (name: string, checkDotsInTheEnd = true) =>
   notAllowedSymbolsRegex.test(name) ||
@@ -208,28 +206,6 @@ export const isVersionPartSizeValid = (version: string | undefined) => {
   }
 
   return version.split('.').every((part) => part.length <= 5);
-};
-
-export const isVersionExists = (
-  versionToTest: string,
-  entityId: string,
-  publicVersionGroups: PublicVersionGroups,
-  newName: string,
-  rootFolder = PUBLIC_URL_PREFIX,
-) => {
-  const { apiKey, parentPath, name: oldName } = splitEntityId(entityId);
-  const modelName = oldName.split(pathKeySeparator)[0];
-  const newEntityId = constructPath(
-    apiKey,
-    rootFolder,
-    parentPath,
-    `${modelName}${pathKeySeparator}${newName}`,
-  );
-  const allVersions = publicVersionGroups[newEntityId]?.allVersions;
-
-  return allVersions?.some(
-    (versionGroup) => versionToTest === versionGroup.version,
-  );
 };
 
 function compareVersions(version1: string, version2: string) {

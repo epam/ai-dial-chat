@@ -20,13 +20,23 @@ export const formErrors = {
     translate(`${name} should be at least ${minLength} characters long`),
   tooLong: (name = 'Name', maxLength = MAX_ENTITY_LENGTH) =>
     translate(`${name} should be at most ${maxLength} characters long`),
-  noDotInTheEnd: (name = 'Name') =>
+  noDotAtTheEnd: (name = 'Name') =>
     translate(`Using a dot at the end of a ${name} is not permitted.`),
+  noDotAtTheStart: (name = 'Name') =>
+    translate(`Using a dot at the start of a ${name} is not permitted.`),
   notUniqName: (name = 'Name', newName: string) =>
     translate(`${name} "{{newName}}" already exists in this folder.`, {
       ns: Translation.Errors,
       newName,
     }),
+  notUniqPublicName: (name = 'Name', newName: string) =>
+    translate(
+      `${name} with the name "{{newName}}" and this version already exists.`,
+      {
+        ns: Translation.Errors,
+        newName,
+      },
+    ),
 };
 
 export const versionsErrors = {

@@ -15,6 +15,7 @@ import {
 import { formErrors, versionsErrors } from '@/src/constants/form-errors';
 
 import {
+  doesHaveDotsAtTheStart,
   doesHaveDotsInTheEnd,
   isEntityNameInvalid,
   isVersionPartSizeValid,
@@ -117,7 +118,7 @@ export function createFormValidationRules(
         }
 
         if (checkDotsInTheEnd && doesHaveDotsInTheEnd(valueToValidate)) {
-          return formErrors.noDotInTheEnd(label);
+          return formErrors.noDotAtTheEnd(label);
         }
 
         return true;
@@ -141,17 +142,21 @@ export function createFormValidationRules(
 export const getStringValidationErrors = ({
   value,
   label,
-  checkDotsInTheEnd,
+  checkDotsAtTheEnd,
+  checkDotsAtTheStart,
   maxLength = MAX_ENTITY_LENGTH,
   minLength = MIN_ENTITY_LENGTH,
   isNotUniqName,
+  isPublic,
 }: {
   value: string;
   label: string;
   maxLength?: number;
   minLength?: number;
-  checkDotsInTheEnd?: boolean;
+  checkDotsAtTheEnd?: boolean;
+  checkDotsAtTheStart?: boolean;
   isNotUniqName?: boolean;
+  isPublic?: boolean;
 }) => {
   const errors: string[] = [];
   const trimmedValue = value.trim();
@@ -165,12 +170,20 @@ export const getStringValidationErrors = ({
     errors.push(formErrors.hasSpecialCharacters(label));
   }
 
-  if (checkDotsInTheEnd && doesHaveDotsInTheEnd(trimmedValue)) {
-    errors.push(formErrors.noDotInTheEnd(label));
+  if (checkDotsAtTheEnd && doesHaveDotsInTheEnd(trimmedValue)) {
+    errors.push(formErrors.noDotAtTheEnd(label));
+  }
+
+  if (checkDotsAtTheStart && doesHaveDotsAtTheStart(trimmedValue)) {
+    errors.push(formErrors.noDotAtTheStart(label));
   }
 
   if (isNotUniqName) {
-    errors.push(formErrors.notUniqName(label, value));
+    if (isPublic) {
+      errors.push(formErrors.notUniqPublicName(label, value));
+    } else {
+      errors.push(formErrors.notUniqName(label, value));
+    }
   }
 
   return errors;

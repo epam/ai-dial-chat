@@ -18,6 +18,10 @@ export interface FolderNode {
 }
 
 export type FolderEditTree = Record<string, FolderNode>;
+export type EntitiesEditState = Record<
+  string,
+  { name: string; version: string }
+>;
 
 export interface PublicationState {
   initialized: boolean;
@@ -37,7 +41,7 @@ export interface PublicationState {
   // Review edit mode
   selectedItemsToApprove: Record<string, string[]>;
   isEditMode: boolean;
-  entitiesEditState: Record<string, { name: string; version: string }>;
+  entitiesEditState: EntitiesEditState;
   foldersEditState: FolderEditTree;
   rulesOnEdit: PublicationRule[];
   isPublicationUpdating: boolean;

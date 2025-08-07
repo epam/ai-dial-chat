@@ -1,5 +1,9 @@
 import { constructPath } from '@/src/utils/app/file';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isConversationId } from '@/src/utils/app/id';
+import {
+  getConversationIdWithoutModel,
+  isEntityIdPublic,
+} from '@/src/utils/app/publications';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -17,10 +21,14 @@ export const usePublicVersionGroupId = (entity: ShareEntity) => {
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );
 
+  const idWithoutModel = isConversationId(entity.id)
+    ? getConversationIdWithoutModel(entity.id)
+    : entity.id;
+
   if (isEntityIdPublic(entity)) {
     return getPublicItemIdWithoutVersion(
       entity.publicationInfo?.version ?? NA_VERSION,
-      entity.id,
+      idWithoutModel,
     );
   }
 
@@ -34,7 +42,7 @@ export const usePublicVersionGroupId = (entity: ShareEntity) => {
         entity.publicationInfo?.action !== PublishActions.DELETE
           ? selectedPublication.targetFolder.split('/').slice(1)
           : ''),
-        ...entity.id.split('/').slice(2),
+        ...idWithoutModel.split('/').slice(2),
       ),
     );
   }

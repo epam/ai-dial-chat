@@ -5,7 +5,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   extractNameFromEmail,
   formatDate,
-  prepareEntityName,
   replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -13,7 +12,9 @@ import { getStringValidationErrors } from '@/src/utils/app/forms';
 import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
+  calculateNewFolderId,
   getDefaultAllEditEntities,
+  getEditEntityValidation,
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
@@ -26,10 +27,6 @@ import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  EDITED_FOLDER_NAME_KEY,
-  FolderNode,
-} from '@/src/store/publication/publication.types';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
@@ -113,9 +110,13 @@ export function PublicationHandler({ publication }: Props) {
     PublicationSelectors.selectDisplayAuthorEditState,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
+  );
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
+  const [authorErrors, setAuthorErrors] = useState<string[]>([]);
+  const [isEntityEditErrors, setIsEntityEditErrors] = useState<boolean>(false);
 
   const [isFormChanged, setIsFormChanged] = useState(false);
 
@@ -125,7 +126,7 @@ export function PublicationHandler({ publication }: Props) {
 
   useEffect(() => {
     if (isEditMode) {
-      setErrors(() =>
+      setAuthorErrors(() =>
         getStringValidationErrors({
           value: replaceSpacesFromString(publication.displayAuthor),
           label: 'Author',
@@ -169,6 +170,64 @@ export function PublicationHandler({ publication }: Props) {
     [publication.resources],
   );
 
+  const updatePublicationResources = useMemo(() => {
+    if (!isEditMode) return;
+
+    const entityErrorsSet = new Set<string>();
+
+    const resources = publication.resources.map(
+      ({ sourceUrl, reviewUrl, action }) => {
+        const { name, version } = entitiesEditState[reviewUrl];
+        // Calculate new folder ID
+        const newPublicFolderId = calculateNewFolderId(
+          reviewUrl,
+          foldersEditState,
+          publication.targetFolder,
+        );
+        if (action !== PublishActions.DELETE) {
+          const versionGroupKey = constructPath(newPublicFolderId, name.trim());
+          const { nameErrors, versionErrors } = getEditEntityValidation({
+            entityId: reviewUrl,
+            name,
+            version,
+            editState: entitiesEditState,
+            publicVersionGroups: publicVersionGroups,
+            versionGroupKey,
+            newPublicFolderId,
+            itemTypeName: '',
+            action: action,
+          });
+
+          if (nameErrors.length || versionErrors.length) {
+            entityErrorsSet.add(reviewUrl);
+          }
+
+          const newApiKey = regenerateApiKeyNameAndVersionParts(
+            reviewUrl,
+            name,
+            version.trim(),
+          );
+          return {
+            action,
+            sourceUrl: sourceUrl ?? '',
+            targetUrl: constructPath(newPublicFolderId, newApiKey),
+          };
+        }
+
+        return { action, sourceUrl: sourceUrl ?? '', targetUrl: '' };
+      },
+    );
+    setIsEntityEditErrors(entityErrorsSet.size > 0);
+    return resources;
+  }, [
+    entitiesEditState,
+    foldersEditState,
+    isEditMode,
+    publicVersionGroups,
+    publication.resources,
+    publication.targetFolder,
+  ]);
+
   const handleUpdateRequest = useCallback(() => {
     dispatch(
       PublicationActions.updatePublicationRequest({
@@ -177,43 +236,7 @@ export function PublicationHandler({ publication }: Props) {
           targetFolder: publication.targetFolder,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
-          resources: publication.resources.map(
-            ({ sourceUrl, reviewUrl, action }) => {
-              const { name, version } = entitiesEditState[reviewUrl];
-
-              // calculate new folderId
-              const folderSegments =
-                getFolderIdFromEntityId(reviewUrl).split('/');
-              const newFolderSegments: string[] = [];
-              let currentFolder = foldersEditState as FolderNode;
-              folderSegments.forEach((segment, i) => {
-                currentFolder = currentFolder[segment] as FolderNode;
-                newFolderSegments.push(
-                  // prepare name if it's not root path segments
-                  i > 1
-                    ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
-                    : currentFolder[EDITED_FOLDER_NAME_KEY],
-                );
-              });
-              if (action !== PublishActions.DELETE) {
-                newFolderSegments[1] = publication.targetFolder;
-              }
-              const newFolderId = newFolderSegments.join('/');
-
-              // get new api key
-              const newApiKey = regenerateApiKeyNameAndVersionParts(
-                reviewUrl,
-                name,
-                version.trim(),
-              );
-
-              return {
-                action,
-                sourceUrl: sourceUrl ?? '',
-                targetUrl: constructPath(newFolderId, newApiKey),
-              };
-            },
-          ),
+          resources: updatePublicationResources!,
         },
       }),
     );
@@ -221,18 +244,16 @@ export function PublicationHandler({ publication }: Props) {
   }, [
     dispatch,
     displayAuthorEditState,
-    entitiesEditState,
-    foldersEditState,
-    publication.resources,
     publication.targetFolder,
     publication.url,
     rulesOnEdit,
+    updatePublicationResources,
   ]);
 
   const handleChangeDisplayAuthor = useCallback(
     (value: string) => {
       const cleanedValue = replaceSpacesFromString(value);
-      setErrors(() =>
+      setAuthorErrors(() =>
         getStringValidationErrors({
           value: cleanedValue,
           label: 'Author',
@@ -360,7 +381,7 @@ export function PublicationHandler({ publication }: Props) {
                       editValue={displayAuthorEditState}
                       onChangeValue={handleChangeDisplayAuthor}
                       isEditMode={isEditMode}
-                      errors={errors}
+                      errors={authorErrors}
                     />
                   )}
 
@@ -444,6 +465,7 @@ export function PublicationHandler({ publication }: Props) {
           onUpdateRequest={handleUpdateRequest}
           publication={publication}
           isFormChanged={isFormChanged}
+          isEntityEditErrors={isEntityEditErrors}
           areRulesChanged={hasUserChangedRules}
         />
       </div>

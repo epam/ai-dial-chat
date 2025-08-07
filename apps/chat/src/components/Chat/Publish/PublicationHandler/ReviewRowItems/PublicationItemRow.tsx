@@ -7,16 +7,12 @@ import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
-import {
-  isVersionExists,
-  replaceSpacesFromString,
-} from '@/src/utils/app/common';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import {
-  getStringValidationErrors,
-  getVersionValidationErrors,
-} from '@/src/utils/app/forms';
+import { replaceSpacesFromString } from '@/src/utils/app/common';
 import { isApplicationId, isFileId } from '@/src/utils/app/id';
+import {
+  calculateNewFolderId,
+  getEditEntityValidation,
+} from '@/src/utils/app/publications';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -39,11 +35,15 @@ import { PublishActions } from '@epam/ai-dial-shared';
 interface PublicationVersionInfoProps {
   item: PublicationReviewItem;
   isEditDisabled?: boolean;
+  publicVersionGroupId: string;
+  errors: string[];
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
   isEditDisabled,
+  publicVersionGroupId,
+  errors,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -53,46 +53,16 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const editState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
-  const publicVersionGroups = useAppSelector(
-    PublicationSelectors.selectPublicVersionGroups,
-  );
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
   const [inputVersion, setInputVersion] = useState(defaultVersion);
-  const [errors, setErrors] = useState<string[]>([]);
 
   const isApplication = useMemo(() => isApplicationId(item.id), [item.id]);
 
   useEffect(() => {
     setInputVersion(defaultVersion);
   }, [defaultVersion, isEditMode]);
-
-  useEffect(() => {
-    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
-      const isExistVersion = isVersionExists(
-        inputVersion,
-        item.id,
-        publicVersionGroups,
-        item.name,
-      );
-
-      const validationErrors = getVersionValidationErrors(
-        inputVersion,
-        isExistVersion,
-        isApplication,
-      );
-      setErrors(validationErrors);
-    }
-  }, [
-    inputVersion,
-    isApplication,
-    isEditMode,
-    item.id,
-    item.name,
-    item.publicationInfo?.action,
-    publicVersionGroups,
-  ]);
 
   const handleChangeVersion = useCallback(
     (version: string) => {
@@ -108,8 +78,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     },
     [dispatch, editState?.name, item.id, item.name],
   );
-
-  const publicVersionGroupId = usePublicVersionGroupId(item);
 
   if (isFileId(item.id)) {
     return (
@@ -197,6 +165,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     PublicationSelectors.selectEntitiesEditState,
   );
 
+  const foldersEditState = useAppSelector(
+    PublicationSelectors.selectFoldersEditState,
+  );
+
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
+  );
+
   const isSelected = useMemo(
     () => selectedPublicationResources.includes(item.id),
     [item.id, selectedPublicationResources],
@@ -204,32 +180,67 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
 
   const [inputName, setInputName] = useState(item.name);
   const [isFocused, setIsFocused] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
+  const [nameErrors, setNameErrors] = useState<string[]>([]);
+  const [versionErrors, setVersionErrors] = useState<string[]>([]);
+  const [publicVersionGroupId, setPublicVersionGroupId] = useState<string>('');
 
   useEffect(() => {
     const cleanName = replaceSpacesFromString(item.name);
     setInputName(cleanName);
   }, [item.name, isEditMode]);
 
+  const itemPublicVersionGroupId = usePublicVersionGroupId(item);
+
   useEffect(() => {
-    const isNotUniqName = Object.entries(editState).some(
-      ([key, { name: editStateName }]) => {
-        const keyFolderId = getFolderIdFromEntityId(key);
-        return (
-          item.id !== key &&
-          item.folderId === keyFolderId &&
-          inputName.trim() === editStateName.trim()
-        );
-      },
-    );
-    const nameErrors = getStringValidationErrors({
-      value: inputName,
-      label: `${itemTypeName} name`,
-      checkDotsInTheEnd: true,
-      isNotUniqName,
-    });
-    setErrors(nameErrors);
-  }, [editState, inputName, item.folderId, item.id, itemTypeName]);
+    if (!isEditMode) {
+      setNameErrors([]);
+      setVersionErrors([]);
+      setPublicVersionGroupId(itemPublicVersionGroupId ?? '');
+    }
+  }, [isEditMode, itemPublicVersionGroupId]);
+
+  useEffect(() => {
+    if (
+      isEditMode &&
+      selectedPublication &&
+      item.publicationInfo?.action !== PublishActions.DELETE
+    ) {
+      // Calculate new folder ID
+      const newPublicFolderId = calculateNewFolderId(
+        item.id,
+        foldersEditState,
+        selectedPublication?.targetFolder || '',
+      );
+      const versionGroupKey = constructPath(
+        newPublicFolderId,
+        inputName.trim(),
+      );
+      const { nameErrors, versionErrors } = getEditEntityValidation({
+        entityId: item.id,
+        name: inputName,
+        version: editState[item.id]?.version,
+        editState: editState,
+        publicVersionGroups: publicVersionGroups,
+        versionGroupKey,
+        newPublicFolderId,
+        itemTypeName: itemTypeName,
+        action: item.publicationInfo?.action,
+      });
+      setPublicVersionGroupId(versionGroupKey);
+      setNameErrors(nameErrors);
+      setVersionErrors(versionErrors);
+    }
+  }, [
+    editState,
+    foldersEditState,
+    inputName,
+    isEditMode,
+    item.id,
+    item.publicationInfo?.action,
+    itemTypeName,
+    publicVersionGroups,
+    selectedPublication,
+  ]);
 
   const handleChangeName = useCallback(
     (name: string) => {
@@ -291,17 +302,22 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           value={inputName}
           isEditMode={isEditDisabled || isDeleteAction ? false : isEditMode}
           onChange={handleChangeName}
-          inputClassName={classNames('w-full', errors.length && 'pr-5')}
+          inputClassName={classNames('w-full', nameErrors.length && 'pr-5')}
           className={classNames(
             item.publicationInfo?.isNotExist && 'text-secondary',
             item.publicationInfo?.action === PublishActions.DELETE &&
               'text-error',
           )}
           tooltipIconClassName="right-5"
-          errors={errors}
+          errors={nameErrors}
         />
       </span>
-      <PublicationVersionInfo item={item} isEditDisabled={isEditDisabled} />
+      <PublicationVersionInfo
+        item={item}
+        isEditDisabled={isEditDisabled}
+        errors={versionErrors}
+        publicVersionGroupId={publicVersionGroupId}
+      />
     </div>
   );
 };

@@ -99,7 +99,8 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
     const nameErrors = getStringValidationErrors({
       value: inputName,
       label: 'Folder name',
-      checkDotsInTheEnd: true,
+      checkDotsAtTheEnd: true,
+      checkDotsAtTheStart: true,
       isNotUniqName,
     });
     setErrors(nameErrors);
