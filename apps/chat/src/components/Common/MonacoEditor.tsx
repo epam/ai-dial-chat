@@ -54,7 +54,6 @@ export const MonacoEditor = memo(function MonacoEditor(
 ) {
   const { t } = useTranslation(Translation.Common);
 
-  const theme = useAppSelector(UISelectors.selectThemeState);
   const editorTheme = useAppSelector(UISelectors.selectCodeEditorTheme);
 
   const [isFullScreen, setIsFullScreen] = useState(false);
