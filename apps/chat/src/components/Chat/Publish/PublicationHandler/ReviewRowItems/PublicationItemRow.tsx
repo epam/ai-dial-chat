@@ -206,6 +206,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         item.id,
         foldersEditState,
         selectedPublication?.targetFolder || '',
+        true,
       );
       const versionGroupKey = constructPath(
         newPublicFolderId,

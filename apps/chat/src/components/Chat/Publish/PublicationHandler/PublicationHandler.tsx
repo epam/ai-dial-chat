@@ -24,7 +24,11 @@ import { constructPath } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
-import { Publication, PublicationRule } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationRule,
+  PublicationUpdateRequestModelResource,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
@@ -193,18 +197,29 @@ export function PublicationHandler({ publication }: Props) {
   }, [publication]);
 
   const updatePublicationResources = useMemo(() => {
-    if (!isEditMode) return;
+    if (
+      !isEditMode ||
+      Object.keys(entitiesEditState).length === 0 ||
+      Object.keys(foldersEditState).length === 0
+    ) {
+      return [];
+    }
 
     const entityErrorsSet = new Set<string>();
 
     const resources = publication.resources.map(
       ({ sourceUrl, reviewUrl, action }) => {
-        const { name, version } = entitiesEditState[reviewUrl];
+        const editedEntity = entitiesEditState[reviewUrl];
+        if (!editedEntity) {
+          return;
+        }
+        const { name, version } = editedEntity;
         // Calculate new folder ID
         const newPublicFolderId = calculateNewFolderId(
           reviewUrl,
           foldersEditState,
           publication.targetFolder,
+          action !== PublishActions.DELETE,
         );
         if (action !== PublishActions.DELETE) {
           const versionGroupKey = constructPath(newPublicFolderId, name.trim());
@@ -223,24 +238,22 @@ export function PublicationHandler({ publication }: Props) {
           if (nameErrors.length || versionErrors.length) {
             entityErrorsSet.add(reviewUrl);
           }
-
-          const newApiKey = regenerateApiKeyNameAndVersionParts(
-            reviewUrl,
-            name,
-            version.trim(),
-          );
-          return {
-            action,
-            sourceUrl: sourceUrl ?? '',
-            targetUrl: constructPath(newPublicFolderId, newApiKey),
-          };
         }
 
-        return { action, sourceUrl: sourceUrl ?? '', targetUrl: '' };
+        const newApiKey = regenerateApiKeyNameAndVersionParts(
+          reviewUrl,
+          name,
+          version.trim(),
+        );
+        return {
+          action,
+          sourceUrl: sourceUrl ?? '',
+          targetUrl: constructPath(newPublicFolderId, newApiKey),
+        };
       },
     );
     setIsEntityEditErrors(entityErrorsSet.size > 0);
-    return resources;
+    return resources.filter(Boolean) as PublicationUpdateRequestModelResource[];
   }, [
     entitiesEditState,
     foldersEditState,
@@ -258,7 +271,7 @@ export function PublicationHandler({ publication }: Props) {
           targetFolder: editedPublishToUrl,
           rules: rulesOnEdit,
           displayAuthor: displayAuthorEditState,
-          resources: updatePublicationResources!,
+          resources: updatePublicationResources,
         },
       }),
     );

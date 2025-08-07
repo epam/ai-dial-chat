@@ -2406,15 +2406,16 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       const selectedItemsToApprove =
         PublicationSelectors.selectAllSelectedItemsToApprove(state$.value);
 
-      if (selectedItemsToApprove[publication.url] !== undefined) {
-        return EMPTY;
-      }
-
-      return of(
-        PublicationActions.setItemsToApprove({
-          publicationUrl: publication?.url ?? '',
-          ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
-        }),
+      return concat(
+        of(PublicationActions.setIsEditMode(false)),
+        selectedItemsToApprove[publication.url] !== undefined
+          ? EMPTY
+          : of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: publication?.url ?? '',
+                ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
+              }),
+            ),
       );
     }),
   );

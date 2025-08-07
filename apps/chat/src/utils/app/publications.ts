@@ -674,6 +674,7 @@ export const calculateNewFolderId = (
   entityId: string,
   foldersEditState: FolderEditTree,
   targetFolder: string,
+  isDelete: boolean,
 ): string => {
   const folderSegments = getFolderIdFromEntityId(entityId).split('/');
   const newFolderSegments: string[] = [];
@@ -681,6 +682,7 @@ export const calculateNewFolderId = (
 
   folderSegments.forEach((segment, i) => {
     currentFolder = currentFolder[segment] as FolderNode;
+
     const folderName =
       i > 1
         ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
@@ -688,7 +690,9 @@ export const calculateNewFolderId = (
     newFolderSegments.push(folderName);
   });
 
-  newFolderSegments[1] = targetFolder;
+  if (isDelete) {
+    newFolderSegments[1] = targetFolder;
+  }
   return newFolderSegments.join('/');
 };
 
