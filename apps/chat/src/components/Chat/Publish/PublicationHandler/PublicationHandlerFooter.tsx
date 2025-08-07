@@ -53,11 +53,7 @@ import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import {
-  Conversation,
-  FeatureType,
-  PublishActions,
-} from '@epam/ai-dial-shared';
+import { Conversation, FeatureType } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -95,9 +91,7 @@ export const PublicationHandlerFooter = ({
     ),
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const entitiesEditState = useAppSelector(
-    PublicationSelectors.selectEntitiesEditState,
-  );
+
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
@@ -109,9 +103,6 @@ export const PublicationHandlerFooter = ({
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
-  );
-  const publicVersionGroups = useAppSelector(
-    PublicationSelectors.selectPublicVersionGroups,
   );
 
   const dispatch = useAppDispatch();

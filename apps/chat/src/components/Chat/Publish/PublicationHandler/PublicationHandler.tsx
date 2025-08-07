@@ -7,7 +7,6 @@ import {
   formatDate,
   replaceSpacesFromString,
 } from '@/src/utils/app/common';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
 import {
   getIdWithoutFeatureType,
@@ -273,6 +272,7 @@ export function PublicationHandler({ publication }: Props) {
     rulesOnEdit,
     displayAuthorEditState,
     entitiesEditState,
+    updatePublicationResources,
     foldersEditState,
   ]);
 

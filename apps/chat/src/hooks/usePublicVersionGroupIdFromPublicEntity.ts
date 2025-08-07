@@ -2,8 +2,8 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   getIdWithoutFeatureType,
   getIdWithoutRootPathSegments,
+  isConversationId,
 } from '@/src/utils/app/id';
-import { isConversationId } from '@/src/utils/app/id';
 import {
   getConversationIdWithoutModel,
   isEntityIdPublic,
