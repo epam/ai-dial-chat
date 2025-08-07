@@ -41,6 +41,7 @@ export const MessageInputSelectors = {
   inputAttachmentsContainer: '[data-qa="attachment-container"]',
   inputAttachment: '[data-qa="chat-attachment"]',
   inputAttachmentName: '[data-qa="attachment-name"]',
+  inputAttachedFolderName: '[data-qa="attached-folder-name"]',
 };
 
 export const PlaybackSelectors = {

@@ -1,5 +1,7 @@
 import classNames from 'classnames';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
@@ -35,6 +37,9 @@ export const ChatInputControls = ({
     ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
 
+  const isPublic =
+    selectedConversations.length && isEntityIdPublic(selectedConversations[0]);
+
   if (isConversationWithSchema && selectedConversations.length > 1) {
     return <SchemaCompareWarning />;
   }
@@ -51,7 +56,7 @@ export const ChatInputControls = ({
     );
   }
 
-  if (isReadOnly) {
+  if (isReadOnly || isPublic) {
     return (
       <ChatExternalControls
         conversations={selectedConversations}

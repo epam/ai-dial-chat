@@ -17,6 +17,7 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
@@ -396,6 +397,29 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
+const setChosenFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.setChosenFolder.type),
+    switchMap(({ payload }) => {
+      const { folderId } = payload;
+      const folders = FilesSelectors.selectFolders(state$.value);
+      const targetFolder = folders.find(
+        ({ id }) =>
+          addTrailingSlashIfAbsent(id) === addTrailingSlashIfAbsent(folderId),
+      );
+
+      if (targetFolder && targetFolder.status !== UploadStatus.LOADED) {
+        return of(
+          FilesActions.getFilesWithFolders({
+            id: folderId.endsWith('/') ? folderId.slice(0, -1) : folderId,
+          }),
+        );
+      }
+
+      return EMPTY;
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -413,4 +437,5 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   deleteFileFailEpic,
   unselectFilesEpic,
+  setChosenFolderEpic,
 );

@@ -337,12 +337,30 @@ export const ConversationContextMenu = ({
     dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
 
-  const isCustomViewerApplication = useMemo(() => {
-    return !!applicationTypeSchemas.find(
-      (schema) =>
-        schema.id === modelsMap[conversation.model.id]?.applicationTypeSchemaId,
-    )?.viewerUrl;
-  }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
+  const { isCustomViewerApplication, applicationTypePlaybackSupport } =
+    useMemo(() => {
+      const applicationTypeSchema = applicationTypeSchemas.find(
+        (schema) =>
+          schema.id ===
+          modelsMap[conversation.model.id]?.applicationTypeSchemaId,
+      );
+      return {
+        isCustomViewerApplication: !!applicationTypeSchema?.viewerUrl,
+        applicationTypePlaybackSupport:
+          !!applicationTypeSchema?.applicationTypePlaybackSupport,
+      };
+    }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
+
+  const isPlaybackActionAvailable = useMemo(() => {
+    return isCustomViewerApplication
+      ? !isReplay && !isPlayback && applicationTypePlaybackSupport
+      : !isReplay && !isPlayback;
+  }, [
+    isReplay,
+    isPlayback,
+    isCustomViewerApplication,
+    applicationTypePlaybackSupport,
+  ]);
 
   const handleOpenInfoModal = useCallback(() => {
     const { id, updatedAt, createdAt, author } = conversation;
@@ -391,9 +409,7 @@ export const ConversationContextMenu = ({
               : undefined
           }
           onPlayback={
-            !isReplay && !isPlayback && !isCustomViewerApplication
-              ? handleCreatePlayback
-              : undefined
+            isPlaybackActionAvailable ? handleCreatePlayback : undefined
           }
           onShare={!isReplay ? handleOpenSharing : undefined}
           onPublish={!isReplay ? handleOpenPublishing : undefined}
