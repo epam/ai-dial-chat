@@ -365,8 +365,15 @@ export const getPublishFolderResources = (
 
   if (isUnpublishing) {
     return sortedItems.filter((item) => {
+      const isWithoutModel = isConversationId(item.id)
+        ? getConversationIdWithoutModel(item.id)
+        : item.id;
+
       const currentVersionGroupId = item.publicationInfo?.version
-        ? getPublicItemIdWithoutVersion(item.publicationInfo.version, item.id)
+        ? getPublicItemIdWithoutVersion(
+            item.publicationInfo.version,
+            isWithoutModel,
+          )
         : null;
 
       if (currentVersionGroupId) {
