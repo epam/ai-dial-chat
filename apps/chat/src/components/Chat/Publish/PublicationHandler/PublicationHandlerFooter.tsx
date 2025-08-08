@@ -445,7 +445,7 @@ export const PublicationHandlerFooter = ({
                 data-qa="approve"
               >
                 {t(
-                  !itemsToApprove.length || isSmallScreen
+                  !publication.resources.length || isSmallScreen
                     ? 'Approve'
                     : 'Approve selected',
                 )}
