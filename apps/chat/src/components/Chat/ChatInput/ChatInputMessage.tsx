@@ -171,10 +171,15 @@ export const ChatInputMessage = Inversify.register(
       if (!canAttachLinks) {
         setSelectedDialLinks([]);
       }
-      if (!canAttachFiles) {
-        dispatch(FilesActions.resetSelectedFiles());
+      if (!canAttachFiles || !canAttachFolders) {
+        dispatch(
+          FilesActions.resetSelectedFiles({
+            keepFiles: canAttachFiles,
+            keepFolders: canAttachFolders,
+          }),
+        );
       }
-    }, [canAttachFiles, canAttachLinks, dispatch]);
+    }, [canAttachFiles, canAttachFolders, canAttachLinks, dispatch]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
