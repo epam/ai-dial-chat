@@ -5,6 +5,8 @@ import { CustomVisualizer } from '@/src/types/custom-visualizers';
 
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { SettingsState } from '../settings.types';
+
 import { Feature } from '@epam/ai-dial-shared';
 
 describe('SettingsSelectors', () => {
@@ -32,7 +34,7 @@ describe('SettingsSelectors', () => {
         Feature.PromptsSharing,
         Feature.PromptsPublishing,
       ],
-    },
+    } as SettingsState,
     auth: {
       session: {
         data: {
@@ -45,15 +47,15 @@ describe('SettingsSelectors', () => {
         },
       },
     },
-  };
+  } as any;
 
   it('should filter enabled features for the user', () => {
     const result = SettingsSelectors.selectEnabledFeatures(mockState);
     expect(result).toEqual(
-      new Set([
-        Feature.ConversationsSharing,
-        Feature.PromptsSharing,
-        Feature.PromptsPublishing,
+      new Map([
+        [Feature.ConversationsSharing, { name: Feature.ConversationsSharing }],
+        [Feature.PromptsSharing, { name: Feature.PromptsSharing }],
+        [Feature.PromptsPublishing, { name: Feature.PromptsPublishing }],
       ]),
     );
   });
