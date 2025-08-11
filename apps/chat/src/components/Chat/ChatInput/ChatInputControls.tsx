@@ -38,7 +38,8 @@ export const ChatInputControls = ({
   );
 
   const isPublic =
-    selectedConversations.length && isEntityIdPublic(selectedConversations[0]);
+    selectedConversations.length > 0 &&
+    isEntityIdPublic(selectedConversations[0]);
 
   if (isConversationWithSchema && selectedConversations.length > 1) {
     return <SchemaCompareWarning />;
@@ -46,34 +47,36 @@ export const ChatInputControls = ({
 
   if (showReplayControls && !isNotEmptyConversations) {
     return (
-      <div
-        className={classNames({
-          'mt-10': isWideLayout,
-        })}
-      >
+      <div className={classNames({ 'mt-10': isWideLayout })}>
         <StartReplayButton />
       </div>
     );
   }
 
-  if (isReadOnly || isPublic) {
-    return (
-      <ChatExternalControls
-        conversations={selectedConversations}
-        showScrollDownButton={showScrollDownButton}
-        onScrollDownClick={onScrollDown}
-      />
-    );
+  const shouldShowExternalControls = isPublic || isReadOnly;
+  const shouldShowModelsControl =
+    !isChatReadyForInput && (!isReadOnly || (isPublic && !isReadOnly));
+
+  if (!shouldShowExternalControls && !shouldShowModelsControl) {
+    return null;
   }
 
-  if (!isChatReadyForInput) {
-    return (
-      <AddModelsControl
-        showScrollDownButton={showScrollDownButton}
-        onScrollDown={onScrollDown}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <>
+      {shouldShowExternalControls && (
+        <ChatExternalControls
+          conversations={selectedConversations}
+          showScrollDownButton={showScrollDownButton}
+          onScrollDownClick={onScrollDown}
+          {...(isPublic ? { isChatReadyForInput } : {})}
+        />
+      )}
+      {shouldShowModelsControl && (
+        <AddModelsControl
+          showScrollDownButton={showScrollDownButton}
+          onScrollDown={onScrollDown}
+        />
+      )}
+    </>
+  );
 };
