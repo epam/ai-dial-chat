@@ -273,6 +273,9 @@ export const ExpectedConstants = {
   noAvailableItemsLabel: 'No available items',
   appDefaultCompletionUrl: 'http://test.example.com',
   appRateEndpointDefaultFeature: 'http://application1/rate',
+  publishingFilterDefaultValue: 'Select',
+  publishingFilterValuePlaceholder: 'Enter one or more options...',
+  dialRolesField: 'dial_roles',
 };
 
 export enum Types {
@@ -565,4 +568,21 @@ export const ExpectedPromptModalConst = {
 export enum DefaultModelReference {
   defaultAgent = '"default-agent"',
   lastUsedModel = '"last-used-agent"',
+}
+
+export enum PublishingRulesFilterTarget {
+  title = 'Title',
+  jobTitle = 'Job Title',
+  role = 'Role',
+  dialRoles = 'Dial Roles',
+}
+
+export enum BooleanOperator {
+  or = 'or',
+}
+
+export enum E2EUserRole {
+  qa = 'QA',
+  developer = 'Developer',
+  manager = 'Manager',
 }

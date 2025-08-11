@@ -1,0 +1,601 @@
+import { BackendResourceType } from '@/chat/types/common';
+import {
+  Publication,
+  PublicationFunctions,
+  PublicationRequestModel,
+} from '@/chat/types/publication';
+import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
+import dialTest from '@/src/core/dialFixtures';
+import {
+  API,
+  BooleanOperator,
+  E2EUserRole,
+  ExpectedConstants,
+  MenuOptions,
+  PublishingRulesFilterTarget,
+} from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
+import { GeneratorUtil } from '@/src/utils';
+import { Conversation, PublishActions } from '@epam/ai-dial-shared';
+
+let organizationFolderName: string;
+let conversationToPublish: Conversation;
+
+dialTest.beforeEach(
+  'Test setup step',
+  async ({
+    conversationData,
+    dataInjector,
+    publishRequestBuilder,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+  }) => {
+    await dialTest.step(
+      'Publish a simple conversation in Organization folder via API',
+      async () => {
+        organizationFolderName = GeneratorUtil.randomString(10);
+        const conversation = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations([conversation]);
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withTargetFolder(organizationFolderName)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .build();
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+      },
+    );
+
+    await dialTest.step(
+      'Prepare a new conversation to publish via API',
+      async () => {
+        conversationToPublish = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations([conversationToPublish]);
+      },
+    );
+  },
+);
+
+dialTest(
+  'Publish chat: filter - contains',
+  async ({
+    dialHomePage,
+    adminPublicationApiHelper,
+    publicationApiAssertion,
+    additionalShareUserPublicationApiAssertion,
+    additionalSecondShareUserPublicationApiAssertion,
+    conversations,
+    conversationDropdownMenu,
+    publishingRequestModal,
+    selectFolderModal,
+    selectFolders,
+    publishingRequestModalAssertion,
+    publishingRules,
+    publishingFilter,
+    publishingRulesAssertion,
+    setTestIds,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3209');
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const filterValue = 'age';
+    let publishRequestResponse: {
+      request: PublicationRequestModel;
+      response: Publication;
+    };
+
+    await dialTest.step(
+      'Open Publishing modal for created conversation, click on "Change path", select available folder and verify rules functionality is enabled',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(conversationToPublish.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await selectFolders.selectFolder(organizationFolderName);
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.publicationRulesList,
+        });
+        await publishingRequestModalAssertion.assertGeneralInfo({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'hidden',
+        });
+        await publishingRulesAssertion.assertElementText(
+          publishingRules,
+          organizationFolderName,
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.rulesList,
+          'visible',
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.addRuleButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Plus" btn and verify filter with params is displayed',
+      async () => {
+        await publishingRules.addRuleButton.click();
+        await publishingRulesAssertion.assertFilterFields({
+          filterTargetState: 'visible',
+          filterTargetValue: ExpectedConstants.publishingFilterDefaultValue,
+          filterFunctionState: 'visible',
+          filterFunctionValue: ExpectedConstants.publishingFilterDefaultValue,
+          filterValues: [],
+          saveButtonState: 'visible',
+          cancelButtonState: 'visible',
+        });
+        await publishingRulesAssertion.assertElementAttribute(
+          publishingFilter.filterValueInput,
+          Attributes.placeholder,
+          ExpectedConstants.publishingFilterValuePlaceholder,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Set filter condition to: `Dial Roles` Contain `age`',
+      async () => {
+        await publishingFilter.filterTarget.click();
+        await publishingFilter
+          .getFilterTargetDropdownMenu()
+          .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
+        await publishingFilter.filterFunction.click();
+        await publishingFilter
+          .getFilterFunctionDropdownMenu()
+          .selectMenuOption(PublicationFunctions.Contain);
+        await publishingFilter.setFilterValue(filterValue);
+        await publishingRulesAssertion.assertFilterFields({
+          filterTargetState: 'visible',
+          filterTargetValue: PublishingRulesFilterTarget.dialRoles,
+          filterFunctionState: 'visible',
+          filterFunctionValue: PublicationFunctions.Contain,
+          filterValues: [filterValue],
+        });
+        await publishingFilter.saveFilterButton.click();
+        await publishingRulesAssertion.assertRule(
+          {
+            target: PublishingRulesFilterTarget.dialRoles,
+            fnc: PublicationFunctions.Contain,
+            values: [filterValue],
+          },
+          'visible',
+          BooleanOperator.or,
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.addRuleButton,
+          'visible',
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.cancelAllRules,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Submit publication request and approve it by admin user',
+      async () => {
+        await publishingRequestModal.requestName.fillInInput(requestName);
+        publishRequestResponse =
+          await publishingRequestModal.sendPublicationRequest();
+        await adminPublicationApiHelper.approveRequest(
+          publishRequestResponse.response,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify published conversation is available only for users with Dial roles "Manager" and "Developer+Manager"',
+      async () => {
+        await verifyPublishedConversationAvailability(
+          publishRequestResponse.request,
+          publicationApiAssertion,
+          additionalShareUserPublicationApiAssertion,
+          additionalSecondShareUserPublicationApiAssertion,
+          {
+            isPublishedForMainUser: false,
+            isPublishedForAdditionalUser: true,
+            isPublishedForSecondAdditionalUser: true,
+          },
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Publish chat : filter - equals (one filter value).\n' +
+    'Filters for functions Contains and Equals are case insensitive',
+  async ({
+    adminPublicationApiHelper,
+    publicationApiAssertion,
+    additionalShareUserPublicationApiAssertion,
+    additionalSecondShareUserPublicationApiAssertion,
+    publishRequestBuilder,
+    publicationApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3211', 'EPMRTC-3725');
+    const filterValue = E2EUserRole.qa.toLowerCase();
+    let publication: Publication;
+
+    await dialTest.step(
+      'Publish the conversation via API applying the rule: `Dial Roles` Equal `qa`',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withTargetFolder(organizationFolderName)
+          .withConversationInFolderResource(
+            conversationToPublish,
+            PublishActions.ADD,
+          )
+          .withRule({
+            source: ExpectedConstants.dialRolesField,
+            function: PublicationFunctions.Equal,
+            targets: [filterValue],
+          })
+          .build();
+        publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+      },
+    );
+
+    await dialTest.step(
+      'Verify published conversation is available only for users with Dial role "QA"',
+      async () => {
+        await verifyPublishedConversationAvailability(
+          publication,
+          publicationApiAssertion,
+          additionalShareUserPublicationApiAssertion,
+          additionalSecondShareUserPublicationApiAssertion,
+          {
+            isPublishedForMainUser: true,
+            isPublishedForAdditionalUser: false,
+            isPublishedForSecondAdditionalUser: false,
+          },
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Publish chat: combination of values inside one filter work as OR',
+  async ({
+    dialHomePage,
+    adminPublicationApiHelper,
+    publicationApiAssertion,
+    additionalShareUserPublicationApiAssertion,
+    additionalSecondShareUserPublicationApiAssertion,
+    conversations,
+    conversationDropdownMenu,
+    publishingRequestModal,
+    selectFolderModal,
+    selectFolders,
+    publishingRules,
+    publishingFilter,
+    publishingRulesAssertion,
+    setTestIds,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3424');
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const firstFilterValue = E2EUserRole.developer.toLowerCase();
+    const secondFilterValue = E2EUserRole.manager.toLowerCase();
+    let publishRequestResponse: {
+      request: PublicationRequestModel;
+      response: Publication;
+    };
+
+    await dialTest.step(
+      'Open Publishing modal for created conversation and set filter condition to: `Dial Roles` Contain `developer` or `manager`',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(conversationToPublish.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await selectFolders.selectFolder(organizationFolderName);
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.publicationRulesList,
+        });
+        await publishingRules.addRuleButton.click();
+        await publishingFilter.filterTarget.click();
+        await publishingFilter
+          .getFilterTargetDropdownMenu()
+          .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
+        await publishingFilter.filterFunction.click();
+        await publishingFilter
+          .getFilterFunctionDropdownMenu()
+          .selectMenuOption(PublicationFunctions.Contain);
+        await publishingFilter.setFilterValue(firstFilterValue);
+        await publishingFilter.setFilterValue(secondFilterValue);
+        await publishingRulesAssertion.assertFilterFields({
+          filterTargetState: 'visible',
+          filterTargetValue: PublishingRulesFilterTarget.dialRoles,
+          filterFunctionState: 'visible',
+          filterFunctionValue: PublicationFunctions.Contain,
+          filterValues: [firstFilterValue, secondFilterValue],
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Save the filter and verify it is displayed with inner `or` operator',
+      async () => {
+        await publishingFilter.saveFilterButton.click();
+        await publishingRulesAssertion.assertRule(
+          {
+            target: PublishingRulesFilterTarget.dialRoles,
+            fnc: PublicationFunctions.Contain,
+            values: [firstFilterValue, secondFilterValue],
+          },
+          'visible',
+          BooleanOperator.or,
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.addRuleButton,
+          'visible',
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.cancelAllRules,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Submit publication request and approve it by admin user',
+      async () => {
+        await publishingRequestModal.requestName.fillInInput(requestName);
+        publishRequestResponse =
+          await publishingRequestModal.sendPublicationRequest();
+        await adminPublicationApiHelper.approveRequest(
+          publishRequestResponse.response,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify published conversation is available only for users with Dial roles "Manager" and "Developer+Manager"',
+      async () => {
+        await verifyPublishedConversationAvailability(
+          publishRequestResponse.request,
+          publicationApiAssertion,
+          additionalShareUserPublicationApiAssertion,
+          additionalSecondShareUserPublicationApiAssertion,
+          {
+            isPublishedForMainUser: false,
+            isPublishedForAdditionalUser: true,
+            isPublishedForSecondAdditionalUser: true,
+          },
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Publish chat: combination of filters work as OR',
+  async ({
+    dialHomePage,
+    adminPublicationApiHelper,
+    publicationApiAssertion,
+    additionalShareUserPublicationApiAssertion,
+    additionalSecondShareUserPublicationApiAssertion,
+    conversations,
+    conversationDropdownMenu,
+    publishingRequestModal,
+    selectFolderModal,
+    selectFolders,
+    publishingRules,
+    publishingFilter,
+    publishingRulesAssertion,
+    setTestIds,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3425');
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const firstFilterValue = E2EUserRole.qa.toLowerCase();
+    const secondFilterValue = 'any value';
+    let publishRequestResponse: {
+      request: PublicationRequestModel;
+      response: Publication;
+    };
+
+    await dialTest.step(
+      'Open Publishing modal for created conversation, click on "Change path", select available folder and verify rules functionality is enabled',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(conversationToPublish.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await selectFolders.selectFolder(organizationFolderName);
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.publicationRulesList,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Add two filters with the conditions: `Dial Roles` Contain `qa`, `Title` Contain `any value`',
+      async () => {
+        const conditions = {
+          [PublishingRulesFilterTarget.dialRoles]: firstFilterValue,
+          [PublishingRulesFilterTarget.title]: secondFilterValue,
+        };
+        const conditionsEntries = Object.entries(conditions);
+        for (const [target, value] of conditionsEntries) {
+          await publishingRules.addRuleButton.click();
+          await publishingFilter.filterTarget.click();
+          await publishingFilter
+            .getFilterTargetDropdownMenu()
+            .selectMenuOption(target);
+          await publishingFilter.filterFunction.click();
+          await publishingFilter
+            .getFilterFunctionDropdownMenu()
+            .selectMenuOption(PublicationFunctions.Contain);
+          await publishingFilter.setFilterValue(value);
+          await publishingFilter.saveFilterButton.click();
+          await publishingRulesAssertion.assertRule(
+            {
+              target: target as PublishingRulesFilterTarget,
+              fnc: PublicationFunctions.Contain,
+              values: [value],
+            },
+            'visible',
+            BooleanOperator.or,
+          );
+        }
+        await publishingRulesAssertion.assertElementsCount(
+          publishingRules.allRules,
+          conditionsEntries.length,
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.addRuleButton,
+          'visible',
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.cancelAllRules,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Submit publication request and approve it by admin user',
+      async () => {
+        await publishingRequestModal.requestName.fillInInput(requestName);
+        publishRequestResponse =
+          await publishingRequestModal.sendPublicationRequest();
+        await adminPublicationApiHelper.approveRequest(
+          publishRequestResponse.response,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify published conversation is available only for user with Dial role "QA"',
+      async () => {
+        await verifyPublishedConversationAvailability(
+          publishRequestResponse.request,
+          publicationApiAssertion,
+          additionalShareUserPublicationApiAssertion,
+          additionalSecondShareUserPublicationApiAssertion,
+          {
+            isPublishedForMainUser: true,
+            isPublishedForAdditionalUser: false,
+            isPublishedForSecondAdditionalUser: false,
+          },
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Publish chat : filter - equals ( two filter values)',
+  async ({
+    adminPublicationApiHelper,
+    publicationApiAssertion,
+    additionalShareUserPublicationApiAssertion,
+    additionalSecondShareUserPublicationApiAssertion,
+    publishRequestBuilder,
+    publicationApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3508');
+    const firstFilterValue = E2EUserRole.manager;
+    const secondFilterValue = 'test';
+    let publication: Publication;
+
+    await dialTest.step(
+      'Publish the conversation via API applying the rule: `Dial Roles` Equal `qa`',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withTargetFolder(organizationFolderName)
+          .withConversationInFolderResource(
+            conversationToPublish,
+            PublishActions.ADD,
+          )
+          .withRule({
+            source: ExpectedConstants.dialRolesField,
+            function: PublicationFunctions.Equal,
+            targets: [firstFilterValue],
+          })
+          .withRule({
+            source: ExpectedConstants.dialRolesField,
+            function: PublicationFunctions.Equal,
+            targets: [secondFilterValue],
+          })
+          .build();
+        publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+      },
+    );
+
+    await dialTest.step(
+      'Verify published conversation is available only for all users with Dial roles "Manager" and "Developer, Manager"',
+      async () => {
+        await verifyPublishedConversationAvailability(
+          publication,
+          publicationApiAssertion,
+          additionalShareUserPublicationApiAssertion,
+          additionalSecondShareUserPublicationApiAssertion,
+          {
+            isPublishedForMainUser: false,
+            isPublishedForAdditionalUser: true,
+            isPublishedForSecondAdditionalUser: true,
+          },
+        );
+      },
+    );
+  },
+);
+
+async function verifyPublishedConversationAvailability(
+  publication: Publication | PublicationRequestModel,
+  publicationApiAssertion: PublicationApiAssertion,
+  additionalShareUserPublicationApiAssertion: PublicationApiAssertion,
+  additionalSecondShareUserPublicationApiAssertion: PublicationApiAssertion,
+  expectedResults: {
+    isPublishedForMainUser: boolean;
+    isPublishedForAdditionalUser: boolean;
+    isPublishedForSecondAdditionalUser: boolean;
+  },
+) {
+  const publishedConversationUrl = publication.resources![0].targetUrl;
+  await publicationApiAssertion.assertPublishedResourceAvailable(
+    BackendResourceType.CONVERSATION,
+    publishedConversationUrl,
+    expectedResults.isPublishedForMainUser,
+  );
+  await additionalShareUserPublicationApiAssertion.assertPublishedResourceAvailable(
+    BackendResourceType.CONVERSATION,
+    publishedConversationUrl,
+    expectedResults.isPublishedForAdditionalUser,
+  );
+  await additionalSecondShareUserPublicationApiAssertion.assertPublishedResourceAvailable(
+    BackendResourceType.CONVERSATION,
+    publishedConversationUrl,
+    expectedResults.isPublishedForSecondAdditionalUser,
+  );
+}

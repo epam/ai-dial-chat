@@ -175,5 +175,22 @@ export const PublishingRulesSelectors = {
   path: '[data-qa="published-path"]',
   rulesList: '[data-qa="rules-list"]',
   rule: '[data-qa="rule"]',
+  ruleTarget: '[data-qa="rule-target"]',
+  ruleFunction: '[data-qa="rule-function"]',
+  ruleValue: '[data-qa="rule-value"]',
+  ruleInnerOperator: '[data-qa="inner-operator"]',
+  ruleOperator: '[data-qa="rule-operator"]',
   addRuleButton: '[data-qa="add-rule"]',
+  cancelAllRulesIcon: '[name="cancel-all-rules"]',
+};
+
+export const PublishingFilterSelectors = {
+  filterContainer: '[data-qa="publish-audience-filter-selectors"]',
+  filterTarget: '[data-qa="filter-selector-targets"]',
+  filterFunction: '[data-qa="filter-selector-filterFns"]',
+  filterValuesContainer: '[data-qa="filter-values-container"]',
+  filterValueInput: '[data-qa="filter-value-input"]',
+  filterValueSuggestion: '[data-qa="value-suggestion"]',
+  filterPill: '[data-qa="combobox-pill"]',
+  saveFilterButton: '[data-qa="save-filter"]',
 };
