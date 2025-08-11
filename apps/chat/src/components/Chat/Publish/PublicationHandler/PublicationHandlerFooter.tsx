@@ -444,7 +444,11 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {t(isSmallScreen ? 'Approve' : 'Approve selected')}
+                {t(
+                  !publication.resources.length || isSmallScreen
+                    ? 'Approve'
+                    : 'Approve selected',
+                )}
               </button>
             </Tooltip>
           </>
