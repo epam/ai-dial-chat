@@ -53,6 +53,7 @@ export enum Feature {
   ConversationsSharing = 'conversations-sharing', // Display conversation sharing
   PromptsSharing = 'prompts-sharing', // Display prompts sharing
   ApplicationsSharing = 'applications-sharing', // Display applications sharing
+  ToolsetsSharing = 'toolsets-sharing', // Display toolsets sharing
 
   // Publishing
   ConversationsPublishing = 'conversations-publishing',
@@ -73,4 +74,7 @@ export enum Feature {
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace
   MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
+
+  //Toolsets
+  Toolsets = 'toolsets', //Enable toolsets
 }
