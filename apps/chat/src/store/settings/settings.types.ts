@@ -3,7 +3,7 @@ import { OAuthProviderType } from 'next-auth/providers';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
-import { Feature, UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, FeatureData, UploadStatus } from '@epam/ai-dial-shared';
 
 export interface SettingsState {
   appName: string;
@@ -11,7 +11,7 @@ export interface SettingsState {
   overlayConversationId?: string;
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
-  enabledFeatures: Feature[];
+  enabledFeatures: (Feature | FeatureData)[];
   publicationFilters: string[];
   codeWarning: string;
   announcement: string;

@@ -154,6 +154,9 @@ export const ChatInputMessage = Inversify.register(
     const isDisabledInputFeature = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
     );
+    const disabledInputFeatureData = useAppSelector((state) =>
+      SettingsSelectors.selectFeatureData(state, Feature.DisabledSend),
+    );
 
     const shouldRegenerate =
       isLastMessageError ||
@@ -469,6 +472,9 @@ export const ChatInputMessage = Inversify.register(
     }, []);
 
     const tooltipContent = (): string => {
+      if (isDisabledInputFeature && disabledInputFeatureData?.description) {
+        return disabledInputFeatureData.description;
+      }
       if (messageIsStreaming) {
         return t('Stop generating');
       }

@@ -86,6 +86,7 @@ import {
   ExportConversationRequest,
   ExportConversationResponse,
   Feature,
+  FeatureData,
   FolderInterface,
   GetConversationsResponse,
   GetMessagesResponse,
@@ -1216,10 +1217,13 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       }
 
       if (enabledFeatures && isOptionChanged('enabledFeatures')) {
-        let features: string[] = [];
+        let features: (Feature | FeatureData)[] = [];
 
         if (typeof enabledFeatures === 'string') {
-          features = parseCommaSeparatedList(enabledFeatures);
+          features = parseCommaSeparatedList(enabledFeatures) as (
+            | Feature
+            | FeatureData
+          )[];
         }
 
         if (Array.isArray(enabledFeatures)) {
@@ -1231,9 +1235,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
 
-          actions.push(
-            of(SettingsActions.setEnabledFeatures(features as Feature[])),
-          );
+          actions.push(of(SettingsActions.setEnabledFeatures(features)));
 
           if (
             !isLoginRequired &&
@@ -1246,6 +1248,9 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         } else {
           const incorrectFeatures = features
             .filter((feature) => !validateFeature(feature))
+            .map((feature) =>
+              typeof feature === 'string' ? feature : feature.name,
+            )
             .join(',');
 
           console.warn(
@@ -1662,7 +1667,6 @@ const sendPMResponseEpic: AppEpic = (action$) =>
   );
 
 export const OverlayEpics = combineEpics(
-  postMessageMapperEpic,
   getMessagesEpic,
   getConversationsEpic,
   getSelectedConversationsEpic,
@@ -1706,4 +1710,5 @@ export const OverlayEpics = combineEpics(
   sendDeleteMessageEvent,
   sendPrevPlaybackMessageEvent,
   sendNextPlaybackMessageEvent,
+  postMessageMapperEpic,
 );
