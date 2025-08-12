@@ -40,7 +40,7 @@ const _selectFeatures = createSelector(
       .reduce(
         (acc, curr) => {
           const featureData = featuresData.find((item) => item.name === curr);
-          acc[curr] = featureData;
+          acc[curr] = { ...featureData, name: curr };
 
           return acc;
         },

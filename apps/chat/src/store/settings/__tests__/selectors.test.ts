@@ -7,7 +7,7 @@ import { SettingsSelectors } from '@/src/store/selectors';
 
 import { SettingsState } from '../settings.types';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, FeatureData } from '@epam/ai-dial-shared';
 
 describe('SettingsSelectors', () => {
   const mockState = {
@@ -34,6 +34,7 @@ describe('SettingsSelectors', () => {
         Feature.PromptsSharing,
         Feature.PromptsPublishing,
       ],
+      enabledFeaturesData: [] as FeatureData[],
     } as SettingsState,
     auth: {
       session: {
