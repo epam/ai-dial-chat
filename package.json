@@ -169,7 +169,7 @@
   },
   "overrides": {
     "koa": "3.0.1",
-    "esbuild": "0.25.8"
+    "stdlib": "1.23.12"
   },
   "engines": {
     "node": ">=22.2.0",
