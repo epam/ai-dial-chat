@@ -21,6 +21,7 @@ import { Conversation, PublishActions } from '@epam/ai-dial-shared';
 
 let organizationFolderName: string;
 let conversationToPublish: Conversation;
+let setupPublication: Publication;
 
 dialTest.beforeEach(
   'Test setup step',
@@ -42,9 +43,9 @@ dialTest.beforeEach(
           .withTargetFolder(organizationFolderName)
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
-        const publication =
+        setupPublication =
           await publicationApiHelper.createPublishRequest(publishRequest);
-        await adminPublicationApiHelper.approveRequest(publication);
+        await adminPublicationApiHelper.approveRequest(setupPublication);
       },
     );
 
@@ -706,6 +707,210 @@ dialTest(
             isPublishedForMainUser: false,
             isPublishedForAdditionalUser: true,
             isPublishedForSecondAdditionalUser: true,
+          },
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'Unpublish chat from folder and apply filters',
+  async ({
+    publishRequestBuilder,
+    publicationApiHelper,
+    dialHomePage,
+    publicationApiAssertion,
+    additionalShareUserPublicationApiAssertion,
+    additionalSecondShareUserPublicationApiAssertion,
+    organizationFolderConversations,
+    publishingRequestModalAssertion,
+    conversationDropdownMenu,
+    publishingRequestModal,
+    publishingRules,
+    publishingFilter,
+    publishingRulesAssertion,
+    setTestIds,
+    localStorageManager,
+    adminDialHomePage,
+    adminLocalStorageManager,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    adminPublicationApiHelper,
+    adminPublishingRulesAssertion,
+    adminPublishingApprovalModalAssertion,
+    adminApproveRequiredConversationsAssertion,
+  }) => {
+    setTestIds('EPMRTC-4167');
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const filterValue = 'QA';
+    let unpublishRequestResponse: {
+      request: PublicationRequestModel;
+      response: Publication;
+    };
+
+    await dialTest.step(
+      'Publish one more conversation in Organization folder via API',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withTargetFolder(organizationFolderName)
+          .withConversationInFolderResource(
+            conversationToPublish,
+            PublishActions.ADD,
+          )
+          .build();
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+      },
+    );
+
+    await dialTest.step(
+      'Open Unpublishing modal for the conversation inside Organization folder',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationFolderConversations.expandFolder(
+          organizationFolderName,
+        );
+        await organizationFolderConversations.openFolderEntityDropdownMenu(
+          organizationFolderName,
+          conversationToPublish.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
+        await publishingRequestModalAssertion.assertElementState(
+          publishingRequestModal,
+          'visible',
+        );
+        await publishingRulesAssertion.assertLabels({
+          publishPath: organizationFolderName,
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'hidden',
+          noChangesLabel: 'hidden',
+          seeChangesButton: 'hidden',
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Set filter condition to: `Dial Roles` Equal `QA`',
+      async () => {
+        await publishingRules.addRuleButton.click();
+        await publishingFilter.filterTarget.click();
+        await publishingFilter
+          .getFilterTargetDropdownMenu()
+          .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
+        await publishingFilter.filterFunction.click();
+        await publishingFilter
+          .getFilterFunctionDropdownMenu()
+          .selectMenuOption(PublicationFunctions.Equal);
+        await publishingFilter.setFilterValue(filterValue);
+        await publishingRulesAssertion.assertFilterFields({
+          filterTargetState: 'visible',
+          filterTargetValue: PublishingRulesFilterTarget.dialRoles,
+          filterFunctionState: 'visible',
+          filterFunctionValue: PublicationFunctions.Equal,
+          filterValues: [filterValue],
+        });
+        await publishingFilter.saveFilterButton.click();
+        await publishingRulesAssertion.assertRule(
+          {
+            target: PublishingRulesFilterTarget.dialRoles,
+            fnc: PublicationFunctions.Equal,
+            values: [filterValue],
+          },
+          'visible',
+          'visible',
+          BooleanOperator.or,
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.addRuleButton,
+          'visible',
+        );
+        await publishingRulesAssertion.assertElementState(
+          publishingRules.cancelAllRules,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step('Submit unpublish request', async () => {
+      await publishingRequestModal.requestName.fillInInput(requestName);
+      unpublishRequestResponse =
+        await publishingRequestModal.sendPublicationRequest();
+    });
+
+    await dialAdminTest.step(
+      'Open the request by admin user and verify the rule is displayed',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: requestName },
+          'visible',
+        );
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminPublishingRulesAssertion.assertLabels({
+          publishPath: organizationFolderName,
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'hidden',
+          noChangesLabel: 'hidden',
+          seeChangesButton: 'visible',
+        });
+        await adminPublishingRulesAssertion.assertRule(
+          {
+            target: PublishingRulesFilterTarget.dialRoles,
+            fnc: PublicationFunctions.Equal,
+            values: [filterValue],
+          },
+          'visible',
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approve the request by admin user via API',
+      async () => {
+        await adminPublicationApiHelper.approveRequest(
+          unpublishRequestResponse.response,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify Organization folder with not unpublished conversation is available only for the user with Dial role "QA"',
+      async () => {
+        await verifyPublishedConversationAvailability(
+          setupPublication,
+          publicationApiAssertion,
+          additionalShareUserPublicationApiAssertion,
+          additionalSecondShareUserPublicationApiAssertion,
+          {
+            isPublishedForMainUser: true,
+            isPublishedForAdditionalUser: false,
+            isPublishedForSecondAdditionalUser: false,
+          },
+        );
+
+        await verifyPublishedConversationAvailability(
+          unpublishRequestResponse.request,
+          publicationApiAssertion,
+          additionalShareUserPublicationApiAssertion,
+          additionalSecondShareUserPublicationApiAssertion,
+          {
+            isPublishedForMainUser: false,
+            isPublishedForAdditionalUser: false,
+            isPublishedForSecondAdditionalUser: false,
           },
         );
       },

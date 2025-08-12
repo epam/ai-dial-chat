@@ -483,8 +483,8 @@ export class BaseAssertion {
     expectedMessage: string,
   ) {
     expectedResult
-      ? expect(predicate, expectedMessage).toBeTruthy()
-      : expect(predicate, expectedMessage).toBeFalsy();
+      ? expect.soft(predicate, expectedMessage).toBeTruthy()
+      : expect.soft(predicate, expectedMessage).toBeFalsy();
   }
 
   public assertValuesAreEqual(
