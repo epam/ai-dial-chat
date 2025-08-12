@@ -743,7 +743,7 @@ dialAdminTest(
   }) => {
     setTestIds('EPMRTC-4167');
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const filterValue = 'QA';
+    const filterValue = E2EUserRole.qa;
     let unpublishRequestResponse: {
       request: PublicationRequestModel;
       response: Publication;
