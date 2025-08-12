@@ -51,6 +51,7 @@ export default defineConfig({
   projects: [
     {
       name: 'auth',
+      fullyParallel: true,
       testMatch: /desktopAuth\.ts/,
     },
     {
