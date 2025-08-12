@@ -189,6 +189,7 @@ export const ExpectedConstants = {
   noChangesLabel: 'No changes',
   availabilityLabel:
     'This publication will be available to all users in the organization',
+  seeChangesLabel: 'See changes',
   unpublishFromLabel: 'Unpublish from',
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',

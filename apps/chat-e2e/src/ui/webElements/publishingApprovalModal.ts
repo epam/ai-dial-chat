@@ -13,6 +13,7 @@ import {
   FolderPromptsToApprove,
   PromptsToApproveTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Page } from '@playwright/test';
 
 export class PublishingApprovalModal extends BaseElement {
@@ -31,6 +32,7 @@ export class PublishingApprovalModal extends BaseElement {
   private folderPromptsToApprove!: FolderPromptsToApprove;
   //applications to approve tree
   private applicationsToPublishTree!: ApplicationsToApproveTree;
+  private publishingRules!: PublishingRules;
 
   getConversationsToApproveTree(): ConversationsToApproveTree {
     if (!this.conversationsToApproveTree) {
@@ -102,6 +104,13 @@ export class PublishingApprovalModal extends BaseElement {
     return this.applicationsToPublishTree;
   }
 
+  getPublishingRules(): PublishingRules {
+    if (!this.publishingRules) {
+      this.publishingRules = new PublishingRules(this.page, this.rootLocator);
+    }
+    return this.publishingRules;
+  }
+
   public publishName = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publishName,
   );
@@ -131,15 +140,6 @@ export class PublishingApprovalModal extends BaseElement {
   );
   public publicAuthorHelpIcon =
     this.publicAuthorLabel.getChildElementBySelector(IconSelectors.helpIcon);
-  public allowAccessLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.allowAccessLabel,
-  );
-  public noChangesLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.noChangesLabel,
-  );
-  public availabilityLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.availabilityLabel,
-  );
   public goToReviewButton = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.goToReviewButton,
   );

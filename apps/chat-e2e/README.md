@@ -61,9 +61,9 @@ In the `baseFixtures.ts` file, the `providerLogin` fixture checks the `AUTH_PROV
 
 In order to run tests for publishing rules, corresponding Dial roles should be assigned to the e2e users:
 
-- **QA** role for the main user
-- **Manager** role for the first additional user
-- **Developer** and **Manager** roles for the second additional user
+- **QA** role for the main users
+- **Manager** role for the first additional users
+- **Developer** and **Manager** roles for the second additional users
 
 ## API tests configuration
 

@@ -19,6 +19,19 @@ export class PublishingRules extends BaseElement {
     return this.publishingFilter;
   }
 
+  public allowAccessLabel = this.getChildElementBySelector(
+    PublishingRulesSelectors.allowAccessLabel,
+  );
+  public availabilityLabel = this.getChildElementBySelector(
+    PublishingRulesSelectors.availabilityLabel,
+  );
+  public seeChangesButton = this.getChildElementBySelector(
+    PublishingRulesSelectors.seeChangesButton,
+  );
+  public noChangesLabel = this.getChildElementBySelector(
+    PublishingRulesSelectors.noChangesLabel,
+  );
+
   public publishingPath = this.getChildElementBySelector(
     PublishingRulesSelectors.path,
   );

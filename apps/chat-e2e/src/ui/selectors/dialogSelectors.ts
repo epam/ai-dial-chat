@@ -200,9 +200,6 @@ export const PublishingApprovalModalSelectors = {
   promptsToApproveContainer: '[data-qa="prompts-to-approve-container"]',
   applicationsToApproveContainer:
     '[data-qa="applications-to-approve-container"]',
-  allowAccessLabel: '[data-qa="allow-access-label"]',
-  noChangesLabel: '[data-qa="no-changes-label"]',
-  availabilityLabel: '[data-qa="availability-label"]',
   goToReviewButton: '[data-qa="go-to-review"]',
   rejectButton: '[data-qa="reject"]',
   approveButton: '[data-qa="approve"]',

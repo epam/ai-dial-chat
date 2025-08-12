@@ -5,6 +5,7 @@ import {
   PublicationRequestModel,
 } from '@/chat/types/publication';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -57,11 +58,10 @@ dialTest.beforeEach(
   },
 );
 
-dialTest(
+dialAdminTest(
   'Publish chat: filter - contains',
   async ({
     dialHomePage,
-    adminPublicationApiHelper,
     publicationApiAssertion,
     additionalShareUserPublicationApiAssertion,
     additionalSecondShareUserPublicationApiAssertion,
@@ -70,12 +70,19 @@ dialTest(
     publishingRequestModal,
     selectFolderModal,
     selectFolders,
-    publishingRequestModalAssertion,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
     setTestIds,
     localStorageManager,
+    adminDialHomePage,
+    adminLocalStorageManager,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    adminPublicationApiHelper,
+    adminPublishingRulesAssertion,
+    adminPublishingApprovalModalAssertion,
+    adminApproveRequiredConversationsAssertion,
   }) => {
     setTestIds('EPMRTC-3209');
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -100,14 +107,11 @@ dialTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRulesAssertion.assertLabels({
+          publishPath: organizationFolderName,
           allowAccessLabel: 'visible',
           availabilityLabel: 'hidden',
         });
-        await publishingRulesAssertion.assertElementText(
-          publishingRules,
-          organizationFolderName,
-        );
         await publishingRulesAssertion.assertElementState(
           publishingRules.rulesList,
           'visible',
@@ -167,6 +171,7 @@ dialTest(
             values: [filterValue],
           },
           'visible',
+          'visible',
           BooleanOperator.or,
         );
         await publishingRulesAssertion.assertElementState(
@@ -180,12 +185,51 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Submit publication request and approve it by admin user',
+    await dialTest.step('Submit publication request', async () => {
+      await publishingRequestModal.requestName.fillInInput(requestName);
+      publishRequestResponse =
+        await publishingRequestModal.sendPublicationRequest();
+    });
+
+    await dialAdminTest.step(
+      'Open the request by admin user and verify the rule is displayed',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        publishRequestResponse =
-          await publishingRequestModal.sendPublicationRequest();
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: requestName },
+          'visible',
+        );
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminPublishingRulesAssertion.assertLabels({
+          publishPath: organizationFolderName,
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'hidden',
+          noChangesLabel: 'hidden',
+          seeChangesButton: 'visible',
+        });
+        await adminPublishingRulesAssertion.assertRule(
+          {
+            target: PublishingRulesFilterTarget.dialRoles,
+            fnc: PublicationFunctions.Contain,
+            values: [filterValue],
+          },
+          'visible',
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approve the request by admin user via API',
+      async () => {
         await adminPublicationApiHelper.approveRequest(
           publishRequestResponse.response,
         );
@@ -268,11 +312,10 @@ dialTest(
   },
 );
 
-dialTest(
+dialAdminTest(
   'Publish chat: combination of values inside one filter work as OR',
   async ({
     dialHomePage,
-    adminPublicationApiHelper,
     publicationApiAssertion,
     additionalShareUserPublicationApiAssertion,
     additionalSecondShareUserPublicationApiAssertion,
@@ -286,6 +329,14 @@ dialTest(
     publishingRulesAssertion,
     setTestIds,
     localStorageManager,
+    adminLocalStorageManager,
+    adminDialHomePage,
+    adminApproveRequiredConversationsAssertion,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModalAssertion,
+    adminPublishingApprovalModal,
+    adminPublishingRulesAssertion,
+    adminPublicationApiHelper,
   }) => {
     setTestIds('EPMRTC-3424');
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -343,6 +394,7 @@ dialTest(
             values: [firstFilterValue, secondFilterValue],
           },
           'visible',
+          'visible',
           BooleanOperator.or,
         );
         await publishingRulesAssertion.assertElementState(
@@ -356,12 +408,51 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Submit publication request and approve it by admin user',
+    await dialTest.step('Submit publication request', async () => {
+      await publishingRequestModal.requestName.fillInInput(requestName);
+      publishRequestResponse =
+        await publishingRequestModal.sendPublicationRequest();
+    });
+
+    await dialAdminTest.step(
+      'Open the request by admin user and verify the rule is displayed',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        publishRequestResponse =
-          await publishingRequestModal.sendPublicationRequest();
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: requestName },
+          'visible',
+        );
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminPublishingRulesAssertion.assertLabels({
+          publishPath: organizationFolderName,
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'hidden',
+          noChangesLabel: 'hidden',
+          seeChangesButton: 'visible',
+        });
+        await adminPublishingRulesAssertion.assertRule(
+          {
+            target: PublishingRulesFilterTarget.dialRoles,
+            fnc: PublicationFunctions.Contain,
+            values: [firstFilterValue, secondFilterValue],
+          },
+          'visible',
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approve the request by admin user via API',
+      async () => {
         await adminPublicationApiHelper.approveRequest(
           publishRequestResponse.response,
         );
@@ -387,7 +478,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialAdminTest(
   'Publish chat: combination of filters work as OR',
   async ({
     dialHomePage,
@@ -405,6 +496,13 @@ dialTest(
     publishingRulesAssertion,
     setTestIds,
     localStorageManager,
+    adminLocalStorageManager,
+    adminDialHomePage,
+    adminApproveRequiredConversationsAssertion,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModalAssertion,
+    adminPublishingApprovalModal,
+    adminPublishingRulesAssertion,
   }) => {
     setTestIds('EPMRTC-3425');
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -414,6 +512,11 @@ dialTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const conditions = {
+      [PublishingRulesFilterTarget.dialRoles]: firstFilterValue,
+      [PublishingRulesFilterTarget.title]: secondFilterValue,
+    };
+    const conditionsEntries = Object.entries(conditions);
 
     await dialTest.step(
       'Open Publishing modal for created conversation, click on "Change path", select available folder and verify rules functionality is enabled',
@@ -436,11 +539,6 @@ dialTest(
     await dialTest.step(
       'Add two filters with the conditions: `Dial Roles` Contain `qa`, `Title` Contain `any value`',
       async () => {
-        const conditions = {
-          [PublishingRulesFilterTarget.dialRoles]: firstFilterValue,
-          [PublishingRulesFilterTarget.title]: secondFilterValue,
-        };
-        const conditionsEntries = Object.entries(conditions);
         for (const [target, value] of conditionsEntries) {
           await publishingRules.addRuleButton.click();
           await publishingFilter.filterTarget.click();
@@ -460,6 +558,7 @@ dialTest(
               values: [value],
             },
             'visible',
+            'visible',
             BooleanOperator.or,
           );
         }
@@ -478,12 +577,55 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Submit publication request and approve it by admin user',
+    await dialTest.step('Submit publication request', async () => {
+      await publishingRequestModal.requestName.fillInInput(requestName);
+      publishRequestResponse =
+        await publishingRequestModal.sendPublicationRequest();
+    });
+
+    await dialAdminTest.step(
+      'Open the request by admin user and verify the rules are displayed',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        publishRequestResponse =
-          await publishingRequestModal.sendPublicationRequest();
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: requestName },
+          'visible',
+        );
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminPublishingRulesAssertion.assertLabels({
+          publishPath: organizationFolderName,
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'hidden',
+          noChangesLabel: 'hidden',
+          seeChangesButton: 'visible',
+        });
+        for (let i = 0; i < conditionsEntries.length; i++) {
+          const [target, value] = conditionsEntries[i];
+          await adminPublishingRulesAssertion.assertRule(
+            {
+              target: target as PublishingRulesFilterTarget,
+              fnc: PublicationFunctions.Contain,
+              values: [value],
+            },
+            'visible',
+            'hidden',
+            i === conditionsEntries.length - 1 ? undefined : BooleanOperator.or,
+          );
+        }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approve the request by admin user via API',
+      async () => {
         await adminPublicationApiHelper.approveRequest(
           publishRequestResponse.response,
         );

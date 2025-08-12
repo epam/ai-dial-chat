@@ -3,6 +3,7 @@ import { BaseAssertion } from '@/src/assertions';
 import {
   BooleanOperator,
   ElementState,
+  ExpectedConstants,
   PublishingRulesFilterTarget,
 } from '@/src/testData';
 import { PublishingRules } from '@/src/ui/webElements';
@@ -13,6 +14,69 @@ export class PublishingRulesAssertion extends BaseAssertion {
   constructor(publishingRules: PublishingRules) {
     super();
     this.publishingRules = publishingRules;
+  }
+
+  public async assertLabels(labelsToVerify: {
+    publishPath?: string;
+    allowAccessLabel?: ElementState;
+    availabilityLabel?: ElementState;
+    noChangesLabel?: ElementState;
+    seeChangesButton?: ElementState;
+  }) {
+    if (labelsToVerify.publishPath) {
+      await this.assertElementText(
+        this.publishingRules.publishingPath,
+        labelsToVerify.publishPath,
+      );
+    }
+    if (labelsToVerify.allowAccessLabel) {
+      await this.assertElementState(
+        this.publishingRules.allowAccessLabel,
+        labelsToVerify.allowAccessLabel,
+      );
+      if (labelsToVerify.allowAccessLabel === 'visible') {
+        await this.assertElementText(
+          this.publishingRules.allowAccessLabel,
+          ExpectedConstants.allowAccessLabel,
+        );
+      }
+    }
+    if (labelsToVerify.availabilityLabel) {
+      await this.assertElementState(
+        this.publishingRules.availabilityLabel,
+        labelsToVerify.availabilityLabel,
+      );
+      if (labelsToVerify.availabilityLabel === 'visible') {
+        await this.assertElementText(
+          this.publishingRules.availabilityLabel,
+          ExpectedConstants.availabilityLabel,
+        );
+      }
+    }
+    if (labelsToVerify.seeChangesButton) {
+      await this.assertElementState(
+        this.publishingRules.seeChangesButton,
+        labelsToVerify.seeChangesButton,
+      );
+      if (labelsToVerify.seeChangesButton === 'visible') {
+        await this.assertElementText(
+          this.publishingRules.seeChangesButton,
+          ExpectedConstants.seeChangesLabel,
+        );
+      }
+    }
+    if (labelsToVerify.noChangesLabel) {
+      await this.assertElementState(
+        this.publishingRules.noChangesLabel,
+        labelsToVerify.noChangesLabel,
+      );
+      if (labelsToVerify.noChangesLabel === 'visible') {
+        await this.assertElementText(
+          this.publishingRules.noChangesLabel,
+          ExpectedConstants.noChangesLabel,
+        );
+      }
+    }
   }
 
   public async assertFilterFields(fieldsToVerify: {
@@ -76,22 +140,28 @@ export class PublishingRulesAssertion extends BaseAssertion {
       values: string[];
     },
     expectedState: ElementState,
+    expectedCancelButtonState: ElementState,
     expectedOperator?: BooleanOperator,
   ) {
     await this.assertElementState(
       this.publishingRules.rule(rule),
       expectedState,
     );
-    if (expectedState === 'visible') {
-      await this.assertElementState(
-        this.publishingRules.cancelRuleButton(rule),
-        'visible',
-      );
-    }
     if (expectedOperator) {
       await this.assertElementText(
         this.publishingRules.ruleOperator(rule),
         expectedOperator,
+      );
+    } else {
+      await this.assertElementState(
+        this.publishingRules.ruleOperator(rule),
+        'hidden',
+      );
+    }
+    if (expectedCancelButtonState) {
+      await this.assertElementState(
+        this.publishingRules.cancelRuleButton(rule),
+        expectedCancelButtonState,
       );
     }
   }

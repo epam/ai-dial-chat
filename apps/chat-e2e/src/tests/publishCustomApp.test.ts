@@ -40,6 +40,7 @@ dialAdminTest(
       adminMarketplaceAgentsAssertion,
       publishingRequestModal,
       publishingRequestModalAssertion,
+      publishingRulesAssertion,
       appToPublishAssertion,
       fileApiHelper,
       adminDialHomePage,
@@ -51,6 +52,7 @@ dialAdminTest(
       adminApproveRequiredConversationsAssertion,
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
+      adminPublishingRulesAssertion,
       adminFilesToApproveAssertion,
       adminAppToApproveAssertion,
       adminTooltip,
@@ -167,6 +169,8 @@ dialAdminTest(
         await publishingRequestModalAssertion.assertGeneralInfo({
           publishTo: PublishPath.Organization,
           author: defaultAuthor,
+        });
+        await publishingRulesAssertion.assertLabels({
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
@@ -264,6 +268,8 @@ dialAdminTest(
           publicAuthor: updatedAuthor,
           requestCreatedLabel: 'visible',
           requestCreated: publishApiModels.response,
+        });
+        await adminPublishingRulesAssertion.assertLabels({
           allowAccessLabel: 'visible',
           noChangesLabel: 'visible',
           availabilityLabel: 'visible',

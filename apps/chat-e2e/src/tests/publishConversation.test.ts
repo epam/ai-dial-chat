@@ -57,6 +57,7 @@ dialAdminTest(
       adminApproveRequiredConversationsAssertion,
       adminOrganizationConversationAssertion,
       adminPublishingApprovalModalAssertion,
+      adminPublishingRulesAssertion,
       adminConversationToApproveAssertion,
       conversationDropdownMenuAssertion,
       toastAssertion,
@@ -256,16 +257,11 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
         );
-
-        await adminPublishingApprovalModalAssertion.assertAllowAccessLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertNoChangesLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
-          'visible',
-        );
+        await adminPublishingRulesAssertion.assertLabels({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+          noChangesLabel: 'visible',
+        });
 
         await adminConversationToApproveAssertion.assertEntityState(
           { name: conversation.name },

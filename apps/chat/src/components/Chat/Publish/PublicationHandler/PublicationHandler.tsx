@@ -416,7 +416,10 @@ export function PublicationHandler({ publication }: Props) {
                     valueToDisplay={formatDate(publication.createdAt)}
                   />
                 </div>
-                <section className="px-3 py-4 md:px-5">
+                <section
+                  className="px-3 py-4 md:px-5"
+                  data-qa="rules-container"
+                >
                   <h2 className="mb-4 flex items-center gap-2 text-sm">
                     <div className="flex w-full justify-between">
                       <p data-qa="allow-access-label">
@@ -426,6 +429,7 @@ export function PublicationHandler({ publication }: Props) {
                         <span
                           onClick={() => setIsCompareModalOpened(true)}
                           className="cursor-pointer text-accent-primary"
+                          data-qa="see-changes"
                         >
                           {t('See changes')}
                         </span>

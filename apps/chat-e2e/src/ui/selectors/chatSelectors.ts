@@ -172,6 +172,10 @@ export const RenameConversationModalSelectors = {
 
 export const PublishingRulesSelectors = {
   rulesContainer: '[data-qa="rules-container"]',
+  allowAccessLabel: '[data-qa="allow-access-label"]',
+  noChangesLabel: '[data-qa="no-changes-label"]',
+  availabilityLabel: '[data-qa="availability-label"]',
+  seeChangesButton: '[data-qa="see-changes"]',
   path: '[data-qa="published-path"]',
   rulesList: '[data-qa="rules-list"]',
   rule: '[data-qa="rule"]',
