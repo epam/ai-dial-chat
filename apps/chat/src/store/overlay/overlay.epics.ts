@@ -86,7 +86,6 @@ import {
   ExportConversationRequest,
   ExportConversationResponse,
   Feature,
-  FeatureData,
   FolderInterface,
   GetConversationsResponse,
   GetMessagesResponse,
@@ -1174,6 +1173,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         overlayConversationId,
         signInInSameWindow,
         messageButtons,
+        enabledFeaturesData,
       } = options;
 
       const availableThemes = UISelectors.selectAvailableThemes(state$.value);
@@ -1217,13 +1217,10 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       }
 
       if (enabledFeatures && isOptionChanged('enabledFeatures')) {
-        let features: (Feature | FeatureData)[] = [];
+        let features: string[] = [];
 
         if (typeof enabledFeatures === 'string') {
-          features = parseCommaSeparatedList(enabledFeatures) as (
-            | Feature
-            | FeatureData
-          )[];
+          features = parseCommaSeparatedList(enabledFeatures);
         }
 
         if (Array.isArray(enabledFeatures)) {
@@ -1235,7 +1232,9 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
 
-          actions.push(of(SettingsActions.setEnabledFeatures(features)));
+          actions.push(
+            of(SettingsActions.setEnabledFeatures(features as Feature[])),
+          );
 
           if (
             !isLoginRequired &&
@@ -1248,15 +1247,18 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         } else {
           const incorrectFeatures = features
             .filter((feature) => !validateFeature(feature))
-            .map((feature) =>
-              typeof feature === 'string' ? feature : feature.name,
-            )
             .join(',');
 
           console.warn(
             `[Overlay](Enabled Features) No such features: ${incorrectFeatures}. \nFeatures aren't set.`,
           );
         }
+      }
+
+      if (enabledFeaturesData && isOptionChanged('enabledFeaturesData')) {
+        actions.push(
+          of(SettingsActions.setEnabledFeaturesData(enabledFeaturesData)),
+        );
       }
 
       const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);

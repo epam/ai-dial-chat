@@ -5,13 +5,17 @@ import {
   commonOverlayProps,
 } from '../../components/chatOverlayWrapper';
 
-import { Feature, FeatureData } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
   enabledFeatures: [
     Feature.Header,
     Feature.ConversationsSection,
+    Feature.DisabledPlaybackControls,
+    Feature.DisabledSend,
+  ],
+  enabledFeaturesData: [
     {
       name: Feature.DisabledSend,
       description: 'This is tooltip for disabled send',
@@ -20,7 +24,7 @@ const overlayOptions = {
       name: Feature.DisabledPlaybackControls,
       description: 'This is tooltip for disabled playback controls',
     },
-  ] as (Feature | FeatureData)[],
+  ],
 };
 
 export default function Index() {

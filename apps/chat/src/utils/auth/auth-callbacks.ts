@@ -6,6 +6,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { Token } from '@/src/types/auth';
 
+import { safeParseJSON } from '../json';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -24,18 +25,6 @@ const safeDecodeJwt = (accessToken: string) => {
     console.error("Token couldn't be parsed as JWT", err);
     // TODO: read roles from GCP token format
     return {};
-  }
-};
-
-const safeParseJSON = (jsonData: string | undefined, errorMessage: string) => {
-  try {
-    if (!jsonData) {
-      return {};
-    }
-    return JSON.parse(jsonData);
-  } catch (err) {
-    logger.error(errorMessage, err);
-    throw Error(`${errorMessage}: ${err}`);
   }
 };
 
@@ -61,6 +50,7 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
   const enabledFeaturesRoles = safeParseJSON(
     process.env.ENABLED_FEATURES_ROLES?.replaceAll('\\"', '"'),
     'Error when parsing ENABLED_FEATURES_ROLES',
+    logger,
   );
 
   const featureFlags = Array.from(Object.values(Feature)).reduce(

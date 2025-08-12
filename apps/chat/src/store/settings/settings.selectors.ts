@@ -29,34 +29,31 @@ const selectIsOverlay = (state: RootState) => rootSelector(state).isOverlay;
 const selectFooterHtmlMessage = (state: RootState) =>
   rootSelector(state).footerHtmlMessage;
 
-const _selectFeatures = createSelector([rootSelector], (state) =>
-  state.enabledFeatures.reduce(
-    (acc, curr) => {
-      const featureName = typeof curr === 'string' ? curr : curr.name;
-      const featureData = typeof curr === 'string' ? { name: curr } : curr;
-      acc[featureName] = featureData;
+const _selectEnabledFeaturesData = (state: RootState) =>
+  rootSelector(state).enabledFeaturesData;
 
-      return acc;
-    },
-    {} as Record<Feature, FeatureData>,
-  ),
-);
+const _selectFeatures = createSelector(
+  [rootSelector, AuthSelectors.selectSessionData, _selectEnabledFeaturesData],
+  (state, session, featuresData) =>
+    state.enabledFeatures
+      .filter((featureName) => canUserUseFeature(session, featureName))
+      .reduce(
+        (acc, curr) => {
+          const featureData = featuresData.find((item) => item.name === curr);
+          acc[curr] = featureData;
 
-const _selectEnabledFeaturesData = createSelector(
-  [_selectFeatures, AuthSelectors.selectSessionData],
-  (enabledFeatures, session) => {
-    return Object.entries(enabledFeatures).filter(([featureName]) =>
-      canUserUseFeature(session, featureName as Feature),
-    );
-  },
+          return acc;
+        },
+        {} as Record<Feature, FeatureData | undefined>,
+      ),
 );
 
 const selectEnabledFeatures = createSelector(
-  [_selectEnabledFeaturesData],
+  [_selectFeatures],
   (enabledFeaturesData) => {
-    const enabledFeatures = new Map<Feature, FeatureData>();
+    const enabledFeatures = new Map<Feature, FeatureData | undefined>();
 
-    enabledFeaturesData.forEach(([featureName, featureData]) =>
+    Object.entries(enabledFeaturesData).forEach(([featureName, featureData]) =>
       enabledFeatures.set(featureName as Feature, featureData),
     );
 

@@ -11,7 +11,8 @@ export interface SettingsState {
   overlayConversationId?: string;
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
-  enabledFeatures: (Feature | FeatureData)[];
+  enabledFeatures: Feature[];
+  enabledFeaturesData: FeatureData[];
   publicationFilters: string[];
   codeWarning: string;
   announcement: string;

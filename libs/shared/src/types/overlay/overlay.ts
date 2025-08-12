@@ -13,7 +13,8 @@ export interface ChatOverlayOptions {
   overlayConversationId?: string;
   newConversationsFolderId?: string;
 
-  enabledFeatures?: (Feature | FeatureData)[] | string;
+  enabledFeatures?: Feature[] | string;
+  enabledFeaturesData?: FeatureData[];
 
   requestTimeout?: number;
 
