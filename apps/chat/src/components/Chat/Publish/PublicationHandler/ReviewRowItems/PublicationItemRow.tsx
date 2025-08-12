@@ -141,7 +141,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       )}
       <span
         className={classNames(
-          'shrink-0 text-xs',
+          'relative shrink-0 text-xs',
           isDeleteAction && 'text-error',
         )}
         data-qa="version"

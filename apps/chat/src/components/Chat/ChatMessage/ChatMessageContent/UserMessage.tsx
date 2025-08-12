@@ -68,8 +68,8 @@ interface UserMessageProps {
   message: Message;
   conversation: Conversation;
   messageIndex: number;
+  realMessageIndex: number;
   allMessages: Message[];
-  isFirstMessageSystem: boolean;
   isEditing: boolean;
   isEditingTemplates: boolean;
   withButtons?: boolean;
@@ -88,8 +88,8 @@ export const UserMessage = memo(function UserMessage({
   message,
   conversation,
   messageIndex,
+  realMessageIndex,
   allMessages,
-  isFirstMessageSystem,
   isEditing,
   isEditingTemplates,
   withButtons,
@@ -630,10 +630,7 @@ export const UserMessage = memo(function UserMessage({
         <MessageAttachments attachments={message.custom_content?.attachments} />
 
         {isOverlay && (
-          <OverlayMessageCustomButtons
-            messageIndex={messageIndex}
-            isSystemMessagePresented={isFirstMessageSystem}
-          />
+          <OverlayMessageCustomButtons realMessageIndex={realMessageIndex} />
         )}
 
         <div
@@ -643,9 +640,10 @@ export const UserMessage = memo(function UserMessage({
       </div>
       {showUserButtons && !isConversationInvalid && (
         <MessageUserButtons
+          realMessageIndex={realMessageIndex}
           isMessageStreaming={!!conversation.isMessageStreaming}
           isEditAvailable={!!onEdit && !editDisabled}
-          onDelete={() => onDelete?.()}
+          onDelete={onDelete}
           onToggleEditing={handleToggleEditing}
           isEditTemplatesAvailable={
             (!isReadOnly || isApproveRequiredEntitySelected) &&
