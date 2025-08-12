@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -10,70 +10,48 @@ import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { getLayout } from '@/src/pages/_app';
 
-import { Field } from '@/src/components/Common/Forms/Field';
 import { Spinner } from '@/src/components/Common/Spinner';
+import { ToolsetEditor } from '@/src/components/ToolsetEditor/ToolsetEditor';
 
-import { ToolsetTransportType } from '@epam/ai-dial-shared';
-
-interface ToolsetForm {
-  name: string;
-  endpoint: string;
-  description: string;
-}
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 function ToolsetEditorPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const { toolsetId: toolsetIdQuery } = router.query;
+  const toolsetDetailsStatus = useAppSelector(
+    ToolsetSelectors.selectToolsetDetailsStatus,
+  );
+  const toolsetsStatus = useAppSelector(ToolsetSelectors.selectToolsetsStatus);
+  const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
+  const { toolsetId: toolsetIdQuery } = router.query;
   const toolsetId = toolsetIdQuery?.toString();
 
-  const areToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
+  const isLoading =
+    (toolsetId &&
+      !toolsetDetails &&
+      (toolsetDetailsStatus === UploadStatus.LOADING ||
+        toolsetDetailsStatus === UploadStatus.UNINITIALIZED)) ||
+    toolsetsStatus === UploadStatus.LOADING ||
+    toolsetsStatus === UploadStatus.UNINITIALIZED;
 
-  const isLoading = toolsetId && areToolsetsLoading;
+  useEffect(() => {
+    if (toolsetId) {
+      dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
+    }
+  }, [dispatch, toolsetId]);
 
-  // below draft form for testing add toolset flow
-  const { register, handleSubmit: submitWrapper } = useForm<ToolsetForm>({
-    defaultValues: {
-      name: '',
-      endpoint: '',
-      description: '',
-    },
-  });
-
-  const handleSubmit = (data: ToolsetForm) => {
-    dispatch(
-      ToolsetActions.createToolset({
-        name: data.name,
-        endpoint: data.endpoint,
-        transport: ToolsetTransportType.HTTP,
-        allowedTools: [],
-        description: data.description,
-      }),
+  if (isLoading)
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Spinner size={45} className="mx-auto" />
+      </div>
     );
-  };
 
   return (
-    <div className="flex size-full flex-col p-4">
-      {isLoading ? (
-        <div className="flex h-full items-center justify-center">
-          <Spinner size={45} className="mx-auto" />
-        </div>
-      ) : (
-        <form
-          onSubmit={submitWrapper(handleSubmit)}
-          className="flex w-full flex-col gap-4 divide-y divide-tertiary overflow-y-auto"
-        >
-          <Field {...register('name')} label="Name" />
-          <Field {...register('endpoint')} label="Endpoint" />
-          <Field {...register('description')} label="Description" />
-
-          <button className="button button-primary py-2" type="submit">
-            Create toolset
-          </button>
-        </form>
-      )}
+    <div className="flex size-full flex-col">
+      <ToolsetEditor />
     </div>
   );
 }
