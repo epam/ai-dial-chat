@@ -12,7 +12,7 @@ export interface SettingsState {
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
-  enabledFeaturesData: FeatureData[];
+  enabledFeaturesData: Partial<Record<Feature, FeatureData>>;
   publicationFilters: string[];
   codeWarning: string;
   announcement: string;

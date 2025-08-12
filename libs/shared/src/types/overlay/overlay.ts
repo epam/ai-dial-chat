@@ -14,7 +14,7 @@ export interface ChatOverlayOptions {
   newConversationsFolderId?: string;
 
   enabledFeatures?: Feature[] | string;
-  enabledFeaturesData?: FeatureData[];
+  enabledFeaturesData?: Partial<Record<Feature | string, FeatureData>>;
 
   requestTimeout?: number;
 

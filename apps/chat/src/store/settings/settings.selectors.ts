@@ -39,8 +39,8 @@ const _selectFeatures = createSelector(
       .filter((featureName) => canUserUseFeature(session, featureName))
       .reduce(
         (acc, curr) => {
-          const featureData = featuresData.find((item) => item.name === curr);
-          acc[curr] = { ...featureData, name: curr };
+          const featureData = featuresData[curr];
+          acc[curr] = { ...featureData };
 
           return acc;
         },

@@ -15,16 +15,14 @@ const overlayOptions = {
     Feature.DisabledPlaybackControls,
     Feature.DisabledSend,
   ],
-  enabledFeaturesData: [
-    {
-      name: Feature.DisabledSend,
-      description: 'This is tooltip for disabled send',
-    },
-    {
-      name: Feature.DisabledPlaybackControls,
-      description: 'This is tooltip for disabled playback controls',
-    },
-  ],
+  // enabledFeaturesData: {
+  //   [Feature.DisabledSend]: {
+  //     description: 'This is tooltip for disabled send',
+  //   },
+  //   [Feature.DisabledPlaybackControls]: {
+  //     description: 'This is tooltip for disabled playback controls',
+  //   },
+  // },
 };
 
 export default function Index() {

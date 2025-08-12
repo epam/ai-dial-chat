@@ -7,7 +7,7 @@ import { SettingsSelectors } from '@/src/store/selectors';
 
 import { SettingsState } from '../settings.types';
 
-import { Feature, FeatureData } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 
 describe('SettingsSelectors', () => {
   const mockState = {
@@ -34,7 +34,7 @@ describe('SettingsSelectors', () => {
         Feature.PromptsSharing,
         Feature.PromptsPublishing,
       ],
-      enabledFeaturesData: [] as FeatureData[],
+      enabledFeaturesData: {},
     } as SettingsState,
     auth: {
       session: {
@@ -54,9 +54,9 @@ describe('SettingsSelectors', () => {
     const result = SettingsSelectors.selectEnabledFeatures(mockState);
     expect(result).toEqual(
       new Map([
-        [Feature.ConversationsSharing, { name: Feature.ConversationsSharing }],
-        [Feature.PromptsSharing, { name: Feature.PromptsSharing }],
-        [Feature.PromptsPublishing, { name: Feature.PromptsPublishing }],
+        [Feature.ConversationsSharing, {}],
+        [Feature.PromptsSharing, {}],
+        [Feature.PromptsPublishing, {}],
       ]),
     );
   });

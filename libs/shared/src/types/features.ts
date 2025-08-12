@@ -76,7 +76,6 @@ export enum Feature {
 }
 
 export interface FeatureData {
-  name: Feature;
   // Field for adding some description for feature
   // Can be used in tooltips or other places
   description?: string;

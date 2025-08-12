@@ -15,7 +15,7 @@ const initialState: SettingsState = {
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
-  enabledFeaturesData: [],
+  enabledFeaturesData: {},
   publicationFilters: [],
   codeWarning: '',
   announcement: '',
