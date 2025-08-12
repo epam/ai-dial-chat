@@ -1,0 +1,4 @@
+# false-positives in esbuild
+# https://github.com/evanw/esbuild/issues/4257
+CVE-2025-4674 exp:2026-01-01
+CVE-2025-47907 exp:2026-01-01
