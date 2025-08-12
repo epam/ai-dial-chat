@@ -5,14 +5,21 @@ export interface ToolsetModel {
   transport: ToolsetTransportType;
   allowedTools: string[];
   id: string;
+  folderId: string;
+  version: string;
 
-  name?: string;
-  description?: string;
+  name: string;
+  description: string;
   iconUrl?: string;
+  topics: string[];
   userRoles?: string[];
-  descriptionKeywords?: string[];
   maxRetryAttempts?: number;
   author?: string;
   createdAt?: number;
   updatedAt?: number;
+}
+
+export enum ToolsetEditorSteps {
+  General = 'General info',
+  Settings = 'Toolset settings',
 }

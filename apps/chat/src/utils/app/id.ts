@@ -64,6 +64,9 @@ export const isApplicationId = (id?: string) =>
 export const getApplicationRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Application, bucket });
 
+export const getToolsetRootId = (bucket?: string) =>
+  getRootId({ featureType: FeatureType.Toolset, bucket });
+
 export const getEntityBucket = (entity: { id: string }) =>
   entity.id.split('/')[1];
 

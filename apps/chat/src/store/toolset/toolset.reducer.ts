@@ -4,10 +4,16 @@ import { ToolsetModel } from '@/src/types/toolsets';
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
+
 const initialState: ToolsetState = {
   initialized: false,
   toolsetsMap: {},
-  isLoading: false,
+  toolsetsStatus: UploadStatus.UNINITIALIZED,
+
+  toolsetDetails: undefined,
+  toolsetDetailsStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const toolsetSlice = createSlice({
@@ -18,7 +24,10 @@ export const toolsetSlice = createSlice({
     initFinish: (state) => {
       state.initialized = true;
     },
-    setToolsets: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
+    getToolsets: (state) => {
+      state.toolsetsStatus = UploadStatus.LOADING;
+    },
+    getToolsetsSuccess: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
       state.toolsetsMap = payload.reduce<Record<string, ToolsetModel>>(
         (acc, toolset) => {
           acc[toolset.id] = toolset;
@@ -26,10 +35,84 @@ export const toolsetSlice = createSlice({
         },
         {},
       );
+      state.toolsetsStatus = UploadStatus.LOADED;
     },
-    createToolset: (state, _action: PayloadAction<ToolsetModel>) => state,
-    createToolsetSuccess: (state, _action: PayloadAction<ToolsetModel>) =>
+    setToolsets: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
+      state.toolsetsMap = {
+        ...state.toolsetsMap,
+        ...payload.reduce<Record<string, ToolsetModel>>((acc, toolset) => {
+          acc[toolset.id] = toolset;
+          return acc;
+        }, {}),
+      };
+    },
+
+    createToolset: (
       state,
+      _action: PayloadAction<{
+        data: Omit<ToolsetModel, 'id'>;
+      }>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    createToolsetFailed: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.FAILED;
+    },
+
+    getToolsetDetails: (state, _action: PayloadAction<{ id: string }>) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    getToolsetDetailsSuccess: (
+      state,
+      { payload }: PayloadAction<ToolsetModel>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
+      state.toolsetDetails = payload;
+    },
+    getToolsetDetailsFailed: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.FAILED;
+      state.toolsetDetails = undefined;
+    },
+
+    updateToolset: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        oldToolset: ToolsetModel;
+        newToolset: ToolsetModel;
+      }>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+      state.toolsetDetails = payload.newToolset;
+    },
+    updateToolsetFailed: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        oldToolset: ToolsetModel;
+      }>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.FAILED;
+      state.toolsetDetails = payload.oldToolset;
+    },
+    updateToolsetSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        oldToolset: ToolsetModel;
+        newToolset: ToolsetModel;
+      }>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
+      state.toolsetDetails = payload.newToolset;
+      state.toolsetsMap = {
+        ...omit(state.toolsetsMap, [payload.oldToolset.id]),
+        [payload.newToolset.id]: payload.newToolset,
+      };
+    },
   },
 });
 
