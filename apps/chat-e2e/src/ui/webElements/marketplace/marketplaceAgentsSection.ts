@@ -10,6 +10,8 @@ import {
 } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
+export const marketplaceContentDisplayTimeout = 200;
+
 export class MarketplaceAgentsSection extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, MarketplaceSelectors.marketplaceAgentSection, parentLocator);
@@ -158,6 +160,9 @@ export class MarketplaceAgentsSection extends BaseElement {
     if (!(await this.rootLocator.isVisible())) {
       return allAgents;
     }
+    //wait for available cards are displayed
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(marketplaceContentDisplayTimeout);
     await this.moveToAgentsSection();
     let scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
@@ -261,7 +266,7 @@ export class MarketplaceAgentsSection extends BaseElement {
     const rowHeight = lastRowBounding!.height;
     //need to wait the scrolling is finished
     // eslint-disable-next-line playwright/no-wait-for-timeout
-    await this.page.waitForTimeout(200);
+    await this.page.waitForTimeout(marketplaceContentDisplayTimeout);
     return rowHeight;
   }
 

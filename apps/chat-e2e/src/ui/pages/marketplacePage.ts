@@ -88,7 +88,7 @@ export class MarketplacePage extends BasePage {
     if (options.getPublishedApplications) {
       expectedResponses.push({
         apiMethod: 'GET',
-        urlPattern: API.publishedApplicationsHost,
+        urlPattern: API.publishedApplicationsHost(),
       });
     }
 
