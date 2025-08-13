@@ -17,7 +17,7 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, FeatureData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState) => state.settings;
@@ -29,17 +29,35 @@ const selectIsOverlay = (state: RootState) => rootSelector(state).isOverlay;
 const selectFooterHtmlMessage = (state: RootState) =>
   rootSelector(state).footerHtmlMessage;
 
-const _selectEnabledFeatures = (state: RootState) =>
-  rootSelector(state).enabledFeatures;
+const _selectEnabledFeaturesData = (state: RootState) =>
+  rootSelector(state).enabledFeaturesData;
+
+const _selectFeatures = createSelector(
+  [rootSelector, AuthSelectors.selectSessionData, _selectEnabledFeaturesData],
+  (state, session, featuresData) =>
+    state.enabledFeatures
+      .filter((featureName) => canUserUseFeature(session, featureName))
+      .reduce(
+        (acc, curr) => {
+          const featureData = featuresData[curr];
+          acc[curr] = { ...featureData };
+
+          return acc;
+        },
+        {} as Record<Feature, FeatureData | undefined>,
+      ),
+);
 
 const selectEnabledFeatures = createSelector(
-  [_selectEnabledFeatures, AuthSelectors.selectSessionData],
-  (enabledFeatures, session) => {
-    return new Set(
-      enabledFeatures.filter((feature: Feature) =>
-        canUserUseFeature(session, feature),
-      ),
+  [_selectFeatures],
+  (enabledFeaturesData) => {
+    const enabledFeatures = new Map<Feature, FeatureData | undefined>();
+
+    Object.entries(enabledFeaturesData).forEach(([featureName, featureData]) =>
+      enabledFeatures.set(featureName as Feature, featureData),
     );
+
+    return enabledFeatures;
   },
 );
 
@@ -57,6 +75,8 @@ const selectPreselectedAction = (state: RootState) =>
 
 const isFeatureEnabled = (state: RootState, featureName: Feature) =>
   selectEnabledFeatures(state).has(featureName);
+const selectFeatureData = (state: RootState, featureName: Feature) =>
+  selectEnabledFeatures(state).get(featureName);
 
 const selectIsPublishingEnabled = (
   state: RootState,
@@ -237,6 +257,7 @@ export const SettingsSelectors = {
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,
+  selectFeatureData,
   selectIsPublishingEnabled,
   isSharingEnabled,
   selectCodeWarning,

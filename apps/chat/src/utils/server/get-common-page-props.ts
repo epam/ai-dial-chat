@@ -28,6 +28,8 @@ import {
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { safeParseJSON } from '../json';
+
 import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
@@ -100,6 +102,13 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
   const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
   const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
+  const enabledFeaturesData = process.env.ENABLED_FEATURES_DATA
+    ? safeParseJSON(
+        process.env.ENABLED_FEATURES_DATA?.replaceAll('\\"', '"'),
+        'Error when parsing ENABLED_FEATURES_DATA',
+        console,
+      )
+    : [];
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
@@ -125,6 +134,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
         isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
       )
       .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
+    enabledFeaturesData,
     widgetsSchemaIds: parseCommaSeparatedList(
       process.env.WIDGETS_SCHEMA_IDS,
       [],
