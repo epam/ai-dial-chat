@@ -252,6 +252,7 @@ export const ExpectedConstants = {
     "Input the MIME type and press 'Enter' to add",
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
+  agentNotFoundToastError: 'Not found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
   informationModalTitle: 'Information',
   informationModalLastUpdatedLabel: 'Last updated:',
@@ -270,6 +271,8 @@ export const ExpectedConstants = {
   lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
   noAvailableItemsLabel: 'No available items',
+  appDefaultCompletionUrl: 'http://test.example.com',
+  appRateEndpointDefaultFeature: 'http://application1/rate',
 };
 
 export enum Types {
@@ -418,9 +421,13 @@ export const API = {
   publishedApplications: '/api/publication/applications/public',
   publishedFiles: () => `/api/publication/${API.filesHostSegment}/public`,
   applicationCreateHost: '/api/applications',
-  publishedApplicationsHost:
-    'api/publication/applications/public?recursive=true',
+  publishedConversationsHost: () =>
+    `${API.publishedConversations}?recursive=true`,
+  publishedPromptsHost: () => `${API.publishedPrompts}?recursive=true`,
+  publishedApplicationsHost: () =>
+    `${API.publishedApplications}?recursive=true`,
   pagePropsHost: '/en.json',
+  appSchemasHost: 'api/application-type-schemas/schemas',
 };
 
 export const Import = {
