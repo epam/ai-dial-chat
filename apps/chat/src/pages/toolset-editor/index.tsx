@@ -6,14 +6,16 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ToolsetSelectors } from '@/src/store/selectors';
+import { SettingsSelectors, ToolsetSelectors } from '@/src/store/selectors';
+
+import { Routes } from '@/src/constants/routes';
 
 import { getLayout } from '@/src/pages/_app';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { ToolsetEditor } from '@/src/components/ToolsetEditor/ToolsetEditor';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 function ToolsetEditorPage() {
   const router = useRouter();
@@ -24,7 +26,9 @@ function ToolsetEditorPage() {
   );
   const toolsetsStatus = useAppSelector(ToolsetSelectors.selectToolsetsStatus);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-
+  const isToolsetsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Toolsets),
+  );
   const { toolsetId: toolsetIdQuery } = router.query;
   const toolsetId = toolsetIdQuery?.toString();
 
@@ -35,6 +39,12 @@ function ToolsetEditorPage() {
         toolsetDetailsStatus === UploadStatus.UNINITIALIZED)) ||
     toolsetsStatus === UploadStatus.LOADING ||
     toolsetsStatus === UploadStatus.UNINITIALIZED;
+
+  useEffect(() => {
+    if (!isToolsetsEnabled) {
+      router.push(Routes.Chat);
+    }
+  }, [isToolsetsEnabled, router]);
 
   useEffect(() => {
     if (toolsetId) {

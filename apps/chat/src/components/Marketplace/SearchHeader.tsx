@@ -29,6 +29,7 @@ import {
 } from '@/src/store/selectors';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
@@ -106,6 +107,9 @@ export const SearchHeader = () => {
     Feature.CustomApplications,
   );
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
+  const isToolsetsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Toolsets),
+  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
@@ -141,6 +145,16 @@ export const SearchHeader = () => {
             router.push(getAppEditorRoute(ApplicationType.CODE_APP));
           },
         },
+        {
+          name: t('Toolset'),
+          dataQa: 'add-toolset',
+          type: FeatureType.Toolset,
+          display: isToolsetsEnabled,
+          onClick: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            router.push(Routes.ToolsetEditor);
+          },
+        },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
           name: t(schema.displayName),
           type: schema.displayName,
@@ -163,6 +177,7 @@ export const SearchHeader = () => {
     [
       t,
       isCodeAppsEnabled,
+      isToolsetsEnabled,
       applicationTypeSchemas,
       router,
       detailedApplicationTypeSchema?.$id,
