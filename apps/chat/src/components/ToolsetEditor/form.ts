@@ -1,3 +1,4 @@
+import { isVersionPartSizeValid, isVersionValid } from '@/src/utils/app/common';
 import { doesHaveNotAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 
@@ -48,12 +49,8 @@ export const ToolsetEditorFormSchema = zodValidation.object({
   version: zodValidation
     .string()
     .nonempty(versionsErrors.required)
-    .regex(/^\d+\.\d+\.\d+$/, {
-      message: versionsErrors.notValid,
-    })
-    .refine((v) => v.split('.').every((part) => part.length <= 5), {
-      message: versionsErrors.tooLongPart,
-    }),
+    .refine(isVersionValid, versionsErrors.notValid)
+    .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
   description: zodValidation.string(),
   allowedTools: zodValidation.array(zodValidation.string()),
   iconUrl: zodValidation.string(),
