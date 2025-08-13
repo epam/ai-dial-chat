@@ -7,9 +7,13 @@ export interface Toolset {
   endpoint: string;
   transport: ToolsetTransportType;
   allowed_tools: string[];
+  display_name: string;
+  display_version: string;
 
+  url?: string;
+  id?: string;
   toolset?: string;
-  display_name?: string;
+  name?: string;
   description?: string;
   icon_url?: string;
   user_roles?: string[];

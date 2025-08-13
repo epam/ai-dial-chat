@@ -18,15 +18,6 @@ export class ToolsetService {
     );
   }
 
-  public static getToolset(toolId: string): Observable<ToolsetModel | null> {
-    return ApiUtils.request(`/api/toolsets/listing/${toolId}`, {
-      method: HTTPMethod.GET,
-    }).pipe(
-      map(convertToolsetFromApi),
-      catchError(() => of(null)),
-    );
-  }
-
   public static getToolsetByPath(
     path: string,
   ): Observable<ToolsetModel | null> {
@@ -44,7 +35,7 @@ export class ToolsetService {
     });
   }
 
-  public static addToolset(data: Toolset, path: string): Observable<void> {
+  public static saveToolset(data: Toolset, path: string): Observable<void> {
     return ApiUtils.request(`/api/toolsets/${path}`, {
       method: HTTPMethod.PUT,
       body: JSON.stringify(data),

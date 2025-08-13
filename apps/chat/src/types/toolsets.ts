@@ -1,18 +1,19 @@
-import { ToolsetTransportType } from '@epam/ai-dial-shared';
+import { ShareEntity, ToolsetTransportType } from '@epam/ai-dial-shared';
 
-export interface ToolsetModel {
+export interface ToolsetModel extends ShareEntity {
   endpoint: string;
   transport: ToolsetTransportType;
   allowedTools: string[];
-  id: string;
+  version: string;
 
-  name?: string;
-  description?: string;
+  description: string;
   iconUrl?: string;
+  topics: string[];
   userRoles?: string[];
-  descriptionKeywords?: string[];
   maxRetryAttempts?: number;
-  author?: string;
-  createdAt?: number;
-  updatedAt?: number;
+}
+
+export enum ToolsetEditorSteps {
+  General = 'General info',
+  Settings = 'Toolset settings',
 }

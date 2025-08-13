@@ -4,6 +4,7 @@ export enum Routes {
   AppsEditorGeneralInfo = '/apps-editor/[slug]',
   Widgets = '/widgets',
   SelectedWidget = '/widgets/[slug]',
+  ToolsetEditor = '/toolset-editor',
   Chat = '/',
   NotFound = '/404',
 }

@@ -1,37 +1,73 @@
+import { constructPath } from '@/src/utils/app/file';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
+import { ApiUtils, getToolsetApiKey } from '@/src/utils/server/api';
+
+import { PartialBy } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import { Toolset } from '@epam/ai-dial-shared';
 
-export const convertToolsetFromApi = (data: Toolset): ToolsetModel => ({
-  endpoint: data.endpoint,
-  transport: data.transport,
-  allowedTools: data.allowed_tools,
-  id: data.toolset ?? '',
+export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
+  const id = ApiUtils.decodeApiUrl(data.id ?? data.toolset ?? data.name ?? '');
 
-  name: data.display_name,
-  description: data.description,
-  iconUrl: data.icon_url,
-  userRoles: data.user_roles,
-  descriptionKeywords: data.description_keywords,
-  maxRetryAttempts: data.max_retry_attempts,
-  author: data.author,
-  createdAt: data.created_at,
-  updatedAt: data.updated_at,
-});
+  return {
+    endpoint: data.endpoint,
+    transport: data.transport,
+    allowedTools: data.allowed_tools,
+    id,
+    folderId: getFolderIdFromEntityId(id),
+    version: data.display_version,
+    name: data.display_name,
+
+    description: data.description ?? '',
+    iconUrl: data.icon_url ? ApiUtils.decodeApiUrl(data.icon_url) : '',
+    topics: data.description_keywords ?? [],
+    userRoles: data.user_roles,
+    maxRetryAttempts: data.max_retry_attempts,
+    author: data.author,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+};
 
 export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
   endpoint: data.endpoint,
   transport: data.transport,
   allowed_tools: data.allowedTools,
+  display_version: data.version,
 
-  toolset: data.id,
   display_name: data.name,
   description: data.description,
-  icon_url: data.iconUrl,
-  user_roles: data.userRoles,
-  description_keywords: data.descriptionKeywords,
-  max_retry_attempts: data.maxRetryAttempts,
-  author: data.author,
-  created_at: data.createdAt,
-  updated_at: data.updatedAt,
+  icon_url: ApiUtils.encodeApiUrl(data.iconUrl ?? ''),
+  description_keywords: data.topics,
 });
+
+export const getGeneratedToolsetId = (
+  toolset: PartialBy<ToolsetModel, 'id'>,
+): string => {
+  if (toolset.folderId) {
+    return constructPath(toolset.folderId, getToolsetApiKey(toolset));
+  }
+
+  return constructPath(
+    getToolsetRootId(
+      toolset.id ? getEntityBucket({ id: toolset.id }) : undefined,
+    ),
+    getToolsetApiKey(toolset),
+  );
+};
+
+export const regenerateToolsetId = (
+  toolset: PartialBy<ToolsetModel, 'id'>,
+): ToolsetModel => {
+  const newId = getGeneratedToolsetId(toolset);
+  if (!toolset.id || newId !== toolset.id) {
+    return {
+      ...toolset,
+      id: newId,
+    };
+  }
+
+  return toolset as ToolsetModel;
+};
