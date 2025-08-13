@@ -30,6 +30,7 @@ enum OverlayCases {
   enabledAppSharingOverlay = '/cases/overlay/enabled-app-sharing-sandbox',
   editLastAssistantMessage = '/cases/overlay/edit-last-assistant-message',
   disabledDefaultButtons = '/cases/overlay/disabled-default-buttons',
+  featuresData = '/cases/overlay/features-data',
 }
 
 export default async function Index() {

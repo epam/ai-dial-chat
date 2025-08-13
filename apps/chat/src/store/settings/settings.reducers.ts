@@ -15,6 +15,7 @@ const initialState: SettingsState = {
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
+  enabledFeaturesData: {},
   publicationFilters: [],
   codeWarning: '',
   announcement: '',
@@ -42,6 +43,12 @@ export const settingsSlice = createSlice({
       { payload }: PayloadAction<SettingsState['enabledFeatures']>,
     ) => {
       state.enabledFeatures = payload;
+    },
+    setEnabledFeaturesData: (
+      state,
+      { payload }: PayloadAction<SettingsState['enabledFeaturesData']>,
+    ) => {
+      state.enabledFeaturesData = payload;
     },
     setDefaultModeReference: (
       state,
