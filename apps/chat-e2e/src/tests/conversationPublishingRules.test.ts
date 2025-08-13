@@ -930,17 +930,17 @@ async function verifyPublishedConversationAvailability(
   },
 ) {
   const publishedConversationUrl = publication.resources![0].targetUrl;
-  await publicationApiAssertion.assertPublishedResourceAvailable(
+  await publicationApiAssertion.assertPublishedResourceAvailability(
     BackendResourceType.CONVERSATION,
     publishedConversationUrl,
     expectedResults.isPublishedForMainUser,
   );
-  await additionalShareUserPublicationApiAssertion.assertPublishedResourceAvailable(
+  await additionalShareUserPublicationApiAssertion.assertPublishedResourceAvailability(
     BackendResourceType.CONVERSATION,
     publishedConversationUrl,
     expectedResults.isPublishedForAdditionalUser,
   );
-  await additionalSecondShareUserPublicationApiAssertion.assertPublishedResourceAvailable(
+  await additionalSecondShareUserPublicationApiAssertion.assertPublishedResourceAvailability(
     BackendResourceType.CONVERSATION,
     publishedConversationUrl,
     expectedResults.isPublishedForSecondAdditionalUser,

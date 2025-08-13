@@ -11,7 +11,7 @@ export class PublicationApiAssertion extends BaseAssertion {
     this.publicationApiHelper = publicationApiHelper;
   }
 
-  public async assertPublishedResourceAvailable(
+  public async assertPublishedResourceAvailability(
     resourceType: BackendResourceType,
     resourceUrl: string,
     expectedResult: boolean,
