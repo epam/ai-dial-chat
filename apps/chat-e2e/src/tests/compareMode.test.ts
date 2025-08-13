@@ -1440,10 +1440,9 @@ dialTest(
     conversationToCompareAssertion,
     chat,
     localStorageManager,
-    setIssueIds,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-557');
-    setIssueIds('3436');
     let firstFolderConversation: FolderConversation;
     let secondFolderConversation: FolderConversation;
     const conversationName = GeneratorUtil.randomString(7);
@@ -1498,9 +1497,13 @@ dialTest(
     await dialTest.step(
       'Select folder conversation for comparison, send new request and verify response generated for both chats',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await compareConversation.selectCompareConversation(
           secondFolderConversation.conversations[0].name,
         );
+        await compare.waitForComparedConversationsLoaded();
         const requestsData = await chat.sendRequestInCompareMode(
           'repeat the same response',
           {
@@ -1508,18 +1511,16 @@ dialTest(
             leftEntity: secondFolderConversation.conversations[0].model.id,
           },
         );
-        expect
-          .soft(
-            requestsData.rightRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(firstFolderConversation.conversations[0].model.id);
-        expect
-          .soft(
-            requestsData.leftRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(secondFolderConversation.conversations[0].model.id);
+        baseAssertion.assertValue(
+          requestsData.rightRequest.model.id,
+          firstFolderConversation.conversations[0].model.id,
+          ExpectedMessages.requestModeIdIsValid,
+        );
+        baseAssertion.assertValue(
+          requestsData.leftRequest.model.id,
+          secondFolderConversation.conversations[0].model.id,
+          ExpectedMessages.requestModeIdIsValid,
+        );
       },
     );
   },

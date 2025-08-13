@@ -6,6 +6,7 @@ import {
   EditPromptFormFields,
   ExpectedConstants,
   ExpectedMessages,
+  ExpectedPromptModalConst,
   MenuOptions,
 } from '@/src/testData';
 import { Cursors, StyleValues, ThemeColorAttributes } from '@/src/ui/domData';
@@ -85,8 +86,10 @@ dialTest(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
         await promptBar.createNewEntity();
-        //TODO: enable next line when fixed https://github.com/epam/ai-dial-chat/issues/3650
-        // await baseAssertion.assertElementText(promptModalDialog.title, ExpectedPromptPreviewConst.createPromptModalTitle)
+        await baseAssertion.assertElementText(
+          promptModalDialog.title,
+          ExpectedPromptModalConst.createPromptModalTitle,
+        );
         await baseAssertion.assertElementState(
           promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
           'visible',

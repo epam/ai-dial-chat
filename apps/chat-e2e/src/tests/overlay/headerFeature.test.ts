@@ -364,27 +364,19 @@ dialOverlayTest(
       await overlayProfilePanel
         .getFooter()
         .openFooterLink(ExpectedConstants.requestApiKeyLink);
-      //TODO: remove when fixed https://github.com/epam/ai-dial-chat/issues/2878
-      const overlayRequestApiKeyModalFirst =
-        overlayRequestApiKeyModal.getNthElement(0);
       await overlayBaseAssertion.assertElementState(
-        overlayRequestApiKeyModalFirst,
+        overlayRequestApiKeyModal,
         'visible',
       );
-      for (let i = 1; i <= 2; i++) {
-        await page.keyboard.press(keys.escape);
-      }
+      await page.keyboard.press(keys.escape);
     });
 
     await dialTest.step('Verify a new issue can be reported', async () => {
       await overlayProfilePanel
         .getFooter()
         .openFooterLink(ExpectedConstants.reportAnIssueLink);
-      //TODO: remove when fixed https://github.com/epam/ai-dial-chat/issues/2878
-      const overlayRequestApiKeyModalFirst =
-        overlayReportAnIssueModal.getNthElement(0);
       await overlayBaseAssertion.assertElementState(
-        overlayRequestApiKeyModalFirst,
+        overlayReportAnIssueModal,
         'visible',
       );
     });
