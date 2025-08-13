@@ -1173,6 +1173,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         overlayConversationId,
         signInInSameWindow,
         messageButtons,
+        enabledFeaturesData,
       } = options;
 
       const availableThemes = UISelectors.selectAvailableThemes(state$.value);
@@ -1252,6 +1253,12 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             `[Overlay](Enabled Features) No such features: ${incorrectFeatures}. \nFeatures aren't set.`,
           );
         }
+      }
+
+      if (enabledFeaturesData && isOptionChanged('enabledFeaturesData')) {
+        actions.push(
+          of(SettingsActions.setEnabledFeaturesData(enabledFeaturesData)),
+        );
       }
 
       const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);
@@ -1662,7 +1669,6 @@ const sendPMResponseEpic: AppEpic = (action$) =>
   );
 
 export const OverlayEpics = combineEpics(
-  postMessageMapperEpic,
   getMessagesEpic,
   getConversationsEpic,
   getSelectedConversationsEpic,
@@ -1706,4 +1712,5 @@ export const OverlayEpics = combineEpics(
   sendDeleteMessageEvent,
   sendPrevPlaybackMessageEvent,
   sendNextPlaybackMessageEvent,
+  postMessageMapperEpic,
 );

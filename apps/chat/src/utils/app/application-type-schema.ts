@@ -14,6 +14,8 @@ export const convertApplicationTypeSchemaFromApi = (
     editorUrl: schema[ApplicationTypeSchemaProperties.applicationTypeEditorUrl],
     viewerUrl: schema[ApplicationTypeSchemaProperties.applicationTypeViewerUrl],
     iconUrl: schema[ApplicationTypeSchemaProperties.applicationTypeIconUrl],
+    applicationTypePlaybackSupport:
+      schema[ApplicationTypeSchemaProperties.applicationTypePlaybackSupport],
   };
 };
 

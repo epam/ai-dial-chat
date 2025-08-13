@@ -74,3 +74,9 @@ export enum Feature {
   Marketplace = 'marketplace', // Enable Marketplace
   MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
 }
+
+export interface FeatureData {
+  // Field for adding some description for feature
+  // Can be used in tooltips or other places
+  description?: string;
+}

@@ -1,6 +1,7 @@
 import config from '../../../config/chat.playwright.config';
 import {
   ChatSelectors,
+  ErrorLabelSelectors,
   MessageInputSelectors,
   SideBarSelectors,
   TableSelectors,
@@ -185,6 +186,12 @@ export class ChatMessages extends BaseElement {
   public getCollapsedChatMessageAttachment(message: string | number) {
     return this.getChatMessage(message).locator(
       ChatSelectors.attachmentCollapsed,
+    );
+  }
+
+  public getChatMessageError(message: string | number) {
+    return this.getChatMessage(message).locator(
+      ErrorLabelSelectors.errorContainer,
     );
   }
 

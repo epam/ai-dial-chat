@@ -15,6 +15,19 @@ const selectThemeState = (state: RootState) => rootSelector(state).theme;
 const selectAvailableThemes = (state: RootState) =>
   rootSelector(state).availableThemes;
 
+const selectCodeEditorTheme = createSelector(
+  [selectThemeState, selectAvailableThemes],
+  (theme, availableThemes) => {
+    const selectedTheme = theme
+      ? availableThemes.find(({ id }) => id === theme)
+      : undefined;
+    return (
+      selectedTheme?.['code-editor-theme'] ??
+      (theme === 'dark' ? 'vs-dark' : 'vs')
+    );
+  },
+);
+
 const selectShowChatbar = (state: RootState) => rootSelector(state).showChatbar;
 
 const selectShowPromptbar = (state: RootState) =>
@@ -106,4 +119,5 @@ export const UISelectors = {
   selectInitialized,
   selectScrollToEntityId,
   selectIsNavigationVisible,
+  selectCodeEditorTheme,
 };

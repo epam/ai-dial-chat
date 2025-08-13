@@ -1,6 +1,7 @@
 import { ToastOptions, toast } from 'react-hot-toast';
 
 import {
+  EMPTY,
   Observable,
   concat,
   filter,
@@ -39,15 +40,9 @@ const initEpic: AppEpic = (action$, state$) =>
     filter(() => !UISelectors.selectInitialized(state$.value)),
     switchMap(() => {
       const state = state$.value;
-
-      const isThemesDefined = SettingsSelectors.selectThemeHostDefined(state);
       const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
 
       return forkJoin({
-        theme: DataService.getTheme(),
-        availableThemes: isThemesDefined
-          ? DataService.getAvailableThemes()
-          : of([]),
         showChatbar: DataService.getShowChatbar(
           enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
             !isTabletScreenOrMobile(),
@@ -56,7 +51,9 @@ const initEpic: AppEpic = (action$, state$) =>
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
             !isTabletScreenOrMobile(),
         ),
-        showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(),
+        showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(
+          enabledFeatures.has(Feature.Marketplace) && !isTabletScreenOrMobile(),
+        ),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
@@ -69,8 +66,6 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
     switchMap(
       ({
-        theme,
-        availableThemes,
         showChatbar,
         showPromptbar,
         showMarketplaceFilterbar,
@@ -83,22 +78,12 @@ const initEpic: AppEpic = (action$, state$) =>
         promptCollapsedSections,
         fileCollapsedSections,
       }) => {
-        const actions = [];
-
-        if (
-          theme &&
-          availableThemes.some((availableTheme) => availableTheme.id === theme)
-        ) {
-          actions.push(UIActions.setTheme(theme));
-        } else if (typeof availableThemes[0] !== 'undefined') {
-          actions.push(UIActions.setTheme(availableThemes[0]?.id));
-        }
+        const actions: AppAction[] = [UIActions.initTheme()];
 
         if (customLogo) {
           actions.push(UIActions.setCustomLogo({ logo: customLogo }));
         }
 
-        actions.push(UIActions.setAvailableThemes(availableThemes));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
         actions.push(
@@ -135,6 +120,49 @@ const initEpic: AppEpic = (action$, state$) =>
         return concat(actions);
       },
     ),
+  );
+
+const initThemeEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(UIActions.initTheme.type),
+    switchMap(() => {
+      const state = state$.value;
+
+      const theme = UISelectors.selectThemeState(state);
+
+      if (theme) {
+        return EMPTY;
+      }
+
+      const isThemesDefined = SettingsSelectors.selectThemeHostDefined(state);
+
+      return forkJoin({
+        theme: DataService.getTheme(),
+        availableThemes: isThemesDefined
+          ? DataService.getAvailableThemes()
+          : of([]),
+      }).pipe(
+        switchMap(({ theme, availableThemes }) => {
+          const actions: Observable<AppAction>[] = [];
+
+          if (
+            theme &&
+            availableThemes.some(
+              (availableTheme) => availableTheme.id === theme,
+            )
+          ) {
+            actions.push(of(UIActions.setTheme(theme)));
+          } else if (typeof availableThemes[0] !== 'undefined') {
+            actions.push(of(UIActions.setTheme(availableThemes[0]?.id)));
+          }
+
+          return concat(
+            ...actions,
+            of(UIActions.setAvailableThemes(availableThemes)),
+          );
+        }),
+      );
+    }),
   );
 
 const saveThemeEpic: AppEpic = (action$) =>
@@ -374,6 +402,7 @@ const setCollapsedSectionsEpic: AppEpic = (action$) =>
 
 export const UIEpics = combineEpics(
   initEpic,
+  initThemeEpic,
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,

@@ -1,5 +1,7 @@
 import classNames from 'classnames';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
@@ -35,40 +37,46 @@ export const ChatInputControls = ({
     ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
 
+  const isPublic =
+    selectedConversations.length > 0 &&
+    isEntityIdPublic(selectedConversations[0]);
+
   if (isConversationWithSchema && selectedConversations.length > 1) {
     return <SchemaCompareWarning />;
   }
 
   if (showReplayControls && !isNotEmptyConversations) {
     return (
-      <div
-        className={classNames({
-          'mt-10': isWideLayout,
-        })}
-      >
+      <div className={classNames({ 'mt-10': isWideLayout })}>
         <StartReplayButton />
       </div>
     );
   }
 
-  if (isReadOnly) {
-    return (
-      <ChatExternalControls
-        conversations={selectedConversations}
-        showScrollDownButton={showScrollDownButton}
-        onScrollDownClick={onScrollDown}
-      />
-    );
+  const shouldShowExternalControls = isPublic || isReadOnly;
+  const shouldShowModelsControl =
+    !isChatReadyForInput && (!isReadOnly || (isPublic && !isReadOnly));
+
+  if (!shouldShowExternalControls && !shouldShowModelsControl) {
+    return null;
   }
 
-  if (!isChatReadyForInput) {
-    return (
-      <AddModelsControl
-        showScrollDownButton={showScrollDownButton}
-        onScrollDown={onScrollDown}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <>
+      {shouldShowExternalControls && (
+        <ChatExternalControls
+          conversations={selectedConversations}
+          showScrollDownButton={showScrollDownButton}
+          onScrollDownClick={onScrollDown}
+          {...(isPublic ? { isChatReadyForInput } : {})}
+        />
+      )}
+      {shouldShowModelsControl && (
+        <AddModelsControl
+          showScrollDownButton={showScrollDownButton}
+          onScrollDown={onScrollDown}
+        />
+      )}
+    </>
+  );
 };
