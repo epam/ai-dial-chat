@@ -1356,6 +1356,7 @@ const dialTest = test.extend<{
       publishRequestBuilder,
       adminApplicationApiHelper,
       adminPublicationApiHelper,
+      fileApiHelper,
     },
     use,
   ) => {
@@ -1365,6 +1366,7 @@ const dialTest = test.extend<{
         adminApplicationApiHelper,
         publishRequestBuilder,
         adminPublicationApiHelper,
+        fileApiHelper,
       );
     await use(adminCustomApplicationPublishingUtil);
   },

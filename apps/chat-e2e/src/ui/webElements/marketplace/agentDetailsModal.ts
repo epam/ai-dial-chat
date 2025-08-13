@@ -45,6 +45,9 @@ export class AgentDetailsModal extends BaseElement {
   public publishButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.publishButton,
   );
+  public unpublishButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.unpublishButton,
+  );
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
   );
@@ -137,13 +140,36 @@ export class AgentDetailsModal extends BaseElement {
       expectedHttpStatus?: number;
     } = { expectedHttpStatus: 200 },
   ) {
+    await this.openPublishRequestModal(
+      () => this.publishButton.click(),
+      options,
+    );
+  }
+
+  public async clickUnpublishButton(
+    options: {
+      expectedHttpStatus?: number;
+    } = { expectedHttpStatus: 200 },
+  ) {
+    await this.openPublishRequestModal(
+      () => this.unpublishButton.click(),
+      options,
+    );
+  }
+
+  private async openPublishRequestModal(
+    method: () => Promise<void>,
+    options: {
+      expectedHttpStatus?: number;
+    },
+  ) {
     const respPromise = this.page.waitForResponse(
       (resp) =>
         resp.request().method() === 'GET' &&
         resp.url().includes(API.applicationCreateHost) &&
         resp.status() === options.expectedHttpStatus,
     );
-    await this.publishButton.click();
+    await method();
     await respPromise;
   }
 }
