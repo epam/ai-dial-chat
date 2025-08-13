@@ -329,7 +329,7 @@ dialTest(
 );
 
 dialTest(
-  'Edit prompt. Cancel',
+  'Edit prompt. Cancel.\n' + 'Edit prompt. Click on X and Save',
   async ({
     dialHomePage,
     promptData,
@@ -337,36 +337,75 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     promptModalDialog,
+    promptModalAssertion,
     setTestIds,
     localStorageManager,
     confirmationDialog,
+    promptAssertion,
+    confirmationDialogAssertion,
+    promptPreviewModalAssertion,
   }) => {
-    setTestIds('EPMRTC-953');
+    setTestIds('EPMRTC-953', 'EPMRTC-1272');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await prompts.openEntityDropdownMenu(prompt.name);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
+    await dialTest.step(
+      'Update prompt details, click on Close button and verify changes are not saves',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
 
-    await promptModalDialog.closeButton.click();
-    await confirmationDialog.cancelButton.click();
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
+        await promptModalDialog.closeButton.click();
+        await confirmationDialog.cancelButton.click();
+        await promptModalAssertion.assertElementState(
+          promptModalDialog,
+          'hidden',
+        );
+        await promptAssertion.assertEntityState(
+          { name: prompt.name },
+          'visible',
+        );
+      },
+    );
 
-    await expect
-      .soft(
-        prompts.getEntityByName(prompt.name),
-        ExpectedMessages.promptNotUpdated,
-      )
-      .toBeVisible();
+    await dialTest.step(
+      'Update prompt details, click on X button and verify confirmation popup is displayed',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
+        await promptModalDialog.closeButton.click();
+        await confirmationDialogAssertion.assertElementState(
+          confirmationDialog,
+          'visible',
+        );
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.promptEditConfirmationDialogTitle,
+        );
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.promptEditConfirmationDialogMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Save button and verify changes are applied',
+      async () => {
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await promptModalAssertion.assertElementState(
+          promptModalDialog,
+          'hidden',
+        );
+        await promptPreviewModalAssertion.assertPromptName(newName);
+        await promptPreviewModalAssertion.assertPromptDescription(newDescr);
+        await promptPreviewModalAssertion.assertPromptContent(newValue);
+        await promptAssertion.assertEntityState({ name: newName }, 'visible');
+      },
+    );
   },
 );
 
