@@ -168,7 +168,8 @@
     "playwright-chromium": "^1.54.0"
   },
   "overrides": {
-    "koa": "3.0.1"
+    "koa": "3.0.1",
+    "esbuild": "0.25.8"
   },
   "engines": {
     "node": ">=22.2.0",
