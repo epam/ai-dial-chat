@@ -106,7 +106,7 @@ export const AppsEditorHeader = ({
     ApplicationSelectors.selectShouldSaveApplication,
   );
 
-  const agent = modelsMap[id as string];
+  const agent = id ? modelsMap[id.toString()] : undefined;
   const activeTab =
     pathname === Routes.AppsEditorGeneralInfo
       ? TabKeys.GENERAL

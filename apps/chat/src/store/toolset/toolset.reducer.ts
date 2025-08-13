@@ -7,6 +7,8 @@ import { ToolsetState } from '@/src/store/toolset/toolset.types';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 
+type ToolsetsMap = Record<string, ToolsetModel>;
+
 const initialState: ToolsetState = {
   initialized: false,
   toolsetsMap: {},
@@ -28,19 +30,16 @@ export const toolsetSlice = createSlice({
       state.toolsetsStatus = UploadStatus.LOADING;
     },
     getToolsetsSuccess: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
-      state.toolsetsMap = payload.reduce<Record<string, ToolsetModel>>(
-        (acc, toolset) => {
-          acc[toolset.id] = toolset;
-          return acc;
-        },
-        {},
-      );
+      state.toolsetsMap = payload.reduce<ToolsetsMap>((acc, toolset) => {
+        acc[toolset.id] = toolset;
+        return acc;
+      }, {});
       state.toolsetsStatus = UploadStatus.LOADED;
     },
     setToolsets: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
       state.toolsetsMap = {
         ...state.toolsetsMap,
-        ...payload.reduce<Record<string, ToolsetModel>>((acc, toolset) => {
+        ...payload.reduce<ToolsetsMap>((acc, toolset) => {
           acc[toolset.id] = toolset;
           return acc;
         }, {}),

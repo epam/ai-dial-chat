@@ -1,33 +1,39 @@
-import { notAllowedSymbols } from '@/src/utils/app/file';
+import { doesHaveNotAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import { DEFAULT_TOOLSET_NAME } from '@/src/constants/default-ui-settings';
+import {
+  formErrors,
+  urlErrors,
+  versionsErrors,
+} from '@/src/constants/form-errors';
 
 import { ToolsetTransportType } from '@epam/ai-dial-shared';
-import { z } from 'zod';
+import { z as zodValidation } from 'zod';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
-export const ToolsetEditorFormSchema = z.object({
-  name: z
+export const ToolsetEditorFormSchema = zodValidation.object({
+  name: zodValidation
     .string()
-    .nonempty('This field is required')
-    .regex(new RegExp(`^[^${notAllowedSymbols}]+$`), {
-      error: 'Name should not contain special characters',
-    })
-    .min(2, 'Name should be at least 2 characters long')
-    .max(160, 'Name should not be longer than 160 characters'),
-  endpoint: z
+    .nonempty(formErrors.required)
+    .min(2, formErrors.tooShort('Name', 2))
+    .max(160, formErrors.tooLong('Name', 160))
+    .refine(
+      (str) => !doesHaveNotAllowedSymbols(str),
+      formErrors.hasSpecialCharacters(),
+    ),
+  endpoint: zodValidation
     .string()
-    .nonempty('Endpoint is required')
+    .nonempty(formErrors.required)
     .regex(/^(https?|sse):\/\//, {
-      error: 'Endpoint must start with a valid protocol',
+      error: urlErrors.notValidProtocol,
     })
     .refine(
       (str) => !str.endsWith('.') && !str.endsWith('//'),
-      'Endpoint cannot end with . or //',
+      urlErrors.notValidEnding,
     )
     .refine((str) => {
       try {
@@ -36,26 +42,27 @@ export const ToolsetEditorFormSchema = z.object({
       } catch {
         return false;
       }
-    }, 'Endpoint should be a valid URL')
-    .or(z.literal(ENDPOINT_PLACEHOLDER)),
-  protocol: z.enum(ToolsetTransportType),
-  version: z
+    }, urlErrors.notValidUrl)
+    .or(zodValidation.literal(ENDPOINT_PLACEHOLDER)),
+  protocol: zodValidation.enum(ToolsetTransportType),
+  version: zodValidation
     .string()
+    .nonempty(versionsErrors.required)
     .regex(/^\d+\.\d+\.\d+$/, {
-      message:
-        'Version should be in x.y.z format and contain only numbers and dots.',
+      message: versionsErrors.notValid,
     })
     .refine((v) => v.split('.').every((part) => part.length <= 5), {
-      message:
-        'Each part of the version should contain no more than five numbers.',
+      message: versionsErrors.tooLongPart,
     }),
-  description: z.string(),
-  allowedTools: z.array(z.string()),
-  iconUrl: z.string(),
-  topics: z.array(z.string()),
+  description: zodValidation.string(),
+  allowedTools: zodValidation.array(zodValidation.string()),
+  iconUrl: zodValidation.string(),
+  topics: zodValidation.array(zodValidation.string()),
 });
 
-export type ToolsetEditorForm = z.infer<typeof ToolsetEditorFormSchema>;
+export type ToolsetEditorForm = zodValidation.infer<
+  typeof ToolsetEditorFormSchema
+>;
 
 export const getDefaultFormData = (
   toolset?: ToolsetModel,
