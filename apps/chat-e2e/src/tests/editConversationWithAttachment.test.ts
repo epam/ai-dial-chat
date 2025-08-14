@@ -147,8 +147,18 @@ dialTest(
             file,
             FileModalSection.AllFiles,
           );
+          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+            { name: file },
+            CheckboxState.checked,
+          );
         }
         await attachFilesModal.attachFiles();
+        for (const file of initAttachedFiles) {
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            file,
+            'visible',
+          );
+        }
       },
     );
 
@@ -184,9 +194,17 @@ dialTest(
           initAttachedFiles[1],
           FileModalSection.AllFiles,
         );
+        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+          { name: initAttachedFiles[1] },
+          CheckboxState.unchecked,
+        );
         await attachFilesModal.checkAttachedFile(
           updatedAttachedFiles[1],
           FileModalSection.AllFiles,
+        );
+        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+          { name: updatedAttachedFiles[1] },
+          CheckboxState.checked,
         );
         await attachFilesModal.attachFiles();
 
