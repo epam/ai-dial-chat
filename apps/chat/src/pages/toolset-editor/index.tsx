@@ -2,13 +2,15 @@ import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { useToolsetEditorValidation } from '@/src/hooks/useToolsetEditorValidation';
+
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { ToolsetActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { getLayout } from '@/src/pages/_app';
 
@@ -19,17 +21,19 @@ import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 function ToolsetEditorPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
+  useToolsetEditorValidation();
 
   const toolsetDetailsStatus = useAppSelector(
     ToolsetSelectors.selectToolsetDetailsStatus,
   );
-  const toolsetsStatus = useAppSelector(ToolsetSelectors.selectToolsetsStatus);
+  const areToolsetsLoaded = useAppSelector(
+    ToolsetSelectors.selectAreToolsetsLoaded,
+  );
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const isToolsetsEnabled = useAppSelector((state) =>
+  const areToolsetsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Toolsets),
   );
-  const { toolsetId: toolsetIdQuery } = router.query;
+  const { [ToolsetEditorQuery.Id]: toolsetIdQuery } = router.query;
   const toolsetId = toolsetIdQuery?.toString();
 
   const isLoading =
@@ -37,20 +41,13 @@ function ToolsetEditorPage() {
       !toolsetDetails &&
       (toolsetDetailsStatus === UploadStatus.LOADING ||
         toolsetDetailsStatus === UploadStatus.UNINITIALIZED)) ||
-    toolsetsStatus === UploadStatus.LOADING ||
-    toolsetsStatus === UploadStatus.UNINITIALIZED;
+    !areToolsetsLoaded;
 
   useEffect(() => {
-    if (!isToolsetsEnabled) {
-      router.push(Routes.Chat);
+    if (!areToolsetsEnabled) {
+      void router.push(Routes.Chat);
     }
-  }, [isToolsetsEnabled, router]);
-
-  useEffect(() => {
-    if (toolsetId) {
-      dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
-    }
-  }, [dispatch, toolsetId]);
+  }, [areToolsetsEnabled, router]);
 
   if (isLoading)
     return (

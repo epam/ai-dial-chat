@@ -25,6 +25,11 @@ const selectIsLoading = createSelector(
   (status) => status === UploadStatus.LOADING,
 );
 
+const selectAreToolsetsLoaded = createSelector(
+  [selectToolsetsStatus],
+  (status) => status === UploadStatus.LOADED,
+);
+
 const selectToolsetDetails = (state: RootState) =>
   rootSelector(state).toolsetDetails;
 
@@ -42,6 +47,7 @@ export const ToolsetSelectors = {
   selectToolsets,
   selectToolsetsStatus,
   selectIsLoading,
+  selectAreToolsetsLoaded,
   selectToolsetDetails,
   selectToolsetDetailsStatus,
   selectIsToolsetDetailsLoading,

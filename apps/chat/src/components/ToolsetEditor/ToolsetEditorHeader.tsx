@@ -1,4 +1,3 @@
-import { IconCircleCheck, IconCircleDot } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -7,29 +6,6 @@ import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
-
-const getTabIcon = (
-  tab: ToolsetEditorSteps,
-  activeTab: ToolsetEditorSteps,
-  isEditing?: boolean,
-  isDisabled?: boolean,
-) => {
-  return tab !== activeTab && isEditing ? (
-    <IconCircleCheck
-      className="text-accent-primary"
-      data-qa="selected-step-icon"
-      width={24}
-      height={24}
-    />
-  ) : (
-    <IconCircleDot
-      className={isDisabled ? 'text-secondary' : 'text-accent-primary'}
-      data-qa="not-selected-step-icon"
-      width={24}
-      height={24}
-    />
-  );
-};
 
 interface ToolsetEditorHeaderProps {
   currentToolset?: ToolsetModel;
@@ -54,23 +30,14 @@ export const ToolsetEditorHeader = ({
         label: ToolsetEditorSteps.General,
         key: ToolsetEditorSteps.General,
         disabled: false,
-        Icon: () =>
-          getTabIcon(ToolsetEditorSteps.General, currentStep, isEditing, false),
       },
       {
         label: ToolsetEditorSteps.Settings,
         key: ToolsetEditorSteps.Settings,
         disabled: !isEditing,
-        Icon: () =>
-          getTabIcon(
-            ToolsetEditorSteps.Settings,
-            currentStep,
-            isEditing,
-            !isEditing,
-          ),
       },
     ],
-    [currentStep, isEditing],
+    [isEditing],
   );
 
   const handleTabClick = useCallback(
@@ -85,8 +52,10 @@ export const ToolsetEditorHeader = ({
     <EditorHeader
       tabs={tabs}
       activeTab={currentStep}
+      isEditing={isEditing}
       onTabClick={handleTabClick}
       title={t(isEditing ? 'Edit toolset' : 'Add toolset')}
+      saveLabel={isEditing ? 'Save and exit' : 'Exit'}
       onSave={onSave}
     />
   );
