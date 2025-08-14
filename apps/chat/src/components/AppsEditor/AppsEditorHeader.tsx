@@ -1,11 +1,5 @@
-import {
-  IconCircleCheck,
-  IconCircleDot,
-  IconLogout,
-} from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
 
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
@@ -53,29 +47,6 @@ const tabKeysInfo = {
 
 const anyRouteExceptAppEditorRegex = /^(?!\/apps-editor(?:\/|$)).*/;
 
-const getTabIcon = (
-  tab: TabKeys,
-  activeTab: TabKeys,
-  isEditing?: boolean,
-  isDisabled?: boolean,
-) => {
-  return tab !== activeTab && isEditing ? (
-    <IconCircleCheck
-      className="text-accent-primary"
-      data-qa="selected-step-icon"
-      width={24}
-      height={24}
-    />
-  ) : (
-    <IconCircleDot
-      className={isDisabled ? 'text-secondary' : 'text-accent-primary'}
-      data-qa="not-selected-step-icon"
-      width={24}
-      height={24}
-    />
-  );
-};
-
 interface AppsEditorHeaderProps {
   applicationTypeDisplayName: string;
   isEditApplication?: boolean;
@@ -118,16 +89,14 @@ export const AppsEditorHeader = ({
         key: TabKeys.GENERAL,
         label: t(tabKeysInfo[TabKeys.GENERAL].label),
         disabled: false,
-        Icon: () => getTabIcon(TabKeys.GENERAL, activeTab, !!id, false),
       },
       {
         key: TabKeys.SETTINGS,
         label: t(tabKeysInfo[TabKeys.SETTINGS].label),
         disabled: !id,
-        Icon: () => getTabIcon(TabKeys.SETTINGS, activeTab, !!id, !id),
       },
     ],
-    [t, id, activeTab],
+    [t, id],
   );
 
   const title = `${t(isEditApplication && !add ? 'Edit' : 'Add')} ${applicationTypeDisplayName}`;
@@ -148,11 +117,25 @@ export const AppsEditorHeader = ({
   );
 
   const handleSaveAndRedirect = useCallback(() => {
-    if (!shouldSaveApplication) {
+    if (
+      !shouldSaveApplication &&
+      isEditApplication &&
+      !hasCustomEditor &&
+      !isEntityIdPublic({ id: agent?.id as string })
+    ) {
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(ApplicationActions.setExitAfterSave(true));
+    } else {
+      void push(myWorkspaceHref);
     }
-  }, [dispatch, shouldSaveApplication]);
+  }, [
+    agent?.id,
+    dispatch,
+    hasCustomEditor,
+    isEditApplication,
+    push,
+    shouldSaveApplication,
+  ]);
 
   const handleCustomViewerExit = useCallback(() => {
     if (hasCustomEditor) {
@@ -199,38 +182,25 @@ export const AppsEditorHeader = ({
     [applicationTypeDisplayName],
   );
 
+  const saveLabel =
+    isEditApplication &&
+    !hasCustomEditor &&
+    !isEntityIdPublic({ id: agent?.id as string })
+      ? 'Save and exit'
+      : 'Exit';
+
   useBeforeRedirect(handleCustomViewerExit, anyRouteExceptAppEditorRegex);
 
   return (
     <EditorHeader
       tabs={tabs}
       activeTab={activeTab}
+      isEditing={isEditApplication}
       onTabClick={handleTabClick}
       getMobileTabLabel={getMobileLabelText}
       title={title}
-      renderSaveButton={() =>
-        isEditApplication &&
-        !hasCustomEditor &&
-        !isEntityIdPublic({ id: agent?.id as string }) ? (
-          <button
-            className="button flex items-center space-x-1 text-accent-primary max-xl:p-0 md:flex"
-            onClick={handleSaveAndRedirect}
-            data-qa="save-and-exit"
-          >
-            <IconLogout size={14} />
-            <span>{t('Save and exit')}</span>
-          </button>
-        ) : (
-          <Link
-            className="flex items-center space-x-1 px-3 text-accent-primary"
-            data-qa="exit-link"
-            href={myWorkspaceHref}
-          >
-            <IconLogout size={14} />
-            <span>{t('Exit')}</span>
-          </Link>
-        )
-      }
+      saveLabel={saveLabel}
+      onSave={handleSaveAndRedirect}
     />
   );
 };
