@@ -76,9 +76,11 @@ export class AppEditorViewForm extends AppEditorForm {
       await this.chatCompletionUrl.fillInInput(ExampleURLs.chatCompletionURL);
     }
     if (options?.attachmentTypes && options.attachmentTypes.length > 0) {
-      for (const type of options.attachmentTypes) {
+      for (let i = 0; i < options.attachmentTypes.length; i++) {
+        const type = options.attachmentTypes[i];
         await this.attachmentTypesInput.fillInInput(type);
         await this.page.keyboard.press(keys.enter);
+        await this.selectedAttachmentTypePills.getNthElement(i + 1).waitFor();
       }
     }
     if (options?.maxAttachments !== undefined) {
