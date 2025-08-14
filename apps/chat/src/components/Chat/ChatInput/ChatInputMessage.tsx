@@ -154,6 +154,9 @@ export const ChatInputMessage = Inversify.register(
     const isDisabledInputFeature = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
     );
+    const disabledInputFeatureData = useAppSelector((state) =>
+      SettingsSelectors.selectFeatureData(state, Feature.DisabledSend),
+    );
 
     const shouldRegenerate =
       isLastMessageError ||
@@ -171,10 +174,15 @@ export const ChatInputMessage = Inversify.register(
       if (!canAttachLinks) {
         setSelectedDialLinks([]);
       }
-      if (!canAttachFiles) {
-        dispatch(FilesActions.resetSelectedFiles());
+      if (!canAttachFiles || !canAttachFolders) {
+        dispatch(
+          FilesActions.resetSelectedFiles({
+            keepFiles: canAttachFiles,
+            keepFolders: canAttachFolders,
+          }),
+        );
       }
-    }, [canAttachFiles, canAttachLinks, dispatch]);
+    }, [canAttachFiles, canAttachFolders, canAttachLinks, dispatch]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
@@ -464,6 +472,9 @@ export const ChatInputMessage = Inversify.register(
     }, []);
 
     const tooltipContent = (): string => {
+      if (isDisabledInputFeature && disabledInputFeatureData?.description) {
+        return disabledInputFeatureData.description;
+      }
       if (messageIsStreaming) {
         return t('Stop generating');
       }

@@ -1,6 +1,6 @@
 import { type OverlayEvents } from '../../constants';
 import { DialLibRequest, Styles } from '../common';
-import { Feature } from '../features';
+import { Feature, FeatureData } from '../features';
 
 export type OverlayRequest = DialLibRequest;
 
@@ -14,6 +14,7 @@ export interface ChatOverlayOptions {
   newConversationsFolderId?: string;
 
   enabledFeatures?: Feature[] | string;
+  enabledFeaturesData?: Partial<Record<Feature | string, FeatureData>>;
 
   requestTimeout?: number;
 

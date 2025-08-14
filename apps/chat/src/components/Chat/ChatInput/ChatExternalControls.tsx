@@ -10,7 +10,11 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
@@ -20,12 +24,14 @@ interface Props {
   conversations: ConversationInfo[];
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
+  isChatReadyForInput?: boolean;
 }
 
 export function ChatExternalControls({
   conversations,
   showScrollDownButton,
   onScrollDownClick,
+  isChatReadyForInput,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -39,6 +45,9 @@ export function ChatExternalControls({
   );
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
+  );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
 
   const conversationsToDuplicate = conversations.filter(
@@ -76,9 +85,11 @@ export function ChatExternalControls({
           <span className="text-secondary">
             <IconCopy width={18} height={18} />
           </span>
-          {t(
-            `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
-          )}
+          {isChatReadyForInput && !isReadOnly
+            ? t('Duplicate')
+            : t(
+                `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
+              )}
         </button>
         {showScrollDownButton && (
           <ScrollDownButton

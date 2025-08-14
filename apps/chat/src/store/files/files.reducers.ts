@@ -97,8 +97,24 @@ export const filesSlice = createSlice({
     selectFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
       state.selectedFilesIds = uniq(state.selectedFilesIds.concat(payload.ids));
     },
-    resetSelectedFiles: (state) => {
-      state.selectedFilesIds = [];
+    resetSelectedFiles: (
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        undefined | { keepFiles?: boolean; keepFolders?: boolean }
+      >,
+    ) => {
+      state.selectedFilesIds = state.selectedFilesIds.filter((id) => {
+        if (
+          (payload?.keepFolders && isFolderId(id)) ||
+          (payload?.keepFiles && !isFolderId(id))
+        ) {
+          return true;
+        }
+
+        return false;
+      });
     },
     unselectFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
       state.selectedFilesIds = state.selectedFilesIds.filter(

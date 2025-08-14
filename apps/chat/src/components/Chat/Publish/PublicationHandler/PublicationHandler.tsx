@@ -176,6 +176,22 @@ export function PublicationHandler({ publication }: Props) {
     [publication.resources],
   );
 
+  const initialState = useMemo(() => {
+    const { entities, folders } = getDefaultAllEditEntities(
+      publication.resources,
+    );
+    const initialRules = publication.rules ?? [];
+    const initialDisplayAuthor = publication.displayAuthor ?? '';
+
+    return {
+      entities,
+      folders,
+      rules: initialRules,
+      displayAuthor: initialDisplayAuthor,
+      publishToUrl: publication.targetFolder,
+    };
+  }, [publication]);
+
   const handleUpdateRequest = useCallback(() => {
     dispatch(
       PublicationActions.updatePublicationRequest({
@@ -274,22 +290,6 @@ export function PublicationHandler({ publication }: Props) {
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
 
-  const initialState = useMemo(() => {
-    const { entities, folders } = getDefaultAllEditEntities(
-      publication.resources,
-    );
-    const initialRules = publication.rules ?? [];
-    const initialDisplayAuthor = publication.displayAuthor ?? '';
-
-    return {
-      entities,
-      folders,
-      rules: initialRules,
-      displayAuthor: initialDisplayAuthor,
-      publishToUrl: publication.targetFolder,
-    };
-  }, [publication]);
-
   useEffect(() => {
     const handler = setTimeout(() => {
       const entitiesChanged = !isEqual(
@@ -326,9 +326,8 @@ export function PublicationHandler({ publication }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    const initialRules = filteredRuleEntries ?? [];
-    return !isEqual(initialRules, rulesOnEdit);
-  }, [filteredRuleEntries, rulesOnEdit]);
+    return !isEqual(rules[publication.targetFolder] ?? [], newRules ?? []);
+  }, [newRules, publication.targetFolder, rules]);
 
   const maxPublishToDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
