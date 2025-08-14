@@ -1392,6 +1392,13 @@ dialTest(
       await appEditorViewForm.fillInAppFields({
         attachmentTypes: [attachmentTypeToSet],
       });
+      const actualAttachmentTypes =
+        await appEditorViewForm.getSelectedAttachmentTypes(true);
+      baseAssertion.assertArrayIncludesAll(
+        actualAttachmentTypes,
+        [attachmentTypeToSet],
+        ExpectedMessages.fieldValueIsValid,
+      );
     });
 
     await dialTest.step(

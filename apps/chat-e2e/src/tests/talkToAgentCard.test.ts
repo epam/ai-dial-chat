@@ -178,7 +178,7 @@ dialTest(
         );
         await marketplaceAgentsAssertion.assertElementText(
           actualVersionElement,
-          SortingUtil.sortVersionsArray([appFirstVersion, appSecondVersion])[0],
+          appSecondVersion,
         );
       },
     );
