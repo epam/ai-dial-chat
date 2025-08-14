@@ -1706,6 +1706,10 @@ dialTest(
           Attributes.value,
           firstConversation.name,
         );
+        await renameConversationModalAssertion.assertElementActionabilityState(
+          renameConversationModal.saveButton,
+          'disabled',
+        );
         await renameConversationModalAssertion.assertElementTextIsSelected(
           renameConversationModal.nameInput,
         );
