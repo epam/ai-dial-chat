@@ -7,6 +7,8 @@ import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
+export const keyEnteringDelay = 20;
+
 export class AppEditorViewForm extends AppEditorForm {
   constructor(page: Page, parentLocator: Locator) {
     super(
@@ -78,7 +80,9 @@ export class AppEditorViewForm extends AppEditorForm {
     if (options?.attachmentTypes && options.attachmentTypes.length > 0) {
       for (let i = 0; i < options.attachmentTypes.length; i++) {
         const type = options.attachmentTypes[i];
-        await this.attachmentTypesInput.typeInInput(type, { delay: 20 });
+        await this.attachmentTypesInput.typeInInput(type, {
+          delay: keyEnteringDelay,
+        });
         await this.page.keyboard.press(keys.enter);
         await this.selectedAttachmentTypePills.getNthElement(i + 1).waitFor();
       }
