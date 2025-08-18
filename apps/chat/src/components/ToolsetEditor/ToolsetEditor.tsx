@@ -42,74 +42,78 @@ export const ToolsetEditor = () => {
     resolver: zodResolver(ToolsetEditorFormSchema),
   });
 
+  const isDirty = formMethods.formState.isDirty;
+
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
-      if (!formMethods.formState.isDirty) return;
+      const payloadToolset = {
+        folderId: '',
+        ...(toolsetDetails && toolsetDetails),
+        name: data.name,
+        endpoint: data.endpoint,
+        iconUrl: data.iconUrl,
+        transport: data.protocol,
+        description: data.description,
+        topics: data.topics,
+        allowedTools: data.allowedTools,
+        version: data.version,
+      };
 
       if (toolsetDetails) {
         dispatch(
           ToolsetActions.updateToolset({
             oldToolset: toolsetDetails,
-            newToolset: {
-              ...toolsetDetails,
-              name: data.name,
-              endpoint: data.endpoint,
-              iconUrl: data.iconUrl,
-              transport: data.protocol,
-              description: data.description,
-              topics: data.topics,
-              allowedTools: data.allowedTools,
-              version: data.version,
-            },
+            newToolset: payloadToolset,
           }),
         );
       } else {
         dispatch(
           ToolsetActions.createToolset({
-            data: {
-              name: data.name,
-              folderId: '',
-              endpoint: data.endpoint,
-              iconUrl: data.iconUrl,
-              transport: data.protocol,
-              allowedTools: data.allowedTools,
-              topics: data.topics,
-              version: data.version,
-              description: data.description,
-            },
+            data: payloadToolset,
           }),
         );
       }
+      formMethods.reset(getDefaultFormData(payloadToolset));
     },
-    [dispatch, formMethods.formState.isDirty, toolsetDetails],
+    [dispatch, formMethods, toolsetDetails],
   );
 
   const handleSubmit = useCallback(
-    (cb?: () => void) =>
-      formMethods
-        .handleSubmit(submitHandler)()
-        .then(() => cb?.()),
-    [formMethods, submitHandler],
+    (cb?: () => void) => {
+      formMethods.trigger().then((isValid) => {
+        if (!isValid) return;
+
+        if (isDirty) {
+          void formMethods
+            .handleSubmit(submitHandler)()
+            .then(() => cb?.());
+        } else {
+          cb?.();
+        }
+      });
+    },
+    [formMethods, submitHandler, isDirty],
   );
 
   const handleSaveAndExit = useCallback(() => {
-    if (!formMethods.formState.isDirty) return router.push(Routes.Marketplace);
-    void handleSubmit(() => router.push(Routes.Marketplace));
-  }, [formMethods, handleSubmit, router]);
+    if (!toolsetDetails) {
+      void router.push(Routes.Marketplace);
+      return;
+    }
+    handleSubmit(() => router.push(Routes.Marketplace));
+  }, [handleSubmit, router, toolsetDetails]);
 
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
-      if (!formMethods.formState.isDirty) return setEditorStep(tab);
-      void handleSubmit(() => setEditorStep(tab));
+      if (tab === editorStep) return;
+      handleSubmit(() => setEditorStep(tab));
     },
-    [formMethods, handleSubmit],
+    [editorStep, handleSubmit],
   );
 
   const handleNextClick = useCallback(() => {
-    if (!formMethods.formState.isDirty)
-      return setEditorStep(ToolsetEditorSteps.Settings);
-    void handleSubmit(() => setEditorStep(ToolsetEditorSteps.Settings));
-  }, [formMethods, handleSubmit]);
+    handleSubmit(() => setEditorStep(ToolsetEditorSteps.Settings));
+  }, [handleSubmit]);
 
   return (
     <FormProvider {...formMethods}>

@@ -1,4 +1,9 @@
-import { IconChevronDown, IconLogout } from '@tabler/icons-react';
+import {
+  IconChevronDown,
+  IconCircleCheck,
+  IconCircleDot,
+  IconLogout,
+} from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -17,20 +22,44 @@ import { Logo } from '@/src/components/Header/Logo';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
+const getTabIcon = <T extends string>(
+  tab: T,
+  activeTab: T,
+  isEditing?: boolean,
+  isDisabled?: boolean,
+) => {
+  return tab !== activeTab && isEditing ? (
+    <IconCircleCheck
+      className="text-accent-primary"
+      data-qa="selected-step-icon"
+      width={24}
+      height={24}
+    />
+  ) : (
+    <IconCircleDot
+      className={isDisabled ? 'text-secondary' : 'text-accent-primary'}
+      data-qa="not-selected-step-icon"
+      width={24}
+      height={24}
+    />
+  );
+};
+
 interface EditorHeaderTab<T extends string> {
   label: string;
   key: T;
   disabled: boolean;
-  Icon?: React.ComponentType;
 }
 
 interface EditorHeaderProps<T extends string> {
   dataQa?: string;
   tabs: EditorHeaderTab<T>[];
   activeTab: T;
-  onTabClick: (e: PartialBy<EditorHeaderTab<T>, 'Icon' | 'label'>) => void;
+  onTabClick: (e: PartialBy<EditorHeaderTab<T>, 'label'>) => void;
   title: string;
 
+  isEditing?: boolean;
+  saveLabel?: string;
   getMobileTabLabel?: (tab: T) => string;
   renderTab?: (tab: EditorHeaderTab<T>) => React.ReactNode;
   onSave?: () => void;
@@ -43,6 +72,9 @@ export const EditorHeader = <T extends string>({
   activeTab,
   onTabClick,
   title,
+
+  isEditing,
+  saveLabel,
   getMobileTabLabel = (tab: T) => tab,
   renderTab,
   onSave,
@@ -64,7 +96,7 @@ export const EditorHeader = <T extends string>({
   }, [dispatch]);
 
   const handleTabClose = useCallback(
-    (tab: PartialBy<EditorHeaderTab<T>, 'Icon' | 'label'>) => {
+    (tab: PartialBy<EditorHeaderTab<T>, 'label'>) => {
       onTabClick(tab);
       setMenuOpen(false);
     },
@@ -137,7 +169,6 @@ export const EditorHeader = <T extends string>({
           >
             {tabs.map((tab, index) => {
               const isDisabled = tab.disabled;
-              const Icon = tab.Icon;
               return (
                 <div key={tab.key} className="flex items-center">
                   {renderTab ? (
@@ -152,7 +183,7 @@ export const EditorHeader = <T extends string>({
                       )}
                       onClick={() => onTabClick(tab)}
                     >
-                      {!!Icon && <Icon />}
+                      {getTabIcon(tab.key, activeTab, isEditing, isDisabled)}
 
                       <span
                         className="grow truncate"
@@ -188,7 +219,7 @@ export const EditorHeader = <T extends string>({
               data-qa="save-and-exit"
             >
               <IconLogout size={14} />
-              <span>{t('Save and exit')}</span>
+              <span>{t(saveLabel ?? 'Save and exit')}</span>
             </button>
           )}
           <div className="h-full max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">

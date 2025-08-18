@@ -21,6 +21,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
 import { Routes } from '@/src/constants/routes';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -64,7 +65,7 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
               if (toolset && shouldUpdateQuery) {
                 router.push({
                   query: {
-                    toolsetId: toolset.id,
+                    [ToolsetEditorQuery.Id]: toolset.id,
                   },
                 });
               }
@@ -175,7 +176,7 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
               if (shouldUpdateQuery) {
                 router.push({
                   query: {
-                    toolsetId: updatedToolset.id,
+                    [ToolsetEditorQuery.Id]: updatedToolset.id,
                   },
                 });
               }
