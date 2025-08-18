@@ -83,8 +83,6 @@ dialTest(
     await dialTest.step(
       'Switch to "My Workspace" tab and verify only installed models are displayed, other models stay under "Suggested results"',
       async () => {
-        //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
-        await marketplaceAgentsSection.goTop();
         await navigationPanel.goToMyWorkspace();
         const allAgents = await marketplaceAgentsSection.getAllAgents();
         const actualWorkspaceModels = allAgents

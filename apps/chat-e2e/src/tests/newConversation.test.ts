@@ -12,7 +12,9 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Click on + resets all settings on new conversation. Change agent pop-up opens\n' +
-    'Click on + resets all settings on new conversation. When temperature was changed in previous chat.',
+    'Click on + resets all settings on new conversation. When temperature was changed in previous chat.\n' +
+    'Default temperature in new chat is set from the previous chat.\n' +
+    'Default system prompt in new chat is always empty',
   async ({
     dialHomePage,
     chatBar,
@@ -27,10 +29,10 @@ dialTest(
     localStorageManager,
     conversationSettingsModal,
     iconApiHelper,
-    setIssueIds,
+    sendMessage,
+    conversationAssertion,
   }) => {
     setTestIds('EPMRTC-4717', 'EPMRTC-4920', 'EPMRTC-404', 'EPMRTC-403');
-    setIssueIds('3116');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter(
         (m) =>
@@ -54,7 +56,7 @@ dialTest(
         iconsToBeLoaded: [models[0].iconUrl!],
       });
       await dialHomePage.waitForPageLoaded();
-      await chat.getSendMessage().waitForState();
+      await sendMessage.waitForState();
     });
 
     const PROMPTS = {
@@ -75,7 +77,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Send a user message and click on the "New conversation" header button and check that the settings are changed, temperature is not changed',
+      'Send a user message and click on the "New conversation" header button',
       async () => {
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -92,11 +94,7 @@ dialTest(
         await agentSettingAssertion.assertSystemPromptValue(
           ExpectedConstants.emptyString,
         );
-        agentInfoAssertion.assertValue(
-          await temperatureSlider.getTemperature(),
-          TEMPERATURE.HIGH,
-          ExpectedMessages.temperatureIsValid,
-        );
+        await agentSettingAssertion.assertTemperature(TEMPERATURE.HIGH);
         await agentInfoAssertion.assertElementsCount(
           addons.selectedAddons,
           0,
@@ -119,6 +117,7 @@ dialTest(
     );
 
     await dialTest.step('Change settings and apply', async () => {
+      await localStorageManager.setLastConversationSettings('');
       await chat.configureSettingsButton.click();
       await agentSettings.setSystemPrompt(PROMPTS.CAT);
       await temperatureSlider.setTemperature(TEMPERATURE.LOW);
@@ -127,22 +126,29 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify settings are completely reset after not sending a message in a chat',
+      'Verify settings are completely reset, temperature is reset to the `lastConversationSettings` value after not sending a message in a chat',
       async () => {
+        await chatBar.createNewEntity();
+        await talkToAgentDialog.selectAgent(models[1]);
         await chat.configureSettingsButton.click();
         await agentSettingAssertion.assertSystemPromptValue(
           ExpectedConstants.emptyString,
         );
-        agentInfoAssertion.assertValue(
-          await temperatureSlider.getTemperature(),
-          TEMPERATURE.HIGH,
-          ExpectedMessages.temperatureIsValid,
-        );
+        await agentSettingAssertion.assertTemperature(TEMPERATURE.HIGH);
         await agentInfoAssertion.assertElementsCount(
           addons.selectedAddons,
           0,
           ExpectedMessages.noAddonsSelected,
         );
+        await conversationSettingsModal.cancelButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Verify conversations count remains the same, no conversations are selected',
+      async () => {
+        await conversationAssertion.assertNoEntityIsSelected();
+        await conversationAssertion.assertEntitiesCount(1);
       },
     );
   },
