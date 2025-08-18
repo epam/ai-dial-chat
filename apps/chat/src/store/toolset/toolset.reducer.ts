@@ -76,6 +76,10 @@ export const toolsetSlice = createSlice({
       state.toolsetDetailsStatus = UploadStatus.FAILED;
       state.toolsetDetails = undefined;
     },
+    clearToolsetDetails: (state) => {
+      state.toolsetDetails = undefined;
+      state.toolsetDetailsStatus = UploadStatus.UNINITIALIZED;
+    },
 
     updateToolset: (
       state,
