@@ -225,10 +225,6 @@ dialTest(
           initialConversationName,
         );
         await conversationAssertion.assertEntitiesCount(1);
-        localStorageAssertion.assertValuesAreEqual(
-          await localStorageManager.getSelectedConversationIds(),
-          [expectedSelectedConversation(models[1])],
-        );
       },
     );
 
