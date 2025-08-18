@@ -3,7 +3,7 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
 import { ApiUtils, getToolsetApiKey } from '@/src/utils/server/api';
 
-import { PartialBy } from '@/src/types/common';
+import { EntityType, PartialBy } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import { Toolset } from '@epam/ai-dial-shared';
@@ -16,9 +16,11 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     transport: data.transport,
     allowedTools: data.allowed_tools,
     id,
+    reference: data.reference ?? id,
     folderId: getFolderIdFromEntityId(id),
     version: data.display_version,
     name: data.display_name,
+    type: EntityType.Toolset,
 
     description: data.description ?? '',
     iconUrl: data.icon_url ? ApiUtils.decodeApiUrl(data.icon_url) : '',
@@ -32,7 +34,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
 };
 
 export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
-  endpoint: data.endpoint,
+  endpoint: data.endpoint ?? '',
   transport: data.transport,
   allowed_tools: data.allowedTools,
   display_version: data.version,

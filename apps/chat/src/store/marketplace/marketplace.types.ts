@@ -4,6 +4,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 
 import {
   DeleteType,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
   TableColumnSortKeys,
   ViewTypes,
@@ -15,10 +16,12 @@ export interface MarketplaceState {
   selectedFilters: MarketplaceFilters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
+  selectedEntitiesTab: MarketplaceEntitiesTabs;
   applyModelStatus: UploadStatus;
   selectedView: ViewTypes;
   applyModelId?: string;
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
+  detailsToolset: { reference: string; isSuggested: boolean } | undefined;
   tableSort: {
     column: TableColumnSortKeys;
     order: SortOrder;
