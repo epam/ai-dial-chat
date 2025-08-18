@@ -35,7 +35,11 @@ import {
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { PromptsActions, PublicationActions } from '@/src/store/actions';
+import {
+  PromptsActions,
+  PublicationActions,
+  ShareActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -47,6 +51,7 @@ import {
 import { stopBubbling } from '@/src/constants/chat';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -108,6 +113,7 @@ export const PromptComponent = ({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isUnshared, setIsUnshared] = useState(false);
 
   const promptRef = useRef<HTMLButtonElement>(null);
 
@@ -202,6 +208,24 @@ export const PromptComponent = ({
     },
     [handleOpenViewModal],
   );
+
+  const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
+    useCallback((e) => {
+      e.stopPropagation();
+      setIsUnshared(true);
+    }, []);
+
+  const handleUnsharing = useCallback(() => {
+    if (prompt.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: [prompt.id],
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    }
+    setIsUnshared(false);
+  }, [dispatch, prompt.id, prompt.sharedWithMe]);
 
   const isHighlighted = !isSelectMode
     ? !!deletingPrompt || isSelected || isContextMenu
@@ -369,6 +393,7 @@ export const PromptComponent = ({
               onExport={handleExport}
               onOpenMoveToModal={handleMoveToFolder}
               onShare={handleShare}
+              onUnshare={handleOpenUnshareModal}
               onPublish={handlePublish}
               onUnpublish={
                 additionalItemData?.publicationUrl ? undefined : handleUnpublish
@@ -387,6 +412,20 @@ export const PromptComponent = ({
           </div>
         )}
       </button>
+
+      {isUnshared && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm unshare prompt')}
+          description={t('Are you sure that you want to unshare a prompt?')}
+          confirmLabel={t('Unshare')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshared(false);
+            if (result) handleUnsharing();
+          }}
+        />
+      )}
     </>
   );
 };

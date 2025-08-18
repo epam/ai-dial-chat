@@ -519,6 +519,9 @@ dialTest(
       'Proceed replaying and verify response received',
       async () => {
         await context.setOffline(false);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.proceedReplaying(true);
         const generatedContent = await chatMessages.getGeneratedChatContent(
           conversation.messages.length,
