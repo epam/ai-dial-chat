@@ -1036,8 +1036,8 @@ dialSharedWithMeTest(
           .toEqual([
             MenuOptions.duplicate,
             MenuOptions.export,
+            MenuOptions.unshare,
             MenuOptions.info,
-            MenuOptions.delete,
           ]);
       },
     );

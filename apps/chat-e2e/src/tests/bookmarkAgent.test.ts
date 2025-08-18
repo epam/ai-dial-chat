@@ -36,6 +36,7 @@ dialTest(
     dialHomePage,
     modelApiHelper,
     talkToAgentDialog,
+    agentVersionsDropdownMenuAssertion,
     fileApiHelper,
   }) => {
     setTestIds(
@@ -156,10 +157,9 @@ dialTest(
         const agentElement = talkToAgents.getAgent(appName);
         await talkToAgentDialogAssertion.assertAgentState(appName, 'visible');
         await talkToAgentDialog.getVersionMenuTrigger(agentElement).click();
-        //TODO enable when fixed https://github.com/epam/ai-dial-chat/issues/3988
-        // await agentVersionsDropdownMenuAssertion.assertMenuOptions(
-        //   twoSortedVersions,
-        // );
+        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+          twoSortedVersions,
+        );
       },
     );
 
