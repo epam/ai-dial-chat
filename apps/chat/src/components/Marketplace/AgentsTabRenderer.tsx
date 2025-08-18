@@ -1,15 +1,12 @@
-import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
-import { ResultsView, ResultsViewProps } from './TabResults';
+import { useCallback, useMemo, useState } from 'react';
 
-import { AgentDialogs } from '@/src/components//Common/AgentDialogs';
-import {
-  DeleteType,
-  FilterTypes,
-  MarketplaceTabs,
-  ViewTypes,
-} from '@/src/constants/marketplace';
-import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
+
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { doesApplicationMatchFilters } from '@/src/utils/marketplace';
+
+import { DialAIEntityModel } from '@/src/types/models';
+
 import { MarketplaceActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -17,10 +14,19 @@ import {
   MarketplaceSelectors,
   ModelsSelectors,
 } from '@/src/store/selectors';
-import { DialAIEntityModel } from '@/src/types/models';
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { doesApplicationMatchFilters } from '@/src/utils/marketplace';
-import { useCallback, useMemo, useState } from 'react';
+
+import {
+  DeleteType,
+  FilterTypes,
+  MarketplaceTabs,
+  ViewTypes,
+} from '@/src/constants/marketplace';
+import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
+
+import { AgentDialogs } from '@/src/components//Common/AgentDialogs';
+
+import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
+import { ResultsView, ResultsViewProps } from './TabResults';
 
 const AgentsResultsView = ResultsView as React.ComponentType<
   ResultsViewProps<DialAIEntityModel>

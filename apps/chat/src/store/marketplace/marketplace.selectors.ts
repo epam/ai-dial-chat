@@ -56,9 +56,6 @@ const selectIsApplyingModel = (state: RootState) =>
 const selectDetailsModel = (state: RootState) =>
   rootSelector(state).detailsModel;
 
-const selectDetailsToolset = (state: RootState) =>
-  rootSelector(state).detailsToolset;
-
 const selectSourceTypes = createSelector(
   [
     ModelsSelectors.selectModels,
@@ -107,7 +104,6 @@ export const MarketplaceSelectors = {
   selectApplyModelStatus,
   selectIsApplyingModel,
   selectDetailsModel,
-  selectDetailsToolset,
   selectSourceTypes,
   selectDeleteModel,
 };

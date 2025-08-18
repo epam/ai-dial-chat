@@ -21,7 +21,6 @@ export interface MarketplaceState {
   selectedView: ViewTypes;
   applyModelId?: string;
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
-  detailsToolset: { reference: string; isSuggested: boolean } | undefined;
   tableSort: {
     column: TableColumnSortKeys;
     order: SortOrder;

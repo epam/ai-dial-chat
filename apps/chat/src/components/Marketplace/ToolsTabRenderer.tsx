@@ -1,11 +1,12 @@
-import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
-import { ResultsView, ResultsViewProps } from './TabResults';
+import { useCallback, useState } from 'react';
 
-import { MarketplaceActions } from '@/src/store/actions';
+import { ToolsetModel } from '@/src/types/toolsets';
+
+import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
-import { ToolsetModel } from '@/src/types/toolsets';
-import { useCallback, useState } from 'react';
+
+import { ResultsView, ResultsViewProps } from './TabResults';
 
 const ToolsetResultsView = ResultsView as React.ComponentType<
   ResultsViewProps<ToolsetModel>
@@ -17,9 +18,7 @@ export function ToolsTabRenderer() {
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
-  const detailsToolset = useAppSelector(
-    MarketplaceSelectors.selectDetailsToolset,
-  );
+  const detailsToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
@@ -29,14 +28,14 @@ export function ToolsTabRenderer() {
 
   const handleSetDetailsToolset = useCallback(
     (toolset: { reference: string }) => {
-      dispatch(
-        MarketplaceActions.setDetailsToolset({
-          reference: toolset.reference,
-          isSuggested: suggestedResults
-            .map((item) => item.reference)
-            .includes(toolset.reference),
-        }),
-      );
+      // dispatch(
+      //   ToolsetActions.setDetailsToolset({
+      //     reference: toolset.reference,
+      //     isSuggested: suggestedResults
+      //       .map((item) => item.reference)
+      //       .includes(toolset.reference),
+      //   }),
+      // );
     },
     [dispatch, suggestedResults],
   );

@@ -32,7 +32,6 @@ const initialState: MarketplaceState = {
   selectedEntitiesTab: MarketplaceEntitiesTabs.AGENTS,
   applyModelStatus: UploadStatus.UNINITIALIZED,
   detailsModel: undefined,
-  detailsToolset: undefined,
   selectedView: ViewTypes.CARD,
   tableSort: {
     column: TableColumnSortKeys.NAME,
@@ -102,14 +101,6 @@ export const marketplaceSlice = createSlice({
       }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
     ) => {
       state.detailsModel = payload;
-    },
-    setDetailsToolset: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
-    ) => {
-      state.detailsToolset = payload;
     },
     setSelectedView: (
       state,
