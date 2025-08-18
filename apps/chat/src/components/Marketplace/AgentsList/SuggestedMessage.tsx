@@ -2,23 +2,22 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import Magnifier from '@/public/images/icons/search-alt.svg';
 
 interface SuggestedMessageProps {
-  entities: DialAIEntityModel[];
+  shouldRender: boolean;
   className?: string;
 }
 
 export const SuggestedMessage: React.FC<SuggestedMessageProps> = ({
-  entities,
+  shouldRender,
   className,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  if (entities.length) {
+  if (!shouldRender) {
     return null;
   }
 

@@ -1,16 +1,11 @@
-import { IconMessage2 } from '@tabler/icons-react';
-import { memo, useCallback, useMemo, useState } from 'react';
-
-import classNames from 'classnames';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
-import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { doesApplicationMatchFilters } from '@/src/utils/marketplace';
 
 import { DialAIEntityModel } from '@/src/types/models';
-import { Translation } from '@/src/types/translation';
 
 import { MarketplaceActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -28,102 +23,16 @@ import {
 } from '@/src/constants/marketplace';
 import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 
-import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
-import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
-import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
-import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
+import { AgentDialogs } from '@/src/components//Common/AgentDialogs';
 
-import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
-import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
+import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
+import { ResultsView, ResultsViewProps } from './TabResults';
 
-interface NoAgentsFoundProps {
-  children: React.ReactNode;
-  description: string;
-  header?: string;
-}
+const AgentsResultsView = ResultsView as React.ComponentType<
+  ResultsViewProps<DialAIEntityModel>
+>;
 
-const NoAgentsFound = ({
-  children,
-  description,
-  header,
-}: NoAgentsFoundProps) => {
-  const { t } = useTranslation(Translation.Marketplace);
-
-  return (
-    <div className="flex grow flex-col items-center justify-center">
-      {children}
-      {header && (
-        <span className="mt-5 text-lg font-semibold">{t(header)}</span>
-      )}
-      {description && (
-        <span
-          className="mt-4 text-sm font-normal"
-          data-qa="no-data-description"
-        >
-          {t(description)}
-        </span>
-      )}
-    </div>
-  );
-};
-
-interface ResultsViewProps {
-  entities: DialAIEntityModel[];
-  suggestedResults: DialAIEntityModel[];
-  selectedTab: MarketplaceTabs;
-  areAllFiltersEmpty: boolean;
-  selectedViewType: ViewTypes;
-  onCardClick: (entity: DialAIEntityModel) => void;
-  onBookmarkClick: (entity: DialAIEntityModel) => void;
-}
-
-const ResultsView = memo(
-  ({
-    areAllFiltersEmpty,
-    selectedViewType,
-    entities,
-    suggestedResults,
-    ...props
-  }: ResultsViewProps) => {
-    if (entities.length || suggestedResults.length) {
-      const AgentsListComponent =
-        selectedViewType === ViewTypes.TABLE ? AgentsTable : AgentsTiles;
-
-      return (
-        <AgentsListComponent
-          entities={entities}
-          suggestedResults={suggestedResults}
-          separator="Suggested results from DIAL Marketplace"
-          {...props}
-        />
-      );
-    }
-
-    if (areAllFiltersEmpty) {
-      return (
-        <NoAgentsFound
-          header="No agents"
-          description="You don't have any agents."
-        >
-          <IconMessage2 size={100} className="stroke-[0.2]" />
-        </NoAgentsFound>
-      );
-    }
-
-    return (
-      <NoAgentsFound description="Sorry, we couldn't find any results for your search.">
-        <NoResultsFound
-          iconSize={100}
-          className="gap-5 text-lg font-semibold"
-        />
-      </NoAgentsFound>
-    );
-  },
-);
-ResultsView.displayName = 'ResultsView';
-
-export const TabRenderer = () => {
+export function AgentsTabRenderer() {
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -144,9 +53,6 @@ export const TabRenderer = () => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
-  const isBannerVisible = useAppSelector(
-    MarketplaceSelectors.selectIsBannerVisible,
   );
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
@@ -233,7 +139,7 @@ export const TabRenderer = () => {
   ]);
 
   const handleSetDetailsModel = useCallback(
-    (model: DialAIEntityModel) => {
+    (model: { reference: string }) => {
       dispatch(
         MarketplaceActions.setDetailsModel({
           reference: model.reference,
@@ -290,31 +196,7 @@ export const TabRenderer = () => {
 
   return (
     <>
-      <header
-        className="mb-5 px-3 md:mb-4 md:px-5 xl:mb-6 xl:px-16"
-        data-qa="marketplace-header"
-      >
-        <div
-          className={classNames(
-            'w-full transition-all duration-1000',
-            isBannerVisible
-              ? 'max-h-[104px] translate-y-0'
-              : 'max-h-0 translate-y-[-135px]',
-          )}
-        >
-          <MarketplaceBanner />
-        </div>
-        <div
-          className={classNames(
-            'flex items-center justify-end gap-2 transition-all duration-1000 md:gap-4',
-            isBannerVisible ? 'md:mt-4 xl:mt-6' : 'm-0',
-          )}
-        >
-          <SearchHeader />
-        </div>
-      </header>
-
-      <ResultsView
+      <AgentsResultsView
         entities={displayedEntities}
         suggestedResults={suggestedResults}
         selectedTab={selectedTab}
@@ -341,4 +223,4 @@ export const TabRenderer = () => {
       <AgentDialogs />
     </>
   );
-};
+}

@@ -221,11 +221,11 @@ export const isExternalApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===
   DefaultsService.get('externalAppsSchemaId', DEFAULT_EXTERNAL_APPS_SCHEMA_ID);
 
-export const getModelDescription = (entity: DialAIEntityModel) => {
+export const getModelDescription = (entity: { description?: string }) => {
   return entity.description ?? '';
 };
 
-export const getModelShortDescription = (entity: DialAIEntityModel) =>
+export const getModelShortDescription = (entity: { description?: string }) =>
   getModelDescription(entity).split(DESCRIPTION_DELIMITER_REGEX)[0];
 
 export const getQuickAppConfig = (

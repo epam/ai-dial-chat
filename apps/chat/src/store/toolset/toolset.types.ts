@@ -4,7 +4,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 export interface ToolsetState {
   initialized: boolean;
-  toolsetsMap: Record<string, Omit<ToolsetModel, 'endpoint'>>;
+  toolsetsMap: Record<string, ToolsetModel>;
   toolsetsStatus: UploadStatus;
 
   toolsetDetails?: ToolsetModel;
