@@ -374,6 +374,9 @@ dialSharedWithMeTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.proceedReplaying();
         await variableModalAssertion.assertVariableModalState('hidden');
       },

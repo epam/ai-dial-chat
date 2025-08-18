@@ -71,7 +71,7 @@ export class BaseElement {
     text: string,
     options?: { delay?: number; noWaitAfter?: boolean; timeout?: number },
   ) {
-    await this.rootLocator.type(text, options);
+    await this.rootLocator.pressSequentially(text, options);
   }
 
   async fillInInput(
