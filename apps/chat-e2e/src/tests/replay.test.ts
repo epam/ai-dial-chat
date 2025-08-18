@@ -719,6 +719,10 @@ dialTest(
     talkToAgentDialogAssertion,
     setTestIds,
     localStorageManager,
+    sendMessage,
+    sendMessageAssertion,
+    talkToAgents,
+    marketplaceAgentsAssertion,
   }) => {
     setTestIds('EPMRTC-1328', 'EPMRTC-2839');
     let notAllowedModelConversation: Conversation;
@@ -751,18 +755,42 @@ dialTest(
           agentInfo.agentName,
           ExpectedConstants.replayAsIsLabel,
         );
-        //TODO: add conversation screen verification when fixed https://github.com/epam/ai-dial-chat/issues/2697
+        await agentInfoAssertion.assertShortDescription(
+          ExpectedConstants.replayAsIsDescr,
+        );
+        await sendMessageAssertion.assertElementState(
+          sendMessage.messageInput,
+          'hidden',
+        );
         await chatAssertion.assertReplayButtonState('hidden');
         await chatAssertion.assertNotAllowedModelLabelContent(notAllowedModel);
       },
     );
 
-    await dialTest.step('Verify "Replay as is" is selected', async () => {
-      await chat.changeAgentButton.click();
-      await talkToAgentDialogAssertion.assertAgentIsSelected(
-        ExpectedConstants.replayAsIsLabel,
-      );
-    });
+    await dialTest.step(
+      'Verify "Replay as is" is selected and stays at the first place',
+      async () => {
+        await chat.changeAgentButton.click();
+        await talkToAgentDialogAssertion.assertAgentIsSelected(
+          ExpectedConstants.replayAsIsLabel,
+        );
+        const actualAgentNames = await talkToAgents.getAgentNames();
+        talkToAgentDialogAssertion.assertValue(
+          actualAgentNames[0],
+          ExpectedConstants.replayAsIsLabel,
+        );
+        const replayAsIsModelElement = talkToAgents.getAgent(
+          ExpectedConstants.replayAsIsLabel,
+        );
+        const replayAsIsDescrElement = talkToAgents.getAgentDescription(
+          replayAsIsModelElement,
+        );
+        await marketplaceAgentsAssertion.assertElementText(
+          replayAsIsDescrElement,
+          ExpectedConstants.replayAsIsDescr,
+        );
+      },
+    );
 
     await dialTest.step(
       'Select any available model and start replaying',

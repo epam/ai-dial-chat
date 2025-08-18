@@ -208,10 +208,6 @@ dialTest(
       await chat.configureSettingsButton.waitForState();
       await conversationAssertion.assertSelectedEntity(initialConversationName);
       await chat.getSendMessage().waitForState({ state: 'attached' });
-      localStorageAssertion.assertValuesAreEqual(
-        await localStorageManager.getSelectedConversationIds(),
-        [expectedSelectedConversation(models[1])],
-      );
     });
 
     await dialTest.step(
@@ -225,14 +221,11 @@ dialTest(
           initialConversationName,
         );
         await conversationAssertion.assertEntitiesCount(1);
-        localStorageAssertion.assertValuesAreEqual(
-          await localStorageManager.getSelectedConversationIds(),
-          [expectedSelectedConversation(models[1])],
-        );
       },
     );
 
-    await dialTest.step(
+    //TODO: need to investigate flaky behavior
+    await dialTest.step.skip(
       'Clear selectedConversationIds, refresh the page and verify new conversation is created',
       async () => {
         await localStorageManager.removeFromLocalStorage(

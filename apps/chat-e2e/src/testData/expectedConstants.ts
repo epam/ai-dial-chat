@@ -275,6 +275,10 @@ export const ExpectedConstants = {
   noAvailableItemsLabel: 'No available items',
   appDefaultCompletionUrl: 'http://test.example.com',
   appRateEndpointDefaultFeature: 'http://application1/rate',
+  leadingDotErrorToast: 'Using a dot at the start of a name is not permitted.',
+  promptEditConfirmationDialogTitle: 'Unsaved changes',
+  promptEditConfirmationDialogMessage:
+    'There are unsaved changes. Do you want to save them before closing?',
 };
 
 export enum Types {

@@ -1394,8 +1394,7 @@ dialTest(
       });
     });
 
-    //TODO blocked by the issue 4225
-    await dialTest.step.skip(
+    await dialTest.step(
       'Verify clip icon appears in preview chat message box',
       async () => {
         await sendMessage.click();

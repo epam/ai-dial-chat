@@ -556,7 +556,7 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    const name = GeneratorUtil.randomString(10);
+    const name = GeneratorUtil.randomConversationName();
     return this.conversationBuilder
       .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
@@ -617,7 +617,7 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    name = name ?? GeneratorUtil.randomString(10);
+    name = name ?? GeneratorUtil.randomConversationName();
 
     let conversationBuilder = this.conversationBuilder
       .withName(name)
@@ -675,7 +675,7 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    const name = GeneratorUtil.randomString(10);
+    const name = GeneratorUtil.randomConversationName();
     return this.conversationBuilder
       .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
@@ -724,7 +724,7 @@ export class ConversationData extends FolderData {
       settings: settings,
       responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
     };
-    const name = GeneratorUtil.randomString(10);
+    const name = GeneratorUtil.randomConversationName();
     return this.conversationBuilder
       .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
       .withName(name)
