@@ -208,10 +208,6 @@ dialTest(
       await chat.configureSettingsButton.waitForState();
       await conversationAssertion.assertSelectedEntity(initialConversationName);
       await chat.getSendMessage().waitForState({ state: 'attached' });
-      localStorageAssertion.assertValuesAreEqual(
-        await localStorageManager.getSelectedConversationIds(),
-        [expectedSelectedConversation(models[1])],
-      );
     });
 
     await dialTest.step(

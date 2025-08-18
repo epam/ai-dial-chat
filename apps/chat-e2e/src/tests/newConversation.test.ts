@@ -350,7 +350,7 @@ dialSharedWithMeTest(
           sharedConversation.name,
         );
         await sharedWithMeConversationDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
         );
         await confirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
