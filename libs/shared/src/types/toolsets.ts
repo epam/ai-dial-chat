@@ -10,6 +10,7 @@ export interface Toolset {
   display_name: string;
   display_version: string;
 
+  reference?: string;
   url?: string;
   id?: string;
   toolset?: string;

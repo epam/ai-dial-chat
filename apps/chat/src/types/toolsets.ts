@@ -5,6 +5,7 @@ export interface ToolsetModel extends ShareEntity {
   transport: ToolsetTransportType;
   allowedTools: string[];
   version: string;
+  reference: string;
 
   description: string;
   iconUrl?: string;

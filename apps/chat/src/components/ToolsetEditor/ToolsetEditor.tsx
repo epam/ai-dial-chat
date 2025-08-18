@@ -47,7 +47,9 @@ export const ToolsetEditor = () => {
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
       const payloadToolset = {
+        id: '',
         folderId: '',
+        reference: '',
         ...(toolsetDetails && toolsetDetails),
         name: data.name,
         endpoint: data.endpoint,

@@ -19,6 +19,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     folderId: getFolderIdFromEntityId(id),
     version: data.display_version,
     name: data.display_name,
+    reference: data.reference ?? id,
 
     description: data.description ?? '',
     iconUrl: data.icon_url ? ApiUtils.decodeApiUrl(data.icon_url) : '',
