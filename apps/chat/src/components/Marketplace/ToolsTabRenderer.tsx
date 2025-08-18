@@ -1,18 +1,17 @@
-import { useCallback, useState } from 'react';
-
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
+import { ResultsView, ResultsViewProps } from './TabResults';
 
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
-
-import { ResultsView, ResultsViewProps } from './TabResults';
+import { ToolsetModel } from '@/src/types/toolsets';
+import { useCallback, useState } from 'react';
 
 const ToolsetResultsView = ResultsView as React.ComponentType<
   ResultsViewProps<ToolsetModel>
 >;
 
-export const ToolsTabRenderer = () => {
+export function ToolsTabRenderer() {
   const dispatch = useAppDispatch();
 
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
@@ -55,17 +54,5 @@ export const ToolsTabRenderer = () => {
     />
 
     // {/* MODALS */}
-
-    //       {currentDetailsModel && (
-    //         <ApplicationDetails
-    //           entity={currentDetailsModel}
-    //           onChangeVersion={handleSetVersion}
-    //           onClose={handleCloseDetailsDialog}
-    //           onBookmarkClick={handleBookmarkClick}
-    //           allEntities={allModels}
-    //           isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
-    //           isSuggested={detailsModel.isSuggested}
-    //         />
-    //       )}
   );
-};
+}
