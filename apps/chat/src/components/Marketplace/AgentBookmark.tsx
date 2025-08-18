@@ -7,6 +7,7 @@ import classNames from 'classnames';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -14,21 +15,21 @@ import { ModelsSelectors } from '@/src/store/selectors';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-interface Props {
-  entity: DialAIEntityModel;
+interface Props<T> {
+  entity: T;
   size?: number;
   className?: string;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: T) => void;
   allocatePlace?: boolean;
 }
 
-export const AgentBookmark: React.FC<Props> = ({
+export const AgentBookmark = <T extends DialAIEntityModel | ToolsetModel>({
   entity,
   size = 18,
   className,
   onBookmarkClick,
   allocatePlace = false,
-}) => {
+}: Props<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const installedModelIds = useAppSelector(
