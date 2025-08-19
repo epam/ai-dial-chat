@@ -51,6 +51,7 @@ const initialState: PublicationState = {
     [FeatureType.Prompt]: false,
     [FeatureType.File]: false,
     [FeatureType.Application]: false,
+    [FeatureType.Toolset]: false,
   },
   selectedItemsToPublish: [],
   isApplicationReview: false,
