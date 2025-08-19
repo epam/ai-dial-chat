@@ -30,6 +30,15 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     author: data.author,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
+
+    authSettings: {
+      authenticationType: data.auth_settings.authentication_type,
+      clientId: data.auth_settings.client_id,
+      clientSecret: data.auth_settings.client_secret,
+      authorizationEndpoint: data.auth_settings.authorization_endpoint,
+      redirectUri: data.auth_settings.redirect_uri,
+      apiKeyHeader: data.auth_settings.api_key_header,
+    }
   };
 };
 
@@ -43,6 +52,15 @@ export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
   description: data.description,
   icon_url: ApiUtils.encodeApiUrl(data.iconUrl ?? ''),
   description_keywords: data.topics,
+
+  auth_settings: {
+    authentication_type: data.authSettings.authenticationType,
+    client_id: data.authSettings.clientId,
+    client_secret: data.authSettings.clientSecret,
+    authorization_endpoint: data.authSettings.authorizationEndpoint,
+    redirect_uri: data.authSettings.redirectUri,
+    api_key_header: data.authSettings.apiKeyHeader,
+  }
 });
 
 export const getGeneratedToolsetId = (

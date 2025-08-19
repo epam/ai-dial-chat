@@ -3,6 +3,12 @@ export enum ToolsetTransportType {
   SSE = 'SSE',
 }
 
+export enum ToolsetAuthTypes {
+  OAUTH = 'OAUTH',
+  API_KEY = 'API_KEY',
+  NONE = 'NONE',
+}
+
 export interface Toolset {
   endpoint: string;
   transport: ToolsetTransportType;
@@ -23,4 +29,13 @@ export interface Toolset {
   author?: string;
   created_at?: number;
   updated_at?: number;
+
+  auth_settings: {
+    authentication_type: ToolsetAuthTypes;
+    client_id?: string;
+    client_secret?: string;
+    authorization_endpoint?: string;
+    redirect_uri?: string;
+    api_key_header?: string;
+  }
 }

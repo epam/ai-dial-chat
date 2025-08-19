@@ -1,6 +1,6 @@
 import { EntityType } from './common';
 
-import { ShareEntity, ToolsetTransportType } from '@epam/ai-dial-shared';
+import {ShareEntity, ToolsetAuthTypes, ToolsetTransportType} from '@epam/ai-dial-shared';
 
 export interface ToolsetModel extends ShareEntity {
   transport: ToolsetTransportType;
@@ -15,7 +15,38 @@ export interface ToolsetModel extends ShareEntity {
   iconUrl?: string;
   userRoles?: string[];
   maxRetryAttempts?: number;
+
+  authSettings: {
+    authenticationType: ToolsetAuthTypes;
+    clientId?: string;
+    clientSecret?: string;
+    authorizationEndpoint?: string;
+    redirectUri?: string;
+    apiKeyHeader?: string;
+  }
 }
+
+export enum ToolsetCredentialsLevel {
+  GLOBAL = 'GLOBAL',
+  USER = 'USER',
+  APP = 'APP',
+}
+
+interface ToolsetAuthPayloadBase {
+  url: string;
+  credentials_level: ToolsetCredentialsLevel;
+  authentication_type: ToolsetAuthTypes;
+}
+
+interface ToolsetOAuthPayload extends ToolsetAuthPayloadBase {
+  code: string;
+}
+
+interface ToolsetApiKeyPayload extends ToolsetAuthPayloadBase {
+  api_key: string;
+}
+
+export type ToolsetAuthPayload = ToolsetOAuthPayload | ToolsetApiKeyPayload;
 
 export enum ToolsetEditorSteps {
   General = 'General info',

@@ -4,7 +4,7 @@ import { convertToolsetFromApi } from '@/src/utils/app/toolsets';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { HTTPMethod } from '@/src/types/http';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetAuthPayload, ToolsetModel } from '@/src/types/toolsets';
 
 import { Toolset } from '@epam/ai-dial-shared';
 
@@ -40,5 +40,9 @@ export class ToolsetService {
       method: HTTPMethod.PUT,
       body: JSON.stringify(data),
     });
+  }
+
+  public static signIn(data: ToolsetAuthPayload): Observable<void> {
+    // TODO: implement ops call
   }
 }
