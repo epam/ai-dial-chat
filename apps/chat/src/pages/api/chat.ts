@@ -153,15 +153,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         : undefined,
       configurationSchemaValue: configurationValue,
     });
-    res.setHeader('Transfer-Encoding', 'chunked');
-
     const reader = stream.getReader();
+
+    let clientAborted = false;
+    req.on('aborted', () => {
+      clientAborted = true;
+      reader.cancel();
+    });
+
     const processStream = async () => {
       try {
         // eslint-disable-next-line no-constant-condition
         while (true) {
           const { value, done } = await reader.read();
-          if (done) {
+          if (done || clientAborted) {
             break;
           }
           res.write(value);
