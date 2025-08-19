@@ -128,6 +128,7 @@ export const PublicationHandlerFooter = ({
         editState: getDefaultAllEditEntities(publication.resources),
         rules: publication.rules ?? [],
         displayAuthor: replaceSpacesFromString(publication.displayAuthor),
+        publishToUrl: publication.targetFolder,
       }),
     );
   }, [
@@ -137,6 +138,7 @@ export const PublicationHandlerFooter = ({
     publication.rules,
     publication.displayAuthor,
     publication.author,
+    publication.targetFolder,
   ]);
 
   const notExistEntities = useMemo(
@@ -442,7 +444,11 @@ export const PublicationHandlerFooter = ({
                 onClick={handleApprovePublication}
                 data-qa="approve"
               >
-                {t(isSmallScreen ? 'Approve' : 'Approve selected')}
+                {t(
+                  !publication.resources.length || isSmallScreen
+                    ? 'Approve'
+                    : 'Approve selected',
+                )}
               </button>
             </Tooltip>
           </>

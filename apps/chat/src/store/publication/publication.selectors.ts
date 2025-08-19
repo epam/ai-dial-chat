@@ -3,7 +3,6 @@ import { createSelector } from '@reduxjs/toolkit';
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { getEntityBucket } from '@/src/utils/app/shared-utils';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -62,14 +61,6 @@ const selectSelectedPublication = createSelector(
           (publication) => publication.url === selectedPublicationUrl,
         ) as Publication)
       : null;
-  },
-);
-
-const selectSelectedPublicationReviewBucket = createSelector(
-  [selectSelectedPublication],
-  (selectedPublication) => {
-    const firstResource = selectedPublication?.resources.at(0)?.reviewUrl;
-    return firstResource ? getEntityBucket({ id: firstResource }) : undefined;
   },
 );
 
@@ -313,6 +304,9 @@ const selectIsPublicationUpdating = (state: RootState) =>
 const selectDisplayAuthorEditState = (state: RootState) =>
   rootSelector(state).displayAuthorEditState;
 
+const selectPublishToUrl = (state: RootState) =>
+  rootSelector(state).publishToUrl;
+
 const selectIsResourceUnpublishing = createSelector(
   [
     (state: RootState, publicationUrl: string) =>
@@ -334,7 +328,6 @@ export const PublicationSelectors = {
   selectFilteredPublicationResources,
   selectSelectedPublicationUrl,
   selectSelectedPublication,
-  selectSelectedPublicationReviewBucket,
   selectPublicationByUrl,
   selectResourcesToReview,
   selectResourceToReviewByReviewUrl,
@@ -364,5 +357,6 @@ export const PublicationSelectors = {
   selectRulesOnEdit,
   selectIsPublicationUpdating,
   selectDisplayAuthorEditState,
+  selectPublishToUrl,
   selectIsResourceUnpublishing,
 };

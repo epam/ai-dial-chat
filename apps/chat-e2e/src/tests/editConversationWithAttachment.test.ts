@@ -2,13 +2,16 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
+  CheckboxState,
   ExpectedMessages,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
@@ -94,6 +97,8 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
+    sendMessageInputAttachmentsAssertions,
+    attachAllFilesTreeAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1764', 'EPMRTC-1901');
@@ -113,6 +118,9 @@ dialTest(
       Attachment.sunImageName,
       Attachment.flowerImageName,
     ];
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
 
     await dialTest.step('Upload 3 files to app', async () => {
       for (const file of allAttachedFiles) {
@@ -132,14 +140,25 @@ dialTest(
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         for (const file of initAttachedFiles) {
           await attachFilesModal.checkAttachedFile(
             file,
             FileModalSection.AllFiles,
           );
+          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+            { name: file },
+            CheckboxState.checked,
+          );
         }
         await attachFilesModal.attachFiles();
+        for (const file of initAttachedFiles) {
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            file,
+            'visible',
+          );
+        }
       },
     );
 
@@ -149,22 +168,21 @@ dialTest(
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         for (const file of initAttachedFiles) {
-          const isFileChecked = attachFilesModal
-            .getAllFilesTree()
-            .getEntityCheckbox(file);
-          await expect
-            .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
-            .toBeChecked();
-
-          const fileNameColor = await attachFilesModal
-            .getAllFilesTree()
-            .getEntityName(file)
-            .getComputedStyleProperty(Styles.color);
-          expect
-            .soft(fileNameColor[0], ExpectedMessages.attachmentNameColorIsValid)
-            .toBe(Colors.controlsBackgroundAccent);
+          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+            { name: file },
+            CheckboxState.checked,
+          );
+          await attachAllFilesTreeAssertion.assertEntityColor(
+            { name: file },
+            expectedColor,
+          );
+          await attachAllFilesTreeAssertion.assertEntityCheckboxColor(
+            { name: file },
+            expectedColor,
+          );
         }
       },
     );
@@ -176,26 +194,30 @@ dialTest(
           initAttachedFiles[1],
           FileModalSection.AllFiles,
         );
+        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+          { name: initAttachedFiles[1] },
+          CheckboxState.unchecked,
+        );
         await attachFilesModal.checkAttachedFile(
           updatedAttachedFiles[1],
           FileModalSection.AllFiles,
         );
+        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
+          { name: updatedAttachedFiles[1] },
+          CheckboxState.checked,
+        );
         await attachFilesModal.attachFiles();
 
         for (const file of updatedAttachedFiles) {
-          await expect
-            .soft(
-              sendMessageInputAttachments.inputAttachment(file),
-              ExpectedMessages.fileIsAttached,
-            )
-            .toBeVisible();
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            file,
+            'visible',
+          );
         }
-        expect
-          .soft(
-            await sendMessageInputAttachments.inputAttachments.getElementsCount(),
-            ExpectedMessages.attachedFilesCountIsValid,
-          )
-          .toBe(updatedAttachedFiles.length);
+        await sendMessageInputAttachmentsAssertions.assertElementsCount(
+          sendMessageInputAttachments.inputAttachments,
+          updatedAttachedFiles.length,
+        );
       },
     );
 
@@ -207,22 +229,16 @@ dialTest(
             initAttachedFiles[0],
           );
         await removeAttachmentIcon.hoverOver();
-        const removeIconColor =
-          await removeAttachmentIcon.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            removeIconColor[0],
-            ExpectedMessages.removeAttachmentIconIsHighlighted,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+        await sendMessageInputAttachmentsAssertions.assertElementColor(
+          removeAttachmentIcon,
+          expectedColor,
+        );
 
         await removeAttachmentIcon.click();
-        await expect
-          .soft(
-            sendMessageInputAttachments.inputAttachment(initAttachedFiles[0]),
-            ExpectedMessages.fileIsNotAttached,
-          )
-          .toBeHidden();
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          initAttachedFiles[0],
+          'hidden',
+        );
       },
     );
   },

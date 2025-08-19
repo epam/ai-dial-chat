@@ -43,6 +43,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
@@ -149,7 +150,7 @@ export const useAgentMenuItems = ({
           !!entity.sharedWithMe &&
           isApplicationsSharingEnabled &&
           disabledActions.unshare !== true,
-        Icon: IconUserShare,
+        Icon: IconUserUnshare,
         onClick: handleOpenUnshare,
       },
       {

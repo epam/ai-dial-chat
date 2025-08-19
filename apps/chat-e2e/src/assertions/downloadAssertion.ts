@@ -1,7 +1,7 @@
-import { LatestExportFormat } from '@/chat/types/import-export';
 import { Attachment, ExpectedMessages } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { FileUtil } from '@/src/utils';
+import { LatestExportFormat } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import path from 'path';
 

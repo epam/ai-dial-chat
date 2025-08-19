@@ -46,6 +46,7 @@ vi.mock('@/src/store/selectors', () => ({
   },
   SettingsSelectors: {
     isFeatureEnabled: vi.fn(),
+    selectFeatureData: vi.fn(),
   },
 }));
 

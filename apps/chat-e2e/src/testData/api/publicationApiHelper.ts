@@ -65,7 +65,7 @@ export class PublicationApiHelper extends BaseApiHelper {
 
   public async listPublishedApps() {
     const response = await this.request.get(
-      this.getHost(API.publishedApplicationsHost),
+      this.getHost(API.publishedApplicationsHost()),
     );
     const statusCode = response.status();
     expect(

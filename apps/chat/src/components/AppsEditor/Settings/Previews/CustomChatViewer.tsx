@@ -2,6 +2,8 @@ import { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { isPlaybackConversation } from '@/src/utils/app/conversation';
+
 import { Conversation } from '@/src/types/chat';
 
 import { ConversationsActions, ModelsActions } from '@/src/store/actions';
@@ -37,14 +39,23 @@ export const CustomChatViewer: React.FC<Props> = ({
     return router.pathname === Routes.AppsEditorSettings;
   }, [router.pathname]);
 
+  const isPlayback = conversation && isPlaybackConversation(conversation);
+
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${customViewerUrl}?authProvider=${providerId}&conversationId=${encodeURIComponent(conversation?.id ?? '')}&id=${encodeURIComponent(id)}&theme=${theme}`;
+      const authProviderQuery = providerId ? `authProvider=${providerId}` : '';
+      const conversationIdQuery = conversation?.id
+        ? `&conversationId=${encodeURIComponent(conversation.id)}`
+        : '';
+      const idQuery = id ? `&id=${encodeURIComponent(id)}` : '';
+      const themeQuery = theme ? `&theme=${theme}` : '';
+      const playbackQuery = isPlayback ? '&playback=true' : '';
+      const iframeUrl = `${customViewerUrl}?${authProviderQuery}${conversationIdQuery}${idQuery}${themeQuery}${playbackQuery}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
     }
-  }, [customViewerUrl, id, providerId, theme, conversation?.id]);
+  }, [customViewerUrl, id, providerId, theme, conversation?.id, isPlayback]);
 
   const onMessage = useCallback(
     (event: MessageEvent<VisualizerConnectorRequest>) => {

@@ -247,7 +247,7 @@ export const UserMessage = memo(function UserMessage({
         f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
           ? ApiUtils.decodeApiUrl(f.id).replace(new RegExp('^metadata/'), '') +
             '/'
-          : f.id,
+          : ApiUtils.decodeApiUrl(f.id),
       ),
     [newEditableAttachments],
   );
