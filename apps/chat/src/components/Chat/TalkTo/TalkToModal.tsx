@@ -216,6 +216,7 @@ const TalkToModalView = ({
 
     return orderedModels;
   }, [
+    searchedModels,
     sortedModels,
     isPlayback,
     isReplay,
@@ -224,7 +225,6 @@ const TalkToModalView = ({
     isMyWorkspace,
     searchTerm.length,
     widgetsSchemaIds,
-    searchedModels,
     t,
   ]);
 

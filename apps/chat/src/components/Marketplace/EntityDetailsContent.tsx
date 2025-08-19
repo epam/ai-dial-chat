@@ -1,7 +1,8 @@
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { getModelDescription } from '@/src/utils/app/application';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { AuthSelectors } from '@/src/store/selectors';
+import { Translation } from '@/src/types/translation';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
@@ -12,8 +13,7 @@ interface Props {
 }
 
 export function EntityDetailsContent({ entity }: Props) {
-  const userName = useAppSelector(AuthSelectors.selectUserName);
-
+  const { t } = useTranslation(Translation.Marketplace);
   return (
     <div
       className="divide-y divide-tertiary overflow-auto"
@@ -34,7 +34,7 @@ export function EntityDetailsContent({ entity }: Props) {
       >
         <EntityInfo
           entityInfo={{
-            author: entity?.author ? entity.author : userName,
+            author: entity?.author ? entity.author : t('Unknown'),
             createdAt: entity?.createdAt,
           }}
         />

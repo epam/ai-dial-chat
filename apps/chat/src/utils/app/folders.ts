@@ -22,7 +22,11 @@ import { ConversationsActions, UIActions } from '@/src/store/actions';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import {
+  addTrailingSlashIfAbsent,
+  doesHaveDotsInTheEnd,
+  prepareEntityName,
+} from './common';
 import { isRootEntity } from './id';
 import { hasWritePermission } from './share';
 import { isReplayConversation, splitEntityId } from './shared-utils';
@@ -686,7 +690,7 @@ export const getPartialAndFullyChosenFolders = (
   selectedEmptyFolderIds: string[] = [],
 ) => {
   const fullyChosenFolderIds = folders
-    .map((folder) => `${folder.id}/`)
+    .map((folder) => addTrailingSlashIfAbsent(folder.id))
     .filter(
       (folderId) =>
         items.some((item) => item.id.startsWith(folderId)) ||
@@ -699,11 +703,13 @@ export const getPartialAndFullyChosenFolders = (
           .every((item) => selectedItems.includes(item.id)) &&
         emptyFolderIds
           .filter((id) => id.startsWith(folderId))
-          .every((id) => selectedEmptyFolderIds.includes(`${id}/`)),
+          .every((id) =>
+            selectedEmptyFolderIds.includes(addTrailingSlashIfAbsent(id)),
+          ),
     );
 
   const partialChosenFolderIds = folders
-    .map((folder) => `${folder.id}/`)
+    .map((folder) => addTrailingSlashIfAbsent(folder.id))
     .filter(
       (folderId) =>
         !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&

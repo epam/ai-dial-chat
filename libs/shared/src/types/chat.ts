@@ -142,6 +142,12 @@ export interface FolderInterface extends ShareEntity {
   isPublicationFolder?: boolean;
 }
 
+export interface TemporaryFolderInterface
+  extends Omit<FolderInterface, 'type'> {
+  temporary: true;
+  type?: FeatureType;
+}
+
 export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
   isPlayback?: boolean;
@@ -162,6 +168,8 @@ export interface Playback {
   isPlayback?: boolean;
   messagesStack: Message[];
   activePlaybackIndex: number;
+  // Custom state for the viewer, can be used to store any additional data needed for the custom viewer
+  customViewState?: Record<string, any>;
 }
 
 export interface Conversation extends ShareEntity, ConversationInfo {
@@ -177,4 +185,6 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   assistantModelId?: string;
 
   isMessageStreaming?: boolean;
+  // Custom state for the viewer, can be used to store any additional data needed for the custom viewer
+  customViewState?: Record<string, any>;
 }

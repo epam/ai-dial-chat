@@ -313,6 +313,7 @@ dialTest(
     'Compare mode is closed on "x" button in chat2',
   async ({
     dialHomePage,
+    agentInfo,
     setTestIds,
     conversationData,
     dataInjector,
@@ -348,6 +349,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await agentInfo.waitForState();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await expect
@@ -1438,10 +1440,9 @@ dialTest(
     conversationToCompareAssertion,
     chat,
     localStorageManager,
-    setIssueIds,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-557');
-    setIssueIds('3436');
     let firstFolderConversation: FolderConversation;
     let secondFolderConversation: FolderConversation;
     const conversationName = GeneratorUtil.randomString(7);
@@ -1496,9 +1497,13 @@ dialTest(
     await dialTest.step(
       'Select folder conversation for comparison, send new request and verify response generated for both chats',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await compareConversation.selectCompareConversation(
           secondFolderConversation.conversations[0].name,
         );
+        await compare.waitForComparedConversationsLoaded();
         const requestsData = await chat.sendRequestInCompareMode(
           'repeat the same response',
           {
@@ -1506,18 +1511,16 @@ dialTest(
             leftEntity: secondFolderConversation.conversations[0].model.id,
           },
         );
-        expect
-          .soft(
-            requestsData.rightRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(firstFolderConversation.conversations[0].model.id);
-        expect
-          .soft(
-            requestsData.leftRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(secondFolderConversation.conversations[0].model.id);
+        baseAssertion.assertValue(
+          requestsData.rightRequest.model.id,
+          firstFolderConversation.conversations[0].model.id,
+          ExpectedMessages.requestModeIdIsValid,
+        );
+        baseAssertion.assertValue(
+          requestsData.leftRequest.model.id,
+          secondFolderConversation.conversations[0].model.id,
+          ExpectedMessages.requestModeIdIsValid,
+        );
       },
     );
   },
@@ -1695,13 +1698,17 @@ dialTest(
     await dialTest.step(
       'Edit left chat title and verify it is updated in the header',
       async () => {
-        const newLeftChatName = GeneratorUtil.randomString(7);
+        const newLeftChatName = GeneratorUtil.randomConversationName();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModalAssertion.assertElementAttribute(
           renameConversationModal.nameInput,
           Attributes.value,
           firstConversation.name,
+        );
+        await renameConversationModalAssertion.assertElementActionabilityState(
+          renameConversationModal.saveButton,
+          'disabled',
         );
         await renameConversationModalAssertion.assertElementTextIsSelected(
           renameConversationModal.nameInput,

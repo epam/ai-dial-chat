@@ -14,6 +14,7 @@ export const openFoldersInitialState = {
   [FeatureType.Prompt]: [],
   [FeatureType.File]: [],
   [FeatureType.Application]: [],
+  [FeatureType.Toolset]: [],
 };
 
 const initialState: UIState = {
@@ -45,6 +46,7 @@ export const uiSlice = createSlice({
     initFinish: (state) => {
       state.initialized = true;
     },
+    initTheme: (state) => state,
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },

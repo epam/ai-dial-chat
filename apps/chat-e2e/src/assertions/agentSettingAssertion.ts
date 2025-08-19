@@ -21,4 +21,12 @@ export class AgentSettingAssertion extends BaseAssertion {
       ExpectedMessages.systemPromptIsValid,
     );
   }
+
+  public async assertTemperature(expectedValue: string) {
+    await this.assertElementText(
+      this.agentSettings.getTemperatureSlider().slider,
+      expectedValue,
+      ExpectedMessages.temperatureIsValid,
+    );
+  }
 }

@@ -26,6 +26,11 @@ export class InputAttachments extends BaseElement {
       ),
     );
 
+  public inputAttachedFolder = (name: string) =>
+    this.inputAttachment(name).locator(
+      MessageInputSelectors.inputAttachedFolderName,
+    );
+
   public inputAttachmentErrorIcon = (name: string) =>
     this.inputAttachment(name).locator(
       `${Tags.svg}${ErrorLabelSelectors.fieldError}`,
