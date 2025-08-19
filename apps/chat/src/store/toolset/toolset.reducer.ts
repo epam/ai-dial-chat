@@ -16,6 +16,7 @@ const initialState: ToolsetState = {
 
   toolsetDetails: undefined,
   toolsetDetailsStatus: UploadStatus.UNINITIALIZED,
+  installedToolsets: [],
 };
 
 export const toolsetSlice = createSlice({
@@ -71,6 +72,8 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload;
+      state.toolsetsMap[payload.reference] = payload;
+      state.toolsetsMap[payload.id] = payload;
     },
     getToolsetDetailsFailed: (state) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
@@ -120,6 +123,14 @@ export const toolsetSlice = createSlice({
         [payload.newToolset.id]: payload.newToolset,
         [payload.newToolset.reference]: payload.newToolset,
       };
+    },
+    setToolsetDetails: (
+      state,
+      { payload }: PayloadAction<{ reference: string } | undefined>,
+    ) => {
+      state.toolsetDetails = payload
+        ? state.toolsetsMap[payload.reference]
+        : payload;
     },
   },
 });

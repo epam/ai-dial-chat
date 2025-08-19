@@ -41,6 +41,16 @@ const selectIsToolsetDetailsLoading = createSelector(
   (status) => status === UploadStatus.LOADING,
 );
 
+const selectInstalledToolsets = (state: RootState) =>
+  rootSelector(state).installedToolsets;
+
+const selectInstalledToolsetsReferences = createSelector(
+  [selectInstalledToolsets],
+  (installedToolsets) => {
+    return new Set(installedToolsets.map(({ reference }) => reference));
+  },
+);
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -51,4 +61,5 @@ export const ToolsetSelectors = {
   selectToolsetDetails,
   selectToolsetDetailsStatus,
   selectIsToolsetDetailsLoading,
+  selectInstalledToolsetsReferences,
 };
