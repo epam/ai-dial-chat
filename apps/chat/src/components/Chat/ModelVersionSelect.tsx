@@ -4,7 +4,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
@@ -25,17 +26,17 @@ const VersionPrefix = () => {
   );
 };
 
-interface ModelVersionSelectProps {
-  entities: DialAIEntityModel[];
-  currentEntity: DialAIEntity;
+interface EntityVersionSelectProps<T extends ToolsetModel | DialAIEntityModel> {
+  entities: T[];
+  currentEntity: T;
   className?: string;
   showVersionPrefix?: boolean;
   readonly?: boolean;
-  onSelect: (entity: DialAIEntityModel) => void;
+  onSelect: (entity: T) => void;
   triggerClassName?: string;
 }
 
-export const ModelVersionSelect = ({
+export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
   entities,
   currentEntity,
   className,
@@ -43,13 +44,15 @@ export const ModelVersionSelect = ({
   readonly = false,
   onSelect,
   triggerClassName,
-}: ModelVersionSelectProps) => {
+}: EntityVersionSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onChangeHandler = (entity: DialAIEntityModel) => {
+  const onChangeHandler = (entity: T) => {
     onSelect(entity);
     setIsOpen(false);
   };
+
+  const getDisplayValue = (entity: T) => entity.version || entity.id;
 
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
@@ -94,7 +97,7 @@ export const ModelVersionSelect = ({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {currentEntity.version || currentEntity.id}
+            {getDisplayValue(currentEntity)}
           </span>
           <ChevronDownIcon
             className={classNames(
@@ -117,7 +120,7 @@ export const ModelVersionSelect = ({
           item={
             <div className="flex items-center gap-2">
               <ModelIcon entityId={entity.id} entity={entity} size={16} />
-              {entity.version || entity.id}
+              {getDisplayValue(entity)}
             </div>
           }
           disabled={readonly}
