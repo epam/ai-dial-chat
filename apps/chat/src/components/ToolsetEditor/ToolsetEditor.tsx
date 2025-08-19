@@ -3,6 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { EntityType } from '@/src/types/common';
 import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -46,8 +47,11 @@ export const ToolsetEditor = () => {
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
-      const payloadToolset = {
+      const payloadToolset: ToolsetModel = {
+        id: '',
         folderId: '',
+        reference: '',
+        type: EntityType.Toolset,
         ...(toolsetDetails && toolsetDetails),
         name: data.name,
         endpoint: data.endpoint,

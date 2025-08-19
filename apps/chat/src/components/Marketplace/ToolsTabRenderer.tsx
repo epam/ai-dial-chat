@@ -46,7 +46,7 @@ export function ToolsTabRenderer() {
       entities={allToolsets}
       suggestedResults={[]}
       selectedTab={selectedTab}
-      areAllFiltersEmpty={true}
+      areAllFiltersEmpty
       selectedViewType={selectedViewType}
       onCardClick={handleSetDetailsToolset}
       onBookmarkClick={handleBookmarkClick}
