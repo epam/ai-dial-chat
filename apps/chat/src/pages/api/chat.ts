@@ -153,6 +153,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         : undefined,
       configurationSchemaValue: configurationValue,
     });
+    res.setHeader('Transfer-Encoding', 'chunked');
+
     const reader = stream.getReader();
 
     let clientAborted = false;
