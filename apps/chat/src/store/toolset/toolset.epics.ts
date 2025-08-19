@@ -63,9 +63,9 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
           }).pipe(
             switchMap(({ toolset }) => {
               if (toolset && shouldUpdateQuery) {
-                router.push({
+                void router.push({
                   query: {
-                    [ToolsetEditorQuery.Id]: toolset.id,
+                    [ToolsetEditorQuery.Id]: toolset.reference,
                   },
                 });
               }
@@ -174,9 +174,9 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
           ).pipe(
             switchMap(() => {
               if (shouldUpdateQuery) {
-                router.push({
+                void router.push({
                   query: {
-                    [ToolsetEditorQuery.Id]: updatedToolset.id,
+                    [ToolsetEditorQuery.Id]: updatedToolset.reference,
                   },
                 });
               }

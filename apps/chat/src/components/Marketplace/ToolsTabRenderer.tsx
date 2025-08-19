@@ -1,15 +1,12 @@
-import { useCallback } from 'react';
+import { ResultsView, ResultsViewProps } from './TabResults';
+import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
 
-import { ToolsetModel } from '@/src/types/toolsets';
-
+import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
-
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-
-import { ResultsView, ResultsViewProps } from './TabResults';
-import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
+import { ToolsetModel } from '@/src/types/toolsets';
+import { useCallback } from 'react';
 
 const ToolsetResultsView = ResultsView as React.ComponentType<
   ResultsViewProps<ToolsetModel>

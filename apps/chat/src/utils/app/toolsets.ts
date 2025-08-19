@@ -16,10 +16,10 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     transport: data.transport,
     allowedTools: data.allowed_tools,
     id,
-    reference: data.reference ?? id,
     folderId: getFolderIdFromEntityId(id),
     version: data.display_version,
     name: data.display_name,
+    reference: data.reference ?? id,
     type: EntityType.Toolset,
 
     description: data.description ?? '',

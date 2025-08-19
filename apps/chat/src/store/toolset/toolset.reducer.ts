@@ -33,6 +33,8 @@ export const toolsetSlice = createSlice({
     getToolsetsSuccess: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
       state.toolsetsMap = payload.reduce<ToolsetsMap>((acc, toolset) => {
         acc[toolset.id] = toolset;
+        acc[toolset.reference] = toolset;
+
         return acc;
       }, {});
       state.toolsetsStatus = UploadStatus.LOADED;
@@ -42,6 +44,8 @@ export const toolsetSlice = createSlice({
         ...state.toolsetsMap,
         ...payload.reduce<ToolsetsMap>((acc, toolset) => {
           acc[toolset.id] = toolset;
+          acc[toolset.reference] = toolset;
+
           return acc;
         }, {}),
       };
@@ -74,6 +78,10 @@ export const toolsetSlice = createSlice({
     getToolsetDetailsFailed: (state) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
       state.toolsetDetails = undefined;
+    },
+    clearToolsetDetails: (state) => {
+      state.toolsetDetails = undefined;
+      state.toolsetDetailsStatus = UploadStatus.UNINITIALIZED;
     },
 
     updateToolset: (
@@ -113,6 +121,7 @@ export const toolsetSlice = createSlice({
       state.toolsetsMap = {
         ...omit(state.toolsetsMap, [payload.oldToolset.id]),
         [payload.newToolset.id]: payload.newToolset,
+        [payload.newToolset.reference]: payload.newToolset,
       };
     },
     setToolsetDetails: (
