@@ -26,6 +26,7 @@ enum OverlayCases {
   customMessageButtons = '/cases/overlay/custom-message-buttons',
   editLastAssistantMessage = '/cases/overlay/edit-last-assistant-message',
   disabledDefaultButtons = '/cases/overlay/disabled-default-buttons',
+  featuresData = '/cases/overlay/features-data',
 }
 
 export default async function Index() {

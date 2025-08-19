@@ -567,6 +567,7 @@ dialTest(
     selectFolderModal,
     baseAssertion,
     selectFolders,
+    selectFoldersAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246');
@@ -622,14 +623,31 @@ dialTest(
           ExpectedConstants.notAllowedDuplicatedFolderNameErrorMessage,
           ExpectedMessages.errorMessageContentIsValid,
         );
-        await expect
-          .soft(
-            selectFolders.getFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(3),
-            ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(3) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create new folder, set name with leading dot and verify error message is shown, folder edit mode is closed',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.renameEmptyFolderWithTick(
+          `.${GeneratorUtil.randomString(5)}`,
+        );
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.leadingDotErrorToast,
+          ExpectedMessages.errorMessageContentIsValid,
+        );
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(4) },
+          'visible',
+        );
       },
     );
   },

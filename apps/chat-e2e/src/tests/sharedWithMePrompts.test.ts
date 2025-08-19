@@ -124,7 +124,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserSharedWithMePrompts
           .getDropdownMenu()
-          .selectMenuOption(MenuOptions.delete);
+          .selectMenuOption(MenuOptions.unshare);
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });

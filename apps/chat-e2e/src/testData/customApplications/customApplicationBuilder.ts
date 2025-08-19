@@ -18,7 +18,7 @@ export class CustomApplicationBuilder {
     this.customApplication = {
       display_name: GeneratorUtil.randomString(7),
       display_version: ExpectedConstants.defaultAppVersion,
-      endpoint: 'http://test.example.com',
+      endpoint: ExpectedConstants.appDefaultCompletionUrl,
       icon_url: '',
       description: '',
       input_attachment_types: [],
