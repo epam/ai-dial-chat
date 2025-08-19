@@ -209,6 +209,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserAppContainer,
     additionalShareUserChatAssertion,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalUserItemApiHelper,
@@ -271,10 +272,14 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMeConversations.selectEntity(
           firstComparedConversation.name,
+          { isHttpMethodTriggered: true },
         );
         await additionalShareUserSharedWithMeConversations
           .selectedEntity(firstComparedConversation.name)
           .waitFor();
+        await additionalShareUserAppContainer
+          .getChatLoader()
+          .waitForState({ state: 'hidden' });
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           firstComparedConversation.name,
         );
@@ -305,6 +310,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserCompareConversation.selectCompareConversation(
           secondComparedConversation.name,
+          { isHttpMethodTriggered: true },
         );
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
         await additionalShareUserCompare.duplicateButton.waitForState();
@@ -325,6 +331,9 @@ dialSharedWithMeTest(
             conversation.name,
           );
         }
+        await additionalShareUserAppContainer
+          .getChatLoader()
+          .waitForState({ state: 'hidden' });
       },
     );
 

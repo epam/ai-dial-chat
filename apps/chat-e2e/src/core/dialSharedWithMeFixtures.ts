@@ -62,6 +62,7 @@ import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageIn
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
+import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
 import {
   ConversationsTree,
   FolderPrompts,
@@ -142,6 +143,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAgentSettingAssertion: AgentSettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserToastAssertion: ToastAssertion;
+  additionalShareUserChatSettingsTooltip: ChatSettingsTooltip;
   additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
   additionalShareUserDownloadAssertion: DownloadAssertion;
   additionalShareUserChatAssertion: ChatAssertion;
@@ -216,6 +218,15 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserToast,
     );
     await use(additionalShareUserToastAssertion);
+  },
+  additionalShareUserChatSettingsTooltip: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserChatSettingsTooltip = new ChatSettingsTooltip(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserChatSettingsTooltip);
   },
   additionalShareUserFileApiHelper: async (
     { additionalShareUserRequestContext },

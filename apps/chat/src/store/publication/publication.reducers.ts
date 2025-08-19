@@ -51,6 +51,7 @@ const initialState: PublicationState = {
     [FeatureType.Prompt]: false,
     [FeatureType.File]: false,
     [FeatureType.Application]: false,
+    [FeatureType.Toolset]: false,
   },
   selectedItemsToPublish: [],
   isApplicationReview: false,
@@ -65,6 +66,7 @@ const initialState: PublicationState = {
   rulesOnEdit: [],
   isPublicationUpdating: false,
   displayAuthorEditState: '',
+  publishToUrl: '',
 };
 
 export const publicationSlice = createSlice({
@@ -445,12 +447,14 @@ export const publicationSlice = createSlice({
         };
         displayAuthor: string;
         rules: PublicationRule[];
+        publishToUrl: string;
       }>,
     ) => {
       state.entitiesEditState = payload.editState.entities;
       state.foldersEditState = payload.editState.folders;
       state.rulesOnEdit = payload.rules;
       state.displayAuthorEditState = payload.displayAuthor;
+      state.publishToUrl = payload.publishToUrl;
     },
     setEntityEditStateByReviewUrl: (
       state,
@@ -509,6 +513,9 @@ export const publicationSlice = createSlice({
     },
     setDisplayAuthorEditState: (state, { payload }: PayloadAction<string>) => {
       state.displayAuthorEditState = payload;
+    },
+    setPublishToUrl: (state, { payload }: PayloadAction<string>) => {
+      state.publishToUrl = payload;
     },
   },
 });

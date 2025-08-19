@@ -222,6 +222,7 @@ export interface TooltipOptions extends TooltipContainerOptions {
   triggerClassName?: string;
   contentClassName?: string;
   dataQa?: string;
+  asChild?: boolean;
 }
 
 export function Tooltip({
@@ -231,6 +232,7 @@ export function Tooltip({
   triggerClassName,
   contentClassName,
   dataQa,
+  asChild,
   ...tooltipProps
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
@@ -241,7 +243,11 @@ export function Tooltip({
     );
   return (
     <TooltipContainer {...tooltipProps}>
-      <TooltipTrigger className={triggerClassName} data-qa={dataQa}>
+      <TooltipTrigger
+        className={triggerClassName}
+        data-qa={dataQa}
+        asChild={asChild}
+      >
         {children}
       </TooltipTrigger>
       <TooltipContent

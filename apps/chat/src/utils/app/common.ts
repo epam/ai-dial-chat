@@ -356,3 +356,6 @@ export const replaceStringRange = (
 };
 
 export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
+
+export const addTrailingSlashIfAbsent = (id: string) =>
+  id.endsWith('/') ? id : `${id}/`;

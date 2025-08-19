@@ -15,7 +15,12 @@ import { constructPath } from '@/src/utils/app/shared-utils';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions, PromptsActions } from '@/src/store/actions';
+import {
+  ConversationsActions,
+  FoldersActions,
+  PromptsActions,
+} from '@/src/store/actions';
+import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -33,7 +38,7 @@ import { SelectFolderFooter } from './SelectFolder/SelectFolderFooter';
 import { SelectFolderHeader } from './SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from './SelectFolder/SelectFolderList';
 
-import { ShareEntity } from '@epam/ai-dial-shared';
+import { FolderInterface, ShareEntity } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ShareEntity;
@@ -64,23 +69,16 @@ export const MoveToDialog: React.FC<Props> = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  const myFilteredFolders = useAppSelector((state) =>
-    selectors.selectMyFoldersWithSearchTerm(state, searchQuery),
+  const myFolders = useAppSelector(selectors.selectMyFolders);
+  const tempFolders = useAppSelector(FoldersSelectors.selectTemporaryFolders);
+  const newAddedTemporaryFolderId = useAppSelector(
+    FoldersSelectors.selectNewAddedTemporaryFolderId,
   );
-  const myFolders = useAppSelector(selectors.selectFolders);
-  const tempFilteredFolders = useAppSelector((state) =>
-    selectors.selectTemporaryFoldersWithSearchTerm(state, searchQuery),
-  );
-  const tempFolders = useAppSelector(selectors.selectTemporaryFolders);
-  const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
 
   const rootFolderId = getRootId({ featureType });
-  const filteredFolders = useMemo(
-    () => [...myFilteredFolders, ...tempFilteredFolders],
-    [myFilteredFolders, tempFilteredFolders],
-  );
+
   const folders = useMemo(
-    () => [...myFolders, ...tempFolders],
+    () => [...myFolders, ...tempFolders] as FolderInterface[],
     [myFolders, tempFolders],
   );
 
@@ -138,7 +136,9 @@ export const MoveToDialog: React.FC<Props> = ({
         return;
       }
 
-      dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
+      dispatch(
+        FoldersActions.renameTemporaryFolder({ folderId, name: newName }),
+      );
       setOpenedFoldersIds(
         updateChildAndCurrentFoldersIds(
           openedFoldersIds,
@@ -147,18 +147,18 @@ export const MoveToDialog: React.FC<Props> = ({
         ),
       );
     },
-    [folders, dispatch, actions, openedFoldersIds, t],
+    [folders, dispatch, openedFoldersIds, t],
   );
 
   const handleDeleteFolder = useCallback(
     (folderId: string) => {
       dispatch(
-        actions.deleteTemporaryFolder({
+        FoldersActions.deleteTemporaryFolder({
           folderId,
         }),
       );
     },
-    [actions, dispatch],
+    [dispatch],
   );
 
   const handleAddFolder = useCallback(
@@ -175,7 +175,8 @@ export const MoveToDialog: React.FC<Props> = ({
       setSelectedFolderId(id);
 
       dispatch(
-        actions.createTemporaryFolder({
+        FoldersActions.createTemporaryFolder({
+          type: featureType,
           folderId: parentFolderId,
           name: folderName,
           id,
@@ -186,13 +187,12 @@ export const MoveToDialog: React.FC<Props> = ({
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
       }
     },
-    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t],
+    [dispatch, folders, rootFolderId, openedFoldersIds, t, featureType],
   );
 
   const clearState = useCallback(() => {
-    dispatch(actions.clearTemporaryFolders());
-    dispatch(actions.resetNewFolderId());
-  }, [actions, dispatch]);
+    dispatch(FoldersActions.clearTemporaryFolders());
+  }, [dispatch]);
 
   const handleSelect = useCallback(() => {
     if (selectedFolderId) {
@@ -204,9 +204,9 @@ export const MoveToDialog: React.FC<Props> = ({
 
       dispatch(
         actions.addFolders({
-          folders: selectedTempFolders.map((folder) => ({
+          folders: selectedTempFolders.map(({ temporary: _, ...folder }) => ({
             ...folder,
-            temporary: false,
+            type: featureType,
           })),
         }),
       );
@@ -218,6 +218,7 @@ export const MoveToDialog: React.FC<Props> = ({
     actions,
     clearState,
     dispatch,
+    featureType,
     onSelect,
     rootFolderId,
     selectedFolderId,
@@ -244,10 +245,10 @@ export const MoveToDialog: React.FC<Props> = ({
         <SelectFolderList
           disableSectionToggle
           searchTerm={searchQuery}
-          allFolders={filteredFolders}
+          allFolders={folders}
           isInitialRenameEnabled
           openedFoldersIds={openedFoldersIds}
-          newAddedFolderId={newFolderId}
+          newAddedFolderId={newAddedTemporaryFolderId}
           onClickFolder={handleFolderSelect}
           onRenameFolder={handleRenameFolder}
           onDeleteFolder={handleDeleteFolder}

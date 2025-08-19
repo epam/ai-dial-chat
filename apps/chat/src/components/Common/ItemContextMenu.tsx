@@ -38,6 +38,7 @@ import { ContextMenu } from './ContextMenu';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface ItemContextMenuProps {
@@ -56,6 +57,7 @@ interface ItemContextMenuProps {
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
   onShare?: MouseEventHandler<unknown>;
+  onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
@@ -86,6 +88,7 @@ export function ItemContextMenu({
   onPlayback,
   onOpenMoveToModal,
   onShare,
+  onUnshare,
   onPublish,
   onUnpublish,
   onOpenChange,
@@ -246,6 +249,14 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display: !!entity.sharedWithMe,
+        Icon: IconUserUnshare,
+        onClick: onUnshare,
+        disabled: disableAll,
+      },
+      {
         name: t('Publish'),
         dataQa: 'publish',
         display:
@@ -277,40 +288,41 @@ export function ItemContextMenu({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isExternal || !!entity.sharedWithMe,
+        display: !isExternal,
         Icon: IconTrashX,
         onClick: onDelete,
       },
     ],
     [
-      disableAll,
+      t,
+      onUse,
       disableUse,
-      entity,
-      featureType,
-      isEmptyConversation,
+      onView,
       isExternal,
-      isFormSchemaConversation,
-      isNameInvalid,
-      isPublishingEnabled,
+      onSelect,
+      featureType,
       isApproveRequiredEntity,
-      isSharingEnabled,
+      entity,
+      onRename,
+      disableAll,
+      isNameInvalid,
       onCompare,
-      onDelete,
+      isFormSchemaConversation,
+      isEmptyConversation,
       onDuplicate,
+      onReplay,
+      onPlayback,
       onExport,
       onOpenExportModal,
       onOpenMoveToModal,
-      onPlayback,
-      onPublish,
-      onRename,
-      onReplay,
-      onSelect,
+      isSharingEnabled,
       onShare,
-      onShowInfo,
+      onUnshare,
+      isPublishingEnabled,
+      onPublish,
       onUnpublish,
-      onUse,
-      onView,
-      t,
+      onShowInfo,
+      onDelete,
     ],
   );
 

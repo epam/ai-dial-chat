@@ -11,6 +11,7 @@ export {
   PublishActions,
 } from '@epam/ai-dial-shared';
 export type {
+  FeatureData,
   ChatOverlayOptions,
   MessageButtonPlacement as MessageButtonType,
   MessageButton,

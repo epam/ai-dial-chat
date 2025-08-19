@@ -176,11 +176,10 @@ dialTest(
           actualDescriptionElement,
           shortDescription(` ${expectedRgbColor}`, ` ${expectedTarget}`),
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3988
-        // await marketplaceAgentsAssertion.assertElementText(
-        //   actualVersionElement,
-        //   SortingUtil.sortVersionsArray([appFirstVersion, appSecondVersion])[0],
-        // );
+        await marketplaceAgentsAssertion.assertElementText(
+          actualVersionElement,
+          appSecondVersion,
+        );
       },
     );
 

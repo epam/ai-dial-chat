@@ -1,4 +1,4 @@
-import { ToolsetModel } from '@/src/types/toolsets';
+import { InstalledToolset, ToolsetModel } from '@/src/types/toolsets';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -9,4 +9,6 @@ export interface ToolsetState {
 
   toolsetDetails?: ToolsetModel;
   toolsetDetailsStatus: UploadStatus;
+
+  installedToolsets: InstalledToolset[];
 }
