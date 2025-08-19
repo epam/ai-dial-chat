@@ -1,9 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
-import { ToolsetActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { ResultsView, ResultsViewProps } from './TabResults';
@@ -12,22 +11,23 @@ const ToolsetResultsView = ResultsView as React.ComponentType<
   ResultsViewProps<ToolsetModel>
 >;
 
+// TODO: uncomment after adding detailed view components
 export function ToolsTabRenderer() {
-  const dispatch = useAppDispatch();
+  // const dispatch = useAppDispatch();
 
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
-  const detailsToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+  // const detailsToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
   );
 
-  const [suggestedResults, setSuggestedResults] = useState<ToolsetModel[]>([]);
+  // const [suggestedResults, setSuggestedResults] = useState<ToolsetModel[]>([]);
 
   const handleSetDetailsToolset = useCallback(
-    (toolset: { reference: string }) => {
+    (_toolset: { reference: string }) => {
       // dispatch(
       //   ToolsetActions.setDetailsToolset({
       //     reference: toolset.reference,
@@ -37,9 +37,11 @@ export function ToolsTabRenderer() {
       //   }),
       // );
     },
-    [dispatch, suggestedResults],
+    [],
   );
-  const handleBookmarkClick = useCallback((entity: ToolsetModel) => {}, []);
+  const handleBookmarkClick = useCallback((_entity: ToolsetModel) => {
+    // TODO: add handler logic
+  }, []);
 
   return (
     <ToolsetResultsView
