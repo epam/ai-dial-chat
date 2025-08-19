@@ -1,13 +1,5 @@
-import { useMemo } from 'react';
-
-import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/router';
-
 import { ModalState } from '@/src/types/modal';
 import { ToolsetModel } from '@/src/types/toolsets';
-
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
 
