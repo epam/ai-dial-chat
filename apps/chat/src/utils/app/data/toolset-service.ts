@@ -1,10 +1,11 @@
 import { Observable, catchError, map, of } from 'rxjs';
 
 import { convertToolsetFromApi } from '@/src/utils/app/toolsets';
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
 
 import { HTTPMethod } from '@/src/types/http';
-import { ToolsetAuthPayload, ToolsetModel } from '@/src/types/toolsets';
+import { ServerSlugs } from '@/src/types/slugs-types';
+import { ToolsetAuthPayload, ToolsetAuthPayloadBase, ToolsetModel } from '@/src/types/toolsets';
 
 import { Toolset } from '@epam/ai-dial-shared';
 
@@ -43,6 +44,16 @@ export class ToolsetService {
   }
 
   public static signIn(data: ToolsetAuthPayload): Observable<void> {
-    // TODO: implement ops call
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.TOOLSET_SIGN_IN), {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+
+  public static signOut(data: ToolsetAuthPayloadBase): Observable<void> {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.TOOLSET_SIGN_OUT), {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
   }
 }

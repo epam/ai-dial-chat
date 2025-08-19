@@ -32,7 +32,7 @@ export enum ToolsetCredentialsLevel {
   APP = 'APP',
 }
 
-interface ToolsetAuthPayloadBase {
+export interface ToolsetAuthPayloadBase {
   url: string;
   credentials_level: ToolsetCredentialsLevel;
   authentication_type: ToolsetAuthTypes;
@@ -41,7 +41,6 @@ interface ToolsetAuthPayloadBase {
 interface ToolsetOAuthPayload extends ToolsetAuthPayloadBase {
   code: string;
 }
-
 interface ToolsetApiKeyPayload extends ToolsetAuthPayloadBase {
   api_key: string;
 }
