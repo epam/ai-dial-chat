@@ -6,6 +6,7 @@ import { HTTPMethod } from '@/src/types/http';
 import { InstalledModel } from '@/src/types/models';
 
 import {
+  BOOKMARKED_TOOLSETS,
   CLIENTDATA_PATH,
   INSTALLED_DEPLOYMENTS,
 } from '@/src/constants/client-data';
@@ -88,5 +89,13 @@ export class ClientDataService {
 
   public static getInstalledDeployments() {
     return this.getData<InstalledModel[]>(INSTALLED_DEPLOYMENTS);
+  }
+
+  public static saveBookmarkedToolsets(bookmarkedToolsets: string[]) {
+    return this.saveData<string[]>(BOOKMARKED_TOOLSETS, bookmarkedToolsets);
+  }
+
+  public static getBookmarkedToolsets() {
+    return this.getData<string[]>(BOOKMARKED_TOOLSETS);
   }
 }

@@ -21,8 +21,3 @@ export enum ToolsetEditorSteps {
   General = 'General info',
   Settings = 'Toolset settings',
 }
-
-export interface InstalledToolset {
-  reference: string;
-  pinned?: boolean;
-}

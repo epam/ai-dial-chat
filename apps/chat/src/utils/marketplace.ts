@@ -68,3 +68,8 @@ export const doesApplicationMatchFilters = (
 export const getApplicationLink = (entity: DialAIEntityModel) => {
   return `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`;
 };
+
+export const isInstalledEntity = (
+  entity: { reference: string },
+  installedEntitiesSet: Set<string>,
+) => installedEntitiesSet.has(entity.reference);

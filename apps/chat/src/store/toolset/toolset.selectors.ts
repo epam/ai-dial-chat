@@ -41,13 +41,13 @@ const selectIsToolsetDetailsLoading = createSelector(
   (status) => status === UploadStatus.LOADING,
 );
 
-const selectInstalledToolsets = (state: RootState) =>
-  rootSelector(state).installedToolsets;
+const selectBookmarkedToolsets = (state: RootState) =>
+  rootSelector(state).bookmarkedToolsets;
 
-const selectInstalledToolsetsReferences = createSelector(
-  [selectInstalledToolsets],
-  (installedToolsets) => {
-    return new Set(installedToolsets.map(({ reference }) => reference));
+const selectBookmarkedToolsetsSet = createSelector(
+  [selectBookmarkedToolsets],
+  (bookmarkedToolsets) => {
+    return new Set(bookmarkedToolsets);
   },
 );
 
@@ -61,5 +61,6 @@ export const ToolsetSelectors = {
   selectToolsetDetails,
   selectToolsetDetailsStatus,
   selectIsToolsetDetailsLoading,
-  selectInstalledToolsetsReferences,
+  selectBookmarkedToolsets,
+  selectBookmarkedToolsetsSet,
 };

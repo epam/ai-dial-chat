@@ -3,7 +3,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { doesApplicationMatchFilters } from '@/src/utils/marketplace';
+import {
+  doesApplicationMatchFilters,
+  isInstalledEntity,
+} from '@/src/utils/marketplace';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -87,7 +90,7 @@ export function AgentsTabRenderer() {
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>
-      installedModelIds.has(entity.reference);
+      isInstalledEntity(entity, installedModelIds);
 
     const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_WORKSPACE
