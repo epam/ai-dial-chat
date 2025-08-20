@@ -158,7 +158,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const reader = stream.getReader();
 
     let clientAborted = false;
-    req.on('aborted', () => {
+    res.on('close', () => {
       clientAborted = true;
       reader.cancel();
     });
@@ -167,8 +167,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       try {
         // eslint-disable-next-line no-constant-condition
         while (true) {
+          if (clientAborted) {
+            break;
+          }
+
           const { value, done } = await reader.read();
-          if (done || clientAborted) {
+
+          if (done) {
             break;
           }
           res.write(value);
