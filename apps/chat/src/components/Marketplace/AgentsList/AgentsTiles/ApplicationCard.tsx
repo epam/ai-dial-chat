@@ -165,7 +165,7 @@ export const ApplicationCard = memo(
                     !isMyEntity && !entity.version && '!mr-12',
                   )}
                 >
-                  <span className="truncate" data-qa="agent-name">
+                  <span className="truncate" data-qa="entity-name">
                     {entity.name}
                   </span>
                   {isAgentsTab && (
