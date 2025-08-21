@@ -24,6 +24,8 @@ import { Routes } from '@/src/constants/routes';
 
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
+import { capitalize } from 'lodash';
+
 enum TabKeys {
   GENERAL = 'general',
   SETTINGS = 'settings',
@@ -169,9 +171,7 @@ export const AppsEditorHeader = ({
 
   const getMobileLabelText = useCallback(
     (tabKey: TabKeys) => {
-      const capitalizedAppType =
-        applicationTypeDisplayName.charAt(0).toUpperCase() +
-        applicationTypeDisplayName.slice(1);
+      const capitalizedAppType = capitalize(applicationTypeDisplayName);
       let labelText = tabKeysInfo[tabKey].label.toUpperCase();
       if (tabKey === TabKeys.SETTINGS) {
         labelText = labelText.replace(/^app\s+/i, '');
