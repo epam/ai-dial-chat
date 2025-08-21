@@ -11,5 +11,5 @@ export interface ToolsetState {
   toolsetDetailsStatus: UploadStatus;
 
   bookmarkedToolsets: string[];
-  isBookmarkedToolsetInitialized: boolean;
+  isBookmarkedToolsetsInitialized: boolean;
 }
