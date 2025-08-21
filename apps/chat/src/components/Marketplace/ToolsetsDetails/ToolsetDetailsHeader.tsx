@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { isMyEntity } from '@/src/utils/app/shared-utils';
 
@@ -36,16 +36,21 @@ export function ToolsetDetailsHeader({ entity, isPreview }: Props) {
     SettingsSelectors.isFeatureEnabled(state, Feature.ToolsetsSharing),
   );
 
+  const shareAction = useMemo(
+    () => ({
+      isEnabled: isToolsetSharingEnabled,
+      onShare: handleOpenSharing,
+    }),
+    [handleOpenSharing, isToolsetSharingEnabled],
+  );
+
   return (
     <EntityHeader<ToolsetModel>
       entity={entity}
       featureType={FeatureType.Toolset}
       isMyEntity={isMyToolset}
       isPreview={isPreview}
-      shareAction={{
-        isEnabled: isToolsetSharingEnabled,
-        onShare: handleOpenSharing,
-      }}
+      shareAction={shareAction}
       //TODO add ToolsetCopyLink and ToolsetStatusIndicator
       //   copyLinkAction={{
       //     isPublic: isPublicApp,

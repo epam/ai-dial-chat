@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getModelDescription } from '@/src/utils/app/application';
@@ -14,6 +16,15 @@ interface Props {
 
 export function EntityDetailsContent({ entity }: Props) {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const entityInfo = useMemo(
+    () => ({
+      author: entity?.author ? entity.author : t('Unknown'),
+      createdAt: entity?.createdAt,
+    }),
+    [entity.author, entity?.createdAt, t],
+  );
+
   return (
     <div
       className="divide-y divide-tertiary overflow-auto"
@@ -32,12 +43,7 @@ export function EntityDetailsContent({ entity }: Props) {
         className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6"
         data-qa="application-information"
       >
-        <EntityInfo
-          entityInfo={{
-            author: entity?.author ? entity.author : t('Unknown'),
-            createdAt: entity?.createdAt,
-          }}
-        />
+        <EntityInfo entityInfo={entityInfo} />
       </section>
     </div>
   );

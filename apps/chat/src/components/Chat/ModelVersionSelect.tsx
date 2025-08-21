@@ -26,6 +26,10 @@ const VersionPrefix = () => {
   );
 };
 
+const getDisplayValue = <T extends ToolsetModel | DialAIEntityModel>(
+  entity: T,
+) => entity.version || entity.id;
+
 interface EntityVersionSelectProps<T extends ToolsetModel | DialAIEntityModel> {
   entities: T[];
   currentEntity: T;
@@ -47,12 +51,10 @@ export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
 }: EntityVersionSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onChangeHandler = (entity: T) => {
+  const handleChange = (entity: T) => {
     onSelect(entity);
     setIsOpen(false);
   };
-
-  const getDisplayValue = (entity: T) => entity.version || entity.id;
 
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
@@ -127,7 +129,7 @@ export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
           value={entity.id}
           onClick={(e) => {
             e.stopPropagation();
-            onChangeHandler(entity);
+            handleChange(entity);
           }}
           data-model-versions
           data-qa="model-version-option"

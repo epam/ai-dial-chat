@@ -37,7 +37,7 @@ export function TabHeader({ isBannerVisible, className }: HeaderProps) {
 
   const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
-  const onSelectTab = useCallback(
+  const handleSelectTab = useCallback(
     (tabId: MarketplaceEntitiesTabs) => {
       dispatch(MarketplaceActions.setSelectedEntitiesTab(tabId));
     },
@@ -75,7 +75,7 @@ export function TabHeader({ isBannerVisible, className }: HeaderProps) {
           <div className="flex gap-3">
             <span
               onClick={() => {
-                onSelectTab(MarketplaceEntitiesTabs.AGENTS);
+                handleSelectTab(MarketplaceEntitiesTabs.AGENTS);
               }}
               className={classNames(
                 'cursor-pointer rounded border border-transparent bg-accent-primary-alpha px-3 py-2.5 hover:bg-layer-4',
@@ -86,7 +86,7 @@ export function TabHeader({ isBannerVisible, className }: HeaderProps) {
             </span>
             <span
               onClick={() => {
-                onSelectTab(MarketplaceEntitiesTabs.TOOLSETS);
+                handleSelectTab(MarketplaceEntitiesTabs.TOOLSETS);
               }}
               className={classNames(
                 'cursor-pointer rounded border border-transparent bg-accent-primary-alpha px-3 py-2.5 hover:bg-layer-4',
