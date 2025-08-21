@@ -44,10 +44,10 @@ const selectIsToolsetDetailsLoading = createSelector(
 const selectInstalledToolsets = (state: RootState) =>
   rootSelector(state).installedToolsets;
 
-const selectInstalledToolsetsReferences = createSelector(
+const selectInstalledToolsetsSet = createSelector(
   [selectInstalledToolsets],
   (installedToolsets) => {
-    return new Set(installedToolsets.map(({ reference }) => reference));
+    return new Set(installedToolsets);
   },
 );
 
@@ -61,5 +61,6 @@ export const ToolsetSelectors = {
   selectToolsetDetails,
   selectToolsetDetailsStatus,
   selectIsToolsetDetailsLoading,
-  selectInstalledToolsetsReferences,
+  selectInstalledToolsets,
+  selectInstalledToolsetsSet,
 };

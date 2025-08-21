@@ -1,4 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
+import { useFuseSearch } from '@/src/hooks/useFuseSearch';
+
+import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
@@ -6,7 +10,12 @@ import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
-import { MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  MarketplaceTabs,
+  ViewTypes,
+} from '@/src/constants/marketplace';
+import { TOOLSETS_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { ResultsView, ResultsViewProps } from './TabResults';
 import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
@@ -22,13 +31,78 @@ export function ToolsTabRenderer() {
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const selectedToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+  const installedToolsetsSet = useAppSelector(
+    ToolsetSelectors.selectInstalledToolsetsSet,
+  );
 
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
   );
 
-  // TODO implement suggestedResults
-  // const [suggestedResults, setSuggestedResults] = useState<ToolsetModel[]>([]);
+  const searchTerm = useAppSelector(
+    MarketplaceSelectors.selectTrimmedSearchTerm,
+  );
+
+  const [suggestedResults, setSuggestedResults] = useState<ToolsetModel[]>([]);
+
+  //TODO add filters
+  const isSomeFilterNotEmpty = searchTerm.length;
+
+  const searchedToolsets = useFuseSearch(
+    allToolsets,
+    searchTerm,
+    TOOLSETS_SEARCH_OPTIONS,
+  );
+
+  const displayedToolsets = useMemo(() => {
+    //TODO add filters
+    const filteredToolsets = searchedToolsets;
+    const isInstalledToolset = (entity: ToolsetModel) =>
+      isInstalledEntity(entity, installedToolsetsSet);
+
+    const entitiesForTab =
+      selectedTab === MarketplaceTabs.MY_WORKSPACE
+        ? filteredToolsets.filter(isInstalledToolset)
+        : filteredToolsets;
+
+    const shouldSuggest =
+      selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
+
+    if (selectedViewType === ViewTypes.TABLE) {
+      if (shouldSuggest) {
+        const suggestedListWithoutBookmarked = filteredToolsets.filter(
+          (toolset) => !isInstalledToolset(toolset),
+        );
+
+        setSuggestedResults(suggestedListWithoutBookmarked);
+      } else {
+        setSuggestedResults([]);
+      }
+      return entitiesForTab;
+    }
+
+    let toolsetsToDisplay = entitiesForTab.concat(
+      shouldSuggest ? filteredToolsets : [],
+    );
+
+    if (shouldSuggest) {
+      const suggestedListWithoutInstalled = toolsetsToDisplay.filter(
+        (toolset) => !isInstalledToolset(toolset),
+      );
+      toolsetsToDisplay = toolsetsToDisplay.filter(isInstalledToolset);
+      setSuggestedResults(suggestedListWithoutInstalled);
+    } else {
+      setSuggestedResults([]);
+    }
+
+    return toolsetsToDisplay;
+  }, [
+    installedToolsetsSet,
+    isSomeFilterNotEmpty,
+    searchedToolsets,
+    selectedTab,
+    selectedViewType,
+  ]);
 
   const handleSetDetailsToolset = useCallback(
     (toolset: { reference: string }) => {
@@ -41,10 +115,26 @@ export function ToolsTabRenderer() {
     [dispatch],
   );
 
-  const handleBookmarkClick = useCallback(() => {
-    // (entity: ToolsetModel) => {
-    //TODO implement onBookmarkClick
-  }, []);
+  const handleBookmarkClick = useCallback(
+    (toolset: ToolsetModel) => {
+      if (installedToolsetsSet.has(toolset.reference)) {
+        dispatch(
+          ToolsetActions.removeInstalledToolsets({
+            references: [toolset.reference],
+            action: DeleteType.REMOVE,
+          }),
+        );
+      } else {
+        dispatch(
+          ToolsetActions.addInstalledToolsets({
+            references: [toolset.reference],
+            showSuccessToast: true,
+          }),
+        );
+      }
+    },
+    [installedToolsetsSet, dispatch],
+  );
 
   const handleSetVersion = useCallback(
     (toolset: ToolsetModel) => {
@@ -67,8 +157,8 @@ export function ToolsTabRenderer() {
   return (
     <>
       <ToolsetResultsView
-        entities={allToolsets}
-        suggestedResults={[]}
+        entities={displayedToolsets}
+        suggestedResults={suggestedResults}
         selectedTab={selectedTab}
         areAllFiltersEmpty
         selectedViewType={selectedViewType}

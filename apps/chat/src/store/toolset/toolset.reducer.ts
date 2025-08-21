@@ -4,6 +4,8 @@ import { ToolsetModel } from '@/src/types/toolsets';
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
 
+import { DeleteType } from '@/src/constants/marketplace';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 
@@ -17,6 +19,7 @@ const initialState: ToolsetState = {
   toolsetDetails: undefined,
   toolsetDetailsStatus: UploadStatus.UNINITIALIZED,
   installedToolsets: [],
+  isInstalledToolsetsInitialized: false,
 };
 
 export const toolsetSlice = createSlice({
@@ -32,7 +35,6 @@ export const toolsetSlice = createSlice({
     },
     getToolsetsSuccess: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
       state.toolsetsMap = payload.reduce<ToolsetsMap>((acc, toolset) => {
-        acc[toolset.id] = toolset;
         acc[toolset.reference] = toolset;
 
         return acc;
@@ -43,7 +45,6 @@ export const toolsetSlice = createSlice({
       state.toolsetsMap = {
         ...state.toolsetsMap,
         ...payload.reduce<ToolsetsMap>((acc, toolset) => {
-          acc[toolset.id] = toolset;
           acc[toolset.reference] = toolset;
 
           return acc;
@@ -73,7 +74,6 @@ export const toolsetSlice = createSlice({
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload;
       state.toolsetsMap[payload.reference] = payload;
-      state.toolsetsMap[payload.id] = payload;
     },
     getToolsetDetailsFailed: (state) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
@@ -119,8 +119,7 @@ export const toolsetSlice = createSlice({
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload.newToolset;
       state.toolsetsMap = {
-        ...omit(state.toolsetsMap, [payload.oldToolset.id]),
-        [payload.newToolset.id]: payload.newToolset,
+        ...omit(state.toolsetsMap, [payload.oldToolset.reference]),
         [payload.newToolset.reference]: payload.newToolset,
       };
     },
@@ -132,6 +131,34 @@ export const toolsetSlice = createSlice({
         ? state.toolsetsMap[payload.reference]
         : payload;
     },
+    getInstalledToolsets: (state) => state,
+    getInstalledToolsetsFail: (state, _action: PayloadAction<string[]>) =>
+      state,
+    getInstalledToolsetsSuccess: (
+      state,
+      { payload }: PayloadAction<string[]>,
+    ) => {
+      state.installedToolsets = payload;
+      state.isInstalledToolsetsInitialized = true;
+    },
+    addInstalledToolsets: (
+      state,
+      _action: PayloadAction<{
+        references: string[];
+        showSuccessToast?: boolean;
+      }>,
+    ) => state,
+    removeInstalledToolsets: (
+      state,
+      _action: PayloadAction<{ references: string[]; action: DeleteType }>,
+    ) => state,
+    updateInstalledToolsetsSuccess: (
+      state,
+      { payload }: PayloadAction<{ installedToolsets: string[] }>,
+    ) => {
+      state.installedToolsets = payload.installedToolsets;
+    },
+    updateInstalledToolsetsFail: (state) => state,
   },
 });
 
