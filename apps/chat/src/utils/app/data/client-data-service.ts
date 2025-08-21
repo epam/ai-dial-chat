@@ -6,9 +6,9 @@ import { HTTPMethod } from '@/src/types/http';
 import { InstalledModel } from '@/src/types/models';
 
 import {
-  BOOKMARKED_TOOLSETS,
   CLIENTDATA_PATH,
   INSTALLED_DEPLOYMENTS,
+  INSTALLED_TOOLSETS,
 } from '@/src/constants/client-data';
 
 import { constructPath } from '../file';
@@ -91,11 +91,11 @@ export class ClientDataService {
     return this.getData<InstalledModel[]>(INSTALLED_DEPLOYMENTS);
   }
 
-  public static saveBookmarkedToolsets(bookmarkedToolsets: string[]) {
-    return this.saveData<string[]>(BOOKMARKED_TOOLSETS, bookmarkedToolsets);
+  public static saveInstalledToolsets(installedToolsets: string[]) {
+    return this.saveData<string[]>(INSTALLED_TOOLSETS, installedToolsets);
   }
 
-  public static getBookmarkedToolsets() {
-    return this.getData<string[]>(BOOKMARKED_TOOLSETS);
+  public static getInstalledToolsets() {
+    return this.getData<string[]>(INSTALLED_TOOLSETS);
   }
 }

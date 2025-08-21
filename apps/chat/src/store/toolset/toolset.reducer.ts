@@ -18,8 +18,8 @@ const initialState: ToolsetState = {
 
   toolsetDetails: undefined,
   toolsetDetailsStatus: UploadStatus.UNINITIALIZED,
-  bookmarkedToolsets: [],
-  isBookmarkedToolsetInitialized: false,
+  installedToolsets: [],
+  isInstalledToolsetsInitialized: false,
 };
 
 export const toolsetSlice = createSlice({
@@ -131,34 +131,34 @@ export const toolsetSlice = createSlice({
         ? state.toolsetsMap[payload.reference]
         : payload;
     },
-    getBookmarkedToolsets: (state) => state,
-    getBookmarkedToolsetsFail: (state, _action: PayloadAction<string[]>) =>
+    getInstalledToolsets: (state) => state,
+    getInstalledToolsetsFail: (state, _action: PayloadAction<string[]>) =>
       state,
-    getBookmarkedToolsetsSuccess: (
+    getInstalledToolsetsSuccess: (
       state,
       { payload }: PayloadAction<string[]>,
     ) => {
-      state.bookmarkedToolsets = payload;
-      state.isBookmarkedToolsetInitialized = true;
+      state.installedToolsets = payload;
+      state.isInstalledToolsetsInitialized = true;
     },
-    addBookmarkedToolsets: (
+    addInstalledToolsets: (
       state,
       _action: PayloadAction<{
         references: string[];
         showSuccessToast?: boolean;
       }>,
     ) => state,
-    removeBookmarkedToolsets: (
+    removeInstalledToolsets: (
       state,
       _action: PayloadAction<{ references: string[]; action: DeleteType }>,
     ) => state,
-    updateBookmarkedToolsetsSuccess: (
+    updateInstalledToolsetsSuccess: (
       state,
-      { payload }: PayloadAction<{ bookmarkedToolsets: string[] }>,
+      { payload }: PayloadAction<{ installedToolsets: string[] }>,
     ) => {
-      state.bookmarkedToolsets = payload.bookmarkedToolsets;
+      state.installedToolsets = payload.installedToolsets;
     },
-    updateBookmarkedToolsetsFail: (state) => state,
+    updateInstalledToolsetsFail: (state) => state,
   },
 });
 

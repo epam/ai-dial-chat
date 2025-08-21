@@ -31,8 +31,8 @@ export function ToolsTabRenderer() {
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const selectedToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const bookmarkedToolsetsSet = useAppSelector(
-    ToolsetSelectors.selectBookmarkedToolsetsSet,
+  const installedToolsetsSet = useAppSelector(
+    ToolsetSelectors.selectInstalledToolsetsSet,
   );
 
   const selectedViewType = useAppSelector(
@@ -57,12 +57,12 @@ export function ToolsTabRenderer() {
   const displayedToolsets = useMemo(() => {
     //TODO add filters
     const filteredToolsets = searchedToolsets;
-    const isBookmarkedToolset = (entity: ToolsetModel) =>
-      isInstalledEntity(entity, bookmarkedToolsetsSet);
+    const isInstalledToolset = (entity: ToolsetModel) =>
+      isInstalledEntity(entity, installedToolsetsSet);
 
     const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_WORKSPACE
-        ? filteredToolsets.filter(isBookmarkedToolset)
+        ? filteredToolsets.filter(isInstalledToolset)
         : filteredToolsets;
 
     const shouldSuggest =
@@ -71,7 +71,7 @@ export function ToolsTabRenderer() {
     if (selectedViewType === ViewTypes.TABLE) {
       if (shouldSuggest) {
         const suggestedListWithoutBookmarked = filteredToolsets.filter(
-          (toolset) => !isBookmarkedToolset(toolset),
+          (toolset) => !isInstalledToolset(toolset),
         );
 
         setSuggestedResults(suggestedListWithoutBookmarked);
@@ -87,9 +87,9 @@ export function ToolsTabRenderer() {
 
     if (shouldSuggest) {
       const suggestedListWithoutInstalled = toolsetsToDisplay.filter(
-        (toolset) => !isBookmarkedToolset(toolset),
+        (toolset) => !isInstalledToolset(toolset),
       );
-      toolsetsToDisplay = toolsetsToDisplay.filter(isBookmarkedToolset);
+      toolsetsToDisplay = toolsetsToDisplay.filter(isInstalledToolset);
       setSuggestedResults(suggestedListWithoutInstalled);
     } else {
       setSuggestedResults([]);
@@ -97,7 +97,7 @@ export function ToolsTabRenderer() {
 
     return toolsetsToDisplay;
   }, [
-    bookmarkedToolsetsSet,
+    installedToolsetsSet,
     isSomeFilterNotEmpty,
     searchedToolsets,
     selectedTab,
@@ -117,23 +117,23 @@ export function ToolsTabRenderer() {
 
   const handleBookmarkClick = useCallback(
     (toolset: ToolsetModel) => {
-      if (bookmarkedToolsetsSet.has(toolset.reference)) {
+      if (installedToolsetsSet.has(toolset.reference)) {
         dispatch(
-          ToolsetActions.removeBookmarkedToolsets({
+          ToolsetActions.removeInstalledToolsets({
             references: [toolset.reference],
             action: DeleteType.REMOVE,
           }),
         );
       } else {
         dispatch(
-          ToolsetActions.addBookmarkedToolsets({
+          ToolsetActions.addInstalledToolsets({
             references: [toolset.reference],
             showSuccessToast: true,
           }),
         );
       }
     },
-    [bookmarkedToolsetsSet, dispatch],
+    [installedToolsetsSet, dispatch],
   );
 
   const handleSetVersion = useCallback(

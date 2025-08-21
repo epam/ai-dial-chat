@@ -10,6 +10,6 @@ export interface ToolsetState {
   toolsetDetails?: ToolsetModel;
   toolsetDetailsStatus: UploadStatus;
 
-  bookmarkedToolsets: string[];
-  isBookmarkedToolsetsInitialized: boolean;
+  installedToolsets: string[];
+  isInstalledToolsetsInitialized: boolean;
 }

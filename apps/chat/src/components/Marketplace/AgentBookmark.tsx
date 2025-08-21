@@ -48,8 +48,8 @@ export const AgentBookmark = <T extends DialAIEntityModel | ToolsetModel>({
     ModelsSelectors.selectInstalledModelIds,
   );
 
-  const bookmarkedToolsetsSet = useAppSelector(
-    ToolsetSelectors.selectBookmarkedToolsetsSet,
+  const installedToolsetsSet = useAppSelector(
+    ToolsetSelectors.selectInstalledToolsetsSet,
   );
 
   const isMyApp = isMyApplication(entity);
@@ -61,7 +61,7 @@ export const AgentBookmark = <T extends DialAIEntityModel | ToolsetModel>({
 
   const isBookmarked = isAgentsTab
     ? installedModelIds.has(entity.reference)
-    : bookmarkedToolsetsSet.has(entity.reference);
+    : installedToolsetsSet.has(entity.reference);
   const [Bookmark, tooltip, dataQa] = isBookmarked
     ? [IconBookmarkFilled, 'Remove from My workspace', 'remove-bookmark']
     : [IconBookmark, 'Add to My workspace', 'add-bookmark'];

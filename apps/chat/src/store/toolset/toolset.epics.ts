@@ -56,7 +56,7 @@ const getToolsetsEpic: AppEpic = (action$) =>
         switchMap(({ toolsets }) =>
           concat(
             of(ToolsetActions.getToolsetsSuccess(toolsets)),
-            of(ToolsetActions.getBookmarkedToolsets()),
+            of(ToolsetActions.getInstalledToolsets()),
           ),
         ),
         catchError((err) => {
@@ -98,7 +98,7 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                     of(ToolsetActions.setToolsets([toolset])),
                     of(ToolsetActions.getToolsetDetailsSuccess(toolset)),
                     of(
-                      ToolsetActions.addBookmarkedToolsets({
+                      ToolsetActions.addInstalledToolsets({
                         references: [toolset.reference],
                       }),
                     ),
@@ -241,9 +241,9 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
     }),
   );
 
-const getBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
+const getInstalledToolsetsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(ToolsetActions.getBookmarkedToolsets.type),
+    ofType(ToolsetActions.getInstalledToolsets.type),
     switchMap(() => {
       const allToolsets = ToolsetSelectors.selectToolsets(state$.value);
 
@@ -251,28 +251,28 @@ const getBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
         .filter((toolset) => isMyEntity(toolset) || toolset.sharedWithMe)
         .map((myToolset) => myToolset.reference);
 
-      return ClientDataService.getBookmarkedToolsets().pipe(
-        switchMap((bookmarkedToolsets) => {
-          if (!bookmarkedToolsets) {
+      return ClientDataService.getInstalledToolsets().pipe(
+        switchMap((installedToolsets) => {
+          if (!installedToolsets) {
             return of(
-              ToolsetActions.getBookmarkedToolsetsFail(myToolsetsReferences),
+              ToolsetActions.getInstalledToolsetsFail(myToolsetsReferences),
             );
           }
 
           const actions: Observable<AppAction>[] = [];
 
-          const bookmarkedToolsetsSet = new Set(bookmarkedToolsets);
+          const installedToolsetsSet = new Set(installedToolsets);
 
-          const references = [...bookmarkedToolsets, ...myToolsetsReferences];
+          const references = [...installedToolsets, ...myToolsetsReferences];
 
           const toolsetsToInstall = references.filter(
-            (reference) => !bookmarkedToolsetsSet.has(reference),
+            (reference) => !installedToolsetsSet.has(reference),
           );
 
           if (toolsetsToInstall.length) {
             actions.push(
               of(
-                ToolsetActions.addBookmarkedToolsets({
+                ToolsetActions.addInstalledToolsets({
                   references: toolsetsToInstall,
                 }),
               ),
@@ -280,7 +280,7 @@ const getBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
           }
 
           return concat(
-            of(ToolsetActions.getBookmarkedToolsetsSuccess(bookmarkedToolsets)),
+            of(ToolsetActions.getInstalledToolsetsSuccess(installedToolsets)),
             ...actions,
           );
         }),
@@ -288,7 +288,7 @@ const getBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
         catchError((error) => {
           if (error?.message && error?.message.endsWith('Not Found')) {
             return of(
-              ToolsetActions.getBookmarkedToolsetsFail(myToolsetsReferences),
+              ToolsetActions.getInstalledToolsetsFail(myToolsetsReferences),
             );
           }
 
@@ -298,36 +298,34 @@ const getBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const getBookmarkedToolsetsFailEpic: AppEpic = (action$) =>
+const getInstalledToolsetsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(ToolsetActions.getBookmarkedToolsetsFail.type),
+    ofType(ToolsetActions.getInstalledToolsetsFail.type),
     switchMap(({ payload: myToolsetsIds }) => {
       return of(
-        ToolsetActions.addBookmarkedToolsets({
+        ToolsetActions.addInstalledToolsets({
           references: myToolsetsIds,
         }),
       );
     }),
   );
 
-const removeFromBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
+const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(ToolsetActions.removeBookmarkedToolsets.type),
+    ofType(ToolsetActions.removeInstalledToolsets.type),
     switchMap(({ payload }) => {
       const stateValue = state$.value;
-      const bookmarkedToolsets =
-        ToolsetSelectors.selectBookmarkedToolsets(stateValue);
+      const installedToolsets =
+        ToolsetSelectors.selectInstalledToolsets(stateValue);
 
       //TODO change to check by 'public group keys' when toolsets publication will be ready
 
       const deletedToolsetsSet = new Set(payload.references);
-      const newBookmarkedToolsets = bookmarkedToolsets.filter(
+      const newInstalledToolsets = installedToolsets.filter(
         (toolset) => !deletedToolsetsSet.has(toolset),
       );
 
-      return ClientDataService.saveBookmarkedToolsets(
-        newBookmarkedToolsets,
-      ).pipe(
+      return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(
         switchMap(() => {
           const actions: Observable<AppAction>[] = [];
           if (payload.action === DeleteType.DELETE) {
@@ -344,41 +342,37 @@ const removeFromBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
           return concat(
             ...actions,
             of(
-              ToolsetActions.getBookmarkedToolsetsSuccess(
-                newBookmarkedToolsets,
-              ),
+              ToolsetActions.getInstalledToolsetsSuccess(newInstalledToolsets),
             ),
             of(
-              ToolsetActions.updateBookmarkedToolsetsSuccess({
-                bookmarkedToolsets: newBookmarkedToolsets,
+              ToolsetActions.updateInstalledToolsetsSuccess({
+                installedToolsets: newInstalledToolsets,
               }),
             ),
           );
         }),
         catchError((err) => {
           console.error(err);
-          return of(ToolsetActions.updateBookmarkedToolsetsFail());
+          return of(ToolsetActions.updateInstalledToolsetsFail());
         }),
       );
     }),
   );
 
-const addBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
+const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    ofType(ToolsetActions.addBookmarkedToolsets.type),
+    ofType(ToolsetActions.addInstalledToolsets.type),
     switchMap(({ payload }) => {
       const stateValue = state$.value;
-      const bookmarkedToolsets =
-        ToolsetSelectors.selectBookmarkedToolsets(stateValue);
+      const installedToolsets =
+        ToolsetSelectors.selectInstalledToolsets(stateValue);
 
-      const newBookmarkedToolsets = uniq([
-        ...bookmarkedToolsets,
+      const newInstalledToolsets = uniq([
+        ...installedToolsets,
         ...payload.references,
       ]);
 
-      return ClientDataService.saveBookmarkedToolsets(
-        newBookmarkedToolsets,
-      ).pipe(
+      return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(
         switchMap(() => {
           const actions: Observable<AppAction>[] = [];
 
@@ -397,13 +391,11 @@ const addBookmarkedToolsetsEpic: AppEpic = (action$, state$) =>
           return concat(
             ...actions,
             of(
-              ToolsetActions.getBookmarkedToolsetsSuccess(
-                newBookmarkedToolsets,
-              ),
+              ToolsetActions.getInstalledToolsetsSuccess(newInstalledToolsets),
             ),
             of(
-              ToolsetActions.updateBookmarkedToolsetsSuccess({
-                bookmarkedToolsets: newBookmarkedToolsets,
+              ToolsetActions.updateInstalledToolsetsSuccess({
+                installedToolsets: newInstalledToolsets,
               }),
             ),
           );
@@ -421,8 +413,8 @@ export const ToolsetEpics = combineEpics(
   updateToolsetEpic,
 
   //Bookmark
-  getBookmarkedToolsetsEpic,
-  getBookmarkedToolsetsFailEpic,
-  removeFromBookmarkedToolsetsEpic,
-  addBookmarkedToolsetsEpic,
+  getInstalledToolsetsEpic,
+  getInstalledToolsetsFailEpic,
+  removeFromInstalledToolsetsEpic,
+  addInstalledToolsetsEpic,
 );
