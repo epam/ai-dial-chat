@@ -61,9 +61,7 @@ interface EditorHeaderProps<T extends string> {
   isEditing?: boolean;
   saveLabel?: string;
   getMobileTabLabel?: (tab: T) => string;
-  renderTab?: (tab: EditorHeaderTab<T>) => React.ReactNode;
   onSave?: () => void;
-  renderSaveButton?: () => React.ReactNode;
 }
 
 export const EditorHeader = <T extends string>({
@@ -76,9 +74,7 @@ export const EditorHeader = <T extends string>({
   isEditing,
   saveLabel,
   getMobileTabLabel = (tab: T) => tab,
-  renderTab,
   onSave,
-  renderSaveButton,
 }: EditorHeaderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -171,28 +167,23 @@ export const EditorHeader = <T extends string>({
               const isDisabled = tab.disabled;
               return (
                 <div key={tab.key} className="flex items-center">
-                  {renderTab ? (
-                    renderTab(tab)
-                  ) : (
-                    <div
-                      className={classNames(
-                        'flex items-center gap-2 rounded px-2 py-1.5',
-                        isDisabled
-                          ? 'cursor-default text-secondary'
-                          : 'cursor-pointer text-primary hover:bg-accent-primary-alpha',
-                      )}
-                      onClick={() => onTabClick(tab)}
-                    >
-                      {getTabIcon(tab.key, activeTab, isEditing, isDisabled)}
+                  <div
+                    tabIndex={isDisabled ? -1 : undefined}
+                    data-qa="single-step-link"
+                    className={classNames(
+                      'flex items-center gap-2 rounded px-2 py-1.5',
+                      isDisabled
+                        ? 'cursor-default text-secondary'
+                        : 'cursor-pointer text-primary hover:bg-accent-primary-alpha',
+                    )}
+                    onClick={() => onTabClick(tab)}
+                  >
+                    {getTabIcon(tab.key, activeTab, isEditing, isDisabled)}
 
-                      <span
-                        className="grow truncate"
-                        data-qa="single-step-title"
-                      >
-                        {tab.label}
-                      </span>
-                    </div>
-                  )}
+                    <span className="grow truncate" data-qa="single-step-title">
+                      {tab.label}
+                    </span>
+                  </div>
                   {index < tabs.length - 1 && (
                     <div
                       className="mx-2 h-0.5 w-5"
@@ -210,18 +201,14 @@ export const EditorHeader = <T extends string>({
         </div>
 
         <div className="flex h-full items-center space-x-2 pr-3 md:pr-5 xl:pr-0">
-          {renderSaveButton ? (
-            renderSaveButton()
-          ) : (
-            <button
-              className="button flex items-center space-x-1 text-accent-primary max-xl:p-0 md:flex"
-              onClick={onSave}
-              data-qa="save-and-exit"
-            >
-              <IconLogout size={14} />
-              <span>{t(saveLabel ?? 'Save and exit')}</span>
-            </button>
-          )}
+          <button
+            className="button flex items-center space-x-1 text-accent-primary max-xl:p-0 md:flex"
+            onClick={onSave}
+            data-qa="save-and-exit"
+          >
+            <IconLogout size={14} />
+            <span>{t(saveLabel ?? 'Save and exit')}</span>
+          </button>
           <div className="h-full max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
             <User />
           </div>

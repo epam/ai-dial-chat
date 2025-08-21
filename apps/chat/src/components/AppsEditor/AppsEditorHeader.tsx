@@ -201,6 +201,7 @@ export const AppsEditorHeader = ({
       title={title}
       saveLabel={saveLabel}
       onSave={handleSaveAndRedirect}
+      dataQa="app-editor-header"
     />
   );
 };
