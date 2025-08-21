@@ -227,6 +227,7 @@ export const OpenAIStream = async ({
     },
     cancel() {
       if (isFinished) return;
+      console.log('cancel');
       isFinished = true;
 
       try {
