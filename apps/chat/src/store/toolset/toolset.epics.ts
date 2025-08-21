@@ -353,7 +353,13 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ToolsetActions.updateInstalledToolsetsFail());
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                `Failed to remove toolset${payload.references.length > 1 ? 's' : ''} from my workspace`,
+              ),
+            ),
+          );
         }),
       );
     }),
@@ -397,6 +403,16 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
               ToolsetActions.updateInstalledToolsetsSuccess({
                 installedToolsets: newInstalledToolsets,
               }),
+            ),
+          );
+        }),
+        catchError((error) => {
+          console.error(error);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                `Failed to add toolset${payload.references.length > 1 ? 's' : ''} to my workspace`,
+              ),
             ),
           );
         }),
