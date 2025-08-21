@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { DialAIEntityModel } from '@/src/types/models';
@@ -13,12 +15,14 @@ interface Props {
 
 export const ApplicationDetailsContent = ({ entity }: Props) => {
   const userName = useAppSelector(AuthSelectors.selectUserName);
-  return (
-    <EntityDetailsContent
-      entity={{
-        ...entity,
-        author: !isMyApplication(entity) ? entity?.owner : userName,
-      }}
-    />
+
+  const content = useMemo(
+    () => ({
+      ...entity,
+      author: !isMyApplication(entity) ? entity?.owner : userName,
+    }),
+    [entity, userName],
   );
+
+  return <EntityDetailsContent entity={content} />;
 };

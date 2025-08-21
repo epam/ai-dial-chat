@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
-
+import { ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -27,7 +27,8 @@ export function AddMarketplaceEntityButton({
 }: AddMarketplaceEntityButtonProps) {
   const { t } = useTranslation(Translation.Marketplace);
   const [isOpen, setIsOpen] = useState(false);
-  const isScreenSmall = isSmallScreen();
+  const screenState = useScreenState();
+  const isScreenSmall = screenState === ScreenState.SM;
 
   const visibleActions = useMemo(() => {
     return menuItems.filter((item) => item.display);

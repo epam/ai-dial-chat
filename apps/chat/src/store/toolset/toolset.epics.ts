@@ -59,6 +59,12 @@ const getToolsetsEpic: AppEpic = (action$) =>
             of(ToolsetActions.getBookmarkedToolsets()),
           ),
         ),
+        catchError((err) => {
+          console.error('Failed to get toolsets: ', err);
+          return of(
+            UIActions.showErrorToast(translate('Failed to get toolsets')),
+          );
+        }),
       ),
     ),
   );
@@ -98,6 +104,16 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                     ),
                   )
                 : of(ToolsetActions.createToolsetFailed());
+            }),
+            catchError((err) => {
+              console.error('Failed to get toolset: ', err);
+              return of(
+                UIActions.showErrorToast(
+                  translate('Failed to get toolset: {{entity}}', {
+                    entity: path,
+                  }),
+                ),
+              );
             }),
           ),
         ),

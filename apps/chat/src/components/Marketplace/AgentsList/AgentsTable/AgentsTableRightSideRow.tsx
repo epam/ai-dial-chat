@@ -6,6 +6,8 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
+
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -131,10 +133,10 @@ export const AgentsTableRightSideRow: React.FC<
               entity={entity}
               allocatePlace
             />
-            {isAgentsTab && (
+            {isAgentsTab && isDialAiEntityModel(entity) && (
               <AgentContextMenu
                 className={isHovered ? 'xl:visible' : 'xl:invisible'}
-                entity={entity as DialAIEntityModel}
+                entity={entity}
               />
             )}
           </div>
