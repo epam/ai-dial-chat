@@ -169,9 +169,7 @@
   },
   "overrides": {
     "esbuild": "0.25.8",
-    "patch-package": {
-      "tmp": "^0.2.5"
-    }
+    "tmp": "0.2.5"
   },
   "engines": {
     "node": ">=22.2.0",
