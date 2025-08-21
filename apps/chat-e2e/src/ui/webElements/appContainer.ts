@@ -2,9 +2,9 @@ import { Header } from './header';
 
 import { Banner } from '@/src/ui/webElements/banner';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
-import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
+import { FileDropArea } from '@/src/ui/webElements/fileDropArea';
 import { Footer } from '@/src/ui/webElements/footer';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
@@ -12,7 +12,7 @@ import { Toast } from '@/src/ui/webElements/toast';
 
 export class AppContainer extends BaseLayoutContainer<Header> {
   private banner!: Banner;
-  private chat!: Chat;
+  private fileDropArea!: FileDropArea;
   private chatBar!: ChatBar;
   private promptBar!: PromptBar;
   private chatLoader!: ChatLoader;
@@ -34,11 +34,11 @@ export class AppContainer extends BaseLayoutContainer<Header> {
     return this.banner;
   }
 
-  getChat(): Chat {
-    if (!this.chat) {
-      this.chat = new Chat(this.page, this.rootLocator);
+  getFileDropArea(): FileDropArea {
+    if (!this.fileDropArea) {
+      this.fileDropArea = new FileDropArea(this.page, this.rootLocator);
     }
-    return this.chat;
+    return this.fileDropArea;
   }
 
   getChatBar(): ChatBar {

@@ -1,9 +1,12 @@
 import config from '../../../config/chat.playwright.config';
 import { keys } from '../keyboard';
 
+import { BackendDataEntity } from '@/chat/types/common';
 import { API, Attachment, Import } from '@/src/testData';
-import { BucketUtil } from '@/src/utils';
-import { Page } from '@playwright/test';
+import { BaseElement } from '@/src/ui/webElements';
+import { BucketUtil, FileUtil } from '@/src/utils';
+import { Locator, Page } from '@playwright/test';
+import { fileTypeFromFile } from 'file-type';
 import * as fs from 'node:fs';
 import path from 'path';
 import { CDPSession, Download } from 'playwright-chromium';
@@ -18,6 +21,18 @@ export interface ExpectedApiResponse {
   urlPattern?: string | RegExp;
   status?: number;
 }
+
+export interface FileMetadata {
+  name: string;
+  mimeType: string;
+  buffer: string;
+}
+
+export type DropImplementation = (
+  fileMetadata: FileMetadata,
+  targetLocator: BaseElement | Locator,
+  onDropPropName: string,
+) => Promise<void>;
 
 export const apiTimeout = 35000;
 export const responseThrottlingTimeout = 2500;
@@ -309,19 +324,223 @@ export class BasePage {
     await this.page.keyboard.press(keys.ctrlPlusC);
   }
 
-  public async pasteFromClipboard() {
+  public async pasteFromClipboard(options?: {
+    triggeredApiResponse: ExpectedApiResponse;
+  }) {
+    if (options?.triggeredApiResponse) {
+      const expectedStatus = options.triggeredApiResponse.status ?? 200;
+      const respPromise = this.page.waitForResponse((response) => {
+        const expectedMethod = options.triggeredApiResponse?.apiMethod;
+        const methodMatch = expectedMethod
+          ? response.request().method() === expectedMethod
+          : true;
+        const statusMatch = response.status() === expectedStatus;
+        const urlPattern = options.triggeredApiResponse?.urlPattern;
+        const responseUrl = response.url();
+        const urlMatch = urlPattern
+          ? urlPattern instanceof RegExp
+            ? urlPattern.test(responseUrl)
+            : responseUrl.includes(urlPattern)
+          : true;
+        return methodMatch && statusMatch && urlMatch;
+      });
+      await this.page.keyboard.press(keys.ctrlPlusV);
+      const response = await respPromise;
+      return response.json();
+    }
     await this.page.keyboard.press(keys.ctrlPlusV);
   }
 
-  public async copyToClipboard(text: string) {
+  public async copyTextToClipboard(text: string) {
     await this.page.evaluate(
       (text) => navigator.clipboard.writeText(text),
       text,
     );
   }
 
-  public async readFromClipboard() {
+  //For security reasons, browsers strictly control which data types a script can programmatically write to the clipboard
+  //Chrome standardized on image/png as the only universally reliable and safely supported format
+  //The Clipboard API has no standard mechanism to include metadata like filenames when copying binary content
+  //This is why pasted images get generic names like "image.png"
+  public async copyFileToClipboard(filename: string): Promise<void> {
+    try {
+      const fileToCopy = await this.getAttachmentFileMetadata(filename);
+
+      // Throw error if not PNG
+      if (fileToCopy.mimeType !== 'image/png') {
+        throw new Error(
+          `Only PNG images are supported. Detected type: ${fileToCopy}`,
+        );
+      }
+
+      // Copy PNG to clipboard
+      await this.page.evaluate(async (fileToCopy) => {
+        const response = await fetch(
+          `data:${fileToCopy.mimeType};base64,${fileToCopy.buffer}`,
+        );
+        const blob = await response.blob();
+
+        // use the newly created blob with the Clipboard API
+        await navigator.clipboard.write([
+          new ClipboardItem({ [fileToCopy.mimeType]: blob }),
+        ]);
+      }, fileToCopy);
+    } catch (error) {
+      console.error(`Error copying file to clipboard: ${filename}`, error);
+      throw error;
+    }
+  }
+
+  //To bypass browser's engine limitation, simulate a "paste" event into a web page element
+  public async triggerPasteFileEvent(
+    filename: string,
+    options?: {
+      pasteToElement?: Locator | BaseElement;
+      isHttpMethodTriggered?: boolean;
+    },
+  ) {
+    const {
+      pasteToElement,
+      isHttpMethodTriggered = true,
+    } = options || {};
+    // 1. Focus on element that support 'paste' event
+    if (pasteToElement) {
+      // eslint-disable-next-line playwright/no-force-option
+      await pasteToElement.click({ force: true });
+    }
+
+    // 2. Read the file and prepare the data payload.
+    const fileToPaste = await this.getAttachmentFileMetadata(filename);
+
+    let respPromise;
+    if (isHttpMethodTriggered) {
+      respPromise = this.page.waitForResponse((response) => {
+        return (
+          response.url().includes(API.fileHost()) &&
+          response.request().method() === 'POST' &&
+          response.status() === 200
+        );
+      });
+    }
+
+    // 3. Create a DataTransfer object in the browser context and dispatch a 'paste' event
+    await this.page.evaluate(async (file) => {
+      // Create the DataTransfer object, which is the container for clipboard data
+      const dt = new DataTransfer();
+
+      // Convert the base64 string back to a Blob, then create a File object
+      const response = await fetch(
+        `data:${file.mimeType};base64,${file.buffer}`,
+      );
+      const blob = await response.blob();
+      const newFile = new File([blob], file.name, { type: file.mimeType });
+
+      // Add the file to the DataTransfer object
+      dt.items.add(newFile);
+
+      // Create the 'paste' event, attaching the DataTransfer object to the clipboardData property
+      const pasteEvent = new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        clipboardData: dt,
+      });
+
+      // Dispatch the event onto the currently focused element
+      document.activeElement?.dispatchEvent(pasteEvent);
+    }, fileToPaste);
+
+    if (isHttpMethodTriggered) {
+      const resolvedResp = await respPromise;
+      const responseBody = await resolvedResp?.json();
+      return responseBody as BackendDataEntity;
+    }
+  }
+
+  public async readTextFromClipboard() {
     return this.page.evaluate(() => navigator.clipboard.readText());
+  }
+
+  /**
+   * Executes a component's 'onDrop' prop by passing a highly realistic mock event object.
+   *
+   * @param fileMetadata The file metadata to upload
+   * @param targetLocator The locator for the DOM element of the React component
+   * @param onDropPropName The name of the prop that handles the file drop (e.g., 'onDrop')
+   */
+  public async executeReactOnDrop(
+    fileMetadata: FileMetadata,
+    targetLocator: BaseElement | Locator,
+    onDropPropName: string,
+  ) {
+    // const fileToUpload = await this.getAttachmentFile(filename);
+    targetLocator =
+      targetLocator instanceof BaseElement
+        ? targetLocator.getElementLocator()
+        : (targetLocator as Locator);
+
+    // This is a surgical strike directly into the application's logic
+    await targetLocator.evaluate(
+      async (element, { file, propName }) => {
+        // Step 1: Create a File object inside the browser.
+        // Create an array of files, which matches the `files: File[]` signature of the handleUpload function
+        const response = await fetch(
+          `data:${file.mimeType};base64,${file.buffer}`,
+        );
+        const blob = await response.blob();
+        const filesArray = [
+          new File([blob], file.name, { type: file.mimeType }),
+        ];
+
+        // Step 2: Create a highly realistic DataTransfer object
+        const dataTransfer = {
+          files: filesArray,
+          items: filesArray.map((f) => ({
+            kind: 'file',
+            type: f.type,
+            getAsFile: () => f,
+            // The function that was missing, now mocked.
+            webkitGetAsEntry: () => ({
+              isFile: true,
+              isDirectory: false,
+              name: f.name,
+              file: (callback: (f: File) => void) => callback(f),
+            }),
+          })),
+          types: ['Files'],
+        };
+
+        // Step 3: Create the MOCK event object with the methods the library needs
+        const mockEvent = {
+          preventDefault: () => void 0,
+          stopPropagation: () => void 0,
+          dataTransfer: dataTransfer,
+        };
+
+        // Step 4: Find the React component's props on its DOM element
+        const propsKey = Object.keys(element).find((key) =>
+          key.startsWith('__reactProps$'),
+        );
+        if (!propsKey) {
+          throw new Error(
+            'Could not find React props on the target element. Is this a React component?',
+          );
+        }
+
+        // Step 5: Access the onDrop function from the props
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const onDropFunction = (element as any)[propsKey][propName];
+        if (typeof onDropFunction !== 'function') {
+          throw new Error(
+            `Prop "${propName}" is not a function on the component's props.`,
+          );
+        }
+
+        // Step 6: Call the function with the fully mocked event
+        onDropFunction(mockEvent);
+      },
+      { file: fileMetadata, propName: onDropPropName },
+    );
   }
 
   public async mockChatImageResponse(
@@ -402,5 +621,18 @@ export class BasePage {
     }
     await action();
     return await Promise.all(responsePromises);
+  }
+
+  public async getAttachmentFileMetadata(
+    filename: string,
+  ): Promise<FileMetadata> {
+    const resolvedPath = path.join(Attachment.attachmentPath, filename);
+    const buffer = FileUtil.readPlainFileData(resolvedPath);
+    const fileTypeResult = await fileTypeFromFile(resolvedPath);
+    return {
+      name: filename,
+      mimeType: fileTypeResult?.mime || 'application/octet-stream',
+      buffer: buffer.toString('base64'),
+    };
   }
 }

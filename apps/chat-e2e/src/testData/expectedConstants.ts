@@ -277,6 +277,14 @@ export const ExpectedConstants = {
   promptEditConfirmationDialogTitle: 'Unsaved changes',
   promptEditConfirmationDialogMessage:
     'There are unsaved changes. Do you want to save them before closing?',
+  fileUploadFolder: 'uploads',
+  fileUploadedToastMessage: (fileFolder: string) =>
+    `The file has been uploaded successfully to "${ExpectedConstants.fileUploadFolder}/${fileFolder}"`,
+  replacedRestrictedCharsName: (restrictedCharsName: string) =>
+    restrictedCharsName.replace(
+      new RegExp(`[${ExpectedConstants.restrictedNameChars}]`, 'g'),
+      '_',
+    ),
 };
 
 export enum Types {
@@ -457,6 +465,7 @@ export const Attachment = {
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
   flowerImageName: 'flower.jpg',
+  fileToCopyName: 'image.png',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
   specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
   textName: 'text.txt',
@@ -469,6 +478,7 @@ export const Attachment = {
   dotExtensionImageName: 'testdot..JPg',
   restrictedSemicolonCharFilename: 'restricted;char.jpg',
   restrictedEqualCharFilename: 'restricted=char.jpg',
+  restrictedCharsFilename: 'restricted=,;{}%&.JPG',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',

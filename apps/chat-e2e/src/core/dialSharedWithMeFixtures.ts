@@ -12,6 +12,7 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
+  FileDropArea,
   InformationModal,
   Marketplace,
   MarketplaceAgents,
@@ -91,6 +92,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
   additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
   additionalShareUserSharedFolderPrompts: FolderPrompts;
+  additionalShareUserFileDropArea: FileDropArea;
   additionalShareUserChat: Chat;
   additionalShareUserConversationSettingsModal: ConversationSettingsModal;
   additionalShareUserAgentSettings: AgentSettings;
@@ -364,8 +366,16 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPromptBar.getSharedFolderPrompts();
     await use(additionalShareUserSharedFolderPrompts);
   },
-  additionalShareUserChat: async ({ additionalShareUserAppContainer }, use) => {
-    const additionalShareUserChat = additionalShareUserAppContainer.getChat();
+  additionalShareUserFileDropArea: async (
+    { additionalShareUserAppContainer },
+    use,
+  ) => {
+    const additionalShareUserFileDropArea =
+      additionalShareUserAppContainer.getFileDropArea();
+    await use(additionalShareUserFileDropArea);
+  },
+  additionalShareUserChat: async ({ additionalShareUserFileDropArea }, use) => {
+    const additionalShareUserChat = additionalShareUserFileDropArea.getChat();
     await use(additionalShareUserChat);
   },
   additionalShareUserConversations: async (
