@@ -12,7 +12,7 @@ export const MarketplaceSelectors = {
 
 export const MarketplaceAgentSelectors = {
   agent: '[data-qa="agent"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',

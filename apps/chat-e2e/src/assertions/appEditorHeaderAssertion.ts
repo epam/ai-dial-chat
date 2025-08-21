@@ -1,10 +1,8 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import {
-  ElementActionabilityState,
-  ElementState,
-  ExpectedMessages,
-} from '@/src/testData';
+import { ElementState, ExpectedMessages } from '@/src/testData';
+import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { AppEditorHeader, BaseElement } from '@/src/ui/webElements';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 export class AppEditorHeaderAssertion extends BaseAssertion {
   readonly appEditorHeader: AppEditorHeader;
@@ -16,14 +14,14 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
 
   /**
    * Asserts the visibility and enabled state of a specific step link.
-   * @param stepTitle The title of the step (e.g., "General info").
+   * @param step The title of the step (e.g., "General info").
    * @param expectedState The expected visibility state ('visible' or 'hidden').
-   * @param expectedActionability The expected actionability state ('enabled' or 'disabled').
+   * @param expectedCursor The expected cursor value.
    */
   public async assertStepState(
     step: BaseElement | string,
     expectedState: ElementState,
-    expectedActionability: ElementActionabilityState = 'enabled', // Default to enabled
+    expectedCursor: Cursors,
   ) {
     const stepLocator =
       typeof step === 'string'
@@ -34,13 +32,15 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
       expectedState,
       `Step "${stepLocator}" should be ${expectedState}`,
     );
-    if (expectedState === 'visible') {
-      await this.assertElementActionabilityState(
-        stepLocator,
-        expectedActionability,
-        `Step "${stepLocator}" should be ${expectedActionability}`,
-      );
-    }
+    await this.assertElementCursor(stepLocator, expectedCursor);
+    const expectedColorAttributes =
+      expectedCursor === 'pointer'
+        ? ThemeColorAttributes.textPrimary
+        : ThemeColorAttributes.textSecondary;
+    await this.assertElementColor(
+      stepLocator,
+      ThemesUtil.getRgbColorByKey(expectedColorAttributes),
+    );
   }
 
   /**

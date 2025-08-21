@@ -277,7 +277,7 @@ export const AppEditorGeneralInfoPreviewSelectors = {
   detailedSwitch: '[data-qa="toggle-switch"]',
   appPreviewGeneralInfoContainer: '[data-qa="app-preview-general-info"]',
   previewIconContainer: '[data-qa="entity-icon"]',
-  previewAgentName: '[data-qa="agent-name"]',
+  previewAgentName: '[data-qa="entity-name"]',
   previewTopicsContainer: '[data-qa="app-topics"]',
   previewInformationSection: '[data-qa="application-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
@@ -293,7 +293,7 @@ export const AppEditorAppSettingsPreviewSelectors = {
   previewIcon: '[data-qa="entity-icon"]',
   agentInfoContainer: '[data-qa="agent-info-container"]',
   agentInfo: '[data-qa="agent-info"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
 };
 
 export const AddApplicationGeneralInfoFormSelector = {
