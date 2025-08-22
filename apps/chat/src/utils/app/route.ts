@@ -18,6 +18,8 @@ export const getPageType = (route?: string) => {
       return PageType.AppsEditorSettings;
     case Routes.AppsEditorGeneralInfo:
       return PageType.AppsEditorGeneralInfo;
+    case Routes.ToolsetEditor:
+      return PageType.ToolsetEditor;
     default:
       return PageType.Chat;
   }

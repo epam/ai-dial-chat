@@ -15,10 +15,14 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
-import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
+import { AgentsTabRenderer } from '@/src/components/Marketplace/AgentsTabRenderer';
+
+import { TabHeader } from './TabHeader';
+import { ToolsTabRenderer } from './ToolsTabRenderer';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -35,6 +39,15 @@ export const Marketplace = () => {
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );
+  const isBannerVisible = useAppSelector(
+    MarketplaceSelectors.selectIsBannerVisible,
+  );
+
+  const selectedEntitiesTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
+  );
+
+  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
   const screenState = useScreenState();
 
@@ -66,7 +79,8 @@ export const Marketplace = () => {
         </div>
       ) : (
         <>
-          <TabRenderer />
+          <TabHeader isBannerVisible={isBannerVisible} />
+          {isAgentsTab ? <AgentsTabRenderer /> : <ToolsTabRenderer />}
           {showOverlay && (
             <FloatingOverlay
               className="z-30 bg-blackout"

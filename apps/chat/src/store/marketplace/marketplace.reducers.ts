@@ -8,6 +8,7 @@ import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
 import {
   DeleteType,
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
   TableColumnSortKeys,
   ViewTypes,
@@ -28,6 +29,7 @@ const initialState: MarketplaceState = {
   selectedFilters: DEFAULT_FILTERS,
   searchTerm: '',
   selectedTab: MarketplaceTabs.HOME,
+  selectedEntitiesTab: MarketplaceEntitiesTabs.AGENTS,
   applyModelStatus: UploadStatus.UNINITIALIZED,
   detailsModel: undefined,
   selectedView: ViewTypes.CARD,
@@ -82,6 +84,12 @@ export const marketplaceSlice = createSlice({
     },
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
+    },
+    setSelectedEntitiesTab: (
+      state,
+      { payload }: PayloadAction<MarketplaceEntitiesTabs>,
+    ) => {
+      state.selectedEntitiesTab = payload;
     },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;

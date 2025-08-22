@@ -16,6 +16,7 @@ import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -145,6 +146,13 @@ export const getApplicationApiKey = (
   application: Omit<ApplicationInfo, 'folderId' | 'id'>,
 ): string => {
   return [application.name, application.version].join(pathKeySeparator);
+};
+
+// Format key: {name}__{version}
+export const getToolsetApiKey = (
+  toolset: Omit<ToolsetModel, 'folderId' | 'id'>,
+) => {
+  return [toolset.name, toolset.version].join(pathKeySeparator);
 };
 
 // Format key: {name}__{version}
