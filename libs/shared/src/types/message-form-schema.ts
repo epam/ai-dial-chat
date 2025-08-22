@@ -1,3 +1,5 @@
+import { JSONSchemaBase, JSONSchemaPropertyBase } from './json-schema';
+
 export enum FormSchemaPropertyWidget {
   buttons = 'buttons',
 }
@@ -22,24 +24,11 @@ export interface FormSchemaButtonOption {
 
 export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
 
-export enum FormSchemaPropertyType {
-  array = 'array',
-  number = 'number',
-  type = 'integer',
-  string = 'string',
-  boolean = 'boolean',
-}
-
-export interface FormSchemaProperty {
+export interface FormSchemaProperty extends JSONSchemaPropertyBase {
   [DialSchemaProperties.DialWidget]?: FormSchemaPropertyWidget;
   oneOf?: FormSchemaButtonOption[];
-  description?: string;
-  type: FormSchemaPropertyType;
 }
 
-export interface MessageFormSchema {
-  type: 'object';
-  required?: string[];
+export interface MessageFormSchema extends JSONSchemaBase<FormSchemaProperty> {
   [DialSchemaProperties.DialChatMessageInputDisabled]?: boolean;
-  properties: Record<string, FormSchemaProperty>;
 }

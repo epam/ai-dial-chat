@@ -37,7 +37,10 @@ export const createApiHandler = ({
       const proxyRes = await fetch(`${process.env.DIAL_API_HOST}${endpoint}`, {
         method,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
-        body: JSON.stringify(req.body),
+        ...((method === HTTPMethod.PUT || method === HTTPMethod.POST) &&
+          req.body && {
+            body: JSON.stringify(req.body),
+          }),
       });
 
       if (!proxyRes.ok) {
