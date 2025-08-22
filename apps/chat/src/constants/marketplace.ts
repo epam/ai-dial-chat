@@ -34,6 +34,10 @@ export enum MarketplaceTabs {
   HOME = 'marketplace',
   MY_WORKSPACE = 'workspace',
 }
+export enum MarketplaceEntitiesTabs {
+  AGENTS = 'agents',
+  TOOLSETS = 'toolsets',
+}
 
 export const ChangeAgentTabs = {
   [MarketplaceTabs.MY_WORKSPACE]: 'My agents',

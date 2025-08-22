@@ -4,13 +4,22 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getModelShortDescription,
+  isDialAiEntityModel,
+} from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
-import { TableIconSizes } from '@/src/constants/marketplace';
+import { useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/selectors';
+
+import {
+  MarketplaceEntitiesTabs,
+  TableIconSizes,
+} from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -18,16 +27,16 @@ import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-interface Props {
-  entity: DialAIEntityModel;
+interface Props<T> {
+  entity: T;
   isHovered: boolean;
-  onClick: (entity: DialAIEntityModel) => void;
+  onClick: (entity: T) => void;
   onRowHoverOver: () => void;
   onRowHover: (id: string) => void;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: T) => void;
 }
 
-export const AgentsTableLeftSideRow: React.FC<Props> = memo(
+export const AgentsTableLeftSideRow: React.FC<Props<MarketplaceEntity>> = memo(
   ({
     entity,
     isHovered,
@@ -37,6 +46,11 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
     onBookmarkClick,
   }) => {
     const screenState = useScreenState();
+
+    const selectedEntitiesTab = useAppSelector(
+      MarketplaceSelectors.selectSelectedEntitiesTab,
+    );
+    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
     const { iconSize, shareIconSize } = TableIconSizes[screenState];
 
@@ -76,7 +90,9 @@ export const AgentsTableLeftSideRow: React.FC<Props> = memo(
               <div className="line-clamp-1 max-w-screen-sm break-all text-base font-semibold leading-5">
                 {entity.name}
               </div>
-              <FunctionStatusIndicator entity={entity} />
+              {isAgentsTab && isDialAiEntityModel(entity) && (
+                <FunctionStatusIndicator entity={entity} />
+              )}
             </div>
             <EntityMarkdownDescription className="mt-2 hidden max-w-screen-sm truncate whitespace-normal break-all !text-sm font-light !leading-[18px] text-secondary md:line-clamp-3">
               {getModelShortDescription(entity)}

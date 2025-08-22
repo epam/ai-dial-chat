@@ -16,12 +16,17 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSyncXScroll } from '@/src/hooks/useSyncXScroll';
 
 import { ScreenState } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
-import { TableColumnSortKeys } from '@/src/constants/marketplace';
+import {
+  MarketplaceEntitiesTabs,
+  TableColumnSortKeys,
+} from '@/src/constants/marketplace';
 
 import { AgentsListWrapper } from '@/src/components/Marketplace/AgentsList/AgentsListWrapper';
 import { AgentsTableHeader } from '@/src/components/Marketplace/AgentsList/AgentsTable/AgentsTableHeader';
@@ -58,14 +63,14 @@ const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
 );
 DataRowContainer.displayName = 'DataRowContainer';
 
-interface DataRowItemProps {
-  suggestedResults: DialAIEntityModel[];
-  entity: DialAIEntityModel | string;
+interface DataRowItemProps<T extends MarketplaceEntity> {
+  suggestedResults: T[];
+  entity: T | string;
   virtualRow: VirtualItem;
   children: ReactNode;
 }
 
-const DataRowItem: React.FC<DataRowItemProps> = ({
+const DataRowItem: React.FC<DataRowItemProps<MarketplaceEntity>> = ({
   entity,
   suggestedResults,
   virtualRow,
@@ -99,13 +104,25 @@ const ROW_SIZES = {
   [ScreenState.XL4]: 115,
   [ScreenState.XL5]: 115,
 };
-const SORT_KEY_MAP: Record<TableColumnSortKeys, keyof DialAIEntityModel> = {
+
+const SORT_KEY_MAP = {
   [TableColumnSortKeys.RELEASED]: 'createdAt',
   [TableColumnSortKeys.NAME]: 'name',
+};
+
+type AgentsSortKeyMap = Record<TableColumnSortKeys, keyof DialAIEntityModel>;
+const AGENTS_SORT_KEY_MAP: AgentsSortKeyMap = {
+  ...(SORT_KEY_MAP as AgentsSortKeyMap),
   [TableColumnSortKeys.OWNER]: 'owner',
 };
 
-export const AgentsTable: React.FC<AgentsListProps> = ({
+type ToolsetsSortKeyMap = Record<TableColumnSortKeys, keyof ToolsetModel>;
+const TOOLSETS_SORT_KEY_MAP: ToolsetsSortKeyMap = {
+  ...(SORT_KEY_MAP as ToolsetsSortKeyMap),
+  [TableColumnSortKeys.OWNER]: 'author',
+};
+
+export const AgentsTable: React.FC<AgentsListProps<MarketplaceEntity>> = ({
   entities,
   suggestedResults,
   separator,
@@ -130,6 +147,12 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
 
   const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
 
+  const selectedEntitiesTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
+  );
+
+  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
   const [hoveredRowId, setHoveredRowId] = useState('');
   const [leftColumnWidth, setLeftColumnWidth] = useState(0);
   const [rightColumnWidth, setRightColumnWidth] = useState(0);
@@ -141,10 +164,18 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
   );
 
   const allEntities = useMemo(() => {
-    const sortField =
-      SORT_KEY_MAP[tableSort.column] || SORT_KEY_MAP[TableColumnSortKeys.NAME];
+    const agentsSortField =
+      AGENTS_SORT_KEY_MAP[tableSort.column] ||
+      SORT_KEY_MAP[TableColumnSortKeys.NAME];
 
-    const sortEntities = (items: DialAIEntityModel[]) => {
+    const toolsetsSortField =
+      TOOLSETS_SORT_KEY_MAP[tableSort.column] ||
+      SORT_KEY_MAP[TableColumnSortKeys.NAME];
+
+    const sortEntities = <T extends MarketplaceEntity>(
+      items: T[],
+      sortField: keyof T,
+    ) => {
       return orderBy(
         items,
         [
@@ -156,8 +187,24 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
         [tableSort.order],
       );
     };
-    const sortedEntities = sortEntities(entities);
-    const sortedSuggestedEntities = sortEntities(suggestedResults);
+    const sortedEntities = isAgentsTab
+      ? sortEntities<DialAIEntityModel>(
+          entities as DialAIEntityModel[],
+          agentsSortField,
+        )
+      : sortEntities<ToolsetModel>(
+          entities as ToolsetModel[],
+          toolsetsSortField,
+        );
+    const sortedSuggestedEntities = isAgentsTab
+      ? sortEntities<DialAIEntityModel>(
+          suggestedResults as DialAIEntityModel[],
+          agentsSortField,
+        )
+      : sortEntities<ToolsetModel>(
+          suggestedResults as ToolsetModel[],
+          toolsetsSortField,
+        );
 
     if (!suggestedResults.length) return sortedEntities;
     if (!entities.length && suggestedResults.length)
@@ -166,6 +213,7 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
     return [...sortedEntities, separator, ...sortedSuggestedEntities];
   }, [
     entities,
+    isAgentsTab,
     separator,
     suggestedResults,
     tableSort.column,
@@ -229,7 +277,7 @@ export const AgentsTable: React.FC<AgentsListProps> = ({
 
   return (
     <>
-      <SuggestedMessage entities={entities} className="md:ml-3" />
+      <SuggestedMessage shouldRender={!entities.length} className="md:ml-3" />
       <AgentsTableHeader ref={headerRefs} />
       <AgentsListWrapper
         separatorRowId={separatorRowId}

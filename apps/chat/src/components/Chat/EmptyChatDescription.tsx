@@ -149,7 +149,6 @@ const EmptyChatDescriptionView = ({
   return (
     <div className="flex size-full flex-col items-center gap-5 rounded-t px-3 py-4 md:px-0 lg:max-w-3xl">
       <div
-        data-qa="agent-name"
         className={classNames(
           'flex size-full justify-center whitespace-pre text-center',
           incorrectModel ? 'text-[40px]' : 'text-sm',
@@ -172,7 +171,7 @@ const EmptyChatDescriptionView = ({
             )}
             <div className="flex items-center gap-2 whitespace-pre-wrap">
               <span
-                data-qa="agent-name"
+                data-qa="entity-name"
                 className={classNames(
                   'break-words',
                   incorrectModel &&

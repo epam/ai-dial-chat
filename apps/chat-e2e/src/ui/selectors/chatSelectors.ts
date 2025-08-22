@@ -24,7 +24,7 @@ export const ChatSettingsSelectors = {
   selectedTalkToEntity: '.border-accent-primary',
   agentInfoContainer: '[data-qa="agent-info-container"]',
   agentInfo: '[data-qa="agent-info"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
   agentDescription: '[data-qa="agent-descr"]',
   agentVersion: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
@@ -46,7 +46,7 @@ export const MessageInputSelectors = {
 
 export const PlaybackSelectors = {
   playbackContainer: '[data-qa="playback"]',
-  playbackAppTitle: '[data-qa="agent-name"]',
+  playbackAppTitle: '[data-qa="entity-name"]',
   playbackChatTitle: '[data-qa="conversation-name"]',
   playbackControl: '[data-qa="playback-control"]',
   playbackMessage: '[data-qa="playback-message"]',
