@@ -14,6 +14,7 @@ export const openFoldersInitialState = {
   [FeatureType.Prompt]: [],
   [FeatureType.File]: [],
   [FeatureType.Application]: [],
+  [FeatureType.Toolset]: [],
 };
 
 const initialState: UIState = {

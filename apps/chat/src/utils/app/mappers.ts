@@ -10,6 +10,8 @@ export class EnumMapper {
         return ApiKeys.Conversations;
       case FeatureType.Application:
         return ApiKeys.Applications;
+      case FeatureType.Toolset:
+        return ApiKeys.Toolsets;
       case FeatureType.File:
       default:
         return ApiKeys.Files;
