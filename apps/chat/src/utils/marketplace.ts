@@ -8,9 +8,8 @@ import { isMyApplication } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { PageType } from '@/src/types/common';
-import { MarketplaceFilters } from '@/src/types/marketplace';
+import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   ApplicationTypeToSourceType,
@@ -24,7 +23,7 @@ import { pluralizeDisplayName } from './app/application-type-schema';
 import intersection from 'lodash-es/intersection';
 
 export const doesMarketplaceEntityMatchFilters = (
-  model: DialAIEntityModel | ToolsetModel,
+  model: MarketplaceEntity,
   selectedFilters: Partial<MarketplaceFilters>,
   applicationTypeSchemas?: ApplicationTypeSchema[],
 ) => {

@@ -6,8 +6,8 @@ import {
   isInstalledEntity,
 } from '@/src/utils/marketplace';
 
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
 
 import { useAppSelector } from '@/src/store/hooks';
 import {
@@ -31,9 +31,7 @@ import { useFuseSearch } from './useFuseSearch';
 import { IFuseOptions } from 'fuse.js';
 import uniqBy from 'lodash-es/uniqBy';
 
-export const useMarketplaceDisplayedEntities = <
-  T extends DialAIEntityModel | ToolsetModel,
->(
+export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
   allEntities: T[],
   installedEntitiesIds: Set<string>,
 ) => {
