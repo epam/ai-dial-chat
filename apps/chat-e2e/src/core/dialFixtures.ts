@@ -199,6 +199,7 @@ const dialTest = test.extend<{
   attachmentDropdownMenu: DropdownMenu;
   sendMessageInputAttachments: InputAttachments;
   sendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
+  editMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
   conversations: ConversationsTree;
   prompts: PromptsTree;
   folderConversations: FolderConversations;
@@ -386,6 +387,14 @@ const dialTest = test.extend<{
     const sendMessageInputAttachmentsAssertions =
       new InputAttachmentsAssertions(sendMessageInputAttachments);
     await use(sendMessageInputAttachmentsAssertions);
+  },
+  editMessageInputAttachmentsAssertions: async (
+    { editMessageInputAttachments },
+    use,
+  ) => {
+    const editMessageInputAttachmentsAssertions =
+      new InputAttachmentsAssertions(editMessageInputAttachments);
+    await use(editMessageInputAttachmentsAssertions);
   },
   localStorageAssertion: async ({ localStorageManager }, use) => {
     const localStorageAssertion = new LocalStorageAssertion(

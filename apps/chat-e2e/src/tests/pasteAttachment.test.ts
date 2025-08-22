@@ -4,11 +4,19 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   Attachment,
+  ConversationData,
+  CustomApplicationBuilder,
   ExpectedConstants,
   UploadMenuOptions,
 } from '@/src/testData';
+import { ApplicationApiHelper } from '@/src/testData/api';
+import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil } from '@/src/utils';
+import { Conversation } from '@epam/ai-dial-shared';
+
+let appEntity: DialAIEntityModel;
+let conversation: Conversation;
 
 dialTest(
   'Ctrl-V pastes a file into input.\n' +
@@ -20,7 +28,8 @@ dialTest(
     'File extension is changed to lower case.\n' +
     'The postfix to the file name is added automatically if to paste the file with the name already exists in the uploads folder.\n' +
     'Ctrl-V or drag&drop a file without extension.\n' +
-    'Ctrl-V pastes 10 files into input',
+    'Ctrl-V pastes 10 files into input' +
+    'Ctrl-V pastes a file into user-message in edit mode. Successful message',
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -36,6 +45,11 @@ dialTest(
     attachFilesModal,
     manageAttachmentsAssertion,
     baseAssertion,
+    conversationData,
+    dataInjector,
+    conversations,
+    chatMessages,
+    editMessageInputAttachmentsAssertions,
   }) => {
     setTestIds(
       'EPMRTC-6227',
@@ -48,37 +62,36 @@ dialTest(
       'EPMRTC-6232',
       'EPMRTC-6239',
       'EPMRTC-6231',
+      'EPMRTC-6225',
     );
-    const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
-    const attachmentType = 'image/*';
-    let appEntity: DialAIEntityModel;
     let yearMonthSubfolder: string;
     let responses: BackendDataEntity[] | undefined;
 
     await dialTest.step(
       'Create a custom app with set of allowed attachment types via API',
       async () => {
-        const applicationModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(appVersion)
-          .withInputAttachmentTypes(attachmentType)
-          .build();
-        await applicationApiHelper.createApplication(applicationModel);
-        appEntity = {
-          name: appName,
-          version: appVersion,
-          reference: applicationModel.reference,
-        } as DialAIEntityModel;
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await createCustomApp(
+          customApplicationBuilder,
+          applicationApiHelper,
+          Attachment.imageTypesExtension,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create a conversation with custom app via API',
+      async () => {
+        await createConversation(conversationData, dataInjector);
       },
     );
 
     await dialTest.step(
       'Copy file to the buffer, paste using keyboard and verify it appears in the send input',
       async () => {
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await dialHomePage.waitForPageLoaded();
 
         yearMonthSubfolder = DateUtil.getCurrentYearMonth();
         await dialHomePage.copyFileToClipboard(Attachment.fileToCopyName);
@@ -234,11 +247,35 @@ dialTest(
         await toast.waitForState({ state: 'hidden' });
       },
     );
+
+    await dialTest.step(
+      'Select created conversation, open the first message in edit mode, paste the file and verify it is displayed in the field',
+      async () => {
+        await conversations.selectEntity(conversation.name);
+        await chatMessages.openEditMessageMode(1);
+        responses = await dialHomePage.triggerPasteFilesEvent(
+          [Attachment.flowerImageName],
+          { pasteToElement: chatMessages.getChatMessageTextarea(1) },
+        );
+        await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+          Attachment.flowerImageName,
+          'visible',
+        );
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.fileUploadedToastMessage(yearMonthSubfolder),
+        );
+        baseAssertion.assertValue(
+          responses![0].parentPath,
+          `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`,
+        );
+      },
+    );
   },
 );
 
 dialTest(
-  `Ctrl-V does nothing if to paste a file into input when agent doesn't work with attachments.\n`,
+  `Ctrl-V does nothing if to paste a file into input when agent doesn't work with attachments.\n` +
+    `Ctrl-V does nothing if to paste a file into user-message in edit mode when agent doesn't work with attachments`,
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -248,34 +285,35 @@ dialTest(
     sendMessageAssertion,
     toastAssertion,
     localStorageManager,
+    conversationData,
+    dataInjector,
+    conversations,
+    chatMessages,
+    editMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-6222');
-    const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
-    let appEntity: DialAIEntityModel;
+    setTestIds('EPMRTC-6222', 'EPMRTC-6224');
 
     await dialTest.step(
       'Create a custom app without allowed attachments via API',
       async () => {
-        const applicationModel = customApplicationBuilder
-          .withDisplayName(appName)
-          .withDisplayVersion(appVersion)
-          .build();
-        await applicationApiHelper.createApplication(applicationModel);
-        appEntity = {
-          name: appName,
-          version: appVersion,
-          reference: applicationModel.reference,
-        } as DialAIEntityModel;
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await createCustomApp(customApplicationBuilder, applicationApiHelper);
+      },
+    );
+
+    await dialTest.step(
+      'Create a conversation with custom app via API',
+      async () => {
+        await createConversation(conversationData, dataInjector);
       },
     );
 
     await dialTest.step(
       'Copy any file to the buffer, paste using keyboard and verify nothing happens',
       async () => {
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.copyFileToClipboard(Attachment.fileToCopyName);
         await dialHomePage.pasteFromClipboard();
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
@@ -286,5 +324,53 @@ dialTest(
         await toastAssertion.assertToastIsHidden();
       },
     );
+
+    await dialTest.step(
+      'Select created conversation, open the first message in edit mode, paste the file and verify nothing happens',
+      async () => {
+        await conversations.selectEntity(conversation.name);
+        await chatMessages.openEditMessageMode(1);
+        await dialHomePage.triggerPasteFilesEvent(
+          [Attachment.flowerImageName],
+          {
+            pasteToElement: chatMessages.getChatMessageTextarea(1),
+            isHttpMethodTriggered: false,
+          },
+        );
+        await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+          Attachment.flowerImageName,
+          'hidden',
+        );
+        await toastAssertion.assertToastIsHidden();
+      },
+    );
   },
 );
+
+async function createCustomApp(
+  customApplicationBuilder: CustomApplicationBuilder,
+  applicationApiHelper: ApplicationApiHelper,
+  ...inputAttachmentTypes: string[]
+) {
+  const appName = GeneratorUtil.randomApplicationName();
+  const appVersion = GeneratorUtil.randomApplicationVersion();
+  const applicationModel = customApplicationBuilder
+    .withDisplayName(appName)
+    .withDisplayVersion(appVersion)
+    .withInputAttachmentTypes(...inputAttachmentTypes)
+    .build();
+  await applicationApiHelper.createApplication(applicationModel);
+  appEntity = {
+    name: appName,
+    version: appVersion,
+    reference: applicationModel.reference,
+  } as DialAIEntityModel;
+}
+
+async function createConversation(
+  conversationData: ConversationData,
+  dataInjector: DataInjectorInterface,
+) {
+  conversation = conversationData.prepareDefaultConversation(appEntity);
+  await dataInjector.createConversations([conversation]);
+}
