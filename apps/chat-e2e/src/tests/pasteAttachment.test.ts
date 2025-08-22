@@ -10,16 +10,17 @@ import {
 import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil } from '@/src/utils';
 
-dialTest.only(
+dialTest(
   'Ctrl-V pastes a file into input.\n' +
-  'Pasted file appears in Manage attachments in "uploads/<year-month>" folder. New folder structure.\n' +
+    'Pasted file appears in Manage attachments in "uploads/<year-month>" folder. New folder structure.\n' +
     'The uploads folder is changed for each month in the successful message and in Manage attachments.\n' +
     `Restricted symbols in the name are changed to '_'.\n` +
     'Toast successful message appears and contains the folder name. Paste one file.\n' +
     'Pasted file appears in Manage attachments in "uploads/<year-month>" folder. The file is added into already existed folder structure.\n' +
     'File extension is changed to lower case.\n' +
     'The postfix to the file name is added automatically if to paste the file with the name already exists in the uploads folder.\n' +
-    'Ctrl-V or drag&drop a file without extension',
+    'Ctrl-V or drag&drop a file without extension.\n' +
+    'Ctrl-V pastes 10 files into input',
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -46,13 +47,14 @@ dialTest.only(
       'EPMRTC-6363',
       'EPMRTC-6232',
       'EPMRTC-6239',
+      'EPMRTC-6231',
     );
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion();
     const attachmentType = 'image/*';
     let appEntity: DialAIEntityModel;
     let yearMonthSubfolder: string;
-    let response: BackendDataEntity | undefined;
+    let responses: BackendDataEntity[] | undefined;
 
     await dialTest.step(
       'Create a custom app with set of allowed attachment types via API',
@@ -81,10 +83,12 @@ dialTest.only(
         yearMonthSubfolder = DateUtil.getCurrentYearMonth();
         await dialHomePage.copyFileToClipboard(Attachment.fileToCopyName);
         await dialHomePage.pasteFromClipboard({
-          triggeredApiResponse: {
-            apiMethod: 'POST',
-            urlPattern: API.fileHost(),
-          },
+          triggeredApiResponses: [
+            {
+              apiMethod: 'POST',
+              urlPattern: API.fileHost(),
+            },
+          ],
         });
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
           Attachment.fileToCopyName,
@@ -95,30 +99,6 @@ dialTest.only(
         );
         await toast.closeToast();
         await toast.waitForState({ state: 'hidden' });
-
-        //await dialHomePage.triggerPasteFileEvent(Attachment.sunImageName);
-
-        // const fileMetadata = await dialHomePage.getAttachmentFileMetadata(
-        //   Attachment.sunImageName,
-        // );
-        // await fileDropArea.dragAndDropFile(fileMetadata, {
-        //   implementation: dialHomePage.executeReactOnDrop,
-        // });
-        // await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
-        //   Attachment.sunImageName,
-        //   'visible',
-        // );
-        // await sendMessageInputAttachmentsAssertions.assertElementState(
-        //   sendMessageInputAttachments.inputAttachmentLoadingIndicator(
-        //     Attachment.sunImageName,
-        //   ),
-        //   'hidden',
-        // );
-        // await toastAssertion.assertToastMessage(
-        //   ExpectedConstants.fileUploadedToastMessage(
-        //     DateUtil.getCurrentYearMonth(),
-        //   ),
-        // );
       },
     );
 
@@ -154,8 +134,8 @@ dialTest.only(
           ExpectedConstants.replacedRestrictedCharsName(
             Attachment.restrictedCharsFilename.toLowerCase(),
           );
-        response = await dialHomePage.triggerPasteFileEvent(
-          Attachment.restrictedCharsFilename,
+        responses = await dialHomePage.triggerPasteFilesEvent(
+          [Attachment.restrictedCharsFilename],
           { pasteToElement: sendMessage.messageInput },
         );
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
@@ -171,7 +151,7 @@ dialTest.only(
       'Verify file with restricted chars is placed by the same path as previous one',
       async () => {
         baseAssertion.assertValue(
-          response?.parentPath,
+          responses![0].parentPath,
           `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`,
         );
       },
@@ -184,7 +164,7 @@ dialTest.only(
           '.',
           ' 1.',
         );
-        await dialHomePage.triggerPasteFileEvent(Attachment.fileToCopyName, {
+        await dialHomePage.triggerPasteFilesEvent([Attachment.fileToCopyName], {
           pasteToElement: sendMessage.messageInput,
         });
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
@@ -199,8 +179,8 @@ dialTest.only(
     await dialTest.step(
       'Paste the file without extension and verify it is displayed in the input field',
       async () => {
-        await dialHomePage.triggerPasteFileEvent(
-          Attachment.fileWithoutExtension,
+        await dialHomePage.triggerPasteFilesEvent(
+          [Attachment.fileWithoutExtension],
           {
             pasteToElement: sendMessage.messageInput,
           },
@@ -217,7 +197,7 @@ dialTest.only(
     await dialTest.step(
       'Paste the file with not allowed extension and verify error toast is shown',
       async () => {
-        await dialHomePage.triggerPasteFileEvent(Attachment.pdfName, {
+        await dialHomePage.triggerPasteFilesEvent([Attachment.pdfName], {
           pasteToElement: sendMessage.messageInput,
           isHttpMethodTriggered: false,
         });
@@ -228,6 +208,82 @@ dialTest.only(
         await toastAssertion.assertToastMessage(
           ExpectedConstants.attachedFileError(Attachment.pdfName),
         );
+        await toast.closeToast();
+        await toast.waitForState({ state: 'hidden' });
+      },
+    );
+
+    await dialTest.step(
+      'Paste several files at once and verify they are displayed in the input field',
+      async () => {
+        const filesToPaste = [
+          Attachment.cloudImageName,
+          Attachment.sunImageName,
+          Attachment.heartImageName,
+        ];
+        await dialHomePage.triggerPasteFilesEvent(filesToPaste, {
+          pasteToElement: sendMessage.messageInput,
+        });
+        for (const fileToPaste of filesToPaste) {
+          await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+            fileToPaste,
+            'visible',
+          );
+        }
+        await toast.closeToast();
+        await toast.waitForState({ state: 'hidden' });
+      },
+    );
+  },
+);
+
+dialTest(
+  `Ctrl-V does nothing if to paste a file into input when agent doesn't work with attachments.\n`,
+  async ({
+    customApplicationBuilder,
+    applicationApiHelper,
+    dialHomePage,
+    setTestIds,
+    sendMessageInputAttachmentsAssertions,
+    sendMessageAssertion,
+    toastAssertion,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-6222');
+    const appName = GeneratorUtil.randomApplicationName();
+    const appVersion = GeneratorUtil.randomApplicationVersion();
+    let appEntity: DialAIEntityModel;
+
+    await dialTest.step(
+      'Create a custom app without allowed attachments via API',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(appName)
+          .withDisplayVersion(appVersion)
+          .build();
+        await applicationApiHelper.createApplication(applicationModel);
+        appEntity = {
+          name: appName,
+          version: appVersion,
+          reference: applicationModel.reference,
+        } as DialAIEntityModel;
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+      },
+    );
+
+    await dialTest.step(
+      'Copy any file to the buffer, paste using keyboard and verify nothing happens',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await dialHomePage.copyFileToClipboard(Attachment.fileToCopyName);
+        await dialHomePage.pasteFromClipboard();
+        await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+          Attachment.fileToCopyName,
+          'hidden',
+        );
+        await sendMessageAssertion.assertMessageValue('');
+        await toastAssertion.assertToastIsHidden();
       },
     );
   },

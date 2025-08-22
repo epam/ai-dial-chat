@@ -2,9 +2,9 @@ import config from '../../../config/chat.playwright.config';
 import { keys } from '../keyboard';
 
 import { BackendDataEntity } from '@/chat/types/common';
-import { API, Attachment, Import } from '@/src/testData';
+import { API, Attachment, ExpectedConstants, Import } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
-import { BucketUtil, FileUtil } from '@/src/utils';
+import { BucketUtil, FileUtil, ItemUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'node:fs';
@@ -325,28 +325,19 @@ export class BasePage {
   }
 
   public async pasteFromClipboard(options?: {
-    triggeredApiResponse: ExpectedApiResponse;
+    triggeredApiResponses: ExpectedApiResponse[];
   }) {
-    if (options?.triggeredApiResponse) {
-      const expectedStatus = options.triggeredApiResponse.status ?? 200;
-      const respPromise = this.page.waitForResponse((response) => {
-        const expectedMethod = options.triggeredApiResponse?.apiMethod;
-        const methodMatch = expectedMethod
-          ? response.request().method() === expectedMethod
-          : true;
-        const statusMatch = response.status() === expectedStatus;
-        const urlPattern = options.triggeredApiResponse?.urlPattern;
-        const responseUrl = response.url();
-        const urlMatch = urlPattern
-          ? urlPattern instanceof RegExp
-            ? urlPattern.test(responseUrl)
-            : responseUrl.includes(urlPattern)
-          : true;
-        return methodMatch && statusMatch && urlMatch;
-      });
-      await this.page.keyboard.press(keys.ctrlPlusV);
-      const response = await respPromise;
-      return response.json();
+    if (options?.triggeredApiResponses) {
+      const responseBodies = [];
+      const responses = await this.waitForExpectedResponses(
+        () => this.page.keyboard.press(keys.ctrlPlusV),
+        options.triggeredApiResponses,
+      );
+      for (const response of responses) {
+        const responseBody = await response?.json();
+        responseBodies.push(responseBody);
+      }
+      return responseBodies;
     }
     await this.page.keyboard.press(keys.ctrlPlusV);
   }
@@ -358,10 +349,10 @@ export class BasePage {
     );
   }
 
-  //For security reasons, browsers strictly control which data types a script can programmatically write to the clipboard
-  //Chrome standardized on image/png as the only universally reliable and safely supported format
-  //The Clipboard API has no standard mechanism to include metadata like filenames when copying binary content
-  //This is why pasted images get generic names like "image.png"
+  // For security reasons, browsers strictly control which data types a script can programmatically write to the clipboard
+  // Chrome standardized on image/png as the only universally reliable and safely supported format
+  // The Clipboard API has no standard mechanism to include metadata like filenames when copying binary content
+  // This is why pasted images get generic names like "image.png"
   public async copyFileToClipboard(filename: string): Promise<void> {
     try {
       const fileToCopy = await this.getAttachmentFileMetadata(filename);
@@ -391,52 +382,74 @@ export class BasePage {
     }
   }
 
-  //To bypass browser's engine limitation, simulate a "paste" event into a web page element
-  public async triggerPasteFileEvent(
-    filename: string,
+  // To bypass browser's engine limitation, simulate a "paste" event into a web page element
+  public async triggerPasteFilesEvent(
+    filenames: string[],
     options?: {
       pasteToElement?: Locator | BaseElement;
       isHttpMethodTriggered?: boolean;
     },
   ) {
-    const {
-      pasteToElement,
-      isHttpMethodTriggered = true,
-    } = options || {};
+    const { pasteToElement, isHttpMethodTriggered = true } = options || {};
     // 1. Focus on element that support 'paste' event
     if (pasteToElement) {
       // eslint-disable-next-line playwright/no-force-option
       await pasteToElement.click({ force: true });
     }
 
-    // 2. Read the file and prepare the data payload.
-    const fileToPaste = await this.getAttachmentFileMetadata(filename);
+    const filesToPaste: FileMetadata[] = [];
+    const expectedApiResponses: ExpectedApiResponse[] = [];
 
-    let respPromise;
-    if (isHttpMethodTriggered) {
-      respPromise = this.page.waitForResponse((response) => {
-        return (
-          response.url().includes(API.fileHost()) &&
-          response.request().method() === 'POST' &&
-          response.status() === 200
+    for (const filename of filenames) {
+      // 2. Read the file and prepare the data payload.
+      const fileToPaste = await this.getAttachmentFileMetadata(filename);
+      filesToPaste.push(fileToPaste);
+
+      if (isHttpMethodTriggered) {
+        // Compose urlPattern to match the following requirements:
+        // restricted chars are replaced with '_';
+        // index is added for the duplicated names
+        const urlFilename = ExpectedConstants.replacedRestrictedCharsName(
+          filename.substring(0, filename.lastIndexOf('.')),
         );
-      });
+        expectedApiResponses.push({
+          apiMethod: 'POST',
+          urlPattern: ItemUtil.getEncodedItemId(urlFilename),
+        });
+      }
     }
 
     // 3. Create a DataTransfer object in the browser context and dispatch a 'paste' event
-    await this.page.evaluate(async (file) => {
+    const responses = await this.waitForExpectedResponses(
+      () => this.firePasteFilesEvent(filesToPaste),
+      expectedApiResponses,
+    );
+
+    //4. Populate array with response bodies
+    const responseBodies: BackendDataEntity[] = [];
+    for (const response of responses) {
+      const responseBody = await response?.json();
+      responseBodies.push(responseBody as BackendDataEntity);
+    }
+    return responseBodies;
+  }
+
+  private async firePasteFilesEvent(filesToPaste: FileMetadata[]) {
+    await this.page.evaluate(async (files) => {
       // Create the DataTransfer object, which is the container for clipboard data
       const dt = new DataTransfer();
 
-      // Convert the base64 string back to a Blob, then create a File object
-      const response = await fetch(
-        `data:${file.mimeType};base64,${file.buffer}`,
-      );
-      const blob = await response.blob();
-      const newFile = new File([blob], file.name, { type: file.mimeType });
+      for (const file of files) {
+        // Convert the base64 string back to a Blob, then create a File object
+        const response = await fetch(
+          `data:${file.mimeType};base64,${file.buffer}`,
+        );
+        const blob = await response.blob();
+        const newFile = new File([blob], file.name, { type: file.mimeType });
 
-      // Add the file to the DataTransfer object
-      dt.items.add(newFile);
+        // Add the file to the DataTransfer object
+        dt.items.add(newFile);
+      }
 
       // Create the 'paste' event, attaching the DataTransfer object to the clipboardData property
       const pasteEvent = new ClipboardEvent('paste', {
@@ -448,13 +461,7 @@ export class BasePage {
 
       // Dispatch the event onto the currently focused element
       document.activeElement?.dispatchEvent(pasteEvent);
-    }, fileToPaste);
-
-    if (isHttpMethodTriggered) {
-      const resolvedResp = await respPromise;
-      const responseBody = await resolvedResp?.json();
-      return responseBody as BackendDataEntity;
-    }
+    }, filesToPaste);
   }
 
   public async readTextFromClipboard() {
