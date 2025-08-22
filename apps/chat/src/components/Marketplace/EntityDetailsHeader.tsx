@@ -6,8 +6,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ScreenState } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { HeaderIconSizes } from '@/src/constants/marketplace';
@@ -39,7 +38,7 @@ interface EntityHeaderProps<T> {
   dataQa?: string;
 }
 
-export function EntityHeader<T extends DialAIEntityModel | ToolsetModel>({
+export function EntityHeader<T extends MarketplaceEntity>({
   entity,
   featureType,
   isMyEntity,

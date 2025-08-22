@@ -5,8 +5,7 @@ import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBanner
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { AgentsListWrapper } from '../AgentsListWrapper';
 import { SuggestedMessage } from '../SuggestedMessage';
@@ -36,9 +35,7 @@ const ROWS_INFO: Record<ScreenState, RowInfo> = {
   [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL5 },
 };
 
-export const AgentsTiles: React.FC<
-  AgentsListProps<DialAIEntityModel | ToolsetModel>
-> = ({
+export const AgentsTiles: React.FC<AgentsListProps<MarketplaceEntity>> = ({
   entities,
   suggestedResults,
   separator,
@@ -87,21 +84,20 @@ export const AgentsTiles: React.FC<
     };
   }, [gap, minWidth]);
 
-  const allEntities: (DialAIEntityModel | ToolsetModel | string)[] =
-    useMemo(() => {
-      if (!suggestedResults.length) return entities;
-      if (!entities.length && suggestedResults.length) return suggestedResults;
+  const allEntities: (MarketplaceEntity | string)[] = useMemo(() => {
+    if (!suggestedResults.length) return entities;
+    if (!entities.length && suggestedResults.length) return suggestedResults;
 
-      return [
-        ...entities,
-        ...Array((colsCount - (entities.length % colsCount)) % colsCount).fill(
-          null,
-        ),
-        separator,
-        ...Array(colsCount - 1).fill(null),
-        ...suggestedResults,
-      ];
-    }, [suggestedResults, entities, colsCount, separator]);
+    return [
+      ...entities,
+      ...Array((colsCount - (entities.length % colsCount)) % colsCount).fill(
+        null,
+      ),
+      separator,
+      ...Array(colsCount - 1).fill(null),
+      ...suggestedResults,
+    ];
+  }, [suggestedResults, entities, colsCount, separator]);
 
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(allEntities.length / colsCount),
