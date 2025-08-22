@@ -17,7 +17,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ItemApiHelper } from '@/src/testData/api';
-import { StyleValues } from '@/src/ui/domData';
+import { Cursors, StyleValues } from '@/src/ui/domData';
 import { Styles } from '@/src/ui/domData/styles';
 import {
   AppEditSteps,
@@ -100,6 +100,8 @@ dialTest(
       description: `${shortDescription}\n\n${longDescription}`,
     } as DialAIEntityModel;
     let agentElement: BaseElement;
+    let generalInfoStep: BaseElement;
+    let appSettingsStep: BaseElement;
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
@@ -198,20 +200,18 @@ dialTest(
       'App editor General Info step is opened, header features are valid, step titles in the header marked as not completed',
       async () => {
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
-
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
-        await baseAssertion.assertElementState(generalInfoStep);
-        await baseAssertion.assertElementState(appSettingsStep);
-        await baseAssertion.assertElementActionabilityState(
+        generalInfoStep = appEditorHeader.getGeneralInfoStep();
+        appSettingsStep = appEditorHeader.getAppSettingsStep();
+        await appEditorHeaderAssertion.assertStepState(
           generalInfoStep,
-          'enabled',
+          'visible',
+          Cursors.pointer,
         );
-        await baseAssertion.assertElementActionabilityState(
+        await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
-          'disabled',
+          'visible',
+          Cursors.default,
         );
-
         await appEditorHeaderAssertion.assertStepIsCompleted(
           generalInfoStep,
           false,
@@ -279,20 +279,21 @@ dialTest(
         );
 
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getGeneralInfoStep(),
+          generalInfoStep,
           'visible',
+          Cursors.pointer,
         );
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getAppSettingsStep(),
+          appSettingsStep,
           'visible',
-          'disabled',
+          Cursors.default,
         );
         await appEditorHeaderAssertion.assertStepIsCompleted(
-          appEditorHeader.getGeneralInfoStep(),
+          generalInfoStep,
           false,
         );
         await appEditorHeaderAssertion.assertStepIsCompleted(
-          appEditorHeader.getAppSettingsStep(),
+          appSettingsStep,
           false,
         );
       },
@@ -351,10 +352,6 @@ dialTest(
       'Wait for app settings step form to load and check the header changes',
       async () => {
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
-
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
-
         await baseAssertion.assertElementActionabilityState(
           generalInfoStep,
           'enabled',
@@ -505,14 +502,15 @@ dialTest(
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.edit(AddAppMenuOptions.customApp)}`,
         );
-
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getGeneralInfoStep(),
+          generalInfoStep,
           'visible',
+          Cursors.pointer,
         );
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getAppSettingsStep(),
+          appSettingsStep,
           'visible',
+          Cursors.pointer,
         );
       },
     );

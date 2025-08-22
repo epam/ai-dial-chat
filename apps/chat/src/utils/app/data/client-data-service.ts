@@ -8,6 +8,7 @@ import { InstalledModel } from '@/src/types/models';
 import {
   CLIENTDATA_PATH,
   INSTALLED_DEPLOYMENTS,
+  INSTALLED_TOOLSETS,
 } from '@/src/constants/client-data';
 
 import { constructPath } from '../file';
@@ -88,5 +89,13 @@ export class ClientDataService {
 
   public static getInstalledDeployments() {
     return this.getData<InstalledModel[]>(INSTALLED_DEPLOYMENTS);
+  }
+
+  public static saveInstalledToolsets(installedToolsets: string[]) {
+    return this.saveData<string[]>(INSTALLED_TOOLSETS, installedToolsets);
+  }
+
+  public static getInstalledToolsets() {
+    return this.getData<string[]>(INSTALLED_TOOLSETS);
   }
 }

@@ -206,7 +206,7 @@ export const ChatSettings = ({
                         'shrink truncate text-base font-semibold leading-[19px] text-primary',
                         !model ? 'text-secondary' : 'text-primary',
                       )}
-                      data-qa="agent-name"
+                      data-qa="entity-name"
                     >
                       {model?.name ?? conversation.model.id}
                     </div>

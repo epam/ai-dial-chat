@@ -1,174 +1,49 @@
-import { IconChevronDown, IconPlus, IconSearch } from '@tabler/icons-react';
-import { ChangeEvent, useMemo, useState } from 'react';
-
-import { useRouter } from 'next/router';
-
-import classNames from 'classnames';
+import { IconSearch } from '@tabler/icons-react';
+import { ChangeEvent } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
-import { getAppEditorRoute } from '@/src/utils/app/route';
-
-import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { ApplicationType } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
-import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationTypesSchemasActions,
-  MarketplaceActions,
-} from '@/src/store/actions';
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors, SettingsSelectors } from '@/src/store/selectors';
+
 import {
-  ApplicationTypesSchemasSelectors,
-  MarketplaceSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-
-import { ContextMenu } from '@/src/components/Common/ContextMenu';
-
+import { AddAppButton } from './AddAppButton';
+import { AddToolsButton } from './AddToolsButton';
 import { ViewToggler } from './ViewToggler';
 
 import { Feature } from '@epam/ai-dial-shared';
-
-interface AddAppButtonProps {
-  menuItems: DisplayMenuItemProps[];
-}
-
-const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
-  const { t } = useTranslation(Translation.Marketplace);
-  const [isOpen, setIsOpen] = useState(false);
-  const isScreenSmall = isSmallScreen();
-
-  const visibleActions = useMemo(() => {
-    return menuItems.filter((item) => item.display);
-  }, [menuItems]);
-
-  if (!visibleActions.length) return null;
-
-  if (visibleActions.length === 1)
-    return (
-      <button
-        onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-2 py-2 xl:flex"
-      >
-        <IconPlus size={18} />
-        <span>{t('Add app')}</span>
-      </button>
-    );
-
-  return (
-    <ContextMenu
-      menuItems={menuItems}
-      featureType={FeatureType.Application}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      placement="bottom"
-      TriggerCustomRenderer={
-        <button
-          className="button button-primary flex items-center gap-2 py-2"
-          data-qa="add-app"
-        >
-          <span>{isScreenSmall ? t('Add') : t('Add app')}</span>
-          <IconChevronDown
-            size={18}
-            className={classNames(isOpen && 'rotate-180')}
-          />
-        </button>
-      }
-    />
-  );
-};
-
-interface MenuItem {
-  type: ApplicationType | string;
-  name: string;
-  dataQa: string;
-  display: boolean;
-}
 
 export const SearchHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
-  const router = useRouter();
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
 
+  const selectedEntitiesTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
+  );
+
+  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
   const isCustomApplicationsEnabled = enabledFeatures.has(
     Feature.CustomApplications,
   );
-  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
+  const isToolsetsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Toolsets),
+  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
-  const applicationTypeSchemas = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
-
-  const menuItems: MenuItem[] = useMemo(
-    () =>
-      [
-        {
-          name: t('Custom app'),
-          type: ApplicationType.CUSTOM_APP,
-          dataQa: 'add-custom-app',
-          display: true,
-          onClick: (e: React.MouseEvent) => {
-            e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
-            router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
-          },
-        },
-        {
-          name: t('Code app'),
-          dataQa: 'add-startable-app',
-          type: ApplicationType.CODE_APP,
-          display: isCodeAppsEnabled,
-          onClick: (e: React.MouseEvent) => {
-            e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
-            router.push(getAppEditorRoute(ApplicationType.CODE_APP));
-          },
-        },
-        ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
-          name: t(schema.displayName),
-          type: schema.displayName,
-          dataQa: `add-${schema.displayName}`,
-          display: true,
-          onClick: (e: React.MouseEvent) => {
-            e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
-            if (detailedApplicationTypeSchema?.$id !== schema.id) {
-              dispatch(
-                ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-                  schema.id,
-                ),
-              );
-            }
-            router.push(getAppEditorRoute(schema.id));
-          },
-        })) ?? []),
-      ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
-    [
-      t,
-      isCodeAppsEnabled,
-      applicationTypeSchemas,
-      router,
-      detailedApplicationTypeSchema?.$id,
-      dispatch,
-    ],
-  );
 
   const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     dispatch(MarketplaceActions.setSearchTerm(e.target.value));
@@ -192,7 +67,11 @@ export const SearchHeader = () => {
       </div>
       {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
       {selectedTab === MarketplaceTabs.MY_WORKSPACE &&
-        isCustomApplicationsEnabled && <AddAppButton menuItems={menuItems} />}
+        isCustomApplicationsEnabled &&
+        isAgentsTab && <AddAppButton />}
+      {selectedTab === MarketplaceTabs.MY_WORKSPACE &&
+        isToolsetsEnabled &&
+        !isAgentsTab && <AddToolsButton />}
     </div>
   );
 };

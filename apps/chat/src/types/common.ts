@@ -7,6 +7,7 @@ export enum EntityType {
   Application = 'application',
   Assistant = 'assistant',
   Addon = 'addon',
+  Toolset = 'toolset',
 }
 
 export enum BackendDataNodeType {
@@ -91,6 +92,7 @@ export enum ApiKeys {
   Conversations = 'conversations',
   Prompts = 'prompts',
   Applications = 'applications',
+  Toolsets = 'toolsets',
 }
 
 export enum CoreApiKeys {
@@ -143,6 +145,7 @@ export enum PageType {
   Marketplace = 'marketplace',
   AppsEditorSettings = 'application-settings',
   AppsEditorGeneralInfo = 'application-general-info',
+  ToolsetEditor = 'toolset-editor',
 }
 
 export enum ScreenState {

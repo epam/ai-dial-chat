@@ -18,3 +18,4 @@ export { SettingsActions } from '@/src/store/settings/settings.reducers';
 export { ShareActions } from '@/src/store/share/share.reducers';
 export { UIActions } from '@/src/store/ui/ui.reducers';
 export { FoldersActions } from '@/src/store/folders/folders.reducers';
+export { ToolsetActions } from '@/src/store/toolset/toolset.reducer';

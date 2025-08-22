@@ -17,6 +17,7 @@ import {
 import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
@@ -221,11 +222,11 @@ export const isExternalApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===
   DefaultsService.get('externalAppsSchemaId', DEFAULT_EXTERNAL_APPS_SCHEMA_ID);
 
-export const getModelDescription = (entity: DialAIEntityModel) => {
+export const getModelDescription = (entity: { description?: string }) => {
   return entity.description ?? '';
 };
 
-export const getModelShortDescription = (entity: DialAIEntityModel) =>
+export const getModelShortDescription = (entity: { description?: string }) =>
   getModelDescription(entity).split(DESCRIPTION_DELIMITER_REGEX)[0];
 
 export const getQuickAppConfig = (
@@ -379,3 +380,10 @@ export const getApplicationEntityFields = (
     applicationTypeSchemaId: schema?.$id ?? '',
   };
 };
+
+export const isDialAiEntityModel = (
+  entity: DialAIEntityModel | ToolsetModel,
+): entity is DialAIEntityModel =>
+  entity?.type === EntityType.Application ||
+  entity?.type === EntityType.Model ||
+  entity?.type === EntityType.Assistant;
