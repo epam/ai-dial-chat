@@ -23,10 +23,14 @@ export const getEntityUrlFromSlugs = ({
   dialApiHost,
   req,
   pathParameter,
+  dynamicSlugs,
+  apiVersion = 'v1',
 }: {
   dialApiHost: string;
   req: NextApiRequest;
   pathParameter?: string;
+  dynamicSlugs?: boolean;
+  apiVersion?: string;
 }) => {
   const slugParam = req.query.slug;
   if (!slugParam) {
@@ -38,14 +42,17 @@ export const getEntityUrlFromSlugs = ({
     throw new DialAIError(`Empty path provided`, 400, req);
   }
 
+  const defaultPathOptions = dynamicSlugs ? { response: true } : undefined;
   const slugPath = constructPath(ServerUtils.encodeSlugs(slugs));
-  const pathOptions = mappingServerUrls[slugPath];
-  if (!pathOptions) {
+  const pathOptions = mappingServerUrls[slugPath] ?? defaultPathOptions;
+  if (!pathOptions && !dynamicSlugs) {
     throw new DialAIError(`Not found`, 404, req);
   }
 
   return {
-    url: sanitizeUri(constructPath(dialApiHost, 'v1', pathParameter, slugPath)),
+    url: sanitizeUri(
+      constructPath(dialApiHost, apiVersion, pathParameter, slugPath),
+    ),
     pathOptions,
   };
 };
@@ -60,6 +67,8 @@ export const createDialApiSlugsHandler = (
     timeout?: number;
     generalErrorMessage?: string;
     pathParameter?: string;
+    dynamicSlugs?: boolean;
+    apiVersion?: string;
   } = {},
 ) => {
   const {
@@ -75,6 +84,8 @@ export const createDialApiSlugsHandler = (
     timeout = 30000, // 30 seconds default
     generalErrorMessage,
     pathParameter,
+    dynamicSlugs = false,
+    apiVersion = 'v1',
   } = options;
 
   return async (req: NextApiRequest, res: NextApiResponse) => {
@@ -100,6 +111,8 @@ export const createDialApiSlugsHandler = (
         dialApiHost,
         req,
         pathParameter,
+        dynamicSlugs,
+        apiVersion,
       });
 
       const reqMethod = method ?? (req.method as HTTPMethod);

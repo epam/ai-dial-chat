@@ -17,6 +17,7 @@ import {
   isClientSessionValid,
   isServerSessionValid,
 } from '@/src/utils/auth/session';
+import { getContentSecurityPolicyDirectives } from '@/src/utils/server/get-common-page-props';
 
 import { SettingsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -154,6 +155,13 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
+
+  res.setHeader(
+    'Content-Security-Policy',
+    getContentSecurityPolicyDirectives(),
+  );
+
+  res.setHeader('Cache-Control', 'no-store');
 
   if (isServerSessionValid(session, true)) {
     return {

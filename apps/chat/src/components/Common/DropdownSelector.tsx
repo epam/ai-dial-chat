@@ -12,9 +12,14 @@ import { Tooltip } from './Tooltip';
 
 type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;
+  closeMenuOnSelect?: boolean;
 };
 
-export function DropdownSelector({ tooltip, ...selectProps }: Props) {
+export function DropdownSelector({
+  tooltip,
+  closeMenuOnSelect = false,
+  ...selectProps
+}: Props) {
   const { t } = useTranslation(Translation.Common);
   return (
     <Tooltip
@@ -26,7 +31,7 @@ export function DropdownSelector({ tooltip, ...selectProps }: Props) {
     >
       <Select
         {...selectProps}
-        closeMenuOnSelect={false}
+        closeMenuOnSelect={closeMenuOnSelect}
         name="colors"
         menuPortalTarget={document.body}
         components={{

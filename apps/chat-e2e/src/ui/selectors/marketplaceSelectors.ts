@@ -14,7 +14,7 @@ export const MarketplaceSelectors = {
 
 export const MarketplaceAgentSelectors = {
   agent: '[data-qa="agent"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',
@@ -37,7 +37,7 @@ export const MarketplaceDetailsModal = {
   applicationContentContainer: '[data-qa="application-content"]',
   applicationDescription: '[data-qa="application-description"]',
   applicationInformation: '[data-qa="application-information"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
   agentVersion: '[data-qa="version"]',
   agentAuthor: '[data-qa="author"]',
   agentReleaseDate: '[data-qa="created-at"]',

@@ -218,10 +218,16 @@ export function PublicationHandler({ publication }: Props) {
                     : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
               });
+
               if (action !== PublishActions.DELETE) {
                 newFolderSegments[1] = publication.targetFolder;
               }
-              const newFolderId = newFolderSegments.join('/');
+
+              let newFolderId = newFolderSegments.join('/');
+              newFolderId = newFolderId.replace(
+                publication.targetFolder,
+                editedPublishToUrl,
+              );
 
               // get new api key
               const newApiKey = regenerateApiKeyNameAndVersionParts(
@@ -338,6 +344,10 @@ export function PublicationHandler({ publication }: Props) {
     }, 0);
   }, [publication.resources]);
 
+  const isSomeResourceIsUnpublish = publication.resources.some(
+    (resource) => resource.action === PublishActions.DELETE,
+  );
+
   return (
     <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
       <div
@@ -368,7 +378,7 @@ export function PublicationHandler({ publication }: Props) {
               <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                 <div className="flex flex-col px-3 pb-4 md:px-5">
                   <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                  {isEditMode ? (
+                  {isEditMode && !isSomeResourceIsUnpublish ? (
                     <PublishToSection
                       path={publishToUrl}
                       maxDepth={maxPublishToDepth}

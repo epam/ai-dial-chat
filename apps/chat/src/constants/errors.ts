@@ -68,7 +68,7 @@ export const errorsMessages = {
   publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
   rulesUploadingFailed: 'Rules uploading failed.',
   createFailed:
-    'Failed to create application. Please check your input and try again.',
+    'Failed to create {{entity}}. Please check your input and try again.',
   fetchDetailsFailed:
     'Fetching application details failed. Please try again later.',
   fetchSchemasFailed:
