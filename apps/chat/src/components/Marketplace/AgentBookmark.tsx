@@ -6,8 +6,7 @@ import classNames from 'classnames';
 
 import { isMyApplication } from '@/src/utils/app/id';
 
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -29,7 +28,7 @@ interface Props<T> {
   allocatePlace?: boolean;
 }
 
-export const AgentBookmark = <T extends DialAIEntityModel | ToolsetModel>({
+export const AgentBookmark = <T extends MarketplaceEntity>({
   entity,
   size = 18,
   className,

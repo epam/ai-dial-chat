@@ -3,8 +3,7 @@ import { memo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { MarketplaceTabs, ViewTypes } from '@/src/constants/marketplace';
@@ -62,7 +61,7 @@ export const ResultsView = memo(
     entities,
     suggestedResults,
     ...props
-  }: ResultsViewProps<DialAIEntityModel | ToolsetModel>) => {
+  }: ResultsViewProps<MarketplaceEntity>) => {
     if (entities.length || suggestedResults.length) {
       const AgentsListComponent =
         selectedViewType === ViewTypes.TABLE ? AgentsTable : AgentsTiles;
