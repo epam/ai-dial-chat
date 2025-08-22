@@ -47,12 +47,7 @@ const hiddenFeaturesForIsolatedView = [
   Feature.HideTopContextMenu,
 ];
 
-export const getCommonPageProps: GetServerSideProps = async ({
-  locale,
-  req,
-  res,
-  resolvedUrl,
-}) => {
+export const getContentSecurityPolicyDirectives = () => {
   const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
     ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
     : 'frame-ancestors none';
@@ -61,9 +56,18 @@ export const getCommonPageProps: GetServerSideProps = async ({
     ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
     : 'frame-src none';
 
+  return `${ancestorsDirective} ; ${frameSrcDirective}`;
+};
+
+export const getCommonPageProps: GetServerSideProps = async ({
+  locale,
+  req,
+  res,
+  resolvedUrl,
+}) => {
   res.setHeader(
     'Content-Security-Policy',
-    ancestorsDirective + '; ' + frameSrcDirective,
+    getContentSecurityPolicyDirectives(),
   );
 
   let params: URLSearchParams | undefined;
