@@ -37,6 +37,17 @@ const getBannerSrc = (theme: string, tab: MarketplaceTabs) => {
     : lightBanner.src;
 };
 
+const getBannerCssVariable = (theme: string, tab: MarketplaceTabs) => {
+  const fallbackBannerSrc = getBannerSrc(theme, tab);
+  const tabBannerCssVariableName =
+    tab === MarketplaceTabs.MY_WORKSPACE
+      ? '--my-workspace-banner'
+      : '--marketplace-banner';
+
+  const bannerCssVariable = `var(${tabBannerCssVariableName}, url(${fallbackBannerSrc}))`;
+  return bannerCssVariable;
+};
+
 export const MarketplaceBanner = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -47,7 +58,7 @@ export const MarketplaceBanner = () => {
     <div
       className="hidden rounded-md bg-cover bg-center bg-no-repeat py-6 md:block"
       style={{
-        backgroundImage: `url(${getBannerSrc(selectedTheme, selectedTab)})`,
+        backgroundImage: getBannerCssVariable(selectedTheme, selectedTab),
       }}
     >
       <h1 className="text-center text-xl font-semibold">
