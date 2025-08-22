@@ -28,12 +28,6 @@ export interface FileMetadata {
   buffer: string;
 }
 
-export type DropImplementation = (
-  fileMetadata: FileMetadata,
-  targetLocator: BaseElement | Locator,
-  onDropPropName: string,
-) => Promise<void>;
-
 export const apiTimeout = 35000;
 export const responseThrottlingTimeout = 2500;
 
@@ -466,88 +460,6 @@ export class BasePage {
 
   public async readTextFromClipboard() {
     return this.page.evaluate(() => navigator.clipboard.readText());
-  }
-
-  /**
-   * Executes a component's 'onDrop' prop by passing a highly realistic mock event object.
-   *
-   * @param fileMetadata The file metadata to upload
-   * @param targetLocator The locator for the DOM element of the React component
-   * @param onDropPropName The name of the prop that handles the file drop (e.g., 'onDrop')
-   */
-  public async executeReactOnDrop(
-    fileMetadata: FileMetadata,
-    targetLocator: BaseElement | Locator,
-    onDropPropName: string,
-  ) {
-    // const fileToUpload = await this.getAttachmentFile(filename);
-    targetLocator =
-      targetLocator instanceof BaseElement
-        ? targetLocator.getElementLocator()
-        : (targetLocator as Locator);
-
-    // This is a surgical strike directly into the application's logic
-    await targetLocator.evaluate(
-      async (element, { file, propName }) => {
-        // Step 1: Create a File object inside the browser.
-        // Create an array of files, which matches the `files: File[]` signature of the handleUpload function
-        const response = await fetch(
-          `data:${file.mimeType};base64,${file.buffer}`,
-        );
-        const blob = await response.blob();
-        const filesArray = [
-          new File([blob], file.name, { type: file.mimeType }),
-        ];
-
-        // Step 2: Create a highly realistic DataTransfer object
-        const dataTransfer = {
-          files: filesArray,
-          items: filesArray.map((f) => ({
-            kind: 'file',
-            type: f.type,
-            getAsFile: () => f,
-            // The function that was missing, now mocked.
-            webkitGetAsEntry: () => ({
-              isFile: true,
-              isDirectory: false,
-              name: f.name,
-              file: (callback: (f: File) => void) => callback(f),
-            }),
-          })),
-          types: ['Files'],
-        };
-
-        // Step 3: Create the MOCK event object with the methods the library needs
-        const mockEvent = {
-          preventDefault: () => void 0,
-          stopPropagation: () => void 0,
-          dataTransfer: dataTransfer,
-        };
-
-        // Step 4: Find the React component's props on its DOM element
-        const propsKey = Object.keys(element).find((key) =>
-          key.startsWith('__reactProps$'),
-        );
-        if (!propsKey) {
-          throw new Error(
-            'Could not find React props on the target element. Is this a React component?',
-          );
-        }
-
-        // Step 5: Access the onDrop function from the props
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const onDropFunction = (element as any)[propsKey][propName];
-        if (typeof onDropFunction !== 'function') {
-          throw new Error(
-            `Prop "${propName}" is not a function on the component's props.`,
-          );
-        }
-
-        // Step 6: Call the function with the fully mocked event
-        onDropFunction(mockEvent);
-      },
-      { file: fileMetadata, propName: onDropPropName },
-    );
   }
 
   public async mockChatImageResponse(
