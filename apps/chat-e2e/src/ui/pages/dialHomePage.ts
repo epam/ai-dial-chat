@@ -40,7 +40,7 @@ export class DialHomePage extends BasePage {
       });
     }
     await appContainer.waitForAppLoaded(loadingTimeout);
-    const chat = appContainer.getFileDropArea().getChat();
+    const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();

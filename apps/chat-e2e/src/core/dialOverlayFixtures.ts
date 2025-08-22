@@ -10,7 +10,6 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   DropdownMenu,
-  FileDropArea,
   ModelInfoTooltip,
   PromptBar,
   PublishingRequestModal,
@@ -77,7 +76,6 @@ const dialOverlayTest = test.extend<{
   beforeTestCleanup: string;
   overlayHomePage: OverlayHomePage;
   overlayMarketplacePage: OverlayMarketplacePage;
-  overlayFileDropArea: FileDropArea;
   overlayChat: Chat;
   overlayAgentInfo: AgentInfo;
   overlayHeader: Header;
@@ -158,14 +156,8 @@ const dialOverlayTest = test.extend<{
     const overlayMarketplacePage = new OverlayMarketplacePage(page);
     await use(overlayMarketplacePage);
   },
-  overlayFileDropArea: async ({ overlayHomePage }, use) => {
-    const overlayFileDropArea = overlayHomePage
-      .getOverlayContainer()
-      .getFileDropArea();
-    await use(overlayFileDropArea);
-  },
-  overlayChat: async ({ overlayFileDropArea }, use) => {
-    const overlayChat = overlayFileDropArea.getChat();
+  overlayChat: async ({ overlayHomePage }, use) => {
+    const overlayChat = overlayHomePage.getOverlayContainer().getChat();
     await use(overlayChat);
   },
   overlayAgentInfo: async ({ overlayChat }, use) => {

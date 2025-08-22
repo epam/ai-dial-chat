@@ -1,8 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
-// Import other types if needed
 import { Toast } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
 
 export class ToastAssertion extends BaseAssertion {
   readonly toast: Toast;

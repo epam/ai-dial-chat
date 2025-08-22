@@ -16,7 +16,6 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
-  FileDropArea,
   FileModalSection,
   InformationModal,
   ListboxMenu,
@@ -192,7 +191,6 @@ const dialTest = test.extend<{
   accountDropdownMenu: DropdownMenu;
   banner: Banner;
   promptBar: PromptBar;
-  fileDropArea: FileDropArea;
   chat: Chat;
   footer: Footer;
   chatMessages: ChatMessages;
@@ -552,12 +550,8 @@ const dialTest = test.extend<{
     const promptBarSearch = promptBar.getSearch();
     await use(promptBarSearch);
   },
-  fileDropArea: async ({ appContainer }, use) => {
-    const fileDropArea = appContainer.getFileDropArea();
-    await use(fileDropArea);
-  },
-  chat: async ({ fileDropArea }, use) => {
-    const chat = fileDropArea.getChat();
+  chat: async ({ appContainer }, use) => {
+    const chat = appContainer.getChat();
     await use(chat);
   },
   footer: async ({ appContainer }, use) => {
