@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.26.7",
+    "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "^4.6.0",
     "@nx/next": "21.4.0",
     "@opentelemetry/api": "^1.9.0",
@@ -96,7 +97,8 @@
     "rxjs": "^7.8.1",
     "stringz": "^2.1.0",
     "tiktoken": "^1.0.17",
-    "tslib": "^2.6.0"
+    "tslib": "^2.6.0",
+    "zod": "^4.0.15"
   },
   "devDependencies": {
     "@mozilla/readability": "^0.6.0",

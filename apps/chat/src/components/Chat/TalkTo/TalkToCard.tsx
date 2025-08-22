@@ -171,7 +171,7 @@ export const TalkToCard = ({
                 !isMyEntity && !entity.version && 'mr-6',
                 isUnavailableModel ? 'text-secondary' : 'text-primary',
               )}
-              data-qa="agent-name"
+              data-qa="entity-name"
             >
               {entity.name}
             </div>

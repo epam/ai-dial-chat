@@ -29,7 +29,7 @@ interface Props {
   entityInfo: { createdAt?: number; author?: string };
 }
 
-export function ApplicationInfo({ entityInfo }: Props) {
+export function EntityInfo({ entityInfo }: Props) {
   const { t } = useTranslation(Translation.Marketplace);
 
   return (

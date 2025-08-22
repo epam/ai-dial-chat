@@ -7,15 +7,23 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getModelShortDescription,
+  isDialAiEntityModel,
   isExternalApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { CardIconSizes } from '@/src/constants/marketplace';
+import { useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/selectors';
+
+import {
+  CardIconSizes,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -27,11 +35,13 @@ import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
-interface CardFooterProps {
-  entity: DialAIEntityModel;
+interface CardFooterProps<T> {
+  entity: T;
 }
 
-const CardFooter = ({ entity }: CardFooterProps) => {
+const CardFooter = <T extends DialAIEntityModel | ToolsetModel>({
+  entity,
+}: CardFooterProps<T>) => {
   return (
     <>
       <EntityMarkdownDescription
@@ -41,10 +51,6 @@ const CardFooter = ({ entity }: CardFooterProps) => {
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
       <div className="flex flex-col gap-2 pt-3 md:pt-4">
-        {/* <span className="text-sm leading-[21px] text-secondary">
-        Capabilities: Conversation
-      </span> */}
-
         <div className="w-full">
           {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
@@ -53,31 +59,37 @@ const CardFooter = ({ entity }: CardFooterProps) => {
   );
 };
 
-interface ApplicationCardProps {
-  entity: DialAIEntityModel;
-  onClick: (entity: DialAIEntityModel) => void;
-  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete?: (entity: DialAIEntityModel) => void;
-  onEdit?: (entity: DialAIEntityModel) => void;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
-  onLogsClick?: (entity: DialAIEntityModel) => void;
+interface MarketplaceEntityCardProps<T> {
+  entity: T;
+  onClick: (entity: T) => void;
+  onPublish?: (entity: T, action: PublishActions) => void;
+  onDelete?: (entity: T) => void;
+  onEdit?: (entity: T) => void;
+  onBookmarkClick?: (entity: T) => void;
+  onLogsClick?: (entity: T) => void;
   isPreview?: boolean;
   dataQA?: string;
 }
 
 export const ApplicationCard = memo(
-  ({
+  <T extends DialAIEntityModel | ToolsetModel>({
     entity,
     onClick,
     onBookmarkClick,
     isPreview = false,
     dataQA,
-  }: ApplicationCardProps) => {
+  }: MarketplaceEntityCardProps<T>) => {
     const { t } = useTranslation(Translation.Marketplace);
+
+    const selectedEntitiesTab = useAppSelector(
+      MarketplaceSelectors.selectSelectedEntitiesTab,
+    );
+
+    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
     const screenState = useScreenState();
 
-    const isMyApp = isMyApplication(entity);
+    const isMyEntity = isMyApplication(entity);
     const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
     return (
@@ -94,11 +106,13 @@ export const ApplicationCard = memo(
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
             {!isPreview && (
               <>
-                <AgentContextMenu
-                  isPreview={isPreview}
-                  className="xl:invisible group-hover:xl:visible"
-                  entity={entity}
-                />
+                {isAgentsTab && (
+                  <AgentContextMenu
+                    isPreview={isPreview}
+                    className="xl:invisible group-hover:xl:visible"
+                    entity={entity as DialAIEntityModel}
+                  />
+                )}
                 <AgentBookmark
                   onBookmarkClick={onBookmarkClick}
                   entity={entity}
@@ -114,8 +128,12 @@ export const ApplicationCard = memo(
                 size={shareIconSize}
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
-                isMyEntity={isMyApp}
-                isExternal={isExternalApp(entity)}
+                isMyEntity={isMyEntity}
+                isExternal={
+                  isAgentsTab && isDialAiEntityModel(entity)
+                    ? isExternalApp(entity)
+                    : false
+                }
               >
                 <ModelIcon
                   entityId={entity.id}
@@ -129,7 +147,7 @@ export const ApplicationCard = memo(
                 <div
                   className={classNames(
                     'mr-6 flex gap-1 text-xs leading-[14px] text-secondary',
-                    !isMyApp && '!mr-12',
+                    !isMyEntity && '!mr-12',
                   )}
                 >
                   {t('Version: ')}
@@ -145,13 +163,15 @@ export const ApplicationCard = memo(
                 <div
                   className={classNames(
                     'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyApp && !entity.version && '!mr-12',
+                    !isMyEntity && !entity.version && '!mr-12',
                   )}
                 >
-                  <span className="truncate" data-qa="agent-name">
+                  <span className="truncate" data-qa="entity-name">
                     {entity.name}
                   </span>
-                  <FunctionStatusIndicator entity={entity} />
+                  {isAgentsTab && isDialAiEntityModel(entity) && (
+                    <FunctionStatusIndicator entity={entity} />
+                  )}
                 </div>
               </div>
               <div
