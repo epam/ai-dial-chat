@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getModelShortDescription,
+  isDialAiEntityModel,
   isExternalApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
@@ -129,14 +130,14 @@ export const ApplicationCard = memo(
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
                 isMyEntity={isMyEntity}
                 isExternal={
-                  isAgentsTab
-                    ? isExternalApp(entity as DialAIEntityModel)
+                  isAgentsTab && isDialAiEntityModel(entity)
+                    ? isExternalApp(entity)
                     : false
                 }
               >
                 <ModelIcon
                   entityId={entity.id}
-                  entity={entity as DialAIEntityModel}
+                  entity={entity}
                   size={iconSize}
                 />
               </ShareIcon>
@@ -168,10 +169,8 @@ export const ApplicationCard = memo(
                   <span className="truncate" data-qa="entity-name">
                     {entity.name}
                   </span>
-                  {isAgentsTab && (
-                    <FunctionStatusIndicator
-                      entity={entity as DialAIEntityModel}
-                    />
+                  {isAgentsTab && isDialAiEntityModel(entity) && (
+                    <FunctionStatusIndicator entity={entity} />
                   )}
                 </div>
               </div>

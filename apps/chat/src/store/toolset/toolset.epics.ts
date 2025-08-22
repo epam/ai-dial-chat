@@ -24,7 +24,6 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { AppAction, AppEpic } from '@/src/types/store';
-import { ToolsetModel } from '@/src/types/toolsets';
 
 import { UIActions } from '@/src/store/actions';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
@@ -74,7 +73,7 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
     ofType(ToolsetActions.createToolset.type),
     switchMap(({ payload }) => {
       const data = regenerateToolsetId(payload.data);
-      const apiPayload = convertToolsetModelToApi(data as ToolsetModel);
+      const apiPayload = convertToolsetModelToApi(data);
 
       const path = ApiUtils.encodeApiUrl(getIdWithoutFeatureType(data.id));
       const shouldUpdateQuery = router.pathname === Routes.ToolsetEditor;
