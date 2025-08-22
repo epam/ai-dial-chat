@@ -17,7 +17,11 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { ENTITY_TYPES, FilterTypes } from '@/src/constants/marketplace';
+import {
+  ENTITY_TYPES,
+  FilterTypes,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 
@@ -135,7 +139,10 @@ export const MarketplaceFilterbar = memo(() => {
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
-
+  const selectedTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
+  );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const topics = useAppSelector(ModelsSelectors.selectModelTopics);
   const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
 
@@ -170,7 +177,7 @@ export const MarketplaceFilterbar = memo(() => {
     dispatch(UIActions.setShowMarketplaceFilterbar(false));
   }, [dispatch]);
 
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
   return (
     <nav
@@ -192,16 +199,18 @@ export const MarketplaceFilterbar = memo(() => {
           >
             <p className="text-base font-semibold">{t('Filters')}</p>
           </div>
-          <FilterSection
-            sectionName={t('Type')}
-            filterValues={ENTITY_TYPES}
-            openedSections={openedSections}
-            selectedFilters={selectedFilters}
-            filterType={FilterTypes.ENTITY_TYPE}
-            onToggleFilterSection={handleToggleFilterSection}
-            onApplyFilter={handleApplyFilter}
-            getDisplayLabel={getTypeLabel}
-          />
+          {isAgentsTab && (
+            <FilterSection
+              sectionName={t('Type')}
+              filterValues={ENTITY_TYPES}
+              openedSections={openedSections}
+              selectedFilters={selectedFilters}
+              filterType={FilterTypes.ENTITY_TYPE}
+              onToggleFilterSection={handleToggleFilterSection}
+              onApplyFilter={handleApplyFilter}
+              getDisplayLabel={getTypeLabel}
+            />
+          )}
           <FilterSection
             sectionName={t('Topics')}
             filterValues={topics} // topics
@@ -211,7 +220,7 @@ export const MarketplaceFilterbar = memo(() => {
             onToggleFilterSection={handleToggleFilterSection}
             onApplyFilter={handleApplyFilter}
           />
-          {sourceTypes.length > 1 && (
+          {isAgentsTab && sourceTypes.length > 1 && (
             <FilterSection
               sectionName={t('Sources')}
               filterValues={sourceTypes}

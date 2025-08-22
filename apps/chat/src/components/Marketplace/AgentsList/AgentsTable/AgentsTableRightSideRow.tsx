@@ -9,8 +9,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { isDialAiEntityModel } from '@/src/utils/app/application';
 
 import { ScreenState } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -34,9 +33,7 @@ interface Props<T> {
   onBookmarkClick?: (entity: T) => void;
 }
 
-export const AgentsTableRightSideRow: React.FC<
-  Props<DialAIEntityModel | ToolsetModel>
-> = memo(
+export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
   ({
     entity,
     isHovered,
