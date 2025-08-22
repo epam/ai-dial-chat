@@ -11,8 +11,7 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
@@ -37,9 +36,7 @@ interface Props<T> {
   onBookmarkClick?: (entity: T) => void;
 }
 
-export const AgentsTableLeftSideRow: React.FC<
-  Props<DialAIEntityModel | ToolsetModel>
-> = memo(
+export const AgentsTableLeftSideRow: React.FC<Props<MarketplaceEntity>> = memo(
   ({
     entity,
     isHovered,
