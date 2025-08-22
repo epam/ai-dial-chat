@@ -177,7 +177,13 @@ const createFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ApplicationActions.createFail.type),
     switchMap(() =>
-      of(UIActions.showErrorToast(translate(errorsMessages.createFailed))),
+      of(
+        UIActions.showErrorToast(
+          translate(errorsMessages.createFailed, {
+            entity: 'application',
+          }),
+        ),
+      ),
     ),
   );
 

@@ -33,7 +33,7 @@ interface Props {
   onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
 
-export const ApplicationDetails = ({
+export function ApplicationDetails({
   entity,
   allEntities,
   isMyAppsTab,
@@ -41,7 +41,7 @@ export const ApplicationDetails = ({
   onClose,
   onChangeVersion,
   onBookmarkClick,
-}: Props) => {
+}: Props) {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
@@ -119,4 +119,4 @@ export const ApplicationDetails = ({
       />
     </Modal>
   );
-};
+}

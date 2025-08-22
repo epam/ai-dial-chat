@@ -6,9 +6,17 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
+
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/selectors';
+
+import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
 
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -17,16 +25,18 @@ import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu'
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
-interface Props {
-  entity: DialAIEntityModel;
+interface Props<T> {
+  entity: T;
   isHovered: boolean;
-  onClick: (entity: DialAIEntityModel) => void;
+  onClick: (entity: T) => void;
   onRowHoverOver: () => void;
   onRowHover: (id: string) => void;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: T) => void;
 }
 
-export const AgentsTableRightSideRow: React.FC<Props> = memo(
+export const AgentsTableRightSideRow: React.FC<
+  Props<DialAIEntityModel | ToolsetModel>
+> = memo(
   ({
     entity,
     isHovered,
@@ -36,6 +46,12 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
     onBookmarkClick,
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
+
+    const selectedEntitiesTab = useAppSelector(
+      MarketplaceSelectors.selectSelectedEntitiesTab,
+    );
+
+    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
     const screenState = useScreenState();
 
@@ -99,7 +115,7 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
           )}
         </div>
         <div className="flex w-[130px] min-w-[130px] items-center">
-          <p className="truncate">{entity.owner ?? t('Unknown')}</p>
+          <p className="truncate">{entity.author ?? t('Unknown')}</p>
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">
@@ -117,10 +133,12 @@ export const AgentsTableRightSideRow: React.FC<Props> = memo(
               entity={entity}
               allocatePlace
             />
-            <AgentContextMenu
-              className={isHovered ? 'xl:visible' : 'xl:invisible'}
-              entity={entity}
-            />
+            {isAgentsTab && isDialAiEntityModel(entity) && (
+              <AgentContextMenu
+                className={isHovered ? 'xl:visible' : 'xl:invisible'}
+                entity={entity}
+              />
+            )}
           </div>
         </div>
       </li>

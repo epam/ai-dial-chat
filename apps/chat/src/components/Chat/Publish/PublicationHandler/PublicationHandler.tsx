@@ -218,10 +218,16 @@ export function PublicationHandler({ publication }: Props) {
                     : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
               });
+
               if (action !== PublishActions.DELETE) {
                 newFolderSegments[1] = publication.targetFolder;
               }
-              const newFolderId = newFolderSegments.join('/');
+
+              let newFolderId = newFolderSegments.join('/');
+              newFolderId = newFolderId.replace(
+                publication.targetFolder,
+                editedPublishToUrl,
+              );
 
               // get new api key
               const newApiKey = regenerateApiKeyNameAndVersionParts(
