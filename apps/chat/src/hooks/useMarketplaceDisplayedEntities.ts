@@ -29,6 +29,7 @@ import {
 import { useFuseSearch } from './useFuseSearch';
 
 import { IFuseOptions } from 'fuse.js';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const useMarketplaceDisplayedEntities = <
   T extends DialAIEntityModel | ToolsetModel,
@@ -80,7 +81,8 @@ export const useMarketplaceDisplayedEntities = <
   const displayedEntities = useMemo(() => {
     const filters = isSelectedAgentsTab
       ? selectedFilters
-      : { [FilterTypes.SOURCES]: selectedFilters[FilterTypes.TOPICS] };
+      : { [FilterTypes.TOPICS]: selectedFilters[FilterTypes.TOPICS] };
+
     const filteredEntities = searchedEntities.filter((entity) =>
       doesMarketplaceEntityMatchFilters(
         entity,
@@ -113,8 +115,9 @@ export const useMarketplaceDisplayedEntities = <
       return entitiesForTab;
     }
 
-    let entitiesToDisplay: T[] = entitiesForTab.concat(
-      shouldSuggest ? filteredEntities : [],
+    let entitiesToDisplay: T[] = uniqBy(
+      entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
+      (entity) => entity.reference,
     );
 
     if (isSelectedAgentsTab) {
