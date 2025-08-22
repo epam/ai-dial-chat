@@ -129,6 +129,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           generateColorsCssVariables(theme.topicColors),
           generateColorsCssVariables(theme.authColors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateUrlsCssVariables(theme.banners),
           generateFontCssVariables({
             'theme-font': theme['font-family'],
             'codeblock-font':
