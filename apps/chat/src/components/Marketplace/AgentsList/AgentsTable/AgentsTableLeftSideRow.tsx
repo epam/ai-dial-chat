@@ -4,7 +4,10 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getModelShortDescription,
+  isDialAiEntityModel,
+} from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
@@ -90,8 +93,8 @@ export const AgentsTableLeftSideRow: React.FC<
               <div className="line-clamp-1 max-w-screen-sm break-all text-base font-semibold leading-5">
                 {entity.name}
               </div>
-              {isAgentsTab && (
-                <FunctionStatusIndicator entity={entity as DialAIEntityModel} />
+              {isAgentsTab && isDialAiEntityModel(entity) && (
+                <FunctionStatusIndicator entity={entity} />
               )}
             </div>
             <EntityMarkdownDescription className="mt-2 hidden max-w-screen-sm truncate whitespace-normal break-all !text-sm font-light !leading-[18px] text-secondary md:line-clamp-3">
