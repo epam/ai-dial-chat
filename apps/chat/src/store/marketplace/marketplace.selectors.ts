@@ -43,6 +43,8 @@ const selectTrimmedSearchTerm = createSelector(
 );
 
 const selectSelectedTab = (state: RootState) => rootSelector(state).selectedTab;
+const selectSelectedEntitiesTab = (state: RootState) =>
+  rootSelector(state).selectedEntitiesTab;
 
 const selectApplyModelStatus = (state: RootState) =>
   rootSelector(state).applyModelStatus;
@@ -98,6 +100,7 @@ export const MarketplaceSelectors = {
   selectSearchTerm,
   selectTrimmedSearchTerm,
   selectSelectedTab,
+  selectSelectedEntitiesTab,
   selectApplyModelStatus,
   selectIsApplyingModel,
   selectDetailsModel,

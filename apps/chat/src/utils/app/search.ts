@@ -12,6 +12,7 @@ import {
   ShareEntity,
   ShareInterface,
 } from '@epam/ai-dial-shared';
+import { IFuseOptions } from 'fuse.js';
 
 export const doesEntityContainSearchTerm = (
   entity: { name: string },
@@ -115,3 +116,15 @@ export const getMyItemsFilters = (
 });
 
 export const defaultMyItemsFilters = getMyItemsFilters();
+
+export const getEntitySearchOptions = <T>(): IFuseOptions<T> => ({
+  keys: ['name', 'version'],
+  threshold: 0.2,
+  distance: 100,
+  minMatchCharLength: 1,
+  ignoreLocation: true,
+  useExtendedSearch: false,
+  findAllMatches: false,
+  isCaseSensitive: false,
+  includeScore: false,
+});
