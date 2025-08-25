@@ -5,6 +5,7 @@ export enum Routes {
   Widgets = '/widgets',
   SelectedWidget = '/widgets/[slug]',
   ToolsetEditor = '/toolset-editor',
+  ToolsetSignIn = '/auth/toolset-signin',
   Chat = '/',
   NotFound = '/404',
 }

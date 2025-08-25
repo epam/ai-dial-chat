@@ -48,7 +48,7 @@ export const ToolsetEditor = () => {
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
-      const payloadToolset: ToolsetModel = {
+      const payloadToolset = {
         id: '',
         folderId: '',
         reference: '',
@@ -65,7 +65,7 @@ export const ToolsetEditor = () => {
         topics: data.topics,
         allowedTools: data.allowedTools,
         version: data.version,
-      };
+      } as ToolsetModel;
 
       if (toolsetDetails) {
         dispatch(

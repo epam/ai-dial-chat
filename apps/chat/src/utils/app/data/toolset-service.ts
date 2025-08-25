@@ -1,11 +1,15 @@
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 import { convertToolsetFromApi } from '@/src/utils/app/toolsets';
 import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
 
 import { HTTPMethod } from '@/src/types/http';
 import { ServerSlugs } from '@/src/types/slugs-types';
-import { ToolsetAuthPayload, ToolsetAuthPayloadBase, ToolsetModel } from '@/src/types/toolsets';
+import {
+  ToolsetAuthPayload,
+  ToolsetAuthPayloadBase,
+  ToolsetModel,
+} from '@/src/types/toolsets';
 
 import { Toolset } from '@epam/ai-dial-shared';
 
@@ -19,14 +23,15 @@ export class ToolsetService {
     );
   }
 
-  public static getToolsetByPath(
-    path: string,
-  ): Observable<ToolsetModel | null> {
+  public static getToolsetByPath(path: string): Observable<ToolsetModel> {
     return ApiUtils.request(`/api/toolsets/${path}`, {
       method: HTTPMethod.GET,
     }).pipe(
       map(convertToolsetFromApi),
-      catchError(() => of(null)),
+      catchError((err) => {
+        console.error('Failed to get toolset', err);
+        return throwError(() => new Error(err.message));
+      }),
     );
   }
 

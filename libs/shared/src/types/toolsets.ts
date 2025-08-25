@@ -9,6 +9,12 @@ export enum ToolsetAuthTypes {
   NONE = 'NONE',
 }
 
+export enum ToolsetAuthStatus {
+  SIGNED_IN = 'SIGNED_IN',
+  SIGNED_OUT = 'SIGNED_OUT',
+  ERROR = 'ERROR',
+}
+
 export interface Toolset {
   endpoint: string;
   transport: ToolsetTransportType;
@@ -32,10 +38,15 @@ export interface Toolset {
 
   auth_settings: {
     authentication_type: ToolsetAuthTypes;
+    redirect_uri?: string;
+    api_key_header?: string;
+    // get
     client_id?: string;
     client_secret?: string;
     authorization_endpoint?: string;
-    redirect_uri?: string;
-    api_key_header?: string;
+    code_challenge?: string;
+    code_challenge_method?: string;
+    global_auth_status?: ToolsetAuthStatus;
+    user_level_auth_status?: ToolsetAuthStatus;
   }
 }
