@@ -67,6 +67,12 @@ export const ApplicationDetailsFooter = ({
   const dispatch = useAppDispatch();
 
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const isAppLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
+  const appDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
 
   const screenState = useScreenState();
 
@@ -93,12 +99,6 @@ export const ApplicationDetailsFooter = ({
 
   const isPublicApp = isMarketplaceEntityPublic(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isAppLoading = useAppSelector(
-    ApplicationSelectors.selectIsApplicationLoading,
-  );
-  const appDetails = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
 
   useEffect(() => {
     if (isExternalApp(entity)) {

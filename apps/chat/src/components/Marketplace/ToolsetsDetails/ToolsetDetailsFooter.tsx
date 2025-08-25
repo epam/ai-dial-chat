@@ -29,7 +29,8 @@ export function ToolsetDetailsFooter({
 }: Props) {
   const screenState = useScreenState();
 
-  const showContextMenu = screenState === ScreenState.SM;
+  const showContextMenu =
+    entity.reference !== entity.id && screenState === ScreenState.SM;
 
   const toolsetMenuItemsParams = useMemo(
     () => ({
