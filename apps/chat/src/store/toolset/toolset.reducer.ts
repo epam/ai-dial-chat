@@ -159,12 +159,6 @@ export const toolsetSlice = createSlice({
       state.installedToolsets = payload.installedToolsets;
     },
     updateInstalledToolsetsFail: (state) => state,
-    enterEditMode: (state, _action: PayloadAction<ToolsetModel>) => {
-      state.toolsetDetailsStatus = UploadStatus.LOADING;
-    },
-    enterEditModeComplete: (state) => {
-      state.toolsetDetailsStatus = UploadStatus.LOADED;
-    },
   },
 });
 
