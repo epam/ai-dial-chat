@@ -22,7 +22,7 @@ export class ShareModal extends BaseElement {
   );
 
   public linkInputLoader = this.getChildElementBySelector(
-    ChatSelectors.messageSpinner,
+    ChatSelectors.entitySpinner,
   );
 
   public shareText = this.getChildElementBySelector(
