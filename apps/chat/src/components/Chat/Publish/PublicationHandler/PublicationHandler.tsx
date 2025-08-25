@@ -10,10 +10,7 @@ import {
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
-import {
-  getIdWithoutFeatureType,
-  getIdWithoutRootPathSegments,
-} from '@/src/utils/app/id';
+import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -61,6 +58,8 @@ import isEqual from 'lodash-es/isEqual';
 interface Props {
   publication: Publication;
 }
+
+const LEADING_SLASH_REGEX = /^\/+/;
 
 const sections = [
   {
@@ -337,12 +336,19 @@ export function PublicationHandler({ publication }: Props) {
 
   const maxPublishToDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
-      return Math.max(
-        max,
-        getIdWithoutRootPathSegments(resource.targetUrl).split('/').length,
+      const targetUrl = getFolderIdFromEntityId(
+        getIdWithoutFeatureType(resource.targetUrl),
       );
+      const cleanTargetUrlPath = targetUrl
+        .replace(publication.targetFolder, '')
+        .replace(LEADING_SLASH_REGEX, '');
+      const cleanTargetUrlPathLength = cleanTargetUrlPath
+        ? cleanTargetUrlPath.split('/').length
+        : 0;
+
+      return Math.max(max, cleanTargetUrlPathLength);
     }, 0);
-  }, [publication.resources]);
+  }, [publication.resources, publication.targetFolder]);
 
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
