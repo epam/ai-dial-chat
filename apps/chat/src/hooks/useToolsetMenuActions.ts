@@ -9,7 +9,6 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { Routes } from '@/src/constants/routes';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const useToolsetMenuActions = (toolset: ToolsetModel) => {
   // const { t } = useTranslation(Translation.Marketplace);
 
