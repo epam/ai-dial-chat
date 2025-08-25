@@ -11,9 +11,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getApplicationSimpleStatus,
-  isApplicationPublic,
   isExecutableApp,
   isExternalApp,
+  isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 
 import {
@@ -33,7 +33,7 @@ import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
+import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -86,8 +86,12 @@ export const ApplicationDetailsFooter = ({
   );
 
   const menuItems = useAgentMenuItems(agentMenuItemsParams);
+  const filteredMenuItems = useMemo(
+    () => menuItems.filter((item) => item.display),
+    [menuItems],
+  );
 
-  const isPublicApp = isApplicationPublic(entity);
+  const isPublicApp = isMarketplaceEntityPublic(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
@@ -115,24 +119,16 @@ export const ApplicationDetailsFooter = ({
               />
             </button>
           ) : (
-            menuItems.map(
-              ({
-                display,
-                name,
-                disabled,
-                className,
-                iconClassName,
-                ...props
-              }) =>
-                display ? (
-                  <IconButton
-                    key={name}
-                    name={disabled ? getDisabledTooltip(entity, name) : name}
-                    disabled={disabled}
-                    className={classNames(iconClassName, className)}
-                    {...props}
-                  />
-                ) : null,
+            filteredMenuItems.map(
+              ({ name, disabled, className, iconClassName, ...props }) => (
+                <IconButton
+                  key={name}
+                  name={disabled ? getDisabledTooltip(entity, name) : name}
+                  disabled={disabled}
+                  className={classNames(iconClassName, className)}
+                  {...props}
+                />
+              ),
             )
           )}
           <AgentBookmark
