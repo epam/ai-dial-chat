@@ -25,7 +25,7 @@ const overlayOptions = {
     Feature.Marketplace,
   ],
   signInOptions: {
-    validationUserEmail: 'mikita_butsko@epam.com',
+    validationUserEmail: 'someMail',
   },
 } as ChatOverlayOptions;
 
