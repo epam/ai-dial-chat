@@ -1,27 +1,18 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 
-import { useFuseSearch } from '@/src/hooks/useFuseSearch';
-
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { doesApplicationMatchFilters } from '@/src/utils/marketplace';
+import { useMarketplaceDisplayedEntities } from '@/src/hooks/useMarketplaceDisplayedEntities';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { MarketplaceActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ApplicationTypesSchemasSelectors,
-  MarketplaceSelectors,
-  ModelsSelectors,
-} from '@/src/store/selectors';
+import { MarketplaceSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import {
   DeleteType,
   FilterTypes,
   MarketplaceTabs,
-  ViewTypes,
 } from '@/src/constants/marketplace';
-import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { AgentDialogs } from '@/src/components//Common/AgentDialogs';
 
@@ -51,19 +42,6 @@ export function AgentsTabRenderer() {
     MarketplaceSelectors.selectSelectedViewType,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const applicationTypeSchemas = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
-
-  const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
-    [],
-  );
-
-  const isSomeFilterNotEmpty =
-    searchTerm.length ||
-    selectedFilters[FilterTypes.ENTITY_TYPE].length ||
-    selectedFilters[FilterTypes.TOPICS].length ||
-    selectedFilters[FilterTypes.SOURCES].length;
 
   const areAllFiltersEmpty =
     !searchTerm.length &&
@@ -71,72 +49,8 @@ export function AgentsTabRenderer() {
     !selectedFilters[FilterTypes.TOPICS].length &&
     !selectedFilters[FilterTypes.SOURCES].length;
 
-  const searchedModels = useFuseSearch(
-    allModels,
-    searchTerm,
-    MODELS_SEARCH_OPTIONS,
-  );
-
-  const displayedEntities = useMemo(() => {
-    const filteredEntities = searchedModels.filter((entity) =>
-      doesApplicationMatchFilters(
-        entity,
-        selectedFilters,
-        applicationTypeSchemas,
-      ),
-    );
-
-    const isInstalledModel = (entity: DialAIEntityModel) =>
-      installedModelIds.has(entity.reference);
-
-    const entitiesForTab =
-      selectedTab === MarketplaceTabs.MY_WORKSPACE
-        ? filteredEntities.filter(isInstalledModel)
-        : filteredEntities;
-
-    const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
-
-    if (selectedViewType === ViewTypes.TABLE) {
-      if (shouldSuggest) {
-        const suggestedListWithoutInstalled = filteredEntities.filter(
-          (entity) => !isInstalledModel(entity),
-        );
-
-        setSuggestedResults(suggestedListWithoutInstalled);
-      } else {
-        setSuggestedResults([]);
-      }
-
-      return entitiesForTab;
-    }
-
-    const groupedEntities = groupModelsAndSaveOrder(
-      entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
-    );
-
-    let orderedEntities = groupedEntities.map(({ entities }) => entities[0]);
-
-    if (shouldSuggest) {
-      const suggestedListWithoutInstalled = orderedEntities.filter(
-        (entity) => !isInstalledModel(entity),
-      );
-      orderedEntities = orderedEntities.filter(isInstalledModel);
-      setSuggestedResults(suggestedListWithoutInstalled);
-    } else {
-      setSuggestedResults([]);
-    }
-
-    return orderedEntities;
-  }, [
-    searchedModels,
-    selectedTab,
-    selectedViewType,
-    isSomeFilterNotEmpty,
-    selectedFilters,
-    installedModelIds,
-    applicationTypeSchemas,
-  ]);
+  const { displayedEntities, suggestedResults } =
+    useMarketplaceDisplayedEntities(allModels, installedModelIds);
 
   const handleSetDetailsModel = useCallback(
     (model: { reference: string }) => {

@@ -38,6 +38,7 @@ export enum StyleValues {
 export enum Cursors {
   pointer = 'pointer',
   notAllowed = 'not-allowed',
+  default = 'default',
 }
 
 // Overflow-related CSS Values: Defines values for overflow properties.

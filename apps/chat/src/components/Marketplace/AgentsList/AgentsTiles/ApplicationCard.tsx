@@ -7,13 +7,13 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getModelShortDescription,
+  isDialAiEntityModel,
   isExternalApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -28,7 +28,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
+import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
@@ -38,7 +38,7 @@ interface CardFooterProps<T> {
   entity: T;
 }
 
-const CardFooter = <T extends DialAIEntityModel | ToolsetModel>({
+const CardFooter = <T extends MarketplaceEntity>({
   entity,
 }: CardFooterProps<T>) => {
   return (
@@ -71,7 +71,7 @@ interface MarketplaceEntityCardProps<T> {
 }
 
 export const ApplicationCard = memo(
-  <T extends DialAIEntityModel | ToolsetModel>({
+  <T extends MarketplaceEntity>({
     entity,
     onClick,
     onBookmarkClick,
@@ -105,11 +105,11 @@ export const ApplicationCard = memo(
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
             {!isPreview && (
               <>
-                {isAgentsTab && (
+                {isDialAiEntityModel(entity) && (
                   <AgentContextMenu
                     isPreview={isPreview}
                     className="xl:invisible group-hover:xl:visible"
-                    entity={entity as DialAIEntityModel}
+                    entity={entity}
                   />
                 )}
                 <AgentBookmark
@@ -129,14 +129,14 @@ export const ApplicationCard = memo(
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
                 isMyEntity={isMyEntity}
                 isExternal={
-                  isAgentsTab
-                    ? isExternalApp(entity as DialAIEntityModel)
+                  isAgentsTab && isDialAiEntityModel(entity)
+                    ? isExternalApp(entity)
                     : false
                 }
               >
                 <ModelIcon
                   entityId={entity.id}
-                  entity={entity as DialAIEntityModel}
+                  entity={entity}
                   size={iconSize}
                 />
               </ShareIcon>
@@ -165,13 +165,11 @@ export const ApplicationCard = memo(
                     !isMyEntity && !entity.version && '!mr-12',
                   )}
                 >
-                  <span className="truncate" data-qa="agent-name">
+                  <span className="truncate" data-qa="entity-name">
                     {entity.name}
                   </span>
-                  {isAgentsTab && (
-                    <FunctionStatusIndicator
-                      entity={entity as DialAIEntityModel}
-                    />
+                  {isAgentsTab && isDialAiEntityModel(entity) && (
+                    <FunctionStatusIndicator entity={entity} />
                   )}
                 </div>
               </div>

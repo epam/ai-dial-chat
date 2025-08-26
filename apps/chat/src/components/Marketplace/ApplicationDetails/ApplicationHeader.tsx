@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
-  isApplicationPublic,
   isExternalApp,
+  isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
@@ -29,7 +29,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
   const dispatch = useAppDispatch();
 
   const isMyApp = isMyApplication(entity);
-  const isPublicApp = isApplicationPublic(entity);
+  const isPublicApp = isMarketplaceEntityPublic(entity);
   const handleOpenSharing = useCallback(() => {
     dispatch(
       ShareActions.share({
@@ -43,6 +43,22 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
+  const shareAction = useMemo(
+    () => ({
+      isEnabled: isApplicationsSharingEnabled,
+      onShare: handleOpenSharing,
+    }),
+    [handleOpenSharing, isApplicationsSharingEnabled],
+  );
+
+  const copyLinkAction = useMemo(
+    () => ({
+      isPublic: isPublicApp,
+      Component: ApplicationCopyLink,
+    }),
+    [isPublicApp],
+  );
+
   return (
     <EntityHeader<DialAIEntityModel>
       entity={entity}
@@ -50,14 +66,8 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
       isMyEntity={isMyApp}
       isExternal={isExternalApp(entity)}
       isPreview={isPreview}
-      shareAction={{
-        isEnabled: isApplicationsSharingEnabled,
-        onShare: handleOpenSharing,
-      }}
-      copyLinkAction={{
-        isPublic: isPublicApp,
-        component: ApplicationCopyLink,
-      }}
+      shareAction={shareAction}
+      copyLinkAction={copyLinkAction}
       StatusIndicator={FunctionStatusIndicator}
       dataQa="application-header"
     />

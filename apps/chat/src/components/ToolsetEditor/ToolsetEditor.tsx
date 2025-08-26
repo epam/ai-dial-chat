@@ -35,10 +35,7 @@ export const ToolsetEditor = () => {
   );
 
   const formMethods = useForm<ToolsetEditorForm>({
-    defaultValues: getDefaultFormData(
-      toolsetDetails,
-      toolsets as ToolsetModel[],
-    ),
+    defaultValues: getDefaultFormData(toolsetDetails, toolsets),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetEditorFormSchema),

@@ -115,7 +115,7 @@ export const checkIsNotAllowedModelUtil = (
     return true;
   }
 
-  const modelInMap = modelsMap[conv.model.id] as DialAIEntityModel | undefined;
+  const modelInMap = modelsMap[conv.model.id];
 
   if (!modelInMap) {
     return true;

@@ -1,5 +1,6 @@
 import {
   EMPTY,
+  Observable,
   catchError,
   concat,
   filter,
@@ -12,9 +13,10 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
-import { getIdWithoutFeatureType } from '@/src/utils/app/id';
+import { getIdWithoutFeatureType, isMyEntity } from '@/src/utils/app/id';
 import {
   convertToolsetModelToApi,
   regenerateToolsetId,
@@ -22,11 +24,10 @@ import {
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { AppEpic } from '@/src/types/store';
+import { AppEpic, AppAction } from '@/src/types/store';
 import {
   ToolsetAuthPayload,
   ToolsetCredentialsLevel,
-  ToolsetModel,
 } from '@/src/types/toolsets';
 
 import { UIActions } from '@/src/store/actions';
@@ -34,10 +35,12 @@ import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { uniq } from 'lodash-es';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -56,8 +59,17 @@ const getToolsetsEpic: AppEpic = (action$) =>
         toolsets: ToolsetService.getToolsets(),
       }).pipe(
         switchMap(({ toolsets }) =>
-          concat(of(ToolsetActions.getToolsetsSuccess(toolsets))),
+          concat(
+            of(ToolsetActions.getToolsetsSuccess(toolsets)),
+            of(ToolsetActions.getInstalledToolsets()),
+          ),
         ),
+        catchError((err) => {
+          console.error('Failed to get toolsets: ', err);
+          return of(
+            UIActions.showErrorToast(translate('Failed to get toolsets')),
+          );
+        }),
       ),
     ),
   );
@@ -67,7 +79,7 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
     ofType(ToolsetActions.createToolset.type),
     switchMap(({ payload }) => {
       const data = regenerateToolsetId(payload.data);
-      const apiPayload = convertToolsetModelToApi(data as ToolsetModel);
+      const apiPayload = convertToolsetModelToApi(data);
 
       const path = ApiUtils.encodeApiUrl(getIdWithoutFeatureType(data.id));
       const shouldUpdateQuery = router.pathname === Routes.ToolsetEditor;
@@ -90,8 +102,23 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                 ? concat(
                     of(ToolsetActions.setToolsets([toolset])),
                     of(ToolsetActions.getToolsetDetailsSuccess(toolset)),
+                    of(
+                      ToolsetActions.addInstalledToolsets({
+                        references: [toolset.reference],
+                      }),
+                    ),
                   )
                 : of(ToolsetActions.createToolsetFailed());
+            }),
+            catchError((err) => {
+              console.error('Failed to get toolset: ', err);
+              return of(
+                UIActions.showErrorToast(
+                  translate('Failed to get toolset: {{entity}}', {
+                    entity: path,
+                  }),
+                ),
+              );
             }),
           ),
         ),
@@ -238,6 +265,185 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
     }),
   );
 
+const getInstalledToolsetsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ToolsetActions.getInstalledToolsets.type),
+    switchMap(() => {
+      const allToolsets = ToolsetSelectors.selectToolsets(state$.value);
+
+      const myToolsetsReferences = allToolsets
+        .filter((toolset) => isMyEntity(toolset) || toolset.sharedWithMe)
+        .map((myToolset) => myToolset.reference);
+
+      return ClientDataService.getInstalledToolsets().pipe(
+        switchMap((installedToolsets) => {
+          if (!installedToolsets) {
+            return of(
+              ToolsetActions.getInstalledToolsetsFail(myToolsetsReferences),
+            );
+          }
+
+          const actions: Observable<AppAction>[] = [];
+
+          const installedToolsetsSet = new Set(installedToolsets);
+
+          const references = [...installedToolsets, ...myToolsetsReferences];
+
+          const toolsetsToInstall = references.filter(
+            (reference) => !installedToolsetsSet.has(reference),
+          );
+
+          if (toolsetsToInstall.length) {
+            actions.push(
+              of(
+                ToolsetActions.addInstalledToolsets({
+                  references: toolsetsToInstall,
+                }),
+              ),
+            );
+          }
+
+          return concat(
+            of(ToolsetActions.getInstalledToolsetsSuccess(installedToolsets)),
+            ...actions,
+          );
+        }),
+
+        catchError((error) => {
+          if (error?.message && error?.message.endsWith('Not Found')) {
+            return of(
+              ToolsetActions.getInstalledToolsetsFail(myToolsetsReferences),
+            );
+          }
+
+          return EMPTY;
+        }),
+      );
+    }),
+  );
+
+const getInstalledToolsetsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.getInstalledToolsetsFail.type),
+    switchMap(({ payload: myToolsetsIds }) => {
+      return of(
+        ToolsetActions.addInstalledToolsets({
+          references: myToolsetsIds,
+        }),
+      );
+    }),
+  );
+
+const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ToolsetActions.removeInstalledToolsets.type),
+    switchMap(({ payload }) => {
+      const stateValue = state$.value;
+      const installedToolsets =
+        ToolsetSelectors.selectInstalledToolsets(stateValue);
+
+      //TODO change to check by 'public group keys' when toolsets publication will be ready
+
+      const deletedToolsetsSet = new Set(payload.references);
+      const newInstalledToolsets = installedToolsets.filter(
+        (toolset) => !deletedToolsetsSet.has(toolset),
+      );
+
+      return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(
+        switchMap(() => {
+          const actions: Observable<AppAction>[] = [];
+          if (payload.action === DeleteType.DELETE) {
+            //TODO uncomment when ToolsetActions.deleteToolsets will be implemented
+            //   actions.push(
+            //     of(
+            //       ToolsetActions.deleteToolsets({
+            //         references: payload.references,
+            //       }),
+            //     ),
+            //   );
+          }
+
+          return concat(
+            ...actions,
+            of(
+              ToolsetActions.getInstalledToolsetsSuccess(newInstalledToolsets),
+            ),
+            of(
+              ToolsetActions.updateInstalledToolsetsSuccess({
+                installedToolsets: newInstalledToolsets,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                `Failed to remove toolset${payload.references.length > 1 ? 's' : ''} from my workspace`,
+              ),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ToolsetActions.addInstalledToolsets.type),
+    switchMap(({ payload }) => {
+      const stateValue = state$.value;
+      const installedToolsets =
+        ToolsetSelectors.selectInstalledToolsets(stateValue);
+
+      const newInstalledToolsets = uniq([
+        ...installedToolsets,
+        ...payload.references,
+      ]);
+
+      return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(
+        switchMap(() => {
+          const actions: Observable<AppAction>[] = [];
+
+          if (payload.showSuccessToast) {
+            actions.push(
+              of(
+                UIActions.showSuccessToast(
+                  translate(
+                    `The toolset${payload.references.length > 1 ? 's' : ''} added to my workspace`,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return concat(
+            ...actions,
+            of(
+              ToolsetActions.getInstalledToolsetsSuccess(newInstalledToolsets),
+            ),
+            of(
+              ToolsetActions.updateInstalledToolsetsSuccess({
+                installedToolsets: newInstalledToolsets,
+              }),
+            ),
+          );
+        }),
+        catchError((error) => {
+          console.error(error);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                `Failed to add toolset${payload.references.length > 1 ? 's' : ''} to my workspace`,
+              ),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const refreshToolset$ = (path: string, route?: string) =>
   ToolsetService.getToolsetByPath(path).pipe(
     switchMap((toolset) => {
@@ -375,6 +581,14 @@ export const ToolsetEpics = combineEpics(
   createToolsetFailedEpic,
   getToolsetDetailsEpic,
   updateToolsetEpic,
+
+  //Bookmark
+  getInstalledToolsetsEpic,
+  getInstalledToolsetsFailEpic,
+  removeFromInstalledToolsetsEpic,
+  addInstalledToolsetsEpic,
+
+  //Signin
   startSignInProcess,
   logInToolsetEpic,
   logOutToolsetEpic,

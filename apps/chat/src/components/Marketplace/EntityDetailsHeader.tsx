@@ -5,7 +5,8 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { EntityType, ScreenState } from '@/src/types/common';
+import { ScreenState } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { HeaderIconSizes } from '@/src/constants/marketplace';
@@ -18,12 +19,7 @@ import { TopicsList } from './TopicsList';
 import { FeatureType } from '@epam/ai-dial-shared';
 
 interface EntityHeaderProps<T> {
-  entity: T & {
-    id: string;
-    name: string;
-    type: EntityType;
-    topics?: string[];
-  };
+  entity: T;
   featureType: FeatureType;
   isMyEntity: boolean;
   isExternal?: boolean;
@@ -35,14 +31,14 @@ interface EntityHeaderProps<T> {
   };
   copyLinkAction?: {
     isPublic: boolean;
-    component: React.ComponentType<{ entity: T; withText: boolean }>;
+    Component: React.ComponentType<{ entity: T; withText: boolean }>;
   };
   // Optional custom components
   StatusIndicator?: React.ComponentType<{ entity: T }>;
   dataQa?: string;
 }
 
-export function EntityHeader<T>({
+export function EntityHeader<T extends MarketplaceEntity>({
   entity,
   featureType,
   isMyEntity,
@@ -57,6 +53,15 @@ export function EntityHeader<T>({
 
   const screenState = useScreenState();
   const { iconSize, shareIconSize } = HeaderIconSizes[screenState];
+
+  const isShareVisible =
+    !!shareAction?.isEnabled &&
+    isMyEntity &&
+    screenState !== ScreenState.SM &&
+    !isPreview;
+
+  const isCopyLinkVisible =
+    !!copyLinkAction?.isPublic && screenState !== ScreenState.SM && !isPreview;
 
   return (
     <header
@@ -111,22 +116,19 @@ export function EntityHeader<T>({
       </div>
 
       {/* Action buttons */}
-      {shareAction?.isEnabled &&
-        isMyEntity &&
-        screenState !== ScreenState.SM &&
-        !isPreview && (
-          <button
-            className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
-            onClick={shareAction.onShare}
-          >
-            <IconUserShare size={18} />
-            <span>{t('Share')}</span>
-          </button>
-        )}
+      {isShareVisible && (
+        <button
+          className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
+          onClick={shareAction.onShare}
+        >
+          <IconUserShare size={18} />
+          <span>{t('Share')}</span>
+        </button>
+      )}
 
-      {copyLinkAction?.isPublic &&
-        screenState !== ScreenState.SM &&
-        !isPreview && <copyLinkAction.component entity={entity} withText />}
+      {isCopyLinkVisible && (
+        <copyLinkAction.Component entity={entity} withText />
+      )}
     </header>
   );
 }

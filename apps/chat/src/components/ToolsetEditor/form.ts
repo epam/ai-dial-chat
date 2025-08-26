@@ -10,6 +10,7 @@ import {
   urlErrors,
   versionsErrors,
 } from '@/src/constants/form-errors';
+import { DEFAULT_VERSION } from '@/src/constants/publication';
 
 import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
 import { z as zodValidation } from 'zod';
@@ -77,7 +78,7 @@ export const getDefaultFormData = (
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
-    version: toolset?.version ?? '',
+    version: toolset?.version ?? DEFAULT_VERSION,
     topics: toolset?.topics ?? [],
   };
 };

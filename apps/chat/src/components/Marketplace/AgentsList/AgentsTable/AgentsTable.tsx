@@ -16,6 +16,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSyncXScroll } from '@/src/hooks/useSyncXScroll';
 
 import { ScreenState } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetModel } from '@/src/types/toolsets';
 
@@ -62,16 +63,19 @@ const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
 );
 DataRowContainer.displayName = 'DataRowContainer';
 
-interface DataRowItemProps<T extends DialAIEntityModel | ToolsetModel> {
-  suggestedResults: T[];
-  entity: T | string;
+interface DataRowItemProps {
+  suggestedResults: DialAIEntityModel[];
+  entity: DialAIEntityModel | string;
   virtualRow: VirtualItem;
   children: ReactNode;
 }
 
-const DataRowItem: React.FC<
-  DataRowItemProps<DialAIEntityModel | ToolsetModel>
-> = ({ entity, suggestedResults, virtualRow, children }) => {
+const DataRowItem: React.FC<DataRowItemProps<MarketplaceEntity>> = ({
+  entity,
+  suggestedResults,
+  virtualRow,
+  children,
+}) => {
   return (
     <div
       className={classNames(
@@ -118,9 +122,7 @@ const TOOLSETS_SORT_KEY_MAP: ToolsetsSortKeyMap = {
   [TableColumnSortKeys.OWNER]: 'author',
 };
 
-export const AgentsTable: React.FC<
-  AgentsListProps<DialAIEntityModel | ToolsetModel>
-> = ({
+export const AgentsTable: React.FC<AgentsListProps<MarketplaceEntity>> = ({
   entities,
   suggestedResults,
   separator,
@@ -170,7 +172,7 @@ export const AgentsTable: React.FC<
       TOOLSETS_SORT_KEY_MAP[tableSort.column] ||
       SORT_KEY_MAP[TableColumnSortKeys.NAME];
 
-    const sortEntities = <T extends DialAIEntityModel | ToolsetModel>(
+    const sortEntities = <T extends MarketplaceEntity>(
       items: T[],
       sortField: keyof T,
     ) => {
