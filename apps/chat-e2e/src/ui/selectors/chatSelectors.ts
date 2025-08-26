@@ -139,7 +139,7 @@ export const ChatSelectors = {
   attachmentExpanded: '[data-qa="attachment-expanded"]',
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
   attachmentsGroup: '[data-qa="grouped-attachments"]',
-  messageSpinner: '[data-qa="message-input-spinner"]',
+  entitySpinner: '[data-qa="entity-spinner"]',
   plotlyContainer: '.plot-container',
   maxWidth: '.max-w-none',
   showMore: '[data-qa="show-more"]',
