@@ -13,8 +13,8 @@ import { Translation } from '@/src/types/translation';
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
-import { ApplicationDetailsContent } from '@/src/components/Marketplace/ApplicationDetails/ApplicationContent';
-import { ApplicationDetailsHeader } from '@/src/components/Marketplace/ApplicationDetails/ApplicationHeader';
+import { ToolsetDetailsContent } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsContent';
+import { ToolsetDetailsHeader } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsHeader';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
 interface ToolsetPreviewProps {
@@ -30,35 +30,54 @@ export const ToolsetPreview = ({
   const { control } = useFormContext<ToolsetEditorForm>();
   const [isDetailed, setIsDetailed] = useState(false);
 
-  const [name, description, iconUrl, topics] = useWatch({
-    control,
-    name: ['name', 'description', 'iconUrl', 'topics'],
-  });
+  const [name, description, iconUrl, topics, version, allowedTools, transport] =
+    useWatch({
+      control,
+      name: [
+        'name',
+        'description',
+        'iconUrl',
+        'topics',
+        'version',
+        'allowedTools',
+        'protocol',
+      ],
+    });
 
-  const cardEntity = useMemo(
+  const cardEntity: ToolsetModel = useMemo(
     () => ({
       type: EntityType.Toolset,
-      reference: 'some-fake-ref',
-      id: 'some-fake-id',
       isDefault: false,
 
       name,
       description,
       iconUrl,
       topics,
+      version,
+      allowedTools,
+      transport,
 
       createdAt: currentToolset?.createdAt,
       updatedAt: currentToolset?.updatedAt,
       owner: currentToolset?.author,
+      folderId: currentToolset?.folderId ?? 'folder-id-placeholder',
+      reference: currentToolset?.reference ?? 'reference-placeholder',
+      id: currentToolset?.id ?? 'id-placeholder',
     }),
     [
+      allowedTools,
       currentToolset?.author,
       currentToolset?.createdAt,
+      currentToolset?.folderId,
+      currentToolset?.id,
+      currentToolset?.reference,
       currentToolset?.updatedAt,
       description,
       iconUrl,
       name,
       topics,
+      transport,
+      version,
     ],
   );
 
@@ -99,8 +118,8 @@ export const ToolsetPreview = ({
         >
           {isDetailed ? (
             <div className="flex w-full flex-col divide-y divide-tertiary rounded bg-layer-3">
-              <ApplicationDetailsHeader entity={cardEntity} isPreview />
-              <ApplicationDetailsContent entity={cardEntity} />
+              <ToolsetDetailsHeader entity={cardEntity} isPreview />
+              <ToolsetDetailsContent entity={cardEntity} />
             </div>
           ) : (
             <ApplicationCard
