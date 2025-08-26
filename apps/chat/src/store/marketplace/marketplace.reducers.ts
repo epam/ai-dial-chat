@@ -61,6 +61,7 @@ export const marketplaceSlice = createSlice({
         selectedFilters: state.selectedFilters,
         selectedView: state.selectedView,
         tableSort: state.tableSort,
+        selectedEntitiesTab: state.selectedEntitiesTab,
       };
     },
     initQueryParams: (state) => state,
