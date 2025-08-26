@@ -128,7 +128,7 @@ export class BaseAssertion {
 
   public async assertElementText(
     element: BaseElement | Locator,
-    expectedText: string | RegExp | number,
+    expectedText: string | RegExp | number | (string | RegExp)[],
     expectedMessage?: string,
   ) {
     const elementLocator = this.getElementLocator(element);
@@ -381,13 +381,12 @@ export class BaseAssertion {
     expectedCount: number,
     expectedMessage?: string,
   ) {
-    const elementsCount = await this.getElementLocator(element).count();
-    expect
+    await expect
       .soft(
-        elementsCount,
+        this.getElementLocator(element),
         expectedMessage ?? ExpectedMessages.elementsCountIsValid,
       )
-      .toBe(expectedCount);
+      .toHaveCount(expectedCount);
   }
 
   public assertNumberIsGreaterThan(
