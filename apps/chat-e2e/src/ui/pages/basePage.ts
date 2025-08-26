@@ -5,7 +5,7 @@ import { BackendDataEntity } from '@/chat/types/common';
 import { API, Attachment, ExpectedConstants, Import } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
 import { BucketUtil, FileUtil, ItemUtil } from '@/src/utils';
-import { Locator, Page } from '@playwright/test';
+import { JSHandle, Locator, Page } from '@playwright/test';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'node:fs';
 import path from 'path';
@@ -429,21 +429,13 @@ export class BasePage {
   }
 
   private async firePasteFilesEvent(filesToPaste: FileMetadata[]) {
-    await this.page.evaluate(async (files) => {
+    // Call the common helper to create File objects in the browser
+    const browserFilesHandle = await this.createBrowserFiles(filesToPaste);
+
+    await this.page.evaluate(async (filesArray) => {
       // Create the DataTransfer object, which is the container for clipboard data
       const dt = new DataTransfer();
-
-      for (const file of files) {
-        // Convert the base64 string back to a Blob, then create a File object
-        const response = await fetch(
-          `data:${file.mimeType};base64,${file.buffer}`,
-        );
-        const blob = await response.blob();
-        const newFile = new File([blob], file.name, { type: file.mimeType });
-
-        // Add the file to the DataTransfer object
-        dt.items.add(newFile);
-      }
+      filesArray.forEach((file) => dt.items.add(file));
 
       // Create the 'paste' event, attaching the DataTransfer object to the clipboardData property
       const pasteEvent = new ClipboardEvent('paste', {
@@ -455,7 +447,7 @@ export class BasePage {
 
       // Dispatch the event onto the currently focused element
       document.activeElement?.dispatchEvent(pasteEvent);
-    }, filesToPaste);
+    }, browserFilesHandle);
   }
 
   public async readTextFromClipboard() {
@@ -553,5 +545,26 @@ export class BasePage {
       mimeType: fileTypeResult?.mime || 'application/octet-stream',
       buffer: buffer.toString('base64'),
     };
+  }
+
+  /**
+   * Creates an array of browser-native File objects from metadata
+   * This code is executed in the browser and returns a handle to the result
+   * @param filesMetadata The array of file descriptions
+   * @returns A JSHandle pointing to the created File[] array in the browser
+   */
+  private async createBrowserFiles(
+    filesMetadata: FileMetadata[],
+  ): Promise<JSHandle<File[]>> {
+    return this.page.evaluateHandle(async (files) => {
+      const filePromises = files.map(async (file) => {
+        const response = await fetch(
+          `data:${file.mimeType};base64,${file.buffer}`,
+        );
+        const blob = await response.blob();
+        return new File([blob], file.name, { type: file.mimeType });
+      });
+      return Promise.all(filePromises);
+    }, filesMetadata);
   }
 }
