@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { translate } from '@/src/utils/app/translation';
 
 import { DialAIEntityModel } from '@/src/types/models';
@@ -58,40 +59,43 @@ const ConfirmAgentDeleteDialogView = () => {
 
   const dispatch = useAppDispatch();
 
-  const deleteModel = useAppSelector(MarketplaceSelectors.selectDeleteModel)!;
+  const deleteState = useAppSelector(MarketplaceSelectors.selectDeleteEntity);
+  const model = deleteState?.entity as DialAIEntityModel;
+  const action = deleteState?.action as DeleteType;
 
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
-      if (confirm && deleteModel) {
-        if (deleteModel.action === DeleteType.REMOVE) {
+      if (confirm && model) {
+        if (action === DeleteType.REMOVE) {
           dispatch(
             ModelsActions.removeInstalledModels({
-              references: [deleteModel.entity.reference],
+              references: [model.reference],
               action: DeleteType.REMOVE,
             }),
           );
-        } else if (deleteModel.action === DeleteType.DELETE) {
-          dispatch(ApplicationActions.delete(deleteModel.entity));
+        } else if (action === DeleteType.DELETE) {
+          dispatch(ApplicationActions.delete(model));
         }
 
         dispatch(MarketplaceActions.setDetailsModel());
       }
 
-      dispatch(MarketplaceActions.setDeleteModel());
+      dispatch(MarketplaceActions.setDeleteEntity());
     },
-    [deleteModel, dispatch],
+    [model, action, dispatch],
   );
 
   return (
     <ConfirmDialog
       isOpen
-      {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
+      {...getDeleteConfirmationText(action, model)}
       onClose={handleDeleteClose}
       cancelLabel={t('Cancel')}
     />
   );
 };
 
-export const ConfirmAgentDeleteDialog = withRenderWhen(
-  MarketplaceSelectors.selectDeleteModel,
-)(ConfirmAgentDeleteDialogView);
+export const ConfirmAgentDeleteDialog = withRenderWhen((state) => {
+  const deleteState = MarketplaceSelectors.selectDeleteEntity(state);
+  return deleteState && isDialAiEntityModel(deleteState.entity);
+})(ConfirmAgentDeleteDialogView);
