@@ -517,9 +517,8 @@ dialAdminTest(
         await selectFolders.openFolderDropdownMenu(
           publishedFolderConversation.folders.name,
         );
-        const actualOptions = await folderDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayIncludesAll(
-          actualOptions,
+        await baseAssertion.assertElementText(
+          folderDropdownMenu.menuOptions(),
           [MenuOptions.addNewFolder],
           ExpectedMessages.contextMenuOptionsValid,
         );

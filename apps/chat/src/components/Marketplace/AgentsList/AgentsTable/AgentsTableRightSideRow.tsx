@@ -20,8 +20,8 @@ import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface Props<T> {

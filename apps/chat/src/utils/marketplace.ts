@@ -1,8 +1,8 @@
 import {
   getApplicationType,
-  isApplicationPublic,
   isApplicationTypeKey,
   isDialAiEntityModel,
+  isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
@@ -52,7 +52,8 @@ export const doesMarketplaceEntityMatchFilters = (
     )?.displayName;
 
     if (
-      (sources.includes(SourceType.Public) && isApplicationPublic(model)) ||
+      (sources.includes(SourceType.Public) &&
+        isMarketplaceEntityPublic(model)) ||
       (sources.includes(SourceType.SharedWithMe) && model.sharedWithMe) ||
       (isMyApplication(model) &&
         isApplicationTypeKey(applicationType) &&

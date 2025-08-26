@@ -18,6 +18,7 @@ import { FeatureType } from '@epam/ai-dial-shared';
 
 export function AddToolsButton() {
   const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const menuItems: AddMarketplaceEntityMenuItem[] = useMemo(

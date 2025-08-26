@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 
 import {
-  isApplicationPublic,
   isExternalApp,
+  isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
@@ -29,7 +29,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
   const dispatch = useAppDispatch();
 
   const isMyApp = isMyApplication(entity);
-  const isPublicApp = isApplicationPublic(entity);
+  const isPublicApp = isMarketplaceEntityPublic(entity);
   const handleOpenSharing = useCallback(() => {
     dispatch(
       ShareActions.share({
