@@ -9,7 +9,7 @@ import { Locator, Page } from '@playwright/test';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'node:fs';
 import path from 'path';
-import { CDPSession, Download } from 'playwright-chromium';
+import { CDPSession, Download, JSHandle } from 'playwright-chromium';
 
 export interface UploadDownloadData {
   path: string;
@@ -27,6 +27,12 @@ export interface FileMetadata {
   mimeType: string;
   buffer: string;
 }
+
+export type DropImplementation = (
+  filesMetadata: FileMetadata[],
+  targetLocator: BaseElement | Locator,
+  onDropPropName: string,
+) => Promise<void>;
 
 export const apiTimeout = 35000;
 export const responseThrottlingTimeout = 2500;
@@ -429,21 +435,13 @@ export class BasePage {
   }
 
   private async firePasteFilesEvent(filesToPaste: FileMetadata[]) {
-    await this.page.evaluate(async (files) => {
+    // Call the common helper to create File objects in the browser
+    const browserFilesHandle = await this.createBrowserFiles(filesToPaste);
+
+    await this.page.evaluate(async (filesArray) => {
       // Create the DataTransfer object, which is the container for clipboard data
       const dt = new DataTransfer();
-
-      for (const file of files) {
-        // Convert the base64 string back to a Blob, then create a File object
-        const response = await fetch(
-          `data:${file.mimeType};base64,${file.buffer}`,
-        );
-        const blob = await response.blob();
-        const newFile = new File([blob], file.name, { type: file.mimeType });
-
-        // Add the file to the DataTransfer object
-        dt.items.add(newFile);
-      }
+      filesArray.forEach((file) => dt.items.add(file));
 
       // Create the 'paste' event, attaching the DataTransfer object to the clipboardData property
       const pasteEvent = new ClipboardEvent('paste', {
@@ -455,12 +453,94 @@ export class BasePage {
 
       // Dispatch the event onto the currently focused element
       document.activeElement?.dispatchEvent(pasteEvent);
-    }, filesToPaste);
+    }, browserFilesHandle);
   }
 
   public async readTextFromClipboard() {
     return this.page.evaluate(() => navigator.clipboard.readText());
   }
+
+  /**
+   * Executes a component's 'onDrop' prop by passing a highly realistic mock event object
+   *
+   * @param filesMetadata The files metadata array to attach
+   * @param targetElement The DOM element of the React component
+   * @param onDropPropName The name of the prop that handles the file drop (e.g., 'onDrop')
+   */
+  public executeReactOnDrop = async (
+    filesMetadata: FileMetadata[],
+    targetElement: BaseElement | Locator,
+    onDropPropName: string,
+  ): Promise<void> => {
+    const locator = BaseElement.getElementLocator(targetElement);
+
+    // Call the common helper to create File objects in the browser
+    const browserFilesHandle = await this.createBrowserFiles(filesMetadata);
+
+    // Use the handle to the files to build the specific mock 'drop' event
+    const mockEventHandle = await locator.evaluateHandle(
+      (element, filesArray) => {
+        // Create a highly realistic DataTransfer object
+        const dataTransfer = {
+          files: filesArray,
+          items: filesArray.map((f) => ({
+            kind: 'file',
+            type: f.type,
+            getAsFile: () => f,
+            webkitGetAsEntry: () => ({
+              isFile: true,
+              isDirectory: false,
+              name: f.name,
+              file: (callback: (f: File) => void) => callback(f),
+            }),
+          })),
+          types: ['Files'],
+        };
+
+        // Return the MOCK event object with the methods the library needs
+        return {
+          preventDefault: () => void 0,
+          stopPropagation: () => void 0,
+          dataTransfer,
+        };
+      },
+      browserFilesHandle,
+    );
+
+    // Call the generic prop executor for the built event
+    await this.executeReactProp(locator, onDropPropName, mockEventHandle);
+  };
+
+  /**
+   * Simulates a 'drag over' event on a React component by calling its onDragOverPropName prop
+   * This is used to trigger UI changes, like showing a drop zone overlay
+   *
+   * @param targetElement The DOM element of the React component
+   * @param onDragOverPropName The name of the prop that handles the drag over event (e.g., 'onDragOver')
+   * @param dragTypes An array of strings representing the data types being dragged. Defaults to ['Files']
+   */
+  public executeReactOnDragOver = async (
+    targetElement: Locator | BaseElement,
+    onDragOverPropName = 'onDragOver',
+    dragTypes = ['Files'],
+  ): Promise<void> => {
+    const locator = BaseElement.getElementLocator(targetElement);
+
+    const mockEvent = await locator.evaluateHandle(
+      (element, { types }) => {
+        return {
+          preventDefault: () => void 0,
+          stopPropagation: () => void 0,
+          dataTransfer: {
+            types: types,
+          },
+        };
+      },
+      { types: dragTypes },
+    );
+
+    await this.executeReactProp(locator, onDragOverPropName, mockEvent);
+  };
 
   public async mockChatImageResponse(
     modelId: string,
@@ -553,5 +633,54 @@ export class BasePage {
       mimeType: fileTypeResult?.mime || 'application/octet-stream',
       buffer: buffer.toString('base64'),
     };
+  }
+
+  /**
+   * Creates an array of browser-native File objects from metadata
+   * This code is executed in the browser and returns a handle to the result
+   * @param filesMetadata The array of file descriptions
+   * @returns A JSHandle pointing to the created File[] array in the browser
+   */
+  private async createBrowserFiles(
+    filesMetadata: FileMetadata[],
+  ): Promise<JSHandle<File[]>> {
+    return this.page.evaluateHandle(async (files) => {
+      const filePromises = files.map(async (file) => {
+        const response = await fetch(
+          `data:${file.mimeType};base64,${file.buffer}`,
+        );
+        const blob = await response.blob();
+        return new File([blob], file.name, { type: file.mimeType });
+      });
+      return Promise.all(filePromises);
+    }, filesMetadata);
+  }
+
+  /**
+   * The private core "engine". Its only job is to find a prop on a React component and call it with a pre-built mock event object
+   */
+  private async executeReactProp(
+    locator: Locator,
+    propName: string,
+    mockEventHandle: JSHandle,
+  ): Promise<void> {
+    await locator.evaluate(
+      (element, { propName, mockEvent }) => {
+        const propsKey = Object.keys(element).find((key) =>
+          key.startsWith('__reactProps$'),
+        );
+        if (!propsKey) {
+          throw new Error('Could not find React props on the target element.');
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const func = (element as any)[propsKey][propName];
+        if (typeof func !== 'function') {
+          throw new Error(`Prop "${propName}" is not a function.`);
+        }
+
+        func(mockEvent);
+      },
+      { propName, mockEvent: mockEventHandle },
+    );
   }
 }

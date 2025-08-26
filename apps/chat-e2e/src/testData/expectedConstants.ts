@@ -285,6 +285,8 @@ export const ExpectedConstants = {
       new RegExp(`[${ExpectedConstants.restrictedNameChars}]`, 'g'),
       '_',
     ),
+  dragFileTitle: 'Attach files',
+  dragFileDescription: 'Drop files here to attach them to the message',
 };
 
 export enum Types {

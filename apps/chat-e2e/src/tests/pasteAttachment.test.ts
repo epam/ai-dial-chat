@@ -5,14 +5,12 @@ import {
   API,
   Attachment,
   ConversationData,
-  CustomApplicationBuilder,
   ExpectedConstants,
   UploadMenuOptions,
 } from '@/src/testData';
-import { ApplicationApiHelper } from '@/src/testData/api';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { FileModalSection } from '@/src/ui/webElements';
-import { DateUtil, GeneratorUtil } from '@/src/utils';
+import { DateUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
 
 let appEntity: DialAIEntityModel;
@@ -31,8 +29,6 @@ dialTest(
     'Ctrl-V pastes 10 files into input' +
     'Ctrl-V pastes a file into user-message in edit mode. Successful message',
   async ({
-    customApplicationBuilder,
-    applicationApiHelper,
     dialHomePage,
     setTestIds,
     sendMessageInputAttachmentsAssertions,
@@ -50,6 +46,7 @@ dialTest(
     conversations,
     chatMessages,
     editMessageInputAttachmentsAssertions,
+    customApplicationPublishingUtil,
   }) => {
     setTestIds(
       'EPMRTC-6227',
@@ -70,11 +67,15 @@ dialTest(
     await dialTest.step(
       'Create a custom app with set of allowed attachment types via API',
       async () => {
-        await createCustomApp(
-          customApplicationBuilder,
-          applicationApiHelper,
-          Attachment.imageTypesExtension,
+        const appData = await customApplicationPublishingUtil.createCustomApp(
+          undefined,
+          [Attachment.imageTypesExtension],
         );
+        appEntity = {
+          name: appData.name,
+          version: appData.version,
+          reference: appData.reference,
+        } as DialAIEntityModel;
       },
     );
 
@@ -277,8 +278,6 @@ dialTest(
   `Ctrl-V does nothing if to paste a file into input when agent doesn't work with attachments.\n` +
     `Ctrl-V does nothing if to paste a file into user-message in edit mode when agent doesn't work with attachments`,
   async ({
-    customApplicationBuilder,
-    applicationApiHelper,
     dialHomePage,
     setTestIds,
     sendMessageInputAttachmentsAssertions,
@@ -290,13 +289,19 @@ dialTest(
     conversations,
     chatMessages,
     editMessageInputAttachmentsAssertions,
+    customApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-6222', 'EPMRTC-6224');
 
     await dialTest.step(
-      'Create a custom app without allowed attachments via API',
+      'Create a custom app with set of allowed attachment types via API',
       async () => {
-        await createCustomApp(customApplicationBuilder, applicationApiHelper);
+        const appData = await customApplicationPublishingUtil.createCustomApp();
+        appEntity = {
+          name: appData.name,
+          version: appData.version,
+          reference: appData.reference,
+        } as DialAIEntityModel;
       },
     );
 
@@ -346,26 +351,6 @@ dialTest(
     );
   },
 );
-
-async function createCustomApp(
-  customApplicationBuilder: CustomApplicationBuilder,
-  applicationApiHelper: ApplicationApiHelper,
-  ...inputAttachmentTypes: string[]
-) {
-  const appName = GeneratorUtil.randomApplicationName();
-  const appVersion = GeneratorUtil.randomApplicationVersion();
-  const applicationModel = customApplicationBuilder
-    .withDisplayName(appName)
-    .withDisplayVersion(appVersion)
-    .withInputAttachmentTypes(...inputAttachmentTypes)
-    .build();
-  await applicationApiHelper.createApplication(applicationModel);
-  appEntity = {
-    name: appName,
-    version: appVersion,
-    reference: applicationModel.reference,
-  } as DialAIEntityModel;
-}
 
 async function createConversation(
   conversationData: ConversationData,

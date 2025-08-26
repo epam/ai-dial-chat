@@ -16,6 +16,8 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  DragFile,
+  FileDropArea,
   FileModalSection,
   InformationModal,
   ListboxMenu,
@@ -191,6 +193,8 @@ const dialTest = test.extend<{
   accountDropdownMenu: DropdownMenu;
   banner: Banner;
   promptBar: PromptBar;
+  fileDropArea: FileDropArea;
+  dragFile: DragFile;
   chat: Chat;
   footer: Footer;
   chatMessages: ChatMessages;
@@ -358,6 +362,7 @@ const dialTest = test.extend<{
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
   adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
+  customApplicationPublishingUtil: CustomApplicationPublishingUtil;
   organizationFolderPromptAssertions: FolderAssertion<Folders>;
 }>({
   beforeTestCleanup: [
@@ -559,8 +564,16 @@ const dialTest = test.extend<{
     const promptBarSearch = promptBar.getSearch();
     await use(promptBarSearch);
   },
-  chat: async ({ appContainer }, use) => {
-    const chat = appContainer.getChat();
+  fileDropArea: async ({ appContainer }, use) => {
+    const fileDropArea = appContainer.getFileDropArea();
+    await use(fileDropArea);
+  },
+  dragFile: async ({ fileDropArea }, use) => {
+    const dragFile = fileDropArea.getDragFile();
+    await use(dragFile);
+  },
+  chat: async ({ fileDropArea }, use) => {
+    const chat = fileDropArea.getChat();
     await use(chat);
   },
   footer: async ({ appContainer }, use) => {
@@ -1378,6 +1391,16 @@ const dialTest = test.extend<{
         fileApiHelper,
       );
     await use(adminCustomApplicationPublishingUtil);
+  },
+  customApplicationPublishingUtil: async (
+    { customApplicationBuilder, applicationApiHelper },
+    use,
+  ) => {
+    const customApplicationPublishingUtil = new CustomApplicationPublishingUtil(
+      customApplicationBuilder,
+      applicationApiHelper,
+    );
+    await use(customApplicationPublishingUtil);
   },
   organizationFolderPromptAssertions: async (
     { organizationFolderPrompts },
