@@ -25,7 +25,7 @@ export class AgentSettings extends BaseElement {
   );
   public systemPromptSpinner =
     this.systemPromptContainer.getChildElementBySelector(
-      ChatSelectors.messageSpinner,
+      ChatSelectors.entitySpinner,
     );
 
   private temperatureSlider!: TemperatureSlider;

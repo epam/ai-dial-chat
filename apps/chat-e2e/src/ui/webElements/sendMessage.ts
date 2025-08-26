@@ -50,7 +50,7 @@ export class SendMessage extends BaseElement {
     SendMessageSelectors.sendMessage,
   );
   public messageInputSpinner = this.messageInput.getChildElementBySelector(
-    ChatSelectors.messageSpinner,
+    ChatSelectors.entitySpinner,
   );
   public attachmentMenuTrigger = this.getChildElementBySelector(
     MenuSelectors.menuTrigger,

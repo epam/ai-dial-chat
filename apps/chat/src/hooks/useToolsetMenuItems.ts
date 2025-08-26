@@ -1,6 +1,5 @@
 import {
   IconEye,
-  IconFileDescription,
   IconLink,
   IconPencilMinus,
   IconTrashX,
@@ -11,59 +10,40 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useAgentMenuActions } from '@/src/hooks/useAgentActions';
+import { useToolsetMenuActions } from '@/src/hooks/useToolsetMenuActions';
 
-import {
-  getApplicationSimpleStatus,
-  getPlayerCaption,
-  isApplicationStatusUpdating,
-  isExecutableApp,
-  isMarketplaceEntityPublic,
-} from '@/src/utils/app/application';
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
-import { SimpleApplicationStatus } from '@/src/types/applications';
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  ApplicationTypesSchemasSelectors,
-  AuthSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
-
-import {
-  PlayerContextButtonClasses,
-  PlayerContextIconClasses,
-  PlayerContextIcons,
-} from '@/src/constants/marketplace';
+import { AuthSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
-  entity: DialAIEntityModel;
+  entity: ToolsetModel;
   disabledActions?: {
     copyLink?: boolean;
-    deploy?: boolean;
     edit?: boolean;
     share?: boolean;
     unshare?: boolean;
     publish?: boolean;
     unpublish?: boolean;
-    logs?: boolean;
     delete?: boolean;
   };
   isPreview?: boolean;
   triggerIconSize?: number;
 }
 
-export const useAgentMenuItems = ({
+export const useToolsetMenuItems = ({
   entity,
   disabledActions = {},
   isPreview = false,
@@ -74,57 +54,34 @@ export const useAgentMenuItems = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-  const schemas = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
 
   const {
     handleCopy,
     handleDelete,
     handleEdit,
-    handleOpenApplicationLogs,
     handleOpenSharing,
     handleOpenUnshare,
     handlePublish,
     handleUnpublish,
-    handleUpdateFunctionStatus,
-  } = useAgentMenuActions(entity);
+  } = useToolsetMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
   const isPublicApp = isMarketplaceEntityPublic(entity);
   const isAppIdPublic = isEntityIdPublic(entity);
   const canWrite = canWriteSharedWithMe(entity);
-  const isModifyDisabled = isApplicationStatusUpdating(entity);
-  const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
-  const hasCustomEditor = schemas.some(
-    (schema) =>
-      schema.id === entity.applicationTypeSchemaId && schema.editorUrl,
-  );
-  const canEditOrView =
-    isMyApp || canWrite || (isPublicAndAdmin && !hasCustomEditor);
+
+  const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: t('Copy link'),
-        dataQa: 'application-copy-link',
+        dataQa: 'toolset-copy-link',
         display: isPublicApp && disabledActions.copyLink !== true,
         Icon: IconLink,
         onClick: handleCopy,
-      },
-      {
-        name: t(getPlayerCaption(entity)),
-        dataQa: 'status-change',
-        disabled: playerStatus === SimpleApplicationStatus.UPDATING,
-        display: isExecutable && disabledActions.deploy !== true,
-        Icon: PlayerContextIcons[playerStatus],
-        className: PlayerContextButtonClasses[playerStatus],
-        iconClassName: PlayerContextIconClasses[playerStatus],
-        onClick: handleUpdateFunctionStatus,
       },
       {
         name: t(isAppIdPublic ? 'View' : 'Edit'),
@@ -168,20 +125,9 @@ export const useAgentMenuItems = ({
         onClick: handleUnpublish,
       },
       {
-        name: t('Logs'),
-        dataQa: 'app-logs',
-        display:
-          !!isExecutable &&
-          playerStatus === SimpleApplicationStatus.UNDEPLOY &&
-          disabledActions.logs !== true,
-        Icon: IconFileDescription,
-        onClick: handleOpenApplicationLogs,
-      },
-      {
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
-        disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
         onClick: handleDelete,
@@ -191,31 +137,24 @@ export const useAgentMenuItems = ({
       t,
       isPublicApp,
       disabledActions.copyLink,
-      disabledActions.deploy,
       disabledActions.edit,
       disabledActions.share,
       disabledActions.unshare,
       disabledActions.publish,
       disabledActions.unpublish,
-      disabledActions.logs,
       disabledActions.delete,
       handleCopy,
-      entity,
-      playerStatus,
-      isExecutable,
-      handleUpdateFunctionStatus,
       isAppIdPublic,
       canEditOrView,
       handleEdit,
       isMyApp,
       isApplicationsSharingEnabled,
       handleOpenSharing,
+      entity.sharedWithMe,
       handleOpenUnshare,
       isMyAppOrPreview,
       handlePublish,
       handleUnpublish,
-      handleOpenApplicationLogs,
-      isModifyDisabled,
       handleDelete,
     ],
   );
