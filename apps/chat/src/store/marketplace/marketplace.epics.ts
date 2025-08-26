@@ -57,13 +57,16 @@ const initEpic: AppEpic = (action$, state$) =>
 
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
       const firstRoutePart = previousRoute?.split('/')[1];
+      const firstRoutePartWithoutParams = firstRoutePart?.split('?')[0];
 
       return concat(
         of(
           MarketplaceActions.initSuccess({
             saveFilters:
-              !!firstRoutePart &&
-              ['apps-editor', 'toolset-editor'].includes(firstRoutePart),
+              !!firstRoutePartWithoutParams &&
+              ['apps-editor', 'toolset-editor'].includes(
+                firstRoutePartWithoutParams,
+              ),
           }),
         ),
         of(
