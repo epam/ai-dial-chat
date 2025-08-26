@@ -33,6 +33,7 @@ interface OverlaySignInOptions {
   autoSignIn: boolean;
   signInProvider?: string;
   signInInNewWindow?: boolean;
+  validationUserEmail?: string;
 }
 
 export enum MessageButtonPlacement {
