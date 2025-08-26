@@ -14,6 +14,7 @@ export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
   tab = 'tab',
+  entitiesTab = 'entitiesTab',
   types = 'types',
   topics = 'topics',
   search = 'search',

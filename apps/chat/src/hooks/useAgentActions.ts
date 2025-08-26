@@ -26,7 +26,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
-export const useApplicationMenuActions = (entity: DialAIEntityModel) => {
+export const useAgentMenuActions = (entity: DialAIEntityModel) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();

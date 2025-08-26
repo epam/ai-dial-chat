@@ -2,8 +2,8 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   getApplicationType,
-  isApplicationPublic,
   isApplicationTypeKey,
+  isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication } from '@/src/utils/app/id';
@@ -81,7 +81,7 @@ const selectSourceTypes = createSelector(
             sourceTypes.add(sourceType as SourceType);
           }
         }
-      } else if (!isApplicationPublic(model)) {
+      } else if (!isMarketplaceEntityPublic(model)) {
         sourceTypes.add(SourceType.SharedWithMe);
       }
     });
