@@ -68,6 +68,6 @@ export class AppEditorContainer extends BaseLayoutContainer<AppEditorHeader> {
   }
 
   getChatLoader(): BaseElement {
-    return this.getChildElementBySelector(ChatSelectors.messageSpinner);
+    return this.getChildElementBySelector(ChatSelectors.entitySpinner);
   }
 }
