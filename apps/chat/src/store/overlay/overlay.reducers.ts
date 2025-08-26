@@ -36,6 +36,7 @@ const initialState: OverlayState = {
   customMessageButtons: [],
 
   systemPrompt: null,
+  validationUserEmail: null,
   newConversationsFolder: null,
   readyToInteractSent: false,
 };
@@ -190,6 +191,12 @@ export const overlaySlice = createSlice({
       { payload }: PayloadAction<MessageButtons[]>,
     ) => {
       state.customMessageButtons = payload;
+    },
+    setValidationUserEmail: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.validationUserEmail = payload;
     },
     sendCustomMessageEvent: (
       state,

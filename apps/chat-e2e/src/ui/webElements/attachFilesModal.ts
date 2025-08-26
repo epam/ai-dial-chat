@@ -2,6 +2,7 @@ import { BaseElement } from './baseElement';
 
 import {
   AttachFilesModalSelectors,
+  ChatSelectors,
   EntitySelectors,
   IconSelectors,
   MenuSelectors,
@@ -260,7 +261,12 @@ export class AttachFilesModal extends BaseElement {
     }
     const file = fileTree!.getEntityByName(filename);
     await file.hover();
-    await file.locator(MenuSelectors.dotsMenu).click();
+    const fileDotsMenu = file.locator(MenuSelectors.dotsMenu);
+    const fileDotsMenuSpinner = fileDotsMenu.locator(
+      ChatSelectors.entitySpinner,
+    );
+    await fileDotsMenu.click();
+    await fileDotsMenuSpinner.waitFor({ state: 'hidden' });
     await this.getFileDropdownMenu().waitForState();
   }
 

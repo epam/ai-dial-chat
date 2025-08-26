@@ -28,7 +28,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/AgentContextMenu';
+import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 

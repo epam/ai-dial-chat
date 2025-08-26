@@ -23,6 +23,7 @@ import {
 import {
   ENTITY_TYPES,
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceQueryParams,
   MarketplaceTabs,
   SourceType,
@@ -56,11 +57,16 @@ const initEpic: AppEpic = (action$, state$) =>
 
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
       const firstRoutePart = previousRoute?.split('/')[1];
+      const firstRoutePartWithoutParams = firstRoutePart?.split('?')[0];
 
       return concat(
         of(
           MarketplaceActions.initSuccess({
-            saveFilters: firstRoutePart === 'apps-editor',
+            saveFilters:
+              !!firstRoutePartWithoutParams &&
+              ['apps-editor', 'toolset-editor'].includes(
+                firstRoutePartWithoutParams,
+              ),
           }),
         ),
         of(
@@ -76,6 +82,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(
       MarketplaceActions.setSelectedTab.type,
+      MarketplaceActions.setSelectedEntitiesTab.type,
       MarketplaceActions.setDetailsModel.type,
       MarketplaceActions.setSelectedFilters.type,
       MarketplaceActions.setState.type,
@@ -95,6 +102,16 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
         MarketplaceQueryParams.tab,
         selectedTab === MarketplaceTabs.MY_WORKSPACE
           ? MarketplaceTabs.MY_WORKSPACE
+          : undefined,
+      );
+      // entities tab
+      const selectedEntitiesTab =
+        MarketplaceSelectors.selectSelectedEntitiesTab(state);
+      addToQuery(
+        query,
+        MarketplaceQueryParams.entitiesTab,
+        selectedEntitiesTab === MarketplaceEntitiesTabs.TOOLSETS
+          ? MarketplaceEntitiesTabs.TOOLSETS
           : undefined,
       );
       // application link
@@ -178,10 +195,17 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       // workspace tab
       const workSpaceTab =
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
-
       updatedMarketplaceState.selectedTab = workSpaceTab
         ? MarketplaceTabs.MY_WORKSPACE
         : MarketplaceTabs.HOME;
+      // entities tab
+      const toolsetsTab =
+        query[MarketplaceQueryParams.entitiesTab] ===
+        MarketplaceEntitiesTabs.TOOLSETS;
+      updatedMarketplaceState.selectedEntitiesTab = toolsetsTab
+        ? MarketplaceEntitiesTabs.TOOLSETS
+        : MarketplaceEntitiesTabs.AGENTS;
+
       // filters
       const existingTopics = ModelsSelectors.selectModelTopics(state);
       const topics = parseCommaSeparatedList(

@@ -422,4 +422,20 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
       )
       .toBeTruthy();
   }
+
+  public async assertFolderEntitiesCount(
+    folder: TreeEntity,
+    expectedCount: number,
+    expectedMessage?: string,
+  ) {
+    const folderEntitiesLocator = this.folder.getFolderEntities(
+      folder.name,
+      folder.index,
+    );
+    await this.assertElementsCount(
+      folderEntitiesLocator,
+      expectedCount,
+      expectedMessage,
+    );
+  }
 }
