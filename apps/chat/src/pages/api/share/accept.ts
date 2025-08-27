@@ -2,11 +2,13 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { getToken } from 'next-auth/jwt';
 
+import { validateInvitationId } from '@/src/utils/app/share';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -27,16 +29,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { invitationId } = req.body;
 
+    validateInvitationId(invitationId, req);
+
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}?accept=true`,
       {
-        method: 'GET',
+        method: HTTPMethod.GET,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
       },
     );
 
     if (!proxyRes.ok) {
-      throw new DialAIError(proxyRes.statusText, '', '', proxyRes.status + '');
+      throw new DialAIError(proxyRes.statusText, proxyRes.status, req);
     }
 
     return res.status(200).send(JSON.stringify({}));

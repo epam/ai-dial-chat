@@ -1,8 +1,9 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { NonModelButton } from '../../Common/NonModelButton';
+import { NonModelButton } from '@/src/components/Common/NonModelButton';
+
 import { PlaybackIcon } from './PlaybackIcon';
 
 export const PlaybackModelButton = () => {

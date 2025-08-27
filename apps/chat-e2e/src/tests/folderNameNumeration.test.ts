@@ -2,6 +2,8 @@ import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -16,16 +18,20 @@ dialTest(
     'Chat folder: renamed and deleted folders are not counted into default numeration',
   async ({
     dialHomePage,
-    conversations,
+    chatBarFolderAssertion,
     conversationDropdownMenu,
+    selectFolderModal,
+    selectFolders,
+    selectFoldersAssertion,
+    selectFolderModalAssertion,
     conversationData,
     dataInjector,
     folderConversations,
-    localStorageManager,
     folderDropdownMenu,
     chatBar,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1628', 'EPMRTC-2948', 'EPMRTC-1629');
     let folderConversation: FolderConversation;
@@ -49,7 +55,7 @@ dialTest(
           folderConversation.folders,
         );
         conversation = folderConversation.conversations[0];
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -58,30 +64,38 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(initialFolderName);
+        await folderConversations.selectFolderEntity(
+          initialFolderName,
+          conversation.name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           initialFolderName,
           conversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-        await conversations.selectMoveToMenuOption(MenuOptions.newFolder);
-
-        await expect
-          .soft(
-            folderConversations.getFolderByName(expectedFolderName),
-            ExpectedMessages.newFolderCreated,
-          )
-          .toBeVisible();
-
-        await folderConversations.expandFolder(expectedFolderName);
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              expectedFolderName,
-              conversation.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'visible',
+        );
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.conversationHost,
+        });
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'hidden',
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: expectedFolderName },
+          { name: conversation.name },
+          'visible',
+        );
       },
     );
 
@@ -97,12 +111,10 @@ dialTest(
           .waitFor({ state: 'hidden' });
 
         await chatBar.createNewFolder();
-        await expect
-          .soft(
-            folderConversations.getFolderByName(incrementedFolderName),
-            ExpectedMessages.newFolderCreated,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: incrementedFolderName },
+          'visible',
+        );
       },
     );
 
@@ -111,17 +123,15 @@ dialTest(
       async () => {
         await folderConversations.openFolderDropdownMenu(incrementedFolderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.editFolderNameWithTick(
+        await folderConversations.renameEmptyFolderWithTick(
           GeneratorUtil.randomString(5),
         );
 
         await chatBar.createNewFolder();
-        await expect
-          .soft(
-            folderConversations.getFolderByName(incrementedFolderName),
-            ExpectedMessages.newFolderCreated,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: incrementedFolderName },
+          'visible',
+        );
       },
     );
   },
@@ -135,11 +145,11 @@ dialTest(
     conversationData,
     dataInjector,
     folderConversations,
-    localStorageManager,
     folderDropdownMenu,
     chatBar,
-    errorToast,
+    toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2949', 'EPMRTC-2952');
     let nestedFolders: FolderInterface[];
@@ -155,10 +165,8 @@ dialTest(
         nestedConversations,
         ...nestedFolders,
       );
-      await localStorageManager.setSelectedConversation(
-        nestedConversations[nestedFolderLevel - 1],
-      );
       expectedDuplicatedFolderName = nestedFolders[nestedFolderLevel - 2].name;
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -166,11 +174,14 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
         await folderConversations.openFolderDropdownMenu(
           nestedFolders[nestedFolderLevel - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.editFolderNameWithTick(
+        await folderConversations.renameFolderWithContentWithTick(
           expectedDuplicatedFolderName,
         );
 
@@ -199,7 +210,7 @@ dialTest(
         await folderConversations.editFolderName(expectedDuplicatedFolderName);
         await folderConversations.getEditFolderInputActions().clickTickButton();
 
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -221,7 +232,9 @@ dialTest(
     dataInjector,
     folderConversations,
     chatBar,
-    errorToast,
+    toast,
+    localStorageManager,
+    baseAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2950', 'EPMRTC-2951');
@@ -250,6 +263,11 @@ dialTest(
           ...nestedFolders,
           folderConversationToMove.folders,
         );
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
+        );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -264,21 +282,15 @@ dialTest(
             nestedFolders[nestedFolderLevel - 2].name,
           ),
         );
-        await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
-          .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedFolderNameErrorMessage(
-              duplicatedFolderName,
-            ),
-          );
-        await errorToast.closeToast();
+        await baseAssertion.assertElementState(toast, 'visible');
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.duplicatedFolderNameErrorMessage(
+            duplicatedFolderName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
+        await toast.closeToast();
       },
     );
 
@@ -292,16 +304,15 @@ dialTest(
           nestedFolders[nestedFolderLevel - 2].name,
           duplicatedFolderName,
         );
-        await chatBar.dragFolderToRoot(elementLocator);
-
-        const errorMessage = await errorToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedFolderRootNameErrorMessage(
-              duplicatedFolderName,
-            ),
-          );
+        await chatBar.dragAndDropFolderToRoot(elementLocator);
+        await baseAssertion.assertElementState(toast, 'visible');
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.duplicatedFolderRootNameErrorMessage(
+            duplicatedFolderName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
       },
     );
   },

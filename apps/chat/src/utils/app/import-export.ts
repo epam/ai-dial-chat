@@ -1,42 +1,52 @@
 import { EMPTY, Observable, map, of } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils } from '@/src/utils/server/api';
 
-import { Attachment, Conversation, Message, Stage } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { Conversation } from '@/src/types/chat';
 import {
+  FeatureType,
+  MappedReplaceActions,
+  ReplaceOptions,
+} from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
+import { AppAction } from '@/src/types/store';
+
+import {
+  ConversationsActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
+import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
+
+import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
+import { successMessages } from '@/src/constants/successMessages';
+
+import { cleanConversationHistory } from './clean';
+import { isImportEntityNameOnSameLevelUnique } from './common';
+import { ConversationService } from './data/conversation-service';
+import { constructPath, triggerDownload } from './file';
+import { getConversationRootId, getFileRootId } from './id';
+import { translate } from './translation';
+
+import {
+  Attachment,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV3,
   ExportFormatV4,
   ExportFormatV5,
+  ExportPromptsFormat,
   LatestExportConversationsFormat,
   LatestExportFormat,
-  MappedReplaceActions,
-  PromptsHistory,
-  ReplaceOptions,
+  Message,
+  ShareInterface,
+  Stage,
   SupportedExportFormats,
-} from '@/src/types/import-export';
-import { Prompt } from '@/src/types/prompt';
-
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-
-import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
-import { successMessages } from '@/src/constants/successMessages';
-
-import { ApiUtils } from '../server/api';
-import { cleanConversationHistory } from './clean';
-import { isImportEntityNameOnSameLevelUnique } from './common';
-import { ConversationService } from './data/conversation-service';
-import { constructPath, triggerDownload } from './file';
-import { splitEntityId } from './folders';
-import { getConversationRootId, getFileRootId } from './id';
-import { translate } from './translation';
+} from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -63,7 +73,7 @@ export function isExportFormatV5(obj: any): obj is ExportFormatV5 {
   return 'version' in obj && obj.version === 5;
 }
 
-export function isPromptsFormat(obj: PromptsHistory) {
+export function isPromptsFormat(obj: ExportPromptsFormat) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
@@ -72,6 +82,10 @@ export const isLatestExportFormat = isExportFormatV5;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
+
+const excludePublicationInfo = <T extends ShareInterface>(
+  entity: T,
+): Omit<T, 'publicationInfo'> => omit(entity, ['publicationInfo']);
 
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
@@ -94,7 +108,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         folderId: getConversationRootId(),
       })),
       prompts: [],
@@ -157,7 +171,7 @@ export const getDownloadFileName = (fileName?: string): string =>
   !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
 
 function downloadChatPromptData(
-  data: LatestExportConversationsFormat | Prompt[] | PromptsHistory,
+  data: LatestExportConversationsFormat | Prompt[] | ExportPromptsFormat,
   exportType: ExportType,
   fileName?: string,
 ) {
@@ -171,6 +185,17 @@ function downloadChatPromptData(
     url,
     `${downloadName}_chat_${exportType}_${currentDate()}.json`,
   );
+}
+
+export function downloadApplicationLogs(data: string, fileName?: string) {
+  const exportedFileName = [fileName, 'application_logs', currentDate()]
+    .filter(Boolean)
+    .join('_');
+
+  const blob = new Blob([data], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  triggerDownload(url, exportedFileName);
 }
 
 const triggerDownloadConversation = (
@@ -187,26 +212,35 @@ const triggerDownloadConversationsHistory = (
 };
 
 const triggerDownloadPromptsHistory = (
-  data: PromptsHistory,
+  data: ExportPromptsFormat,
   appName?: string,
 ) => {
   downloadChatPromptData(data, 'prompts_history', appName);
 };
 
-const triggerDownloadPrompt = (data: PromptsHistory, appName?: string) => {
+const triggerDownloadPrompt = (data: ExportPromptsFormat, appName?: string) => {
   downloadChatPromptData(data, 'prompt', appName);
 };
 
-export const exportConversation = (
+export const getExportConversationInfo = (
+  conversation: Conversation,
+  folders: FolderInterface[],
+) => {
+  const data: LatestExportConversationsFormat = {
+    version: 5,
+    history: [excludePublicationInfo(conversation)],
+    folders: folders,
+  };
+
+  return data;
+};
+
+export const triggerExportConversation = (
   conversation: Conversation,
   folders: FolderInterface[],
   appName?: string,
 ) => {
-  const data: LatestExportConversationsFormat = {
-    version: 5,
-    history: [conversation] || [],
-    folders: folders,
-  };
+  const data = getExportConversationInfo(conversation, folders);
 
   triggerDownloadConversation(data, appName);
 };
@@ -222,7 +256,7 @@ export const prepareConversationsForExport = ({
 }: PrepareConversationsForExport) => {
   const data = {
     version: 5,
-    history: conversations || [],
+    history: conversations?.map(excludePublicationInfo) || [],
     folders: folders || [],
   } as LatestExportConversationsFormat;
 
@@ -237,7 +271,7 @@ export const exportConversations = (
 ) => {
   const data = {
     version,
-    history: conversations || [],
+    history: conversations?.map(excludePublicationInfo) || [],
     folders: folders || [],
   } as LatestExportConversationsFormat;
 
@@ -250,7 +284,7 @@ export const exportPrompts = (
   appName?: string,
 ) => {
   const data = {
-    prompts,
+    prompts: prompts.map(excludePublicationInfo),
     folders,
   };
   triggerDownloadPromptsHistory(data, appName);
@@ -261,9 +295,9 @@ export const exportPrompt = (
   folders: FolderInterface[],
   appName?: string,
 ) => {
-  const promptsToExport: Prompt[] = [prompt];
+  const promptsToExport: Prompt[] = [excludePublicationInfo(prompt)];
 
-  const data: PromptsHistory = {
+  const data: ExportPromptsFormat = {
     prompts: promptsToExport,
     folders,
   };
@@ -325,8 +359,8 @@ export const updateAttachment = ({
 
   const newTitle =
     oldAttachment.type === PLOTLY_CONTENT_TYPE
-      ? oldAttachment.title ?? newAttachmentFile?.name
-      : newAttachmentFile?.name ?? oldAttachment.title;
+      ? (oldAttachment.title ?? newAttachmentFile?.name)
+      : (newAttachmentFile?.name ?? oldAttachment.title);
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
@@ -374,8 +408,8 @@ export const getDuplicatedConversations = (
 export const getConversationActions = (
   conversation: Conversation,
   index: number,
-): Observable<AnyAction>[] => {
-  const firstConversationActions: Observable<AnyAction>[] = [];
+): Observable<AppAction>[] => {
+  const firstConversationActions: Observable<AppAction>[] = [];
   if (index === 0) {
     firstConversationActions.push(
       of(
@@ -393,7 +427,7 @@ export const getConversationActions = (
   }
 
   return [
-    of(ConversationsActions.saveConversation(conversation)),
+    of(ConversationsActions.saveConversation({ conversation })),
     of(
       ConversationsActions.updateConversationSuccess({
         id: conversation.id,
@@ -407,8 +441,8 @@ export const getConversationActions = (
 export const getPromptActions = (
   prompt: Prompt,
   index: number,
-): Observable<AnyAction>[] => {
-  const firstPromptAction: Observable<AnyAction> =
+): Observable<AppAction>[] => {
+  const firstPromptAction$: Observable<AppAction> =
     index === 0
       ? of(
           UIActions.setOpenedFoldersIds({
@@ -419,21 +453,21 @@ export const getPromptActions = (
       : EMPTY;
 
   return [
-    of(PromptsActions.savePrompt(prompt)),
+    of(PromptsActions.savePrompt({ prompt })),
     of(
       PromptsActions.updatePromptSuccess({
         id: prompt.id,
         prompt,
       }),
     ),
-    firstPromptAction,
+    firstPromptAction$,
   ];
 };
 
 export const getToastAction = (
   errorList: string[],
   featureType: string,
-): Observable<AnyAction> => {
+): Observable<AppAction> => {
   const errorMessage = `It looks like these ${featureType}(s) ${errorList.join(', ')} have been deleted. Please reload the page and try again`;
   const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
 

@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
 @layer base {
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
@@ -46,6 +56,15 @@
     border-top: none;
     border-bottom: none;
   }
+
+  .codeblock .table {
+    display: initial;
+  }
+
+  .break-words {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 }
 
 html {
@@ -74,9 +93,6 @@ pre:has(div.codeblock) {
     @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
 
-  .submitted {
-  }
-
   .input-invalid {
     @apply invalid:border-error;
   }
@@ -88,6 +104,13 @@ pre:has(div.codeblock) {
   .input.touched.invalid,
   .input.dirty.invalid {
     @apply border-error;
+  }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+    color: transparent;
   }
 }
 
@@ -126,11 +149,55 @@ pre:has(div.codeblock) {
   }
 
   .button.button-secondary:disabled {
-    @apply text-controls-disable;
+    @apply cursor-not-allowed bg-layer-3 text-controls-disable;
   }
 
   .button.button-chat {
-    @apply absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 border-primary bg-layer-2 p-3 hover:bg-layer-4;
+    @apply absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-2 border-primary bg-layer-2 p-3 hover:bg-layer-4;
+  }
+}
+
+@layer components {
+  .icon-button {
+    @apply flex items-center justify-center rounded border border-transparent p-[5px] outline-none;
+  }
+
+  .icon-button:disabled {
+    @apply cursor-not-allowed text-controls-disable;
+  }
+
+  .icon-button:not(:disabled) {
+    @apply text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary;
+  }
+
+  .icon-button.button-accent-primary:not(:disabled) {
+    @apply text-accent-primary;
+  }
+
+  .icon-button.button-error:not(:disabled) {
+    @apply text-error hover:bg-error;
+  }
+
+  .icon-button.button-accent-secondary:not(:disabled) {
+    @apply text-accent-secondary hover:bg-accent-secondary-alpha;
+  }
+}
+
+@layer components {
+  .chat-button {
+    @apply cursor-pointer rounded-xl border px-4 py-2.5 text-sm leading-tight;
+  }
+
+  .chat-button:disabled {
+    @apply cursor-not-allowed border-primary bg-transparent text-controls-disable;
+  }
+
+  .chat-button:not(:disabled) {
+    @apply border-primary bg-layer-3 text-primary hover:bg-layer-4;
+  }
+
+  .chat-button.button-accent-primary {
+    @apply border-accent-primary bg-accent-primary-alpha text-primary;
   }
 }
 
@@ -160,5 +227,11 @@ pre:has(div.codeblock) {
 
 .h-screen {
   height: 100vh; /* Fallback for browsers that do not support Custom Properties */
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
   height: calc(var(--vh, 1vh) * 100);
+}
+
+span.katex-mathml {
+  display: none;
 }

@@ -1,4 +1,5 @@
-import { FolderInterface, FolderType } from '@/chat/types/folder';
+import { FeatureType } from '@/chat/types/common';
+import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import { FolderData } from '@/src/testData/folders/folderData';
 import { PromptBuilder } from '@/src/testData/prompts/promptBuilder';
@@ -13,7 +14,7 @@ export class PromptData extends FolderData {
   private promptBuilder: PromptBuilder;
 
   constructor() {
-    super(FolderType.Prompt);
+    super(FeatureType.Prompt);
     this.promptBuilder = new PromptBuilder();
   }
 
@@ -23,18 +24,12 @@ export class PromptData extends FolderData {
   }
 
   public prepareDefaultPrompt(name?: string) {
-    const promptName = name ?? GeneratorUtil.randomString(10);
+    const promptName = name ?? GeneratorUtil.randomPromptName();
     return this.promptBuilder
       .withName(promptName)
       .withId(promptName)
       .withContent(promptName)
       .build();
-  }
-
-  public prepareDefaultSharedPrompt(name?: string) {
-    const prompt = this.prepareDefaultPrompt(name);
-    prompt.isShared = true;
-    return prompt;
   }
 
   public prepareNestedFolder(
@@ -43,14 +38,17 @@ export class PromptData extends FolderData {
   ) {
     return super.prepareNestedFolder(
       nestedLevel,
-      FolderType.Prompt,
+      FeatureType.Prompt,
       folderNames,
     );
   }
 
-  public prepareDefaultPromptInFolder(name?: string): FolderPrompt {
-    const prompt = this.prepareDefaultPrompt(name);
-    const folder = this.prepareFolder();
+  public prepareDefaultPromptInFolder(
+    promptName?: string,
+    folderName?: string,
+  ): FolderPrompt {
+    const prompt = this.prepareDefaultPrompt(promptName);
+    const folder = this.prepareFolder(folderName);
     prompt.folderId = folder.id;
     prompt.id = `${folder.id}/${prompt.id}`;
     return { prompts: [prompt], folders: folder };
@@ -69,8 +67,11 @@ export class PromptData extends FolderData {
     return { prompts: [prompt], folders: folder };
   }
 
-  public preparePromptsInFolder(promptsCount: number): FolderPrompt {
-    const folder = this.prepareFolder();
+  public preparePromptsInFolder(
+    promptsCount: number,
+    name?: string,
+  ): FolderPrompt {
+    const folder = this.prepareFolder(name);
     const prompts: Prompt[] = [];
     for (let i = 1; i <= promptsCount; i++) {
       const prompt = this.prepareDefaultPrompt();
@@ -83,7 +84,7 @@ export class PromptData extends FolderData {
   }
 
   public preparePrompt(content: string, description?: string, name?: string) {
-    const promptName = name ?? GeneratorUtil.randomString(10);
+    const promptName = name ?? GeneratorUtil.randomPromptName();
     return this.promptBuilder
       .withId(promptName)
       .withName(promptName)

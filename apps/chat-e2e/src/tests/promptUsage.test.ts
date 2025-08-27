@@ -1,9 +1,16 @@
 import { Prompt } from '@/chat/types/prompt';
+import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
+import {
+  ExpectedConstants,
+  FolderPrompt,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
+import { Colors, CssClasses, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
   'The list of prompts is updated if to type /name.\n' +
@@ -20,6 +27,7 @@ dialTest(
     sendMessagePromptListAssertion,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-3843',
@@ -49,15 +57,14 @@ dialTest(
         promptData.resetData();
       }
       await dataInjector.createPrompts(prompts);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       `Type / in send message input and verify all prompts are shown, options have text-overflow=ellipsis css property`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         promptToSelect = prompts[1];
         await sendMessage.messageInput.fillInInput('/');
         await sendMessagePromptListAssertion.assertPromptListOptions(
@@ -65,6 +72,7 @@ dialTest(
         );
         await sendMessagePromptListAssertion.assertPromptOptionOverflow(
           promptToSelect.name,
+          Overflow.ellipsis,
         );
       },
     );
@@ -78,10 +86,15 @@ dialTest(
       `Type "/the" in send message input and verify one prompt is shown`,
       async () => {
         await sendMessage.messageInput.fillInInput(searchTerm);
+        const includedOptions = promptNames.filter((p) =>
+          p.toLowerCase().includes(searchTerm.substring(1)),
+        );
+        const excludedOptions = promptNames.filter(
+          (p) => !p.toLowerCase().includes(searchTerm.substring(1)),
+        );
         await sendMessagePromptListAssertion.assertPromptListOptions(
-          promptNames.filter((p) =>
-            p.toLowerCase().includes(searchTerm.substring(1)),
-          ),
+          includedOptions,
+          excludedOptions,
         );
       },
     );
@@ -109,26 +122,33 @@ dialTest(
 
 dialTest(
   'Prompt text without parameters appears one by one in Input message box.\n' +
-    'The text entered by user remains if to use prompt with parameters in Input message box',
+    'The text entered by user remains if to use prompt with parameters in Input message box.\n' +
+    'Message template created for the user-message with prompt without parameters',
   async ({
     dialHomePage,
     promptData,
     dataInjector,
     sendMessage,
+    chatMessages,
+    messageTemplateModal,
+    messageTemplateModalAssertion,
     sendMessageAssertion,
     variableModalDialog,
     setTestIds,
+    localStorageManager,
+    chat,
   }) => {
-    setTestIds('EPMRTC-3823', 'EPMRTC-3803');
+    setTestIds('EPMRTC-3823', 'EPMRTC-3803', 'EPMRTC-4371');
     let simplePrompt: Prompt;
     let promptWithVariable: Prompt;
+    const simplePromptContent = GeneratorUtil.randomString(10);
     const promptVariable = 'A';
     const promptWithVariableContent = (variable: string) =>
       `Calculate ${variable} * 100`;
 
     await dialTest.step('Prepare 2 prompts', async () => {
       simplePrompt = promptData.preparePrompt(
-        GeneratorUtil.randomString(10),
+        simplePromptContent,
         undefined,
         ExpectedConstants.newPromptTitle(1),
       );
@@ -139,15 +159,14 @@ dialTest(
         ExpectedConstants.newPromptTitle(2),
       );
       await dataInjector.createPrompts([simplePrompt, promptWithVariable]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       `Type / in send message input and select first prompt`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -174,6 +193,22 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step(
+      'Send the request, open request message template and verify prompt w/o params is not displayed in the rows',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton();
+        await chatMessages.openMessageTemplateModal(1);
+
+        await messageTemplateModalAssertion.assertElementState(
+          messageTemplateModal.getTemplateRowContent(simplePromptContent),
+          'hidden',
+        );
+      },
+    );
   },
 );
 
@@ -188,6 +223,7 @@ dialTest(
     sendMessageAssertion,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3844', 'EPMRTC-3838');
     let prompt: Prompt;
@@ -203,6 +239,7 @@ dialTest(
       async () => {
         prompt = promptData.preparePrompt(content);
         await dataInjector.createPrompts([prompt]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -210,17 +247,16 @@ dialTest(
       `Type / in send message input, hit Enter and verify prompt content is displayed in the input`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         for (const searchTerm of ['/', `/${prompt.name.substring(0, 3)}`]) {
-          await sendMessage.messageInput.fillInInput(searchTerm);
+          await sendMessage.messageInput.typeInInput(searchTerm);
           await sendMessage
             .getPromptList()
             .selectPromptWithKeyboard(prompt.name, {
               triggeredHttpMethod: 'GET',
             });
           await sendMessageAssertion.assertMessageValue(content);
+          await sendMessage.messageInput.click();
           await page.keyboard.press(keys.ctrlPlusA);
         }
       },
@@ -242,6 +278,7 @@ dialTest(
     variableModalDialog,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3829', 'EPMRTC-3830', 'EPMRTC-3842', 'EPMRTC-3832');
     let prompt: Prompt;
@@ -266,6 +303,7 @@ dialTest(
       async () => {
         prompt = promptData.preparePrompt(content);
         await dataInjector.createPrompts([prompt]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -273,9 +311,7 @@ dialTest(
       `Type / in send message input, select created prompt and verify prompt edit window is opened`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -408,6 +444,7 @@ dialTest(
     variableModalDialog,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3833', 'EPMRTC-1015', 'EPMRTC-3865');
     let prompt: Prompt;
@@ -426,6 +463,7 @@ dialTest(
           promptName,
         );
         await dataInjector.createPrompts([prompt]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -433,9 +471,7 @@ dialTest(
       `Type / in send message input, select created prompt and verify prompt name, description and variables have valid css properties`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -461,7 +497,7 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(promptName);
         await tooltipAssertion.assertTooltipStyle(
           Styles.wordBreak,
-          Styles.breakAll,
+          CssClasses.breakAll,
         );
       },
     );
@@ -472,6 +508,318 @@ dialTest(
         await variableModalDialog.submitButton.click();
         await sendMessageAssertion.assertMessageValue(
           expectedAppliedPromptContent,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Prompt with parameters appears in System prompt field in chat settings.\n' +
+    'The chat is replayed without a Prompt pop-up if there is parameter in the prompt and prompt is used in System prompt',
+  async ({
+    dialHomePage,
+    promptData,
+    dataInjector,
+    agentSettings,
+    conversationSettingsModal,
+    variableModalAssertion,
+    agentSettingAssertion,
+    variableModalDialog,
+    conversations,
+    conversationDropdownMenu,
+    chat,
+    setTestIds,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3821', 'EPMRTC-3883');
+    let prompt: Prompt;
+    const aVar = 'a';
+    const aVarValue = '5';
+    const bVar = 'b';
+    const bVarDefaultValue = '10';
+    const promptTemplate = (a: string, b: string) => `Calculate ${a} + ${b}`;
+    const promptContent = promptTemplate(
+      `{{${aVar}}}`,
+      `{{${bVar}|${bVarDefaultValue}}}`,
+    );
+
+    await dialTest.step('Prepare prompt with vars', async () => {
+      prompt = promptData.preparePrompt(promptContent);
+      await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step(
+      'Set the agent with allowed systemPrompt to the recent',
+      async () => {
+        const recentModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels().filter((m) => m.features?.systemPrompt),
+        );
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          recentModel,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Type / in system prompt field, select created prompt and verify variable modal with default values is displayed`,
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
+        await agentSettings.setSystemPrompt('/');
+        const promptsList = agentSettings.getPromptList();
+        await promptsList.selectPromptWithKeyboard(prompt.name, {
+          triggeredHttpMethod: 'GET',
+        });
+        await variableModalAssertion.assertVariableModalState('visible');
+        await variableModalAssertion.assertPromptVariableValue(aVar, '');
+        await variableModalAssertion.assertPromptVariableValue(
+          bVar,
+          bVarDefaultValue,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Set prompt variables, submit and verify prompt is applied in the field`,
+      async () => {
+        await variableModalDialog.setVariableValue(aVar, aVarValue);
+        await variableModalDialog.submitButton.click();
+        await agentSettingAssertion.assertSystemPromptValue(
+          promptTemplate(aVarValue, bVarDefaultValue),
+        );
+        await conversationSettingsModal.applyChangesButton.click();
+      },
+    );
+
+    await dialTest.step(
+      `Send request and then create replay conversation`,
+      async () => {
+        const newName = 'test';
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithKeyboard(newName);
+        await conversations.openEntityDropdownMenu(newName);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
+          triggeredHttpMethod: 'POST',
+        });
+      },
+    );
+
+    await dialTest.step(
+      `Start replaying and verify no variable modal appears`,
+      async () => {
+        await chat.startReplay(undefined, true);
+        await variableModalAssertion.assertVariableModalState('hidden');
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Shared with me. Use shared with me prompt in system prompt',
+  async ({
+    additionalShareUserDialHomePage,
+    promptData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalShareUserAgentSettings,
+    additionalShareUserConversationSettingsModal,
+    additionalShareUserVariableModalDialog,
+    additionalShareUserChat,
+    additionalShareUserSystemPromptListAssertion,
+    additionalShareUserVariableModalAssertion,
+    additionalShareUserAgentSettingAssertion,
+    apiAssertion,
+    setTestIds,
+    additionalShareUserLocalStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3502');
+    let folderPrompt: FolderPrompt;
+    let promptWithParams: Prompt;
+    let promptInFolder: Prompt;
+    let sharePromptByLinkResponse: ShareByLinkResponseModel;
+    let shareFolderByLinkResponse: ShareByLinkResponseModel;
+    const promptTemplate = (param: string) => `Hi ${param}`;
+    const promptParam = 'where';
+    const promptParamValue = 'there';
+    const promptContent = promptTemplate(`{{${promptParam}}}`);
+
+    await dialSharedWithMeTest.step(
+      'Prepare folder with prompt, prompt with parameters and share them',
+      async () => {
+        folderPrompt = promptData.prepareDefaultPromptInFolder();
+        promptInFolder = folderPrompt.prompts[0];
+        promptData.resetData();
+        promptWithParams = promptData.preparePrompt(promptContent);
+        await dataInjector.createPrompts(
+          [promptWithParams, ...folderPrompt.prompts],
+          folderPrompt.folders,
+        );
+        sharePromptByLinkResponse =
+          await mainUserShareApiHelper.shareEntityByLink([promptWithParams]);
+        shareFolderByLinkResponse =
+          await mainUserShareApiHelper.shareEntityByLink(
+            folderPrompt.prompts,
+            true,
+          );
+        await additionalUserShareApiHelper.acceptInvite(
+          sharePromptByLinkResponse,
+        );
+        await additionalUserShareApiHelper.acceptInvite(
+          shareFolderByLinkResponse,
+        );
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Set the agent with allowed systemPrompt to the recent',
+      async () => {
+        const recentModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels().filter((m) => m.features?.systemPrompt),
+        );
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
+          recentModel,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Type / in system prompt field, select shared prompt with parameters and verify variable modal with default values is displayed`,
+      async () => {
+        await additionalShareUserDialHomePage.openHomePage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserChat.configureSettingsButton.click();
+        await additionalShareUserAgentSettings.setSystemPrompt('/');
+        await additionalShareUserSystemPromptListAssertion.assertPromptListOptions(
+          [promptWithParams.name, promptInFolder.name],
+        );
+        await additionalShareUserAgentSettings
+          .getPromptList()
+          .selectPromptWithKeyboard(promptWithParams.name, {
+            triggeredHttpMethod: 'GET',
+          });
+        await additionalShareUserVariableModalAssertion.assertVariableModalState(
+          'visible',
+        );
+        await additionalShareUserVariableModalAssertion.assertPromptVariableValue(
+          promptParam,
+          '',
+        );
+        await additionalShareUserVariableModalDialog.setVariableValue(
+          promptParam,
+          promptParamValue,
+        );
+        await additionalShareUserVariableModalDialog.submitButton.click();
+        await additionalShareUserAgentSettingAssertion.assertSystemPromptValue(
+          promptTemplate(promptParamValue),
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Type / in system prompt field, select shared folder prompt and verify it is applied after the first prompt`,
+      async () => {
+        await additionalShareUserAgentSettings.setSystemPrompt('/');
+        await additionalShareUserAgentSettings
+          .getPromptList()
+          .selectPromptWithKeyboard(promptInFolder.name, {
+            triggeredHttpMethod: 'GET',
+          });
+        await additionalShareUserAgentSettingAssertion.assertSystemPromptValue(
+          promptTemplate(promptParamValue) + promptInFolder.content,
+        );
+        await additionalShareUserConversationSettingsModal.applyChangesButton.click();
+      },
+    );
+
+    await dialTest.step(
+      `Send request and verify system prompt is applied`,
+      async () => {
+        const request = await additionalShareUserChat.sendRequestWithKeyboard(
+          'test',
+          false,
+        );
+        apiAssertion.assertRequestPrompt(
+          request,
+          promptTemplate(promptParamValue) + promptInFolder.content,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `View prompt: on 'Use prompt' button click the prompt parameters modal is opened. Prompt contains parameters.\n` +
+    '[View prompt] View prompt modal is opened via context menu',
+  async ({
+    dialHomePage,
+    promptData,
+    dataInjector,
+    variableModalAssertion,
+    sendMessageAssertion,
+    variableModalDialog,
+    prompts,
+    promptDropdownMenu,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
+    setTestIds,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-6108', 'EPMRTC-6146');
+    let prompt: Prompt;
+    const aVar = 'a';
+    const aVarDefaultValue = '5';
+    const bVar = 'b';
+    const bVarDefaultValue = '4';
+    const promptTemplate = (a: string, b: string) => `${a} - ${b} = `;
+    const promptContent = promptTemplate(
+      `{{${aVar}|${aVarDefaultValue}}}`,
+      `{{${bVar}|${bVarDefaultValue}}}`,
+    );
+
+    await dialTest.step('Prepare a prompt with vars', async () => {
+      prompt = promptData.preparePrompt(promptContent);
+      await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
+    });
+
+    await dialTest.step(
+      `Open prompt view modal, click on "Use prompt" button and verify variable modal with default values is displayed`,
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.view, {
+          triggeredHttpMethod: 'GET',
+        });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await promptPreviewModal.usePromptButton.click();
+        await variableModalAssertion.assertVariableModalState('visible');
+        await variableModalAssertion.assertPromptVariableValue(
+          aVar,
+          aVarDefaultValue,
+        );
+        await variableModalAssertion.assertPromptVariableValue(
+          bVar,
+          bVarDefaultValue,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Submit and verify prompt is applied in the field',
+      async () => {
+        await variableModalDialog.submitButton.click();
+        await sendMessageAssertion.assertMessageValue(
+          promptTemplate(aVarDefaultValue, bVarDefaultValue),
         );
       },
     );

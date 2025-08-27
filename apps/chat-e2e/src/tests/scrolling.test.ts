@@ -2,23 +2,22 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  AddonIds,
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
   ScrollState,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
+import { Properties } from '@/src/ui/domData/properties';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -30,21 +29,21 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     sendMessage,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-494', 'EPMRTC-492', 'EPMRTC-496');
     const deltaY = 50;
     let conversation: Conversation;
 
     await dialTest.step('Prepare conversation with long response', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        [GeneratorUtil.randomString(3000)],
-      );
+      conversation = conversationData.prepareModelConversationBasedOnRequests([
+        GeneratorUtil.randomString(3000),
+      ]);
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -52,6 +51,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -100,6 +100,9 @@ dialTest(
       'Send new request and verify no auto-scroll applied, scroll down button is visible',
       async () => {
         await dialHomePage.unRouteAllResponses();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton('1+2=');
         const scrollPosition =
           await chat.scrollableArea.getVerticalScrollPosition();
@@ -135,22 +138,24 @@ dialTest(
   async ({
     dialHomePage,
     chat,
+    chatAssertion,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
+    chatMessages,
     dataInjector,
     sendMessage,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3071');
     let conversation: Conversation;
 
     await dialTest.step('Prepare conversation with long response', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        [GeneratorUtil.randomString(3000)],
-      );
+      conversation = conversationData.prepareModelConversationBasedOnRequests([
+        GeneratorUtil.randomString(3000),
+      ]);
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -158,20 +163,25 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await conversations.selectedEntity(conversation.name).waitFor();
+        await chatMessages.waitForState();
         await chat.goToContentPosition(ScrollState.top);
+        await chatAssertion.assertScrollPosition(
+          chat.scrollableArea,
+          Properties.scrollTop,
+          0,
+        );
         await sendMessage.scrollDownButton.click();
-        await expect
-          .soft(
-            sendMessage.scrollDownButton.getElementLocator(),
-            ExpectedMessages.scrollDownButtonIsNotVisible,
-          )
-          .toBeHidden();
-        expect
-          .soft(
-            await chat.scrollableArea.getVerticalScrollPosition(),
-            ExpectedMessages.scrollPositionIsCorrect,
-          )
-          .toBe(ScrollState.bottom);
+        await chatAssertion.assertElementState(
+          sendMessage.scrollDownButton,
+          'hidden',
+        );
+        chatAssertion.assertValue(
+          (await chat.scrollableArea.getVerticalScrollPosition()).toString(),
+          ScrollState.bottom,
+          ExpectedMessages.scrollPositionIsCorrect,
+        );
       },
     );
   },
@@ -185,14 +195,16 @@ dialTest(
   async ({
     dialHomePage,
     chat,
+    chatAssertion,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     sendMessage,
     conversations,
+    conversationDropdownMenu,
     conversationAssertion,
     chatBar,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-493', 'EPMRTC-3072', 'EPMRTC-1783', 'EPMRTC-1754');
     let firstConversation: Conversation;
@@ -202,21 +214,19 @@ dialTest(
       'Prepare two conversations with long responses',
       async () => {
         firstConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            [GeneratorUtil.randomString(3000)],
-          );
+          conversationData.prepareModelConversationBasedOnRequests([
+            GeneratorUtil.randomString(3000),
+          ]);
         conversationData.resetData();
         secondConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            [GeneratorUtil.randomString(3000)],
-          );
+          conversationData.prepareModelConversationBasedOnRequests([
+            GeneratorUtil.randomString(3000),
+          ]);
         await dataInjector.createConversations([
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(firstConversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -225,8 +235,14 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(firstConversation.name);
         await chat.goToContentPosition(ScrollState.top);
-        await conversations.selectConversation(secondConversation.name);
+        await chatAssertion.assertScrollPosition(
+          chat.scrollableArea,
+          Properties.scrollTop,
+          0,
+        );
+        await conversations.selectEntity(secondConversation.name);
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -239,8 +255,8 @@ dialTest(
     await dialTest.step(
       'Back to the first conversation, create new conversation and verify no "Scroll down" button is visible',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
-        await chatBar.createNewConversation();
+        await conversations.selectEntity(firstConversation.name);
+        await chatBar.createNewEntity();
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -253,9 +269,9 @@ dialTest(
     await dialTest.step(
       'Create Replay conversation based on the first one and verify it is selected and highlighted',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectEntity(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
-        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
         });
 
@@ -273,10 +289,10 @@ dialTest(
           },
           Colors.backgroundAccentSecondary,
         );
-        await conversationAssertion.assertEntityBackgroundColor(
-          { name: firstConversation.name, index: 2 },
-          Colors.defaultBackground,
-        );
+        await conversationAssertion.assertEntityBackgroundColor({
+          name: firstConversation.name,
+          index: 2,
+        });
       },
     );
 
@@ -310,11 +326,11 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     conversationDropdownMenu,
-    compareConversationSelector,
+    compareConversation,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3079');
     let firstConversation: Conversation;
@@ -327,28 +343,28 @@ dialTest(
       async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [
               GeneratorUtil.randomString(2000),
               GeneratorUtil.randomString(2000),
             ],
+            defaultModel,
             firstConversationName,
           );
         conversationData.resetData();
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [
               GeneratorUtil.randomString(2000),
               GeneratorUtil.randomString(2000),
             ],
+            defaultModel,
             secondConversationName,
           );
         await dataInjector.createConversations([
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(firstConversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -357,11 +373,21 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(
+          firstConversation.name,
+          { isHttpMethodTriggered: false },
+          {
+            exactMatch: true,
+          },
+        );
         await chat.scrollContent(0, -100);
-        await conversations.openEntityDropdownMenu(firstConversationName, 2);
+        await conversations.openEntityDropdownMenu(firstConversationName, {
+          exactMatch: true,
+        });
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await compareConversationSelector.selectModel(secondConversationName);
-
+        await compareConversation.selectCompareConversation(
+          secondConversationName,
+        );
         const scrollPosition =
           await chat.scrollableArea.getVerticalScrollPosition();
         expect
@@ -379,20 +405,22 @@ dialTest(
     sendMessage,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3074');
     let stageConversation: Conversation;
 
     await dialTest.step('Prepare conversation with stage', async () => {
-      stageConversation = conversationData.prepareAddonsConversation(
-        ModelsUtil.getModel(ModelIds.GPT_4)!,
-        AddonIds.XWEATHER,
-      );
+      stageConversation =
+        conversationData.prepareConversationWithStagesInResponse(
+          defaultModel,
+          1,
+        );
       await dataInjector.createConversations([stageConversation]);
-      await localStorageManager.setSelectedConversation(stageConversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -400,6 +428,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(stageConversation.name);
         await chatMessages.openMessageStage(2, 1);
         await expect
           .soft(
@@ -429,13 +458,15 @@ dialTest(
   'Scroll down button appears if to expand picture, disappears if to collapse',
   async ({
     dialHomePage,
-    sendMessage,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     chatMessages,
     fileApiHelper,
+    chatMessagesAssertion,
+    sendMessageAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3073');
     let imageConversation: Conversation;
@@ -447,10 +478,10 @@ dialTest(
         imageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl,
-            ModelIds.DALLE,
+            defaultModel,
           );
         await dataInjector.createConversations([imageConversation]);
-        await localStorageManager.setSelectedConversation(imageConversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -459,16 +490,16 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(imageConversation.name);
+        await chatMessages.getCollapsedChatMessageAttachment(2).waitFor();
         await chatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
-        await expect
-          .soft(
-            sendMessage.scrollDownButton.getElementLocator(),
-            ExpectedMessages.scrollDownButtonIsVisible,
-          )
-          .toBeVisible();
+        await chatMessagesAssertion.assertEntityIcon(
+          chatMessages.getOpenedChatMessageAttachment(2),
+        );
+        await sendMessageAssertion.assertScrollDownButtonState('visible');
       },
     );
 
@@ -479,12 +510,7 @@ dialTest(
           2,
           Attachment.sunImageName,
         );
-        await expect
-          .soft(
-            sendMessage.scrollDownButton.getElementLocator(),
-            ExpectedMessages.scrollDownButtonIsNotVisible,
-          )
-          .toBeHidden();
+        await sendMessageAssertion.assertScrollDownButtonState('hidden');
       },
     );
   },
@@ -495,10 +521,11 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3076');
     let conversation: Conversation;
@@ -510,12 +537,12 @@ dialTest(
     await dialTest.step(
       'Prepare conversation with 3 long requests',
       async () => {
-        conversation = conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          userRequests,
-        );
+        conversation =
+          conversationData.prepareModelConversationBasedOnRequests(
+            userRequests,
+          );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -524,6 +551,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
 
         const lastChatMessage = chatMessages.getChatMessage(
           userRequests.length * 2,

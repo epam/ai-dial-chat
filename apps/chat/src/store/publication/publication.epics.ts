@@ -14,13 +14,24 @@ import {
   toArray,
 } from 'rxjs';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { combineEpics, ofType } from 'redux-observable';
 
-import { combineEpics } from 'redux-observable';
-
+import { getLastPathSegment } from '@/src/utils/app/common';
+import {
+  getConversationInfoFromId,
+  updateMessagesAttachmentsTitles,
+} from '@/src/utils/app/conversation';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
+import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import {
+  addMessageAttachmentsToPublication,
+  getSetUpdatedItemsToApproveAction,
+  getUpdateApplicationGeneralInfoAction,
+} from '@/src/utils/app/epics-helpers/publications.epic-helpers';
+import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
@@ -28,71 +39,122 @@ import {
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
   getRootFolderIdFromEntityId,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import {
-  getConversationRootId,
-  getPromptRootId,
-  getRootId,
+  filterIdsByFeatureType,
+  getIdWithoutRootPathSegments,
+  isApplicationId,
   isConversationId,
   isFileId,
+  isMyEntity,
   isPromptId,
+  isRootEntity,
   isRootId,
 } from '@/src/utils/app/id';
+import { getPromptInfoFromId } from '@/src/utils/app/prompts';
+import {
+  getFilesFromPublicResources,
+  getItemsIdsToRemoveAndHide,
+  isEntityIdPublic,
+  mapPublishedItems,
+  processPublicationResources,
+} from '@/src/utils/app/publications';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
+  getIdWithoutVersionFromApiKey,
+  getVersionFromId,
+  parseApplicationApiKey,
   parseConversationApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
-import { PublishActions } from '@/src/types/publication';
-import { AppEpic } from '@/src/types/store';
-
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { CustomApplicationModel } from '@/src/types/applications';
+import { EntityType, FeatureType } from '@/src/types/common';
+import { PromptInfo } from '@/src/types/prompt';
+import {
+  PublicationUpdateRequestModel,
+  PublishedFileItem,
+} from '@/src/types/publication';
+import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
   ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
-import { FilesActions } from '../files/files.reducers';
-import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
-import { UIActions } from '../ui/ui.reducers';
-import {
+  FilesActions,
+  ModelsActions,
+  PromptsActions,
   PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  AuthSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  PromptsSelectors,
   PublicationSelectors,
-} from './publication.reducers';
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
+
+import {
+  Conversation,
+  ConversationInfo,
+  Feature,
+  Prompt,
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.init.match),
-    switchMap(() => of(PublicationActions.uploadPublications())),
+    ofType(PublicationActions.init.type),
+    filter(() => !PublicationSelectors.selectInitialized(state$.value)),
+    switchMap(() => {
+      const actions: Observable<AppAction>[] = [];
+
+      const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+
+      if (isAdmin) {
+        actions.push(of(PublicationActions.uploadPublications()));
+      }
+
+      return concat(
+        ...actions,
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Chat,
+          }),
+        ),
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+        of(PublicationActions.initFinish()),
+      );
+    }),
   );
 
 const publishEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.publish.match),
-    switchMap(({ payload }) => {
-      const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
-      const targetFolderSuffix = payload.targetFolder ? '/' : '';
+    ofType(PublicationActions.publish.type),
+    switchMap(({ payload }) => processPublicationResources(payload)),
+    switchMap(({ publicationData, isPublishingExternalFiles }) => {
+      if (isPublishingExternalFiles) {
+        return of(
+          PublicationActions.publishFail(
+            errorsMessages.publicationWithExternalFilesFailed,
+          ),
+        );
+      }
 
       return PublicationService.createPublicationRequest({
-        name: payload.name,
-        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
-        resources: payload.resources.map((r) => ({
-          action: payload.action,
-          sourceUrl: r.sourceUrl
-            ? ApiUtils.encodeApiUrl(r.sourceUrl)
-            : undefined,
-          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
-        })),
-        rules: payload.rules,
+        ...publicationData,
       }).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
@@ -105,17 +167,29 @@ const publishEpic: AppEpic = (action$) =>
 
 const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.publishFail.match),
-    map(({ payload }) =>
-      UIActions.showErrorToast(
+    ofType(PublicationActions.publishFail.type),
+    map(({ payload }) => {
+      return UIActions.showErrorToast(
         translate(payload ?? errorsMessages.publicationFailed),
-      ),
-    ),
+      );
+    }),
   );
 
-const uploadPublicationsEpic: AppEpic = (action$) =>
+const uploadPublicationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublications.match),
+    ofType(PublicationActions.uploadPublications.type),
+    filter(() => {
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+        state$.value,
+      );
+      const featuresToCheck = [
+        Feature.CustomApplications,
+        Feature.ConversationsPublishing,
+        Feature.PromptsPublishing,
+      ];
+
+      return featuresToCheck.some((feature) => enabledFeatures.has(feature));
+    }),
     switchMap(() =>
       PublicationService.publicationList().pipe(
         switchMap((publications) =>
@@ -131,7 +205,7 @@ const uploadPublicationsEpic: AppEpic = (action$) =>
 
 const uploadPublicationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublicationsFail.match),
+    ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationsUploadFailed),
@@ -139,9 +213,9 @@ const uploadPublicationsFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const uploadPublicationEpic: AppEpic = (action$) =>
+const uploadPublicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublication.match),
+    ofType(PublicationActions.uploadPublication.type),
     switchMap(({ payload }) =>
       PublicationService.getPublication(payload.url).pipe(
         switchMap((publication) => {
@@ -174,15 +248,15 @@ const uploadPublicationEpic: AppEpic = (action$) =>
             });
           }
 
-          return forkJoin({
-            publication: of(publication),
-            uploadedUnpublishEntities: of([]),
-            unpublishResources: of([]),
+          return of({
+            publication: publication,
+            uploadedUnpublishEntities: [],
+            unpublishResources: [],
           });
         }),
         switchMap(
           ({ publication, uploadedUnpublishEntities, unpublishResources }) => {
-            const actions: Observable<AnyAction>[] = [];
+            const actions: Observable<AppAction>[] = [];
 
             if (unpublishResources.length) {
               const uploadedUnpublishEntitiesIds =
@@ -201,39 +275,37 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
               if (conversationUnpublishEntities.length) {
                 actions.push(
-                  concat(
-                    of(
-                      ConversationsActions.addConversations({
-                        conversations: conversationUnpublishEntities.map(
-                          (r) => {
-                            const parsedApiKey = parseConversationApiKey(
-                              splitEntityId(r.targetUrl).name,
-                            );
+                  of(
+                    ConversationsActions.addConversations({
+                      conversations: conversationUnpublishEntities.map((r) => {
+                        const parsedApiKey = parseConversationApiKey(
+                          splitEntityId(r.targetUrl).name,
+                          { parseVersion: true },
+                        );
 
-                            return {
-                              ...parsedApiKey,
-                              id: r.reviewUrl,
-                              folderId: getFolderIdFromEntityId(r.reviewUrl),
-                              publicationInfo: {
-                                action: r.action,
-                                isNotExist:
-                                  !uploadedUnpublishEntitiesIds.includes(
-                                    r.reviewUrl,
-                                  ),
-                              },
-                            };
+                        return {
+                          ...parsedApiKey,
+                          id: r.reviewUrl,
+                          folderId: getFolderIdFromEntityId(r.reviewUrl),
+                          publicationInfo: {
+                            ...parsedApiKey.publicationInfo,
+                            action: r.action,
+                            isNotExist: !uploadedUnpublishEntitiesIds.includes(
+                              r.reviewUrl,
+                            ),
+                            publicationUrl: payload.url,
                           },
-                        ),
+                        };
                       }),
-                    ),
-                    of(
-                      ConversationsActions.addFolders({
-                        folders: conversationPaths.map((path) => ({
-                          ...getFolderFromId(path, FolderType.Chat),
-                          status: UploadStatus.LOADED,
-                        })),
-                      }),
-                    ),
+                    }),
+                  ),
+                  of(
+                    ConversationsActions.addFolders({
+                      folders: conversationPaths.map((path) => ({
+                        ...getFolderFromId(path, FeatureType.Chat),
+                        status: UploadStatus.LOADED,
+                      })),
+                    }),
                   ),
                 );
               }
@@ -251,37 +323,37 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
               if (promptUnpublishEntities.length) {
                 actions.push(
-                  concat(
-                    of(
-                      PromptsActions.addPrompts({
-                        prompts: promptUnpublishEntities.map((r) => {
-                          const parsedApiKey = parsePromptApiKey(
-                            splitEntityId(r.targetUrl).name,
-                          );
+                  of(
+                    PromptsActions.addPrompts({
+                      prompts: promptUnpublishEntities.map((r) => {
+                        const parsedApiKey = parsePromptApiKey(
+                          splitEntityId(r.targetUrl).name,
+                          { parseVersion: true },
+                        );
 
-                          return {
-                            id: r.reviewUrl,
-                            folderId: getFolderIdFromEntityId(r.reviewUrl),
-                            name: parsedApiKey.name,
-                            publicationInfo: {
-                              action: r.action,
-                              isNotExist:
-                                !uploadedUnpublishEntitiesIds.includes(
-                                  r.reviewUrl,
-                                ),
-                            },
-                          };
-                        }),
+                        return {
+                          id: r.reviewUrl,
+                          folderId: getFolderIdFromEntityId(r.reviewUrl),
+                          name: parsedApiKey.name,
+                          publicationInfo: {
+                            ...parsedApiKey.publicationInfo,
+                            action: r.action,
+                            isNotExist: !uploadedUnpublishEntitiesIds.includes(
+                              r.reviewUrl,
+                            ),
+                            publicationUrl: payload.url,
+                          },
+                        };
                       }),
-                    ),
-                    of(
-                      PromptsActions.addFolders({
-                        folders: promptPaths.map((path) => ({
-                          ...getFolderFromId(path, FolderType.Prompt),
-                          status: UploadStatus.LOADED,
-                        })),
-                      }),
-                    ),
+                    }),
+                  ),
+                  of(
+                    PromptsActions.addFolders({
+                      folders: promptPaths.map((path) => ({
+                        ...getFolderFromId(path, FeatureType.Prompt),
+                        status: UploadStatus.LOADED,
+                      })),
+                    }),
                   ),
                 );
               }
@@ -301,34 +373,75 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               );
 
               actions.push(
-                concat(
-                  of(
-                    PromptsActions.addFolders({
-                      folders: promptPaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.Prompt),
-                        status: UploadStatus.LOADED,
-                        isPublicationFolder: true,
-                      })),
-                    }),
-                  ),
-                  of(
-                    PromptsActions.addPrompts({
-                      prompts: promptResources.map((r) => {
-                        const parsedApiKey = parsePromptApiKey(
-                          splitEntityId(r.targetUrl).name,
-                        );
+                of(
+                  PromptsActions.addFolders({
+                    folders: promptPaths.map((path) => ({
+                      ...getFolderFromId(path, FeatureType.Prompt),
+                      status: UploadStatus.LOADED,
+                      isPublicationFolder: true,
+                    })),
+                  }),
+                ),
+                of(
+                  PromptsActions.addPrompts({
+                    prompts: promptResources.map((r) => {
+                      const parsedApiKey = parsePromptApiKey(
+                        splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
+                      );
 
-                        return {
-                          id: r.reviewUrl,
-                          folderId: getFolderIdFromEntityId(r.reviewUrl),
-                          name: parsedApiKey.name,
-                          publicationInfo: {
-                            action: r.action,
-                          },
-                        };
-                      }),
+                      return {
+                        id: r.reviewUrl,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        name: parsedApiKey.name,
+                        publicationInfo: {
+                          ...parsedApiKey.publicationInfo,
+                          action: r.action,
+                          publicationUrl: payload.url,
+                        },
+                      };
                     }),
-                  ),
+                  }),
+                ),
+              );
+            }
+
+            const applicationResources = publication.resources.filter((r) =>
+              isApplicationId(r.targetUrl),
+            );
+
+            if (applicationResources.length) {
+              const allModels = ModelsSelectors.selectModels(state$.value);
+
+              actions.push(
+                of(
+                  ModelsActions.addPublishRequestModels({
+                    models: applicationResources.map((r) => {
+                      const parsedApiKey = parsePromptApiKey(
+                        splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
+                      );
+
+                      return {
+                        id: r.reviewUrl,
+                        name: parsedApiKey.name,
+                        isDefault: false,
+                        reference: r.reviewUrl,
+                        type: EntityType.Application,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        publicationInfo: {
+                          action: r.action,
+                          isNotExist:
+                            r.action === PublishActions.DELETE &&
+                            !allModels.some(
+                              (model) => model.id === r.reviewUrl,
+                            ),
+                          publicationUrl: payload.url,
+                        },
+                        owner: r.author ?? 'Unknown',
+                      };
+                    }),
+                  }),
                 ),
               );
             }
@@ -347,34 +460,35 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               );
 
               actions.push(
-                concat(
-                  of(
-                    ConversationsActions.addFolders({
-                      folders: conversationPaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.Chat),
-                        status: UploadStatus.LOADED,
-                        isPublicationFolder: true,
-                      })),
-                    }),
-                  ),
-                  of(
-                    ConversationsActions.addConversations({
-                      conversations: conversationResources.map((r) => {
-                        const parsedApiKey = parseConversationApiKey(
-                          splitEntityId(r.targetUrl).name,
-                        );
+                of(
+                  ConversationsActions.addFolders({
+                    folders: conversationPaths.map((path) => ({
+                      ...getFolderFromId(path, FeatureType.Chat),
+                      status: UploadStatus.LOADED,
+                      isPublicationFolder: true,
+                    })),
+                  }),
+                ),
+                of(
+                  ConversationsActions.addConversations({
+                    conversations: conversationResources.map((r) => {
+                      const parsedApiKey = parseConversationApiKey(
+                        splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
+                      );
 
-                        return {
-                          ...parsedApiKey,
-                          id: r.reviewUrl,
-                          folderId: getFolderIdFromEntityId(r.reviewUrl),
-                          publicationInfo: {
-                            action: r.action,
-                          },
-                        };
-                      }),
+                      return {
+                        ...parsedApiKey,
+                        id: r.reviewUrl,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        publicationInfo: {
+                          ...parsedApiKey.publicationInfo,
+                          action: r.action,
+                          publicationUrl: payload.url,
+                        },
+                      };
                     }),
-                  ),
+                  }),
                 ),
               );
             }
@@ -392,37 +506,58 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                 ),
               );
 
+              const { publicFiles, foldersSet } = getFilesFromPublicResources({
+                fileResources,
+                payloadUrl: payload.url,
+              });
+
               actions.push(
-                concat(
-                  of(
-                    FilesActions.getFoldersSuccess({
-                      folders: filePaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.File),
-                        status: UploadStatus.LOADED,
-                        isPublicationFolder: true,
-                      })),
-                    }),
-                  ),
-                  of(
-                    FilesActions.getFilesSuccess({
-                      files: fileResources.map((r) => ({
-                        id: r.reviewUrl,
-                        folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        name: splitEntityId(r.targetUrl).name,
-                        contentLength: 0,
-                        contentType: '',
-                        isPublicationFile: true,
-                        publicationInfo: {
-                          action: r.action,
-                        },
-                      })),
-                    }),
-                  ),
+                of(
+                  FilesActions.getFoldersSuccess({
+                    folders: filePaths.map((path) => ({
+                      ...getFolderFromId(path, FeatureType.File),
+                      status: UploadStatus.LOADED,
+                      isPublicationFolder: true,
+                    })),
+                  }),
+                ),
+                of(
+                  FilesActions.getFilesSuccess({
+                    files: publicFiles,
+                    foldersSet: foldersSet,
+                  }),
                 ),
               );
             }
 
+            // we do not need to review files
+            const existingReviewedResources =
+              PublicationSelectors.selectResourcesToReviewByPublicationUrl(
+                state$.value,
+                publication.url,
+              );
+
+            const resourcesToReview = publication.resources.filter(
+              (resource) => !isFileId(resource.targetUrl),
+            );
+
             return concat(
+              of(
+                PublicationActions.setPublicationsToReview({
+                  items: resourcesToReview.map((resource) => {
+                    const matched = existingReviewedResources.find(
+                      (r) => r.sourceUrl === resource.sourceUrl,
+                    );
+
+                    return {
+                      reviewed: matched?.reviewed ?? false,
+                      reviewUrl: resource.reviewUrl,
+                      sourceUrl: resource.sourceUrl!,
+                    };
+                  }),
+                  publicationUrl: publication.url,
+                }),
+              ),
               of(
                 PublicationActions.uploadPublicationSuccess({
                   publication: {
@@ -432,14 +567,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                   },
                 }),
               ),
-              of(
-                PublicationActions.selectPublication({
-                  publication: {
-                    ...publication,
-                    resources: publication.resources,
-                  },
-                }),
-              ),
+              of(PublicationActions.selectPublication(publication.url)),
               ...actions,
             );
           },
@@ -454,7 +582,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
 const uploadPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublicationsFail.match),
+    ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationUploadFailed),
@@ -464,33 +592,43 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
 
 const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublishedWithMeItems.match),
+    ofType(PublicationActions.uploadPublishedWithMeItems.type),
+    filter(({ payload }) =>
+      SettingsSelectors.selectIsPublishingEnabled(
+        state$.value,
+        payload.featureType,
+      ),
+    ),
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap(({ folders, items }) => {
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
+
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const pathsToUpload = selectedIds
+          const selectedConversationsToUpload = selectedIds.filter(
             // do not upload root entities, as they uploaded with listing
-            .filter((id) => id.split('/').length > 3)
-            .filter((id) =>
-              id.startsWith(
-                `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
+            (id) => id.split('/').length > 3 && isEntityIdPublic({ id }),
+          );
+          const publicationItems = items.map((item) => ({
+            ...item,
+            id: item.url,
+            updatedAt: Date.now(),
+          }));
+
+          if (selectedConversationsToUpload.length) {
+            const rootFolderIds = uniq(
+              selectedConversationsToUpload.map((id) =>
+                getRootFolderIdFromEntityId(id),
               ),
             );
 
-          if (pathsToUpload.length) {
-            const rootFolderIds = uniq(
-              pathsToUpload.map((path) => getRootFolderIdFromEntityId(path)),
-            );
-
-            rootFolderIds.forEach((path) =>
+            rootFolderIds.forEach((id) =>
               actions.push(
                 of(
                   ConversationsActions.uploadConversationsWithFoldersRecursive({
-                    path,
+                    path: id,
                     noLoader: true,
                   }),
                 ),
@@ -507,41 +645,37 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               actions.push(
                 of(
                   ConversationsActions.addFolders({
-                    folders: folders.map((folder) => {
-                      const newUrl = ApiUtils.decodeApiUrl(
-                        folder.url.slice(0, -1),
-                      );
-
-                      return {
-                        name: folder.name,
-                        id: newUrl,
-                        folderId: getFolderIdFromEntityId(newUrl),
-                        publishedWithMe: true,
-                        type: FolderType.Chat,
-                      };
-                    }),
+                    folders: folders.map((folder) => ({
+                      name: folder.name,
+                      id: folder.url,
+                      folderId: getFolderIdFromEntityId(folder.url),
+                      publishedWithMe: true,
+                      type: FeatureType.Chat,
+                    })),
                   }),
                 ),
               );
             }
 
             if (items.length) {
+              const { publicVersionGroups, items: conversations } =
+                mapPublishedItems<ConversationInfo>(
+                  publicationItems.map((item) => ({
+                    ...item,
+                    updatedAt: item.updatedAt,
+                  })),
+                  payload.featureType,
+                );
+
               actions.push(
                 of(
+                  PublicationActions.addPublicVersionGroups({
+                    publicVersionGroups,
+                  }),
+                ),
+                of(
                   ConversationsActions.addConversations({
-                    conversations: items.map((item) => {
-                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
-                      const parsedApiKey = parseConversationApiKey(
-                        splitEntityId(decodedUrl).name,
-                      );
-
-                      return {
-                        ...parsedApiKey,
-                        id: decodedUrl,
-                        folderId: getFolderIdFromEntityId(decodedUrl),
-                        publishedWithMe: true,
-                      };
-                    }),
+                    conversations,
                   }),
                 ),
               );
@@ -551,41 +685,82 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               actions.push(
                 of(
                   PromptsActions.addFolders({
-                    folders: folders.map((item) => {
-                      const newUrl = ApiUtils.decodeApiUrl(
-                        item.url.slice(0, -1),
-                      );
-
-                      return {
-                        name: item.name,
-                        id: newUrl,
-                        folderId: getFolderIdFromEntityId(newUrl),
-                        publishedWithMe: true,
-                        type: FolderType.Prompt,
-                      };
-                    }),
+                    folders: folders.map((folder) => ({
+                      name: folder.name,
+                      id: folder.url,
+                      folderId: getFolderIdFromEntityId(folder.url),
+                      publishedWithMe: true,
+                      type: FeatureType.Prompt,
+                    })),
                   }),
                 ),
               );
             }
 
             if (items.length) {
+              const { publicVersionGroups, items: prompts } =
+                mapPublishedItems<PromptInfo>(
+                  publicationItems,
+                  payload.featureType,
+                );
+
               actions.push(
                 of(
+                  PublicationActions.addPublicVersionGroups({
+                    publicVersionGroups,
+                  }),
+                ),
+                of(
                   PromptsActions.addPrompts({
-                    prompts: items.map((item) => {
-                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
-                      const parsedApiKey = parsePromptApiKey(
-                        splitEntityId(decodedUrl).name,
-                      );
+                    prompts,
+                  }),
+                ),
+              );
+            }
+          } else if (payload.featureType === FeatureType.File) {
+            if (folders.length) {
+              actions.push(
+                of(
+                  FilesActions.getFoldersSuccess({
+                    folders: folders.map((item) => ({
+                      name: item.name,
+                      id: item.url,
+                      folderId: getFolderIdFromEntityId(item.url),
+                      publishedWithMe: true,
+                      type: FeatureType.File,
+                    })),
+                  }),
+                ),
+              );
+            }
 
-                      return {
-                        id: decodedUrl,
-                        folderId: getFolderIdFromEntityId(decodedUrl),
-                        name: parsedApiKey.name,
-                        publishedWithMe: true,
-                      };
-                    }),
+            if (items.length) {
+              const foldersSet = new Set<string>();
+              const publicFiles = (items as PublishedFileItem[]).map((item) => {
+                const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+
+                const folderId = getFolderIdFromEntityId(decodedUrl);
+
+                foldersSet.add(folderId);
+                const { apiKey, bucket, parentPath, name } =
+                  splitEntityId(decodedUrl);
+
+                return {
+                  contentLength: item.contentLength,
+                  contentType: item.contentType,
+                  absolutePath: constructPath(apiKey, bucket, parentPath),
+                  id: decodedUrl,
+                  folderId,
+                  name,
+                  publishedWithMe: true,
+                };
+              });
+
+              actions.push(
+                of(
+                  FilesActions.getFilesSuccess({
+                    files: publicFiles,
+                    foldersSet,
                   }),
                 ),
               );
@@ -604,7 +779,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
 const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublishedWithMeItemsFail.match),
+    ofType(PublicationActions.uploadPublishedWithMeItemsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publishedItemsUploadFailed),
@@ -614,49 +789,71 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
 
 const approvePublicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.approvePublication.match),
+    ofType(PublicationActions.approvePublication.type),
     switchMap(({ payload }) =>
       PublicationService.approvePublication(payload.url).pipe(
         switchMap(() => {
-          const actions: Observable<AnyAction>[] = [];
+          const state = state$.value;
           const selectedPublication =
-            PublicationSelectors.selectSelectedPublication(state$.value);
+            PublicationSelectors.selectSelectedPublication(state);
 
           if (!selectedPublication) {
             return of(PublicationActions.approvePublicationFail());
           }
 
+          const actions: Observable<AppAction>[] = [];
+
+          const resourcesToReview =
+            PublicationSelectors.selectResourcesToReview(state);
+
           const conversationResources = selectedPublication.resources.filter(
-            (r) => isConversationId(r.targetUrl),
+            (resource) => isConversationId(resource.targetUrl),
           );
           const conversationResourcesToPublish = conversationResources.filter(
-            (r) => r.action === PublishActions.ADD,
+            (resource) => resource.action === PublishActions.ADD,
           );
           const conversationResourcesToUnpublish = conversationResources.filter(
-            (r) => r.action === PublishActions.DELETE,
+            (resource) => resource.action === PublishActions.DELETE,
           );
 
           if (conversationResourcesToUnpublish.length) {
-            const allConversations = ConversationsSelectors.selectConversations(
-              state$.value,
-            );
-            const allFolders = ConversationsSelectors.selectFolders(
-              state$.value,
-            );
-            const conversationsToRemove = conversationResourcesToUnpublish.map(
-              (r) => r.reviewUrl,
-            );
+            const allConversations =
+              ConversationsSelectors.selectConversations(state);
+            const allFolders = ConversationsSelectors.selectFolders(state);
+
+            const { itemsToHideIds, itemsToRemoveIds } =
+              getItemsIdsToRemoveAndHide(
+                conversationResourcesToUnpublish,
+                resourcesToReview,
+              );
+            const idsToExclude = [...itemsToRemoveIds, ...itemsToHideIds];
             const filteredConversations = allConversations.filter(
-              (c) => !conversationsToRemove.includes(c.id),
+              (conv) => !idsToExclude.includes(conv.id),
             );
-            const filteredFolders = allFolders.filter(
-              (f) =>
-                f.status !== UploadStatus.LOADED ||
-                !f.id.startsWith(getConversationRootId(PUBLIC_URL_PREFIX)) ||
-                (filteredConversations.some((c) =>
-                  c.id.startsWith(`${f.id}/`),
-                ) &&
-                  f.id.startsWith(getConversationRootId(PUBLIC_URL_PREFIX))),
+            const filteredFolders = allFolders.filter((folder) => {
+              const isNotLoaded = folder.status !== UploadStatus.LOADED;
+              const isPublic = !isEntityIdPublic(folder);
+              const hasConversations = filteredConversations.some((conv) =>
+                conv.id.startsWith(`${folder.id}/`),
+              );
+
+              return isNotLoaded || isPublic || hasConversations;
+            });
+            const foldersToHide = allFolders.filter((folder) => {
+              const hasConversations = filteredConversations.some((conv) =>
+                conv.id.startsWith(`${folder.id}/`),
+              );
+              const hasHiddenConversations = itemsToHideIds.some((convId) =>
+                convId.startsWith(`${folder.id}/`),
+              );
+
+              return !hasConversations && hasHiddenConversations;
+            });
+
+            const versionGroups = uniq(
+              idsToExclude.map((id) =>
+                getIdWithoutVersionFromApiKey(id, parseConversationApiKey),
+              ),
             );
 
             actions.push(
@@ -665,11 +862,55 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   conversations: filteredConversations,
                 }),
               ),
-            );
-            actions.push(
+              of(
+                ConversationsActions.addConversations({
+                  conversations: allConversations
+                    .filter((conv) => itemsToHideIds.includes(conv.id))
+                    .map((conv) => ({
+                      status: undefined,
+                      id: conv.id,
+                      model: { id: conv.model.id },
+                      name: conv.name,
+                      folderId: conv.folderId,
+                      publicationInfo: {
+                        ...conv.publicationInfo,
+                        isNotExist: true,
+                        publicationUrl: payload.url,
+                      },
+                      publishedWithMe: false,
+                    })),
+                }),
+              ),
               of(
                 ConversationsActions.setFolders({
                   folders: filteredFolders,
+                }),
+              ),
+              of(
+                ConversationsActions.addFolders({
+                  folders: foldersToHide.map((folder) => ({
+                    ...folder,
+                    publishedWithMe: false,
+                  })),
+                }),
+              ),
+              of(
+                PublicationActions.markResourcesAsReviewedByIds({
+                  ids: itemsToHideIds,
+                }),
+              ),
+              of(
+                PublicationActions.removePublicVersionGroups({
+                  groupsToRemove: versionGroups.map((groupId) => ({
+                    groupIds: idsToExclude.filter(
+                      (id) =>
+                        getIdWithoutVersionFromApiKey(
+                          id,
+                          parseConversationApiKey,
+                        ) === groupId,
+                    ),
+                    versionGroupId: groupId,
+                  })),
                 }),
               ),
             );
@@ -680,71 +921,93 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               conversationResourcesToPublish.flatMap((resource) =>
                 getParentFolderIdsFromEntityId(
                   getFolderIdFromEntityId(resource.targetUrl),
-                ).filter((p) => p !== resource.targetUrl),
+                ).filter((folderId) => folderId !== resource.targetUrl),
               ),
             );
 
-            actions.push(
-              concat(
-                of(
-                  ConversationsActions.addFolders({
-                    folders: conversationPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Chat),
-                      status: UploadStatus.LOADED,
-                      publishedWithMe: path.split('/').length === 3,
-                    })),
-                  }),
-                ),
-                of(
-                  ConversationsActions.addConversations({
-                    conversations: conversationResourcesToPublish.map(
-                      (item) => {
-                        const parsedApiKey = parseConversationApiKey(
-                          splitEntityId(item.targetUrl).name,
-                        );
-                        const folderId = getFolderIdFromEntityId(
-                          item.targetUrl,
-                        );
+            const { publicVersionGroups, items } =
+              mapPublishedItems<ConversationInfo>(
+                conversationResourcesToPublish.map((resource) => ({
+                  id: resource.targetUrl,
+                  updatedAt: Date.now(),
+                })),
+                FeatureType.Chat,
+              );
 
-                        return {
-                          ...parsedApiKey,
-                          id: item.targetUrl,
-                          folderId,
-                          publishedWithMe: isRootId(folderId),
-                        };
-                      },
-                    ),
+            actions.push(
+              of(
+                ConversationsActions.addFolders({
+                  folders: conversationPaths.map((path) => ({
+                    ...getFolderFromId(path, FeatureType.Chat),
+                    status: UploadStatus.LOADED,
+                    publishedWithMe: isRootEntity(path),
+                  })),
+                }),
+              ),
+              of(
+                ConversationsActions.addConversations({
+                  conversations: items.map((item) => {
+                    if (item.publicationInfo?.isNotExist) {
+                      item.publicationInfo.isNotExist = false;
+                    }
+
+                    return item;
                   }),
-                ),
+                }),
+              ),
+              of(
+                PublicationActions.addPublicVersionGroups({
+                  publicVersionGroups,
+                }),
               ),
             );
           }
 
-          const promptResources = selectedPublication.resources.filter((r) =>
-            isPromptId(r.targetUrl),
+          const promptResources = selectedPublication.resources.filter(
+            (resource) => isPromptId(resource.targetUrl),
           );
           const promptResourcesToPublish = promptResources.filter(
-            (r) => r.action === PublishActions.ADD,
+            (resource) => resource.action === PublishActions.ADD,
           );
           const promptResourcesToUnpublish = promptResources.filter(
-            (r) => r.action === PublishActions.DELETE,
+            (resource) => resource.action === PublishActions.DELETE,
           );
 
           if (promptResourcesToUnpublish.length) {
-            const allPrompts = PromptsSelectors.selectPrompts(state$.value);
-            const promptsToRemove = promptResourcesToUnpublish.map(
-              (r) => r.reviewUrl,
-            );
-            const allFolders = PromptsSelectors.selectFolders(state$.value);
+            const allPrompts = PromptsSelectors.selectPrompts(state);
+            const allFolders = PromptsSelectors.selectFolders(state);
+            const { itemsToHideIds, itemsToRemoveIds } =
+              getItemsIdsToRemoveAndHide(
+                promptResourcesToUnpublish,
+                resourcesToReview,
+              );
+            const idsToExclude = [...itemsToRemoveIds, ...itemsToHideIds];
             const filteredPrompts = allPrompts.filter(
-              (p) => !promptsToRemove.includes(p.id),
+              (prompt) => !idsToExclude.includes(prompt.id),
             );
-            const filteredFolders = allFolders.filter(
-              (f) =>
-                f.status !== UploadStatus.LOADED ||
-                !f.id.startsWith(getPromptRootId(PUBLIC_URL_PREFIX)) ||
-                (filteredPrompts.some((c) => c.id.startsWith(`${f.id}/`)) &&
-                  f.id.startsWith(getPromptRootId(PUBLIC_URL_PREFIX))),
+            const filteredFolders = allFolders.filter((folder) => {
+              const isNotLoaded = folder.status !== UploadStatus.LOADED;
+              const isPublic = !isEntityIdPublic(folder);
+              const hasPrompts = filteredPrompts.some((prompt) =>
+                prompt.id.startsWith(`${folder.id}/`),
+              );
+
+              return isNotLoaded || isPublic || hasPrompts;
+            });
+            const foldersToHide = allFolders.filter((folder) => {
+              const hasPrompts = filteredPrompts.some((prompt) =>
+                prompt.id.startsWith(`${folder.id}/`),
+              );
+              const hasHiddenPrompts = itemsToHideIds.some((promptId) =>
+                promptId.startsWith(`${folder.id}/`),
+              );
+
+              return !hasPrompts && hasHiddenPrompts;
+            });
+            const versionGroups = uniq(
+              idsToExclude.map((id) => {
+                return getIdWithoutVersionFromApiKey(id, parsePromptApiKey);
+              }),
             );
 
             actions.push(
@@ -753,11 +1016,53 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   prompts: filteredPrompts,
                 }),
               ),
-            );
-            actions.push(
               of(
-                ConversationsActions.setFolders({
+                PromptsActions.addPrompts({
+                  prompts: allPrompts
+                    .filter((prompt) => itemsToHideIds.includes(prompt.id))
+                    .map((prompt) => ({
+                      status: undefined,
+                      id: prompt.id,
+                      name: prompt.name,
+                      folderId: prompt.folderId,
+                      publicationInfo: {
+                        ...prompt.publicationInfo,
+                        isNotExist: true,
+                        publicationUrl: payload.url,
+                      },
+                      publishedWithMe: false,
+                    })),
+                }),
+              ),
+              of(
+                PromptsActions.setFolders({
                   folders: filteredFolders,
+                }),
+              ),
+              of(
+                PromptsActions.addFolders({
+                  folders: foldersToHide.map((folder) => ({
+                    ...folder,
+                    publishedWithMe: false,
+                  })),
+                }),
+              ),
+              of(
+                PublicationActions.markResourcesAsReviewedByIds({
+                  ids: itemsToHideIds,
+                }),
+              ),
+              of(
+                PublicationActions.removePublicVersionGroups({
+                  groupsToRemove: versionGroups.map((groupId) => ({
+                    groupIds: idsToExclude.filter((id) => {
+                      return (
+                        getIdWithoutVersionFromApiKey(id, parsePromptApiKey) ===
+                        groupId
+                      );
+                    }),
+                    versionGroupId: groupId,
+                  })),
                 }),
               ),
             );
@@ -768,40 +1073,67 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               promptResourcesToPublish.flatMap((resource) =>
                 getParentFolderIdsFromEntityId(
                   getFolderIdFromEntityId(resource.targetUrl),
-                ).filter((p) => p !== resource.targetUrl),
+                ).filter((folderId) => folderId !== resource.targetUrl),
               ),
             );
+
+            const { publicVersionGroups, items } =
+              mapPublishedItems<PromptInfo>(
+                promptResourcesToPublish.map((resource) => ({
+                  id: resource.targetUrl,
+                })),
+                FeatureType.Prompt,
+              );
 
             actions.push(
-              concat(
-                of(
-                  PromptsActions.addFolders({
-                    folders: promptPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Prompt),
-                      status: UploadStatus.LOADED,
-                      publishedWithMe: path.split('/').length === 3,
-                    })),
-                  }),
-                ),
-                of(
-                  PromptsActions.addPrompts({
-                    prompts: promptResourcesToPublish.map((item) => {
-                      const parsedApiKey = parsePromptApiKey(
-                        splitEntityId(item.targetUrl).name,
-                      );
-                      const folderId = getFolderIdFromEntityId(item.targetUrl);
+              of(
+                PromptsActions.addFolders({
+                  folders: promptPaths.map((path) => ({
+                    ...getFolderFromId(path, FeatureType.Prompt),
+                    status: UploadStatus.LOADED,
+                    publishedWithMe: isRootEntity(path),
+                  })),
+                }),
+              ),
+              of(
+                PromptsActions.addPrompts({
+                  prompts: items.map((item) => {
+                    if (item.publicationInfo?.isNotExist) {
+                      item.publicationInfo.isNotExist = false;
+                    }
 
-                      return {
-                        id: item.targetUrl,
-                        folderId,
-                        name: parsedApiKey.name,
-                        publishedWithMe: isRootId(folderId),
-                      };
-                    }),
+                    return item;
                   }),
-                ),
+                }),
+              ),
+              of(
+                PublicationActions.addPublicVersionGroups({
+                  publicVersionGroups,
+                }),
               ),
             );
+          }
+
+          const appResourcesToUnpublish = selectedPublication.resources.filter(
+            (r) =>
+              r.action === PublishActions.DELETE &&
+              isApplicationId(r.targetUrl),
+          );
+
+          if (appResourcesToUnpublish.length) {
+            appResourcesToUnpublish.forEach((r) => {
+              actions.push(
+                of(
+                  ModelsActions.updateModelPublicationInfo({
+                    reference: r.reviewUrl,
+                    updatedValues: {
+                      isNotExist: true,
+                      publicationUrl: payload.url,
+                    },
+                  }),
+                ),
+              );
+            });
           }
 
           return concat(
@@ -809,6 +1141,12 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             of(
               PublicationActions.approvePublicationSuccess({
                 url: payload.url,
+                triggerModelsListing: selectedPublication.resources.some(
+                  (resource) => isApplicationId(resource.reviewUrl),
+                ),
+                triggerPublicFilesListing: selectedPublication.resources.some(
+                  (resource) => isFileId(resource.reviewUrl),
+                ),
               }),
             ),
           );
@@ -823,7 +1161,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
 const approvePublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.approvePublicationFail.match),
+    ofType(PublicationActions.approvePublicationFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast(
         translate(payload ?? errorsMessages.publicationApproveFailed),
@@ -833,7 +1171,7 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
 
 const rejectPublicationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.rejectPublication.match),
+    ofType(PublicationActions.rejectPublication.type),
     switchMap(({ payload }) =>
       PublicationService.rejectPublication(payload.url).pipe(
         switchMap(() =>
@@ -849,7 +1187,7 @@ const rejectPublicationEpic: AppEpic = (action$) =>
 
 const rejectPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.rejectPublicationFail.match),
+    ofType(PublicationActions.rejectPublicationFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationRejectFailed),
@@ -857,22 +1195,43 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const approvePublicationSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(PublicationActions.approvePublicationSuccess.type),
+    switchMap(({ payload }) => {
+      const actions: Observable<AppAction>[] = [];
+
+      if (payload.triggerModelsListing) {
+        actions.push(of(ModelsActions.getModels()));
+      }
+
+      if (payload.triggerPublicFilesListing) {
+        actions.push(
+          of(
+            PublicationActions.uploadPublishedWithMeItems({
+              featureType: FeatureType.File,
+            }),
+          ),
+        );
+      }
+
+      return concat(...actions);
+    }),
+  );
+
 const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        PublicationActions.rejectPublicationSuccess.match(action) ||
-        PublicationActions.approvePublicationSuccess.match(action),
+    ofType(
+      PublicationActions.rejectPublicationSuccess.type,
+      PublicationActions.approvePublicationSuccess.type,
     ),
     switchMap(() => {
-      const publications = PublicationSelectors.selectPublications(
-        state$.value,
-      );
+      const state = state$.value;
+
+      const publications = PublicationSelectors.selectPublications(state);
 
       if (!publications.length) {
-        const conversations = ConversationsSelectors.selectConversations(
-          state$.value,
-        );
+        const conversations = ConversationsSelectors.selectConversations(state);
 
         return iif(
           () => !!conversations.length,
@@ -889,15 +1248,17 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return of(
-        PublicationActions.uploadPublication({ url: publications[0].url }),
+      return ConversationService.setSelectedConversationsIds([]).pipe(
+        map(() =>
+          PublicationActions.uploadPublication({ url: publications[0].url }),
+        ),
       );
     }),
   );
 
 const uploadRulesEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadRules.match),
+    ofType(PublicationActions.uploadRules.type),
     switchMap(({ payload }) =>
       PublicationService.getRules(payload.path).pipe(
         switchMap((rules) => {
@@ -917,7 +1278,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
 
 const uploadRulesFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadRulesFail.match),
+    ofType(PublicationActions.uploadRulesFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast(
         translate(payload ?? errorsMessages.rulesUploadingFailed),
@@ -927,17 +1288,19 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.uploadAllPublishedWithMeItems.match),
+    ofType(PublicationActions.uploadAllPublishedWithMeItems.type),
+    filter(
+      ({ payload }) =>
+        SettingsSelectors.selectIsPublishingEnabled(
+          state$.value,
+          payload.featureType,
+        ) &&
+        !PublicationSelectors.selectIsAllItemsUploaded(
+          state$.value,
+          payload.featureType,
+        ),
+    ),
     mergeMap(({ payload }) => {
-      const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
-        state$.value,
-        payload.featureType,
-      );
-
-      if (isAllItemsUploaded) {
-        return EMPTY;
-      }
-
       return PublicationService.getPublishedWithMeItems(
         '',
         payload.featureType,
@@ -950,32 +1313,23 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             return EMPTY;
           }
 
-          const actions: Observable<AnyAction>[] = [];
+          const actions: Observable<AppAction>[] = [];
 
+          const publicationItems = publications.items.map((item) => ({
+            ...item,
+            id: item.url,
+            updatedAt: item.updatedAt,
+          }));
           const paths = uniq(
-            publications.items.flatMap((c) =>
-              getParentFolderIdsFromFolderId(getFolderIdFromEntityId(c.url)),
+            publicationItems.flatMap(({ id }) =>
+              getParentFolderIdsFromFolderId(getFolderIdFromEntityId(id)),
             ),
-          ).map((path) => ApiUtils.decodeApiUrl(path));
-          const items = publications.items.map((item) => {
-            const id = ApiUtils.decodeApiUrl(item.url);
-            const parsedApiKey = parseConversationApiKey(
-              splitEntityId(id).name,
-            );
-            const folderId = getFolderIdFromEntityId(id);
-
-            return {
-              ...parsedApiKey,
-              id,
-              folderId: folderId,
-              publishedWithMe: isRootId(folderId),
-            };
-          });
+          );
           const folders = getFoldersFromIds(
             paths,
             payload.featureType === FeatureType.Chat
-              ? FolderType.Chat
-              : FolderType.Prompt,
+              ? FeatureType.Chat
+              : FeatureType.Prompt,
             UploadStatus.LOADED,
           ).map((folder) => ({
             ...folder,
@@ -983,24 +1337,46 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           }));
 
           if (payload.featureType === FeatureType.Chat) {
+            const { publicVersionGroups, items: conversations } =
+              mapPublishedItems<ConversationInfo>(
+                publicationItems,
+                payload.featureType,
+              );
+
             actions.push(
+              of(
+                PublicationActions.addPublicVersionGroups({
+                  publicVersionGroups,
+                }),
+              ),
               of(
                 ConversationsActions.uploadChildConversationsWithFoldersSuccess(
                   {
                     parentIds: paths,
                     folders,
-                    conversations: items,
+                    conversations,
                   },
                 ),
               ),
             );
           } else if (payload.featureType === FeatureType.Prompt) {
+            const { publicVersionGroups, items: prompts } =
+              mapPublishedItems<PromptInfo>(
+                publicationItems,
+                payload.featureType,
+              );
+
             actions.push(
+              of(
+                PublicationActions.addPublicVersionGroups({
+                  publicVersionGroups,
+                }),
+              ),
               of(
                 PromptsActions.uploadChildPromptsWithFoldersSuccess({
                   parentIds: paths,
                   folders,
-                  prompts: items,
+                  prompts,
                 }),
               ),
             );
@@ -1025,12 +1401,1022 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
 const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadAllPublishedWithMeItemsFail.match),
+    ofType(PublicationActions.uploadAllPublishedWithMeItemsFail.type),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publishedItemsUploadFailed),
       ),
     ),
+  );
+
+const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequestAndEntity.type),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state,
+        payload.publicationUrl,
+      );
+
+      const isConversation = isConversationId(payload.newEntity.id);
+
+      if (!publication) {
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication not found`,
+            ),
+          ),
+        );
+      }
+
+      if (!publication.resources) {
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication has no resources`,
+            ),
+          ),
+        );
+      }
+
+      const publicationData: PublicationUpdateRequestModel = {
+        ...publication,
+        resources: publication.resources.map((resource) => {
+          if (resource.reviewUrl === payload.resourceToUpdateUrl) {
+            const newTargetUrlSegments = payload.newEntity.id.split('/');
+            newTargetUrlSegments[1] = publication.targetFolder;
+            const newTargetUrl = newTargetUrlSegments.join('/');
+
+            return {
+              ...resource,
+              sourceUrl: resource.sourceUrl ?? '',
+              targetUrl: newTargetUrl,
+            };
+          }
+
+          return {
+            ...resource,
+            sourceUrl: resource.sourceUrl ?? '',
+          };
+        }),
+      };
+
+      return PublicationService.updatePublicationRequest({
+        publicationData,
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap(() => {
+          const updateEntityPayload = {
+            id: payload.newEntity.id,
+            values: payload.newEntity,
+          };
+
+          const isConversationResource = isConversationId(payload.newEntity.id);
+
+          const { selectedPromptId } =
+            PromptsSelectors.selectSelectedPromptId(state);
+          const selectedConversationIds =
+            ConversationsSelectors.selectSelectedConversationsIds(state);
+
+          const updateEntityAction$: Observable<AppAction> = of(
+            isConversationResource
+              ? ConversationsActions.updateConversation({
+                  ...updateEntityPayload,
+                  selectUpdatedOptions: {
+                    selectUpdated: selectedConversationIds.includes(
+                      payload.resourceToUpdateUrl,
+                    ),
+                    compareConversationId:
+                      selectedConversationIds.length > 1
+                        ? selectedConversationIds.filter(
+                            (id) => id !== payload.resourceToUpdateUrl,
+                          )[0]
+                        : undefined,
+                  },
+                })
+              : PromptsActions.updatePrompt({
+                  ...updateEntityPayload,
+                  selectUpdated:
+                    selectedPromptId === payload.resourceToUpdateUrl,
+                }),
+          );
+
+          const clearOldStateAction$ = of(
+            isConversationResource
+              ? ConversationsActions.setConversations({
+                  conversations: ConversationsSelectors.selectConversations(
+                    state,
+                  ).filter(
+                    (conversation) =>
+                      conversation.id !== payload.resourceToUpdateUrl,
+                  ),
+                })
+              : PromptsActions.setPrompts({
+                  prompts: PromptsSelectors.selectPrompts(state).filter(
+                    (prompt) => prompt.id !== payload.resourceToUpdateUrl,
+                  ),
+                }),
+          );
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
+          return concat(
+            updateEntityAction$,
+            clearOldStateAction$,
+            of(
+              PublicationActions.uploadPublication({
+                url: payload.publicationUrl,
+              }),
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: payload.publicationUrl,
+                ids: itemsToApprove.map((id) =>
+                  id === payload.resourceToUpdateUrl
+                    ? payload.newEntity.id
+                    : id,
+                ),
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updateApplicationPublicationUrls.type),
+    switchMap(({ payload }) => {
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state$.value,
+        payload.publicationUrl as string,
+      );
+
+      if (!publication || !publication?.resources || !payload.publicationUrl) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update application, publication not found'),
+          ),
+        );
+      }
+
+      const { oldApplication, newApplication } = payload;
+
+      const resources = publication.resources.map((resource) => ({
+        action: resource.action,
+        sourceUrl: resource.sourceUrl ?? '',
+        targetUrl:
+          resource.reviewUrl === oldApplication.id
+            ? constructPath(
+                getFolderIdFromEntityId(resource.targetUrl),
+                splitEntityId(newApplication.id).name,
+              )
+            : resource.targetUrl,
+      }));
+
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const state = state$.value;
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
+          return concat(
+            getUpdateApplicationGeneralInfoAction(
+              // oldApplication is not exist after update, so we need to replace it with newApplication.id
+              { ...oldApplication, id: newApplication.id },
+              newApplication,
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: response.url,
+                ids: itemsToApprove.map((id) =>
+                  id === oldApplication.id ? newApplication.id : id,
+                ),
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: response.url,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
+    switchMap(({ payload }) => {
+      if (!payload.newApplication.iconUrl) {
+        return EMPTY;
+      }
+
+      const state = state$.value;
+
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state,
+        payload.publicationUrl,
+      );
+
+      if (!publication) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update application icon, publication not found'),
+          ),
+        );
+      }
+
+      const resources: PublicationUpdateRequestModel['resources'] =
+        publication.resources?.map((resource) => ({
+          ...resource,
+          sourceUrl: resource.sourceUrl ?? '',
+        })) ?? [];
+
+      const newIconUrl = payload.newApplication.iconUrl.split('/');
+      resources.push({
+        action: PublishActions.ADD_IF_ABSENT,
+        sourceUrl: payload.newApplication.iconUrl,
+        targetUrl: ApiUtils.decodeApiUrl(
+          constructPath(
+            newIconUrl[0],
+            publication.targetFolder,
+            getFolderIdFromEntityId(
+              getIdWithoutRootPathSegments(payload.newApplication.id),
+            ),
+            newIconUrl.at(-1),
+          ),
+        ),
+      });
+
+      return PublicationService.updatePublicationRequest({
+        publicationData: {
+          ...publication,
+          resources,
+        },
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const newIconUrl = ApiUtils.decodeApiUrl(
+            response.resources.find(
+              (resource) =>
+                ApiUtils.decodeApiUrl(resource.sourceUrl ?? '') ===
+                payload.newApplication.iconUrl,
+            )?.reviewUrl ?? '',
+          );
+          const newApplicationWithMappedIconUrl = {
+            ...payload.newApplication,
+            iconUrl: newIconUrl,
+          };
+
+          const itemsToApprove =
+            PublicationSelectors.selectSelectedItemsToApprove(state);
+
+          return concat(
+            getUpdateApplicationGeneralInfoAction(
+              payload.oldApplication,
+              newApplicationWithMappedIconUrl,
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: payload.publicationUrl,
+                ids: [...itemsToApprove, newIconUrl],
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: payload.publicationUrl,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequestAndFolder.type),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+      const publication = PublicationSelectors.selectPublicationByUrl(
+        state,
+        payload.publicationUrl,
+      );
+      const oldPublicationResources = publication?.resources ?? [];
+
+      if (!publication) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update folder, publication not found'),
+          ),
+        );
+      }
+
+      if (!publication.resources) {
+        return of(
+          UIActions.showErrorToast(
+            translate('Cannot update folder, publication has no resources'),
+          ),
+        );
+      }
+
+      const publicationData: PublicationUpdateRequestModel = {
+        ...publication,
+        resources: publication.resources.map((resource) => {
+          if (resource.reviewUrl.startsWith(`${payload.folderIdToUpdate}/`)) {
+            const folderIdToUpdateSegments =
+              payload.folderIdToUpdate.split('/');
+            folderIdToUpdateSegments[1] = publication.targetFolder;
+            const targetFolderIdToUpdate = folderIdToUpdateSegments.join('/');
+
+            const newFolderIdSegments = payload.newFolder.id.split('/');
+            newFolderIdSegments[1] = publication.targetFolder;
+            const newTargetFolderId = newFolderIdSegments.join('/');
+
+            return {
+              ...resource,
+              sourceUrl: resource.sourceUrl ?? '',
+              targetUrl: resource.targetUrl.replace(
+                `${targetFolderIdToUpdate}/`,
+                `${newTargetFolderId}/`,
+              ),
+            };
+          }
+
+          return {
+            ...resource,
+            sourceUrl: resource.sourceUrl ?? '',
+          };
+        }),
+      };
+
+      return PublicationService.updatePublicationRequest({
+        publicationData,
+        url: payload.publicationUrl,
+      }).pipe(
+        switchMap((response) => {
+          const actions: Observable<AppAction>[] = [];
+
+          const newPublicationResources = response.resources.map(
+            (resource) => ({
+              ...resource,
+              sourceUrl: ApiUtils.decodeApiUrl(resource.sourceUrl ?? ''),
+              targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+              reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl ?? ''),
+            }),
+          );
+          const updateFolderPayload = {
+            folderId: payload.newFolder.id,
+            values: payload.newFolder,
+          };
+
+          if (isConversationId(payload.folderIdToUpdate)) {
+            actions.push(
+              of(ConversationsActions.updateFolder(updateFolderPayload)),
+              of(
+                ConversationsActions.setConversations({
+                  conversations: ConversationsSelectors.selectConversations(
+                    state,
+                  ).filter(
+                    (conv) =>
+                      !conv.id.startsWith(`${payload.folderIdToUpdate}/`),
+                  ),
+                }),
+              ),
+            );
+          } else {
+            actions.push(
+              of(PromptsActions.updateFolder(updateFolderPayload)),
+              of(
+                PromptsActions.setPrompts({
+                  prompts: PromptsSelectors.selectPrompts(state).filter(
+                    (prompt) =>
+                      !prompt.id.startsWith(`${payload.folderIdToUpdate}/`),
+                  ),
+                }),
+              ),
+            );
+          }
+
+          return concat(
+            ...actions,
+            getSetUpdatedItemsToApproveAction(
+              state,
+              oldPublicationResources,
+              newPublicationResources,
+              payload.publicationUrl,
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: payload.publicationUrl,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updatePublicationRequest.type),
+    switchMap(({ payload }) =>
+      forkJoin({
+        payload: processPublicationResources(payload.dataToUpdate),
+        url: of(payload.url),
+      }),
+    ),
+    switchMap(({ payload, url }) => {
+      const { publicationData } = payload;
+
+      return PublicationService.updatePublicationRequest({
+        publicationData,
+        url,
+      }).pipe(
+        switchMap((response) => {
+          const state = state$.value;
+
+          const oldPublicationResources =
+            PublicationSelectors.selectPublicationByUrl(state, url)
+              ?.resources ?? [];
+          const newPublicationResources = response.resources.map(
+            (resource) => ({
+              ...resource,
+              sourceUrl: ApiUtils.decodeApiUrl(resource.sourceUrl ?? ''),
+              targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+              reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl ?? ''),
+            }),
+          );
+
+          const resourcesRequiresUpdate = newPublicationResources.filter(
+            (newResource) => {
+              const match = oldPublicationResources.find(
+                (oldResource) =>
+                  oldResource?.sourceUrl === newResource.sourceUrl,
+              );
+
+              return match && match.targetUrl !== newResource.targetUrl;
+            },
+          );
+          const resourcesRequiresUpdateIds = resourcesRequiresUpdate.map(
+            (resource) => resource.reviewUrl,
+          );
+
+          const [
+            conversationsRequiresUpdate,
+            promptsRequiresUpdate,
+            applicationsRequiresUpdate,
+            filesToUpdate,
+          ] = [
+            FeatureType.Chat,
+            FeatureType.Prompt,
+            FeatureType.Application,
+            FeatureType.File,
+          ].map((featureType) =>
+            filterIdsByFeatureType(resourcesRequiresUpdateIds, featureType),
+          );
+
+          if (
+            !conversationsRequiresUpdate.length &&
+            !promptsRequiresUpdate.length &&
+            !applicationsRequiresUpdate.length &&
+            !filesToUpdate.length
+          ) {
+            return of(PublicationActions.uploadPublication({ url }));
+          }
+
+          const observables: {
+            conversations?: Observable<(Conversation | null)[]>;
+            prompts?: Observable<(Prompt | null)[]>;
+            applications?: Observable<(CustomApplicationModel | null)[]>;
+          } = {};
+
+          if (conversationsRequiresUpdate.length || filesToUpdate.length) {
+            const resourcesNotRequiresUpdate = newPublicationResources
+              .filter(
+                (resource) =>
+                  !resourcesRequiresUpdateIds.includes(resource.reviewUrl),
+              )
+              .map((resource) => resource.reviewUrl);
+            const conversationsNotRequiresUpdate = filterIdsByFeatureType(
+              resourcesNotRequiresUpdate,
+              FeatureType.Chat,
+            );
+            const conversationsToUpload = filesToUpdate.length
+              ? [
+                  ...conversationsNotRequiresUpdate,
+                  ...conversationsRequiresUpdate,
+                ]
+              : conversationsRequiresUpdate;
+
+            if (conversationsToUpload.length) {
+              observables.conversations = forkJoin(
+                conversationsToUpload.map((id) =>
+                  ConversationService.getConversation(
+                    getConversationInfoFromId(id, { parseVersion: true }),
+                  ),
+                ),
+              );
+            }
+          }
+
+          if (promptsRequiresUpdate.length) {
+            observables.prompts = forkJoin(
+              promptsRequiresUpdate.map((id) =>
+                PromptService.getPrompt(
+                  getPromptInfoFromId(id, { parseVersion: true }),
+                ),
+              ),
+            );
+          }
+
+          if (applicationsRequiresUpdate.length) {
+            observables.applications = forkJoin(
+              applicationsRequiresUpdate.map((id) =>
+                ApplicationService.get(id),
+              ),
+            );
+          }
+
+          const hasObservables = Object.keys(observables).length > 0;
+
+          const fetchData$ = hasObservables
+            ? forkJoin(observables)
+            : of({
+                conversations: [],
+                prompts: [],
+                applications: [],
+              });
+
+          return fetchData$.pipe(
+            map((results) => {
+              const conversations = results.conversations ?? [];
+              const prompts = results.prompts ?? [];
+              const applications = results.applications ?? [];
+
+              return {
+                conversations: conversations.filter(Boolean) as Conversation[],
+                prompts: prompts.filter(Boolean) as Prompt[],
+                applications: applications.filter(
+                  Boolean,
+                ) as CustomApplicationModel[],
+              };
+            }),
+            switchMap(({ conversations, prompts, applications }) => {
+              const actions: Observable<AppAction>[] = [];
+
+              const updateBasePublicationValues = (entity: ShareEntity) => ({
+                name: entity.name,
+                publicationInfo: {
+                  ...entity.publicationInfo,
+                  version: getVersionFromId(entity.id),
+                  publicationUrl: url,
+                },
+              });
+
+              const oldResourcesToClear = oldPublicationResources.filter(
+                (oldResource) => {
+                  const match = newPublicationResources.find(
+                    (newResource) =>
+                      newResource?.sourceUrl === oldResource.sourceUrl,
+                  );
+
+                  return match && match.targetUrl !== oldResource.targetUrl;
+                },
+              );
+
+              if (conversations.length) {
+                if (filesToUpdate.length) {
+                  const titlesToUpdate = filesToUpdate.map(getLastPathSegment);
+
+                  actions.push(
+                    ...conversations.map((conversation) => {
+                      return of(
+                        ConversationsActions.updateConversation({
+                          id: conversation.id,
+                          values: {
+                            ...updateBasePublicationValues(conversation),
+                            messages: updateMessagesAttachmentsTitles(
+                              conversation.messages,
+                              titlesToUpdate,
+                            ),
+                            playback: conversation.playback
+                              ? {
+                                  ...conversation.playback,
+                                  messagesStack:
+                                    updateMessagesAttachmentsTitles(
+                                      conversation.playback.messagesStack,
+                                      titlesToUpdate,
+                                    ),
+                                }
+                              : undefined,
+                          },
+                        }),
+                      );
+                    }),
+                  );
+                } else {
+                  actions.push(
+                    ...conversations.map((conversation) =>
+                      of(
+                        ConversationsActions.updateConversation({
+                          id: conversation.id,
+                          values: updateBasePublicationValues(conversation),
+                        }),
+                      ),
+                    ),
+                  );
+                }
+
+                // Clear old conversations from state
+                const oldConversationResourcesIds = oldResourcesToClear
+                  .filter(({ reviewUrl }) => isConversationId(reviewUrl))
+                  .map(({ reviewUrl }) => reviewUrl);
+
+                if (oldConversationResourcesIds.length) {
+                  const allConversations =
+                    ConversationsSelectors.selectConversations(state);
+                  const clearedConversationsState = allConversations.filter(
+                    ({ id }) => !oldConversationResourcesIds.includes(id),
+                  );
+
+                  actions.push(
+                    of(
+                      ConversationsActions.setConversations({
+                        conversations: clearedConversationsState,
+                      }),
+                    ),
+                  );
+                }
+              }
+
+              if (prompts.length) {
+                actions.push(
+                  ...prompts.map((prompt) =>
+                    of(
+                      PromptsActions.updatePrompt({
+                        id: prompt.id,
+                        values: updateBasePublicationValues(prompt),
+                      }),
+                    ),
+                  ),
+                );
+
+                // Clear old prompts from state
+                const oldPromptResourcesIds = oldResourcesToClear
+                  .filter(({ reviewUrl }) => isPromptId(reviewUrl))
+                  .map(({ reviewUrl }) => reviewUrl);
+
+                if (oldPromptResourcesIds.length) {
+                  const allPrompts = PromptsSelectors.selectPrompts(state);
+                  const clearedPromptsState = allPrompts.filter(
+                    ({ id }) => !oldPromptResourcesIds.includes(id),
+                  );
+
+                  actions.push(
+                    of(
+                      PromptsActions.setPrompts({
+                        prompts: clearedPromptsState,
+                      }),
+                    ),
+                  );
+                }
+              }
+
+              if (applications.length) {
+                actions.push(
+                  ...applications.map((application) => {
+                    const newApplication = {
+                      ...application,
+                      name: parseApplicationApiKey(
+                        splitEntityId(application.id).name,
+                      ).name,
+                      version: getVersionFromId(application.id),
+                    };
+
+                    return getUpdateApplicationGeneralInfoAction(
+                      application,
+                      newApplication,
+                    );
+                  }),
+                );
+
+                // Clear old applications from state
+                const oldApplicationResourcesIds = oldResourcesToClear
+                  .filter(({ reviewUrl }) => isApplicationId(reviewUrl))
+                  .map(({ reviewUrl }) => reviewUrl);
+
+                if (oldApplicationResourcesIds.length) {
+                  const allAgents = ModelsSelectors.selectModels(state);
+                  const clearedApplicationsState = allAgents.filter(
+                    ({ id }) => !oldApplicationResourcesIds.includes(id),
+                  );
+
+                  actions.push(
+                    of(
+                      ModelsActions.setModels({
+                        models: clearedApplicationsState,
+                      }),
+                    ),
+                  );
+                }
+              }
+
+              return concat(
+                ...actions,
+                getSetUpdatedItemsToApproveAction(
+                  state,
+                  oldPublicationResources,
+                  newPublicationResources,
+                  url,
+                ),
+                of(PublicationActions.uploadPublication({ url })),
+              );
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.updateAndApprovePublicationRequest.type),
+    switchMap(() => {
+      const state = state$.value;
+      const selectedPublication =
+        PublicationSelectors.selectSelectedPublication(state);
+
+      if (!selectedPublication) {
+        return of(PublicationActions.approvePublicationFail());
+      }
+
+      const resourcesToApproveIds =
+        PublicationSelectors.selectSelectedItemsToApprove(state);
+      const filteredResources = selectedPublication.resources
+        .filter(({ reviewUrl }) => resourcesToApproveIds.includes(reviewUrl))
+        .map((resource) => ({
+          ...resource,
+          sourceUrl: resource.sourceUrl ?? '',
+        }));
+
+      return PublicationService.updatePublicationRequest({
+        url: selectedPublication.url,
+        publicationData: {
+          ...selectedPublication,
+          resources: filteredResources,
+        },
+      }).pipe(
+        switchMap((response) => {
+          return of(
+            PublicationActions.approvePublication({
+              url: response.url,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    ofType(
+      PublicationActions.updatePublicationAndConversationLastMessageAttachments
+        .type,
+    ),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+
+      return addMessageAttachmentsToPublication(
+        payload.message,
+        getFolderIdFromEntityId(payload.conversationId),
+        payload.publicationUrl,
+        state,
+      ).pipe(
+        switchMap(({ updatedPublication, newItemsToSelect }) => {
+          return forkJoin({
+            updatedPublication: of(updatedPublication),
+            newItemsToSelect: of(newItemsToSelect),
+            conversation: getOrUploadConversation(
+              {
+                id: payload.conversationId,
+              },
+              state,
+            ).pipe(map(({ conversation }) => conversation)),
+          });
+        }),
+        switchMap(({ updatedPublication, newItemsToSelect, conversation }) => {
+          if (!conversation) {
+            console.error(
+              'Conversation not found, cannot update conversation attachments',
+            );
+
+            return EMPTY;
+          }
+
+          const lastMessage = conversation.messages.at(-1);
+          if (!lastMessage) {
+            console.error(
+              'Last message not found, cannot update conversation attachments',
+            );
+
+            return EMPTY;
+          }
+
+          const responseResourcesSourceUrls = updatedPublication.resources.map(
+            (resource) => resource.sourceUrl,
+          );
+          const updatedLastMessage = {
+            ...lastMessage,
+            custom_content: {
+              ...lastMessage?.custom_content,
+              attachments: lastMessage?.custom_content?.attachments?.map(
+                (attachment) =>
+                  responseResourcesSourceUrls.includes(attachment.url ?? '')
+                    ? {
+                        ...attachment,
+                        url:
+                          updatedPublication.resources.find(
+                            (resource) => resource.sourceUrl === attachment.url,
+                          )?.reviewUrl ?? attachment.url,
+                      }
+                    : attachment,
+              ),
+            },
+          };
+
+          return concat(
+            of(
+              ConversationsActions.updateConversation({
+                id: conversation.id,
+                values: {
+                  ...conversation,
+                  isMessageStreaming: false,
+                  messages: [
+                    ...conversation.messages.slice(0, -1),
+                    updatedLastMessage,
+                  ],
+                },
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublication({
+                url: updatedPublication.url,
+              }),
+            ),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl: updatedPublication.url,
+                ids: newItemsToSelect,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    ofType(
+      PublicationActions.updatePublicationConversationAttachmentsAndSendMessage
+        .type,
+    ),
+    switchMap(({ payload }) => {
+      const state = state$.value;
+      const { sendMessagePayload, publicationUrl } = payload;
+
+      return addMessageAttachmentsToPublication(
+        sendMessagePayload.message,
+        sendMessagePayload.conversation.folderId,
+        publicationUrl,
+        state,
+      ).pipe(
+        switchMap(({ updatedPublication, newItemsToSelect }) => {
+          return concat(
+            of(
+              ConversationsActions.sendMessage({
+                ...sendMessagePayload,
+                message: {
+                  ...sendMessagePayload.message,
+                  custom_content: {
+                    ...sendMessagePayload.message.custom_content,
+                    attachments:
+                      sendMessagePayload.message.custom_content?.attachments?.map(
+                        (attachment) => {
+                          const addedResource =
+                            updatedPublication.resources.find(
+                              (resource) =>
+                                resource.sourceUrl === attachment.url,
+                            );
+
+                          if (
+                            !isMyEntity({ id: attachment.url ?? '' }) ||
+                            !addedResource
+                          ) {
+                            return attachment;
+                          }
+
+                          return {
+                            ...attachment,
+                            url: addedResource.reviewUrl,
+                          };
+                        },
+                      ),
+                  },
+                },
+              }),
+            ),
+            of(PublicationActions.uploadPublication({ url: publicationUrl })),
+            of(
+              PublicationActions.setItemsToApprove({
+                publicationUrl,
+                ids: newItemsToSelect,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.publishFail(err.message));
+        }),
+      );
+    }),
+  );
+
+const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(PublicationActions.selectPublication.type),
+    switchMap(() => {
+      const publication = PublicationSelectors.selectSelectedPublication(
+        state$.value,
+      );
+      const resources = publication?.resources;
+
+      if (!publication) {
+        console.error('Publication not found, cannot select items to approve');
+        return EMPTY;
+      }
+
+      const selectedItemsToApprove =
+        PublicationSelectors.selectAllSelectedItemsToApprove(state$.value);
+
+      if (selectedItemsToApprove[publication.url] !== undefined) {
+        return EMPTY;
+      }
+
+      return of(
+        PublicationActions.setItemsToApprove({
+          publicationUrl: publication?.url ?? '',
+          ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
+        }),
+      );
+    }),
   );
 
 export const PublicationEpics = combineEpics(
@@ -1053,14 +2439,28 @@ export const PublicationEpics = combineEpics(
   uploadAllPublishedWithMeItemsEpic,
   uploadAllPublishedWithMeItemsFailEpic,
 
-  // handle publications
+  // resolve publications
   approvePublicationEpic,
   approvePublicationFailEpic,
   rejectPublicationEpic,
   rejectPublicationFailEpic,
+  approvePublicationSuccessEpic,
   resolvePublicationSuccessEpic,
 
   // upload rules
   uploadRulesEpic,
   uploadRulesFailEpic,
+
+  // update publication request
+  updatePublicationRequestEpic,
+  updateAndApprovePublicationRequestEpic,
+  updatePublicationRequestAndEntityEpic,
+  updatePublicationRequestAndFolderEpic,
+  updatePublicationConversationAttachmentsAndSendMessageEpic,
+  updatePublicationAndConversationLastMessageAttachmentsEpic,
+  updatePublicationRequestAndApplicationIconEpic,
+  updateApplicationPublicationUrlsEpic,
+
+  // on select publication
+  onSelectPublicationEffectEpic,
 );

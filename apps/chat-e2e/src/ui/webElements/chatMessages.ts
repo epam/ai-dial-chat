@@ -1,6 +1,7 @@
 import config from '../../../config/chat.playwright.config';
 import {
   ChatSelectors,
+  ErrorLabelSelectors,
   MessageInputSelectors,
   SideBarSelectors,
   TableSelectors,
@@ -17,12 +18,11 @@ import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Locator, Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chatMessages);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.chatMessages, parentLocator);
   }
 
-  public loadingCursor = new BaseElement(
-    this.page,
+  public loadingCursor = this.getChildElementBySelector(
     ChatSelectors.loadingCursor,
   );
 
@@ -31,7 +31,11 @@ export class ChatMessages extends BaseElement {
   );
 
   public compareChatMessageRows = this.getChildElementBySelector(
-    ChatSelectors.compareChatMessage,
+    ChatSelectors.compareChatMessageRow,
+  );
+
+  public lastCompareChatMessageRows = this.getChildElementBySelector(
+    ChatSelectors.lastCompareChatMessageRow(),
   );
 
   public compareChatMessages =
@@ -39,7 +43,7 @@ export class ChatMessages extends BaseElement {
       ChatSelectors.chatMessage,
     );
 
-  public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
+  public regenerate = this.getChildElementBySelector(ChatSelectors.regenerate);
   private inputAttachments!: InputAttachments;
 
   getInputAttachments(): InputAttachments {
@@ -179,42 +183,49 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.maxWidth);
   }
 
+  public getCollapsedChatMessageAttachment(message: string | number) {
+    return this.getChatMessage(message).locator(
+      ChatSelectors.attachmentCollapsed,
+    );
+  }
+
+  public getChatMessageError(message: string | number) {
+    return this.getChatMessage(message).locator(
+      ErrorLabelSelectors.errorContainer,
+    );
+  }
+
   public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const isCollapsed = await this.getChatMessage(message)
-      .locator(ChatSelectors.attachmentCollapsed)
-      .isVisible();
-    if (isCollapsed) {
-      const messageAttachment = this.getChatMessageAttachment(
-        message,
-        attachmentTitle,
+    await this.getCollapsedChatMessageAttachment(message).waitFor();
+    const messageAttachment = this.getChatMessageAttachment(
+      message,
+      attachmentTitle,
+    );
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'GET' &&
+          resp.url().includes(attachmentTitle),
+        { timeout: config.use!.actionTimeout! * 2 },
       );
-      if (isApiStorageType) {
-        const respPromise = this.page.waitForResponse(
-          (resp) =>
-            resp.request().method() === 'GET' &&
-            resp.url().includes(attachmentTitle),
-          { timeout: config.use!.actionTimeout! * 2 },
-        );
-        await messageAttachment.click();
-        return respPromise;
-      }
       await messageAttachment.click();
+      return respPromise;
     }
+    await messageAttachment.click();
   }
 
   public async collapseChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
   ) {
-    const isExpanded = await this.getChatMessage(message)
+    await this.getChatMessage(message)
       .locator(ChatSelectors.attachmentExpanded)
-      .isVisible();
-    if (isExpanded) {
-      await this.getChatMessageAttachment(message, attachmentTitle).click();
-    }
+      .waitFor();
+    await this.getChatMessageAttachment(message, attachmentTitle).click();
   }
 
   public async getChatMessageAttachmentUrl(message: string | number) {
@@ -232,6 +243,13 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.attachmentsGroup);
   }
 
+  public getMessageJumpingIconLocator(messageLocator: Locator) {
+    return messageLocator
+      .locator(ChatSelectors.iconAnimation)
+      .locator(Tags.img)
+      .first();
+  }
+
   public async getGeneratedChatContent(messagesCount: number) {
     const chatContent = await this.chatMessages.getElementsInnerContent();
     return chatContent.slice(0, messagesCount - 1).join('\n');
@@ -242,18 +260,14 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages.getNthElement(messagesCount).innerText();
   }
 
-  public async getIconAttributesForMessage(index?: number) {
+  public async getMessageIcon(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
     const messageIcon = this.chatMessages.getNthElement(index ?? messagesCount);
-    return this.getElementIconHtml(messageIcon);
+    return this.getElementIcon(messageIcon);
   }
 
   public async getMessageIconSize(index?: number) {
-    const messagesCount = await this.chatMessages.getElementsCount();
-    const icon = this.chatMessages
-      .getNthElement(index ?? messagesCount)
-      .locator(Tags.svg)
-      .first();
+    const icon = await this.getMessageIcon(index);
     await icon.waitFor();
     const iconBounding = await icon.boundingBox();
     return {
@@ -262,78 +276,74 @@ export class ChatMessages extends BaseElement {
     };
   }
 
+  public async getMessageArrowIcon(index?: number) {
+    const messagesCount = await this.chatMessages.getElementsCount();
+    const messageIcon = this.chatMessages.getNthElement(index ?? messagesCount);
+    return messageIcon.locator(SideBarSelectors.arrowAdditionalIcon);
+  }
+
   public async waitForCompareMessageJumpingIconDisappears(
     comparedMessageSide: Side,
   ) {
-    const compareRowMessage =
-      await this.getCompareRowMessage(comparedMessageSide);
-    await compareRowMessage
-      .locator(ChatSelectors.iconAnimation)
-      .locator(Tags.svg)
-      .first()
-      .waitFor({ state: 'detached' });
+    const compareRowMessage = this.getCompareRowMessage(comparedMessageSide);
+    await this.getMessageJumpingIconLocator(compareRowMessage).waitFor({
+      state: 'detached',
+    });
   }
 
   public async getMessageJumpingIcon(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    return this.chatMessages
-      .getNthElement(index ?? messagesCount)
-      .locator(ChatSelectors.iconAnimation)
-      .locator(Tags.svg)
-      .first();
+    return this.getMessageJumpingIconLocator(
+      this.chatMessages.getNthElement(index ?? messagesCount),
+    );
   }
 
-  public async getCompareMessageJumpingIcon(
+  public getCompareMessageJumpingIcon(
     comparedMessageSide: Side,
     rowIndex?: number,
   ) {
-    const compareRowMessage = await this.getCompareRowMessage(
+    const compareRowMessage = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );
-    return compareRowMessage
-      .locator(ChatSelectors.iconAnimation)
-      .locator(Tags.svg)
-      .first();
+    return this.getMessageJumpingIconLocator(compareRowMessage);
   }
 
-  public async getIconAttributesForCompareMessage(
+  public getIconAttributesForCompareMessage(
     comparedMessageSide: Side,
     rowIndex?: number,
   ) {
-    const compareRowMessage = await this.getCompareRowMessage(
+    const compareRowMessage = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );
-    return this.getElementIconHtml(compareRowMessage);
+    return this.getElementIcon(compareRowMessage);
   }
 
   public async getCompareMessagesCount() {
     return this.compareChatMessages.getElementsCount();
   }
 
-  public async getCompareMessageRow(rowIndex?: number) {
-    const rowsCount = await this.compareChatMessageRows.getElementsCount();
-    return this.compareChatMessageRows.getNthElement(rowIndex ?? rowsCount);
+  public getCompareMessageRow(rowIndex?: number) {
+    return rowIndex
+      ? this.compareChatMessageRows.getNthElement(rowIndex)
+      : this.lastCompareChatMessageRows.getElementLocator();
   }
 
-  public async getCompareRowMessage(
-    comparedMessageSide: Side,
-    rowIndex?: number,
-  ) {
-    const compareChatMessageRow = await this.getCompareMessageRow(rowIndex);
+  public getCompareRowMessage(comparedMessageSide: Side, rowIndex?: number) {
+    const compareChatMessageRow = this.getCompareMessageRow(rowIndex);
     const messageIndex = comparedMessageSide === Side.left ? 0 : 1;
     return compareChatMessageRow
       .locator(ChatSelectors.chatMessage)
       .nth(messageIndex);
   }
 
-  public async getCompareRowMessageRate(
+  public getCompareRowMessageRate(
     comparedMessageSide: Side,
     rate: Rate,
     rowIndex?: number,
   ) {
-    const compareRowMessage = await this.getCompareRowMessage(
+    const compareRowMessage = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );
@@ -345,7 +355,7 @@ export class ChatMessages extends BaseElement {
     rate: Rate,
     rowIndex?: number,
   ) {
-    const thumb = await this.getCompareRowMessageRate(
+    const thumb = this.getCompareRowMessageRate(
       comparedMessageSide,
       rate,
       rowIndex,
@@ -354,23 +364,10 @@ export class ChatMessages extends BaseElement {
     await thumb.hover({ force: true });
     await thumb.waitFor();
     const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'POST',
+      (resp) => resp.request().method() === 'POST' && resp.status() === 200,
     );
     await thumb.click();
     return respPromise;
-  }
-
-  public async isComparedRowMessageRated(
-    comparedMessageSide: Side,
-    rate: Rate,
-    rowIndex?: number,
-  ) {
-    const thumb = await this.getCompareRowMessageRate(
-      comparedMessageSide,
-      rate,
-      rowIndex,
-    );
-    return thumb.isVisible();
   }
 
   public async openDeleteCompareRowMessageDialog(
@@ -411,7 +408,7 @@ export class ChatMessages extends BaseElement {
     comparedMessageSide: Side,
     rowIndex?: number,
   ) {
-    const messageToCopy = await this.getCompareRowMessage(
+    const messageToCopy = this.getCompareRowMessage(
       comparedMessageSide,
       rowIndex,
     );
@@ -503,6 +500,8 @@ export class ChatMessages extends BaseElement {
 
   public messageEditIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.editIcon);
+  public setMessageTemplateIcon = (messageLocator: Locator) =>
+    messageLocator.locator(IconSelectors.listDetailsIcon);
   public saveAndSubmit = this.getChildElementBySelector(
     MessageInputSelectors.saveAndSubmit,
   );
@@ -513,21 +512,46 @@ export class ChatMessages extends BaseElement {
   public messageDeleteIcon = (message: string | number) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
+  public messageCopyIcon = (message: string | number) =>
+    this.getChatMessage(message).locator(IconSelectors.copyIcon);
+  public messageRegenerateIcon = (message: string | number) =>
+    this.getChatMessage(message).locator(ChatSelectors.regenerate);
+
   public async openEditMessageMode(message: string | number) {
     const editIcon = await this.waitForEditMessageIcon(message);
     await editIcon.click();
   }
 
-  public async waitForEditMessageIcon(message: string | number) {
+  public async hoverOverMessage(message: string | number) {
     const chatMessage = this.getChatMessage(message);
     await chatMessage.scrollIntoViewIfNeeded();
     await chatMessage.hover();
+    return chatMessage;
+  }
+
+  public async waitForEditMessageIcon(message: string | number) {
+    const chatMessage = await this.hoverOverMessage(message);
     const editIcon = this.messageEditIcon(chatMessage);
     await editIcon.waitFor();
     return editIcon;
   }
 
-  public async editMessage(oldMessage: string, newMessage: string) {
+  public async editFirstMessage(newMessage: string) {
+    const responses = [];
+    for (const method of ['POST', 'PUT']) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.request().method() === method && response.status() === 200,
+      );
+      responses.push(resp);
+    }
+    await this.editMessage(1, newMessage);
+    for (const resp of responses) {
+      await resp;
+    }
+  }
+
+  public async editMessage(oldMessage: string | number, newMessage: string) {
     await this.fillEditData(oldMessage, newMessage);
     await this.saveAndSubmit.click();
     await this.waitForResponseReceived();
@@ -566,5 +590,10 @@ export class ChatMessages extends BaseElement {
     if (waitForAnswer) {
       await this.waitForResponseReceived();
     }
+  }
+
+  public async openMessageTemplateModal(message: string | number) {
+    const chatMessage = await this.hoverOverMessage(message);
+    await this.setMessageTemplateIcon(chatMessage).click();
   }
 }

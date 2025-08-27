@@ -1,77 +1,40 @@
-import {
-  CheckboxState,
-  ElementState,
-  ExpectedMessages,
-  TreeEntity,
-} from '@/src/testData';
-import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
+import { EntityTreeAssertion } from '@/src/assertions/base/entityTreeAssertion';
+import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
+import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class SideBarEntityAssertion<T extends SideBarEntities> {
-  readonly sideBarEntities: T;
+export class SideBarEntityAssertion<
+  T extends SideBarEntitiesTree,
+> extends EntityTreeAssertion<SideBarEntitiesTree> {
+  readonly sideBarEntitiesTree: T;
 
-  constructor(sideBarEntities: T) {
-    this.sideBarEntities = sideBarEntities;
+  constructor(sideBarEntitiesTree: T) {
+    super(sideBarEntitiesTree);
+    this.sideBarEntitiesTree = sideBarEntitiesTree;
   }
 
-  public async assertEntityState(
+  public async assertEntityAndCheckboxHasSelectedColors(
     entity: TreeEntity,
-    expectedState: ElementState,
+    expectedColors: { checkboxColor: string; entityBackgroundColor: string },
   ) {
-    const entityLocator = this.sideBarEntities.getEntityByName(
-      entity.name,
-      entity.index,
+    await this.assertEntityCheckboxColor(entity, expectedColors.checkboxColor);
+    await this.assertEntityCheckboxBorderColors(
+      entity,
+      expectedColors.checkboxColor,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(entityLocator, ExpectedMessages.entityIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(entityLocator, ExpectedMessages.entityIsNotVisible)
-          .toBeHidden();
-  }
-
-  public async assertEntityCheckbox(
-    entity: TreeEntity,
-    expectedState: ElementState,
-  ) {
-    const entityCheckboxLocator = this.sideBarEntities.getEntityCheckbox(
-      entity.name,
-      entity.index,
+    await this.assertEntityBackgroundColor(
+      entity,
+      expectedColors.entityBackgroundColor,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(entityCheckboxLocator, ExpectedMessages.entityIsChecked)
-          .toBeVisible()
-      : await expect
-          .soft(entityCheckboxLocator, ExpectedMessages.entityIsNotChecked)
-          .toBeHidden();
-  }
-
-  public async assertEntityCheckboxState(
-    entity: TreeEntity,
-    expectedState: CheckboxState,
-  ) {
-    const message =
-      expectedState === CheckboxState.checked
-        ? ExpectedMessages.entityIsChecked
-        : ExpectedMessages.entityIsNotChecked;
-    expect
-      .soft(
-        await this.sideBarEntities.getEntityCheckboxState(
-          entity.name,
-          entity.index,
-        ),
-        message,
-      )
-      .toBe(expectedState);
   }
 
   public async assertEntityDotsMenuState(
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const dotsMenuLocator = this.sideBarEntities.entityDotsMenu(
+    const dotsMenuLocator = this.sideBarEntitiesTree.entityDotsMenu(
       entity.name,
       entity.index,
     );
@@ -84,30 +47,60 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
           .toBeHidden();
   }
 
-  public async assertEntityBackgroundColor(
+  public async hoverAndAssertEntityDotsMenuState(
     entity: TreeEntity,
-    expectedColor: string,
+    expectedState: ElementState,
   ) {
-    const entityBackgroundColor =
-      await this.sideBarEntities.getEntityBackgroundColor(
-        entity.name,
-        entity.index,
-      );
-    expect
-      .soft(
-        entityBackgroundColor,
-        ExpectedMessages.entityBackgroundColorIsValid,
-      )
-      .toBe(expectedColor);
+    await this.sideBarEntitiesTree.getEntityByName(entity.name).hover();
+    await this.assertEntityDotsMenuState(
+      {
+        name: entity.name,
+      },
+      expectedState,
+    );
   }
 
-  public async assertEntityIcon(entity: TreeEntity, expectedIcon: string) {
-    const entityIcon = await this.sideBarEntities.getEntityIcon(
-      entity.name,
-      entity.index,
+  public async assertEntitiesCount(
+    expectedCount: number,
+    actualCount?: number,
+  ) {
+    if (actualCount === undefined) {
+      await this.assertElementsCount(
+        this.sideBarEntitiesTree.treeEntityNames,
+        expectedCount,
+      );
+    } else {
+      this.assertValue(
+        expectedCount,
+        actualCount,
+        ExpectedMessages.elementsCountIsValid,
+      );
+    }
+  }
+
+  public async assertSelectedEntity(name: string) {
+    const selectedEntity = this.sideBarEntitiesTree.selectedEntity(name);
+
+    await this.assertElementState(selectedEntity, 'visible');
+    await this.assertEntityBackgroundColor(
+      { name: name },
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentSecondaryAlpha),
     );
+  }
+
+  public async assertEntityCursor(name: string, expectedCursor: Cursors) {
+    await this.sideBarEntitiesTree.getEntityByName(name).hover();
+    await super.assertElementCursor(
+      this.sideBarEntitiesTree.getEntityName(name),
+      expectedCursor,
+    );
+  }
+
+  public async assertNoEntityIsSelected() {
+    const selectedEntities =
+      await this.sideBarEntitiesTree.getSelectedEntities();
     expect
-      .soft(entityIcon, ExpectedMessages.entityIconIsValid)
-      .toBe(expectedIcon);
+      .soft(selectedEntities.length, ExpectedMessages.noConversationIsSelected)
+      .toBe(0);
   }
 }

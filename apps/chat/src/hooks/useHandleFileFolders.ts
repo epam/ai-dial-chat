@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getChildAndCurrentFoldersIdsById,
@@ -8,12 +8,13 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 
-import { UploadStatus } from '../types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 /**
  * Custom hook to handle attachment folder operations.
@@ -32,7 +33,7 @@ export const useHandleFileFolders = (
   rootFolderId: string,
   setErrorMessage: Dispatch<SetStateAction<string | undefined>>,
   setOpenedFoldersIds: Dispatch<SetStateAction<string[]>>,
-  setIsAllFilesOpened: Dispatch<SetStateAction<boolean>>,
+  setIsAllFilesOpened?: Dispatch<SetStateAction<boolean>>,
 ) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -49,7 +50,7 @@ export const useHandleFileFolders = (
       const error = validateFolderRenaming(folders, newName, folderId);
 
       if (error) {
-        setErrorMessage(t(error) as string);
+        setErrorMessage(t(error));
         return;
       }
 
@@ -83,7 +84,7 @@ export const useHandleFileFolders = (
   const handleToggleFolder = useCallback(
     (folderId: string) => {
       if (folderId === rootFolderId) {
-        setIsAllFilesOpened((value) => !value);
+        setIsAllFilesOpened?.((value) => !value);
         setOpenedFoldersIds([]);
         return;
       }
@@ -118,9 +119,11 @@ export const useHandleFileFolders = (
    * Handles the creation of a new folder.
    */
   const handleNewFolder = useCallback(() => {
-    dispatch(FilesActions.addNewFolder({ parentId: getFileRootId() }));
-    setIsAllFilesOpened(true);
-  }, [dispatch, setIsAllFilesOpened]);
+    dispatch(
+      FilesActions.addNewFolder({ parentId: rootFolderId ?? getFileRootId() }),
+    );
+    setIsAllFilesOpened?.(true);
+  }, [dispatch, rootFolderId, setIsAllFilesOpened]);
 
   return {
     handleRenameFolder,

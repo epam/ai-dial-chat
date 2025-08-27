@@ -1,8 +1,9 @@
 import { FolderInterface } from '@/src/types/folder';
-import { PromptInfo } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 
 export interface PromptsState {
+  initialized: boolean;
   prompts: PromptInfo[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];
@@ -10,12 +11,17 @@ export interface PromptsState {
   searchFilters: SearchFilters;
   selectedPromptId: string | undefined;
   isSelectedPromptApproveRequiredResource: boolean;
-  isEditModalOpen: boolean;
-  isModalPreviewMode: boolean;
+  isPromptModalOpen: boolean;
+  isPromptModalInitModeEdit: boolean;
   newAddedFolderId?: string;
   promptsLoaded: boolean;
   isPromptLoading: boolean;
   loadingFolderIds: string[];
   isNewPromptCreating: boolean;
   chosenPromptIds: string[];
+  chosenEmptyFoldersIds: string[];
+  promptWithVariablesForApply?: Prompt;
+
+  deletingPrompt: PromptInfo | undefined;
+  moveToPrompt: PromptInfo | undefined;
 }

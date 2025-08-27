@@ -4,13 +4,12 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedMessages,
-  MenuOptions,
-  Theme,
+  ThemeId,
   UploadMenuOptions,
 } from '@/src/testData';
 import { Attributes, Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -32,27 +31,28 @@ dialTest(
     attachFilesModal,
     localStorageManager,
     uploadFromDeviceModal,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-1888', 'EPMRTC-3197', 'EPMRTC-3233');
     const attachments = [Attachment.sunImageName, Attachment.cloudImageName];
     let theme: string;
 
     await dialTest.step('Set random app theme', async () => {
-      theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       'Open "Manage attachments" modal through chat side bar menu icon and verify "Upload from device" button colors',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
 
         const uploadFromDeviceBackgroundColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
@@ -81,7 +81,7 @@ dialTest(
     await dialTest.step(
       'Click "Upload from device" button and verify "Upload" button is disabled by default, possibility to upload file through "Add more files..." link',
       async () => {
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await attachFilesModal.uploadFromDevice();
         await expect
           .soft(
             uploadFromDeviceModal.uploadButton.getElementLocator(),
@@ -99,7 +99,7 @@ dialTest(
             ExpectedMessages.buttonTextColorIsValid,
           )
           .toBe(
-            theme === Theme.light
+            theme === ThemeId.light
               ? Colors.controlsBackgroundAccentPrimary
               : Colors.controlsBackgroundAccent,
           );
@@ -145,6 +145,8 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     page,
+    localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
     let deleteUploadedFileIcon: BaseElement;
@@ -156,15 +158,15 @@ dialTest(
     await dialTest.step(
       'Upload from device 2 files and verify file with long name is cut with dots, file extension is separated from file name',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
+        await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
 
         uploadedFileInput = uploadFromDeviceModal.getUploadedFilenameInput(
@@ -248,14 +250,15 @@ dialTest(
         await expect
           .soft(
             attachFilesModal
-              .attachedFileName(attachments[1])
+              .getAllFilesTree()
+              .getEntityName(attachments[1])
               .getElementLocator(),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();
         expect
           .soft(
-            await attachFilesModal.attachedFiles.getElementsCount(),
+            await attachFilesModal.getAllFilesTree().getElementsCount(),
             ExpectedMessages.filesCountIsValid,
           )
           .toBe(1);
@@ -289,10 +292,13 @@ dialTest(
     conversationData,
     sendMessage,
     dataInjector,
-    localStorageManager,
+    conversations,
+    conversationAssertion,
     attachmentDropdownMenu,
     uploadFromDeviceModal,
-    sendMessageInputAttachments,
+    localStorageManager,
+    baseAssertion,
+    sendMessageInputAttachmentsAssertions,
   }) => {
     setTestIds('EPMRTC-2043', 'EPMRTC-2044', 'EPMRTC-3284');
     const menuItems = Object.values(UploadMenuOptions);
@@ -320,7 +326,10 @@ dialTest(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModelWithImageAttachment,
+        );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -328,31 +337,36 @@ dialTest(
       'Open "Upload from device" modal for created conversation and verify supported types label is "images"',
       async () => {
         await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await conversationAssertion.assertSelectedEntity(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(randomMenuItem);
         if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
-          await attachFilesModal.uploadFromDeviceButton.click();
+          await attachFilesModal.uploadFromDevice();
         }
-        expect
-          .soft(
-            await uploadFromDeviceModal.getModalHeader().getSupportedTypes(),
-            ExpectedMessages.supportedTypesLabelIsCorrect,
-          )
-          .toBe(Attachment.imagesTypesLabel);
+        baseAssertion.assertValue(
+          await uploadFromDeviceModal.getModalHeader().getSupportedTypes(),
+          Attachment.imagesTypesLabel,
+          ExpectedMessages.supportedTypesLabelIsCorrect,
+        );
       },
     );
 
     await dialTest.step(
       'Upload 15 files at once and verify scroll appears on modal window',
       async () => {
+        await dialHomePage.emulateSlowNetworkConditions({
+          downloadThroughput: -1,
+          uploadThroughput: -1,
+        });
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         for (const attachment of attachments) {
-          await expect
-            .soft(
-              uploadFromDeviceModal.getUploadedFile(attachment),
-              ExpectedMessages.fileIsUploaded,
-            )
-            .toBeVisible();
+          await baseAssertion.assertElementState(
+            uploadFromDeviceModal.getUploadedFile(attachment),
+            'visible',
+            ExpectedMessages.fileIsUploaded,
+          );
         }
         expect
           .soft(
@@ -371,12 +385,10 @@ dialTest(
           await attachFilesModal.attachFiles();
         }
         for (const attachment of attachments) {
-          await expect
-            .soft(
-              sendMessageInputAttachments.inputAttachment(attachment),
-              ExpectedMessages.fileIsAttached,
-            )
-            .toBeVisible();
+          await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+            attachment,
+            'visible',
+          );
         }
       },
     );
@@ -392,6 +404,8 @@ dialTest(
     setTestIds,
     attachFilesModal,
     uploadFromDeviceModal,
+    localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3196', 'EPMRTC-3235');
     const attachments = [
@@ -402,24 +416,29 @@ dialTest(
     await dialTest.step(
       'Verify files with same names, zero size but different extensions can be uploaded',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
+        await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
+        for (const attachment of attachments) {
+          await manageAttachmentsAssertion.assertElementState(
+            uploadFromDeviceModal.getUploadedFullFilename(attachment),
+            'visible',
+          );
+        }
         await uploadFromDeviceModal.uploadFiles();
         for (const attachment of attachments) {
-          await expect
-            .soft(
-              attachFilesModal.attachedFile(attachment),
-              ExpectedMessages.fileIsUploaded,
-            )
-            .toBeVisible();
+          await manageAttachmentsAssertion.assertEntityState(
+            { name: attachment },
+            FileModalSection.AllFiles,
+            'visible',
+          );
         }
       },
     );
@@ -438,6 +457,9 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     page,
+    localStorageManager,
+    baseAssertion,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-1674', 'EPMRTC-3023', 'EPMRTC-3215', 'EPMRTC-2922');
     const fileNameExtension = Attachment.sunImageName.split('.');
@@ -446,19 +468,28 @@ dialTest(
     await dialTest.step(
       'Upload files through "Upload from device" modal',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
+        await attachFilesModal.uploadFromDevice();
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
           Attachment.dotExtensionImageName,
         );
+        for (const file of [
+          Attachment.sunImageName,
+          Attachment.dotExtensionImageName,
+        ]) {
+          await baseAssertion.assertElementState(
+            uploadFromDeviceModal.getUploadedFile(file),
+            'visible',
+          );
+        }
       },
     );
 
@@ -473,26 +504,23 @@ dialTest(
           Attachment.sunImageName,
           '.',
         );
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadedFilenameInputLocator(expectedName),
-            ExpectedMessages.fieldIsInFocus,
-          )
-          .toBeFocused();
+        await baseAssertion.assertIsElementFocused(
+          uploadFromDeviceModal.getUploadedFilenameInputLocator(expectedName),
+          true,
+        );
       },
     );
 
     await dialTest.step(
       'Verify second file changed extension to lower case',
       async () => {
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadedFile(
-              Attachment.dotExtensionImageName.toLowerCase(),
-            ),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(
+            Attachment.dotExtensionImageName.toLowerCase(),
+          ),
+          'visible',
+          ExpectedMessages.fileIsUploaded,
+        );
       },
     );
 
@@ -500,20 +528,16 @@ dialTest(
       'Click "Upload" button and verify both files are uploaded',
       async () => {
         await uploadFromDeviceModal.uploadFiles();
-        await expect
-          .soft(
-            attachFilesModal.attachedFile(expectedName),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            attachFilesModal.attachedFile(
-              Attachment.dotExtensionImageName.toLowerCase(),
-            ),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: expectedName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.dotExtensionImageName.toLowerCase() },
+          FileModalSection.AllFiles,
+          'visible',
+        );
       },
     );
   },
@@ -528,8 +552,10 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
+    localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-1614');
     const modelWithAttachmentExtensions = modelsWithAttachments.find(
@@ -547,7 +573,7 @@ dialTest(
         conversation =
           conversationData.prepareDefaultConversation(conversationModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -556,16 +582,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
-        expect
-          .soft(
-            await attachFilesModal.getModalHeader().getSupportedTypes(),
-            ExpectedMessages.supportedTypesLabelIsCorrect,
-          )
-          .toBe(Attachment.allTypesLabel);
+        await conversations.selectEntity(conversation.name);
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertElementState(
+          attachFilesModal,
+          'visible',
+        );
+        manageAttachmentsAssertion.assertValue(
+          await attachFilesModal.getModalHeader().getSupportedTypes(),
+          Attachment.allTypesLabel,
+          ExpectedMessages.supportedTypesLabelIsCorrect,
+        );
       },
     );
 
@@ -574,15 +601,14 @@ dialTest(
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.cloudImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
         await uploadFromDeviceModal.uploadFiles();
-        await expect
-          .soft(
-            attachFilesModal.attachedFile(Attachment.cloudImageName),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
       },
     );
   },

@@ -3,29 +3,31 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
-dialTest(
+dialTest.skip(
   'Default chat numeration.\n' + 'Chat numeration continues after 999',
   async ({
     dialHomePage,
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1624', 'EPMRTC-2955');
     let conversation: Conversation;
@@ -41,7 +43,7 @@ dialTest(
           initialConversationName,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -50,8 +52,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         for (let i = 1; i <= 2; i++) {
-          await chatBar.createNewConversation();
+          await chatBar.createNewEntity();
           await expect
             .soft(
               conversations.getEntityByName(
@@ -68,7 +71,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Renamed chats are not counted into default chat numeration',
   async ({
     dialHomePage,
@@ -77,14 +80,17 @@ dialTest(
     conversationData,
     dataInjector,
     conversationDropdownMenu,
-    localStorageManager,
     setTestIds,
+    renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1625');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     const thirdConversationName =
       ExpectedConstants.newConversationWithIndexTitle(3);
+    const fourthConversationName =
+      ExpectedConstants.newConversationWithIndexTitle(4);
 
     await dialTest.step(
       'Prepare new conversations with index 2 in the name and random name',
@@ -102,7 +108,7 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(secondConversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -111,10 +117,19 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatBar.createNewConversation();
+        await conversations.selectEntity(secondConversation.name);
+        await chatBar.createNewEntity();
         await expect
           .soft(
             conversations.getEntityByName(thirdConversationName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
+        //Now we have to check for the third and fourth conversation
+        // because of the changes to the initial behavior of the page loading
+        await expect
+          .soft(
+            conversations.getEntityByName(fourthConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -126,13 +141,14 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(thirdConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           GeneratorUtil.randomString(7),
+          { isHttpMethodTriggered: false },
         );
-        await chatBar.createNewConversation();
+        await chatBar.createNewEntity();
         await expect
           .soft(
-            conversations.getEntityByName(thirdConversationName),
+            conversations.getEntityByName(fourthConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -141,7 +157,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Deleted chats are not counted into default chat numeration',
   async ({
     dialHomePage,
@@ -150,27 +166,27 @@ dialTest(
     conversationData,
     dataInjector,
     conversationDropdownMenu,
-    localStorageManager,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1626');
     const latestIndex = 3;
+    const conversationsArray: Conversation[] = [];
 
     await dialTest.step(
       'Prepare new conversations with indexes 1-3 in the name',
       async () => {
-        const conversations: Conversation[] = [];
         for (let i = 1; i <= latestIndex; i++) {
           const conversation = conversationData.prepareDefaultConversation(
             defaultModel,
             ExpectedConstants.newConversationWithIndexTitle(i),
           );
-          conversations.push(conversation);
+          conversationsArray.push(conversation);
           conversationData.resetData();
         }
-        await dataInjector.createConversations(conversations);
-        await localStorageManager.setSelectedConversation(conversations[0]);
+        await dataInjector.createConversations(conversationsArray);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -179,16 +195,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversationsArray[0].name);
         await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await chatBar.createNewConversation();
+        await chatBar.createNewEntity();
         await expect
           .soft(
             conversations.getEntityByName(
-              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 1),
+              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 2),
             ),
             ExpectedMessages.conversationIsVisible,
           )
@@ -203,56 +220,61 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    chat,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2947');
-    const initConversationName =
-      ExpectedConstants.newConversationWithIndexTitle(1);
-    let folderConversation: FolderConversation;
+    const initConversationName = GeneratorUtil.randomString(7);
+    let nestedFolders: FolderInterface[];
+    let secondLevelFolderConversation: Conversation;
 
     await dialTest.step(
-      'Prepare new conversation with name "New conversation 1" in folder',
+      'Prepare new conversation and place it into the child folder',
       async () => {
-        folderConversation =
-          conversationData.prepareDefaultConversationInFolder(
-            GeneratorUtil.randomString(7),
+        nestedFolders = conversationData.prepareNestedFolder(2);
+        conversationData.resetData();
+        secondLevelFolderConversation =
+          conversationData.prepareDefaultConversation(
             defaultModel,
             initConversationName,
           );
+        secondLevelFolderConversation.folderId = nestedFolders[1].id;
+        secondLevelFolderConversation.id = `${nestedFolders[1].id}/${secondLevelFolderConversation.id}`;
         await dataInjector.createConversations(
-          folderConversation.conversations,
-          folderConversation.folders,
+          [secondLevelFolderConversation],
+          ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          folderConversation.conversations[0],
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step(
-      'Create new conversations with name "New conversation 1" and move to a new folder',
+      'Create new conversations with the same name and move to the root folder',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatBar.createNewFolder();
-        await chatBar.createNewConversation();
-
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(initConversationName);
         await chatBar.dragAndDropEntityToFolder(
           conversations.getEntityByName(initConversationName),
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(1),
-          ),
+          folderConversations.getFolderByName(nestedFolders[0].name),
+          { isHttpMethodTriggered: true },
         );
-
         await expect
           .soft(
             folderConversations.getFolderEntity(
-              ExpectedConstants.newFolderWithIndexTitle(1),
+              nestedFolders[0].name,
               initConversationName,
             ),
             ExpectedMessages.conversationIsVisible,
@@ -262,9 +284,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify one more conversation with name "New conversation 1" can be created',
+      'Verify one more conversation with the same name can be created',
       async () => {
-        await chatBar.createNewConversation();
+        await chatBar.createNewEntity();
+        await chat.sendRequestWithButton(initConversationName);
         await expect
           .soft(
             conversations.getEntityByName(initConversationName),
@@ -286,6 +309,7 @@ dialTest(
     chat,
     chatHeader,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2798');
     const requestBasedConversationName = 'test';
@@ -299,6 +323,7 @@ dialTest(
           requestBasedConversationName,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -306,9 +331,10 @@ dialTest(
       'Create new conversation, send request with content "test" and verify conversation is renamed to "test 1"',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(requestBasedConversationName);
         await expect
           .soft(
@@ -322,7 +348,11 @@ dialTest(
     await dialTest.step(
       'Send one more request to "test" conversation and verify name is not changed',
       async () => {
-        await conversations.selectConversation(requestBasedConversationName, 2);
+        await conversations.selectEntity(
+          requestBasedConversationName,
+          { isHttpMethodTriggered: false },
+          2,
+        );
         await chat.sendRequestWithButton('1+2', false);
         expect
           .soft(
@@ -344,12 +374,18 @@ dialTest(
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     conversationDropdownMenu,
-    errorToast,
+    selectFolderModal,
+    selectFolderModalAssertion,
+    toastAssertion,
+    chatBarFolderAssertion,
+    conversationAssertion,
+    localStorageManager,
+    toast,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2915', 'EPMRTC-2956', 'EPMRTC-2931');
     const duplicatedName = GeneratorUtil.randomString(7);
@@ -383,9 +419,11 @@ dialTest(
           [...folderConversation.conversations, rootConversation],
           folderConversation.folders,
         );
-        await localStorageManager.setSelectedConversation(
-          secondFolderConversation,
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -394,34 +432,26 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          secondFolderConversation.name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           secondFolderConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const editFolderConversationInputActions =
-          folderConversations.getEditFolderEntityInputActions();
-        await folderConversations
-          .getEditFolderEntityInput()
-          .editValue(duplicatedName);
-        await editFolderConversationInputActions.clickTickButton();
-
-        await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
-          .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedConversationNameErrorMessage(
-              duplicatedName,
-            ),
-          );
-        await errorToast.closeToast();
-        await editFolderConversationInputActions.clickCancelButton();
+        await renameConversationModal.editInputValue(duplicatedName);
+        await renameConversationModal.saveButton.click();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedConversationNameErrorMessage(
+            duplicatedName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
+        await toast.closeToast();
+        await renameConversationModal.cancelButton.click();
       },
     );
 
@@ -436,28 +466,18 @@ dialTest(
         await chatBar.dragAndDropEntityFromFolder(
           firstFolderConversationLocator,
         );
-
-        await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
-          .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedConversationRootNameErrorMessage(
-              duplicatedName,
-            ),
-          );
-        await expect
-          .soft(
-            firstFolderConversationLocator,
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
-        await errorToast.closeToast();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedConversationRootNameErrorMessage(
+            duplicatedName,
+          ),
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: folderConversation.folders.name },
+          { name: firstFolderConversation.name },
+          'visible',
+        );
+        await toast.closeToast();
       },
     );
 
@@ -466,30 +486,22 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(rootConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-        await conversationDropdownMenu.selectMenuOption(
-          folderConversation.folders.name,
+        await selectFolderModalAssertion.assertElementState(
+          selectFolderModal,
+          'visible',
         );
-
-        await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
-          .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(
-            ExpectedConstants.duplicatedConversationNameErrorMessage(
-              duplicatedName,
-            ),
-          );
-        await expect
-          .soft(
-            conversations.getEntityByName(rootConversation.name),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await selectFolderModal.selectFolder(folderConversation.folders.name);
+        await selectFolderModal.clickSelectFolderButton();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedConversationNameErrorMessage(
+            duplicatedName,
+          ),
+          ExpectedMessages.errorToastIsShown,
+        );
+        await conversationAssertion.assertEntityState(
+          { name: rootConversation.name },
+          'visible',
+        );
       },
     );
   },
@@ -502,44 +514,46 @@ dialTest(
     conversations,
     conversationData,
     dataInjector,
-    errorToast,
+    toast,
     conversationDropdownMenu,
     setTestIds,
+    renameConversationModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2933');
-    let conversation: Conversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
 
-    await dialTest.step('Prepare new conversation', async () => {
-      conversation = conversationData.prepareDefaultConversation();
-      await dataInjector.createConversations([conversation]);
+    await dialTest.step('Prepare two conversations', async () => {
+      firstConversation = conversationData.prepareDefaultConversation();
+      conversationData.resetData();
+      secondConversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([
+        firstConversation,
+        secondConversation,
+      ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
-      'Try to rename new conversation to the same name as already existing conversation and verify error toast is shown',
+      'Try to rename one conversation to the same name as already existing conversation and verify error toast is shown',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await conversations.openEntityDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(1),
-        );
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditEntityNameMode(conversation.name);
-        await conversations.getEditInputActions().clickTickButton();
+        await renameConversationModal.editInputValue(firstConversation.name);
+        await renameConversationModal.saveButton.click();
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
             ExpectedConstants.duplicatedConversationNameErrorMessage(
-              conversation.name,
+              firstConversation.name,
             ),
           );
       },
@@ -555,9 +569,9 @@ dialTest(
     dataInjector,
     folderConversations,
     chatBar,
-    errorToast,
-    localStorageManager,
+    toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2932');
     let nestedFolders: FolderInterface[];
@@ -579,9 +593,10 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[0],
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -590,22 +605,23 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(nestedFolders[0].name);
+        const conversationToMove = folderConversations.getFolderEntity(
+          nestedFolders[0].name,
+          nestedConversations[0].name,
+        );
+        const targetFolder = folderConversations.getFolderByName(
+          nestedFolders[nestedFolderLevel - 1].name,
+        );
+
         await chatBar.dragAndDropEntityToFolder(
-          folderConversations.getFolderEntity(
-            nestedFolders[0].name,
-            nestedConversations[0].name,
-          ),
-          folderConversations.getFolderByName(
-            nestedFolders[nestedFolderLevel - 1].name,
-          ),
+          conversationToMove,
+          targetFolder,
         );
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(

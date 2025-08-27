@@ -9,18 +9,21 @@ import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { Menu, MenuItem } from './DropdownMenu';
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 function ContextMenuItemRenderer({
   featureType,
   name,
+  additionalNameNode,
   Icon,
+  iconClassName = 'text-secondary',
   dataQa,
   onClick,
   disabled,
   className,
   childMenuItems,
   onChildMenuOpenChange,
+  useStandardColor,
 }: MenuItemRendererProps) {
   const item = (
     <div
@@ -32,13 +35,19 @@ function ContextMenuItemRenderer({
     >
       {Icon && (
         <Icon
-          className="shrink-0 text-secondary"
+          className={classNames(
+            'shrink-0',
+            iconClassName,
+            disabled && '!text-controls-disable',
+          )}
           size={18}
           height={18}
           width={18}
         />
       )}
-      <span className="truncate break-words">{name}</span>
+      <span className="truncate break-words">
+        {name} {additionalNameNode}
+      </span>
     </div>
   );
   if (childMenuItems && !disabled) {
@@ -51,8 +60,10 @@ function ContextMenuItemRenderer({
           'text-secondary',
           'hover:bg-accent-primary-alpha',
         )}
+        onTriggerClick={onClick}
         TriggerCustomRenderer={item}
         onOpenChange={onChildMenuOpenChange}
+        useStandardColor={useStandardColor}
       />
     );
   }
@@ -70,7 +81,7 @@ function ContextMenuItemRenderer({
   );
 }
 
-export default function ContextMenu({
+export function ContextMenu({
   menuItems,
   featureType,
   TriggerIcon = IconDotsVertical,
@@ -85,6 +96,9 @@ export default function ContextMenu({
   onOpenChange,
   isLoading,
   placement,
+  useStandardColor,
+  onTriggerClick,
+  hideTriggerIcon,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -93,27 +107,43 @@ export default function ContextMenu({
 
   if (!displayedMenuItems.length) return null;
 
-  const menuContent = TriggerCustomRenderer || (
-    <TriggerIcon
-      size={triggerIconSize}
-      width={triggerIconSize}
-      height={triggerIconSize}
-      strokeWidth={1.5}
-      onClick={(e) => {
-        e.stopPropagation();
-      }}
-    />
-  );
+  const menuContent =
+    TriggerCustomRenderer ||
+    (!hideTriggerIcon && (
+      <TriggerIcon
+        size={triggerIconSize}
+        width={triggerIconSize}
+        height={triggerIconSize}
+        strokeWidth={1.5}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      />
+    ));
 
-  if (isLoading && isOpen) return <Spinner size={18} />;
+  if (isLoading && isOpen)
+    return (
+      <div
+        className={classNames(
+          'flex w-full items-center justify-center rounded text-secondary',
+          className,
+        )}
+      >
+        <Spinner size={18} />
+      </div>
+    );
 
   return (
     <Menu
       placement={placement}
       className={triggerIconClassName}
       listClassName={classNames(
-        featureType === FeatureType.Chat && 'context-menu-chat',
-        featureType === FeatureType.Prompt && 'context-menu-prompt',
+        featureType === FeatureType.Chat &&
+          !useStandardColor &&
+          'context-menu-chat',
+        featureType === FeatureType.Prompt &&
+          !useStandardColor &&
+          'context-menu-prompt',
       )}
       disabled={disabled}
       type="contextMenu"
@@ -127,6 +157,7 @@ export default function ContextMenu({
             triggerIconHighlight && 'hover:text-accent-primary',
             className,
           )}
+          onClick={onTriggerClick}
         >
           {triggerTooltip ? (
             <Tooltip isTriggerClickable tooltip={triggerTooltip}>
@@ -145,9 +176,14 @@ export default function ContextMenu({
               {...props}
               Renderer={ContextMenuItemRenderer}
               featureType={featureType}
+              useStandardColor={useStandardColor}
             />
           ) : (
-            <ContextMenuItemRenderer {...props} featureType={featureType} />
+            <ContextMenuItemRenderer
+              {...props}
+              featureType={featureType}
+              useStandardColor={useStandardColor}
+            />
           );
           return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
         })}

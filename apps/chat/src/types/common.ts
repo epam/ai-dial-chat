@@ -1,17 +1,13 @@
-import { PublishActions } from './publication';
-import { ShareInterface } from './share';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
+
+export { FeatureType } from '@epam/ai-dial-shared';
 
 export enum EntityType {
   Model = 'model',
   Application = 'application',
   Assistant = 'assistant',
   Addon = 'addon',
-}
-
-export enum FeatureType {
-  Chat = 'chat',
-  Prompt = 'prompt',
-  File = 'file',
+  Toolset = 'toolset',
 }
 
 export enum BackendDataNodeType {
@@ -23,23 +19,15 @@ export enum BackendResourceType {
   FILE = 'FILE',
   PROMPT = 'PROMPT',
   CONVERSATION = 'CONVERSATION',
+  APPLICATION = 'APPLICATION',
 }
 
-export interface EntityPublicationInfo {
-  action?: PublishActions;
-  isNotExist?: boolean;
-  // TODO: add version
+export enum BackendResourceTypeName {
+  FILE = 'File',
+  PROMPT = 'Prompt',
+  CONVERSATION = 'Conversation',
+  APPLICATION = 'Application',
 }
-
-export interface Entity {
-  id: string;
-  name: string;
-  folderId: string;
-  status?: UploadStatus;
-  publicationInfo?: EntityPublicationInfo;
-}
-
-export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface BackendDataEntity {
   nodeType: BackendDataNodeType;
@@ -48,6 +36,7 @@ export interface BackendDataEntity {
   bucket: string;
   parentPath?: string | null;
   url: string;
+  permissions?: SharePermission[];
 }
 
 export interface BackendEntity extends BackendDataEntity {
@@ -56,6 +45,8 @@ export interface BackendEntity extends BackendDataEntity {
 
 export interface BackendChatEntity extends BackendEntity {
   updatedAt: number;
+  createdAt?: number;
+  author?: string;
 }
 
 export interface BackendFolder<ItemType> extends BackendDataEntity {
@@ -86,22 +77,97 @@ export type DialChatEntity = Omit<
 > &
   BaseDialEntity;
 
-export enum UploadStatus {
-  UNINITIALIZED = 'UNINITIALIZED',
-  LOADING = 'UPLOADING',
-  LOADED = 'LOADED',
-  FAILED = 'FAILED',
-  ALL_LOADED = 'ALL_LOADED',
-}
-
 export const isNotLoaded = (status?: UploadStatus) => {
   return !status || status === UploadStatus.UNINITIALIZED;
 };
 
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
+export interface ParseOptions {
+  parseVersion?: boolean;
+}
+
 export enum ApiKeys {
   Files = 'files',
   Conversations = 'conversations',
   Prompts = 'prompts',
+  Applications = 'applications',
+  Toolsets = 'toolsets',
+}
+
+export enum CoreApiKeys {
+  Deployments = 'deployments',
+}
+
+export enum ReplaceOptions {
+  Postfix = 'Postfix',
+  Replace = 'Replace',
+  Ignore = 'Ignore',
+  Mixed = 'Mixed',
+}
+
+export type MappedReplaceActions = Record<string, ReplaceOptions>;
+
+export interface AdditionalItemData {
+  publicationUrl?: string;
+  canAttachFiles?: boolean;
+  isChangePathFolder?: boolean;
+  selectedFilesIds?: string[];
+  selectedFolderIds?: string[];
+  partialSelectedFolderIds?: string[];
+  isSidePanelItem?: boolean;
+  mappedActions?: MappedReplaceActions;
+}
+
+export interface MoveModel {
+  sourceUrl: string;
+  destinationUrl: string;
+  overwrite: boolean;
+}
+
+export interface DropdownSelectorOption {
+  readonly value: string;
+  readonly label: string;
+  readonly backgroundColor?: string;
+  readonly borderColor?: string;
+  readonly isFixed?: boolean;
+  readonly isDisabled?: boolean;
+}
+
+export interface SelectOption<L, V> {
+  label: L;
+  value: V;
+  defaultValue?: string;
+}
+
+export enum PageType {
+  Chat = 'chat',
+  Marketplace = 'marketplace',
+  AppsEditorSettings = 'application-settings',
+  AppsEditorGeneralInfo = 'application-general-info',
+  ToolsetEditor = 'toolset-editor',
+}
+
+export enum ScreenState {
+  SM = 768,
+  MD = 1280,
+  XL = 1770,
+  XL3 = 2120,
+  XL4 = 2560,
+  XL5 = Number.MAX_SAFE_INTEGER,
+}
+
+export interface EntityInfo {
+  id: string;
+  createdAt?: number;
+  updatedAt?: number;
+  author?: string;
+  isPublic?: boolean;
+}
+
+export type SortOrder = 'asc' | 'desc';
+
+export interface ConfirmDialogValueTypes {
+  heading: string;
+  description: string;
 }

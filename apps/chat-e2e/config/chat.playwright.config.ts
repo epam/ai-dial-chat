@@ -1,6 +1,8 @@
 import { ResultFolder } from '@/src/testData';
 import { defineConfig, devices } from '@playwright/test';
 
+export const overlayHost = 'http://localhost:4200';
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -17,7 +19,7 @@ export default defineConfig({
       'allure-playwright',
       {
         detail: true,
-        outputFolder: `apps/chat-e2e/${ResultFolder.allureChatReport}`,
+        resultsDir: `apps/chat-e2e/${ResultFolder.allureChatReport}`,
       },
     ],
   ],
@@ -66,17 +68,17 @@ export default defineConfig({
     {
       name: 'chat api',
       testMatch: /\/chatApi\/.*\.test\.ts/,
-      dependencies: ['api listing'],
+      dependencies: ['cleanup'],
       fullyParallel: true,
     },
     {
-      name: 'chromium',
-      testIgnore: /\/chatApi|listingApi|\/overlay\/.*\.test\.ts/,
+      name: 'chat e2e',
+      testIgnore: /\/chatApi|listingApi|monitoring|\/overlay\/.*\.test\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1536, height: 864 },
       },
-      dependencies: ['chat api'],
+      dependencies: ['cleanup'],
     },
   ],
 });

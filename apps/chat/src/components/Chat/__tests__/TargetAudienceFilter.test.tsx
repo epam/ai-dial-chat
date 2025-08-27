@@ -4,25 +4,22 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { AnyAction } from '@reduxjs/toolkit';
-
 import { PublicationFunctions } from '@/src/types/publication';
+import { AppAction } from '@/src/types/store';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
 vi.mock('@/src/store/hooks', async () => {
   return {
     useAppSelector: (selector: any) => selector({}),
-    useAppDispatch: () => (action: AnyAction) => action,
+    useAppDispatch: () => (action: AppAction) => action,
   };
 });
 
-vi.mock('@/src/store/settings/settings.reducers', async () => {
-  const actual: any = await vi.importActual(
-    '@/src/store/settings/settings.reducers',
-  );
+vi.mock('@/src/store/selectors', async () => {
+  const actual: any = await vi.importActual('@/src/store/selectors');
   return {
     ...actual,
     SettingsSelectors: {

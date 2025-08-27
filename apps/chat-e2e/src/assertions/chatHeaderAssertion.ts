@@ -1,13 +1,24 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
-import { Styles } from '@/src/ui/domData';
+import { StyleValues, Styles } from '@/src/ui/domData';
 import { ChatHeader } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class ChatHeaderAssertion {
-  readonly chatHeader: ChatHeader;
+export class ChatHeaderAssertion<T extends ChatHeader> extends BaseAssertion {
+  readonly chatHeader: T;
 
-  constructor(chatHeader: ChatHeader) {
+  constructor(chatHeader: T) {
+    super();
     this.chatHeader = chatHeader;
+  }
+
+  public async assertHeaderTitle(expectedTitle: string) {
+    await expect
+      .soft(
+        this.chatHeader.chatTitle.getElementLocator(),
+        ExpectedMessages.headerTitleIsValid,
+      )
+      .toHaveText(expectedTitle);
   }
 
   public async assertHeaderWidth(option: { hasFullWidth: boolean }) {
@@ -16,10 +27,10 @@ export class ChatHeaderAssertion {
     option.hasFullWidth
       ? expect
           .soft(headerTitleWidth[0], ExpectedMessages.elementWidthIsValid)
-          .toBe(Styles.none)
+          .toBe(StyleValues.none)
       : expect
           .soft(headerTitleWidth[0], ExpectedMessages.elementWidthIsValid)
-          .not.toBe(Styles.none);
+          .not.toBe(StyleValues.none);
   }
 
   public async assertClearButtonState(expectedState: ElementState) {
@@ -33,10 +44,20 @@ export class ChatHeaderAssertion {
           .toBeHidden();
   }
 
-  public async assertEntityIcon(expectedIcon: string) {
-    const entityIcon = await this.chatHeader.getHeaderModelIcon();
-    expect
-      .soft(entityIcon, ExpectedMessages.entityIconIsValid)
-      .toBe(expectedIcon);
+  public async assertHeaderIcon(expectedIcon: string) {
+    await super.assertEntityIcon(
+      await this.chatHeader.getHeaderModelIcon(),
+      expectedIcon,
+    );
+  }
+
+  public async assertHeaderAddonIcon(expectedAddonIcons: string[]) {
+    const actualAddonIcons = await this.chatHeader.getHeaderAddonsIcons();
+    for (let i = 0; i < actualAddonIcons.length; i++) {
+      await super.assertEntityIcon(
+        actualAddonIcons[i].iconLocator,
+        expectedAddonIcons[i],
+      );
+    }
   }
 }

@@ -1,42 +1,78 @@
-import { MouseEvent, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import classNames from 'classnames';
 
-import { DialAIEntity } from '@/src/types/models';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
+
+import { stopBubbling } from '@/src/constants/chat';
+
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import orderBy from 'lodash-es/orderBy';
 
-interface ModelVersionSelectProps {
-  entities: DialAIEntity[];
-  currentEntity: DialAIEntity;
-  onSelect: (id: string) => void;
+const VersionPrefix = () => {
+  const { t } = useTranslation(Translation.Chat);
+
+  return (
+    <div className="mr-2 flex items-center">
+      <span className="hidden md:block">{t('Version: ')}</span>
+      <span className="md:hidden">{t('v. ')}</span>
+    </div>
+  );
+};
+
+const getDisplayValue = <T extends ToolsetModel | DialAIEntityModel>(
+  entity: T,
+) => entity.version || entity.id;
+
+interface EntityVersionSelectProps<T extends ToolsetModel | DialAIEntityModel> {
+  entities: T[];
+  currentEntity: T;
   className?: string;
+  showVersionPrefix?: boolean;
+  readonly?: boolean;
+  onSelect: (entity: T) => void;
+  triggerClassName?: string;
 }
 
-export const ModelVersionSelect = ({
-  currentEntity,
+export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
   entities,
-  onSelect,
+  currentEntity,
   className,
-}: ModelVersionSelectProps) => {
+  showVersionPrefix = false,
+  readonly = false,
+  onSelect,
+  triggerClassName,
+}: EntityVersionSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
-    onSelect(e.currentTarget.value);
+  const handleChange = (entity: T) => {
+    onSelect(entity);
     setIsOpen(false);
   };
 
-  const sortedEntities = useMemo(
-    () => orderBy(entities, 'version', 'desc'),
-    [entities],
-  );
-
   if (entities.length < 2) {
+    if (entities.length && entities[0].version) {
+      return (
+        <div
+          className={classNames('flex truncate font-theme text-sm', className)}
+        >
+          {showVersionPrefix && <VersionPrefix />}
+          <span
+            className="max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
+            {entities[0].version}
+          </span>
+        </div>
+      );
+    }
+
     return null;
   }
 
@@ -46,19 +82,28 @@ export const ModelVersionSelect = ({
       type="contextMenu"
       placement="bottom-end"
       onOpenChange={setIsOpen}
+      listClassName="z-[60]"
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex items-center justify-between gap-2"
-          data-qa="model-version-select-trigger"
+          className={classNames(
+            'flex cursor-pointer items-center justify-between font-theme text-sm',
+            triggerClassName,
+          )}
+          data-qa="agent-version-select-trigger"
           data-model-versions
+          onClick={stopBubbling}
         >
-          <span className="truncate">
-            {currentEntity.version || currentEntity.id}
+          {showVersionPrefix && <VersionPrefix />}
+          <span
+            className="max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
+            {getDisplayValue(currentEntity)}
           </span>
           <ChevronDownIcon
             className={classNames(
-              'shrink-0 text-primary transition-all',
+              'ml-1 shrink-0 text-primary transition-all',
               isOpen && 'rotate-180',
             )}
             width={18}
@@ -67,7 +112,7 @@ export const ModelVersionSelect = ({
         </div>
       }
     >
-      {sortedEntities.map((entity) => (
+      {entities.map((entity) => (
         <MenuItem
           key={entity.id}
           className={classNames(
@@ -77,11 +122,15 @@ export const ModelVersionSelect = ({
           item={
             <div className="flex items-center gap-2">
               <ModelIcon entityId={entity.id} entity={entity} size={16} />
-              {entity.version || entity.id}
+              {getDisplayValue(entity)}
             </div>
           }
+          disabled={readonly}
           value={entity.id}
-          onClick={onChangeHandler}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleChange(entity);
+          }}
           data-model-versions
           data-qa="model-version-option"
         />

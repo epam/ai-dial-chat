@@ -1,11 +1,4 @@
-import { ShareEntity } from './common';
-
-export type PromptInfo = ShareEntity;
-
-export interface Prompt extends PromptInfo {
-  description?: string;
-  content?: string;
-}
+export type { PromptInfo, Prompt } from '@epam/ai-dial-shared';
 
 export interface TemplateParameter {
   name: string;

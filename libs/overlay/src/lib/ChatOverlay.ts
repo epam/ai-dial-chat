@@ -1,11 +1,39 @@
 import {
   ChatOverlayOptions,
+  CreateConversationRequest,
+  CreateConversationResponse,
+  CreateLocalConversationResponse,
+  CreatePlaybackConversationRequest,
+  CreatePlaybackConversationResponse,
   DeferredRequest,
+  DeleteMessageRequest,
+  DeleteMessageResponse,
+  ExportConversationRequest,
+  ExportConversationResponse,
+  GetConversationsResponse,
+  GetMessagesResponse,
+  GetSelectedConversationsResponse,
+  ImportConversationRequest,
+  ImportConversationResponse,
+  LatestExportConversationsFormat,
+  Message,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  RenameConversationRequest,
+  RenameConversationResponse,
+  SelectConversationRequest,
+  SelectConversationResponse,
+  SendMessageRequest,
+  SendMessageResponse,
+  SetInputContentRequest,
+  SetSystemPromptRequest,
+  SetSystemPromptResponse,
+  StopSelectedPlaybackConversationResponse,
   Styles,
   Task,
+  UpdateMessageRequest,
+  UpdateMessageResponse,
   overlayAppName,
   overlayLibName,
   setStyles,
@@ -86,6 +114,7 @@ export class ChatOverlay {
     iframe.src = this.options.domain;
     iframe.allow = 'clipboard-write';
     iframe.name = 'overlay';
+    iframe.ariaLabel = 'Chat overlay';
 
     iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-scripts');
@@ -212,16 +241,32 @@ export class ChatOverlay {
   protected process = (event: MessageEvent<OverlayRequest>): void => {
     if (event.data.type === `${overlayAppName}/${OverlayEvents.initReady}`) {
       this.showLoader();
+
+      if (this.options.loaderHideEvent === OverlayEvents.initReady) {
+        this.hideLoader();
+      }
+
       return;
     }
     if (event.data.type === `${overlayAppName}/${OverlayEvents.ready}`) {
       this.setOverlayOptions(this.options);
-      this.hideLoader();
+
+      if (
+        !this.options.loaderHideEvent ||
+        this.options.loaderHideEvent === OverlayEvents.ready
+      ) {
+        this.hideLoader();
+      }
+
       return;
     }
     if (
       event.data.type === `${overlayAppName}/${OverlayEvents.readyToInteract}`
     ) {
+      if (this.options.loaderHideEvent === OverlayEvents.readyToInteract) {
+        this.hideLoader();
+      }
+
       this.iframeInteraction.complete();
       return;
     }
@@ -230,6 +275,10 @@ export class ChatOverlay {
 
     // Try to map event, because type doesn't have requestId
     if (!event.data?.requestId) {
+      if (this.options.loaderHideEvent === event.data.type) {
+        this.hideLoader();
+      }
+
       this.processEvent(event.data.type, event.data?.payload);
 
       return;
@@ -319,30 +368,260 @@ export class ChatOverlay {
   /**
    * Get messages from first selected conversation
    */
-  public async getMessages() {
-    const messages = await this.send(OverlayRequests.getMessages);
+  public async getMessages(): Promise<GetMessagesResponse> {
+    return this.send(
+      OverlayRequests.getMessages,
+    ) as Promise<GetMessagesResponse>;
+  }
 
-    return messages;
+  /**
+   * Get all listing conversations
+   * @returns {OverlayConversation[]} all conversations visible in chat
+   */
+  public async getConversations(): Promise<GetConversationsResponse> {
+    return this.send(
+      OverlayRequests.getConversations,
+    ) as Promise<GetConversationsResponse>;
+  }
+
+  /**
+   * Get all selected conversations
+   * @returns {OverlayConversation[]} all selected conversations visible in chat
+   */
+  public async getSelectedConversations(): Promise<GetSelectedConversationsResponse> {
+    return this.send(
+      OverlayRequests.getSelectedConversations,
+    ) as Promise<GetSelectedConversationsResponse>;
+  }
+
+  /**
+   * Select conversation
+   * @param {string} id - id of conversation to select
+   * @returns Returns selected conversation info
+   */
+  public async selectConversation(
+    id: string,
+  ): Promise<SelectConversationResponse> {
+    const request: SelectConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.selectConversation,
+      request,
+    ) as Promise<SelectConversationResponse>;
+  }
+
+  /**
+   * Delete conversation
+   * @param {string} id - id of conversation to delete
+   */
+  public async deleteConversation(id: string): Promise<void> {
+    const request: SelectConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.deleteConversation,
+      request,
+    ) as Promise<void>;
+  }
+
+  /**
+   * Rename conversation
+   * @param {string} id - id of conversation to rename
+   * @param {string} newName - new name of conversation
+   * @returns Returns renamed conversation info
+   */
+  public async renameConversation(
+    id: string,
+    newName: string,
+  ): Promise<RenameConversationResponse> {
+    const request: RenameConversationRequest = {
+      id,
+      newName,
+    };
+
+    return this.send(
+      OverlayRequests.renameConversation,
+      request,
+    ) as Promise<RenameConversationResponse>;
+  }
+
+  /**
+   * Create playback conversation
+   * @param {string} id - id of conversation from create playback
+   * @returns Returns newly created playback conversation info
+   */
+  public async createPlaybackConversation(
+    id: string,
+  ): Promise<CreatePlaybackConversationResponse> {
+    const request: CreatePlaybackConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.createPlaybackConversation,
+      request,
+    ) as Promise<CreatePlaybackConversationResponse>;
+  }
+
+  /**
+   * Stop selected playback conversation
+   * @returns Returns normal conversation after stopping playback
+   */
+  public async stopSelectedPlaybackConversation(): Promise<StopSelectedPlaybackConversationResponse> {
+    return this.send(
+      OverlayRequests.stopSelectedPlaybackConversation,
+    ) as Promise<StopSelectedPlaybackConversationResponse>;
+  }
+
+  /**
+   * Export conversation
+   * @param {string} id - id of conversation to export
+   * @returns Returns exported conversation object
+   */
+  public async exportConversation(
+    id: string,
+  ): Promise<ExportConversationResponse> {
+    const request: ExportConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.exportConversation,
+      request,
+    ) as Promise<ExportConversationResponse>;
+  }
+
+  /**
+   * Import conversation
+   * @param {LatestExportConversationsFormat} importedConversation - conversation object to import
+   * @returns Returns imported conversation info
+   */
+  public async importConversation(
+    importedConversation: LatestExportConversationsFormat,
+  ): Promise<ImportConversationResponse> {
+    const request: ImportConversationRequest = {
+      importConversation: importedConversation,
+    };
+
+    return this.send(
+      OverlayRequests.importConversation,
+      request,
+    ) as Promise<ImportConversationResponse>;
+  }
+
+  /**
+   * Create conversation
+   * @param {string} parentPath - path to create conversation in. If not defined or null conversation will be created in user Root
+   * @returns Returns created conversation info
+   */
+  public async createConversation(
+    parentPath?: string | null,
+    local?: boolean | null,
+  ): Promise<CreateConversationResponse> {
+    const request: CreateConversationRequest = {
+      parentPath,
+      local,
+    };
+
+    return this.send(
+      OverlayRequests.createConversation,
+      request,
+    ) as Promise<CreateConversationResponse>;
+  }
+
+  /**
+   * Create local conversation which will be not visible before first assistant message
+   *
+   * Note: after first assistant message local conversation will be saved in `newConversationsFolderId` option path, or in user Root if it's not defined or null
+   * @returns Returns created local conversation info
+   */
+  public async createLocalConversation(): Promise<CreateLocalConversationResponse> {
+    return this.send(
+      OverlayRequests.createLocalConversation,
+    ) as Promise<CreateLocalConversationResponse>;
   }
 
   /**
    * Send message into the first selected conversation
    * @param content {string} text of message that should be sent to the chat
    */
-  public async sendMessage(content: string) {
-    await this.send(OverlayRequests.sendMessage, {
+  public async sendMessage(content: string): Promise<SendMessageResponse> {
+    const request: SendMessageRequest = {
       content,
-    });
+    };
+
+    return this.send(
+      OverlayRequests.sendMessage,
+      request,
+    ) as Promise<SendMessageResponse>;
+  }
+
+  /**
+   * Delete message in current selected conversation by index
+   * @param index {number} index of message in conversation
+   * NOTE: if message on index is user message or assistant it will also remove paired answer or question message
+   */
+  public async deleteMessage(index: number): Promise<DeleteMessageResponse> {
+    const request: DeleteMessageRequest = {
+      index,
+    };
+
+    return this.send(
+      OverlayRequests.deleteMessage,
+      request,
+    ) as Promise<DeleteMessageResponse>;
+  }
+
+  /**
+   * Update message in current selected conversation by index
+   * @param index {number} index of message in conversation
+   * @param updatedMessageFields {Partial<Message>} index of message in conversation
+   */
+  public async updateMessage(
+    index: number,
+    updatedMessageFields: Partial<Message>,
+  ): Promise<UpdateMessageResponse> {
+    const request: UpdateMessageRequest = {
+      index,
+      updatedMessageFields,
+    };
+
+    return this.send(
+      OverlayRequests.updateMessage,
+      request,
+    ) as Promise<UpdateMessageResponse>;
+  }
+
+  /**
+   * Set input content
+   * @param content {string} content to set in chat input
+   */
+  public async setInputContent(content: string): Promise<void> {
+    const request: SetInputContentRequest = {
+      content,
+    };
+
+    return this.send(OverlayRequests.setInputContent, request) as Promise<void>;
   }
 
   /**
    * Set systemPrompt into the first selected conversation
    * @param systemPrompt {string} text content of system prompt
    */
-  public async setSystemPrompt(systemPrompt: string) {
-    await this.send(OverlayRequests.setSystemPrompt, {
+  public async setSystemPrompt(
+    systemPrompt: string,
+  ): Promise<SetSystemPromptResponse> {
+    const request: SetSystemPromptRequest = {
       systemPrompt,
-    });
+    };
+
+    return this.send(
+      OverlayRequests.setSystemPrompt,
+      request,
+    ) as Promise<SetSystemPromptResponse>;
   }
 
   /**

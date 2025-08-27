@@ -4,17 +4,18 @@ import { getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils } from '@/src/utils/server/server';
 
-import { ApiKeys } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const getEntityUrlFromSlugs = (
@@ -27,7 +28,7 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new DialAIError(`No ${entityType} path provided`, '', '', '400');
+    throw new DialAIError(`No ${entityType} path provided`, 400, req);
   }
 
   return constructPath(
@@ -39,10 +40,6 @@ const getEntityUrlFromSlugs = (
   );
 };
 
-const isValidEntityApiType = (apiKey: string): boolean => {
-  return Object.values(ApiKeys).includes(apiKey as ApiKeys);
-};
-
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const entityType = ServerUtils.getEntityTypeFromPath(req);
   if (!entityType || !isValidEntityApiType(entityType)) {
@@ -51,8 +48,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
 
-  const { recursive = false } = req.query as {
+  const { recursive = 'false', limit = '1000' } = req.query as {
     recursive?: string;
+    limit?: string;
   };
 
   const session = await getServerSession(req, res, authOptions);
@@ -64,8 +62,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const token = await getToken({ req });
 
+  const searchParams = new URLSearchParams();
+  searchParams.set('recursive', recursive);
+  searchParams.set('limit', limit);
+  searchParams.set('permissions', 'true');
+
   try {
-    const proxyRes = await fetch(`${url}/?recursive=${recursive}`, {
+    const proxyRes = await fetch(`${sanitizeUri(url)}/?${searchParams}`, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
     });
 
@@ -79,9 +82,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
+        proxyRes.status,
+        req,
       );
     }
     json = await proxyRes.json();

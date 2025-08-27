@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -61,23 +61,27 @@ class BasePathResolver {
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
+  devIndicators: false,
   nx: {
     // Set this to true if you would like to use SVGR
     // See: https://github.com/gregberge/svgr
     svgr: false,
   },
+  productionBrowserSourceMaps: process.env.NODE_ENV !== 'production',
 
   i18n,
   poweredByHeader: false,
   reactStrictMode: true,
-  experimental: {
-    instrumentationHook: true,
-  },
   // @ts-ignore
-  basePath: new BasePathResolver(),
+  basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
 
   async redirects() {
     return [
+      {
+        source: '/marketplace/share/:slug([A-Za-z0-9-]+)',
+        destination: '/marketplace/?share=:slug',
+        permanent: false,
+      },
       {
         source: '/share/:slug([A-Za-z0-9-]+)',
         destination: '/?share=:slug',
@@ -91,11 +95,19 @@ const nextConfig = {
     ];
   },
 
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
     };
+
+    if (!isServer) {
+      config.output.environment = {
+        ...config.output.environment,
+        asyncFunction: true,
+        module: true,
+      };
+    }
 
     //SVGR config
     // Grab the existing rule that handles SVG imports

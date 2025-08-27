@@ -1,24 +1,27 @@
-import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import {
   DIAL_API_HOST,
   DIAL_API_VERSION,
-} from '../../constants/default-server-settings';
+} from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { ApiUtils } from './api';
 import { hardLimitMessages } from './chat';
 import { getApiHeaders } from './get-headers';
 import { logger } from './logger';
 
+import { Message, MessageFormValue } from '@epam/ai-dial-shared';
 import {
   ParsedEvent,
   ReconnectInterval,
   createParser,
 } from 'eventsource-parser';
 import fetch, { Response } from 'node-fetch';
+import { Readable } from 'stream';
 
 interface DialAIErrorResponse extends Response {
   error?: {
@@ -33,16 +36,16 @@ interface DialAIErrorResponse extends Response {
 }
 
 function getUrl(
-  modelId: string,
-  modelType: EntityType,
+  model: DialAIEntityModel,
   selectedAddonsIds: string[] | undefined,
 ): string {
   const isAddonsAdded: boolean = Array.isArray(selectedAddonsIds);
-  if (modelType === EntityType.Model && isAddonsAdded) {
+  const { type, id } = model;
+  if (type === EntityType.Model && isAddonsAdded) {
     return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
   }
 
-  return `${DIAL_API_HOST}/openai/deployments/${modelId}/chat/completions?api-version=${DIAL_API_VERSION}`;
+  return `${DIAL_API_HOST}/openai/deployments/${ApiUtils.encodeApiUrl(id)}/chat/completions?api-version=${DIAL_API_VERSION}`;
 }
 
 const encoder = new TextEncoder();
@@ -64,10 +67,11 @@ export const OpenAIStream = async ({
   messages,
   selectedAddonsIds,
   assistantModelId,
-  chatId,
+  chatReference,
   userJWT,
   jobTitle,
   maxRequestTokens,
+  configurationSchemaValue,
 }: {
   model: DialAIEntityModel;
   temperature: number | undefined;
@@ -75,15 +79,16 @@ export const OpenAIStream = async ({
   selectedAddonsIds: string[] | undefined;
   assistantModelId: string | undefined;
   userJWT: string;
-  chatId: string;
+  chatReference: string;
   jobTitle: string | undefined;
   maxRequestTokens: number | undefined;
+  configurationSchemaValue?: MessageFormValue;
 }) => {
   let messagesToSend = messages;
-  const url = getUrl(model.id, model.type, selectedAddonsIds);
+  const url = getUrl(model, selectedAddonsIds);
 
   const requestHeaders = getApiHeaders({
-    chatId,
+    chatReference,
     jwt: userJWT,
     jobTitle,
   });
@@ -91,61 +96,72 @@ export const OpenAIStream = async ({
   let retries = 0;
   let body;
   let res: Response;
+  const abortController = new AbortController();
   do {
     body = JSON.stringify({
       messages: messagesToSend,
       temperature,
       stream: true,
-      model: assistantModelId ?? model.id,
+      model: assistantModelId ?? model.reference,
       addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
       max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
+      ...(configurationSchemaValue && {
+        custom_fields: { configuration: configurationSchemaValue },
+      }),
     });
 
     res = await fetch(url, {
       headers: requestHeaders,
-      method: 'POST',
+      method: HTTPMethod.POST,
       body,
+      signal: abortController.signal,
     });
 
-    if (
-      res.status === 400 &&
-      retries === 0 &&
-      model.limits?.isMaxRequestTokensCustom
-    ) {
-      retries += 1;
-      const json = await res.json();
-      logger.info(
-        json,
-        `Getting 400 error and retrying chat request to ${model.id} model`,
-      );
-      messagesToSend = hardLimitMessages(messagesToSend);
-      continue;
-    } else if (res.status !== 200) {
+    if (res.status !== 200) {
       let result: DialAIErrorResponse;
       try {
         result = (await res.json()) as DialAIErrorResponse;
       } catch (e) {
         throw new DialAIError(
           `Chat Server error: ${res.statusText}`,
-          '',
-          '',
-          res.status + '',
+          res.status,
+          url,
         );
       }
 
-      if (result.error) {
-        throw new DialAIError(
-          result.error.message ?? '',
-          result.error.type ?? '',
-          result.error.param ?? '',
-          result.error.code ?? res.status.toString(10),
-          result.error.display_message,
-        );
-      } else {
+      if (!result.error) {
         throw new Error(
           `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
         );
       }
+
+      const dial_error = new DialAIError(
+        result.error.message ?? '',
+        result.error.code ?? res.status,
+        url,
+        {
+          type: result.error.type,
+          param: result.error.param,
+          displayMessage: result.error.display_message,
+        },
+      );
+
+      if (
+        res.status === 400 &&
+        dial_error.code === 'truncate_prompt_error' &&
+        retries === 0 &&
+        model.limits?.isMaxRequestTokensCustom
+      ) {
+        retries += 1;
+        logger.info(
+          result,
+          `Getting error with status ${res.status} and code '${dial_error.code}'. Retrying chat request to ${model.id} model`,
+        );
+        messagesToSend = hardLimitMessages(messagesToSend);
+        continue;
+      }
+
+      throw dial_error;
     }
 
     break;
@@ -171,15 +187,13 @@ export const OpenAIStream = async ({
             const data = event.data;
             const json = JSON.parse(data);
             if (json.error) {
-              throw new DialAIError(
-                json.error.message,
-                json.error.type,
-                json.error.param,
-                json.error.code,
-                json.error.display_message,
-              );
+              throw new DialAIError(json.error.message, json.error.code, url, {
+                type: json.error.type,
+                param: json.error.param,
+                displayMessage: json.error.display_message,
+              });
             }
-            if (!idSend) {
+            if (!idSend && json.id) {
               appendChunk(controller, { responseId: json.id });
               idSend = true;
             }
@@ -188,9 +202,8 @@ export const OpenAIStream = async ({
               if (json.choices[0].finish_reason === 'content_filter') {
                 throw new DialAIError(
                   errorsMessages.contentFiltering,
-                  '',
-                  '',
                   'content_filter',
+                  url,
                 );
               }
 
@@ -210,6 +223,29 @@ export const OpenAIStream = async ({
           }
           parser.feed(decoder.decode(chunk as Buffer));
         }
+      }
+    },
+    cancel() {
+      if (isFinished) return;
+      isFinished = true;
+
+      try {
+        abortController.abort();
+      } catch (error) {
+        logger.debug(
+          { error },
+          'AbortController: abort was called but the request was already aborted',
+        );
+      }
+
+      try {
+        const nodeBody = res.body as Readable | null;
+        nodeBody?.destroy?.();
+      } catch (error) {
+        logger.debug(
+          { error },
+          'Stream body: destroy was called but the stream was already closed',
+        );
       }
     },
   });

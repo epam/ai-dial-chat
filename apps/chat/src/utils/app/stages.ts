@@ -1,4 +1,4 @@
-import { Message, Role } from '@/src/types/chat';
+import { Message, Role } from '@epam/ai-dial-shared';
 
 export const filterUnfinishedStages = (messages: Message[]): Message[] => {
   let assistentMessageIndex = -1;

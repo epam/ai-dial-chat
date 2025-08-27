@@ -1,5 +1,10 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
+import {
+  BackendChatEntity,
+  BackendEntity,
+  BackendResourceType,
+} from '@/chat/types/common';
+import { Prompt } from '@/chat/types/prompt';
 import {
   ShareAcceptRequestModel,
   ShareByLinkResponseModel,
@@ -11,11 +16,12 @@ import {
 } from '@/chat/types/share';
 import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
+import { ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 export class ShareApiHelper extends BaseApiHelper {
   public async shareEntityByLink(
-    entities: Conversation[],
+    entities: Conversation[] | Prompt[],
     isFolder = false,
     folderToShare?: string,
   ) {
@@ -34,38 +40,66 @@ export class ShareApiHelper extends BaseApiHelper {
         url = entity.id!;
       }
       if (!resources.find((r) => r.url === url)) {
-        resources.push({ url: url });
+        resources.push({ url: ItemUtil.getEncodedItemId(url) });
       }
-      entity.messages.map((m) =>
-        m.custom_content?.attachments?.forEach((a) => {
-          if (a.reference_url === undefined) {
-            resources.push({ url: a.url! });
-          }
-        }),
-      );
-      entity.playback?.messagesStack.map((m) =>
-        m.custom_content?.attachments?.forEach((a) => {
-          if (a.reference_url === undefined) {
-            resources.push({ url: a.url! });
-          }
-        }),
-      );
+
+      if ('messages' in entity) {
+        entity.messages.map((m) =>
+          m.custom_content?.attachments?.forEach((a) => {
+            if (a.reference_url === undefined) {
+              resources.push({ url: a.url! });
+            }
+          }),
+        );
+        entity.playback?.messagesStack.map((m) =>
+          m.custom_content?.attachments?.forEach((a) => {
+            if (a.reference_url === undefined) {
+              resources.push({ url: a.url! });
+            }
+          }),
+        );
+      }
     }
 
-    for (const r of resources) {
-      r.url = r.url.replace(
-        ExpectedConstants.playbackConversation,
-        encodeURIComponent(ExpectedConstants.playbackConversation),
-      );
+    // for (const r of resources) {
+    //   r.url = ItemUtil.getEncodedItemId(r.url);
+    // }
+
+    const requestData: ShareRequestModel = {
+      invitationType: ShareRequestType.link,
+      resources: resources,
+    };
+    const response = await this.request.post(
+      this.getHost(API.shareEntityHost),
+      {
+        data: requestData,
+      },
+    );
+    expect(
+      response.status(),
+      `Successfully created share invitation link`,
+    ).toBe(200);
+    const responseText = await response.text();
+    return JSON.parse(responseText) as ShareByLinkResponseModel;
+  }
+
+  public async shareAppByLink(app: BackendEntity) {
+    const resources: { url: string }[] = [];
+    const url = '';
+    if (!resources.find((r) => r.url === url)) {
+      resources.push({ url: app.url });
     }
 
     const requestData: ShareRequestModel = {
       invitationType: ShareRequestType.link,
       resources: resources,
     };
-    const response = await this.request.post(API.shareConversationHost, {
-      data: requestData,
-    });
+    const response = await this.request.post(
+      this.getHost(API.shareEntityHost),
+      {
+        data: requestData,
+      },
+    );
     expect(
       response.status(),
       `Successfully created share invitation link`,
@@ -83,9 +117,12 @@ export class ShareApiHelper extends BaseApiHelper {
         shareLinkResponse.invitationLink,
       ),
     };
-    const response = await this.request.post(API.shareInviteAcceptanceHost, {
-      data: requestData,
-    });
+    const response = await this.request.post(
+      this.getHost(API.shareInviteAcceptanceHost),
+      {
+        data: requestData,
+      },
+    );
     expect(
       response.status(),
       `Successfully accepted share invitation link`,
@@ -100,13 +137,19 @@ export class ShareApiHelper extends BaseApiHelper {
     return this.listSharedWithMeEntities(BackendResourceType.CONVERSATION);
   }
 
-  public async listSharedWithMeEntities(resourceType: BackendResourceType) {
+  public async listSharedWithMePrompts() {
+    return this.listSharedWithMeEntities(BackendResourceType.PROMPT);
+  }
+
+  public async listSharedWithMeEntities(
+    ...resourceType: BackendResourceType[]
+  ) {
     const requestData: ShareListingRequestModel = {
-      resourceTypes: [resourceType],
+      resourceTypes: resourceType,
       with: ShareRelations.me,
       order: 'popular_asc',
     };
-    const response = await this.request.post(API.shareListing, {
+    const response = await this.request.post(this.getHost(API.shareListing), {
       data: requestData,
     });
     const statusCode = response.status();
@@ -132,9 +175,12 @@ export class ShareApiHelper extends BaseApiHelper {
       const requestData: ShareRevokeRequestModel = {
         resources: entityUrls,
       };
-      const response = await this.request.post(API.discardShareWithMeItem, {
-        data: requestData,
-      });
+      const response = await this.request.post(
+        this.getHost(API.discardShareWithMeItem),
+        {
+          data: requestData,
+        },
+      );
       expect(response.status(), `Shared items successfully deleted`).toBe(200);
     }
   }

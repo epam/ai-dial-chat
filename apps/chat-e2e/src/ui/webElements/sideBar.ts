@@ -2,15 +2,14 @@ import { ErrorLabelSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ExpectedConstants } from '@/src/testData';
-import { Styles } from '@/src/ui/domData';
+import { Styles, removeAlpha } from '@/src/ui/domData';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
 
 export class SideBar extends BaseElement {
-  constructor(page: Page, selector: string) {
-    super(page, selector);
+  constructor(page: Page, selector: string, parentLocator: Locator) {
+    super(page, selector, parentLocator);
   }
 
   private search!: Search;
@@ -30,9 +29,6 @@ export class SideBar extends BaseElement {
     return this.chatLoader;
   }
 
-  public newEntityButton = this.getChildElementBySelector(
-    SideBarSelectors.newEntity,
-  );
   public newFolderButton = this.getChildElementBySelector(
     SideBarSelectors.newFolder,
   );
@@ -65,24 +61,12 @@ export class SideBar extends BaseElement {
     SideBarSelectors.pinnedEntities,
   ).getChildElementBySelector(SideBarSelectors.folderSeparator);
 
-  public async hoverOverNewEntity() {
-    await this.newEntityButton.waitForState();
-    await this.newEntityButton.hoverOver();
-  }
+  public newEntityButton = this.getChildElementBySelector(
+    SideBarSelectors.newEntity,
+  );
 
-  public async getNewEntityBackgroundColor() {
-    const backgroundColor = await this.newEntityButton.getComputedStyleProperty(
-      Styles.backgroundColor,
-    );
-    backgroundColor[0] = backgroundColor[0].replace(
-      ExpectedConstants.backgroundColorPattern,
-      '$1)',
-    );
-    return backgroundColor[0];
-  }
-
-  public async getNewEntityCursor() {
-    return this.newEntityButton.getComputedStyleProperty(Styles.cursor);
+  public async createNewEntity() {
+    await this.newEntityButton.click();
   }
 
   public async createNewFolder() {
@@ -97,10 +81,7 @@ export class SideBar extends BaseElement {
     const backgroundColor = await this.draggableArea.getComputedStyleProperty(
       Styles.backgroundColor,
     );
-    backgroundColor[0] = backgroundColor[0].replace(
-      ExpectedConstants.backgroundColorPattern,
-      '$1)',
-    );
+    backgroundColor[0] = removeAlpha(backgroundColor[0]);
     return backgroundColor[0];
   }
 
@@ -115,6 +96,43 @@ export class SideBar extends BaseElement {
     await this.page.mouse.up();
   }
 
+  private async dragAndDropEntityToCoordinates(
+    entityLocator: Locator,
+    x: number,
+    y: number,
+    {
+      isHttpMethodTriggered = false,
+      httpMethod = 'POST',
+    }: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {},
+  ) {
+    await entityLocator.hover();
+    await this.page.mouse.down();
+    await this.page.mouse.move(x, y);
+
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === httpMethod,
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
+    await this.page.mouse.up();
+  }
+
+  private async dragAndDropEntityToEntity(
+    sourceEntityLocator: Locator,
+    targetEntityLocator: Locator,
+    options: { isHttpMethodTriggered?: boolean; httpMethod?: string } = {},
+  ) {
+    const targetBounding = await targetEntityLocator.boundingBox();
+    return this.dragAndDropEntityToCoordinates(
+      sourceEntityLocator,
+      targetBounding!.x + targetBounding!.width / 2,
+      targetBounding!.y + targetBounding!.height / 2,
+      options,
+    );
+  }
+
   public async dragEntityFromFolder(entityLocator: Locator) {
     await entityLocator.hover();
     await this.page.mouse.down();
@@ -125,27 +143,34 @@ export class SideBar extends BaseElement {
     );
   }
 
-  public async dragFolderToRoot(
+  public async dragAndDropFolderToRoot(
     folderLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    await folderLocator.hover();
-    await this.page.mouse.down();
     const draggableBounding = await this.foldersSeparator
       .getNthElement(1)
       .boundingBox();
-    await this.page.mouse.move(
+    return this.dragAndDropEntityToCoordinates(
+      folderLocator,
       draggableBounding!.x + draggableBounding!.width / 2,
       draggableBounding!.y,
+      { isHttpMethodTriggered },
     );
-    if (isApiStorageType && isHttpMethodTriggered) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
-      await this.page.mouse.up();
-      return respPromise;
-    }
-    await this.page.mouse.up();
+  }
+
+  public async dragAndDropEntityToRoot(
+    entityLocator: Locator,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    const draggableBounding = await this.foldersSeparator
+      .getNthElement(1)
+      .boundingBox();
+    return this.dragAndDropEntityToCoordinates(
+      entityLocator,
+      draggableBounding!.x + draggableBounding!.width / 2,
+      draggableBounding!.y,
+      { isHttpMethodTriggered },
+    );
   }
 
   public async dragEntityToFolder(
@@ -184,14 +209,21 @@ export class SideBar extends BaseElement {
     folderLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    await this.dragEntityToFolder(entityLocator, folderLocator);
-    if (isApiStorageType && isHttpMethodTriggered) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
-      await this.page.mouse.up();
-      return respPromise;
-    }
-    await this.page.mouse.up();
+    return this.dragAndDropEntityToEntity(entityLocator, folderLocator, {
+      isHttpMethodTriggered,
+      httpMethod: 'POST',
+    });
   }
+
+  public noDataIcon = this.getChildElementBySelector(
+    SideBarSelectors.noDataIcon,
+  );
+
+  public noDataPlaceholder = this.getChildElementBySelector(
+    SideBarSelectors.noData,
+  );
+
+  public closeButton = this.getChildElementBySelector(
+    SideBarSelectors.closeSidebar,
+  );
 }

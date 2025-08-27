@@ -1,8 +1,12 @@
+import { ApplicationStatus } from '@/src/types/applications';
+
 import { EntityType } from './common';
 
-import { TiktokenEncoding } from '@dqbd/tiktoken';
+import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
+import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
+export type AddonsMap = Partial<Record<string, DialAIEntityAddon>>;
 
 export enum TokenizerModel {
   GPT_35_TURBO_0301 = 'gpt-3.5-turbo-0301',
@@ -18,6 +22,9 @@ export interface CoreAIEntity<T = EntityType.Model> {
   display_version?: string;
   icon_url?: string;
   description?: string;
+  created_at: number;
+  updated_at: number;
+  owner: string;
   capabilities?: {
     embeddings: boolean;
     chat_completion: boolean;
@@ -34,11 +41,31 @@ export interface CoreAIEntity<T = EntityType.Model> {
   features?: {
     truncate_prompt?: boolean;
     system_prompt?: boolean;
+    temperature?: boolean;
+    addons?: boolean;
     url_attachments?: boolean;
     folder_attachments?: boolean;
-    allowResume?: boolean;
+    allow_resume?: boolean;
+    configuration?: boolean;
   };
+  application_type_schema_id?: string;
   tokenizer_model?: TokenizerModel;
+  description_keywords?: string[];
+
+  function?: {
+    status: ApplicationStatus;
+  };
+}
+
+export interface DialAIEntityFeatures {
+  truncatePrompt?: boolean;
+  systemPrompt: boolean;
+  temperature: boolean;
+  addons: boolean;
+  urlAttachments?: boolean;
+  folderAttachments?: boolean;
+  allowResume?: boolean;
+  configuration?: boolean;
 }
 
 export interface DialAIEntity {
@@ -46,26 +73,25 @@ export interface DialAIEntity {
   name: string;
   description?: string | undefined;
   iconUrl?: string | undefined;
+  createdAt?: number;
+  updatedAt?: number;
+  owner?: string;
   type: EntityType;
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
   version?: string;
-  features?: {
-    truncatePrompt?: boolean;
-    systemPrompt?: boolean;
-    urlAttachments?: boolean;
-    folderAttachments?: boolean;
-    allowResume?: boolean;
-  };
+  features?: DialAIEntityFeatures;
   tokenizer?: {
     encoding?: TiktokenEncoding;
     tokensPerMessage?: number;
   };
+  applicationTypeSchemaId?: string;
 }
 
-export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
-  isDefault: boolean;
+export interface DialAIEntityModel
+  extends Omit<ShareEntity, 'folderId'>,
+    Omit<DialAIEntity, 'type'> {
   limits?: {
     maxTotalTokens: number;
     maxResponseTokens: number;
@@ -74,8 +100,28 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   };
   type: EntityType;
   reference: string;
+  isDefault: boolean;
+  topics?: string[];
+
+  functionStatus?: ApplicationStatus;
+  applicationTypeSchemaId?: string;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
   type: EntityType.Addon;
+}
+
+export interface InstalledModel {
+  id: string;
+  pinned?: boolean;
+}
+
+export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
+  folderId: string;
+  publicationInfo: EntityPublicationInfo;
+}
+
+export interface ModelsGroup {
+  groupName: string;
+  entities: DialAIEntityModel[];
 }

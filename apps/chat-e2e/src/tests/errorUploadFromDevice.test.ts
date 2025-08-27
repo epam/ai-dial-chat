@@ -3,10 +3,11 @@ import {
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
-  MenuOptions,
 } from '@/src/testData';
-import { Attributes, Colors, Styles } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -19,28 +20,36 @@ dialTest(
     fileApiHelper,
     chatBar,
     uploadFromDeviceModal,
+    manageAttachmentsAssertion,
+    baseAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1777', 'EPMRTC-1778');
     const expectedErrorTextClassAttribute = 'truncate whitespace-pre-wrap';
 
     await dialTest.step('Upload file with long name to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       'Upload the same file again through chat bar dots menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.longImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
         await dialHomePage.uploadData(
           { path: Attachment.longImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
+        );
+        await baseAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.longImageName),
+          'visible',
         );
         await uploadFromDeviceModal.uploadButton.click();
       },
@@ -49,35 +58,22 @@ dialTest(
     await dialTest.step(
       'Verify error message is shown, it is red and has valid class attribute value',
       async () => {
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-            ExpectedMessages.notAllowedNameErrorShown,
-          )
-          .toBeVisible();
-
-        const uploadErrorText = uploadFromDeviceModal.getUploadErrorText;
-        expect
-          .soft(
-            await uploadErrorText.getElementContent(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(
-            ExpectedConstants.duplicatedFilenameError(Attachment.longImageName),
-          );
-
-        const errorTextColor = await uploadErrorText.getComputedStyleProperty(
-          Styles.color,
+        const error = uploadFromDeviceModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.duplicatedFilenameError(Attachment.longImageName),
+          ExpectedMessages.errorMessageContentIsValid,
         );
-        expect
-          .soft(errorTextColor[0], ExpectedMessages.errorTextColorIsValid)
-          .toBe(Colors.textPrimary);
-        await expect
-          .soft(
-            uploadErrorText.getElementLocator(),
-            ExpectedMessages.elementAttributeValueIsValid,
-          )
-          .toHaveAttribute(Attributes.class, expectedErrorTextClassAttribute);
+        await baseAssertion.assertElementColor(
+          error.errorMessage,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
+        );
+        await baseAssertion.assertElementAttribute(
+          error.errorMessage,
+          Attributes.class,
+          expectedErrorTextClassAttribute,
+        );
       },
     );
   },
@@ -92,74 +88,74 @@ dialTest(
     attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
+    baseAssertion,
+    localStorageManager,
+    attachAllFilesTreeAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
       ExpectedConstants.restrictedNameChars.split(''),
     );
-    const notAllowedFilename = `${restrictedChar}${Attachment.sunImageName}`;
 
     await dialTest.step('Upload file through chat bar dots menu', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
-      await chatBar.bottomDotsMenuIcon.click();
-      await chatBar
-        .getBottomDropdownMenu()
-        .selectMenuOption(MenuOptions.attachments);
+      await dialHomePage.waitForPageLoaded();
+      await chatBar.openManageAttachmentsModal();
+      await baseAssertion.assertElementState(attachFilesModal, 'visible');
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
-        () => attachFilesModal.uploadFromDeviceButton.click(),
+        () => attachFilesModal.uploadFromDevice(),
+      );
+      await attachAllFilesTreeAssertion.assertElementState(
+        uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
+        'visible',
       );
     });
 
     await dialTest.step(
-      'Add restricted symbol to file name, click Upload and verify error is shown',
+      'Add restricted symbol to file name, click Upload and observe restricted symbols are restricted, file is not renamed',
       async () => {
         await uploadFromDeviceModal.typeInUploadedFilename(
           Attachment.sunImageName,
           restrictedChar,
         );
         await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-            ExpectedMessages.notAllowedNameErrorShown,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await uploadFromDeviceModal.getUploadErrorText.getElementContent(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(ExpectedConstants.notAllowedFilenameError(notAllowedFilename));
+        await attachAllFilesTreeAssertion.assertEntityState(
+          {
+            name: Attachment.sunImageName,
+          },
+          'visible',
+        );
+        await attachAllFilesTreeAssertion.assertEntityColor(
+          {
+            name: Attachment.sunImageName,
+          },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
 
     await dialTest.step(
-      'Remove restricted symbol, click Upload and verify file is uploaded and had blue color name',
+      'Upload a file without a restricted symbol, click Upload and verify file is uploaded and had blue color name',
       async () => {
-        await uploadFromDeviceModal.setUploadedFilename(
-          notAllowedFilename,
-          Attachment.sunImageName.split('.')[0],
+        await dialHomePage.uploadData(
+          { path: Attachment.heartImageName, dataType: 'upload' },
+          () => attachFilesModal.uploadFromDevice(),
+        );
+        await attachAllFilesTreeAssertion.assertElementState(
+          uploadFromDeviceModal.getUploadedFile(Attachment.heartImageName),
+          'visible',
         );
         await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            attachFilesModal.attachedFile(Attachment.sunImageName),
-            ExpectedMessages.fileIsUploaded,
-          )
-          .toBeVisible();
-        const attachmentNameColor = await attachFilesModal
-          .attachedFileName(Attachment.sunImageName)
-          .getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            attachmentNameColor[0],
-            ExpectedMessages.attachmentNameColorIsValid,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+        await attachAllFilesTreeAssertion.assertEntityState(
+          { name: Attachment.heartImageName },
+          'visible',
+        );
+        await attachAllFilesTreeAssertion.assertEntityColor(
+          { name: Attachment.sunImageName },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
   },
@@ -176,24 +172,28 @@ dialTest(
     chatBar,
     uploadFromDeviceModal,
     fileApiHelper,
+    baseAssertion,
+    localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
     await dialTest.step('Upload file with valid name to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       'Upload one file with already uploaded name, 2 files with restricted symbols, 2 files with equal names through chat bar dots menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
+          'visible',
+        );
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
@@ -202,34 +202,36 @@ dialTest(
           Attachment.cloudImageName,
           Attachment.cloudImageName,
         );
+        for (const fileConfig of [
+          { name: Attachment.sunImageName, index: 0 },
+          { name: Attachment.restrictedSemicolonCharFilename, index: 0 },
+          { name: Attachment.restrictedEqualCharFilename, index: 1 },
+          { name: Attachment.cloudImageName, index: 0 },
+          { name: Attachment.cloudImageName, index: 1 },
+        ]) {
+          await baseAssertion.assertElementState(
+            uploadFromDeviceModal
+              .getUploadedFile(fileConfig.name.replace(/[=;]/g, '_'))
+              .nth(fileConfig.index),
+            'visible',
+          );
+        }
         await uploadFromDeviceModal.uploadButton.click();
       },
     );
 
-    await dialTest.step('Verify 3 error messages are shown', async () => {
-      await expect
-        .soft(
-          uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-          ExpectedMessages.errorMessageIsShown,
-        )
-        .toBeVisible();
-      const errorText =
-        await uploadFromDeviceModal.getUploadErrorText.getElementContent();
-      expect
-        .soft(
-          errorText?.replaceAll('\n', ''),
-          ExpectedMessages.errorMessageContentIsValid,
-        )
-        .toBe(
-          ExpectedConstants.notAllowedFilenameError(
-            [
-              Attachment.restrictedSemicolonCharFilename,
-              Attachment.restrictedEqualCharFilename,
-            ].join(', '),
-          ) +
-            ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName) +
-            ExpectedConstants.sameFilenamesError(Attachment.cloudImageName),
-        );
+    await dialTest.step('Verify 2 error messages are shown', async () => {
+      const error = uploadFromDeviceModal.getModalError();
+      await baseAssertion.assertElementState(error, 'visible');
+      const errorText = await error.errorMessage.getElementContent();
+      baseAssertion.assertValue(
+        errorText?.replaceAll('\n', ''),
+        ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName) +
+          ExpectedConstants.sameFilenamesError(
+            `${Attachment.restrictedEqualCharFilename.replace('=', '_')}, ${Attachment.cloudImageName}`,
+          ),
+        ExpectedMessages.errorMessageContentIsValid,
+      );
     });
   },
 );
@@ -243,6 +245,7 @@ dialTest(
     attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3216', 'EPMRTC-3113');
     const dot = '.';
@@ -250,23 +253,19 @@ dialTest(
     await dialTest.step(
       'Upload file without extension through chat bar dots menu',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.fileWithoutExtension, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+          () => attachFilesModal.uploadFromDevice(),
         );
       },
     );
 
     await dialTest.step(
-      'Add dot at the end of file name and verify error message is shown',
+      'Add dot at the end of file name and verify file is uploaded',
       async () => {
         await uploadFromDeviceModal
           .getUploadedFilenameInput(Attachment.fileWithoutExtension)
@@ -274,35 +273,6 @@ dialTest(
         await uploadFromDeviceModal.typeInUploadedFilename(
           Attachment.fileWithoutExtension,
           dot,
-        );
-        await uploadFromDeviceModal.uploadButton.click();
-        await expect
-          .soft(
-            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
-            ExpectedMessages.notAllowedNameErrorShown,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await uploadFromDeviceModal.getUploadErrorText.getElementContent(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(
-            ExpectedConstants.endDotFilenameError(
-              Attachment.fileWithoutExtension + dot,
-            ),
-          );
-      },
-    );
-
-    await dialTest.step(
-      'Remove end dot and verify file is successfully uploaded',
-      async () => {
-        await uploadFromDeviceModal
-          .getDeleteUploadedFileIcon(Attachment.fileWithoutExtension)
-          .click();
-        await uploadFromDeviceModal.addMoreFilesToUpload(
-          Attachment.fileWithoutExtension,
         );
         const uploadedFileExtension = await uploadFromDeviceModal
           .getUploadedFileExtension(Attachment.fileWithoutExtension)
@@ -314,14 +284,16 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.fileWithoutExtension),
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.fileWithoutExtension),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();
 
-        const isFileChecked = attachFilesModal.attachedFileCheckBox(
-          Attachment.fileWithoutExtension,
-        );
+        const isFileChecked = attachFilesModal
+          .getAllFilesTree()
+          .getEntityCheckbox(Attachment.fileWithoutExtension);
         await expect
           .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
           .toBeChecked();

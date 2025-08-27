@@ -1,11 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { RootState } from '../index';
-import { MigrationState } from './migration.types';
+import { RootState } from '@/src/types/store';
 
-const rootSelector = (state: RootState): MigrationState => state.migration;
+const rootSelector = (state: RootState) => state.migration;
 
-export const selectConversationsToMigrateAndMigratedCount = createSelector(
+const selectConversationsToMigrateAndMigratedCount = createSelector(
   [rootSelector],
   (state) => ({
     conversationsToMigrateCount: state.conversationsToMigrateCount,
@@ -13,17 +12,13 @@ export const selectConversationsToMigrateAndMigratedCount = createSelector(
   }),
 );
 
-export const selectFailedMigratedConversations = createSelector(
-  [rootSelector],
-  (state) => state.failedMigratedConversations,
-);
+const selectFailedMigratedConversations = (state: RootState) =>
+  rootSelector(state).failedMigratedConversations;
 
-export const selectIsChatsBackedUp = createSelector(
-  [rootSelector],
-  (state) => state.isChatsBackedUp,
-);
+const selectIsChatsBackedUp = (state: RootState) =>
+  rootSelector(state).isChatsBackedUp;
 
-export const selectPromptsToMigrateAndMigratedCount = createSelector(
+const selectPromptsToMigrateAndMigratedCount = createSelector(
   [rootSelector],
   (state) => ({
     promptsToMigrateCount: state.promptsToMigrateCount,
@@ -31,12 +26,20 @@ export const selectPromptsToMigrateAndMigratedCount = createSelector(
   }),
 );
 
-export const selectFailedMigratedPrompts = createSelector(
-  [rootSelector],
-  (state) => state.failedMigratedPrompts,
-);
+const selectFailedMigratedPrompts = (state: RootState) =>
+  rootSelector(state).failedMigratedPrompts;
 
-export const selectIsPromptsBackedUp = createSelector(
-  [rootSelector],
-  (state) => state.isPromptsBackedUp,
-);
+const selectIsPromptsBackedUp = (state: RootState) =>
+  rootSelector(state).isPromptsBackedUp;
+
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
+
+export const MigrationSelectors = {
+  selectConversationsToMigrateAndMigratedCount,
+  selectFailedMigratedConversations,
+  selectIsChatsBackedUp,
+  selectPromptsToMigrateAndMigratedCount,
+  selectFailedMigratedPrompts,
+  selectIsPromptsBackedUp,
+  selectInitialized,
+};

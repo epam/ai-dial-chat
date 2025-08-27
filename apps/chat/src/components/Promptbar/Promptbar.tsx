@@ -1,100 +1,32 @@
-import { DragEvent, useCallback } from 'react';
+import { DragEvent, useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
 
 import { FeatureType } from '@/src/types/common';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
+
+import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
-import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
+import { Sidebar } from '@/src/components/Sidebar/Sidebar';
 
-import PlusIcon from '../../../public/images/icons/plus-large.svg';
-import Sidebar from '../Sidebar';
-
-const PromptActionsBlock = () => {
-  const { t } = useTranslation(Translation.PromptBar);
-  const dispatch = useAppDispatch();
-
-  const isNewPromptCreating = useAppSelector(
-    PromptsSelectors.selectIsNewPromptCreating,
-  );
-
-  const { showModal, isModalPreviewMode } = useAppSelector(
-    PromptsSelectors.selectIsEditModalOpen,
-  );
-
-  const handleUpdate = useCallback(
-    (prompt: Prompt) => {
-      isNewPromptCreating
-        ? dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)))
-        : dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: {
-                name: prompt.name,
-                description: prompt.description,
-                content: prompt.content,
-                isShared: prompt.isShared,
-              },
-            }),
-          );
-      dispatch(PromptsActions.resetSearch());
-    },
-    [dispatch, isNewPromptCreating],
-  );
-
-  const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch]);
-
-  return (
-    <div className="flex px-2 py-1">
-      <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
-        onClick={() => {
-          dispatch(PromptsActions.setIsNewPromptCreating(true));
-          dispatch(PromptsActions.resetSearch());
-          dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
-          dispatch(PromptsActions.resetChosenPrompts());
-        }}
-        disabled={isNewPromptCreating}
-        data-qa="new-entity"
-      >
-        <PlusIcon className="text-secondary" width={18} height={18} />
-        {t('New prompt')}
-      </button>
-      {showModal && !isModalPreviewMode && (
-        <PromptModal
-          isOpen
-          onClose={handleClose}
-          onUpdatePrompt={handleUpdate}
-        />
-      )}
-    </div>
-  );
-};
-
-const Promptbar = () => {
+export const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
+
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
@@ -103,12 +35,24 @@ const Promptbar = () => {
     PromptsSelectors.arePromptsUploaded,
   );
 
-  const filteredPrompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
   );
-  const filteredFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(state, myItemsFilters, searchTerm),
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
+
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
   );
+  const filteredFoldersSelector = useMemo(
+    () => PromptsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
+  );
+
+  const filteredPrompts = useAppSelector(filteredPromptsSelector);
+  const filteredFolders = useAppSelector(filteredFoldersSelector);
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
@@ -131,7 +75,7 @@ const Promptbar = () => {
             dispatch(
               UIActions.showErrorToast(
                 t('Prompt with name "{{name}}" already exists at the root.', {
-                  ns: 'prompt',
+                  ns: Translation.PromptBar,
                   name: prompt.name,
                 }),
               ),
@@ -141,6 +85,14 @@ const Promptbar = () => {
           }
 
           dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Prompt,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== RECENT_PROMPTS_SECTION_NAME,
+              ),
+            }),
+          );
+          dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: { folderId },
@@ -149,7 +101,7 @@ const Promptbar = () => {
         }
       }
     },
-    [allPrompts, dispatch, t],
+    [allPrompts, collapsedSections, dispatch, t],
   );
 
   const handleSearchTerm = useCallback(
@@ -169,24 +121,23 @@ const Promptbar = () => {
   );
 
   return (
-    <Sidebar<PromptInfo>
-      featureType={FeatureType.Prompt}
-      side="right"
-      isOpen={showPromptbar}
-      itemComponent={<Prompts prompts={filteredPrompts} />}
-      actionButtons={<PromptActionsBlock />}
-      folderComponent={<PromptFolders />}
-      filteredItems={filteredPrompts}
-      filteredFolders={filteredFolders}
-      searchTerm={searchTerm}
-      searchFilters={searchFilters}
-      handleSearchTerm={handleSearchTerm}
-      handleSearchFilters={handleSearchFilters}
-      handleDrop={handleDrop}
-      footerComponent={<PromptbarSettings />}
-      areEntitiesUploaded={areEntitiesUploaded}
-    />
+    <>
+      <Sidebar<PromptInfo>
+        featureType={FeatureType.Prompt}
+        side="right"
+        isOpen={showPromptbar}
+        itemComponent={<Prompts prompts={filteredPrompts} />}
+        folderComponent={<PromptFolders />}
+        filteredItems={filteredPrompts}
+        filteredFolders={filteredFolders}
+        searchTerm={searchTerm}
+        searchFilters={searchFilters}
+        onSearchTerm={handleSearchTerm}
+        onSearchFilters={handleSearchFilters}
+        onDrop={handleDrop}
+        footerComponent={<PromptbarSettings />}
+        areEntitiesUploaded={areEntitiesUploaded}
+      />
+    </>
   );
 };
-
-export default Promptbar;

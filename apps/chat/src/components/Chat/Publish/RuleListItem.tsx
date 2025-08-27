@@ -1,13 +1,16 @@
 import { Fragment } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { getLastPathSegment } from '@/src/utils/app/common';
 
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { startCase, toLower } from 'lodash-es';
+import startCase from 'lodash-es/startCase';
+import toLower from 'lodash-es/toLower';
 
 interface Props {
   path: string;
@@ -26,7 +29,9 @@ export function RuleListItem({
 
   return (
     <>
-      <div className="mb-1 text-xs text-secondary">{path.split('/').pop()}</div>
+      <div className="mb-1 text-xs text-secondary">
+        {getLastPathSegment(path)}
+      </div>
       <div className="mb-3 flex flex-wrap gap-1 text-xs">
         {rules.map((rule, idx) => (
           <div key={rule.source} className="flex max-w-full items-center">

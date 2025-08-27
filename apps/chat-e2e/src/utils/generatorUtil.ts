@@ -1,4 +1,12 @@
+import { ExpectedConstants, Import } from '@/src/testData';
 import { webcrypto } from 'node:crypto';
+
+export const publicationRequestPrefix = 'E2EPublish';
+export const unpublishRequestPrefix = 'E2EUnpublish';
+export const applicationNamePrefix = 'E2EApp';
+
+export const conversationNamePrefix = 'E2EConversation';
+export const promptNamePrefix = 'E2EPrompt';
 
 export class GeneratorUtil {
   static randomIntegerNumber() {
@@ -14,6 +22,23 @@ export class GeneratorUtil {
     return array[index];
   }
 
+  static randomArrayElements<T>(array: T[], count: number): T[] {
+    if (count >= array.length) return array.slice();
+    if (count <= 0) return [];
+
+    const result: T[] = [];
+    const taken = new Set<number>();
+
+    while (result.length < count) {
+      const index = Math.floor(Math.random() * array.length);
+      if (!taken.has(index)) {
+        taken.add(index);
+        result.push(array[index]);
+      }
+    }
+    return result;
+  }
+
   static randomString(length: number) {
     const chars =
       '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -24,5 +49,60 @@ export class GeneratorUtil {
       result += chars[randomValues[i] % chars.length];
     }
     return result;
+  }
+
+  static randomPublicationRequestName() {
+    return publicationRequestPrefix + GeneratorUtil.randomString(7);
+  }
+
+  static randomUnpublishRequestName() {
+    return unpublishRequestPrefix + GeneratorUtil.randomString(7);
+  }
+
+  static randomApplicationName() {
+    return applicationNamePrefix + GeneratorUtil.randomString(10);
+  }
+
+  static randomConversationName() {
+    return conversationNamePrefix + GeneratorUtil.randomString(10);
+  }
+
+  static randomPromptName() {
+    return promptNamePrefix + GeneratorUtil.randomString(10);
+  }
+
+  static exportedWithoutAttachmentsFilename() {
+    return `${GeneratorUtil.randomString(7)}${ExpectedConstants.exportedFileExtension}`;
+  }
+
+  static exportedWithAttachmentsFilename() {
+    return `${GeneratorUtil.randomString(7)}${Import.importAttachmentExtension}`;
+  }
+
+  static randomApplicationVersion(stringsToExclude?: string[]) {
+    const major = GeneratorUtil.randomIntegerNumber();
+    const minor = GeneratorUtil.randomIntegerNumber();
+    const patch = GeneratorUtil.randomIntegerNumber();
+    let version = `${major}.${minor}.${patch}`;
+    stringsToExclude = stringsToExclude ?? [];
+    if (!stringsToExclude.includes(ExpectedConstants.defaultAppVersion)) {
+      stringsToExclude.push();
+    }
+    while (stringsToExclude.some((s) => s.includes(version))) {
+      version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
+    }
+    return version;
+  }
+
+  static randomShortAndLongDescription(): string {
+    return `${this.randomShortDescription()}\n\n${this.randomLongDescription()}`;
+  }
+
+  static randomShortDescription() {
+    return `short description: ${GeneratorUtil.randomString(20)}`;
+  }
+
+  static randomLongDescription() {
+    return `long description: ${GeneratorUtil.randomString(150)}`;
   }
 }

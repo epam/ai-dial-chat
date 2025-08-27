@@ -1,6 +1,6 @@
-import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -9,12 +9,19 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Prompt folder: default numeration',
-  async ({ dialHomePage, promptBar, folderPrompts, setTestIds }) => {
+  async ({
+    dialHomePage,
+    promptBar,
+    folderPrompts,
+    setTestIds,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-1621');
 
     await dialTest.step(
       'Create several new prompt folders and verify their names are incremented',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 3; i++) {
@@ -34,69 +41,6 @@ dialTest(
 );
 
 dialTest(
-  'Prompt folder: folder created from Move to is counted into default numeration',
-  async ({
-    dialHomePage,
-    promptData,
-    dataInjector,
-    prompts,
-    promptBar,
-    folderPrompts,
-    promptDropdownMenu,
-    setTestIds,
-  }) => {
-    setTestIds('EPMRTC-1623');
-    let prompt: Prompt;
-    const folderNumber = 1;
-
-    await dialTest.step('Preparation', async () => {
-      prompt = promptData.prepareDefaultPrompt();
-      await dataInjector.createPrompts([prompt]);
-    });
-
-    await dialTest.step('Create a new folder', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await promptBar.createNewFolder();
-      await expect
-        .soft(
-          folderPrompts.getFolderByName(
-            ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber),
-          ),
-          ExpectedMessages.folderIsVisible,
-        )
-        .toBeVisible();
-    });
-
-    await dialTest.step('Move the prompt to the new folder', async () => {
-      await prompts.openEntityDropdownMenu(prompt.name);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-      await promptDropdownMenu.selectMenuOption(
-        ExpectedConstants.newFolderTitle,
-      );
-
-      await expect(
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
-        ),
-        ExpectedMessages.folderIsVisible,
-      ).toBeVisible();
-
-      await folderPrompts.expandFolder(
-        ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber + 1),
-      );
-      await expect(
-        folderPrompts.getFolderEntity(
-          ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
-          prompt.name,
-        ),
-        ExpectedMessages.newFolderCreated,
-      ).toBeVisible();
-    });
-  },
-);
-
-dialTest(
   'Prompt folder: renamed and deleted folders are not counted into prompt folder numeration',
   async ({
     dialHomePage,
@@ -105,6 +49,7 @@ dialTest(
     promptDropdownMenu,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1622');
     let folderNumber = 1;
@@ -112,6 +57,7 @@ dialTest(
     await dialTest.step(
       'Create several new prompt folders and verify their names are incremented',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (folderNumber = 1; folderNumber < 3; folderNumber++) {
@@ -162,7 +108,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(folderNumber),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick('Renamed Folder');
+        await folderPrompts.renameEmptyFolderWithTick('Renamed Folder');
 
         await promptBar.createNewFolder();
         await expect
@@ -186,10 +132,12 @@ dialTest(
     folderPrompts,
     promptDropdownMenu,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2967');
 
     await dialTest.step('Create a new folder', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await promptBar.createNewFolder();
@@ -208,7 +156,7 @@ dialTest(
         ExpectedConstants.newFolderWithIndexTitle(1),
       );
       await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await folderPrompts.editFolderNameWithTick(
+      await folderPrompts.renameEmptyFolderWithTick(
         ExpectedConstants.newPromptFolderWithIndexTitle(999),
       );
     });
@@ -236,12 +184,18 @@ dialTest(
     promptBar,
     folderPrompts,
     promptDropdownMenu,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2968');
     const duplicatedFolderName = 'Duplicated Name';
 
     await dialTest.step('Create four folders', async () => {
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 3; i++) {
@@ -268,11 +222,9 @@ dialTest(
           ),
         );
       }
-      for (let i = 2; i <= 3; i++) {
-        await folderPrompts.expandFolder(
-          ExpectedConstants.newPromptFolderWithIndexTitle(i),
-        );
-      }
+      await folderPrompts.expandFolder(
+        ExpectedConstants.newPromptFolderWithIndexTitle(2),
+      );
     });
 
     await dialTest.step('Rename all folders to the same name', async () => {
@@ -281,7 +233,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(i),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
+        await folderPrompts.renameEmptyFolderWithTick(duplicatedFolderName);
         await expect(
           folderPrompts.getFolderByName(duplicatedFolderName, i),
           ExpectedMessages.folderNameUpdated,

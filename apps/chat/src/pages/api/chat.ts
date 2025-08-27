@@ -2,25 +2,37 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import {
+  excludeSystemMessages,
+  getSystemMessageContent,
+} from '@/src/utils/app/conversation';
+import { getConfigurationValue } from '@/src/utils/app/form-schema';
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
 import {
   chatErrorHandler,
-  getMessageCustomContent,
+  getUserMessageCustomContent,
   limitMessagesByTokens,
 } from '@/src/utils/server/chat';
-import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 
-import { ChatBody, Message, Role } from '@/src/types/chat';
+import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
+import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
 import {
-  DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
+
+import { Message, Role } from '@epam/ai-dial-shared';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -30,45 +42,50 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const {
-    modelId,
     id,
+    reference,
     messages,
     prompt,
     temperature,
     selectedAddons,
-    assistantModelId,
+    model,
+    assistantModel,
   } = req.body as ChatBody;
 
   try {
     const token = await getToken({ req });
-    const models = await getSortedEntities(token);
-    const model = models.find(
-      ({ id, reference }) => id === modelId || reference === modelId,
-    );
-    const assistantModel = assistantModelId
-      ? models.find(
-          ({ id, reference }) =>
-            id === assistantModelId || reference === assistantModelId,
-        )
-      : undefined;
 
     if (
       !id ||
       !model ||
-      (!!assistantModelId && !assistantModel) ||
-      (!!assistantModelId && model.type !== EntityType.Assistant) ||
+      (!!assistantModel && model.type !== EntityType.Assistant) ||
       (!prompt && !messages?.length)
     ) {
       return res.status(400).send(errorsMessages[400]);
     }
 
+    if (!assistantModel && model.type === EntityType.Assistant) {
+      return res.status(400).send(errorsMessages.noAssistantModelSelected);
+    }
+
     let promptToSend = prompt;
-    if (!promptToSend && model.type === EntityType.Model) {
+    let filteredMessages = messages;
+    if (!doesModelAllowSystemPrompt(model)) {
+      // model doesn't support system prompt
+      promptToSend = '';
+      filteredMessages = excludeSystemMessages(messages);
+    } else if (getSystemMessageContent(messages)) {
+      // system prompt is already added by overlay
+      promptToSend = '';
+    } else if (!promptToSend && model.type === EntityType.Model) {
+      // if no any system prompt was added
       promptToSend = DEFAULT_SYSTEM_PROMPT;
     }
 
     let temperatureToUse = temperature;
-    if (
+    if (!doesModelAllowTemperature(model)) {
+      temperatureToUse = FALLBACK_TEMPERATURE;
+    } else if (
       !temperatureToUse &&
       temperatureToUse !== 0 &&
       model.type !== EntityType.Application
@@ -92,14 +109,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     let messagesToSend: Message[] = limitMessagesByTokens({
       promptToSend,
-      messages,
+      messages: filteredMessages,
       limits,
       features,
       tokenizer,
+      request: req,
     });
 
+    const configurationValue = getConfigurationValue(
+      messages.find(getConfigurationValue),
+    );
+
     messagesToSend = messagesToSend.map((message) => ({
-      ...getMessageCustomContent(message),
+      ...getUserMessageCustomContent(message),
       role: message.role,
       content: message.content,
     }));
@@ -118,23 +140,39 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       temperature: temperatureToUse,
       messages: messagesToSend,
-      selectedAddonsIds: selectedAddons?.length ? selectedAddons : undefined,
-      assistantModelId,
+      selectedAddonsIds:
+        selectedAddons?.length && doesModelAllowAddons(model)
+          ? selectedAddons
+          : undefined,
+      assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
-      chatId: id,
+      chatReference: reference ?? id,
       jobTitle: token?.jobTitle as string,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
+      configurationSchemaValue: configurationValue,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 
     const reader = stream.getReader();
+
+    let clientAborted = false;
+    res.on('close', () => {
+      clientAborted = true;
+      reader.cancel();
+    });
+
     const processStream = async () => {
       try {
         // eslint-disable-next-line no-constant-condition
         while (true) {
+          if (clientAborted) {
+            break;
+          }
+
           const { value, done } = await reader.read();
+
           if (done) {
             break;
           }
@@ -158,7 +196,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return chatErrorHandler({
       error,
       res,
-      msg: `Error while sending chat request to '${modelId}'`,
+      msg: `Error while sending chat request to '${model?.id}'`,
     });
   }
 };

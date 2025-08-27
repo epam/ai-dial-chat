@@ -2,6 +2,8 @@ import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  Chronology,
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -10,39 +12,123 @@ import {
 import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { EditInput } from '@/src/ui/webElements';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
   'Create new chat folder.\n' +
-    'Share option is unavailable in chat folder if there is no any chat inside',
+    'Share option is unavailable in chat folder if there is no any chat inside.\n' +
+    'Publish folder: folder should not be empty.\n' +
+    'Publish folder with Empty chats only.\n' +
+    'Publish folder with Replay chats only',
   async ({
     dialHomePage,
     chatBar,
     folderConversations,
-    folderDropdownMenu,
+    conversationData,
+    chatBarFolderAssertion,
+    folderDropdownMenuAssertion,
+    dataInjector,
+    page,
     setTestIds,
+    localStorageManager,
   }) => {
-    setTestIds('EPMRTC-569', 'EPMRTC-2005');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await chatBar.createNewFolder();
-    await expect
-      .soft(
-        folderConversations.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-        ),
-        ExpectedMessages.newFolderCreated,
-      )
-      .toBeVisible();
-
-    await folderConversations.openFolderDropdownMenu(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    setTestIds(
+      'EPMRTC-569',
+      'EPMRTC-2005',
+      'EPMRTC-4157',
+      'EPMRTC-3567',
+      'EPMRTC-3497',
     );
-    const actualMenuOptions = await folderDropdownMenu.getAllMenuOptions();
-    expect
-      .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([MenuOptions.select, MenuOptions.rename, MenuOptions.delete]);
+    let folderEmptyConversation: FolderConversation;
+    let folderReplayConversation: FolderConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
+
+    await dialTest.step(
+      'Prepare folder with empty conversation and folder with replay conversation',
+      async () => {
+        folderEmptyConversation =
+          conversationData.prepareDefaultConversationInFolder();
+        folderEmptyConversation.conversations[0].messages = [];
+        conversationData.resetData();
+
+        conversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+
+        replayConversation =
+          conversationData.prepareDefaultReplayConversation(conversation);
+        conversationData.resetData();
+        folderReplayConversation =
+          conversationData.prepareConversationsInFolder([replayConversation]);
+
+        await dataInjector.createConversations(
+          [
+            ...folderEmptyConversation.conversations,
+            conversation,
+            ...folderReplayConversation.conversations,
+          ],
+          folderEmptyConversation.folders,
+          folderReplayConversation.folders,
+        );
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Create new folder and verify available menu options',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+
+        await folderConversations.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.delete,
+        ]);
+        await page.keyboard.press(keys.escape);
+      },
+    );
+
+    //enable the step when https://github.com/epam/ai-dial-chat/issues/2595 is fixed
+    // await dialTest.step(
+    //   'Open folder with empty conversation dropdown menu and verify available menu options',
+    //   async () => {
+    //     await folderConversations.openFolderDropdownMenu(
+    //       folderEmptyConversation.folders.name,
+    //     );
+    //     await folderDropdownMenuAssertion.assertMenuOptions([
+    //       MenuOptions.select,
+    //       MenuOptions.rename,
+    //       MenuOptions.share,
+    //       MenuOptions.delete,
+    //     ]);
+    // await page.keyboard.press(keys.escape);
+    //   },
+    // );
+
+    await dialTest.step(
+      'Open folder with replay conversation dropdown menu and verify available menu options',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          folderReplayConversation.folders.name,
+        );
+        await folderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.share,
+          MenuOptions.delete,
+        ]);
+      },
+    );
   },
 );
 
@@ -57,6 +143,7 @@ dialTest(
     folderConversations,
     folderDropdownMenu,
     chatBar,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds(
@@ -68,7 +155,11 @@ dialTest(
     );
     const newNameWithSpaces = '  updated    folder name  ';
     const randomFolderIndex = GeneratorUtil.randomNumberInRange(2) + 1;
-
+    await localStorageManager.setChatCollapsedSection(
+      CollapsedSections.Organization,
+      CollapsedSections.SharedWithMe,
+    );
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
@@ -93,10 +184,14 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderConversations.editFolderNameWithEnter(newNameWithSpaces);
+    await folderConversations.renameEmptyFolderWithEnter(
+      newNameWithSpaces.replace(' ', '_'),
+    );
     await expect
       .soft(
-        folderConversations.getFolderByName(newNameWithSpaces.trim()),
+        folderConversations.getFolderByName(
+          newNameWithSpaces.replace(' ', '_'),
+        ),
         ExpectedMessages.folderNameUpdated,
       )
       .toBeVisible();
@@ -121,45 +216,47 @@ dialTest(
     'Chat folder: Error message appears if there is a dot is at the end of folder name.\n' +
     'Chat folder: restricted special characters are not entered.\n' +
     'Chat folder: restricted special characters are removed if to copy-paste.\n' +
+    'Chat folder: Error message appears if there is a dot is at the beginning of folder name.\n' +
     'Chat folder: name can not be blank or with spaces only',
   async ({
     dialHomePage,
     folderConversations,
-    conversationDropdownMenu,
+    folderDropdownMenu,
     chatBar,
-    errorToast,
-    sendMessage,
+    toast,
+    toastAssertion,
     page,
     setTestIds,
+    localStorageManager,
+    chatBarFolderAssertion,
   }) => {
     setTestIds(
       'EPMRTC-572',
       'EPMRTC-587',
       'EPMRTC-2889',
       'EPMRTC-2890',
+      'EPMRTC-6713',
       'EPMRTC-575',
     );
     const newNameWithEndDot = 'updated folder name.';
+    const leadingDotFolderName = `.${GeneratorUtil.randomString(5)}`;
     let editFolderInput: EditInput;
 
     await dialTest.step('Start editing folder and cancel', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await chatBar.createNewFolder();
       await folderConversations.openFolderDropdownMenu(
         ExpectedConstants.newFolderWithIndexTitle(1),
       );
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderConversations.editFolderName(newNameWithEndDot);
       await folderConversations.getEditFolderInputActions().clickCancelButton();
-      await expect
-        .soft(
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(1),
-          ),
-          ExpectedMessages.folderNameNotUpdated,
-        )
-        .toBeVisible();
+      await chatBarFolderAssertion.assertFolderState(
+        { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+        'visible',
+      );
     });
 
     await dialTest.step(
@@ -168,44 +265,60 @@ dialTest(
         await folderConversations.openFolderDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        editFolderInput =
-          await folderConversations.editFolderName(newNameWithEndDot);
-        await folderConversations.getEditFolderInputActions().clickTickButton();
-
-        const errorMessage = await errorToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-          .toBe(ExpectedConstants.nameWithDotErrorMessage);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await folderConversations.renameEmptyFolderWithTick(newNameWithEndDot);
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.nameWithDotErrorMessage,
+          ExpectedMessages.notAllowedNameErrorShown,
+        );
+        await toast.closeToast();
       },
     );
 
     await dialTest.step(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
+        editFolderInput = folderConversations.getEditFolderInput();
         await editFolderInput.click();
         await editFolderInput.editValue(ExpectedConstants.restrictedNameChars);
-        const inputContent = await editFolderInput.getElementContent();
-        expect
-          .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
-          .toBe('');
+        await chatBarFolderAssertion.assertFolderEditInputValue(
+          '',
+          ExpectedMessages.charactersAreNotDisplayed,
+        );
       },
     );
 
     await dialTest.step(
       'Paste prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await sendMessage.fillRequestData(
+        await dialHomePage.copyToClipboard(
           ExpectedConstants.restrictedNameChars,
         );
-        await page.keyboard.press(keys.ctrlPlusA);
-        await page.keyboard.press(keys.ctrlPlusC);
         await editFolderInput.click();
         await page.keyboard.press(keys.ctrlPlusV);
-        const inputContent = await editFolderInput.getElementContent();
-        expect
-          .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
-          .toBe('');
+        await chatBarFolderAssertion.assertFolderEditInputValue(
+          '',
+          ExpectedMessages.charactersAreNotDisplayed,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Set the name with leading dot and verify the error toast is displayed, folder remains in the edit mode',
+      async () => {
+        await folderConversations.renameEmptyFolderWithTick(
+          leadingDotFolderName,
+        );
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.leadingDotErrorToast,
+        );
+        await toast.closeToast();
+        await chatBarFolderAssertion.assertFolderEditInputState('visible');
+        await chatBarFolderAssertion.assertFolderEditInputValue(
+          leadingDotFolderName,
+        );
       },
     );
 
@@ -213,16 +326,11 @@ dialTest(
       'Set empty folder name or spaces and verify initial name is preserved',
       async () => {
         const name = GeneratorUtil.randomArrayElement(['', '   ']);
-        await folderConversations.editFolderName(name);
-        await folderConversations.getEditFolderInputActions().clickTickButton();
-        await expect
-          .soft(
-            folderConversations.getFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(1),
-            ),
-            ExpectedMessages.folderNameNotUpdated,
-          )
-          .toBeVisible();
+        await folderConversations.renameEmptyFolderWithTick(name);
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
       },
     );
   },
@@ -238,8 +346,9 @@ dialTest(
     folderConversations,
     dataInjector,
     folderDropdownMenu,
-    errorToast,
+    toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
     const folderName = GeneratorUtil.randomString(70);
@@ -258,6 +367,7 @@ dialTest(
           conversationInFolder.conversations,
           conversationInFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -265,9 +375,7 @@ dialTest(
       'Open app and verify folder name is truncated in the side panel',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         const folderNameOverflow = await folderConversations
           .getFolderName(folderName)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -307,12 +415,11 @@ dialTest(
     await dialTest.step(
       'Edit folder name using tick button and verify it is renamed',
       async () => {
-        await folderConversations.editFolderNameWithTick(newFolderNameToSet);
+        await folderConversations.renameFolderWithContentWithTick(
+          newFolderNameToSet,
+        );
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.noErrorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
           .toBeHidden();
         expect
           .soft(
@@ -335,6 +442,7 @@ dialTest(
     folderConversations,
     dataInjector,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-579');
     let conversationInFolder: FolderConversation;
@@ -345,14 +453,14 @@ dialTest(
         conversationInFolder.conversations,
         conversationInFolder.folders,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
+
     await dialTest.step(
       'Verify folder arrow icon is changes on expand/collapse folder',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         let isFolderCaretExpanded =
           await folderConversations.isFolderCaretExpanded(
             conversationInFolder.folders.name,
@@ -383,11 +491,17 @@ dialTest(
     conversationDropdownMenu,
     confirmationDialog,
     chatBar,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-606', 'EPMRTC-1373');
 
     await dialTest.step('Create max nested folders structure', async () => {
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
 
@@ -467,9 +581,11 @@ dialTest(
     folderConversations,
     dataInjector,
     conversationDropdownMenu,
-    conversations,
     confirmationDialog,
+    chatBarFolderAssertion,
+    conversationAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-605');
     const conversationInFolder =
@@ -478,28 +594,23 @@ dialTest(
       conversationInFolder.conversations,
       conversationInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await folderConversations.openFolderDropdownMenu(
       conversationInFolder.folders.name,
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    await expect
-      .soft(
-        folderConversations.getFolderByName(conversationInFolder.folders.name),
-        ExpectedMessages.folderDeleted,
-      )
-      .toBeHidden();
-
-    const todayConversations = await conversations.getTodayConversations();
-    expect
-      .soft(
-        todayConversations.includes(conversationInFolder.conversations[0].name),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeFalsy();
+    await chatBarFolderAssertion.assertFolderState(
+      { name: conversationInFolder.folders.name },
+      'hidden',
+    );
+    await conversationAssertion.assertEntityState(
+      { name: conversationInFolder.conversations[0].name },
+      'hidden',
+    );
   },
 );
 
@@ -514,6 +625,7 @@ dialTest(
     conversations,
     confirmationDialog,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1372');
     const levelsCount = 4;
@@ -531,6 +643,7 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -593,12 +706,14 @@ dialTest(
     conversationDropdownMenu,
     chatBar,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1277');
 
     await dialTest.step(
       'Create a new folder and rename to name with special symbols',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
@@ -633,8 +748,8 @@ dialTest(
     dataInjector,
     chatMessages,
     chat,
-    localStorageManager,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2954');
     const updatedFolderName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
@@ -647,9 +762,7 @@ dialTest(
         folderConversation.conversations,
         folderConversation.folders,
       );
-      await localStorageManager.setSelectedConversation(
-        folderConversation.conversations[0],
-      );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -657,6 +770,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
@@ -675,12 +793,263 @@ dialTest(
     await dialTest.step(
       'Send request to folder chat and verify response received',
       async () => {
-        await chat.sendRequestWithButton('1+2');
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(folderConversation.conversations[0].messages.length + 2);
+        const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+        if (simpleRequestModel !== undefined) {
+          await chat.sendRequestWithButton('1+2');
+          const messagesCount =
+            await chatMessages.chatMessages.getElementsCount();
+          expect
+            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+            .toBe(folderConversation.conversations[0].messages.length + 2);
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  'Error message appears that no nested chat folders are allowed\n' +
+    'Error message appears if to drag&drop chat Folder_parent to Folder_child\n' +
+    "It's forbidden to drag&drop chat folder to Today\n" +
+    'Context menu appears if to click on chat name or folder name using right mouse button',
+  async ({
+    dialHomePage,
+    chatBar,
+    folderConversations,
+    toast,
+    setTestIds,
+    conversations,
+    chatBarFolderAssertion,
+    conversationData,
+    dataInjector,
+    localStorageManager,
+    toastAssertion,
+    conversationDropdownMenuAssertion,
+  }) => {
+    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1763');
+    let firstConversation: Conversation;
+
+    await dialTest.step('Prepare folders hierarchy', async () => {
+      firstConversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([firstConversation]);
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
+      await localStorageManager.setShowSideBarPanels();
+
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      await conversations.selectEntity(firstConversation.name);
+      // Create folders
+      for (let i = 1; i <= 4; i++) {
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(i) },
+          'visible',
+        );
+      }
+
+      // Create nested structure
+      for (let i = 4; i > 1; i--) {
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i),
+          ),
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i - 1),
+          ),
+        );
+        if (i !== 4) {
+          await folderConversations.expandFolder(
+            ExpectedConstants.newFolderWithIndexTitle(i),
+          );
+        }
+      }
+    });
+
+    await dialTest.step(
+      'Create New folder and move it into Folder4 folder',
+      async () => {
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+            2,
+          ),
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(4),
+          ),
+        );
+
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.tooManyNestedFolders,
+          ExpectedMessages.tooManyNestedFolders,
+        );
+
+        await chatBarFolderAssertion.assertRootFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
+        await toast.closeToast();
+      },
+    );
+
+    // blocked by the issue https://github.com/epam/ai-dial-chat/issues/1925
+    // await dialTest.step('Drag & drop Folder1 to Folder2 -> error appears', async () => {
+    //   await chatBar.dragAndDropEntityToFolder(
+    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(3)),
+    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(4))
+    //   );
+    //
+    //   const errorMessage = await errorToast.getElementContent();
+    //   expect
+    //     .soft(errorMessage, ExpectedMessages.notAllowedToMoveParentToChild)
+    //     .toBe(ExpectedConstants.notAllowedToMoveParentToChild);
+    //
+    //   await expect
+    //     .soft(
+    //       chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
+    //         .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
+    //         .locator('div').locator(FolderSelectors.folderName).locator('span')
+    //         .getByText(ExpectedConstants.newFolderWithIndexTitle(4), {exact: true}),
+    //       ExpectedMessages.folderIsVisible
+    //     )
+    //     .toBeVisible();
+    // });
+
+    await dialTest.step(
+      'Drag & drop Folder to Today -> error appears',
+      async () => {
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+            2,
+          ),
+          conversations.chronologyByTitle(Chronology.today),
+        );
+
+        await chatBarFolderAssertion.assertRootFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Context menu appears if to click on chat name or folder name using right mouse button',
+      async () => {
+        // Chat context menu
+        await conversations
+          .getEntityByName(firstConversation.name)
+          .click({ button: 'right' });
+        await conversationDropdownMenuAssertion.assertMenuState('visible');
+        await conversations.getEntityName(firstConversation.name).click();
+
+        // Folder context menu
+        await folderConversations
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+          .click({ button: 'right' });
+        await folderConversations
+          .getDropdownMenu()
+          .waitForState({ state: 'visible' });
+      },
+    );
+  },
+);
+
+dialTest(
+  'Menu for conversation in Replay mode\n' +
+    'Single chat can not be stored in Pinned chats section',
+  async ({
+    dialHomePage,
+    conversationData,
+    dataInjector,
+    conversations,
+    setTestIds,
+    conversationAssertion,
+    chatBar,
+    chatBarFolderAssertion,
+    conversationDropdownMenuAssertion,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-1138', 'EPMRTC-1598');
+    const conversation = conversationData.prepareDefaultConversation();
+    conversationData.resetData();
+    const replayConversation =
+      conversationData.prepareDefaultReplayConversation(conversation);
+    await dataInjector.createConversations([conversation, replayConversation]);
+    await localStorageManager.setChatCollapsedSection(
+      CollapsedSections.Organization,
+      CollapsedSections.SharedWithMe,
+    );
+    await localStorageManager.setShowSideBarPanels();
+
+    await dialTest.step(
+      'Create New conversation and send any message there',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+      },
+    );
+
+    await dialTest.step('Open menu for the conversation', async () => {
+      await conversations.openEntityDropdownMenu(
+        ExpectedConstants.replayConversation + conversation.name,
+      );
+      const expectedMenuOptions = [
+        MenuOptions.select,
+        MenuOptions.rename,
+        MenuOptions.duplicate,
+        MenuOptions.export,
+        MenuOptions.moveTo,
+        MenuOptions.delete,
+      ];
+      await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+        ...expectedMenuOptions,
+      );
+
+      const excludedMenuOptions = [
+        MenuOptions.playback,
+        MenuOptions.replay,
+        MenuOptions.share,
+        MenuOptions.publish,
+      ];
+
+      await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
+        ...excludedMenuOptions,
+      );
+    });
+
+    await dialTest.step(
+      'Create a folder -> Pinned chats section appears with New folder inside',
+      async () => {
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Move (drag& drop) chat in Pinned chats section but out of New folder -> green line appears but nothing happens',
+      async () => {
+        await chatBar.dragAndDropEntityToRoot(
+          conversations.getEntityByName(conversation.name),
+        );
+        await conversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+        await conversationAssertion.assertConversationInToday(
+          conversation.name,
+        );
       },
     );
   },

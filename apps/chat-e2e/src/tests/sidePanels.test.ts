@@ -9,47 +9,34 @@ dialTest(
   'Hide panel with chats.\n' +
     'Hide panel with prompts.\n' +
     "Browser refresh doesn't open hidden panels",
-  async ({ dialHomePage, setTestIds, chatBar, header, promptBar }) => {
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    header,
+    promptBar,
+    baseAssertion,
+  }) => {
     setTestIds('EPMRTC-352', 'EPMRTC-353', 'EPMRTC-354');
-    let isChatPanelVisible;
-    let isPromptsPanelVisible;
 
-    await dialTest.step('Hide chat panel', async () => {
+    await dialTest.step('Open chat panel', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await header.chatPanelToggle.click();
-      await expect
-        .soft(
-          chatBar.getElementLocator(),
-          ExpectedMessages.sideBarPanelIsHidden,
-        )
-        .toBeHidden();
+      await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+      await header.leftPanelToggle.click();
+      await baseAssertion.assertElementState(chatBar, 'visible');
     });
 
-    await dialTest.step('Hide prompts panel', async () => {
-      await header.promptsPanelToggle.click();
-      await expect
-        .soft(
-          promptBar.getElementLocator(),
-          ExpectedMessages.sideBarPanelIsHidden,
-        )
-        .toBeHidden();
+    await dialTest.step('Open prompts panel', async () => {
+      await header.rightPanelToggle.click();
+      await baseAssertion.assertElementState(promptBar, 'visible');
     });
 
     await dialTest.step(
       'Refresh page and verify both panels are hidden',
       async () => {
         await dialHomePage.reloadPage();
-        isChatPanelVisible = await chatBar.isVisible();
-        isPromptsPanelVisible = await promptBar.isVisible();
-        for (const isPanelVisible of [
-          isChatPanelVisible,
-          isPromptsPanelVisible,
-        ]) {
-          expect
-            .soft(isPanelVisible, ExpectedMessages.sideBarPanelIsHidden)
-            .toBeFalsy();
-        }
+        await baseAssertion.assertElementState(chatBar, 'visible');
+        await baseAssertion.assertElementState(promptBar, 'visible');
       },
     );
   },
@@ -68,11 +55,20 @@ dialTest(
     promptBar,
     header,
     tooltip,
+    conversationData,
+    dataInjector,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1642', 'EPMRTC-1650', 'EPMRTC-1641', 'EPMRTC-1647');
     let appBounding;
     let maxChatBarBounding;
     let maxPromptBarBounding;
+
+    await dialTest.step('Prepare conversation with the history', async () => {
+      const conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
+    });
 
     await dialTest.step(
       'Open app, hover over resize chat panel icon and verify it is highlighted',
@@ -169,8 +165,8 @@ dialTest(
       async () => {
         maxChatBarBounding = await chatBar.getElementBoundingBox();
         for (let i = 1; i <= 2; i++) {
-          await header.chatPanelToggle.click();
-          await header.promptsPanelToggle.click();
+          await header.leftPanelToggle.click();
+          await header.rightPanelToggle.click();
         }
         const openedChatBarPanelBounding =
           await chatBar.getElementBoundingBox();

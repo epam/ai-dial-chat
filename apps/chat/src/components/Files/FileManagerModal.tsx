@@ -1,44 +1,66 @@
 import { useId } from '@floating-ui/react';
-import { IconDownload, IconTrash } from '@tabler/icons-react';
+import { IconDownload, IconTrashX } from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getDialFilesWithInvalidFileType,
-  getShortExtentionsListFromMimeType,
+  getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
+import {
+  getParentFolderIdsFromFolderId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
+import { areEntitiesBucketsTheSame, getFileRootId } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import {
+  PublishedWithMeFilter,
+  SharedWithMeFilters,
+  defaultMyItemsFilters,
+} from '@/src/utils/app/search';
 
-import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
-import Modal from '@/src/components/Common/Modal';
-import Folder from '@/src/components/Folder/Folder';
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+import {
+  ORGANIZATION_SECTION_NAME,
+  SHARED_WITH_ME_SECTION_NAME,
+} from '@/src/constants/sections';
 
-import FolderPlus from '../../../public/images/icons/folder-plus.svg';
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import { ErrorMessage } from '../Common/ErrorMessage';
-import { NoData } from '../Common/NoData';
-import { NoResultsFound } from '../Common/NoResultsFound';
-import { Spinner } from '../Common/Spinner';
-import Tooltip from '../Common/Tooltip';
+import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
+import { Modal } from '@/src/components/Common/Modal';
+import { NoData } from '@/src/components/Common/NoData';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { Folder } from '@/src/components/Folder/Folder';
+
 import { FileItem, FileItemEventIds } from './FileItem';
+import { FilesSectionWrapper } from './FilesSectionWrapper';
 import { PreUploadDialog } from './PreUploadModal';
+import { ReviewBucketFilesSection } from './ReviewBucketFilesSection';
 
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import uniq from 'lodash-es/uniq';
+
+const sectionWrapperToggleClasses = 'sticky top-0 z-10 bg-layer-3';
 
 interface Props {
   isOpen: boolean;
@@ -53,6 +75,8 @@ interface Props {
   forceShowSelectCheckBox?: boolean;
   forceHideSelectFolders?: boolean;
   showTooltip?: boolean;
+  sourceFilters?: Set<FileSourceType>;
+  warningMessage?: string;
 }
 
 export const FileManagerModal = ({
@@ -68,6 +92,8 @@ export const FileManagerModal = ({
   forceHideSelectFolders,
   onClose,
   showTooltip,
+  sourceFilters,
+  warningMessage,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -76,14 +102,63 @@ export const FileManagerModal = ({
   const headingId = useId();
   const descriptionId = useId();
 
-  const folders = useAppSelector(FilesSelectors.selectFolders);
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const areFoldersLoading = useAppSelector(
-    FilesSelectors.selectAreFoldersLoading,
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isUnshare, setIsUnshare] = useState(false);
+  const [areHiddenItemsVisible, setAreHiddenItemsVisible] = useState(false);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
   );
+  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
+  );
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+  const files = useAppSelector(FilesSelectors.selectFiles);
+
+  const myRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(
+      state,
+      defaultMyItemsFilters,
+      searchQuery,
+    ),
+  );
+  const organizationRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(
+      state,
+      PublishedWithMeFilter,
+      searchQuery,
+    ),
+  );
+  const sharedWithMeRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(state, SharedWithMeFilters, searchQuery),
+  );
+
+  const myRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      defaultMyItemsFilters,
+      searchQuery,
+      areHiddenItemsVisible,
+    ),
+  );
+  const organizationRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      PublishedWithMeFilter,
+      searchQuery,
+      areHiddenItemsVisible,
+    ),
+  );
+  const sharedWithMeRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      SharedWithMeFilters,
+      searchQuery,
+      areHiddenItemsVisible,
+    ),
+  );
+  const areFoldersLoading = useAppSelector(
+    FilesSelectors.selectAreFoldersLoading,
   );
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
@@ -91,31 +166,57 @@ export const FileManagerModal = ({
   const canAttachFolders =
     useAppSelector(ConversationsSelectors.selectCanAttachFolders) &&
     !forceHideSelectFolders;
-  const allowedTypesArray = useMemo(
-    () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
-    [allowedTypes, canAttachFiles, canAttachFolders],
+  const lastRenamedParentFolder = useAppSelector(
+    FilesSelectors.selectLastRenamedParentFolder,
   );
+  const {
+    partialChosenFolderIds: partiallySelectedFolderIds,
+    fullyChosenFolderIds: selectedFolderIds,
+  } = useAppSelector(FilesSelectors.selectChosenFolderIds);
+  const selectedFilesIds = useAppSelector(FilesSelectors.selectChosenItems);
+
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
-  const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
     getFileRootId(),
   );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilesIds, setSelectedFilesIds] = useState(
-    canAttachFiles || forceShowSelectCheckBox
-      ? initialSelectedFilesIds.filter((id) => !isFolderId(id))
-      : [],
-  );
-  const [selectedFolderIds, setSelectedFolderIds] = useState(
-    canAttachFolders
-      ? initialSelectedFilesIds.filter((id) => isFolderId(id))
-      : [],
-  );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
   const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
+
+  const handleSelectFiles = useCallback(
+    (ids: string[]) => {
+      dispatch(FilesActions.setChosenFiles({ ids }));
+    },
+    [dispatch],
+  );
+
+  const handleSelectFolder = useCallback(
+    (folderId: string) => {
+      dispatch(FilesActions.setChosenFolder({ folderId }));
+    },
+    [dispatch],
+  );
+
+  useEffect(() => {
+    if (lastRenamedParentFolder?.newId) {
+      setOpenedFoldersIds((prev) =>
+        prev.map((id) => {
+          if (id === lastRenamedParentFolder.oldId)
+            return lastRenamedParentFolder.newId;
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+            return updateMovedFolderId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+          return id;
+        }),
+      );
+      dispatch(FilesActions.resetLastRenamedParentFolder());
+    }
+  }, [dispatch, lastRenamedParentFolder]);
 
   const highlightFolderIds = useMemo(() => {
     return uniq(
@@ -138,23 +239,19 @@ export const FileManagerModal = ({
     getFileRootId(),
     setErrorMessage,
     setOpenedFoldersIds,
-    setIsAllFilesOpened,
   );
 
-  const filteredFiles = useMemo(() => {
-    return files.filter(
-      ({ name, isPublicationFile }) =>
-        name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !isPublicationFile,
-    );
-  }, [files, searchQuery]);
+  const allowedTypesArray = useMemo(
+    () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
+    [allowedTypes, canAttachFiles, canAttachFolders],
+  );
 
   const allowedExtensions = useMemo(() => {
     if (allowedTypesArray.includes('*/*')) {
       return [t('all')];
     }
 
-    return getShortExtentionsListFromMimeType(allowedTypesArray, t);
+    return getShortExtensionsListFromMimeType(allowedTypesArray, t);
   }, [allowedTypesArray, t]);
 
   const typesLabel = useMemo(() => {
@@ -172,12 +269,35 @@ export const FileManagerModal = ({
 
   const showSpinner = folders.length === 0 && areFoldersLoading;
 
+  const isNothingExists =
+    !myRootFolders.length &&
+    !myRootFiles.length &&
+    !organizationRootFolders.length &&
+    !organizationRootFiles.length &&
+    !sharedWithMeRootFolders.length &&
+    !sharedWithMeRootFiles.length;
+
+  const showNoResult = searchQuery !== '' && isNothingExists;
+
   useEffect(() => {
     if (isOpen) {
+      dispatch(FilesActions.resetAllFoldersStatus());
       dispatch(FilesActions.getFilesWithFolders({}));
       dispatch(FilesActions.resetNewFolderId());
     }
+
+    return () => {
+      dispatch(FilesActions.resetChosenFiles());
+    };
   }, [dispatch, isOpen]);
+
+  useEffect(() => {
+    if (isOpen && initialSelectedFilesIds.length) {
+      dispatch(
+        FilesActions.setChosenFilesAndFolders({ ids: initialSelectedFilesIds }),
+      );
+    }
+  }, [isOpen, initialSelectedFilesIds, dispatch]);
 
   const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -212,67 +332,6 @@ export const FileManagerModal = ({
     setDeletingFolderIds(selectedFolderIds);
   }, [selectedFilesIds, selectedFolderIds]);
 
-  const handleFolderToggle = useCallback(
-    (folderId: string) => {
-      const parentFolderIds = getParentFolderIdsFromFolderId(folderId)
-        .slice(0, -2)
-        .map((fid) => `${fid}/`);
-      // selected now
-      if (selectedFolderIds.some((fid) => parentFolderIds.includes(fid))) {
-        setSelectedFilesIds((oldFileIds) =>
-          !canAttachFiles
-            ? []
-            : oldFileIds.concat(
-                files
-                  .filter((file) =>
-                    parentFolderIds.some((parentId) =>
-                      file.id.startsWith(parentId),
-                    ),
-                  )
-                  .map((f) => f.id),
-              ),
-        );
-        setSelectedFolderIds((oldFolderIds) => {
-          const parentSelectedFolderIds = selectedFolderIds.filter((fid) =>
-            parentFolderIds.includes(fid),
-          );
-          return oldFolderIds
-            .concat(
-              folders
-                .filter((folder) =>
-                  parentSelectedFolderIds.some((parentId) =>
-                    folder.id.startsWith(parentId),
-                  ),
-                )
-                .map((f) => `${f.id}/`),
-            )
-            .filter(
-              (oldFolderId) =>
-                oldFolderId !== folderId &&
-                !parentFolderIds.includes(oldFolderId),
-            );
-        });
-      } else {
-        setSelectedFolderIds((oldValues) => {
-          if (oldValues.includes(folderId)) {
-            return oldValues.filter((oldValue) => oldValue !== folderId);
-          }
-          setSelectedFilesIds((oldFileIds) =>
-            !canAttachFiles
-              ? []
-              : oldFileIds.filter(
-                  (oldFileId) => !oldFileId.startsWith(folderId),
-                ),
-          );
-          return oldValues
-            .filter((oldFolderId) => !oldFolderId.startsWith(folderId))
-            .concat(folderId);
-        });
-      }
-    },
-    [canAttachFiles, files, folders, selectedFolderIds],
-  );
-
   const handleItemCallback = useCallback(
     (eventId: string, data: unknown) => {
       if (typeof data !== 'string') {
@@ -280,52 +339,11 @@ export const FileManagerModal = ({
       }
 
       switch (eventId) {
+        case FileItemEventIds.Toggle:
+          handleSelectFiles([data]);
+          break;
         case FileItemEventIds.Retry:
           dispatch(FilesActions.reuploadFile({ fileId: data }));
-          break;
-        case FileItemEventIds.Toggle:
-          {
-            const parentFolderIds = getParentFolderIdsFromFolderId(data)
-              .slice(0, -1)
-              .map((fid) => `${fid}/`);
-            if (
-              selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
-            ) {
-              setSelectedFilesIds((oldFileIds) =>
-                oldFileIds.concat(
-                  files
-                    .filter((file) =>
-                      selectedFolderIds.some((parentId) =>
-                        file.id.startsWith(parentId),
-                      ),
-                    )
-                    .map((f) => f.id),
-                ),
-              );
-              setSelectedFolderIds((oldFolderIds) => {
-                return oldFolderIds
-                  .concat(
-                    folders
-                      .filter((folder) =>
-                        parentFolderIds.some((parentId) =>
-                          folder.id.startsWith(parentId),
-                        ),
-                      )
-                      .map((f) => `${f.id}/`),
-                  )
-                  .filter(
-                    (oldFolderId) => !parentFolderIds.includes(oldFolderId),
-                  );
-              });
-            }
-            setSelectedFilesIds((oldValues) => {
-              if (oldValues.includes(data)) {
-                return oldValues.filter((oldValue) => oldValue !== data);
-              }
-
-              return oldValues.concat(data);
-            });
-          }
           break;
         case FileItemEventIds.Cancel:
           dispatch(FilesActions.deleteFile({ fileId: data }));
@@ -333,11 +351,15 @@ export const FileManagerModal = ({
         case FileItemEventIds.Delete:
           setDeletingFileIds([data]);
           break;
+        case FileItemEventIds.Unshare:
+          setDeletingFileIds([data]);
+          setIsUnshare(true);
+          break;
         default:
           break;
       }
     },
-    [dispatch, files, folders, selectedFolderIds],
+    [dispatch, handleSelectFiles],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -349,7 +371,7 @@ export const FileManagerModal = ({
             maxAttachmentsAmount: maximumAttachmentsAmount,
             selectedAttachmentsAmount: selectedFilesIds.length,
           },
-        ) as string,
+        ),
       );
       return;
     }
@@ -364,18 +386,32 @@ export const FileManagerModal = ({
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
         t(
-          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
           {
             incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
           },
-        ) as string,
+        ),
       );
       return;
     }
 
-    onClose([...selectedFolderIds, ...selectedFilesIds]);
+    const result: string[] = [];
+
+    if (canAttachFolders) {
+      result.push(...selectedFolderIds);
+    }
+    result.push(
+      ...selectedFilesIds.filter((id) =>
+        canAttachFolders
+          ? !selectedFolderIds.some((folderId) => id.startsWith(folderId))
+          : true,
+      ),
+    );
+
+    onClose(uniq(result));
   }, [
     allowedTypesArray,
+    canAttachFolders,
     files,
     maximumAttachmentsAmount,
     onClose,
@@ -395,9 +431,7 @@ export const FileManagerModal = ({
       folderPath: string | undefined,
     ) => {
       if (canAttachFiles || forceShowSelectCheckBox) {
-        setSelectedFilesIds((oldValues) =>
-          oldValues.concat(selectedFiles.map((f) => f.id)),
-        );
+        handleSelectFiles(selectedFiles.map((f) => f.id));
       }
 
       selectedFiles.forEach((file) => {
@@ -411,7 +445,20 @@ export const FileManagerModal = ({
         );
       });
     },
-    [canAttachFiles, dispatch, forceShowSelectCheckBox],
+    [canAttachFiles, dispatch, handleSelectFiles, forceShowSelectCheckBox],
+  );
+
+  const handleDiscardSharedWithMeFolder = useCallback(
+    (folderId: string) => {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: [folderId],
+          featureType: FeatureType.File,
+          isFolder: true,
+        }),
+      );
+    },
+    [dispatch],
   );
 
   const handleDeleteMultipleFiles = useCallback(() => {
@@ -419,16 +466,36 @@ export const FileManagerModal = ({
       return;
     }
     if (deletingFileIds.length) {
+      const sharedWithMeFilesIds = sharedWithMeRootFiles
+        .filter(({ id }) => deletingFileIds.includes(id))
+        .map(({ id }) => id);
+
+      if (sharedWithMeFilesIds.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: sharedWithMeFilesIds,
+            featureType: FeatureType.File,
+          }),
+        );
+      }
       dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
       if (selectedFilesIds === deletingFileIds) {
-        setSelectedFilesIds([]);
+        dispatch(FilesActions.resetChosenFiles());
       }
     }
     if (deletingFolderIds.length) {
       // TODO: implement
       // dispatch(FilesActions.deleteFolderList({ folderIds: deletingFolderIds }));
-      if (selectedFolderIds === deletingFolderIds) {
-        setSelectedFolderIds([]);
+      const sharedWithMeFoldersIds = sharedWithMeRootFolders
+        .filter(({ id }) => deletingFolderIds.includes(id))
+        .map(({ id }) => id);
+      if (sharedWithMeFoldersIds.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: sharedWithMeFoldersIds,
+            featureType: FeatureType.File,
+          }),
+        );
       }
     }
   }, [
@@ -436,7 +503,8 @@ export const FileManagerModal = ({
     deletingFolderIds,
     dispatch,
     selectedFilesIds,
-    selectedFolderIds,
+    sharedWithMeRootFiles,
+    sharedWithMeRootFolders,
   ]);
 
   const handleDownloadMultipleFiles = useCallback(() => {
@@ -447,6 +515,40 @@ export const FileManagerModal = ({
     dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
   }, [dispatch, selectedFilesIds]);
 
+  const handleToggleHiddenItems = useCallback(
+    () => setAreHiddenItemsVisible((prev) => !prev),
+    [],
+  );
+
+  const additionalItemData: AdditionalItemData = useMemo(
+    () => ({
+      selectedFilesIds,
+      selectedFolderIds,
+      partialSelectedFolderIds: partiallySelectedFolderIds,
+      canAttachFiles: canAttachFiles || forceShowSelectCheckBox,
+    }),
+    [
+      canAttachFiles,
+      partiallySelectedFolderIds,
+      selectedFilesIds,
+      selectedFolderIds,
+      forceShowSelectCheckBox,
+    ],
+  );
+
+  const firstPublicationResourceReviewUrl =
+    selectedPublication?.resources.at(0)?.reviewUrl;
+  const someReviewBucketFileSelected =
+    !!firstPublicationResourceReviewUrl &&
+    selectedFilesIds.some((id) =>
+      areEntitiesBucketsTheSame(id, firstPublicationResourceReviewUrl),
+    );
+  const somePublicFileSelected = selectedFilesIds.some((id) =>
+    isEntityIdPublic({ id }),
+  );
+  const isDeleteDisabled =
+    somePublicFileSelected || someReviewBucketFileSelected;
+
   return (
     <Modal
       portalId="theme-main"
@@ -454,7 +556,7 @@ export const FileManagerModal = ({
       onClose={() => onClose(false)}
       dataQa="file-manager-modal"
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 md:p-6">
         <div className="flex justify-between">
@@ -465,7 +567,7 @@ export const FileManagerModal = ({
         {(canAttachFiles || forceShowSelectCheckBox) && (
           <p id={descriptionId} data-qa="supported-attributes">
             {t(
-              'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+              'Maximum size: 512 MB. Supported types: {{allowedExtensions}}.',
               {
                 allowedExtensions:
                   typesLabel ||
@@ -476,13 +578,16 @@ export const FileManagerModal = ({
             &nbsp;
             {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
               !!maximumAttachmentsAmount &&
-              t('Max selected files is {{maxAttachmentsAmount}}.', {
+              t('Up to {{maxAttachmentsAmount}} files.', {
                 maxAttachmentsAmount: maximumAttachmentsAmount,
               })}
           </p>
         )}
 
-        <ErrorMessage error={errorMessage} />
+        <ErrorMessage
+          error={warningMessage || errorMessage}
+          type={warningMessage ? 'warning' : 'error'}
+        />
 
         {showSpinner ? (
           <div className="flex items-center justify-center py-10">
@@ -492,137 +597,233 @@ export const FileManagerModal = ({
           <div className="group/modal flex flex-col gap-2 overflow-auto">
             <input
               name="titleInput"
-              placeholder={t('Search files') || ''}
+              placeholder={t('Search files')}
               type="text"
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+              data-qa="search"
             ></input>
-            <div
-              className="flex min-h-[350px] flex-col overflow-auto"
-              data-qa="all-files"
-            >
-              <button
-                className={classNames(
-                  'flex items-center gap-1 rounded py-1 text-xs ',
-                  selectedFilesIds.length > 0 || selectedFolderIds.length > 0
-                    ? 'text-accent-primary'
-                    : 'text-secondary',
-                )}
-                onClick={() => handleToggleFolder(getFileRootId())}
-              >
-                <CaretIconComponent isOpen={isAllFilesOpened} />
-                {t('All files')}
-              </button>
-              {isAllFilesOpened && (
-                <div className="flex grow flex-col gap-0.5 overflow-auto">
-                  {searchQuery !== '' &&
-                  folders.every(
-                    (folder) =>
-                      !folder.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()),
-                  ) &&
-                  filteredFiles.every(
-                    (file) =>
-                      !file.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()),
-                  ) ? (
-                    <div className="my-auto">
-                      <NoResultsFound />
-                    </div>
-                  ) : folders.length === 0 && filteredFiles.length === 0 ? (
-                    <div className="my-auto">
-                      <NoData />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-1 overflow-auto">
-                      {folders.map((folder) => {
-                        if (!isRootId(folder.folderId)) {
-                          return null;
-                        }
-                        return (
-                          <div key={folder.id}>
-                            <Folder
-                              searchTerm={searchQuery}
-                              currentFolder={folder}
-                              allFolders={folders}
-                              highlightedFolders={highlightFolderIds}
-                              isInitialRenameEnabled
-                              newAddedFolderId={newFolderId}
-                              loadingFolderIds={loadingFolderIds}
-                              openedFoldersIds={openedFoldersIds}
-                              allItems={filteredFiles}
-                              additionalItemData={{
-                                selectedFilesIds,
-                                selectedFolderIds,
-                                canAttachFiles:
-                                  canAttachFiles || forceShowSelectCheckBox,
-                              }}
-                              itemComponent={FileItem}
-                              onClickFolder={handleFolderSelect}
-                              onAddFolder={handleAddFolder}
-                              onFileUpload={handleUploadFile}
-                              onRenameFolder={handleRenameFolder}
-                              skipFolderRenameValidation
-                              onItemEvent={handleItemCallback}
-                              withBorderHighlight={false}
-                              featureType={FeatureType.File}
-                              canSelectFolders={canAttachFolders}
-                              showTooltip={showTooltip}
-                              onSelectFolder={handleFolderToggle}
-                            />
-                          </div>
-                        );
-                      })}
-                      {filteredFiles.map((file) => {
-                        if (!isRootId(file.folderId)) {
-                          return null;
-                        }
-                        return (
-                          <div key={file.id}>
-                            <FileItem
-                              item={file}
-                              level={0}
-                              additionalItemData={{
-                                selectedFolderIds,
-                                selectedFilesIds,
-                                canAttachFiles:
-                                  canAttachFiles || forceShowSelectCheckBox,
-                              }}
-                              onEvent={handleItemCallback}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+            <div className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto">
+              {(isNothingExists || showNoResult) && (
+                <div className="flex grow flex-col justify-center">
+                  {showNoResult ? <NoResultsFound /> : <NoData />}
                 </div>
               )}
+              <FilesSectionWrapper
+                name={ORGANIZATION_SECTION_NAME}
+                dataQa="organization-files"
+                folders={organizationRootFolders}
+                files={organizationRootFiles}
+                sourceType={FileSourceType.PUBLIC}
+                filters={sourceFilters}
+                toggleClassName={sectionWrapperToggleClasses}
+              >
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {organizationRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        showTechnicalFolders={areHiddenItemsVisible}
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        isInitialRenameEnabled
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={additionalItemData}
+                        itemComponent={(props) => (
+                          <FileItem {...props} onEvent={handleItemCallback} />
+                        )}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders || canAttachFiles}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleSelectFolder}
+                        onShowError={setErrorMessage}
+                      />
+                    );
+                  })}
+                  {organizationRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={additionalItemData}
+                        onEvent={handleItemCallback}
+                      />
+                    );
+                  })}
+                </div>
+              </FilesSectionWrapper>
+
+              <FilesSectionWrapper
+                name={SHARED_WITH_ME_SECTION_NAME}
+                dataQa="shared-with-me-files"
+                folders={sharedWithMeRootFolders}
+                files={sharedWithMeRootFiles}
+                sourceType={FileSourceType.SHARED_WITH_ME}
+                filters={sourceFilters}
+                toggleClassName={sectionWrapperToggleClasses}
+              >
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {sharedWithMeRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        showTechnicalFolders={areHiddenItemsVisible}
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={additionalItemData}
+                        itemComponent={FileItem}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders || canAttachFiles}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleSelectFolder}
+                        onUnshareFolder={handleDiscardSharedWithMeFolder}
+                        onShowError={setErrorMessage}
+                      />
+                    );
+                  })}
+                  {sharedWithMeRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={additionalItemData}
+                        onEvent={handleItemCallback}
+                      />
+                    );
+                  })}
+                </div>
+              </FilesSectionWrapper>
+
+              <ReviewBucketFilesSection
+                searchQuery={searchQuery}
+                highlightFolderIds={highlightFolderIds}
+                additionalItemData={{
+                  selectedFilesIds,
+                  selectedFolderIds,
+                  canAttachFiles: canAttachFiles || forceShowSelectCheckBox,
+                }}
+                openedFoldersIds={openedFoldersIds}
+                onItemEvent={handleItemCallback}
+                onClickFolder={handleFolderSelect}
+                canAttachFolders={canAttachFolders}
+                onToggleFolder={handleSelectFolder}
+              />
+
+              <FilesSectionWrapper
+                name={t('All files')}
+                dataQa="all-files"
+                folders={myRootFolders}
+                files={myRootFiles}
+                sourceType={FileSourceType.MY_FILES}
+                filters={sourceFilters}
+                toggleClassName={sectionWrapperToggleClasses}
+              >
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {myRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        showTechnicalFolders={areHiddenItemsVisible}
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        isInitialRenameEnabled
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={additionalItemData}
+                        itemComponent={FileItem}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders || canAttachFiles}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleSelectFolder}
+                        onShowError={setErrorMessage}
+                      />
+                    );
+                  })}
+                  {myRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={additionalItemData}
+                        onEvent={handleItemCallback}
+                      />
+                    );
+                  })}
+                </div>
+              </FilesSectionWrapper>
             </div>
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between border-t border-primary px-3 py-4 md:px-6 md:py-4">
+      <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6 md:py-4">
         <div className="flex items-center justify-center gap-2">
-          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
+          {selectedFilesIds.length > 0 && (
             <button
               onClick={handleStartDeleteMultipleFiles}
-              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              disabled={isDeleteDisabled}
+              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
               data-qa="delete-files"
             >
-              <Tooltip tooltip="Delete files" isTriggerClickable>
-                <IconTrash size={24} />
+              <Tooltip
+                tooltip={t(
+                  somePublicFileSelected
+                    ? 'It is forbidden to delete files from Organization'
+                    : someReviewBucketFileSelected
+                      ? 'It is forbidden to delete files from the "Review files" section'
+                      : 'Delete files',
+                )}
+                isTriggerClickable
+              >
+                <IconTrashX size={24} />
               </Tooltip>
             </button>
           )}
-          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
+          {selectedFilesIds.length > 0 && (
             <button
               onClick={handleDownloadMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               data-qa="download-files"
             >
-              <Tooltip tooltip="Download files" isTriggerClickable>
+              <Tooltip tooltip={t('Download files')} isTriggerClickable>
                 <IconDownload size={24} />
               </Tooltip>
             </button>
@@ -633,9 +834,15 @@ export const FileManagerModal = ({
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               data-qa="new-folder"
             >
-              <FolderPlus height={24} width={24} />
+              <Tooltip tooltip={t('Create new folder')} isTriggerClickable>
+                <FolderPlus height={24} width={24} />
+              </Tooltip>
             </button>
           )}
+          <HiddenItemsToggler
+            onClick={handleToggleHiddenItems}
+            areItemsVisible={areHiddenItemsVisible}
+          />
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -681,7 +888,8 @@ export const FileManagerModal = ({
         isOpen={!!deletingFileIds.length || !!deletingFolderIds.length}
         heading={t(
           [
-            'Confirm deleting ',
+            'Confirm ',
+            isUnshare ? 'unsharing ' : 'deleting ',
             deletingFolderIds.length > 0
               ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
               : '',
@@ -693,27 +901,26 @@ export const FileManagerModal = ({
               : '',
           ].join(''),
         )}
-        description={
-          t(
-            [
-              'Are you sure that you want to delete ',
-              deletingFileIds.length + deletingFolderIds.length > 1
-                ? 'these '
-                : 'this ',
-              deletingFolderIds.length > 0
-                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
-                : '',
-              deletingFileIds.length > 0 && deletingFolderIds.length > 0
-                ? ' and '
-                : '',
-              deletingFileIds.length > 0
-                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
-                : '',
-              '?',
-            ].join(''),
-          ) || ''
-        }
-        confirmLabel={t('Delete')}
+        description={t(
+          [
+            'Are you sure that you want to ',
+            isUnshare ? 'unshare ' : 'delete ',
+            deletingFileIds.length + deletingFolderIds.length > 1
+              ? 'these '
+              : 'this ',
+            deletingFolderIds.length > 0
+              ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+              : '',
+            deletingFileIds.length > 0 && deletingFolderIds.length > 0
+              ? ' and '
+              : '',
+            deletingFileIds.length > 0
+              ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+              : '',
+            '?',
+          ].join(''),
+        )}
+        confirmLabel={t(isUnshare ? 'Unshare' : 'Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           if (result) {
@@ -721,6 +928,7 @@ export const FileManagerModal = ({
           }
           setDeletingFileIds([]);
           setDeletingFolderIds([]);
+          setIsUnshare(false);
         }}
       />
     </Modal>

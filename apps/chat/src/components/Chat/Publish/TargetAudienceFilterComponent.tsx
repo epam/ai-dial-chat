@@ -1,9 +1,9 @@
 import { IconCheck, IconX } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { translate } from '@/src/utils/app/translation';
@@ -16,10 +16,11 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import Modal from '../../Common/Modal';
-import { MultipleComboBox } from '../../Common/MultipleComboBox';
+import { Modal } from '@/src/components/Common/Modal';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 
@@ -215,7 +216,7 @@ export function TargetAudienceFilterComponent({
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
-                  placeholder={t('Enter one or more options...') as string}
+                  placeholder={t('Enter one or more options...')}
                 />
               )}
             </div>
@@ -236,7 +237,7 @@ export function TargetAudienceFilterComponent({
   }
 
   return (
-    <div className="flex gap-[1px]" data-qa="publish-audience-filter-selectors">
+    <div className="flex gap-px" data-qa="publish-audience-filter-selectors">
       <RulesSelect
         menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
@@ -246,7 +247,7 @@ export function TargetAudienceFilterComponent({
         id="targets"
       />
       <RulesSelect
-        menuClassName="max-w-full italic"
+        menuClassName="max-w-full italic md:max-w-[100px]"
         // TODO: uncomment when it will be supported on core
         // menuClassName={classNames(
         //   'max-w-full italic',
@@ -266,11 +267,13 @@ export function TargetAudienceFilterComponent({
         />
       ) : (
         <MultipleComboBox
+          className="!bg-layer-3"
           initialSelectedItems={filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
-          placeholder={t('Enter one or more options...') as string}
+          fontSize="text-xs"
+          placeholder={t('Enter one or more options...')}
         />
       )}
       {/* } */}

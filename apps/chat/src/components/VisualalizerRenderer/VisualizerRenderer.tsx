@@ -1,29 +1,30 @@
 import { IconRefresh } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { Role } from '@/src/types/chat';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
 
-import { Spinner } from '../Common/Spinner';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import {
   AttachmentData,
   CustomVisualizerDataLayout,
+  Role,
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
@@ -53,6 +54,8 @@ export const VisualizerRenderer = ({
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
   );
+
+  const themeId = useAppSelector(UISelectors.selectThemeState);
 
   const customAttachmentData = useAppSelector((state) =>
     ConversationsSelectors.selectCustomAttachmentData(state, attachmentUrl),
@@ -84,11 +87,13 @@ export const VisualizerRenderer = ({
       ...customAttachmentData?.layout,
       width: scrollWidth
         ? scrollWidth
-        : customAttachmentData?.layout.width ?? DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
+        : (customAttachmentData?.layout.width ??
+          DEFAULT_CUSTOM_ATTACHMENT_WIDTH),
       height:
         customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+      themeId,
     };
-  }, [customAttachmentData?.layout, scrollWidth]);
+  }, [customAttachmentData?.layout, scrollWidth, themeId]);
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {

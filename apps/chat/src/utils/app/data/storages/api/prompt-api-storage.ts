@@ -2,19 +2,18 @@ import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanPrompt } from '@/src/utils/app/clean';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
-import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
-import { ApiKeys, Entity, UploadStatus } from '@/src/types/common';
+import { ApiKeys } from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { RootState } from '@/src/types/store';
 
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/selectors';
 
 import { ApiEntityStorage } from './api-entity-storage';
 
-import { RootState } from '@/src/store';
+import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
 export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
   mergeGetResult(info: Entity, entity: Prompt): Prompt {
@@ -37,22 +36,21 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
   }
 }
 
-export const getOrUploadPrompt = (
-  payload: { id: string },
+export const getOrUploadPrompt = <T extends { id: string }>(
+  payload: T,
   state: RootState,
 ): Observable<{
   prompt: Prompt | null;
-  payload: { id: string };
+  payload: T;
+  wasUploaded: boolean;
 }> => {
-  const prompt = PromptsSelectors.selectPrompt(state, payload.id);
+  let prompt = PromptsSelectors.selectPrompt(state, payload.id);
 
-  if (prompt?.status !== UploadStatus.LOADED) {
-    const { apiKey, bucket, name, parentPath } = splitEntityId(payload.id);
-    const prompt = regeneratePromptId({
-      name,
-      folderId: constructPath(apiKey, bucket, parentPath),
-    });
+  if (!prompt) {
+    prompt = getPromptInfoFromId(payload.id);
+  }
 
+  if (prompt && prompt?.status !== UploadStatus.LOADED) {
     return forkJoin({
       prompt: PromptService.getPrompt(prompt).pipe(
         catchError((err) => {
@@ -61,11 +59,13 @@ export const getOrUploadPrompt = (
         }),
       ),
       payload: of(payload),
+      wasUploaded: of(true),
     });
   } else {
-    return forkJoin({
-      prompt: of(prompt),
-      payload: of(payload),
+    return of({
+      prompt: prompt ?? null,
+      payload: payload,
+      wasUploaded: false,
     });
   }
 };

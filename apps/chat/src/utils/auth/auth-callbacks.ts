@@ -1,15 +1,82 @@
 import { Account, CallbacksOptions, Profile, Session } from 'next-auth';
 import { TokenEndpointHandler } from 'next-auth/providers';
 
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { logger } from '@/src/utils/server/logger';
+
 import { Token } from '@/src/types/auth';
 
-import { logger } from '../server/logger';
+import { safeParseJSON } from '../json';
 import NextClient, { RefreshToken } from './nextauth-client';
 
-import { JWTPayload, decodeJwt } from 'jose';
+import { Feature } from '@epam/ai-dial-shared';
+import { decodeJwt } from 'jose';
+import get from 'lodash-es/get';
+import intersection from 'lodash-es/intersection';
+import snakeCase from 'lodash-es/snakeCase';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
+
+const safeDecodeJwt = (accessToken: string) => {
+  try {
+    return decodeJwt(accessToken);
+  } catch (err) {
+    console.error("Token couldn't be parsed as JWT", err);
+    // TODO: read roles from GCP token format
+    return {};
+  }
+};
+
+const getUser = (accessToken: string | undefined, providerId: string) => {
+  const rolesFieldName =
+    process.env[
+      `AUTH_${snakeCase(providerId).toUpperCase()}_DIAL_ROLES_FIELD`
+    ] ??
+    process.env.DIAL_ROLES_FIELD ??
+    'dial_roles';
+  const adminRoleNames = parseCommaSeparatedList(
+    process.env[
+      `AUTH_${snakeCase(providerId).toUpperCase()}_ADMIN_ROLE_NAMES`
+    ] ?? process.env.ADMIN_ROLE_NAMES,
+    ['admin'],
+  );
+  const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
+  const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
+  const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
+  const isAdmin =
+    roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
+
+  const enabledFeaturesRoles = safeParseJSON(
+    process.env.ENABLED_FEATURES_ROLES?.replaceAll('\\"', '"'),
+    'Error when parsing ENABLED_FEATURES_ROLES',
+    logger,
+  );
+
+  const featureFlags = Array.from(Object.values(Feature)).reduce(
+    (flags, feature) => {
+      const featureRoles = enabledFeaturesRoles[feature];
+      if (featureRoles) {
+        const featureRolesArr = Array.isArray(featureRoles)
+          ? featureRoles
+          : parseCommaSeparatedList(featureRoles);
+        if (
+          featureRolesArr.length &&
+          !intersection(featureRolesArr, roles).length
+        ) {
+          flags[feature] = false;
+        }
+      }
+      return flags;
+    },
+    {} as Record<Feature, boolean>,
+  );
+
+  return {
+    isAdmin,
+    ...featureFlags,
+  };
+};
 
 // Need to be set for all providers
 export const tokenConfig: TokenEndpointHandler = {
@@ -59,7 +126,7 @@ async function refreshAccessToken(token: Token) {
 
       if (!refresh || !refresh.isRefreshing) {
         const localToken: RefreshToken = refresh || {
-          isRefreshing: true,
+          isRefreshing: false,
           token,
         };
         if (
@@ -69,7 +136,10 @@ async function refreshAccessToken(token: Token) {
           return localToken.token;
         }
 
-        NextClient.setIsRefreshTokenStart(token.userId, localToken);
+        NextClient.setIsRefreshTokenStart(token.userId, {
+          token: localToken.token,
+          isRefreshing: true,
+        });
         break;
       }
 
@@ -101,11 +171,12 @@ async function refreshAccessToken(token: Token) {
     }
 
     if (!refreshedTokens.refresh_token && !token.refreshToken) {
-      throw new Error(`No refresh tokens exists`);
+      throw new Error('No refresh tokens exists');
     }
 
     const returnToken = {
       ...token,
+      user: getUser(refreshedTokens.access_token, token.providerId),
       access_token: refreshedTokens.access_token,
       accessTokenExpires: refreshedTokens.expires_in
         ? Date.now() + refreshedTokens.expires_in * 1000
@@ -138,14 +209,9 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
-      const decodedPayload: JWTPayload & Partial<{ dial_roles: string[] }> =
-        options.account.access_token
-          ? decodeJwt(options.account.access_token)
-          : {};
-
       return {
         ...options.token,
-        user: { dial_roles: decodedPayload?.dial_roles ?? [] },
+        user: getUser(options.account?.access_token, options.account.provider),
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -155,6 +221,7 @@ export const callbacks: Partial<
         refreshToken: options.account.refresh_token,
         providerId: options.account.provider,
         userId: options.user.id,
+        idToken: options.account.id_token,
       };
     }
 
@@ -164,7 +231,15 @@ export const callbacks: Partial<
       (typeof options.token.accessTokenExpires === 'number' &&
         Date.now() < options.token.accessTokenExpires)
     ) {
-      return options.token;
+      return {
+        ...options.token,
+        user: getUser(
+          options.token.access_token,
+          typeof options.token.providerId === 'string'
+            ? options.token.providerId
+            : '',
+        ),
+      };
     }
     const typedToken = options.token as Token;
     // Access token has expired, try to update it
@@ -183,15 +258,22 @@ export const callbacks: Partial<
         options.token.error;
     }
 
-    if (options.session.user && options.token.user.dial_roles) {
-      const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(
-        ',',
-      );
+    const isAdmin = options?.token?.user?.isAdmin ?? false;
 
-      options.session.user.isAdmin = adminRoleNames.some((role) =>
-        options.token.user.dial_roles?.includes(role),
-      );
+    if (options.session.user) {
+      options.session.user.isAdmin = isAdmin;
+      Object.values(Feature).forEach((feature) => {
+        if (options?.token?.user?.[feature] === false) {
+          options.session.user[feature] = false;
+        }
+      });
     }
+
+    const providerId =
+      typeof options.token.providerId === 'string'
+        ? options.token.providerId
+        : '';
+    options.session.providerId = providerId;
 
     return options.session;
   },

@@ -1,12 +1,14 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
-import { Attributes, Overflow, Styles } from '@/src/ui/domData';
+import { Attributes, CssClasses, StyleValues, Styles } from '@/src/ui/domData';
 import { VariableModalDialog } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class VariableModalAssertion {
+export class VariableModalAssertion extends BaseAssertion {
   readonly variableModalDialog: VariableModalDialog;
 
   constructor(variableModalDialog: VariableModalDialog) {
+    super();
     this.variableModalDialog = variableModalDialog;
   }
 
@@ -138,13 +140,13 @@ export class VariableModalAssertion {
     );
     expect
       .soft(nameClass, ExpectedMessages.promptNameIsTruncated)
-      .toContain(Styles.truncate);
+      .toContain(CssClasses.truncate);
     expect
       .soft(nameClass, ExpectedMessages.promptNameIsTruncated)
-      .toContain(Styles.whitespacePre);
+      .toContain(CssClasses.whitespacePre);
     expect
       .soft(nameClass, ExpectedMessages.elementFontIsValid)
-      .toContain(Styles.fontBold);
+      .toContain(CssClasses.fontBold);
   }
 
   public async assertPromptDescriptionStyle() {
@@ -152,10 +154,10 @@ export class VariableModalAssertion {
       await this.variableModalDialog.description.getAttribute(Attributes.class);
     expect
       .soft(descriptionClass, ExpectedMessages.promptDescriptionIsFullyVisible)
-      .toContain(Styles.whitespacePreWrap);
+      .toContain(CssClasses.whitespacePreWrap);
     expect
       .soft(descriptionClass, ExpectedMessages.elementFontIsValid)
-      .toContain(Styles.italic);
+      .toContain(CssClasses.italic);
   }
 
   public async assertPromptVariableLabelStyle(varLabel: string) {
@@ -165,7 +167,7 @@ export class VariableModalAssertion {
         await label.getAttribute(Attributes.class),
         ExpectedMessages.promptVarLabelIsFullyVisible,
       )
-      .toContain(Styles.breakAll);
+      .toContain(CssClasses.breakAll);
   }
 
   public async assertPromptVariablePlaceholderStyle(varLabel: string) {
@@ -177,6 +179,6 @@ export class VariableModalAssertion {
         placeholderOverflow[0],
         ExpectedMessages.promptVarPlaceholderIsFullyVisible,
       )
-      .toBe(Overflow.breakWord);
+      .toBe(StyleValues.breakWord);
   }
 }

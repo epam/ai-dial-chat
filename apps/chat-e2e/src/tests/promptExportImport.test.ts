@@ -2,6 +2,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
@@ -10,7 +11,7 @@ import {
 } from '@/src/testData';
 import { ImportPrompt } from '@/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { FileUtil, GeneratorUtil } from '@/src/utils';
+import { FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let folderPromptData: UploadDownloadData;
@@ -38,8 +39,11 @@ dialTest(
     confirmationDialog,
     promptData,
     sendMessage,
-    chatMessagesAssertion,
+    talkToAgentDialog,
+    apiAssertion,
+    sendMessageAssertion,
     chat,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
     let promptsInsideFolder: FolderPrompt;
@@ -71,6 +75,7 @@ dialTest(
           promptsInsideFolder.folders,
           ...nestedFolders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -78,16 +83,15 @@ dialTest(
       'Export all prompts using prompt bar Export button',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await promptBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
           await folderPrompts.expandFolder(nestedFolder.name);
         }
         await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
-        exportedData = await dialHomePage.downloadData(() =>
-          promptBar.exportButton.click(),
+        exportedData = await dialHomePage.downloadData(
+          () => promptBar.exportButton.click(),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -142,21 +146,23 @@ dialTest(
           .selectPromptWithKeyboard(promptOutsideFolder.name, {
             triggeredHttpMethod: 'GET',
           });
-
-        const selectedPromptContent =
-          await sendMessage.messageInput.getElementContent();
-        expect
-          .soft(selectedPromptContent, ExpectedMessages.promptNameValid)
-          .toBe(promptContent);
+        await sendMessageAssertion.assertMessageValue(promptContent);
       },
     );
 
     await dialTest.step(
-      'Send request and verify response corresponds prompt',
+      'Send request and verify prompt content is set as a user message',
       async () => {
-        await chat.sendRequestWithPrompt(promptContent);
-        await chat.sendRequestWithButton('white');
-        await chatMessagesAssertion.assertLastMessageContent('black');
+        const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+        if (simpleRequestModel !== undefined) {
+          await chat.changeAgentButton.click();
+          await talkToAgentDialog.selectAgent(simpleRequestModel);
+          const request = await chat.sendRequestWithPrompt(
+            promptContent,
+            false,
+          );
+          apiAssertion.assertRequestMessage(request.messages[0], promptContent);
+        }
       },
     );
   },
@@ -177,6 +183,9 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     confirmationDialog,
+    localStorageManager,
+    promptPreviewModalAssertion,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-884', 'EPMRTC-885', 'EPMRTC-896');
     let promptInsideFolder: FolderPrompt;
@@ -194,6 +203,7 @@ dialTest(
           promptOutsideFolder,
           ...promptInsideFolder.prompts,
         ]);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -201,16 +211,15 @@ dialTest(
       'Export prompt inside folder using prompt dropdown menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await folderPrompts.expandFolder(promptInsideFolder.folders.name);
         await folderPrompts.openFolderEntityDropdownMenu(
           promptInsideFolder.folders.name,
           promptInsideFolder.prompts[0].name,
         );
-        exportedData = await dialHomePage.downloadData(() =>
-          promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        exportedData = await dialHomePage.downloadData(
+          () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -271,21 +280,26 @@ dialTest(
           newDescr,
           newValue,
         );
-        await prompts.getEntityByName(newName).waitFor();
-        await prompts.openEntityDropdownMenu(newName);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        expect
-          .soft(
-            await promptModalDialog.getDescription(),
-            ExpectedMessages.promptDescriptionUpdated,
-          )
-          .toBe(newDescr);
-        expect
-          .soft(
-            await promptModalDialog.getPrompt(),
-            ExpectedMessages.promptValueUpdated,
-          )
-          .toBe(newValue);
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
+
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptName,
+          newName,
+          ExpectedMessages.promptNameValid,
+        );
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptDescription,
+          newDescr,
+          ExpectedMessages.promptDescriptionUpdated,
+        );
+        await promptPreviewModalAssertion.assertElementText(
+          promptPreviewModal.promptContent,
+          newValue,
+          ExpectedMessages.promptContentValid,
+        );
       },
     );
   },
@@ -302,6 +316,7 @@ dialTest(
     promptData,
     promptDropdownMenu,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-886');
     let promptInsideFolder: FolderPrompt;
@@ -321,6 +336,7 @@ dialTest(
           [...promptInsideFolder.prompts, promptOutsideFolder],
           promptInsideFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -328,12 +344,11 @@ dialTest(
       'Export prompt in the root using prompt dropdown menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
-        exportedData = await dialHomePage.downloadData(() =>
-          promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        exportedData = await dialHomePage.downloadData(
+          () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -375,6 +390,7 @@ dialTest(
     folderPrompts,
     promptBar,
     promptData,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-889');
     let promptsInsideFolder: FolderPrompt;
@@ -396,6 +412,7 @@ dialTest(
           [...promptsInsideFolder.prompts, promptOutsideFolder],
           promptsInsideFolder.folders,
         );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -425,9 +442,7 @@ dialTest(
       'Import prompt inside existing folder and verify it is imported and existing prompts remain inside folder',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
 
         await dialHomePage.importFile(folderPromptData, () =>
           promptBar.importButton.click(),
@@ -501,16 +516,17 @@ dialTest(
     promptModalDialog,
     variableModalAssertion,
     sendMessageAssertion,
+    localStorageManager,
+    promptPreviewModal,
   }) => {
     setTestIds('EPMRTC-1135');
     const aVariable = 'A';
     await dialTest.step(
       'Import prompt from 1.4 app version and verify folder with prompt is visible',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(
           { path: Import.v14AppImportedFilename },
           () => promptBar.importButton.click(),
@@ -537,9 +553,7 @@ dialTest(
         newDescr,
         newValue,
       );
-      await folderPrompts
-        .getFolderEntity(Import.oldVersionAppFolderName, newName)
-        .waitFor();
+      await promptPreviewModal.closeButton.click();
     });
 
     await dialTest.step(
@@ -578,6 +592,7 @@ dialTest(
     promptData,
     promptDropdownMenu,
     folderDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1375', 'EPMRTC-1376', 'EPMRTC-1377');
     let nestedFolders: FolderInterface[];
@@ -592,14 +607,13 @@ dialTest(
           promptData.preparePromptsForNestedFolders(nestedFolders);
 
         await dataInjector.createPrompts([...nestedPrompts], ...nestedFolders);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step('Export prompt from 3rd level folder', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
+      await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
         await folderPrompts.expandFolder(nestedFolder.name);
       }
@@ -607,8 +621,9 @@ dialTest(
         nestedFolders[levelsCount - 1].name,
         nestedPrompts[levelsCount - 1].name,
       );
-      exportedData = await dialHomePage.downloadData(() =>
-        promptDropdownMenu.selectMenuOption(MenuOptions.export),
+      exportedData = await dialHomePage.downloadData(
+        () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        GeneratorUtil.exportedWithoutAttachmentsFilename(),
       );
     });
 
@@ -712,6 +727,7 @@ dialTest(
     promptBar,
     promptData,
     promptDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1378');
     let nestedFolders: FolderInterface[];
@@ -726,12 +742,13 @@ dialTest(
           promptData.preparePromptsForNestedFolders(nestedFolders);
 
         await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step('Export 2nd and 3rd level folder prompts', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
         await folderPrompts.expandFolder(nestedFolder.name);
       }
@@ -752,7 +769,7 @@ dialTest(
       'Update id and name of exported prompts and import them again',
       async () => {
         for (const exportedData of exportedPrompts) {
-          const exportedContent = FileUtil.readFileData(exportedData.path);
+          const exportedContent = FileUtil.readJsonFileData(exportedData.path);
           const prompt = exportedContent.prompts[0];
           prompt.id = GeneratorUtil.randomString(10);
           prompt.name = GeneratorUtil.randomString(10);
@@ -826,6 +843,9 @@ dialTest(
     promptBar,
     promptData,
     promptDropdownMenu,
+    localStorageManager,
+    toast,
+    promptBarFolderAssertion,
   }) => {
     setTestIds('EPMRTC-1388');
     let nestedFolders: FolderInterface[];
@@ -844,12 +864,17 @@ dialTest(
           [thirdLevelFolderPrompt],
           ...nestedFolders,
         );
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
+        );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step('Export 3rd level folder prompt', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
         await folderPrompts.expandFolder(nestedFolder.name);
       }
@@ -857,22 +882,43 @@ dialTest(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderPrompt.name,
       );
-      exportedData = await dialHomePage.downloadData(() =>
-        promptDropdownMenu.selectMenuOption(MenuOptions.export),
+      exportedData = await dialHomePage.downloadData(
+        () =>
+          promptDropdownMenu.selectMenuOption(MenuOptions.export, {
+            isHttpMethodTriggered: true,
+            triggeredHttpMethod: 'GET',
+          }),
+        GeneratorUtil.exportedWithoutAttachmentsFilename(),
       );
     });
 
     await dialTest.step(
       'Move 3rd level folder on the 1st level folder and import exported prompt',
       async () => {
-        await promptBar.drugAndDropFolderToFolder(
+        await promptBar.dragAndDropFolderToFolder(
           nestedFolders[levelsCount - 1].name,
           nestedFolders[0].name,
           { isHttpMethodTriggered: true },
         );
+        await promptBarFolderAssertion.assertElementState(
+          folderPrompts.getNestedFolder(
+            nestedFolders[levelsCount - 2].name,
+            nestedFolders[levelsCount - 1].name,
+          ),
+          'hidden',
+        );
+        await promptBarFolderAssertion.assertElementState(
+          folderPrompts.getNestedFolder(
+            nestedFolders[0].name,
+            nestedFolders[levelsCount - 1].name,
+          ),
+          'visible',
+        );
+
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
+        await toast.closeToast();
       },
     );
 
@@ -884,18 +930,12 @@ dialTest(
           { isHttpMethodTriggered: false },
           2,
         );
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount - 1].name,
-            thirdLevelFolderPrompt.name,
-            2,
-          )
-          .waitFor();
-
-        const foldersCount = await folderPrompts.getFoldersCount();
-        expect
-          .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 1);
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: nestedFolders[levelsCount - 1].name, index: 2 },
+          { name: thirdLevelFolderPrompt.name },
+          'visible',
+        );
+        await promptBarFolderAssertion.assertFoldersCount(levelsCount + 1);
       },
     );
   },

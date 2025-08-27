@@ -1,9 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { FeatureType } from '../types/common';
+import { FeatureType } from '@/src/types/common';
 
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { UIActions, UISelectors } from '../store/ui/ui.reducers';
+import { UIActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 
 import uniq from 'lodash-es/uniq';
 
@@ -13,9 +14,12 @@ export const useSectionToggle = (
 ) => {
   const dispatch = useAppDispatch();
 
-  const collapsedSections = useAppSelector((state) =>
-    UISelectors.selectCollapsedSections(state, featureType),
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(featureType),
+    [featureType],
   );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const handleToggle = useCallback(
     (isOpen: boolean) => {

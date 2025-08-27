@@ -1,28 +1,36 @@
 import {
   ChatBarSelectors,
+  EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
 } from '../selectors';
-import { Conversations } from './conversations';
 
-import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { FolderConversations } from '@/src/ui/webElements/folderConversations';
-import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
-import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
+import {
+  ApproveRequiredConversationsTree,
+  ConversationsTree,
+  FolderConversations,
+  Folders,
+  OrganizationConversationsTree,
+  SharedFolderConversations,
+  SharedWithMeConversationsTree,
+} from '@/src/ui/webElements/entityTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ChatBar extends SideBar {
-  constructor(page: Page) {
-    super(page, SideBarSelectors.chatBar);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, SideBarSelectors.chatBar, parentLocator);
   }
 
-  private conversations!: Conversations;
-  private sharedWithMeConversations!: SharedWithMeConversations;
+  private conversationsTree!: ConversationsTree;
+  private sharedWithMeConversationsTree!: SharedWithMeConversationsTree;
   private folderConversations!: FolderConversations;
   private sharedFolderConversations!: SharedFolderConversations;
+  private approveRequiredConversationsTree!: ApproveRequiredConversationsTree;
+  private organizationFolderConversations!: Folders;
+  private organizationConversations!: OrganizationConversationsTree;
   private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
@@ -34,18 +42,24 @@ export class ChatBar extends SideBar {
     MenuSelectors.dotsMenu,
   );
 
-  getConversations(): Conversations {
-    if (!this.conversations) {
-      this.conversations = new Conversations(this.page);
+  getConversationsTree(): ConversationsTree {
+    if (!this.conversationsTree) {
+      this.conversationsTree = new ConversationsTree(
+        this.page,
+        this.rootLocator,
+      );
     }
-    return this.conversations;
+    return this.conversationsTree;
   }
 
-  getSharedWithMeConversations(): SharedWithMeConversations {
-    if (!this.sharedWithMeConversations) {
-      this.sharedWithMeConversations = new SharedWithMeConversations(this.page);
+  getSharedWithMeConversationsTree(): SharedWithMeConversationsTree {
+    if (!this.sharedWithMeConversationsTree) {
+      this.sharedWithMeConversationsTree = new SharedWithMeConversationsTree(
+        this.page,
+        this.rootLocator,
+      );
     }
-    return this.sharedWithMeConversations;
+    return this.sharedWithMeConversationsTree;
   }
 
   getFolderConversations(): FolderConversations {
@@ -68,6 +82,39 @@ export class ChatBar extends SideBar {
     return this.sharedFolderConversations;
   }
 
+  getApproveRequiredConversationsTree(): ApproveRequiredConversationsTree {
+    if (!this.approveRequiredConversationsTree) {
+      this.approveRequiredConversationsTree =
+        new ApproveRequiredConversationsTree(
+          this.page,
+          this.getElementLocator(),
+        );
+    }
+    return this.approveRequiredConversationsTree;
+  }
+
+  getOrganizationFolderConversations(): Folders {
+    if (!this.organizationFolderConversations) {
+      this.organizationFolderConversations = new Folders(
+        this.page,
+        this.getElementLocator(),
+        ChatBarSelectors.organizationConversations(),
+        EntitySelectors.conversation,
+      );
+    }
+    return this.organizationFolderConversations;
+  }
+
+  getOrganizationConversationsTree(): OrganizationConversationsTree {
+    if (!this.organizationConversations) {
+      this.organizationConversations = new OrganizationConversationsTree(
+        this.page,
+        this.getElementLocator(),
+      );
+    }
+    return this.organizationConversations;
+  }
+
   getBottomDropdownMenu(): DropdownMenu {
     if (!this.bottomDropdownMenu) {
       this.bottomDropdownMenu = new DropdownMenu(this.page);
@@ -75,30 +122,31 @@ export class ChatBar extends SideBar {
     return this.bottomDropdownMenu;
   }
 
-  public async createNewConversation() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    let putResponsePromise;
-    if (isApiStorageType) {
-      putResponsePromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
-    }
-    await this.newEntityButton.click();
-    await modelsResponsePromise;
-    await addonsResponsePromise;
-    if (isApiStorageType) {
-      await putResponsePromise;
+  public async openCompareMode() {
+    const isButtonVisible = await this.compareButton.isVisible();
+    if (!isButtonVisible) {
+      await this.bottomDotsMenuIcon.click();
+      await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
+    } else {
+      await this.compareButton.click();
     }
   }
 
-  public async openCompareMode() {
-    await this.bottomDotsMenuIcon.click();
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
-    await modelsResponsePromise;
-    await addonsResponsePromise;
+  public async openManageAttachmentsModal() {
+    const respPromise = this.page.waitForResponse(
+      (r) => r.url().includes(API.filesListingHost()) && r.status() === 200,
+    );
+    const isButtonVisible = await this.attachments.isVisible();
+    if (!isButtonVisible) {
+      await this.bottomDotsMenuIcon.click();
+      await this.getBottomDropdownMenu().selectMenuOption(
+        MenuOptions.attachments,
+      );
+      await respPromise;
+    } else {
+      await this.attachments.click();
+      await respPromise;
+    }
   }
 
   public async drugConversationFromFolder(
@@ -112,17 +160,17 @@ export class ChatBar extends SideBar {
     await this.dragEntityFromFolder(folderConversation);
   }
 
-  public async drugConversationToFolder(
+  public async dragConversationToFolder(
     folderName: string,
     conversationName: string,
   ) {
     const folder = this.getFolderConversations().getFolderByName(folderName);
     const conversation =
-      this.getConversations().getEntityByName(conversationName);
+      this.getConversationsTree().getEntityByName(conversationName);
     await this.dragEntityToFolder(conversation, folder);
   }
 
-  public async drugAndDropConversationToFolderConversation(
+  public async dragAndDropConversationToFolderConversation(
     folderName: string,
     folderConversationName: string,
     conversationName: string,
@@ -133,7 +181,7 @@ export class ChatBar extends SideBar {
       folderConversationName,
     );
     const conversation =
-      this.getConversations().getEntityByName(conversationName);
+      this.getConversationsTree().getEntityByName(conversationName);
     await this.dragAndDropEntityToFolder(conversation, folderConversation, {
       isHttpMethodTriggered,
     });
@@ -144,6 +192,6 @@ export class ChatBar extends SideBar {
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folder = this.getFolderConversations().getFolderByName(folderName);
-    await this.dragFolderToRoot(folder, { isHttpMethodTriggered });
+    await this.dragAndDropFolderToRoot(folder, { isHttpMethodTriggered });
   }
 }

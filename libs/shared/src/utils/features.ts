@@ -1,5 +1,5 @@
-import { availableFeatures } from '../types/features';
+import { Feature } from '../types/features';
 
 export const validateFeature = (feature: string) => {
-  return feature in availableFeatures;
+  return Object.values(Feature).includes(feature as Feature);
 };

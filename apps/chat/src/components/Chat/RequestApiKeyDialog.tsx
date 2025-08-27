@@ -9,9 +9,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
@@ -19,16 +19,12 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ServiceActions,
-  ServiceSelectors,
-} from '@/src/store/service/service.reducer';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ServiceSelectors } from '@/src/store/selectors';
 
-import Modal from '@/src/components/Common/Modal';
-
-import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Modal } from '@/src/components/Common/Modal';
 
 function transformDateString(dateString: string): string {
   const dateParts = dateString.split('-');
@@ -40,11 +36,10 @@ function transformDateString(dateString: string): string {
 }
 
 interface Props {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
+export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
   const { t } = useTranslation(Translation.Settings);
 
   const dispatch = useAppDispatch();
@@ -218,7 +213,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     <Modal
       initialFocus={projectNameInputRef}
       portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
       dataQa="request-api-key-dialog"
       overlayClassName="fixed inset-0"
@@ -363,9 +358,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           htmlFor="projectEndDateInput"
         >
           <span>5.</span>
-          <span className="ml-1">
-            {t('End date of the project (YYYY-MM-DD)')}
-          </span>
+          <span className="ml-1">{t('End date of the project')}</span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <input

@@ -1,62 +1,293 @@
-import { DialHomePage } from '../ui/pages';
+import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
+  AgentDetailsModal,
+  AgentSettings,
+  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
-  ChatInfoTooltip,
   ChatMessages,
   Compare,
   ConfirmationDialog,
-  ConversationSettings,
+  ConversationSettingsModal,
   ConversationToCompare,
-  Conversations,
   DropdownMenu,
-  EntitySelector,
-  ErrorToast,
-  ModelSelector,
-  RecentEntities,
+  InformationModal,
+  Marketplace,
+  MarketplaceAgents,
+  MarketplaceContainer,
+  MarketplaceFilter,
+  MarketplaceSidebar,
+  ModelInfoTooltip,
+  PromptBar,
+  PromptModalDialog,
+  PublishingRequestModal,
+  SelectFolderModal,
+  SendMessage,
+  TalkToAgentDialog,
+  Toast,
+  VariableModalDialog,
 } from '../ui/webElements';
 
+import { BackendResourceType } from '@/chat/types/common';
 import config from '@/config/chat.playwright.config';
+import {
+  ChatAssertion,
+  ConversationAssertion,
+  DownloadAssertion,
+  ManageAttachmentsAssertion,
+  SelectFolderModalAssertion,
+  TalkToAgentDialogAssertion,
+  ToastAssertion,
+} from '@/src/assertions';
+import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
+import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
+import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
+import { MenuAssertion } from '@/src/assertions/menuAssertion';
+import { PromptAssertion } from '@/src/assertions/promptAssertion';
+import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
+import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
+import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
+import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
+import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
+import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
+import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { FileApiHelper, ModelApiHelper } from '@/src/testData/api';
+import { ApiInjector } from '@/src/testData/injector/apiInjector';
+import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
+import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
+import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
+import {
+  ConversationsTree,
+  FolderPrompts,
+  Folders,
+  PromptsTree,
+} from '@/src/ui/webElements/entityTree';
+import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
+import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
+import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
+import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
+import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
-import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
 const dialSharedWithMeTest = dialTest.extend<{
+  beforeAdditionalShareUserTestCleanup: string;
   additionalShareUserLocalStorageManager: LocalStorageManager;
   additionalShareUserPage: Page;
   additionalShareUserDialHomePage: DialHomePage;
   additionalShareUserAppContainer: AppContainer;
   additionalShareUserChatBar: ChatBar;
-  additionalShareUserSharedWithMeConversations: SharedWithMeConversations;
+  additionalShareUserPromptBar: PromptBar;
+  additionalShareUserSharedWithMeConversations: SharedWithMeConversationsTree;
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
+  additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
+  additionalShareUserSharedFolderPrompts: FolderPrompts;
   additionalShareUserChat: Chat;
-  additionalShareUserConversationSettings: ConversationSettings;
-  additionalShareUserTalkToSelector: EntitySelector;
-  additionalShareUserRecentEntities: RecentEntities;
+  additionalShareUserConversationSettingsModal: ConversationSettingsModal;
+  additionalShareUserAgentSettings: AgentSettings;
   additionalShareUserChatHeader: ChatHeader;
+  additionalShareUserModelApiHelper: ModelApiHelper;
+  additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
   additionalShareUserChatMessages: ChatMessages;
-  additionalShareUserChatInfoTooltip: ChatInfoTooltip;
+  additionalShareUserSendMessage: SendMessage;
+  additionalShareUserModelInfoTooltip: ModelInfoTooltip;
+  additionalShareUserFolderPrompts: FolderPrompts;
+  additionalShareUserFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
+  additionalShareUserAttachmentDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
-  additionalShareUserConversations: Conversations;
+  additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
+  additionalShareUserConversations: ConversationsTree;
+  additionalShareUserPrompts: PromptsTree;
   additionalShareUserCompare: Compare;
   additionalShareUserCompareConversation: ConversationToCompare;
-  additionalShareUserCompareConversationSelector: ModelSelector;
   additionalShareUserNotFound: ChatNotFound;
   additionalShareUserConfirmationDialog: ConfirmationDialog;
   additionalShareUserPlaybackControl: PlaybackControl;
-  additionalShareUserErrorToast: ErrorToast;
+  additionalShareUserToast: Toast;
+  additionalShareUserPromptPreviewModal: PromptPreviewModalWindow;
+  additionalShareUserVariableModalDialog: VariableModalDialog;
+  additionalShareUserPromptDropdownMenu: DropdownMenu;
+  additionalShareUserBrowserStorageInjector: BrowserStorageInjector;
+  additionalShareUserApiInjector: ApiInjector;
+  additionalShareUserDataInjector: DataInjectorInterface;
+  additionalShareUserFileApiHelper: FileApiHelper;
+  additionalShareUserPromptModalDialog: PromptModalDialog;
+  additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
+  additionalShareUserSharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
+  additionalShareUserPromptPreviewModalAssertion: PromptPreviewModalAssertion;
+  additionalShareUserSendMessageAssertion: SendMessageAssertion;
+  additionalShareUserVariableModalAssertion: VariableModalAssertion;
+  additionalShareUserConversationDropdownMenu: DropdownMenu;
+  additionalShareUserPublishingRequestModal: PublishingRequestModal;
+  additionalShareUserInformationModal: InformationModal;
+  additionalShareUserInformationModalAssertion: InformationModalAssertion;
+  additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
+  additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
+  additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
+  additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
+  additionalShareUserPromptAssertion: PromptAssertion;
+  additionalShareUserPromptModalAssertion: PromptModalAssertion;
+  additionalShareUserPromptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+  additionalShareUserSharedWithMeFoldersAssertion: FolderAssertion<Folders>;
+  additionalShareUserSystemPromptListAssertion: PromptListAssertion;
+  additionalShareUserAgentSettingAssertion: AgentSettingAssertion;
+  additionalShareUserAttachFilesModal: AttachFilesModal;
+  additionalShareUserToastAssertion: ToastAssertion;
+  additionalShareUserChatSettingsTooltip: ChatSettingsTooltip;
+  additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
+  additionalShareUserDownloadAssertion: DownloadAssertion;
+  additionalShareUserChatAssertion: ChatAssertion;
+  additionalShareUserConversationAssertion: ConversationAssertion;
+  additionalShareUserTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  additionalShareUserMarketplacePage: MarketplacePage;
+  additionalShareUserMarketplaceContainer: MarketplaceContainer;
+  additionalShareUserMarketplaceSidebar: MarketplaceSidebar;
+  additionalShareUserNavigationPanel: NavigationPanel;
+  additionalShareUserMarketplaceFilter: MarketplaceFilter;
+  additionalShareUserMarketplace: Marketplace;
+  additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
+  additionalShareUserMarketplaceAgents: MarketplaceAgents;
+  additionalShareUserAgentDetailsModal: AgentDetailsModal;
+  additionalShareUserSelectFolderModal: SelectFolderModal;
+  additionalShareUserSelectFolders: Folders;
+  additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
+  additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
 }>({
+  beforeAdditionalShareUserTestCleanup: [
+    async (
+      {
+        additionalUserItemApiHelper,
+        additionalUserShareApiHelper,
+        additionalSecondUserItemApiHelper,
+        additionalSecondUserShareApiHelper,
+      },
+      use,
+    ) => {
+      await additionalUserItemApiHelper.deleteAllData(
+        BucketUtil.getAdditionalShareUserBucket(),
+      );
+      await additionalSecondUserItemApiHelper.deleteAllData(
+        BucketUtil.getAdditionalSecondShareUserBucket(),
+      );
+      const additionalUserSharedEntities =
+        await additionalUserShareApiHelper.listSharedWithMeEntities(
+          ...Object.values(BackendResourceType),
+        );
+      await additionalUserShareApiHelper.deleteSharedWithMeEntities([
+        ...additionalUserSharedEntities.resources,
+      ]);
+      const additionalSecondUserSharedEntities =
+        await additionalSecondUserShareApiHelper.listSharedWithMeEntities(
+          ...Object.values(BackendResourceType),
+        );
+      await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities([
+        ...additionalSecondUserSharedEntities.resources,
+      ]);
+      await use('beforeAdditionalShareUserTestCleanup');
+    },
+    { scope: 'test', auto: true },
+  ],
+  // eslint-disable-next-line no-empty-pattern
+  additionalShareUserDownloadAssertion: async ({}, use) => {
+    const additionalShareUserDownloadAssertion = new DownloadAssertion();
+    await use(additionalShareUserDownloadAssertion);
+  },
+  additionalShareUserManageAttachmentsAssertion: async (
+    { additionalShareUserAttachFilesModal },
+    use,
+  ) => {
+    const additionalShareUserManageAttachmentsAssertion =
+      new ManageAttachmentsAssertion(additionalShareUserAttachFilesModal);
+    await use(additionalShareUserManageAttachmentsAssertion);
+  },
+  additionalShareUserToastAssertion: async (
+    { additionalShareUserToast },
+    use,
+  ) => {
+    const additionalShareUserToastAssertion = new ToastAssertion(
+      additionalShareUserToast,
+    );
+    await use(additionalShareUserToastAssertion);
+  },
+  additionalShareUserChatSettingsTooltip: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserChatSettingsTooltip = new ChatSettingsTooltip(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserChatSettingsTooltip);
+  },
+  additionalShareUserFileApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserFileApiHelper = new FileApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    );
+    await use(additionalShareUserFileApiHelper);
+  },
+  additionalShareUserAttachFilesModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserAttachFilesModal = new AttachFilesModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserAttachFilesModal);
+  },
+  additionalShareUserAttachmentDropdownMenu: async (
+    { additionalShareUserSendMessage },
+    use,
+  ) => {
+    const additionalShareUserAttachmentDropdownMenu =
+      additionalShareUserSendMessage.getDropdownMenu();
+    await use(additionalShareUserAttachmentDropdownMenu);
+  },
+  additionalShareUserApiInjector: async (
+    { additionalUserItemApiHelper },
+    use,
+  ) => {
+    const additionalShareUserApiInjector = new ApiInjector(
+      additionalUserItemApiHelper,
+    );
+    await use(additionalShareUserApiInjector);
+  },
+  additionalShareUserBrowserStorageInjector: async (
+    { additionalShareUserLocalStorageManager },
+    use,
+  ) => {
+    const additionalShareUserBrowserStorageInjector =
+      new BrowserStorageInjector(additionalShareUserLocalStorageManager);
+    await use(additionalShareUserBrowserStorageInjector);
+  },
+  additionalShareUserDataInjector: async (
+    {
+      additionalShareUserApiInjector,
+      additionalShareUserBrowserStorageInjector,
+    },
+    use,
+  ) => {
+    const additionalShareUserDataInjector = isApiStorageType
+      ? additionalShareUserApiInjector
+      : additionalShareUserBrowserStorageInjector;
+    await use(additionalShareUserDataInjector);
+  },
   additionalShareUserPage: async ({ browser }, use) => {
+    const numWorkers = +config.workers!;
     const context = await browser.newContext({
-      storageState: stateFilePath(+config.workers!),
+      storageState: stateFilePath(dialTest.info().parallelIndex + numWorkers), // Accessing additional user
     });
     const additionalShareUserPage = await context.newPage();
     await use(additionalShareUserPage);
@@ -93,12 +324,20 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserAppContainer.getChatBar();
     await use(additionalShareUserChatBar);
   },
+  additionalShareUserPromptBar: async (
+    { additionalShareUserAppContainer },
+    use,
+  ) => {
+    const additionalShareUserPromptBar =
+      additionalShareUserAppContainer.getPromptBar();
+    await use(additionalShareUserPromptBar);
+  },
   additionalShareUserSharedWithMeConversations: async (
     { additionalShareUserChatBar },
     use,
   ) => {
     const additionalShareUserSharedWithMeConversations =
-      additionalShareUserChatBar.getSharedWithMeConversations();
+      additionalShareUserChatBar.getSharedWithMeConversationsTree();
     await use(additionalShareUserSharedWithMeConversations);
   },
   additionalShareUserSharedFolderConversations: async (
@@ -109,6 +348,22 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserChatBar.getSharedFolderConversations();
     await use(additionalShareUserSharedFolderConversations);
   },
+  additionalShareUserSharedWithMePrompts: async (
+    { additionalShareUserPromptBar },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMePrompts =
+      additionalShareUserPromptBar.getSharedWithMePromptsTree();
+    await use(additionalShareUserSharedWithMePrompts);
+  },
+  additionalShareUserSharedFolderPrompts: async (
+    { additionalShareUserPromptBar },
+    use,
+  ) => {
+    const additionalShareUserSharedFolderPrompts =
+      additionalShareUserPromptBar.getSharedFolderPrompts();
+    await use(additionalShareUserSharedFolderPrompts);
+  },
   additionalShareUserChat: async ({ additionalShareUserAppContainer }, use) => {
     const additionalShareUserChat = additionalShareUserAppContainer.getChat();
     await use(additionalShareUserChat);
@@ -118,8 +373,13 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserConversations =
-      additionalShareUserChatBar.getConversations();
+      additionalShareUserChatBar.getConversationsTree();
     await use(additionalShareUserConversations);
+  },
+  additionalShareUserPrompts: async ({ additionalShareUserPromptBar }, use) => {
+    const additionalShareUserPrompts =
+      additionalShareUserPromptBar.getPromptsTree();
+    await use(additionalShareUserPrompts);
   },
   additionalShareUserCompare: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserCompare = additionalShareUserChat.getCompare();
@@ -133,56 +393,64 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserCompare.getConversationToCompare();
     await use(additionalShareUserCompareConversation);
   },
-  additionalShareUserCompareConversationSelector: async (
-    { additionalShareUserCompareConversation },
+  additionalShareUserConversationSettingsModal: async (
+    { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserCompareConversationSelector =
-      additionalShareUserCompareConversation.getConversationSelector();
-    await use(additionalShareUserCompareConversationSelector);
+    const additionalShareUserConversationSettingsModal =
+      new ConversationSettingsModal(additionalShareUserPage);
+    await use(additionalShareUserConversationSettingsModal);
   },
-  additionalShareUserConversationSettings: async (
-    { additionalShareUserAppContainer },
+  additionalShareUserAgentSettings: async (
+    { additionalShareUserConversationSettingsModal },
     use,
   ) => {
-    const additionalShareUserConversationSettings =
-      additionalShareUserAppContainer.getConversationSettings();
-    await use(additionalShareUserConversationSettings);
-  },
-  additionalShareUserTalkToSelector: async (
-    { additionalShareUserConversationSettings },
-    use,
-  ) => {
-    const additionalShareUserTalkToSelector =
-      additionalShareUserConversationSettings.getTalkToSelector();
-    await use(additionalShareUserTalkToSelector);
-  },
-  additionalShareUserRecentEntities: async (
-    { additionalShareUserTalkToSelector },
-    use,
-  ) => {
-    const additionalShareUserRecentEntities =
-      additionalShareUserTalkToSelector.getRecentEntities();
-    await use(additionalShareUserRecentEntities);
+    const additionalShareUserAgentSettings =
+      additionalShareUserConversationSettingsModal.getAgentSettings();
+    await use(additionalShareUserAgentSettings);
   },
   additionalShareUserChatHeader: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatHeader =
       additionalShareUserChat.getChatHeader();
     await use(additionalShareUserChatHeader);
   },
+  additionalShareUserModelApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserModelApiHelper = new ModelApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    );
+    await use(additionalShareUserModelApiHelper);
+  },
+  additionalShareUserTalkToAgentDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserTalkToAgentDialog = new TalkToAgentDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserTalkToAgentDialog);
+  },
   additionalShareUserChatMessages: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatMessages =
       additionalShareUserChat.getChatMessages();
     await use(additionalShareUserChatMessages);
   },
-  additionalShareUserChatInfoTooltip: async (
+  additionalShareUserSendMessage: async ({ additionalShareUserChat }, use) => {
+    const additionalShareUserSendMessage =
+      additionalShareUserChat.getSendMessage();
+    await use(additionalShareUserSendMessage);
+  },
+  additionalShareUserModelInfoTooltip: async (
     { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserChatInfoTooltip = new ChatInfoTooltip(
+    const additionalShareUserModelInfoTooltip = new ModelInfoTooltip(
       additionalShareUserPage,
     );
-    await use(additionalShareUserChatInfoTooltip);
+    await use(additionalShareUserModelInfoTooltip);
   },
   additionalShareUserSharedWithMeConversationDropdownMenu: async (
     { additionalShareUserSharedWithMeConversations },
@@ -191,6 +459,63 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSharedWithMeConversationDropdownMenu =
       additionalShareUserSharedWithMeConversations.getDropdownMenu();
     await use(additionalShareUserSharedWithMeConversationDropdownMenu);
+  },
+  additionalShareUserConversationDropdownMenu: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationDropdownMenu =
+      additionalShareUserConversations.getDropdownMenu();
+    await use(additionalShareUserConversationDropdownMenu);
+  },
+  additionalShareUserPublishingRequestModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserPublishingRequestModal =
+      new PublishingRequestModal(additionalShareUserPage);
+    await use(additionalShareUserPublishingRequestModal);
+  },
+  additionalShareUserInformationModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserInformationModal = new InformationModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserInformationModal);
+  },
+  additionalShareUserInformationModalAssertion: async (
+    { additionalShareUserInformationModal },
+    use,
+  ) => {
+    const additionalShareUserInformationModalAssertion =
+      new InformationModalAssertion(additionalShareUserInformationModal);
+    await use(additionalShareUserInformationModalAssertion);
+  },
+  additionalShareUserSharedWithMePromptDropdownMenu: async (
+    { additionalShareUserSharedWithMePrompts },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMePromptDropdownMenu =
+      additionalShareUserSharedWithMePrompts.getDropdownMenu();
+    await use(additionalShareUserSharedWithMePromptDropdownMenu);
+  },
+  additionalShareUserFolderPrompts: async (
+    { additionalShareUserPromptBar },
+    use,
+  ) => {
+    const additionalShareUserFolderPrompts =
+      additionalShareUserPromptBar.getPinnedFolderPrompts();
+    await use(additionalShareUserFolderPrompts);
+  },
+  additionalShareUserFolderDropdownMenu: async (
+    { additionalShareUserFolderPrompts },
+    use,
+  ) => {
+    const additionalShareUserFolderDropdownMenu =
+      additionalShareUserFolderPrompts.getDropdownMenu();
+    await use(additionalShareUserFolderDropdownMenu);
   },
   additionalShareUserSharedWithMeFolderDropdownMenu: async (
     { additionalShareUserSharedFolderConversations },
@@ -223,13 +548,312 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserChat.getPlaybackControl();
     await use(additionalShareUserPlaybackControl);
   },
-  additionalShareUserErrorToast: async (
+  additionalShareUserToast: async (
     { additionalShareUserAppContainer },
     use,
   ) => {
-    const additionalShareUserErrorToast =
-      additionalShareUserAppContainer.getErrorToast();
-    await use(additionalShareUserErrorToast);
+    const additionalShareUserToast = additionalShareUserAppContainer.getToast();
+    await use(additionalShareUserToast);
+  },
+  additionalShareUserPromptPreviewModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserPromptPreviewModal = new PromptPreviewModalWindow(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserPromptPreviewModal);
+  },
+  additionalShareUserVariableModalDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserVariableModalDialog = new VariableModalDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserVariableModalDialog);
+  },
+  additionalShareUserPromptDropdownMenu: async (
+    { additionalShareUserPrompts },
+    use,
+  ) => {
+    const additionalShareUserPromptDropdownMenu =
+      additionalShareUserPrompts.getDropdownMenu();
+    await use(additionalShareUserPromptDropdownMenu);
+  },
+  additionalShareUserPromptModalDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserPromptModalDialog = new PromptModalDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserPromptModalDialog);
+  },
+  additionalShareUserSharedWithMePromptAssertion: async (
+    { additionalShareUserSharedWithMePrompts },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMePromptAssertion =
+      new SharedWithMePromptsAssertion(additionalShareUserSharedWithMePrompts);
+    await use(additionalShareUserSharedWithMePromptAssertion);
+  },
+  additionalShareUserSharedWithMeConversationAssertion: async (
+    { additionalShareUserSharedWithMeConversations },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMeConversationAssertion =
+      new SideBarConversationAssertion<SharedWithMeConversationsTree>(
+        additionalShareUserSharedWithMeConversations,
+      );
+    await use(additionalShareUserSharedWithMeConversationAssertion);
+  },
+  additionalShareUserPromptPreviewModalAssertion: async (
+    { additionalShareUserPromptPreviewModal },
+    use,
+  ) => {
+    const additionalShareUserPromptPreviewModalAssertion =
+      new PromptPreviewModalAssertion(additionalShareUserPromptPreviewModal);
+    await use(additionalShareUserPromptPreviewModalAssertion);
+  },
+  additionalShareUserVariableModalAssertion: async (
+    { additionalShareUserVariableModalDialog },
+    use,
+  ) => {
+    const additionalShareUserVariableModalAssertion =
+      new VariableModalAssertion(additionalShareUserVariableModalDialog);
+    await use(additionalShareUserVariableModalAssertion);
+  },
+  additionalShareUserSendMessageAssertion: async (
+    { additionalShareUserSendMessage },
+    use,
+  ) => {
+    const additionalShareUserSendMessageAssertion = new SendMessageAssertion(
+      additionalShareUserSendMessage,
+    );
+    await use(additionalShareUserSendMessageAssertion);
+  },
+  additionalShareUserSharedFolderPromptsAssertions: async (
+    { additionalShareUserSharedFolderPrompts },
+    use,
+  ) => {
+    const additionalShareUserSharedFolderPromptsAssertions =
+      new FolderAssertion<FolderPrompts>(
+        additionalShareUserSharedFolderPrompts,
+      );
+    await use(additionalShareUserSharedFolderPromptsAssertions);
+  },
+  additionalShareUserPromptsDropdownMenuAssertion: async (
+    { additionalShareUserPromptDropdownMenu },
+    use,
+  ) => {
+    const additionalShareUserPromptsDropdownMenuAssertion = new MenuAssertion(
+      additionalShareUserPromptDropdownMenu,
+    );
+    await use(additionalShareUserPromptsDropdownMenuAssertion);
+  },
+  additionalShareUserFolderDropdownMenuAssertion: async (
+    { additionalShareUserFolderDropdownMenu },
+    use,
+  ) => {
+    const additionalShareUserFolderDropdownMenuAssertion = new MenuAssertion(
+      additionalShareUserFolderDropdownMenu,
+    );
+    await use(additionalShareUserFolderDropdownMenuAssertion);
+  },
+  additionalShareUserConfirmationDialogAssertion: async (
+    { additionalShareUserConfirmationDialog },
+    use,
+  ) => {
+    const additionalShareUserConfirmationDialogAssertion =
+      new ConfirmationDialogAssertion(additionalShareUserConfirmationDialog);
+    await use(additionalShareUserConfirmationDialogAssertion);
+  },
+  additionalShareUserPromptAssertion: async (
+    { additionalShareUserPrompts },
+    use,
+  ) => {
+    const additionalShareUserPromptAssertion = new PromptAssertion(
+      additionalShareUserPrompts,
+    );
+    await use(additionalShareUserPromptAssertion);
+  },
+  additionalShareUserPromptModalAssertion: async (
+    { additionalShareUserPromptModalDialog },
+    use,
+  ) => {
+    const additionalShareUserPromptModalAssertion = new PromptModalAssertion(
+      additionalShareUserPromptModalDialog,
+    );
+    await use(additionalShareUserPromptModalAssertion);
+  },
+  additionalShareUserPromptBarFolderAssertion: async (
+    { additionalShareUserFolderPrompts },
+    use,
+  ) => {
+    const additionalShareUserPromptBarFolderAssertion = new FolderAssertion(
+      additionalShareUserFolderPrompts,
+    );
+    await use(additionalShareUserPromptBarFolderAssertion);
+  },
+  additionalShareUserSharedWithMeFoldersAssertion: async (
+    { additionalShareUserSharedFolderConversations },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMeFoldersAssertion = new FolderAssertion(
+      additionalShareUserSharedFolderConversations,
+    );
+    await use(additionalShareUserSharedWithMeFoldersAssertion);
+  },
+  additionalShareUserSystemPromptListAssertion: async (
+    { additionalShareUserAgentSettings },
+    use,
+  ) => {
+    const additionalShareUserSystemPromptListAssertion =
+      new PromptListAssertion(additionalShareUserAgentSettings.getPromptList());
+    await use(additionalShareUserSystemPromptListAssertion);
+  },
+  additionalShareUserAgentSettingAssertion: async (
+    { additionalShareUserAgentSettings },
+    use,
+  ) => {
+    const additionalShareUserAgentSettingAssertion = new AgentSettingAssertion(
+      additionalShareUserAgentSettings,
+    );
+    await use(additionalShareUserAgentSettingAssertion);
+  },
+  additionalShareUserChatAssertion: async (
+    { additionalShareUserChat },
+    use,
+  ) => {
+    const additionalShareUserChatAssertion = new ChatAssertion(
+      additionalShareUserChat,
+    );
+    await use(additionalShareUserChatAssertion);
+  },
+  additionalShareUserConversationAssertion: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationAssertion = new ConversationAssertion(
+      additionalShareUserConversations,
+    );
+    await use(additionalShareUserConversationAssertion);
+  },
+  additionalShareUserTalkToAgentDialogAssertion: async (
+    { additionalShareUserTalkToAgentDialog },
+    use,
+  ) => {
+    const additionalShareUserTalkToAgentDialogAssertion =
+      new TalkToAgentDialogAssertion(additionalShareUserTalkToAgentDialog);
+    await use(additionalShareUserTalkToAgentDialogAssertion);
+  },
+  additionalShareUserMarketplacePage: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserMarketplacePage = new MarketplacePage(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserMarketplacePage);
+  },
+  additionalShareUserMarketplaceContainer: async (
+    { additionalShareUserMarketplacePage },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceContainer =
+      additionalShareUserMarketplacePage.getMarketplaceContainer();
+    await use(additionalShareUserMarketplaceContainer);
+  },
+  additionalShareUserMarketplaceSidebar: async (
+    { additionalShareUserMarketplaceContainer },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceSidebar =
+      additionalShareUserMarketplaceContainer.getMarketplaceSidebar();
+    await use(additionalShareUserMarketplaceSidebar);
+  },
+  additionalShareUserNavigationPanel: async (
+    { additionalShareUserMarketplaceContainer },
+    use,
+  ) => {
+    const additionalShareUserNavigationPanel =
+      additionalShareUserMarketplaceContainer.getNavigationPanel();
+    await use(additionalShareUserNavigationPanel);
+  },
+  additionalShareUserMarketplaceFilter: async (
+    { additionalShareUserMarketplaceSidebar },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceFilter =
+      additionalShareUserMarketplaceSidebar.getMarketplaceFilter();
+    await use(additionalShareUserMarketplaceFilter);
+  },
+  additionalShareUserMarketplace: async (
+    { additionalShareUserMarketplaceContainer },
+    use,
+  ) => {
+    const additionalShareUserMarketplace =
+      additionalShareUserMarketplaceContainer.getMarketplace();
+    await use(additionalShareUserMarketplace);
+  },
+  additionalShareUserMarketplaceAgentsSection: async (
+    { additionalShareUserMarketplace },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceAgentsSection =
+      additionalShareUserMarketplace.getMarketplaceAgentsSection();
+    await use(additionalShareUserMarketplaceAgentsSection);
+  },
+  additionalShareUserMarketplaceAgents: async (
+    { additionalShareUserMarketplaceAgentsSection },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceAgents =
+      additionalShareUserMarketplaceAgentsSection.getAgents();
+    await use(additionalShareUserMarketplaceAgents);
+  },
+  additionalShareUserAgentDetailsModal: async (
+    { additionalShareUserMarketplaceAgents },
+    use,
+  ) => {
+    const additionalShareUserAgentDetailsModal =
+      additionalShareUserMarketplaceAgents.getAgentDetailsModal();
+    await use(additionalShareUserAgentDetailsModal);
+  },
+  additionalShareUserSelectFolderModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderModal = new SelectFolderModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserSelectFolderModal);
+  },
+  additionalShareUserSelectFolders: async (
+    { additionalShareUserSelectFolderModal },
+    use,
+  ) => {
+    const additionalShareUserSelectFolders =
+      additionalShareUserSelectFolderModal.getSelectFolders();
+    await use(additionalShareUserSelectFolders);
+  },
+  additionalShareUserSelectFoldersAssertion: async (
+    { additionalShareUserSelectFolders },
+    use,
+  ) => {
+    const additionalShareUserSelectFoldersAssertion = new FolderAssertion(
+      additionalShareUserSelectFolders,
+    );
+    await use(additionalShareUserSelectFoldersAssertion);
+  },
+  additionalShareUserSelectFolderModalAssertion: async (
+    { additionalShareUserSelectFolderModal },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderModalAssertion =
+      new SelectFolderModalAssertion(additionalShareUserSelectFolderModal);
+    await use(additionalShareUserSelectFolderModalAssertion);
   },
 });
 

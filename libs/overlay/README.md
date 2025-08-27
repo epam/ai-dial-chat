@@ -51,11 +51,11 @@ const run = async () => {
     domain: 'https://your-hosted-overlay-domain.com',
     // optional, theme, 'light' | 'dark'
     theme: 'light',
-    // optional, name of model that could be by default
-    modelId: 'gpt-4',
+    // optional, specifies the 'reference' or 'id' of the agent to be used as the default.
+    modelId: 'gpt-4o',
     // optional, if DIAL doesn't respond in requestTimeout ms, overlay will throw an exception
     requestTimeout: 20000,
-    // optional, features that should be enabled
+    // optional, features that should be enabled. Use to override the default chat settings. Skip to apply all default chat settings.
     enabledFeatures: ['conversations-section', 'prompts-section', 'top-settings', 'top-clear-conversation', 'top-chat-info', 'top-chat-model-settings', 'empty-chat-settings', 'header', 'footer', 'request-api-key', 'report-an-issue', 'likes'],
     // optional, styles for loading which are showing until overlay installing settings
     loaderStyles: {
@@ -67,6 +67,15 @@ const run = async () => {
     overlayConversationId: 'some-conversation-id',
     // optional, if DIAL should redirect to sign in the same browser window
     signInInSameWindow: false,
+    // optional, auto-sign in options
+    signInOptions: {
+      // optional, If the DIAL should automatically sign in without user interaction (provided there is an active provider session)
+      autoSignIn: true,
+      //provider which will be used for the sign in
+      signInProvider: 'provider_name',
+      //optional, should be true if provider page couldn't be open in iframe and hostDomain and DIAL have different providers or application id within one provider
+      signInInNewWindow: true,
+    },
   });
 
   // overlay loaded application and ready to send and receive information from the application

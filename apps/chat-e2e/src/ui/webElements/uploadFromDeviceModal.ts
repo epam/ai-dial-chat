@@ -3,12 +3,13 @@ import { BaseElement } from './baseElement';
 import { Attachment, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
-  ErrorLabelSelectors,
   FileSelectors,
   IconSelectors,
   UploadFromDeviceModalSelectors,
 } from '@/src/ui/selectors';
+import { ChangePath } from '@/src/ui/webElements/changePath';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { ModalError } from '@/src/ui/webElements/modalError';
 import { Page } from '@playwright/test';
 
 export class UploadFromDeviceModal extends BaseElement {
@@ -17,12 +18,28 @@ export class UploadFromDeviceModal extends BaseElement {
   }
 
   private modalHeader!: FilesModalHeader;
+  private changeUploadToPath!: ChangePath;
+  public modalError!: ModalError;
 
   getModalHeader(): FilesModalHeader {
     if (!this.modalHeader) {
       this.modalHeader = new FilesModalHeader(this.page, this.rootLocator);
     }
     return this.modalHeader;
+  }
+
+  getChangeUploadToPath(): ChangePath {
+    if (!this.changeUploadToPath) {
+      this.changeUploadToPath = new ChangePath(this.page, this.rootLocator);
+    }
+    return this.changeUploadToPath;
+  }
+
+  getModalError(): ModalError {
+    if (!this.modalError) {
+      this.modalError = new ModalError(this.page, this.rootLocator);
+    }
+    return this.modalError;
   }
 
   public uploadedFiles = this.getChildElementBySelector(
@@ -39,23 +56,11 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public uploadToButton = this.getChildElementBySelector(
-    UploadFromDeviceModalSelectors.uploadTo,
-  );
-
-  public uploadToPath = this.uploadToButton.getChildElementBySelector(
-    UploadFromDeviceModalSelectors.uploadToPath,
-  );
-
-  public changeUploadToButton = this.uploadToButton.getChildElementBySelector(
-    UploadFromDeviceModalSelectors.changeUploadTo,
-  );
-
   public async changeUploadToLocation() {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'GET',
     );
-    await this.changeUploadToButton.click();
+    await this.getChangeUploadToPath().changeButton.click();
     await responsePromise;
   }
 
@@ -88,6 +93,14 @@ export class UploadFromDeviceModal extends BaseElement {
     );
   }
 
+  public getUploadedFullFilename(filename: string) {
+    const extensionElement = new BaseElement(
+      this.page,
+      UploadFromDeviceModalSelectors.fileExtension,
+    ).getElementLocatorByText(filename.substring(filename.lastIndexOf('.')));
+    return this.getUploadedFile(filename).filter({ has: extensionElement });
+  }
+
   public getUploadedFileExtension(filename: string) {
     return this.createElementFromLocator(
       this.getUploadedFile(filename).locator(
@@ -103,10 +116,6 @@ export class UploadFromDeviceModal extends BaseElement {
       ),
     );
   }
-
-  public getUploadErrorText = this.getChildElementBySelector(
-    ErrorLabelSelectors.errorText,
-  );
 
   public async setUploadedFilename(
     currentFilename: string,
@@ -125,7 +134,7 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public async uploadFiles() {
     const respPremise = this.page.waitForResponse(
-      (r) => r.request().method() === 'POST',
+      (r) => r.request().method() === 'POST' && r.status() === 200,
     );
     await this.uploadButton.click();
     await respPremise;
@@ -136,5 +145,7 @@ export class UploadFromDeviceModal extends BaseElement {
       Attachment.attachmentPath,
       ...filenames,
     );
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(500);
   }
 }

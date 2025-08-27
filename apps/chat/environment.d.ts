@@ -6,6 +6,12 @@ declare global {
       DIAL_API_KEY: string;
       DIAL_API_HOST: string;
 
+      QUICK_APPS_HOST?: string;
+      QUICK_APPS_MODEL?: string;
+      QUICK_APPS_SCHEMA_ID?: string;
+
+      EXTERNAL_APPS_SCHEMA_ID?: string;
+
       DIAL_API_VERSION?: string;
       APP_BASE_PATH?: string;
       APP_BASE_ORIGIN?: string;
@@ -17,11 +23,13 @@ declare global {
       ENABLED_FEATURES?: string;
       PUBLICATION_FILTERS?: string;
       ADMIN_ROLE_NAMES?: string;
+      DIAL_ROLES_FIELD?: string;
+      CODE_APPS_ROLES?: string;
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;
       DEFAULT_MODEL?: string;
-      DEFAULT_ASSISTANT_SUB_MODEL?: string;
+      NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL?: string;
       RECENT_MODELS_IDS?: string;
       RECENT_ADDONS_IDS?: string;
       E2E_HOST?: string;
@@ -30,6 +38,7 @@ declare global {
       TMS_URL?: string;
       ISSUE_URL?: string;
       THEMES_CONFIG_HOST?: string;
+      THEME_DEFAULT_ID?: string;
       FOOTER_HTML_MESSAGE?: string;
       ANNOUNCEMENT_HTML_MESSAGE?: string;
       AZURE_FUNCTIONS_API_HOST?: string;
@@ -40,6 +49,9 @@ declare global {
       STORAGE_TYPE?: string;
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
+      TOPICS?: string;
+      CODE_EDITOR_PYTHON_VERSIONS?: string;
+      WIDGETS_SCHEMA_IDS?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;

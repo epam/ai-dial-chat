@@ -1,7 +1,8 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { API } from '@/src/testData';
+import { API, MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
 import { Cursors } from '@/src/ui/domData';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
   'Another chat is not available while AI is generating a response.\n' +
@@ -14,10 +15,15 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
-    localStorageManager,
     chat,
     conversationAssertion,
+    baseAssertion,
     sendMessage,
+    conversationDropdownMenu,
+    compareConversation,
+    conversationToCompareAssertion,
+    localStorageManager,
+    sendMessageAssertion,
   }) => {
     setTestIds(
       'EPMRTC-598',
@@ -36,7 +42,10 @@ dialTest(
     await dialTest.step(
       'Prepare 1 empty conversation, replay conversation and 2 default conversations',
       async () => {
-        firstConversation = conversationData.prepareEmptyConversation();
+        firstConversation = conversationData.prepareEmptyConversation(
+          ModelsUtil.getDefaultAgent()!,
+          `z${GeneratorUtil.randomString(10)}`,
+        );
         conversationData.resetData();
         preReplayConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
@@ -48,16 +57,12 @@ dialTest(
         conversationData.resetData();
 
         await dataInjector.createConversations([
-          firstConversation,
           preReplayConversation,
           replayConversation,
           comparedConversation,
+          firstConversation,
         ]);
-        // Initiates compare mode for two selected conversations
-        await localStorageManager.setSelectedConversation(
-          preReplayConversation,
-          comparedConversation,
-        );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -66,32 +71,64 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(preReplayConversation.name, {
+          exactMatch: true,
+        });
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await conversationToCompareAssertion.assertConversationToCompareState(
+          'visible',
+        );
+        await conversationToCompareAssertion.assertElementState(
+          compareConversation.showAllConversationsCheckbox,
+          'visible',
+        );
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          comparedConversation.name,
+        );
 
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           firstConversation.name,
           Cursors.pointer,
         );
-        await conversations.getEntityByName(firstConversation.name).click();
-        await conversationAssertion.assertSelectedConversation(
+        await conversationAssertion.assertSelectedEntity(
+          comparedConversation.name,
+        );
+        await conversations.selectEntity(firstConversation.name);
+        await conversationAssertion.assertSelectedEntity(
           firstConversation.name,
+        );
+        await baseAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
+        await sendMessageAssertion.assertElementState(
+          sendMessage.messageInput,
+          'visible',
         );
       },
     );
 
     await dialTest.step('Send request to the first conversation', async () => {
+      await dialHomePage.mockChatTextResponse(
+        MockedChatApiResponseBodies.simpleTextBody,
+      );
       await dialHomePage.throttleAPIResponse(API.chatHost);
       await chat.sendRequestWithButton(request, false);
-      firstConversation.name = request;
     });
 
     await dialTest.step(
       'Verify any conversation cursor is "not-allowed" during text generation',
       async () => {
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           preReplayConversation.name,
           Cursors.notAllowed,
         );
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           firstConversation.name,
           Cursors.notAllowed,
         );
@@ -101,8 +138,8 @@ dialTest(
     await dialTest.step(
       'Verify another conversation is not selectable during text generation',
       async () => {
-        await conversations.getEntityByName(preReplayConversation.name).click();
-        await conversationAssertion.assertSelectedConversation(
+        await conversations.selectEntity(preReplayConversation.name);
+        await conversationAssertion.assertSelectedEntity(
           firstConversation.name,
         );
       },
@@ -111,21 +148,24 @@ dialTest(
     await dialTest.step(
       'Select [Replay] conversation and start generation',
       async () => {
-        await sendMessage.stopGenerating.waitForState({ state: 'visible' });
+        await sendMessageAssertion.assertElementState(
+          sendMessage.stopGenerating,
+          'visible',
+        );
         await sendMessage.stopGenerating.click();
-        await conversations.getEntityByName(replayConversation.name).click();
-        await chat.startReplay();
+        await conversations.selectEntity(replayConversation.name);
+        await chat.replay.click();
       },
     );
 
     await dialTest.step(
       'Verify conversation cursor is "not-allowed" during the chat replay',
       async () => {
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           preReplayConversation.name,
           Cursors.notAllowed,
         );
-        await conversationAssertion.assertConversationCursor(
+        await conversationAssertion.assertEntityCursor(
           replayConversation.name,
           Cursors.notAllowed,
         );
@@ -135,8 +175,8 @@ dialTest(
     await dialTest.step(
       'Verify another conversation is not selectable during text generation in Replay',
       async () => {
-        await conversations.getEntityByName(preReplayConversation.name).click();
-        await conversationAssertion.assertSelectedConversation(
+        await conversations.selectEntity(preReplayConversation.name);
+        await conversationAssertion.assertSelectedEntity(
           replayConversation.name,
         );
       },

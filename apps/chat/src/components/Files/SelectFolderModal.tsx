@@ -1,22 +1,31 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
-import { FeatureType } from '@/src/types/common';
+import {
+  getParentFolderIdsFromFolderId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
 import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
+import uniq from 'lodash-es/uniq';
+
 interface Props {
   isOpen: boolean;
-  initialSelectedFolderId: string;
+  initialSelectedFolderId?: string;
   rootFolderId: string;
   onClose: (path: string | undefined) => void;
+  disallowSelectRootFolder?: boolean;
+  warningMessage?: string;
 }
 
 export const SelectFolderModal = ({
@@ -24,15 +33,34 @@ export const SelectFolderModal = ({
   initialSelectedFolderId,
   rootFolderId,
   onClose,
+  disallowSelectRootFolder,
+  warningMessage,
 }: Props) => {
   const dispatch = useAppDispatch();
 
+  const { name: rootFolderName } = splitEntityId(rootFolderId);
+
+  const defaultSelectedFolder = useMemo(() => {
+    return (
+      initialSelectedFolderId ??
+      (!disallowSelectRootFolder ? rootFolderId : undefined)
+    );
+  }, [disallowSelectRootFolder, initialSelectedFolderId, rootFolderId]);
+
+  const defaultOpenedFoldersIds = useMemo(() => {
+    return initialSelectedFolderId
+      ? getParentFolderIdsFromFolderId(initialSelectedFolderId)
+      : [];
+  }, [initialSelectedFolderId]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
+  const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>(
+    defaultOpenedFoldersIds,
+  );
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const [selectedFolderId, setSelectedFolderId] = useState<string>(
-    initialSelectedFolderId || rootFolderId,
+
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
+    defaultSelectedFolder,
   );
 
   const folders = useAppSelector((state) =>
@@ -44,6 +72,9 @@ export const SelectFolderModal = ({
   );
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
+  );
+  const lastRenamedParentFolder = useAppSelector(
+    FilesSelectors.selectLastRenamedParentFolder,
   );
 
   const {
@@ -60,6 +91,42 @@ export const SelectFolderModal = ({
     setIsAllFilesOpened,
   );
   const showSpinner = folders.length === 0 && areFoldersLoading;
+
+  useEffect(() => {
+    if (lastRenamedParentFolder?.newId) {
+      setOpenedFoldersIds((prev) =>
+        prev.map((id) => {
+          if (id === lastRenamedParentFolder.oldId)
+            return lastRenamedParentFolder.newId;
+          if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+            return updateMovedFolderId(
+              lastRenamedParentFolder.oldId,
+              lastRenamedParentFolder.newId,
+              id,
+            );
+          return id;
+        }),
+      );
+      setSelectedFolderId((id) => {
+        if (!id) return id;
+
+        if (id === lastRenamedParentFolder.oldId)
+          return lastRenamedParentFolder.newId;
+        if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+          return updateMovedFolderId(
+            lastRenamedParentFolder.oldId,
+            lastRenamedParentFolder.newId,
+            id,
+          );
+        return id;
+      });
+      dispatch(FilesActions.resetLastRenamedParentFolder());
+    }
+  }, [
+    dispatch,
+    lastRenamedParentFolder?.newId,
+    lastRenamedParentFolder?.oldId,
+  ]);
 
   useEffect(() => {
     if (isOpen) {
@@ -88,10 +155,12 @@ export const SelectFolderModal = ({
 
   const handleFolderSelect = useCallback(
     (folderId: string) => {
-      setSelectedFolderId(folderId);
+      if (!disallowSelectRootFolder || folderId !== rootFolderId) {
+        setSelectedFolderId(folderId);
+      }
       handleToggleFolder(folderId);
     },
-    [handleToggleFolder],
+    [disallowSelectRootFolder, handleToggleFolder, rootFolderId],
   );
 
   const handleClose = useCallback(
@@ -102,43 +171,53 @@ export const SelectFolderModal = ({
     [onClose],
   );
 
+  const handleSelectFolder = useCallback(
+    () => handleClose(selectedFolderId),
+    [handleClose, selectedFolderId],
+  );
+
+  const onCancel = useCallback(() => {
+    handleClose(undefined);
+    setSelectedFolderId(defaultSelectedFolder);
+    setOpenedFoldersIds((prev) => uniq(prev.concat(defaultOpenedFoldersIds)));
+  }, [defaultOpenedFoldersIds, defaultSelectedFolder, handleClose]);
+
   return (
     <SelectFolder
       isOpen={isOpen}
       modalDataQa="select-folder-modal"
-      onClose={() => handleClose(undefined)}
+      onClose={onCancel}
       title="Select folder"
     >
       <SelectFolderHeader
-        handleSearch={handleSearch}
+        onSearch={handleSearch}
         searchQuery={searchQuery}
-        errorMessage={errorMessage}
+        errorMessage={warningMessage || errorMessage}
         showSpinner={showSpinner}
+        type={warningMessage ? 'warning' : 'error'}
       >
         <SelectFolderList
-          folderProps={{
-            searchTerm: searchQuery,
-            allFolders: folders,
-            isInitialRenameEnabled: true,
-            openedFoldersIds,
-            onClickFolder: handleFolderSelect,
-            onRenameFolder: handleRenameFolder,
-            onAddFolder: handleAddFolder,
-            newAddedFolderId: newFolderId,
-            loadingFolderIds: loadingFolderIds,
-            featureType: FeatureType.File,
-            isSidePanelFolder: false,
-          }}
-          handleFolderSelect={handleFolderSelect}
+          searchTerm={searchQuery}
+          allFolders={folders}
+          isInitialRenameEnabled
+          openedFoldersIds={openedFoldersIds}
+          onClickFolder={handleFolderSelect}
+          onRenameFolder={handleRenameFolder}
+          onAddFolder={handleAddFolder}
+          newAddedFolderId={newFolderId}
+          loadingFolderIds={loadingFolderIds}
+          onFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
-          rootFolderName="All files"
+          rootFolderName={rootFolderName}
           rootFolderId={rootFolderId}
+          onShowError={setErrorMessage}
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={handleNewFolder}
-        onSelectFolderClick={() => handleClose(selectedFolderId)}
+        onCreateNewFolder={handleNewFolder}
+        onSelectFolderClick={handleSelectFolder}
+        disableSelect={!selectedFolderId}
       />
     </SelectFolder>
   );

@@ -1,12 +1,12 @@
 import { isAbsoluteUrl } from '@/src/utils/app/file';
 
-import { Attachment } from '@/src/types/chat';
+import { Attachment } from '@epam/ai-dial-shared';
 
 export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {
     return undefined;
   }
-  return isAbsoluteUrl(url) ? url : `api/${url}`;
+  return isAbsoluteUrl(url) ? url : `/api/${url}`;
 };
 
 export const getMappedAttachment = (attachment: Attachment): Attachment => {

@@ -29,7 +29,8 @@
             "input": ".",
             "output": "."
           }
-        ]
+        ],
+        "useLegacyTypescriptPlugin": false
       }
     },
     "publish": {

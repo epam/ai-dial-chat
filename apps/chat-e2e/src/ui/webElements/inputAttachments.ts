@@ -26,6 +26,11 @@ export class InputAttachments extends BaseElement {
       ),
     );
 
+  public inputAttachedFolder = (name: string) =>
+    this.inputAttachment(name).locator(
+      MessageInputSelectors.inputAttachedFolderName,
+    );
+
   public inputAttachmentErrorIcon = (name: string) =>
     this.inputAttachment(name).locator(
       `${Tags.svg}${ErrorLabelSelectors.fieldError}`,
@@ -38,4 +43,18 @@ export class InputAttachments extends BaseElement {
     this.createElementFromLocator(
       this.inputAttachment(name).locator(FileSelectors.remove),
     );
+
+  public async retryLoading(
+    name: string,
+    options?: { isHttpMethodTriggered: boolean },
+  ) {
+    if (options?.isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST' && resp.status() === 200,
+      );
+      await this.inputAttachmentLoadingRetry(name).click();
+      return respPromise;
+    }
+    await this.inputAttachmentLoadingRetry(name).click();
+  }
 }

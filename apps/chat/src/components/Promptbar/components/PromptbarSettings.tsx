@@ -7,38 +7,49 @@ import {
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPromptRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
-import { PromptsHistory } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
+  ImportExportActions,
   PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+  UIActions,
+} from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
+
+import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import SidebarMenu from '@/src/components/Common/SidebarMenu';
+import { SidebarMenu } from '@/src/components/Common/SidebarMenu';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import { ExportPromptsFormat } from '@epam/ai-dial-shared';
 
 export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
+
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+
   const isMyItemsExist = useAppSelector(
     PromptsSelectors.selectDoesAnyMyItemExist,
   );
-
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Prompt),
+    [],
+  );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const deleteTerm = isSelectMode ? 'selected' : 'all';
 
@@ -51,6 +62,7 @@ export function PromptbarSettings() {
         onClick: () => {
           dispatch(PromptsActions.setAllChosenPrompts());
         },
+        display: isMyItemsExist,
       },
       {
         name: t('Unselect all'),
@@ -67,6 +79,14 @@ export function PromptbarSettings() {
         Icon: FolderPlus,
         onClick: () => {
           dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Prompt,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== PINNED_PROMPTS_SECTION_NAME,
+              ),
+            }),
+          );
+          dispatch(
             PromptsActions.createFolder({
               parentId: getPromptRootId(),
             }),
@@ -80,7 +100,7 @@ export function PromptbarSettings() {
           const typedJson = promptsJSON as { content: unknown };
           dispatch(
             ImportExportActions.importPrompts({
-              promptsHistory: typedJson.content as PromptsHistory,
+              promptsHistory: typedJson.content as ExportPromptsFormat,
             }),
           );
         },
@@ -108,7 +128,7 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [deleteTerm, dispatch, isMyItemsExist, isSelectMode, t],
+    [collapsedSections, deleteTerm, dispatch, isMyItemsExist, isSelectMode, t],
   );
 
   return (
@@ -118,9 +138,9 @@ export function PromptbarSettings() {
       <ConfirmDialog
         isOpen={isClearModalOpen}
         heading={t(`Confirm deleting ${deleteTerm} prompts`)}
-        description={
-          t(`Are you sure that you want to delete ${deleteTerm} prompts?`) || ''
-        }
+        description={t(
+          `Are you sure that you want to delete ${deleteTerm} prompts?`,
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

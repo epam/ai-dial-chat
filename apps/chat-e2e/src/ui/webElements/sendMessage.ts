@@ -5,6 +5,7 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { API } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
@@ -49,7 +50,7 @@ export class SendMessage extends BaseElement {
     SendMessageSelectors.sendMessage,
   );
   public messageInputSpinner = this.messageInput.getChildElementBySelector(
-    ChatSelectors.messageSpinner,
+    ChatSelectors.entitySpinner,
   );
   public attachmentMenuTrigger = this.getChildElementBySelector(
     MenuSelectors.menuTrigger,
@@ -62,6 +63,7 @@ export class SendMessage extends BaseElement {
   public stopGenerating = this.getChildElementBySelector(
     SendMessageSelectors.stopGenerating,
   );
+  public regenerate = this.getChildElementBySelector(ChatSelectors.regenerate);
 
   public proceedGenerating = this.getChildElementBySelector(
     SendMessageSelectors.proceedGenerating,
@@ -101,5 +103,13 @@ export class SendMessage extends BaseElement {
     message
       ? await this.messageInput.fillInInput(message)
       : await this.messageInput.click();
+  }
+
+  public async regenerateErrorResponse() {
+    const requestPromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.chatHost),
+    );
+    await this.regenerate.click();
+    await requestPromise;
   }
 }

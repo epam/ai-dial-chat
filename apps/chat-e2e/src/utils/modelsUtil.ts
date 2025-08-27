@@ -1,71 +1,100 @@
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/chat/utils/app/models';
+import { ApplicationTypes } from '@/src/testData';
 
 export class ModelsUtil {
+  private static readonly slowModelIds: string[] = process.env.SLOW_MODELS_IDS
+    ? JSON.parse(process.env.SLOW_MODELS_IDS)
+    : [];
+
   public static getOpenAIEntities() {
     return JSON.parse(process.env.MODELS!) as DialAIEntityModel[];
   }
 
-  public static getLatestOpenAIEntities() {
-    const latestOpenAIEntities: DialAIEntityModel[] = [];
-    const allOpenAIEntities = ModelsUtil.getOpenAIEntities();
-    const recentModels = ModelsUtil.getRecentModelIds();
-    let groupedOpenAIEntities = allOpenAIEntities.map((object) => ({
-      key: object.name,
-      object: object,
-    }));
-    for (const recentModelId of recentModels) {
-      const groupedOpenAIEntity = groupedOpenAIEntities.find(
-        (e) => e.object.id === recentModelId,
-      );
-      if (groupedOpenAIEntity) {
-        latestOpenAIEntities.push(groupedOpenAIEntity.object);
-        groupedOpenAIEntities = groupedOpenAIEntities.filter(
-          (e) => e.key !== groupedOpenAIEntity.key,
-        );
-      }
-    }
-    groupedOpenAIEntities.forEach((e) => {
-      if (!latestOpenAIEntities.find((le) => le.name === e.key)) {
-        latestOpenAIEntities.push(e.object);
+  public static getLatestOpenAIEntities(
+    allOpenAIEntities?: DialAIEntityModel[],
+  ): DialAIEntityModel[] {
+    const entities = allOpenAIEntities ?? ModelsUtil.getOpenAIEntities();
+    const uniqueEntitiesMap = new Map<string, DialAIEntityModel>();
+    entities.forEach((entity) => {
+      if (!uniqueEntitiesMap.has(entity.name)) {
+        uniqueEntitiesMap.set(entity.name, entity);
       }
     });
-    return latestOpenAIEntities;
+    return Array.from(uniqueEntitiesMap.values());
+  }
+
+  private static filterEntities(
+    source: DialAIEntityModel[],
+    entityType: EntityType,
+    excludedEntityIds?: string[],
+  ): DialAIEntityModel[] {
+    let entities = source.filter((e) => e.type === entityType);
+    if (excludedEntityIds) {
+      entities = entities.filter((e) => !excludedEntityIds.includes(e.id));
+    }
+    return entities;
+  }
+
+  public static getLatestEntities(
+    entityType: EntityType,
+    excludedEntityIds?: string[],
+  ): DialAIEntityModel[] {
+    return this.filterEntities(
+      ModelsUtil.getLatestOpenAIEntities(),
+      entityType,
+      excludedEntityIds,
+    );
+  }
+
+  private static getEntities(
+    entityType: EntityType,
+    excludedEntityIds?: string[],
+  ): DialAIEntityModel[] {
+    return this.filterEntities(
+      ModelsUtil.getOpenAIEntities(),
+      entityType,
+      excludedEntityIds,
+    );
   }
 
   public static getAddons() {
     return JSON.parse(process.env.ADDONS!) as DialAIEntityModel[];
   }
 
-  public static getLatestModels() {
-    return ModelsUtil.getLatestOpenAIEntities().filter(
-      (e) => e.type === 'model',
-    );
+  public static getLatestModels(excludeSlowModels = true) {
+    if (excludeSlowModels) {
+      return this.getLatestEntities(EntityType.Model, this.slowModelIds);
+    }
+    return this.getLatestEntities(EntityType.Model);
   }
 
   public static getLatestAssistants() {
-    return ModelsUtil.getLatestOpenAIEntities().filter(
-      (e) => e.type === 'assistant',
-    );
+    return this.getLatestEntities(EntityType.Assistant);
   }
 
   public static getLatestApplications() {
-    return ModelsUtil.getLatestOpenAIEntities().filter(
-      (e) => e.type === 'application',
-    );
+    return this.getLatestEntities(EntityType.Application);
   }
 
-  public static getModels() {
-    return ModelsUtil.getOpenAIEntities().filter((e) => e.type === 'model');
+  public static getModels(excludeSlowModels = true) {
+    if (excludeSlowModels) {
+      return this.getEntities(EntityType.Model, this.slowModelIds);
+    }
+    return this.getEntities(EntityType.Model);
   }
 
   public static getAssistants() {
-    return ModelsUtil.getOpenAIEntities().filter((e) => e.type === 'assistant');
+    return this.getEntities(EntityType.Assistant);
   }
 
   public static getApplications() {
-    return ModelsUtil.getOpenAIEntities().filter(
-      (e) => e.type === 'application',
-    );
+    return this.getEntities(EntityType.Application);
   }
 
   public static getOpenAIEntity(entity: string) {
@@ -73,22 +102,27 @@ export class ModelsUtil {
   }
 
   public static getModel(modelId: string) {
-    return ModelsUtil.getModels().find((a) => a.id === modelId);
+    return ModelsUtil.getModels(false).find((a) => a.id === modelId);
   }
 
-  public static getModelInfo(modelId: string) {
-    const model = ModelsUtil.getModel(modelId)!;
-    return model.version ? `${model.name} ${model.version}` : model.name;
+  public static getDefaultAgent() {
+    return ModelsUtil.getOpenAIEntities().find((a) => a.isDefault);
   }
 
-  public static getDefaultModel() {
-    return ModelsUtil.getModels().find((a) => a.isDefault);
+  public static doesModelAllowSystemPrompt(
+    model: DialAIEntityModel | undefined,
+  ) {
+    return doesModelAllowSystemPrompt(model);
   }
 
-  public static getModelsWithoutSystemPrompt() {
-    return ModelsUtil.getModels()
-      .filter((m) => m.features?.systemPrompt === false)
-      .map((m) => m.id);
+  public static doesModelAllowTemperature(
+    model: DialAIEntityModel | undefined,
+  ) {
+    return doesModelAllowTemperature(model);
+  }
+
+  public static doesModelAllowAddons(model: DialAIEntityModel | undefined) {
+    return doesModelAllowAddons(model);
   }
 
   public static getModelsWithoutAttachment() {
@@ -97,8 +131,8 @@ export class ModelsUtil {
     );
   }
 
-  public static getLatestModelsWithAttachment() {
-    return ModelsUtil.getLatestModels().filter(
+  public static getLatestModelsWithAttachment(excludeSlowModels = true) {
+    return ModelsUtil.getLatestModels(excludeSlowModels).filter(
       (m) => m.inputAttachmentTypes !== undefined,
     );
   }
@@ -200,5 +234,57 @@ export class ModelsUtil {
     } else {
       return entity.name;
     }
+  }
+
+  public static getModelForSimpleRequest() {
+    return process.env.SIMPLE_REQUEST_MODEL
+      ? ModelsUtil.getModel(process.env.SIMPLE_REQUEST_MODEL)
+      : undefined;
+  }
+
+  public static getRecentAgents(recentAgentIds: string[]) {
+    const allAgents = ModelsUtil.getOpenAIEntities();
+    return allAgents.filter((a) =>
+      recentAgentIds.includes(a.reference || a.id),
+    );
+  }
+
+  public static getRecentAgentsNames(recentAgentIds: string[]) {
+    return ModelsUtil.getRecentAgents(recentAgentIds).map(({ name }) => name);
+  }
+
+  public static getRecentAgentsVersions(recentAgentIds: string[]) {
+    return ModelsUtil.getRecentAgents(recentAgentIds)
+      .filter((r) => r.version !== undefined)
+      .map(({ version }) => version ?? '');
+  }
+
+  public static getApplicationType(entity: DialAIEntityModel) {
+    if (entity.applicationTypeSchemaId) {
+      return entity.applicationTypeSchemaId;
+    }
+    if (ModelsUtil.isExecutableApp(entity)) return ApplicationTypes.CODE_APP;
+    return ApplicationTypes.CUSTOM_APP;
+  }
+
+  public static isExecutableApp(entity: DialAIEntityModel) {
+    return !!entity.functionStatus;
+  }
+
+  public static getAgentsWithSimpleDescription(agents?: DialAIEntityModel[]) {
+    agents = agents ?? ModelsUtil.getOpenAIEntities();
+    //define all patterns
+    const htmlTagRegExp = /<[^>]*>/g;
+    const markdownLinkRegExp = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const markdownBoldRegExp = /\*\*(.*?)\*\*/g;
+
+    return agents.filter((agent) => {
+      const description = agent.description ?? '';
+      //check if the string match any of the patterns
+      const hasHtmlTag = description.match(htmlTagRegExp);
+      const hasMarkdownLink = description.match(markdownLinkRegExp);
+      const hasMarkdownBold = description.match(markdownBoldRegExp);
+      return !hasHtmlTag && !hasMarkdownLink && !hasMarkdownBold;
+    });
   }
 }

@@ -2,7 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { get_encoding } from '@dqbd/tiktoken';
+import { get_encoding } from 'tiktoken';
 
 dialTest(
   'Prompt exceeded the limit is not copied into input message field.\n' +
@@ -15,8 +15,9 @@ dialTest(
     conversationData,
     sendMessage,
     sendMessageAssertion,
-    localStorageManager,
+    conversations,
     dataInjector,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1200', 'EPMRTC-3006');
     let conversation: Conversation;
@@ -46,7 +47,10 @@ dialTest(
       async () => {
         conversation = conversationData.prepareEmptyConversation(randomModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -55,6 +59,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.promptLimitExceededTitle,

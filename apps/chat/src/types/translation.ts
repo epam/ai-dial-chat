@@ -6,5 +6,11 @@ export enum Translation {
   Settings = 'settings',
   SideBar = 'sidebar',
   Files = 'files',
+  Marketplace = 'marketplace',
   Header = 'header',
+  Errors = 'errors',
 }
+
+export type TranslationOptions = Record<string, unknown> & {
+  ns?: Translation;
+};

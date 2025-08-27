@@ -1,12 +1,18 @@
-import { ElementState, ExpectedMessages } from '@/src/testData';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
+import {
+  ElementActionabilityState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { SendMessage } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class SendMessageAssertion {
+export class SendMessageAssertion extends BaseAssertion {
   readonly sendMessage: SendMessage;
 
   constructor(sendMessage: SendMessage) {
+    super();
     this.sendMessage = sendMessage;
   }
 
@@ -26,11 +32,12 @@ export class SendMessageAssertion {
           .toBe(initialWidth);
   }
 
-  public async assertMessageValue(expectedValue: string) {
-    const messageValue = await this.sendMessage.getMessage();
-    expect
-      .soft(messageValue, ExpectedMessages.messageContentIsValid)
-      .toBe(expectedValue);
+  public async assertMessageValue(expectedValue: string | undefined) {
+    await super.assertElementText(
+      this.sendMessage.messageInput,
+      expectedValue ?? '',
+      ExpectedMessages.messageContentIsValid,
+    );
   }
 
   public async assertContinueReplayButtonState(expectedState: ElementState) {
@@ -43,5 +50,29 @@ export class SendMessageAssertion {
       : await expect
           .soft(continueReplayButton, ExpectedMessages.buttonIsNotVisible)
           .toBeHidden();
+  }
+
+  public async assertScrollDownButtonState(expectedState: ElementState) {
+    const scrollDownButton =
+      this.sendMessage.scrollDownButton.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(scrollDownButton, ExpectedMessages.scrollDownButtonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(scrollDownButton, ExpectedMessages.scrollDownButtonIsNotVisible)
+          .toBeHidden();
+  }
+
+  public async assertInputFieldState(
+    expectedState: ElementState,
+    expectedActionability: ElementActionabilityState,
+  ) {
+    const messageInput = this.sendMessage.messageInput.getElementLocator();
+    await this.assertElementState(messageInput, expectedState);
+    await this.assertElementActionabilityState(
+      messageInput,
+      expectedActionability,
+    );
   }
 }

@@ -1,57 +1,97 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { isRootId } from '@/src/utils/app/id';
+import { getParentAndChildFolders } from '@/src/utils/app/folders';
+import { isConversationId, isFileId, isRootId } from '@/src/utils/app/id';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { NoData } from '@/src/components/Common/NoData';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
-import Folder, { FolderProps } from '@/src/components/Folder/Folder';
+import { Folder, FolderProps } from '@/src/components/Folder/Folder';
 
-import CollapsibleSection from '../CollapsibleSection';
-import { NoData } from '../NoData';
-
-interface Props<T, P = unknown> {
-  folderProps: Omit<FolderProps<T, P>, 'currentFolder'>;
-  handleFolderSelect: (folderId: string) => void;
+interface Props<T, P = unknown>
+  extends Omit<FolderProps<T, P>, 'currentFolder' | 'featureType'> {
   isAllEntitiesOpened: boolean;
   rootFolderName: string;
   rootFolderId: string;
+  searchTerm: string;
+  allFolders: FolderInterface[];
+  isInitialRenameEnabled: boolean;
+  openedFoldersIds: string[];
+  loadingFolderIds?: string[];
+  additionalItemData?: AdditionalItemData;
   selectedFolderId?: string;
   initiallySelectedFolderId?: string;
   highlightTemporaryFolders?: boolean;
   showAllRootFolders?: boolean;
+  newAddedFolderId?: string;
+  editOnlyTemporary?: boolean;
+  deleteOnlyTemporary?: boolean;
+  disableSectionToggle?: boolean;
+  onClickFolder: (folderId: string) => void;
+  onRenameFolder: (newName: string, folderId: string) => void;
+  onAddFolder: (parentFolderId: string) => void;
+  onFolderSelect: (folderId: string) => void;
+  onDeleteFolder?: (folderId: string) => void;
+  onShowError?: (error: string) => void;
 }
 
 export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
-  folderProps,
-  handleFolderSelect,
   isAllEntitiesOpened,
+  allFolders,
+  searchTerm,
   selectedFolderId,
   initiallySelectedFolderId,
   highlightTemporaryFolders,
   rootFolderName,
   rootFolderId,
   showAllRootFolders,
+  disableSectionToggle,
+  onFolderSelect,
+  onRenameFolder,
+  onDeleteFolder,
+  onShowError,
+  ...props
 }: Props<T>) => {
   const highlightedFolders = useMemo(
     () => [selectedFolderId].filter(Boolean) as string[],
     [selectedFolderId],
   );
 
-  const noFolders = !folderProps.allFolders.length;
-  const isSearching = !!folderProps.searchTerm;
+  const handleToggleSection = useCallback(() => {
+    onFolderSelect(rootFolderId);
+  }, [onFolderSelect, rootFolderId]);
+
+  const filteredFolders = useMemo(() => {
+    const filteredFolders = allFolders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm),
+    );
+
+    return getParentAndChildFolders(allFolders, filteredFolders);
+  }, [allFolders, searchTerm]);
+
+  const noFolders = !filteredFolders.length;
+  const isSearching = !!searchTerm;
 
   return (
-    <div className="flex min-h-[350px] flex-col" data-qa="upload-folders">
+    <div
+      className="flex min-h-[350px] flex-col overflow-auto"
+      data-qa="select-folders"
+    >
       <CollapsibleSection
-        onToggle={() => handleFolderSelect(rootFolderId)}
+        onToggle={handleToggleSection}
         name={rootFolderName}
+        isExpanded={disableSectionToggle}
         openByDefault
         dataQa="root-folder"
         isHighlighted={rootFolderId === selectedFolderId}
@@ -61,18 +101,17 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
         )}
-        className="!px-0"
+        className="grow !px-0"
       >
         {isAllEntitiesOpened && (
-          <div className="flex grow flex-col gap-0.5 overflow-y-auto">
+          <div className="flex grow flex-col gap-0.5">
             {!noFolders ? (
               <div className="flex flex-col gap-1" data-qa="all-folders">
-                {folderProps.allFolders.map((folder) => {
+                {filteredFolders.map((folder) => {
                   if (
                     !showAllRootFolders &&
                     (folder.folderId !== rootFolderId ||
-                      (initiallySelectedFolderId &&
-                        folder.originalId === initiallySelectedFolderId))
+                      initiallySelectedFolderId)
                   ) {
                     return null;
                   }
@@ -84,11 +123,24 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                   return (
                     <div className="relative" key={folder.id}>
                       <Folder
-                        {...folderProps}
+                        {...props}
+                        searchTerm={searchTerm}
+                        allFolders={allFolders}
+                        onRenameFolder={onRenameFolder}
+                        onDeleteFolder={onDeleteFolder}
+                        featureType={
+                          isConversationId(folder.id)
+                            ? FeatureType.Chat
+                            : isFileId(folder.id)
+                              ? FeatureType.File
+                              : FeatureType.Prompt
+                        }
+                        skipFolderRenameValidation
                         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                         currentFolder={folder}
                         highlightedFolders={highlightedFolders}
                         highlightTemporaryFolders={highlightTemporaryFolders}
+                        onShowError={onShowError}
                       />
                     </div>
                   );

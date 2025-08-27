@@ -1,6 +1,5 @@
-import { NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 
-import { Message, Role } from '@/src/types/chat';
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -8,28 +7,31 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { logger } from './logger';
 
-import { Tiktoken, TiktokenEncoding, get_encoding } from '@dqbd/tiktoken';
-import { Blob } from 'buffer';
+import { Message, Role } from '@epam/ai-dial-shared';
+import { Tiktoken, TiktokenEncoding, get_encoding } from 'tiktoken';
 
-// This is very conservative calculations of tokens (1 token = 1 byte)
+// This is a very conservative calculation of tokens (1 token = 1 byte)
 export const getBytesTokensSize = (str: string): number => {
   return new Blob([str]).size;
 };
 
+// Note: This cache stores Tiktoken instances indefinitely. Consider implementing
+// a cleanup mechanism if memory usage becomes a concern in long-running processes.
 const encodings: Partial<Record<TiktokenEncoding, Tiktoken | undefined>> = {};
-
 export function limitMessagesByTokens({
   promptToSend,
   messages,
   limits,
   features,
   tokenizer,
+  request,
 }: {
   promptToSend: string | undefined;
   messages: Message[];
   limits: DialAIEntityModel['limits'];
   features: DialAIEntityModel['features'];
   tokenizer: DialAIEntityModel['tokenizer'];
+  request: NextApiRequest;
 }): Message[] {
   if (!limits || !limits.maxRequestTokens || features?.truncatePrompt) {
     return messages;
@@ -57,6 +59,7 @@ export function limitMessagesByTokens({
   let fullTokensSize = promptTokensSize;
   let messagesToSend: Message[] = [];
 
+  // Limit processing to 1000 messages to prevent excessive computation
   const length = Math.min(messages.length, 1000);
   for (let i = length - 1; i >= 0; i--) {
     if (!messages[i]) {
@@ -74,10 +77,9 @@ export function limitMessagesByTokens({
 
   if (messagesToSend.length === 0) {
     throw new DialAIError(
-      'User sended messages cannot be empty after limit messages by tokens process',
-      '',
-      '',
-      '400',
+      'User sent messages cannot be empty after limiting messages by tokens',
+      400,
+      request,
     );
   }
 
@@ -103,11 +105,10 @@ export const hardLimitMessages = (messages: Message[]) => {
 export function getMessageCustomContent(
   message: Message,
 ): Partial<Message> | undefined {
-  if (message.role === Role.Assistant && !message.custom_content?.state) {
-    return;
-  }
   return message.custom_content?.state ||
-    message.custom_content?.attachments?.length
+    message.custom_content?.attachments?.length ||
+    message.custom_content?.form_value ||
+    message.custom_content?.form_schema
     ? {
         custom_content: {
           attachments:
@@ -116,9 +117,24 @@ export function getMessageCustomContent(
               ? message.custom_content?.attachments
               : undefined,
           state: message.custom_content?.state,
+          form_value: message.custom_content?.form_value,
+          form_schema: message.custom_content?.form_schema,
         },
       }
     : undefined;
+}
+
+export function getUserMessageCustomContent(
+  message: Message,
+): Partial<Message> | undefined {
+  if (
+    message.role === Role.Assistant &&
+    !message.custom_content?.state &&
+    !message.custom_content?.form_schema
+  ) {
+    return;
+  }
+  return getMessageCustomContent(message);
 }
 
 const getResponseBody = (
@@ -129,6 +145,22 @@ const getResponseBody = (
   return {
     [fieldName]: displayMessage ? displayMessage : fallbackMessage,
   };
+};
+
+type ErrorMessageKeys = keyof typeof errorsMessages;
+
+const ERROR_CONFIG: Record<
+  string,
+  { status: number; messageKey: ErrorMessageKeys }
+> = {
+  '400': { status: 400, messageKey: 400 },
+  '401': { status: 401, messageKey: 401 },
+  '403': { status: 403, messageKey: 403 },
+  '404': { status: 404, messageKey: 404 },
+  '429': { status: 429, messageKey: 429 },
+  '504': { status: 504, messageKey: 'timeoutError' },
+  content_filter: { status: 400, messageKey: 'contentFiltering' },
+  ModelDeprecated: { status: 410, messageKey: 'ModelDeprecated' },
 };
 
 export const chatErrorHandler = ({
@@ -145,15 +177,21 @@ export const chatErrorHandler = ({
   const postfix = isStreamingError ? '\0' : '';
   const fieldName = isStreamingError ? 'errorMessage' : 'message';
   let fallbackErrorMessage = errorsMessages.generalServer;
+  let statusCode = 500;
 
   logger.error(error, msg);
 
-  if (error instanceof DialAIError) {
-    // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
-    if (['429', '504'].includes(error.code)) {
-      fallbackErrorMessage = errorsMessages[429];
-    } else if (error.code === 'content_filter') {
-      fallbackErrorMessage = errorsMessages.contentFiltering;
+  if (error instanceof DialAIError && ERROR_CONFIG[error.code]) {
+    const config = ERROR_CONFIG[error.code];
+    statusCode = config.status;
+    const errorMessage = errorsMessages[config.messageKey];
+    fallbackErrorMessage =
+      typeof errorMessage === 'function'
+        ? errorMessage('entity')
+        : errorMessage;
+
+    if (error.code === '429' && error.message) {
+      console.error(error.message);
     }
   }
 
@@ -163,5 +201,5 @@ export const chatErrorHandler = ({
     fallbackErrorMessage,
   );
 
-  return res.status(500).send(JSON.stringify(responseBody) + postfix);
+  return res.status(statusCode).send(JSON.stringify(responseBody) + postfix);
 };

@@ -1,25 +1,25 @@
-import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
-import {
-  Attachment,
-  Conversation,
-  ConversationEntityModel,
-  Message,
-  Stage,
-} from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
 import { prepareEntityName } from './common';
-import { constructPath } from './file';
+import { constructPath, isAbsoluteUrl } from './file';
 import { getConversationRootId } from './id';
+
+import {
+  Attachment,
+  ConversationEntityModel,
+  Message,
+  Stage,
+} from '@epam/ai-dial-shared';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
@@ -57,7 +57,7 @@ const migrateMessageAttachmentUrls = (message: Message): Message => {
 };
 
 export const cleanConversation = (
-  conversation: Partial<Conversation>,
+  conversation: Partial<Conversation> & { lastActivityDate?: number },
 ): Conversation => {
   // added model for each conversation (3/20/23)
   // added system prompt for each conversation (3/21/23)
@@ -66,33 +66,34 @@ export const cleanConversation = (
   // added messages (4/16/23)
   // added replay (6/22/2023)
   // added selectedAddons and refactored to not miss any new fields (7/6/2023)
+  // added reference to make chatId (x-conversation-id header) a constant value (16/4/2025)
 
-  const model: ConversationEntityModel = conversation.model
-    ? {
-        id: conversation.model.id,
-      }
-    : { id: FALLBACK_MODEL_ID };
-
+  const model: ConversationEntityModel = {
+    id: conversation.model ? conversation.model.id : FALLBACK_MODEL_ID,
+  };
   const assistantModelId =
-    conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL_ID;
+    conversation.assistantModelId ??
+    DefaultsService.get('assistantSubmodelId', FALLBACK_ASSISTANT_SUBMODEL_ID);
+  const conversationId =
+    conversation.id ||
+    constructPath(
+      conversation.folderId || getConversationRootId(),
+      conversation.name || DEFAULT_CONVERSATION_NAME,
+    );
 
   const cleanConversation: Conversation = {
-    id:
-      conversation.id ||
-      constructPath(
-        conversation.folderId || getConversationRootId(),
-        conversation.name || DEFAULT_CONVERSATION_NAME,
-      ),
+    id: conversationId,
+    reference: conversation.reference ?? conversationId,
     name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
-    prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
+    prompt:
+      conversation.prompt ?? DefaultsService.get('defaultSystemPrompt', ''),
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
-    lastActivityDate: conversation.lastActivityDate || 0,
-    isNameChanged: conversation.isNameChanged,
+    updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     ...(conversation.playback && {
       playback: {
         ...conversation.playback,
@@ -111,6 +112,7 @@ export const cleanConversation = (
           ) || [],
       },
     }),
+    customViewState: conversation.customViewState,
   };
 
   return cleanConversation;

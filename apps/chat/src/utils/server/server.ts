@@ -1,6 +1,7 @@
 import { NextApiRequest } from 'next';
 
-import { constructPath } from '../app/file';
+import { constructPath } from '@/src/utils/app/file';
+
 import { ApiUtils } from './api';
 
 import { Response as NodeFetchResponse } from 'node-fetch';
@@ -19,6 +20,14 @@ export class ServerUtils {
         .map((part) => ApiUtils.safeEncodeURIComponent(part as string)),
     );
 
+  public static safeDecodeURI = (str: string): string => {
+    try {
+      return decodeURIComponent(str);
+    } catch {
+      return str;
+    }
+  };
+
   public static getErrorMessageFromResponse = async (
     res: Response | NodeFetchResponse,
   ): Promise<string | null> => {
@@ -26,9 +35,11 @@ export class ServerUtils {
       const text = await res.text();
       try {
         const json = JSON.parse(text);
-        return typeof json === 'string' ? json : JSON.stringify(json);
+        return this.safeDecodeURI(
+          typeof json === 'string' ? json : JSON.stringify(json),
+        );
       } catch {
-        return text;
+        return this.safeDecodeURI(text);
       }
     } catch {
       return null;

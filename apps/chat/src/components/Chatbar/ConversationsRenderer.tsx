@@ -5,16 +5,21 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
-import CollapsibleSection from '../Common/CollapsibleSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {
   conversations: Conversation[];
   label: string;
 }
+
+const additionalConvData = {
+  isSidePanelItem: true,
+};
 
 export const ConversationsRenderer = ({
   conversations,
@@ -37,26 +42,28 @@ export const ConversationsRenderer = ({
     );
   }, [selectedConversationsIds, conversations]);
 
+  if (!conversations.length) {
+    return null;
+  }
+
   return (
-    <>
-      {conversations.length > 0 && (
-        <CollapsibleSection
-          name={label}
-          onToggle={handleToggle}
-          dataQa="chronology"
-          isHighlighted={isSectionHighlighted}
-          openByDefault={isExpanded}
-        >
-          <div className="flex flex-col gap-1 py-1">
-            {conversations.map((conversation) => (
-              <ConversationComponent
-                key={conversation.id}
-                item={conversation}
-              />
-            ))}
-          </div>
-        </CollapsibleSection>
-      )}
-    </>
+    <CollapsibleSection
+      name={label}
+      onToggle={handleToggle}
+      dataQa="chronology"
+      isHighlighted={isSectionHighlighted}
+      openByDefault={isExpanded}
+      isExpanded={isExpanded}
+    >
+      <div className="flex flex-col gap-1 py-1">
+        {conversations.map((conversation) => (
+          <ConversationComponent
+            key={conversation.id}
+            item={conversation}
+            additionalItemData={additionalConvData}
+          />
+        ))}
+      </div>
+    </CollapsibleSection>
   );
 };

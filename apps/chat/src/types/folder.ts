@@ -1,22 +1,13 @@
-import { ShareEntity } from './common';
+import { PromptInfo } from './prompt';
 import { EntityFilters } from './search';
 
-export interface FolderInterface extends ShareEntity {
-  type: FolderType;
-  temporary?: boolean;
-  serverSynced?: boolean;
-  isPublicationFolder?: boolean;
-}
+import { ConversationInfo, FolderInterface } from '@epam/ai-dial-shared';
+
+export type { FolderInterface };
 
 export interface FoldersAndEntities<T> {
   folders: FolderInterface[];
   entities: T[];
-}
-
-export enum FolderType {
-  Chat = 'chat',
-  Prompt = 'prompt',
-  File = 'file',
 }
 
 export interface FolderSectionProps {
@@ -30,7 +21,7 @@ export interface FolderSectionProps {
   openByDefault?: boolean;
 }
 
-export interface MoveToFolderProps {
-  folderId?: string;
-  isNewFolder?: boolean;
+export interface DraggedInterface {
+  entity: FolderInterface | ConversationInfo | PromptInfo;
+  isFolder: boolean;
 }

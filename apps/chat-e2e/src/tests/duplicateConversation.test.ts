@@ -1,45 +1,44 @@
 import { Conversation } from '@/chat/types/chat';
-import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
-import { ModelsUtil } from '@/src/utils';
+import { DateUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-
-let defaultModel: DialAIEntityModel;
-
-dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
-});
 
 dialTest(
   'Duplicate chat located in today.\n' +
-    'Duplicate chat located in today several times to check postfixes',
+    'Duplicate chat located in today several times to check postfixes.\n' +
+    'Metadata for chat duplicated from yesterday section',
   async ({
     dialHomePage,
     conversations,
+    conversationDropdownMenu,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
-    chatMessages,
+    localStorageManager,
+    conversationAssertion,
+    chatMessagesAssertion,
+    informationModalAssertion,
   }) => {
-    setTestIds('EPMRTC-3000', 'EPMRTC-3056');
+    setTestIds('EPMRTC-3000', 'EPMRTC-3056', 'EPMRTC-6103');
     let conversation: Conversation;
     const firstRequest = 'first request';
     const secondRequest = 'second request';
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialTest.step('Prepare conversation with some history', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        [firstRequest, secondRequest],
-      );
+      conversation = conversationData.prepareModelConversationBasedOnRequests([
+        firstRequest,
+        secondRequest,
+      ]);
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -47,26 +46,45 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         for (let i = 1; i <= 2; i++) {
-          await conversations.openEntityDropdownMenu(conversation.name, i);
-          await conversations.selectEntityMenuOption(MenuOptions.duplicate, {
-            triggeredHttpMethod: 'POST',
+          await conversations.openEntityDropdownMenu(conversation.name, {
+            exactMatch: true,
+            index: i,
           });
-          await expect
-            .soft(
-              conversations.getEntityByName(
-                ExpectedConstants.entityWithIndexTitle(conversation.name, i),
+          await conversationDropdownMenu.selectMenuOption(
+            MenuOptions.duplicate,
+            {
+              triggeredHttpMethod: 'POST',
+            },
+          );
+          await conversationAssertion.assertEntityState(
+            {
+              name: ExpectedConstants.entityWithIndexTitle(
+                conversation.name,
+                i,
               ),
-              ExpectedMessages.conversationIsVisible,
-            )
-            .toBeVisible();
-          expect
-            .soft(
-              await chatMessages.chatMessages.getElementsCount(),
-              ExpectedMessages.messageCountIsCorrect,
-            )
-            .toBe(conversation.messages.length);
+            },
+            'visible',
+          );
+          await chatMessagesAssertion.assertMessagesCount(
+            conversation.messages.length,
+          );
         }
+      },
+    );
+
+    await dialTest.step(
+      'Select "Info" option for duplicated conversation from dropdown menu and verify modal data',
+      async () => {
+        await conversations.openEntityDropdownMenu(
+          ExpectedConstants.entityWithIndexTitle(conversation.name, 1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info);
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
       },
     );
   },
@@ -79,9 +97,9 @@ dialTest(
     folderConversations,
     setTestIds,
     conversationData,
-    conversations,
-    localStorageManager,
+    conversationDropdownMenu,
     dataInjector,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3001');
     let folderConversation: FolderConversation;
@@ -93,9 +111,10 @@ dialTest(
         folderConversation.conversations,
         folderConversation.folders,
       );
-      await localStorageManager.setSelectedConversation(
-        folderConversation.conversations[0],
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
       );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -103,11 +122,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           folderConversation.conversations[0].name,
         );
-        await conversations.selectEntityMenuOption(MenuOptions.duplicate, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
           triggeredHttpMethod: 'POST',
         });
         await expect

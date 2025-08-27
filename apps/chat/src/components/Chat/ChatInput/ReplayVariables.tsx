@@ -1,19 +1,23 @@
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { replaceDefaultValuesFromContent } from '@/src/utils/app/prompts';
+import {
+  getEntitiesFromTemplateMapping,
+  replaceDefaultValuesFromContent,
+  replaceTemplates,
+} from '@/src/utils/app/prompts';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { PromptVariablesDialog } from './PromptVariablesDialog';
+
+import isEmpty from 'lodash-es/isEmpty';
 
 export const ReplayVariables = () => {
   const isReplay = useAppSelector(
@@ -57,7 +61,7 @@ const ReplayVariablesDialog = () => {
                 replayUserMessagesStack:
                   conversation.replay.replayUserMessagesStack.map(
                     (message, index) =>
-                      index === conversation.replay?.activeReplayIndex ?? 0
+                      index === (conversation.replay?.activeReplayIndex ?? 0)
                         ? {
                             ...message,
                             content: newContent,
@@ -85,19 +89,19 @@ const ReplayVariablesDialog = () => {
   if (
     !activeMessage ||
     !activeMessage.templateMapping ||
-    !Object.keys(activeMessage.templateMapping).length
+    isEmpty(activeMessage.templateMapping)
   )
     return null;
 
-  const template = Object.entries(activeMessage.templateMapping).reduce(
-    (acc, [key, value]) => acc.replaceAll(key, value),
+  const template = replaceTemplates(
+    getEntitiesFromTemplateMapping(activeMessage.templateMapping),
     activeMessage.content,
   );
   const prompt: Prompt = {
     content: replaceDefaultValuesFromContent(activeMessage.content, template),
     id: '',
     folderId: '',
-    name: t('Please, enter variables for template:'),
+    name: t('Please, enter variables for the template:'),
     description: template,
   };
 

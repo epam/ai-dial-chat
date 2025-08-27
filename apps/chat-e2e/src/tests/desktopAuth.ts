@@ -4,33 +4,31 @@ import { stateFilePath } from '../core/dialFixtures';
 import test from '@/src/core/baseFixtures';
 import { API } from '@/src/testData';
 
+// Number of users needed: numWorkers * 3 (main + additional + second additional) + 1 (admin)
 const usernames = process.env
   .E2E_USERNAME!.split(',')
-  .slice(0, +config.workers! + 2);
+  .slice(0, +config.workers! * 3);
 
+//admin user to test publishing feature is required
+if (process.env.E2E_ADMIN) {
+  usernames.push(process.env.E2E_ADMIN);
+}
+
+// Main User: stateFilePath(testInfo.parallelIndex)
+// Additional User: stateFilePath(testInfo.parallelIndex + numWorkers)
+// Second Additional User: stateFilePath(testInfo.parallelIndex + 2 * numWorkers)
+// Admin User: stateFilePath(3 * numWorkers) (assuming admin is always the last user)
 for (let i = 0; i < usernames.length; i++) {
   test(`Authenticate user: ${usernames[i]}`, async ({
     page,
-    loginPage,
-    auth0Page,
-    localStorageManager,
+    providerLogin,
   }, testInfo) => {
-    await loginPage.navigateToBaseUrl();
-    await loginPage.ssoSignInButton.click();
-    let options;
-    if (testInfo.parallelIndex == 0) {
-      options = { setEntitiesEnvVars: true };
-    }
-    const retrievedResponses = await auth0Page.loginToChatBot(
+    const retrievedResponses = await providerLogin.login(
+      testInfo,
       usernames[i],
-      options,
+      process.env.E2E_PASSWORD!,
+      i < +config.workers!,
     );
-    if (options?.setEntitiesEnvVars) {
-      process.env.MODELS = retrievedResponses.get(API.modelsHost);
-      process.env.ADDONS = retrievedResponses.get(API.addonsHost);
-      process.env.RECENT_ADDONS = await localStorageManager.getRecentAddons();
-      process.env.RECENT_MODELS = await localStorageManager.getRecentModels();
-    }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
     await page.context().storageState({ path: stateFilePath(i) });
   });

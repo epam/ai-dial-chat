@@ -2,6 +2,8 @@ import React, { useEffect, useImperativeHandle, useRef } from 'react';
 
 import classNames from 'classnames';
 
+import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
+
 type Props = React.DetailedHTMLProps<
   React.TextareaHTMLAttributes<HTMLTextAreaElement>,
   HTMLTextAreaElement
@@ -61,6 +63,7 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
         value={value}
       />
       <textarea
+        id={CHAT_TEXT_FIELD_ID}
         data-qa="chat-textarea"
         className={className}
         value={value}

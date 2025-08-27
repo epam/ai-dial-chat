@@ -1,8 +1,12 @@
+import { BackendDataNodeType, BackendResourceType } from './common';
+import { DialFile } from './files';
+
 import {
-  BackendDataNodeType,
-  BackendResourceType,
+  MIMEType,
+  PublishActions,
+  ShareEntity,
   UploadStatus,
-} from './common';
+} from '@epam/ai-dial-shared';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -13,26 +17,34 @@ export enum PublicationFunctions {
   // False = 'False',
 }
 
-export enum PublishActions {
-  ADD = 'ADD',
-  DELETE = 'DELETE',
-}
-
 export interface PublicationRule {
   source: string;
   function: PublicationFunctions;
   targets: string[];
 }
 
-export interface PublicationRequestModel {
-  name: string;
+export interface BasePublicationRequestModel {
+  displayAuthor?: string;
   targetFolder: string;
+  rules?: PublicationRule[];
+}
+
+export interface PublicationRequestModel extends BasePublicationRequestModel {
+  name: string;
   resources: {
     action: PublishActions;
     sourceUrl?: string;
     targetUrl: string;
   }[];
-  rules?: PublicationRule[];
+}
+
+export interface PublicationUpdateRequestModel
+  extends BasePublicationRequestModel {
+  resources: {
+    action: PublishActions;
+    sourceUrl: string;
+    targetUrl: string;
+  }[];
 }
 
 export enum PublicationStatus {
@@ -46,6 +58,7 @@ export interface PublicationResource {
   sourceUrl: string | null;
   targetUrl: string;
   reviewUrl: string;
+  author?: string;
 }
 
 export interface Publication {
@@ -58,6 +71,8 @@ export interface Publication {
   resources: PublicationResource[];
   rules?: PublicationRule[];
   resourceTypes: BackendResourceType[];
+  author?: string;
+  displayAuthor?: string;
 }
 
 export interface PublicationInfo {
@@ -67,6 +82,7 @@ export interface PublicationInfo {
   status: PublicationStatus;
   createdAt: number;
   resourceTypes: BackendResourceType[];
+  displayAuthor?: string;
 }
 
 export interface PublicationsListModel {
@@ -93,6 +109,11 @@ export interface PublishedItem {
   items?: PublishedItem[];
 }
 
+export interface PublishedFileItem extends PublishedItem {
+  contentLength: number;
+  contentType: MIMEType;
+}
+
 export interface PublishedList {
   name: string | null;
   parentPath: string | null;
@@ -114,6 +135,24 @@ export interface TargetAudienceFilter extends TargetAudienceFilterItem {
 
 export interface ResourceToReview {
   publicationUrl: string;
-  reviewed: boolean;
   reviewUrl: string;
+  sourceUrl: string;
+  reviewed: boolean;
 }
+
+export interface PublicVersionOption {
+  version: string;
+  id: string;
+}
+
+export interface PublicVersionGroup {
+  selectedVersion: PublicVersionOption;
+  allVersions: PublicVersionOption[];
+}
+
+export type PublicVersionGroups = Record<
+  string,
+  PublicVersionGroup | undefined
+>;
+
+export type PublicationReviewItem = ShareEntity | DialFile;

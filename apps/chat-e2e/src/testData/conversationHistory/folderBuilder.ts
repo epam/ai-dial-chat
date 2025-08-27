@@ -1,4 +1,5 @@
-import { FolderInterface, FolderType } from '@/chat/types/folder';
+import { FeatureType } from '@/chat/types/common';
+import { FolderInterface } from '@/chat/types/folder';
 import { ExpectedConstants } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -9,7 +10,7 @@ export class FolderBuilder {
     this.folder = {
       id: GeneratorUtil.randomString(10),
       name: ExpectedConstants.newFolderTitle,
-      type: FolderType.Chat,
+      type: FeatureType.Chat,
       folderId: '',
     };
   }
@@ -28,7 +29,7 @@ export class FolderBuilder {
     return this;
   }
 
-  withType(type: FolderType): FolderBuilder {
+  withType(type: FeatureType): FolderBuilder {
     this.folder.type = type;
     return this;
   }

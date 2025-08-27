@@ -8,23 +8,36 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
-import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+  getConfigurationValue,
+  getMessageFormValue,
+} from '@/src/utils/app/form-schema';
+import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+
+import { Translation } from '@/src/types/translation';
+
+import { ChatActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { ChatInputFooter } from '../ChatInput/ChatInputFooter';
 import { PlaybackAttachments } from './PlaybackAttachments';
+
+import {
+  Attachment,
+  Feature,
+  MessageFormValueType,
+} from '@epam/ai-dial-shared';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -44,7 +57,7 @@ export const PlaybackControls = ({
   nextMessageBoxRef,
   showScrollDownButton,
 }: Props) => {
-  const { t } = useTranslation('playback');
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -62,6 +75,15 @@ export const PlaybackControls = ({
   );
 
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const isDisabledPlaybackControls = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisabledPlaybackControls),
+  );
+  const disabledPlaybackControlsData = useAppSelector((state) =>
+    SettingsSelectors.selectFeatureData(
+      state,
+      Feature.DisabledPlaybackControls,
+    ),
+  );
 
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
   const [phase, setPhase] = useState<PlaybackPhases>(PlaybackPhases.EMPTY);
@@ -105,20 +127,28 @@ export const PlaybackControls = ({
       currentMessage && currentMessage?.custom_content?.attachments?.length
         ? currentMessage.custom_content.attachments
         : [];
+    const form_value =
+      getMessageFormValue(currentMessage) ??
+      getConfigurationValue(currentMessage);
     const message = attachments.length
-      ? { content, custom_content: { attachments } }
-      : { content };
+      ? { content, custom_content: { attachments, form_value } }
+      : { content, custom_content: { form_value } };
     return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
 
-  const hasAttachments =
+  const hasAttachments = !!(
     activeMessage &&
     activeMessage.custom_content &&
     activeMessage.custom_content.attachments &&
-    activeMessage.custom_content.attachments.length;
+    activeMessage.custom_content.attachments.length
+  );
 
   const handlePlayNextMessage = useCallback(() => {
-    if (isMessageStreaming || !isNextMessageInStack) {
+    if (
+      isDisabledPlaybackControls ||
+      isMessageStreaming ||
+      !isNextMessageInStack
+    ) {
       return;
     }
     if (phase === PlaybackPhases.EMPTY) {
@@ -128,10 +158,19 @@ export const PlaybackControls = ({
     setPhase(PlaybackPhases.EMPTY);
 
     dispatch(ConversationsActions.playbackNextMessageStart());
-  }, [dispatch, isMessageStreaming, isNextMessageInStack, phase]);
+  }, [
+    dispatch,
+    isDisabledPlaybackControls,
+    isMessageStreaming,
+    isNextMessageInStack,
+    phase,
+  ]);
 
   const handlePrevMessage = useCallback(() => {
-    if (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE) {
+    if (
+      isDisabledPlaybackControls ||
+      (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
+    ) {
       return;
     }
     if (phase === PlaybackPhases.EMPTY) {
@@ -147,7 +186,13 @@ export const PlaybackControls = ({
     }
 
     dispatch(ConversationsActions.playbackPrevMessage());
-  }, [dispatch, isPrevMessageInStack, phase, activeIndex]);
+  }, [
+    isDisabledPlaybackControls,
+    activeIndex,
+    phase,
+    isPrevMessageInStack,
+    dispatch,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -209,6 +254,26 @@ export const PlaybackControls = ({
     };
   }, [controlsContainerRef, onResize]);
 
+  useEffect(() => {
+    if (
+      phase === PlaybackPhases.MESSAGE &&
+      activeMessage?.custom_content?.form_value
+    ) {
+      Object.entries(activeMessage.custom_content.form_value).forEach(
+        ([property, value]) => {
+          dispatch(
+            ChatActions.setFormValue({
+              property,
+              value: value as MessageFormValueType,
+            }),
+          );
+        },
+      );
+    } else if (phase === PlaybackPhases.EMPTY) {
+      dispatch(ChatActions.resetFormValue());
+    }
+  }, [activeMessage?.custom_content?.form_value, dispatch, phase]);
+
   return (
     <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
       <div
@@ -218,14 +283,23 @@ export const PlaybackControls = ({
         )}
         data-qa="playback-control"
       >
-        <button
-          data-qa="playback-prev"
-          onClick={handlePrevMessage}
-          disabled={activeIndex === 0 && phase !== PlaybackPhases.MESSAGE}
-          className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+        <Tooltip
+          tooltip={disabledPlaybackControlsData?.description}
+          asChild
+          isTriggerClickable
         >
-          <IconPlayerPlay size={20} className="rotate-180" />
-        </button>
+          <button
+            data-qa="playback-prev"
+            onClick={handlePrevMessage}
+            disabled={
+              isDisabledPlaybackControls ||
+              (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
+            }
+            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+          >
+            <IconPlayerPlay size={20} className="rotate-180" />
+          </button>
+        </Tooltip>
         <div
           ref={nextMessageBoxRef}
           className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
@@ -249,22 +323,34 @@ export const PlaybackControls = ({
                   >
                     {phase === PlaybackPhases.EMPTY
                       ? t('Type a message')
-                      : activeMessage.content ?? ''}
+                      : (activeMessage.content ?? '')}
                   </span>
 
                   {phase === PlaybackPhases.MESSAGE && hasAttachments && (
                     <PlaybackAttachments
-                      attachments={activeMessage.custom_content.attachments}
+                      attachments={
+                        activeMessage.custom_content.attachments as Attachment[]
+                      }
                     />
                   )}
-                  <button
-                    data-qa="playback-next"
-                    onClick={handlePlayNextMessage}
-                    className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                    disabled={isMessageStreaming || !isNextMessageInStack}
+                  <Tooltip
+                    tooltip={disabledPlaybackControlsData?.description}
+                    isTriggerClickable
+                    asChild
                   >
-                    <IconPlayerPlay size={20} className="shrink-0" />
-                  </button>
+                    <button
+                      data-qa="playback-next"
+                      onClick={handlePlayNextMessage}
+                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                      disabled={
+                        isDisabledPlaybackControls ||
+                        isMessageStreaming ||
+                        !isNextMessageInStack
+                      }
+                    >
+                      <IconPlayerPlay size={20} className="shrink-0" />
+                    </button>
+                  </Tooltip>
                 </>
               )}
             </>
@@ -277,7 +363,6 @@ export const PlaybackControls = ({
           />
         )}
       </div>
-      <ChatInputFooter />
     </div>
   );
 };

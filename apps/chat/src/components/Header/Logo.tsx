@@ -1,0 +1,85 @@
+import { MouseEventHandler } from 'react';
+
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+
+import classNames from 'classnames';
+
+import { ApiUtils } from '@/src/utils/server/api';
+
+import { ConversationsActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
+
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { Routes } from '@/src/constants/routes';
+
+import { Feature } from '@epam/ai-dial-shared';
+import cssEscape from 'css.escape';
+
+export const Logo = () => {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
+  const areConversationsLoaded = useAppSelector(
+    ConversationsSelectors.areConversationsUploaded,
+  );
+  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
+  const isCustomLogoFeatureEnabled = enabledFeatures.has(Feature.CustomLogo);
+  const isNewConversationDisabled = enabledFeatures.has(
+    Feature.HideNewConversation,
+  );
+
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+
+  const customLogoUrl =
+    isCustomLogoFeatureEnabled &&
+    customLogo &&
+    `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
+
+  const createNewConversation = () => {
+    if (!areConversationsLoaded || isNewConversationDisabled) return;
+    dispatch(
+      ConversationsActions.createNewConversations({
+        names: [DEFAULT_CONVERSATION_NAME],
+      }),
+    );
+    dispatch(ConversationsActions.resetSearch());
+  };
+
+  const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
+    if (messageIsStreaming) return e.preventDefault();
+    if (router.route === Routes.Chat) {
+      e.preventDefault();
+    }
+    createNewConversation();
+  };
+
+  return (
+    <Link
+      href={Routes.Chat}
+      shallow
+      onClick={handleLogoClick}
+      className={classNames(
+        'min-w-[110px] bg-contain bg-center bg-no-repeat lg:bg-left',
+        messageIsStreaming && 'cursor-not-allowed',
+      )}
+      style={{
+        backgroundImage: customLogoUrl
+          ? `url(${cssEscape(customLogoUrl)})`
+          : `var(--app-logo)`,
+      }}
+      data-qa="logo"
+    ></Link>
+  );
+};

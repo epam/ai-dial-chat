@@ -10,12 +10,13 @@ import { SendMessage } from './sendMessage';
 
 import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
+import { AgentInfo } from '@/src/ui/webElements/agentInfo';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
-import { Footer } from '@/src/ui/webElements/footer';
-import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
+import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
+import { Request } from 'playwright-core';
 
 export const PROMPT_APPLY_DELAY = 500;
 export const SCROLL_MOVING_DELAY = 100;
@@ -30,14 +31,9 @@ export class Chat extends BaseElement {
   private chatMessages!: ChatMessages;
   private compare!: Compare;
   private playbackControl!: PlaybackControl;
-  private isolatedView!: MoreInfo;
-  private footer!: Footer;
+  private agentInfo!: AgentInfo;
+  private publicationReviewControl!: PublicationReviewControl;
   public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
-  public applyChanges = (index?: number) =>
-    new BaseElement(
-      this.page,
-      ChatSettingsSelectors.applyChanges,
-    ).getNthElement(index ?? 1);
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
   public notAllowedModelLabel = this.getChildElementBySelector(
     ErrorLabelSelectors.notAllowedModel,
@@ -45,6 +41,15 @@ export class Chat extends BaseElement {
   public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
   public scrollableArea = this.getChildElementBySelector(
     ChatSelectors.chatScrollableArea,
+  );
+  public addModelButton = this.getChildElementBySelector(
+    ChatSelectors.addModelToWorkspace,
+  );
+  public changeAgentButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.changeAgentButton,
+  );
+  public configureSettingsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.configureSettingsButton,
   );
 
   getChatHeader(): ChatHeader {
@@ -63,7 +68,7 @@ export class Chat extends BaseElement {
 
   getChatMessages(): ChatMessages {
     if (!this.chatMessages) {
-      this.chatMessages = new ChatMessages(this.page);
+      this.chatMessages = new ChatMessages(this.page, this.rootLocator);
     }
     return this.chatMessages;
   }
@@ -77,23 +82,26 @@ export class Chat extends BaseElement {
 
   getPlaybackControl(): PlaybackControl {
     if (!this.playbackControl) {
-      this.playbackControl = new PlaybackControl(this.page);
+      this.playbackControl = new PlaybackControl(this.page, this.rootLocator);
     }
     return this.playbackControl;
   }
 
-  getIsolatedView(): MoreInfo {
-    if (!this.isolatedView) {
-      this.isolatedView = new MoreInfo(this.page, this.rootLocator);
+  getAgentInfo(): AgentInfo {
+    if (!this.agentInfo) {
+      this.agentInfo = new AgentInfo(this.page, this.rootLocator);
     }
-    return this.isolatedView;
+    return this.agentInfo;
   }
 
-  getFooter(): Footer {
-    if (!this.footer) {
-      this.footer = new Footer(this.page, this.rootLocator);
+  getPublicationReviewControl(): PublicationReviewControl {
+    if (!this.publicationReviewControl) {
+      this.publicationReviewControl = new PublicationReviewControl(
+        this.page,
+        this.rootLocator,
+      );
     }
-    return this.footer;
+    return this.publicationReviewControl;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {
@@ -107,8 +115,12 @@ export class Chat extends BaseElement {
   public async startReplay(userRequest?: string, waitForAnswer = false) {
     await this.replay.waitForState();
     const requestPromise = this.waitForRequestSent(userRequest);
+    const moveResponsePromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.moveHost),
+    );
     await this.replay.click();
     const request = await requestPromise;
+    await moveResponsePromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
   }
@@ -131,6 +143,8 @@ export class Chat extends BaseElement {
     comparedEntities: { rightEntity: string; leftEntity: string },
     waitForAnswer = false,
   ) {
+    // Click on "Add Model to Workspace" button if present
+    await this.addModelToWorkspace();
     const rightRequestPromise = this.waitForRequestSent(
       comparedEntities.rightEntity,
     );
@@ -189,11 +203,32 @@ export class Chat extends BaseElement {
   public async proceedReplaying(waitForAnswer = false) {
     const proceedGeneratingButton = this.getSendMessage().proceedGenerating;
     await proceedGeneratingButton.waitForState();
+    const apiPromises = [];
     const requestPromise = this.page.waitForRequest(API.chatHost);
+    apiPromises.push(requestPromise);
+    if (waitForAnswer) {
+      const updateRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'PUT' &&
+          resp.url().includes(API.conversationHost),
+      );
+      const moveRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'POST' &&
+          resp.url().includes(API.moveHost),
+      );
+      apiPromises.push(updateRespPromise, moveRespPromise);
+    }
     await proceedGeneratingButton.click();
-    const request = await requestPromise;
+    let request;
+    for (let i = 0; i < apiPromises.length; i++) {
+      const resolvedPromise = await apiPromises[i];
+      if (i === 0) {
+        request = resolvedPromise as Request;
+      }
+    }
     await this.waitForResponse(waitForAnswer);
-    return request.postDataJSON();
+    return request?.postDataJSON();
   }
 
   public async waitForResponse(waitForAnswer = false) {
@@ -206,19 +241,44 @@ export class Chat extends BaseElement {
     await this.chatSpinner.waitForState({ state: 'detached' });
   }
 
+  public async addModelToWorkspace() {
+    if (await this.addModelButton.isVisible()) {
+      const respPromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.installedDeploymentsHost()),
+      );
+      await this.addModelButton.click();
+      await respPromise;
+    }
+  }
+
   private async sendRequest(
     message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
+    await this.addModelToWorkspace();
+    const apiPromises = [];
     const requestPromise = this.waitForRequestSent(message);
+    apiPromises.push(requestPromise);
+    if (waitForAnswer) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'PUT',
+      );
+      apiPromises.push(respPromise);
+    }
     await sendMethod();
-    const request = await requestPromise;
+    let request;
+    for (let i = 0; i < apiPromises.length; i++) {
+      const resolvedPromise = await apiPromises[i];
+      if (i === 0) {
+        request = resolvedPromise as Request;
+      }
+    }
     await this.waitForResponse(waitForAnswer);
-    return request.postDataJSON();
+    return request?.postDataJSON();
   }
 
-  public async sendRequestWithButton(message: string, waitForAnswer = true) {
+  public async sendRequestWithButton(message?: string, waitForAnswer = true) {
     return this.sendRequest(
       message,
       () => this.getSendMessage().send(message),
@@ -235,11 +295,16 @@ export class Chat extends BaseElement {
   }
 
   public async saveAndSubmitRequest(waitForAnswer = false) {
-    return this.sendRequest(
+    const updateResponsePromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'PUT',
+    );
+    const request = this.sendRequest(
       undefined,
       () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
+    await updateResponsePromise;
+    return request;
   }
 
   public async playNextChatMessage(waitForResponse = true) {
@@ -266,11 +331,7 @@ export class Chat extends BaseElement {
     await this.getPlaybackControl().playbackPreviousButton.click();
   }
 
-  public async applyNewEntity() {
-    await this.applyChanges().click();
-  }
-
-  public async duplicateSharedConversation() {
+  public async duplicateConversation() {
     const respPromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'POST',
     );
@@ -302,7 +363,7 @@ export class Chat extends BaseElement {
   }
 
   public async goToContentPosition(state: ScrollState) {
-    const chatBounding = await this.getElementBoundingBox();
+    const chatBounding = await this.scrollableArea.getElementBoundingBox();
     await this.click({
       position: {
         x: chatBounding!.x + chatBounding!.width / 2,
@@ -319,6 +380,5 @@ export class Chat extends BaseElement {
         break;
     }
     await this.page.keyboard.press(keyToPress!);
-    await this.waitForScrollPosition(state);
   }
 }

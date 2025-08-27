@@ -11,13 +11,16 @@ import {
   throwError,
 } from 'rxjs';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
+import { cleanConversationHistory } from '@/src/utils/app/clean';
+
 import {
-  FolderInterface,
-  FolderType,
-  FoldersAndEntities,
-} from '@/src/types/folder';
+  ApplicationInfo,
+  ApplicationLogsType,
+  CustomApplicationModel,
+} from '@/src/types/applications';
+import { Conversation } from '@/src/types/chat';
+import { BackendChatEntity, FeatureType, MoveModel } from '@/src/types/common';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import {
   DialStorage,
@@ -25,9 +28,14 @@ import {
   UIStorageKeys,
 } from '@/src/types/storage';
 
+import { DEFAULT_AGENT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
-import { cleanConversationHistory } from '../../clean';
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';
@@ -70,6 +78,16 @@ export class BrowserStorage implements DialStorage {
   getConversations(): Observable<Conversation[]> {
     return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
       map((conversations) => cleanConversationHistory(conversations)),
+    );
+  }
+
+  getMultipleFoldersConversations(paths: string[]): Observable<Conversation[]> {
+    return this.getConversations().pipe(
+      map((conversations) => {
+        return conversations.filter((conv) =>
+          paths.some((path) => conv.id.startsWith(`${path}/`)),
+        );
+      }),
     );
   }
 
@@ -140,6 +158,16 @@ export class BrowserStorage implements DialStorage {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []);
   }
 
+  getMultipleFoldersPrompts(paths: string[]): Observable<Prompt[]> {
+    return this.getPrompts().pipe(
+      map((prompts) => {
+        return prompts.filter((prompt) =>
+          paths.some((path) => prompt.id.startsWith(`${path}/`)),
+        );
+      }),
+    );
+  }
+
   getPrompt(info: PromptInfo): Observable<Prompt | null> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
       map(
@@ -190,7 +218,7 @@ export class BrowserStorage implements DialStorage {
       map((folders: FolderInterface[]) => {
         return folders.filter(
           (folder) =>
-            folder.type === FolderType.Chat &&
+            folder.type === FeatureType.Chat &&
             (recursive || folder.folderId === path),
         );
       }),
@@ -202,7 +230,7 @@ export class BrowserStorage implements DialStorage {
       map((folders: FolderInterface[]) => {
         return folders.filter(
           (folder) =>
-            folder.type === FolderType.Prompt &&
+            folder.type === FeatureType.Prompt &&
             (recursive || folder.folderId === path),
         );
       }),
@@ -214,7 +242,7 @@ export class BrowserStorage implements DialStorage {
   ): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
-        items.filter((item) => item.type !== FolderType.Chat),
+        items.filter((item) => item.type !== FeatureType.Chat),
       ),
       map((promptsFolders: FolderInterface[]) => {
         return promptsFolders.concat(conversationFolders);
@@ -228,7 +256,7 @@ export class BrowserStorage implements DialStorage {
   setPromptsFolders(promptsFolders: FolderInterface[]): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Folders, []).pipe(
       map((items: FolderInterface[]) =>
-        items.filter((item) => item.type !== FolderType.Prompt),
+        items.filter((item) => item.type !== FeatureType.Prompt),
       ),
       map((convFolders: FolderInterface[]) => {
         return convFolders.concat(promptsFolders);
@@ -303,6 +331,28 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  public static getSelectedWidget(): Observable<string | undefined> {
+    return BrowserStorage.getData(UIStorageKeys.SelectedWidget, undefined);
+  }
+
+  public static setSelectedWidget(id: string | undefined): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.SelectedWidget, id);
+  }
+
+  public static getDefaultModelReference(): Observable<string> {
+    return BrowserStorage.getData(
+      UIStorageKeys.DefaultModelReference,
+      DEFAULT_AGENT,
+    );
+  }
+
+  public static setDefaultModelReference(reference: string): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.DefaultModelReference,
+      reference,
+    );
+  }
+
   public static getData<K = undefined>(
     key: UIStorageKeys | MigrationStorageKeys,
     defaultValue: K,
@@ -339,5 +389,54 @@ export class BrowserStorage implements DialStorage {
         return throwError(() => e);
       }
     }
+  }
+
+  move(_data: MoveModel): Observable<MoveModel> {
+    throw new Error('Method not implemented.');
+  }
+
+  createApplication(
+    _application: CustomApplicationModel,
+  ): Observable<ApplicationInfo> {
+    throw new Error('Method not implemented.');
+  }
+  updateApplication(
+    _application: CustomApplicationModel,
+  ): Observable<ApplicationInfo> {
+    throw new Error('Method not implemented.');
+  }
+  getApplication(
+    _applicationId: string,
+  ): Observable<CustomApplicationModel | null> {
+    throw new Error('Method not implemented.');
+  }
+  deleteApplication(_applicationId: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  deployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  undeployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  redeployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  getApplicationLogs(_path: string): Observable<ApplicationLogsType> {
+    throw new Error('Method not implemented.');
+  }
+
+  getApplicationConfig(_path: string): Observable<MessageFormSchema> {
+    throw new Error('Method not implemented.');
+  }
+  getConversationMetadata(_id: string): Observable<BackendChatEntity | null> {
+    throw new Error('Method not implemented.');
+  }
+  getPromptMetadata(_id: string): Observable<BackendChatEntity | null> {
+    throw new Error('Method not implemented.');
   }
 }

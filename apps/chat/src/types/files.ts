@@ -2,21 +2,13 @@ import {
   BackendEntity,
   BackendFolder,
   BaseDialEntity,
-  ShareEntity,
 } from '@/src/types/common';
 
-import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '../constants/folders';
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { FolderInterface } from './folder';
 
-export type ImageMIMEType = 'image/jpeg' | 'image/png' | string;
-
-export type MIMEType =
-  | 'text/markdown'
-  | 'text/plain'
-  | 'text/html'
-  | ImageMIMEType
-  | string;
+import { MIMEType, ShareEntity } from '@epam/ai-dial-shared';
 
 export interface BackendFile extends BackendEntity {
   contentLength: number;
@@ -50,4 +42,17 @@ export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
 export interface DialLink {
   title?: string;
   href: string;
+}
+
+export enum FileSourceType {
+  MY_FILES = 'MY_FILES',
+  REVIEW_FILES = 'REVIEW_FILES',
+  SHARED_WITH_ME = 'SHARED_WITH_ME',
+  PUBLIC = 'PUBLIC',
+}
+
+export enum FileValidationErrors {
+  IncorrectSize = 'incorrectSize',
+  IncorrectType = 'incorrectType',
+  IncorrectName = 'incorrectName',
 }

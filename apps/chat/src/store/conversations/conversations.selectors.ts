@@ -3,12 +3,17 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
-  isEntityNameOrPathInvalid,
+  isSearchFilterMatched,
+  isSectionFilterMatched,
+  isVersionFilterMatched,
 } from '@/src/utils/app/common';
-import { sortByDateAndName } from '@/src/utils/app/conversation';
+import {
+  isPlaybackConversation,
+  isReplayConversation,
+  sortByDateAndName,
+} from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
-  getChildAndCurrentFoldersById,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
@@ -16,161 +21,210 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
-  sortByName,
-  splitEntityId,
+  getPartialAndFullyChosenFolders,
+  isFolderEmpty,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
 import {
-  PublishedWithMeFilter,
+  isConversationWithFormSchema,
+  isMessageInputDisabled,
+} from '@/src/utils/app/form-schema';
+import {
+  getConversationRootId,
+  isEntityIdExternal,
+  isEntityIdLocal,
+  isRootId,
+} from '@/src/utils/app/id';
+import { checkIsNotAllowedModelUtil } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import {
   doesEntityContainSearchTerm,
   getMyItemsFilters,
+  isSearchTermMatched,
 } from '@/src/utils/app/search';
-import {
-  isEntityExternal,
-  isEntityOrParentsExternal,
-} from '@/src/utils/app/share';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { Conversation, NotAllowedItem } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
+import { RootState } from '@/src/types/store';
+
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
+import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import { RootState } from '../index';
-import { ModelsSelectors } from '../models/models.reducers';
-import { SettingsSelectors } from '../settings/settings.reducers';
-import { ConversationsState } from './conversations.types';
+import { AddonsSelectors } from '../selectors';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Feature,
+  Role,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
+import isNil from 'lodash-es/isNil';
 import uniqBy from 'lodash-es/uniqBy';
 
-const rootSelector = (state: RootState): ConversationsState =>
-  state.conversations;
+const rootSelector = (state: RootState) => state.conversations;
 
-export const selectConversations = createSelector(
-  [rootSelector],
-  (state) => state.conversations,
-);
+const selectConversations = (state: RootState): ConversationInfo[] =>
+  rootSelector(state).conversations;
 
-export const selectNotExternalConversations = createSelector(
-  [(state: RootState) => state, selectConversations],
-  (state, conversations) =>
+const selectNotExternalConversations = createSelector(
+  [selectConversations],
+  (conversations) =>
     conversations.filter(
       (conversation) =>
-        !isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+        !isEntityIdExternal(conversation) && !isEntityIdLocal(conversation),
     ),
 );
 
-export const selectPublishedOrSharedByMeConversations = createSelector(
-  [selectConversations],
-  (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
-);
-
-export const selectFilteredConversations = createSelector(
-  [
-    selectConversations,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
-      ignoreSectionFilter,
-  ],
-  (conversations, filters, searchTerm?, ignoreSectionFilter?) => {
-    return conversations.filter(
-      (conversation) =>
-        (!searchTerm ||
-          doesEntityContainSearchTerm(conversation, searchTerm)) &&
-        (filters.searchFilter?.(conversation) ?? true) &&
-        (ignoreSectionFilter ||
-          (filters.sectionFilter?.(conversation) ?? true)),
+const selectConversationsByFolderId = createSelector(
+  [selectConversations, (_state, folderId: string) => folderId],
+  (conversations, folderId) => {
+    const folderPath = `${folderId}/`;
+    return conversations.filter((conversation) =>
+      conversation.id.startsWith(folderPath),
     );
   },
 );
 
-export const selectFolders = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.folders || [];
+const selectConversationById = createSelector(
+  [selectConversations, (_state, id: string) => id],
+  (conversations, id) => {
+    return conversations.find((conv) => conv.id === id);
   },
 );
 
-export const selectPublicationFolders = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.folders.filter((f) => f.isPublicationFolder);
+const selectFilteredConversations = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  ignoreFilters?: Partial<{
+    ignoreSectionFilter: boolean;
+    ignoreVersionFilter: boolean;
+  }>,
+) =>
+  createSelector(
+    [selectConversations, PublicationSelectors.selectPublicVersionGroups],
+    (conversations, versionGroups) => {
+      return conversations.filter(
+        (conversation) =>
+          isSearchTermMatched(conversation, searchTerm) &&
+          isSearchFilterMatched(conversation, filters) &&
+          isSectionFilterMatched(
+            conversation,
+            filters,
+            ignoreFilters?.ignoreSectionFilter,
+          ) &&
+          isVersionFilterMatched(
+            conversation,
+            filters,
+            versionGroups,
+            ignoreFilters?.ignoreVersionFilter,
+          ),
+      );
+    },
+  );
+
+const selectFolders = (state: RootState) => rootSelector(state).folders;
+
+const selectMyFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) =>
+    folder.id.startsWith(`${getConversationRootId()}/`),
+  );
+});
+
+const selectMyFoldersWithSearchTerm = createSelector(
+  [selectMyFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
   },
 );
 
-export const selectEmptyFolderIds = createSelector(
+const selectFolderById = createSelector(
+  [selectFolders, (_state, id: string) => id],
+  (folders, id) => {
+    return folders.find((folder) => folder.id === id);
+  },
+);
+
+const selectFoldersByFolderId = createSelector(
+  [selectFolders, (_state, folderId: string) => folderId],
+  (folders, folderId) => {
+    const folderPath = `${folderId}/`;
+
+    return folders.filter((folder) => folder.id.startsWith(folderPath));
+  },
+);
+
+const selectEmptyFolderIds = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
     return folders
-      .filter(
-        ({ id }) =>
-          !folders.some((folder) => folder.folderId === id) &&
-          !conversations.some((conv) => conv.folderId === id),
+      .filter(({ id }) =>
+        isFolderEmpty({ id, folders, entities: conversations }),
       )
       .map(({ id }) => id);
   },
 );
+const ignoreFilters = {
+  ignoreSectionFilter: true,
+  ignoreVersionFilter: true,
+};
+const selectFilteredFolders = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  includeEmptyFolders?: boolean,
+) =>
+  createSelector(
+    [
+      selectFolders,
+      selectEmptyFolderIds,
+      selectFilteredConversations(filters, searchTerm, ignoreFilters),
+    ],
+    (allFolders, emptyFolderIds, filteredConversations) =>
+      getFilteredFolders({
+        allFolders,
+        emptyFolderIds,
+        filters,
+        entities: filteredConversations,
+        searchTerm,
+        includeEmptyFolders,
+      }),
+  );
 
-export const selectFilteredFolders = createSelector(
-  [
-    (state) => state,
-    selectFolders,
-    selectEmptyFolderIds,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?, includeEmptyFolders?: boolean) =>
-      includeEmptyFolders,
-  ],
-  (
-    state,
-    allFolders,
-    emptyFolderIds,
-    filters,
-    searchTerm?,
-    includeEmptyFolders?,
-  ) =>
-    getFilteredFolders({
-      allFolders,
-      emptyFolderIds,
-      filters,
-      entities: selectFilteredConversations(state, filters, searchTerm, true),
-      searchTerm,
-      includeEmptyFolders,
-    }),
-);
-
-export const selectLastConversation = createSelector(
+const selectLastConversation = createSelector(
   [selectNotExternalConversations],
   (ownConversations): ConversationInfo | undefined => {
     if (!ownConversations.length) return undefined;
     return sortByDateAndName(ownConversations)[0];
   },
 );
-export const selectConversation = createSelector(
+const selectConversation = createSelector(
   [selectConversations, (_state, id: string) => id],
   (conversations, id): ConversationInfo | undefined => {
     return conversations.find((conv) => conv.id === id);
   },
 );
-export const selectSelectedConversationsIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.selectedConversationsIds;
-  },
-);
-export const selectConversationSignal = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.conversationSignal;
-  },
-);
-export const selectSelectedConversations = createSelector(
+
+const selectSelectedConversationsIds = (state: RootState) =>
+  rootSelector(state).selectedConversationsIds;
+
+const selectConversationSignal = (state: RootState) =>
+  rootSelector(state).conversationSignal;
+
+const selectSelectedConversations = createSelector(
   [selectConversations, selectSelectedConversationsIds],
   (conversations, selectedConversationIds) => {
     return selectedConversationIds
@@ -179,23 +233,39 @@ export const selectSelectedConversations = createSelector(
   },
 );
 
-export const selectLoadedCharts = createSelector([rootSelector], (state) => {
-  // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
-  // PlotReactState had some additional "state" properties that were never declared or updated.
-  return cloneDeep(state.loadedCharts);
-});
+const _selectLoadedCharts = (state: RootState) =>
+  rootSelector(state).loadedCharts;
 
-export const selectChartLoading = createSelector([rootSelector], (state) => {
-  return state.chartLoading;
-});
+const selectLoadedCharts = createSelector(
+  [_selectLoadedCharts],
+  (loadedCharts) => {
+    // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
+    // PlotReactState had some additional "state" properties that were never declared or updated.
+    return cloneDeep(loadedCharts);
+  },
+);
 
-export const selectParentFolders = createSelector(
+const selectChartLoading = (state: RootState) =>
+  rootSelector(state).chartLoading;
+
+const selectParentFolders = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
     return getParentAndCurrentFoldersById(folders, folderId);
   },
 );
-export const selectSelectedConversationsFoldersIds = createSelector(
+
+const selectRootParentFolder = createSelector(
+  [
+    (state, folderId: string | undefined) =>
+      selectParentFolders(state, folderId),
+  ],
+  (parentFolders) => {
+    return parentFolders.find((folder) => isRootId(folder.folderId));
+  },
+);
+
+const selectSelectedConversationsFoldersIds = createSelector(
   [selectSelectedConversationsIds],
   (selectedConversationsIds) => {
     return selectedConversationsIds.flatMap((id) =>
@@ -204,124 +274,98 @@ export const selectSelectedConversationsFoldersIds = createSelector(
   },
 );
 
-export const selectFirstSelectedConversation = createSelector(
-  [selectSelectedConversations],
-  (conversations): Conversation | undefined => {
-    return conversations[0];
-  },
-);
-export const selectIsConversationsStreaming = createSelector(
+const selectFirstSelectedConversation = (
+  state: RootState,
+): Conversation | undefined => selectSelectedConversations(state)[0];
+
+const selectIsConversationsStreaming = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => !!conv.isMessageStreaming);
   },
 );
 
-export const selectIsConversationNameInvalid = createSelector(
+const selectIsConversationNameInvalid = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => isEntityNameInvalid(conv.name));
   },
 );
 
-export const selectIsConversationPathInvalid = createSelector(
+const selectIsConversationPathInvalid = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => hasInvalidNameInPath(conv.folderId));
   },
 );
 
-export const selectIsConversationNameOrPathInvalid = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    return conversations.some((conv) => isEntityNameOrPathInvalid(conv));
-  },
-);
+const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
-export const selectSearchTerm = createSelector([rootSelector], (state) => {
-  return state.searchTerm;
-});
+const selectSearchFilters = (state: RootState) =>
+  rootSelector(state).searchFilters;
 
-export const selectSearchFilters = createSelector(
-  [rootSelector],
-  (state) => state.searchFilters,
-);
+const selectIsEmptySearchFilter = (state: RootState) =>
+  selectSearchFilters(state) === SearchFilters.None;
 
-export const selectIsEmptySearchFilter = createSelector(
-  [rootSelector],
-  (state) => state.searchFilters === SearchFilters.None,
-);
-
-export const selectMyItemsFilters = createSelector(
+const selectMyItemsFilters = createSelector(
   [selectSearchFilters],
   (searchFilters) => getMyItemsFilters(searchFilters),
 );
 
-export const selectSearchedConversations = createSelector(
-  [selectConversations, selectSearchTerm],
-  (conversations, searchTerm) =>
-    conversations.filter((conversation) =>
-      doesEntityContainSearchTerm(conversation, searchTerm),
-    ),
-);
+const selectIsReplayPaused = (state: RootState) =>
+  rootSelector(state).isReplayPaused;
 
-export const selectIsReplayPaused = createSelector([rootSelector], (state) => {
-  return state.isReplayPaused;
-});
-export const selectIsReplayRequiresVariables = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isReplayRequiresVariables;
-  },
-);
-export const selectWillReplayRequireVariables = createSelector(
+const selectIsReplayRequiresVariables = (state: RootState) =>
+  rootSelector(state).isReplayRequiresVariables;
+
+const selectWillReplayRequireVariables = createSelector(
   [selectFirstSelectedConversation],
   (conversation) => {
     if (!conversation?.replay) return false;
     const replay = conversation.replay;
     return (
-      Object.keys(
+      getEntitiesFromTemplateMapping(
         replay.replayUserMessagesStack?.[replay.activeReplayIndex ?? 0]
-          ?.templateMapping ?? {},
+          ?.templateMapping,
       ).length > 0
     );
   },
 );
-export const selectIsSendMessageAborted = createSelector(
-  [selectConversationSignal],
-  (state) => {
-    return state.signal.aborted;
-  },
-);
-export const selectIsReplaySelectedConversations = createSelector(
+
+const selectIsReplaySelectedConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => conv.replay?.isReplay);
+    return conversations.some((conv) => isReplayConversation(conv));
   },
 );
 
-export const selectIsPlaybackSelectedConversations = createSelector(
+const selectIsPlaybackSelectedConversations = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isPlaybackConversation(conv));
+  },
+);
+
+const selectAreSelectedConversationsExternal = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isEntityIdExternal(conv));
+  },
+);
+
+const selectAreSelectedConversationsReadOnly = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some(
-      (conv) => conv.playback && conv.playback.isPlayback,
+      (conv) => isEntityReadOnly(conv) && isEntityIdExternal(conv),
     );
   },
 );
 
-export const selectAreSelectedConversationsExternal = createSelector(
-  [(state: RootState) => state, selectSelectedConversations],
-  (state, conversations) => {
-    return conversations.some((conv) =>
-      isEntityOrParentsExternal(state, conv, FeatureType.Chat),
-    );
-  },
-);
-
-export const selectDoesAnyMyItemExist = createSelector(
+const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
-    const conversationRootId = getConversationRootId();
+    const conversationRootId = `${getConversationRootId()}/`;
     return (
       conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
       folders.some((folder) => folder.id.startsWith(conversationRootId))
@@ -329,7 +373,7 @@ export const selectDoesAnyMyItemExist = createSelector(
   },
 );
 
-export const selectPlaybackActiveIndex = createSelector(
+const selectPlaybackActiveIndex = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return (
@@ -338,47 +382,26 @@ export const selectPlaybackActiveIndex = createSelector(
   },
 );
 
-export const selectIsErrorReplayConversations = createSelector(
+const selectIsErrorReplayConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => conv.replay?.isError);
   },
 );
 
-export const selectIsPlaybackPaused = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isPlaybackPaused;
-  },
-);
+const selectIsPlaybackPaused = (state: RootState) =>
+  rootSelector(state).isPlaybackPaused;
 
-export const selectPlaybackActiveMessage = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    const activeIndex =
-      conversations[0].playback &&
-      conversations[0].playback.activePlaybackIndex;
-    const activeMessage =
-      conversations[0].playback?.messagesStack[activeIndex ?? -1];
-    if (!activeMessage || activeMessage.role === Role.Assistant) {
-      return;
-    }
-    return activeMessage;
-  },
-);
-
-export const selectIsMessagesError = createSelector(
+const selectIsMessagesError = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) =>
-      conv.messages.some(
-        (message) => typeof message.errorMessage !== 'undefined',
-      ),
+      conv.messages.some((message) => !isNil(message.errorMessage)),
     );
   },
 );
 
-export const selectIsLastAssistantMessageEmpty = createSelector(
+const selectIsLastAssistantMessageEmpty = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => {
@@ -399,7 +422,7 @@ export const selectIsLastAssistantMessageEmpty = createSelector(
   },
 );
 
-export const selectSelectedConversationsModels = createSelector(
+const selectSelectedConversationsModels = createSelector(
   [selectSelectedConversations, ModelsSelectors.selectModelsMap],
   (conversations, modelsMap) => {
     return conversations
@@ -408,7 +431,7 @@ export const selectSelectedConversationsModels = createSelector(
   },
 );
 
-export const selectAvailableAttachmentsTypes = createSelector(
+const selectAvailableAttachmentsTypes = createSelector(
   [selectSelectedConversationsModels],
   (models) => {
     if (models.length === 0) {
@@ -426,7 +449,7 @@ export const selectAvailableAttachmentsTypes = createSelector(
     // Assume that we have only 2 selected models available
     const availableModelsAttachmentTypes = (
       modelsAttachmentsTypes[0] || []
-    ).filter((value) => (modelsAttachmentsTypes[1] || []).includes(value));
+    ).filter((value) => (modelsAttachmentsTypes[1] ?? []).includes(value));
 
     return availableModelsAttachmentTypes.length === 0
       ? undefined
@@ -434,7 +457,7 @@ export const selectAvailableAttachmentsTypes = createSelector(
   },
 );
 
-export const selectMaximumAttachmentsAmount = createSelector(
+const selectMaximumAttachmentsAmount = createSelector(
   [selectSelectedConversationsModels],
   (models) => {
     if (models.length === 0) {
@@ -449,12 +472,10 @@ export const selectMaximumAttachmentsAmount = createSelector(
   },
 );
 
-export const selectCanAttachLink = createSelector(
-  [
-    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputLinks),
-    selectSelectedConversationsModels,
-  ],
-  (inputLinksEnabled, models) => {
+const selectCanAttachLink = createSelector(
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  (enabledFeatures, models) => {
+    const inputLinksEnabled = enabledFeatures.has(Feature.InputLinks);
     if (!inputLinksEnabled || models.length === 0) {
       return false;
     }
@@ -463,7 +484,10 @@ export const selectCanAttachLink = createSelector(
   },
 );
 
-export const selectCanAttachFolders = createSelector(
+const selectIsStartedCustomViewerConversation = (state: RootState) =>
+  rootSelector(state).isStartedCustomViewerConversation;
+
+const selectCanAttachFolders = createSelector(
   [selectSelectedConversationsModels],
   (models) => {
     if (models.length === 0) {
@@ -474,12 +498,10 @@ export const selectCanAttachFolders = createSelector(
   },
 );
 
-export const selectCanAttachFile = createSelector(
-  [
-    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
-    selectSelectedConversationsModels,
-  ],
-  (inputFilesEnabled, models) => {
+const selectCanAttachFile = createSelector(
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  (enabledFeatures, models) => {
+    const inputFilesEnabled = enabledFeatures.has(Feature.InputFiles);
     if (!inputFilesEnabled || models.length === 0) {
       return false;
     }
@@ -492,67 +514,17 @@ export const selectCanAttachFile = createSelector(
   },
 );
 
-export const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId: string) => folderId],
-  (folders, folderId) => {
-    if (!folderId.startsWith(getConversationRootId())) {
-      return true;
-    }
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isEntityExternal(folder));
-  },
-);
+const selectPublicFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
+});
 
-export const selectTemporaryFolders = createSelector(
-  [rootSelector],
-  (state: ConversationsState) => {
-    return state.temporaryFolders;
-  },
-);
+const selectNewAddedFolderId = (state: RootState) =>
+  rootSelector(state).newAddedFolderId;
 
-export const selectPublishedWithMeFolders = createSelector(
-  [selectFolders],
-  (folders) => {
-    return folders.filter(
-      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? folder,
-    );
-  },
-);
-
-export const selectTemporaryAndPublishedFolders = createSelector(
-  [
-    selectFolders,
-    selectPublishedWithMeFolders,
-    selectTemporaryFolders,
-    (_state, searchTerm?: string) => searchTerm,
-  ],
-  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
-    const allPublishedFolders = publishedFolders.flatMap((folder) =>
-      getChildAndCurrentFoldersById(folder.id, allFolders),
-    );
-    const filteredFolders = [
-      ...sortByName(allPublishedFolders),
-      ...temporaryFolders,
-    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
-
-    return getParentAndChildFolders(
-      sortByName([...allFolders, ...temporaryFolders]),
-      filteredFolders,
-    );
-  },
-);
-
-export const selectNewAddedFolderId = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.newAddedFolderId;
-  },
-);
-
-export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] =>
+const getUniqueAttachments = (attachments: DialFile[]): DialFile[] =>
   uniqBy(attachments, (file) => constructPath(file.relativePath, file.name));
 
-export const getAttachments = createSelector(
+const getAttachments = createSelector(
   [
     selectFolders,
     selectConversations,
@@ -596,33 +568,17 @@ export const getAttachments = createSelector(
   },
 );
 
-export const areConversationsUploaded = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.conversationsLoaded;
-  },
-);
+const areConversationsUploaded = (state: RootState) =>
+  rootSelector(state).conversationsLoaded;
 
-export const selectFoldersStatus = createSelector([rootSelector], (state) => {
-  return state.foldersStatus;
-});
+const selectAreSelectedConversationsLoaded = (state: RootState) =>
+  rootSelector(state).areSelectedConversationsLoaded;
 
-export const selectConversationsStatus = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.conversationsStatus;
-  },
-);
-
-export const selectAreSelectedConversationsLoaded = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.areSelectedConversationsLoaded;
-  },
-);
+const selectAreConversationsWithContentUploading = (state: RootState) =>
+  rootSelector(state).areConversationsWithContentUploading;
 
 // default name with counter
-export const selectNewFolderName = createSelector(
+const selectNewFolderName = createSelector(
   [
     selectFolders,
     (_state: RootState, folderId: string | undefined) => folderId,
@@ -635,33 +591,13 @@ export const selectNewFolderName = createSelector(
   },
 );
 
-export const selectLoadingFolderIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.loadingFolderIds;
-  },
-);
+const selectLoadingFolderIds = (state: RootState) =>
+  rootSelector(state).loadingFolderIds;
 
-export const selectIsCompareLoading = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.compareLoading;
-  },
-);
+const selectIsCompareLoading = (state: RootState) =>
+  rootSelector(state).compareLoading;
 
-export const selectIsActiveNewConversationRequest = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isActiveNewConversationRequest;
-  },
-);
-
-export const selectIsMessageSending = createSelector(
-  [rootSelector],
-  (state) => state.isMessageSending,
-);
-
-export const selectDuplicatedConversation = createSelector(
+const selectDuplicatedConversation = createSelector(
   [
     selectConversations,
     (
@@ -685,21 +621,13 @@ export const selectDuplicatedConversation = createSelector(
   },
 );
 
-export const selectCustomAttachmentLoading = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.customAttachmentDataLoading;
-  },
-);
+const selectCustomAttachmentLoading = (state: RootState) =>
+  rootSelector(state).customAttachmentDataLoading;
 
-export const selectLoadedCustomAttachments = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.loadedCustomAttachmentsData;
-  },
-);
+const selectLoadedCustomAttachments = (state: RootState) =>
+  rootSelector(state).loadedCustomAttachmentsData;
 
-export const selectCustomAttachmentData = createSelector(
+const selectCustomAttachmentData = createSelector(
   [
     selectLoadedCustomAttachments,
     (_state: RootState, attachmentUrl: string) => attachmentUrl,
@@ -713,53 +641,263 @@ export const selectCustomAttachmentData = createSelector(
   },
 );
 
-export const selectIsConversationsEmpty = createSelector(
-  [selectSelectedConversations],
-  (conversations) => {
-    return conversations.some((conv) => {
-      return !conv.messages || conv.messages.length === 0;
-    });
+const selectIsSelectMode = createSelector([rootSelector], (state) => {
+  return (
+    state.chosenConversationIds.length > 0 ||
+    state.chosenEmptyFoldersIds.length > 0
+  );
+});
+
+const selectSelectedItems = (state: RootState) =>
+  rootSelector(state).chosenConversationIds;
+
+const selectChosenEmptyFolderIds = (state: RootState) =>
+  rootSelector(state).chosenEmptyFoldersIds;
+
+const selectIsFolderEmpty = createSelector(
+  [selectEmptyFolderIds, (_state, folderId: string) => folderId],
+  (emptyFolderIds, folderId) => {
+    return emptyFolderIds.includes(folderId);
   },
 );
 
-export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return state.chosenConversationIds.length > 0;
-});
+const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
+  createSelector(
+    [
+      selectSelectedItems,
+      selectFolders,
+      selectEmptyFolderIds,
+      selectChosenEmptyFolderIds,
+    ],
+    (selectedItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
+      return getPartialAndFullyChosenFolders(
+        folders,
+        itemsShouldBeChosen,
+        selectedItems,
+        emptyFolderIds,
+        chosenEmptyFolderIds,
+      );
+    },
+  );
 
-export const selectSelectedItems = createSelector([rootSelector], (state) => {
-  return state.chosenConversationIds;
-});
+const selectIsNewConversationUpdating = (state: RootState) =>
+  rootSelector(state).isNewConversationUpdating;
 
-export const selectChosenFolderIds = createSelector(
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
+
+const selectRenamingConversationId = (state: RootState) =>
+  rootSelector(state).renamingConversationId;
+
+const selectRenamingConversation = createSelector(
+  [selectConversations, selectRenamingConversationId],
+  (conversations, renamingConversationId) =>
+    conversations.find((conv) => conv.id === renamingConversationId),
+);
+
+const selectTalkToConversationId = (state: RootState) =>
+  rootSelector(state).talkToConversationId;
+
+const selectIsNotAllowed = createSelector(
   [
-    selectSelectedItems,
-    selectFolders,
-    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
+    selectSelectedConversations,
+    ModelsSelectors.selectModelsMap,
+    ModelsSelectors.selectModels,
+    ModelsSelectors.selectAreModelsLoaded,
   ],
-  (selectedItems, folders, itemsShouldBeChosen) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
-      )
-      .filter((folderId) =>
-        itemsShouldBeChosen
-          .filter((item) => item.id.startsWith(folderId))
-          .every((item) => selectedItems.includes(item.id)),
-      );
-
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            fullyChosenFolderIds.some((entityId) =>
-              entityId.startsWith(folderId),
-            )) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
-
-    return { fullyChosenFolderIds, partialChosenFolderIds };
+  (selectedConversations, modelsMap, models, areModelsLoaded) => {
+    if (!areModelsLoaded) {
+      return false;
+    }
+    if (models.length === 0 && selectedConversations.length > 0) {
+      return true;
+    }
+    if (
+      Object.keys(modelsMap).length === 0 &&
+      models.length > 0 &&
+      selectedConversations.length > 0
+    ) {
+      return true;
+    }
+    return selectedConversations.some((conv) =>
+      checkIsNotAllowedModelUtil(conv, modelsMap),
+    );
   },
 );
+
+const selectHasNotAllowedAddons = createSelector(
+  [
+    selectSelectedConversations,
+    AddonsSelectors.selectAddonsMap,
+    AddonsSelectors.selectInitialized,
+  ],
+  (selectedConversations, addonsMap, areAddonsInitialized) => {
+    if (!areAddonsInitialized) {
+      return false;
+    }
+    if (Object.keys(addonsMap).length === 0) {
+      return selectedConversations.some(
+        (conv) => conv.selectedAddons && conv.selectedAddons.length > 0,
+      );
+    }
+    return selectedConversations.some((conversation) =>
+      conversation.selectedAddons?.some((addonId) => !addonsMap[addonId]),
+    );
+  },
+);
+
+const selectNotAllowedItemsForDisplay = createSelector(
+  [
+    selectSelectedConversations,
+    ModelsSelectors.selectModelsMap,
+    ModelsSelectors.selectAreModelsLoaded,
+  ],
+  (selectedConversations, modelsMap, areModelsLoaded): NotAllowedItem[] => {
+    if (!areModelsLoaded || Object.keys(modelsMap).length === 0) {
+      return [];
+    }
+    return selectedConversations
+      .filter((conv) => checkIsNotAllowedModelUtil(conv, modelsMap))
+      .map((conv: Conversation): NotAllowedItem => {
+        const modelDetails = modelsMap[conv.model.id];
+        return {
+          conversationId: conv.id,
+          agentName: modelDetails?.name ?? conv.model.id,
+        };
+      });
+  },
+);
+
+const selectIsSelectedConversationBlocksInput = createSelector(
+  [
+    selectSelectedConversations,
+    PublicationSelectors.selectResourcesToReview,
+    ChatSelectors.selectIsConfigurationBlocksInput,
+    selectIsNotAllowed,
+    selectHasNotAllowedAddons,
+    selectAreSelectedConversationsReadOnly,
+    AuthSelectors.selectIsAdmin,
+  ],
+  (
+    conversations,
+    resourcesToReview,
+    isConfigurationBlocksInput,
+    isNotAllowedModels,
+    hasNotAllowedAddonsFlag,
+    areReadOnly,
+    isAdmin,
+  ) => {
+    const isReviewEntity = conversations.some((conversation) =>
+      resourcesToReview.some(
+        (resource) => resource.reviewUrl === conversation.id,
+      ),
+    );
+
+    return conversations.some(
+      (conversation) =>
+        conversation.sharedWithMe ||
+        (!conversation.messages?.length &&
+          (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
+        isNotAllowedModels ||
+        hasNotAllowedAddonsFlag ||
+        isPlaybackConversation(conversation) ||
+        (areReadOnly && !isReviewEntity) ||
+        (isReviewEntity && !isAdmin) ||
+        !conversation.messages ||
+        isMessageInputDisabled(
+          conversation.messages.length,
+          conversation.messages,
+        ),
+    );
+  },
+);
+
+const selectPreviewConversationId = (state: RootState) =>
+  rootSelector(state).previewConversationId;
+
+const selectIsSelectedConversationsWithSchema = createSelector(
+  [selectSelectedConversations],
+  (conversations) => conversations.some(isConversationWithFormSchema),
+);
+
+const selectAction = (state: RootState) =>
+  rootSelector(state).preselectedAction;
+
+export const ConversationsSelectors = {
+  selectConversations,
+  selectConversationsByFolderId,
+  selectConversationById,
+  selectFilteredConversations,
+  selectFolders,
+  selectMyFolders,
+  selectMyFoldersWithSearchTerm,
+  selectFolderById,
+  selectFoldersByFolderId,
+  selectEmptyFolderIds,
+  selectFilteredFolders,
+  selectLastConversation,
+  selectConversation,
+  selectSelectedConversationsIds,
+  selectSelectedConversations,
+  selectLoadedCharts,
+  selectChartLoading,
+  selectParentFolders,
+  selectRootParentFolder,
+  selectSelectedConversationsFoldersIds,
+  selectFirstSelectedConversation,
+  selectIsConversationsStreaming,
+  selectIsConversationNameInvalid,
+  selectIsConversationPathInvalid,
+  selectSearchTerm,
+  selectSearchFilters,
+  selectIsEmptySearchFilter,
+  selectMyItemsFilters,
+  selectIsReplayPaused,
+  selectIsReplayRequiresVariables,
+  selectWillReplayRequireVariables,
+  selectIsReplaySelectedConversations,
+  selectIsPlaybackSelectedConversations,
+  selectAreSelectedConversationsExternal,
+  selectAreSelectedConversationsReadOnly,
+  selectDoesAnyMyItemExist,
+  selectPlaybackActiveIndex,
+  selectIsErrorReplayConversations,
+  selectIsPlaybackPaused,
+  selectIsMessagesError,
+  selectIsLastAssistantMessageEmpty,
+  selectSelectedConversationsModels,
+  selectAvailableAttachmentsTypes,
+  selectMaximumAttachmentsAmount,
+  selectCanAttachLink,
+  selectIsStartedCustomViewerConversation,
+  selectCanAttachFolders,
+  selectCanAttachFile,
+  selectPublicFolders,
+  selectNewAddedFolderId,
+  selectLoadingFolderIds,
+  selectIsCompareLoading,
+  selectDuplicatedConversation,
+  selectCustomAttachmentLoading,
+  selectCustomAttachmentData,
+  selectIsSelectMode,
+  selectSelectedItems,
+  selectChosenFolderIds,
+  selectIsFolderEmpty,
+  selectIsNewConversationUpdating,
+  selectInitialized,
+  selectRenamingConversation,
+  selectTalkToConversationId,
+  selectIsSelectedConversationBlocksInput,
+  selectPreviewConversationId,
+  selectIsSelectedConversationsWithSchema,
+  selectAreSelectedConversationsLoaded,
+  selectNewFolderName,
+  areConversationsUploaded,
+  selectAreConversationsWithContentUploading,
+  getAttachments,
+  selectConversationSignal,
+  getUniqueAttachments,
+  selectAction,
+  selectIsNotAllowed,
+  selectHasNotAllowedAddons,
+  selectNotAllowedItemsForDisplay,
+};

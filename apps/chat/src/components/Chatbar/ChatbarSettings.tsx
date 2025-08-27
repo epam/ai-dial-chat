@@ -9,35 +9,40 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getConversationRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+  ImportExportActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import SidebarMenu from '@/src/components/Common/SidebarMenu';
+import { SidebarMenu } from '@/src/components/Common/SidebarMenu';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, SupportedExportFormats } from '@epam/ai-dial-shared';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);
+
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -50,18 +55,19 @@ export const ChatbarSettings = () => {
   );
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
-  const maximumAttachmentsAmount = useAppSelector(
-    ConversationsSelectors.selectMaximumAttachmentsAmount,
-  );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
   const isMyItemsExist = useAppSelector(
     ConversationsSelectors.selectDoesAnyMyItemExist,
   );
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
+
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
+  );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -100,6 +106,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(ConversationsActions.setAllChosenConversations());
         },
+        display: isMyItemsExist,
         disabled: isStreaming,
       },
       {
@@ -117,6 +124,14 @@ export const ChatbarSettings = () => {
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
+          dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Chat,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== PINNED_CONVERSATIONS_SECTION_NAME,
+              ),
+            }),
+          );
           dispatch(
             ConversationsActions.createFolder({
               parentId: getConversationRootId(),
@@ -169,7 +184,7 @@ export const ChatbarSettings = () => {
         name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
-        disabled: isStreaming || isActiveNewConversationRequest,
+        disabled: isStreaming,
         onClick: () => {
           handleToggleCompare();
         },
@@ -189,13 +204,13 @@ export const ChatbarSettings = () => {
     ],
     [
       t,
-      isSelectMode,
       isMyItemsExist,
-      deleteTerm,
       isStreaming,
-      isActiveNewConversationRequest,
+      isSelectMode,
+      deleteTerm,
       enabledFeatures,
       dispatch,
+      collapsedSections,
       jsonImportHandler,
       zipImportHandler,
       handleToggleCompare,
@@ -210,13 +225,11 @@ export const ChatbarSettings = () => {
         <FileManagerModal
           isOpen
           allowedTypes={['*/*']}
-          maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={() => {
             setIsSelectFilesDialogOpened(false);
           }}
           headerLabel={t('Manage attachments')}
           forceShowSelectCheckBox
-          forceHideSelectFolders
           showTooltip
         />
       )}
@@ -224,11 +237,9 @@ export const ChatbarSettings = () => {
       <ConfirmDialog
         isOpen={isClearModalOpen}
         heading={t(`Confirm deleting ${deleteTerm} conversations`)}
-        description={
-          t(
-            `Are you sure that you want to delete ${deleteTerm} conversations?`,
-          ) || ''
-        }
+        description={t(
+          `Are you sure that you want to delete ${deleteTerm} conversations?`,
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

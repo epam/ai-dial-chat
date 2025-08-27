@@ -5,4 +5,5 @@ export const FileSelectors = {
   loadingRetry: '[data-qa="retry-upload"]',
   remove: `[data-qa="remove-file"] > ${Tags.svg}`,
   fileTypeAttribute: '[type="file"]',
+  downloadIcon: '[data-qa="download"]',
 };

@@ -1,7 +1,14 @@
 export const HeaderSelectors = {
   headerContainer: '[data-qa="header"]',
-  chatPanelToggle: '[data-qa="chat-panel-toggle"]:visible',
-  promptsPanelToggle: '[data-qa="prompts-panel-toggle"]:visible',
+  leftPanelToggle: '[data-qa="left-panel-toggle"]:visible',
+  rightPanelToggle: '[data-qa="right-panel-toggle"]:visible',
   banner: '[data-qa="banner"]',
-  accountSettings: '[data-qa="account-settings"]',
+  accountSettings: '[data-qa="account-settings"]:visible',
+  newEntity: '[data-qa="new-entity"]',
+  profilePanel: '[data-qa="profile-panel"]',
+  settings: '#user-settings-menu-item',
+  overlayLogout: '#logout-menu-item',
+  logo: '[data-qa="logo"]',
+  username: '[data-qa="username"]:visible',
+  avatar: '[alt="User avatar"]',
 };

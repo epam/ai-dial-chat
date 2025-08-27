@@ -1,97 +1,127 @@
-import { IconPlus, IconX } from '@tabler/icons-react';
-import {
-  ClipboardEvent,
-  Fragment,
-  MouseEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-
-import { useTranslation } from 'next-i18next';
-import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import {
+  getLastPathSegment,
+  isVersionValid,
+  prepareEntityName,
+  replaceSpacesFromString,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
-import { createTargetUrl } from '@/src/utils/app/publications';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import {
+  getIdWithoutRootPathSegments,
+  isApplicationId,
+} from '@/src/utils/app/id';
+import {
+  createTargetUrl,
+  getApplicationPublishResources,
+  getPublicationDefaultName,
+  isEntityIdPublic,
+  mapFilterToRule,
+  mapRuleToFilter,
+} from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
+import {
+  PublicationRequestModel,
+  TargetAudienceFilter,
+} from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import {
+  ApplicationActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  PublicationActions,
+  ApplicationSelectors,
+  AuthSelectors,
+  ConversationsSelectors,
   PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+} from '@/src/store/selectors';
 
-import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
-import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
-import Modal from '@/src/components/Common/Modal';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
+import { Field } from '@/src/components/Common/Forms/Field';
+import { Modal } from '@/src/components/Common/Modal';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { Spinner } from '../../Common/Spinner';
+import { PublicationInfoSection } from './PublicationInfoSection';
 import { PublicationItemsList } from './PublicationItemsList';
+import { PublishToSection } from './PublishToSection';
 import { RuleListItem } from './RuleListItem';
-import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+  publishRequestFields,
+  validators,
+} from './form';
 
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { escapeRegExp } from 'lodash';
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
 import isEqual from 'lodash-es/isEqual';
-import startCase from 'lodash-es/startCase';
-import toLower from 'lodash-es/toLower';
 
-interface Props {
-  entity: ShareEntity;
+interface Props<
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+> {
+  entity: T;
   type: SharingType;
   isOpen: boolean;
-  onClose: () => void;
   publishAction: PublishActions;
-  entities?: ShareEntity[];
+  entities?: T[];
   depth?: number;
   defaultPath?: string;
+  onClose: () => void;
 }
 
-export function PublishModal({
+export function PublishModal<
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+>({
   entity,
   isOpen,
-  onClose,
   type,
-  depth,
-  entities,
   publishAction,
+  entities,
+  depth = 0,
   defaultPath,
-}: Props) {
+  onClose,
+}: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
-
-  const [publishRequestName, setPublishRequestName] = useState('');
   const [path, setPath] = useState(defaultPath ?? '');
   const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
-  const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
-    useState(false);
+  const [isSomeVersionInvalid, setIsSomeVersionInvalid] = useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
+  const userName = useAppSelector(AuthSelectors.selectUserName);
 
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  const versionsRef = useRef<Record<string, string | undefined>>({});
+
+  const areConversationsWithContentUploading = useAppSelector(
+    ConversationsSelectors.selectAreConversationsWithContentUploading,
+  );
+  const isApplicationLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -99,7 +129,7 @@ export function PublishModal({
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(
       state,
-      constructPath(CLIENT_PUBLIC_FILES_PATH, path),
+      constructPath(PUBLIC_URL_PREFIX, path),
     ),
   );
   const files = useAppSelector((state) =>
@@ -109,22 +139,47 @@ export function PublishModal({
     PublicationSelectors.selectSelectedItemsToPublish,
   );
 
-  const entitiesArray = useMemo(
-    () => (entities ? entities : [entity]),
-    [entities, entity],
-  );
+  const applicationId = isApplicationId(entity?.id) ? entity.id : null;
+
+  const filteredFiles = useMemo(() => {
+    if (publishAction === PublishActions.DELETE) {
+      return files.filter((file) => isEntityIdPublic(file));
+    }
+
+    return files;
+  }, [files, publishAction]);
+
   const notCurrentFolderRules = useMemo(
     () =>
       Object.entries(rules).filter(
-        ([rulePath]) =>
-          constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+        ([rulePath]) => constructPath(PUBLIC_URL_PREFIX, path) !== rulePath,
       ),
     [path, rules],
   );
   const currentFolderRules = useMemo(
-    () => rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)],
+    () => rules[constructPath(PUBLIC_URL_PREFIX, path)],
     [path, rules],
   );
+  const entitiesArray = useMemo(
+    () => (entities ? entities : [entity]),
+    [entities, entity],
+  );
+
+  const {
+    register,
+    handleSubmit: submitWrapper,
+    formState: { errors, isValid },
+    trigger,
+  } = useForm<PublicationRequestFormData>({
+    defaultValues: {
+      publishRequestName: getPublicationDefaultName(
+        prepareEntityName(replaceSpacesFromString(userName)),
+      ),
+      publicationAuthor: prepareEntityName(replaceSpacesFromString(userName)),
+    },
+
+    mode: 'onChange',
+  });
 
   useEffect(() => {
     if (path) {
@@ -133,42 +188,47 @@ export function PublishModal({
   }, [dispatch, path]);
 
   useEffect(() => {
+    if (applicationId && isOpen) {
+      dispatch(ApplicationActions.get({ applicationId }));
+    }
+  }, [applicationId, dispatch, isOpen]);
+
+  useEffect(() => {
     if (currentFolderRules) {
-      setOtherTargetAudienceFilters(
-        currentFolderRules.map((rule) => ({
-          id: rule.source,
-          filterFunction: rule.function,
-          filterParams: rule.targets,
-        })),
-      );
+      setOtherTargetAudienceFilters(currentFolderRules.map(mapRuleToFilter));
     }
   }, [currentFolderRules]);
 
-  const handleFolderChange = useCallback(() => {
-    setIsChangeFolderModalOpened(true);
-  }, []);
-
-  const handleOnSaveFilter = useCallback(
-    (targetFilter: TargetAudienceFilter) => {
-      setOtherTargetAudienceFilters((prev) =>
-        prev.filter(({ id }) => id !== targetFilter.id).concat(targetFilter),
+  useEffect(() => {
+    if (!areConversationsWithContentUploading && entitiesArray.length === 0) {
+      dispatch(
+        UIActions.showErrorToast(t('There are no valid items to publish')),
       );
-      setIsRuleSetterOpened(false);
-    },
-    [],
-  );
+
+      onClose();
+    }
+  }, [
+    publishAction,
+    areConversationsWithContentUploading,
+    dispatch,
+    entitiesArray.length,
+    onClose,
+    t,
+  ]);
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   const handlePublish = useCallback(
-    (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
+    (data: PublicationRequestFormData) => {
       const folderOldPathPartsRegExp = new RegExp(
-        getIdWithoutRootPathSegments(entity.folderId),
+        escapeRegExp(getIdWithoutRootPathSegments(entity.folderId)),
       );
 
       const trimmedPath = path.trim();
-      const trimmedName = publishRequestName.trim();
+      const trimmedPublishRequestName = data.publishRequestName.trim();
+      const trimmedPublicationAuthor = data.publicationAuthor.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           // TODO: uncomment when it will be supported on core
@@ -183,135 +243,162 @@ export function PublishModal({
             id: rule.id,
           }))
         : notEmptyFilters;
-      const mappedFiles = (entitiesArray as Conversation[])
-        .filter((c) =>
-          (c.playback?.messagesStack || c.messages || []).some(
+      const conversationEntities = entitiesArray.filter(
+        (conv) =>
+          'messages' in conv &&
+          (conv.playback?.messagesStack || conv.messages).some(
             (m) => m.custom_content?.attachments,
           ),
-        )
-        .flatMap((c) => {
-          const urls = compact(
-            flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
-              m.custom_content?.attachments?.map((a) => a.url),
+      ) as Conversation[];
+      const mappedFiles = conversationEntities.flatMap((c) => {
+        const urls = compact(
+          flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+            m.custom_content?.attachments?.map((a) => a.url),
+          ),
+        );
+
+        return urls.map((oldUrl) => {
+          const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+
+          return {
+            oldUrl: decodedOldUrl,
+            newUrl: createTargetUrl(
+              FeatureType.File,
+              trimmedPath,
+              constructPath(
+                getFolderIdFromEntityId(c.id),
+                ...decodedOldUrl.split('/').slice(-1),
+              ).replace(folderOldPathPartsRegExp, ''),
+              type,
             ),
-          );
-
-          return urls.map((oldUrl) => {
-            const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
-
-            return {
-              oldUrl: decodedOldUrl,
-              newUrl: createTargetUrl(
-                FeatureType.File,
-                trimmedPath,
-                constructPath(
-                  ...c.id.split('/').slice(0, -1),
-                  ...decodedOldUrl.split('/').slice(-1),
-                ).replace(folderOldPathPartsRegExp, ''),
-                type,
-              ),
-            };
-          });
+          };
         });
+      });
 
       const selectedEntities = entitiesArray.filter((e) =>
         selectedItemsIds.includes(e.id),
       );
-      const selectedFiles = files.filter((f) =>
+      const selectedFiles = filteredFiles.filter((f) =>
         selectedItemsIds.includes(f.id),
       );
 
       dispatch(
         PublicationActions.publish({
-          action: publishAction,
-          name: trimmedName,
+          name: trimmedPublishRequestName,
+          displayAuthor: trimmedPublicationAuthor,
           targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
           resources: [
             ...(publishAction === PublishActions.DELETE
-              ? selectedEntities.map((entity) => ({ targetUrl: entity.id }))
+              ? selectedEntities.map((entity) => ({
+                  targetUrl: entity.id,
+                  action: publishAction,
+                }))
               : selectedEntities.map((item) => ({
+                  action: publishAction,
                   sourceUrl: item.id,
                   targetUrl: createTargetUrl(
                     type === SharingType.ConversationFolder ||
                       type === SharingType.Conversation
                       ? FeatureType.Chat
-                      : FeatureType.Prompt,
+                      : type === SharingType.Application
+                        ? FeatureType.Application
+                        : FeatureType.Prompt,
                     trimmedPath,
                     type === SharingType.ConversationFolder ||
                       type === SharingType.PromptFolder
                       ? item.id.replace(folderOldPathPartsRegExp, '')
                       : item.id,
                     type,
+                    versionsRef.current[item.id],
                   ),
                 }))),
             ...(publishAction === PublishActions.DELETE
-              ? files.map((f) => ({
+              ? selectedFiles.map((f) => ({
+                  action: publishAction,
                   targetUrl: ApiUtils.decodeApiUrl(f.id),
                 }))
-              : selectedFiles.reduce<
-                  { sourceUrl: string; targetUrl: string }[]
-                >((acc, file) => {
-                  const decodedFileId = ApiUtils.decodeApiUrl(file.id);
-                  const item = mappedFiles.find(
-                    (f) => f.oldUrl === decodedFileId,
-                  );
+              : selectedFiles.reduce<PublicationRequestModel['resources']>(
+                  (acc, file) => {
+                    const decodedFileId = ApiUtils.decodeApiUrl(file.id);
 
-                  if (item) {
-                    acc.push({
-                      sourceUrl: decodedFileId,
-                      targetUrl: item.newUrl,
-                    });
-                  }
+                    const item = mappedFiles.find(
+                      (f) => f.oldUrl === decodedFileId,
+                    );
 
-                  return acc;
-                }, [])),
+                    if (item) {
+                      acc.push({
+                        action: publishAction,
+                        sourceUrl: decodedFileId,
+                        targetUrl: item.newUrl,
+                      });
+                    } else {
+                      acc.push({
+                        action: publishAction,
+                        sourceUrl: decodedFileId,
+                        targetUrl: ApiUtils.decodeApiUrl(
+                          constructPath(
+                            file.id.split('/')[0],
+                            PUBLIC_URL_PREFIX,
+                            trimmedPath,
+                            getIdWithoutRootPathSegments(entity.folderId),
+                            file.id.split('/').at(-1),
+                          ),
+                        ),
+                      });
+                    }
+
+                    return acc;
+                  },
+                  [],
+                )),
+            ...(type === SharingType.Application
+              ? getApplicationPublishResources({
+                  entity: entity as PublishRequestDialAIEntityModel,
+                  path: trimmedPath,
+                  publishAction,
+                })
+              : []),
           ],
-          rules: preparedFilters.map((filter) => ({
-            function: filter.filterFunction,
-            source: filter.id,
-            targets: filter.filterParams,
-          })),
+          rules: preparedFilters.map(mapFilterToRule),
         }),
       );
 
       onClose();
     },
     [
-      currentFolderRules,
-      dispatch,
-      entitiesArray,
-      entity.folderId,
-      files,
-      onClose,
-      otherTargetAudienceFilters,
+      entity,
       path,
+      otherTargetAudienceFilters,
+      currentFolderRules,
+      entitiesArray,
+      filteredFiles,
+      dispatch,
       publishAction,
-      publishRequestName,
-      selectedItemsIds,
       type,
+      onClose,
+      selectedItemsIds,
     ],
   );
 
-  useEffect(() => {
-    if (
-      // We should be able to unpublish any item even if it's invalid
-      publishAction !== PublishActions.DELETE &&
-      areSelectedConversationsLoaded &&
-      entitiesArray.length === 0
-    ) {
-      dispatch(
-        UIActions.showErrorToast(t('There are no valid items to publish')),
-      );
-      onClose();
+  const handleChangeVersion = useCallback((id: string, version: string) => {
+    versionsRef.current = { ...versionsRef.current, [id]: version };
+
+    const isInvalid = Object.values(versionsRef.current).some((version) => {
+      if (isVersionValid(version)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    setIsSomeVersionInvalid(isInvalid);
+  }, []);
+
+  const handleClose = useCallback((folderId?: string) => {
+    if (typeof folderId === 'string') {
+      setPath(folderId);
     }
-  }, [
-    publishAction,
-    areSelectedConversationsLoaded,
-    dispatch,
-    entitiesArray.length,
-    onClose,
-    t,
-  ]);
+  }, []);
 
   const isNothingSelectedAndNoRuleChanges =
     !selectedItemsIds.length &&
@@ -325,64 +412,126 @@ export function PublishModal({
     ) ||
       !path ||
       (!otherTargetAudienceFilters.length && !currentFolderRules));
+  const isSendBtnDisabled =
+    !isValid ||
+    isRuleSetterOpened ||
+    isNothingSelectedAndNoRuleChanges ||
+    isSomeVersionInvalid ||
+    areConversationsWithContentUploading ||
+    isApplicationLoading;
+  const isSendBtnTooltipHidden =
+    isValid &&
+    !isRuleSetterOpened &&
+    !isNothingSelectedAndNoRuleChanges &&
+    !isSomeVersionInvalid;
+
+  const tooltipText = useMemo(() => {
+    if (!isValid && !!errors.publishRequestName?.message) {
+      return 'Enter a valid name for the publish request';
+    }
+
+    if (!isValid && !!errors.publicationAuthor?.message) {
+      return "Enter a valid publication's author name";
+    }
+
+    if (isRuleSetterOpened) {
+      return 'Accept or reject rule changes';
+    }
+
+    if (isSomeVersionInvalid) {
+      return 'All versions should be valid';
+    }
+
+    return 'Nothing is selected and rules have not changed';
+  }, [
+    isValid,
+    errors.publishRequestName?.message,
+    errors.publicationAuthor?.message,
+    isRuleSetterOpened,
+    isSomeVersionInvalid,
+  ]);
 
   return (
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
         'group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
-        { 'w-full': files.length },
+        filteredFiles.length && 'w-full',
       )}
       dataQa="publish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
-      initialFocus={nameInputRef}
+      initialFocus={1}
     >
-      <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
-        <div className="px-3 py-4 md:pl-4 md:pr-10">
-          <input
-            autoFocus
-            onChange={(e) => setPublishRequestName(e.target.value)}
-            value={publishRequestName}
+      <form
+        onSubmit={submitWrapper(handlePublish)}
+        className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto"
+      >
+        <div className="py-4 pl-3 pr-10 md:pl-4">
+          <Field
+            className="border-none p-0 text-base font-semibold"
+            {...register(
+              PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+              validators.publishRequestName,
+            )}
             placeholder={
               publishAction === PublishActions.ADD
-                ? t('Type publication request name...') ?? ''
-                : t('Type unpublish request name...') ?? ''
+                ? t('Type publication request name...')
+                : t('Type unpublish request name...')
             }
-            className="w-full bg-transparent text-base font-semibold outline-none"
+            id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
+            error={errors.publishRequestName?.message}
+            dataQa="request-name"
           />
         </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
-            <section className="px-3 py-4 md:px-5">
-              <label className="mb-4 flex text-sm" htmlFor="requestPath">
-                {publishAction === PublishActions.DELETE
-                  ? t('Unpublish from')
-                  : t('Publish to')}
-              </label>
-              <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
-                <div className="flex w-full justify-between truncate whitespace-pre break-all">
-                  <Tooltip
-                    tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
-                    contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-                    triggerClassName="truncate whitespace-pre"
-                  >
-                    {constructPath(PUBLISHING_FOLDER_NAME, path)}
-                  </Tooltip>
-                  {publishAction !== PublishActions.DELETE && (
-                    <span
-                      className="h-full cursor-pointer text-accent-primary"
-                      onClick={handleFolderChange}
-                    >
-                      {t('Change')}
-                    </span>
+            <div className="flex w-full shrink flex-col px-3 py-4 md:px-5">
+              <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+              {publishAction !== PublishActions.DELETE ? (
+                <PublishToSection
+                  path={constructPath(ORGANIZATION_SECTION_NAME, path)}
+                  maxDepth={depth}
+                  onSelect={handleClose}
+                />
+              ) : (
+                <PublicationInfoSection
+                  labelDataQa={'unpublish-from-label'}
+                  label={t('Unpublish from')}
+                  valueDataQa={'unpublish-from-path'}
+                  valueToDisplay={constructPath(
+                    ORGANIZATION_SECTION_NAME,
+                    path,
                   )}
-                </div>
-              </button>
-            </section>
+                  tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
+                />
+              )}
 
+              {publishAction !== PublishActions.DELETE && (
+                <section>
+                  <Field
+                    {...register(
+                      PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+                      validators.publicationAuthor,
+                    )}
+                    placeholder={t(`Type publication's author name...`)}
+                    label={t(
+                      publishRequestFields[
+                        PublishRequestFieldsNames.PUBLICATION_AUTHOR
+                      ].label,
+                    )}
+                    id={PublishRequestFieldsNames.PUBLICATION_AUTHOR}
+                    error={errors.publicationAuthor?.message}
+                    dataQa="public-author-input"
+                  />
+                </section>
+              )}
+            </div>
             <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
-              <h2 className="mb-4 flex gap-2">
+              <h2
+                className="mb-4 flex gap-2 font-semibold"
+                data-qa="allow-access-label"
+              >
                 {t('Allow access if all match')}
               </h2>
               {isRulesLoading ? (
@@ -395,89 +544,40 @@ export function PublishModal({
                 ))
               )}
               {!isRulesLoading && path && (
-                <div>
-                  <div className="mb-1 text-xs text-secondary">
-                    {path.split('/').pop()}
+                <div data-qa="rules-container">
+                  <div
+                    className="mb-1 text-xs text-secondary"
+                    data-qa="published-path"
+                  >
+                    {getLastPathSegment(path)}
                   </div>
-                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
-                    {otherTargetAudienceFilters.map((item) => (
-                      <div className="flex items-center gap-1" key={item.id}>
-                        <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
-                          <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
-                            <span className="font-semibold">
-                              {startCase(toLower(item.id))}
-                            </span>
-                            <span className="italic">
-                              {toLower(item.filterFunction)}
-                            </span>
-                            {item.filterParams.map((param, index) => (
-                              <Fragment key={index}>
-                                {index > 0 && (
-                                  <span className="italic">{t('or')}</span>
-                                )}
-                                <span className="font-semibold">{param}</span>
-                              </Fragment>
-                            ))}
-                          </div>
-                          <IconX
-                            size={18}
-                            stroke="1"
-                            onClick={() =>
-                              setOtherTargetAudienceFilters((prev) =>
-                                prev.filter(({ id }) => id !== item.id),
-                              )
-                            }
-                            className="mr-3 shrink-0 cursor-pointer text-secondary"
-                          />
-                        </div>
-                        <span className="text-xs italic text-secondary">
-                          {t('or')}
-                        </span>
-                      </div>
-                    ))}
-                    {!isRuleSetterOpened && (
-                      <button
-                        onClick={() => setIsRuleSetterOpened(true)}
-                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
-                      >
-                        <IconPlus stroke="1" size={18} />
-                      </button>
-                    )}
-                    {!!otherTargetAudienceFilters.length && (
-                      <IconX
-                        size={18}
-                        stroke="2"
-                        onClick={() => setOtherTargetAudienceFilters([])}
-                        className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
-                      />
-                    )}
-                  </div>
+                  <RulesInput
+                    isOpen={isRuleSetterOpened}
+                    filters={otherTargetAudienceFilters}
+                    setFilters={setOtherTargetAudienceFilters}
+                    onSwitchRulesSetter={setIsRuleSetterOpened}
+                  />
                 </div>
               )}
               {!path && (
-                <p className="text-secondary">
+                <p className="text-secondary" data-qa="availability-label">
                   {t(
                     'This publication will be available to all users in the organization',
                   )}
                 </p>
               )}
-
-              {isRuleSetterOpened && path && (
-                <TargetAudienceFilterComponent
-                  onCloseFilter={() => setIsRuleSetterOpened(false)}
-                  onSaveFilter={handleOnSaveFilter}
-                />
-              )}
             </section>
           </div>
-          {areSelectedConversationsLoaded ? (
+          {!areConversationsWithContentUploading ? (
             <PublicationItemsList
               type={type}
+              path={path}
               entity={entity}
               entities={entitiesArray}
-              files={files}
+              files={filteredFiles}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={publishAction}
+              onChangeVersion={handleChangeVersion}
             />
           ) : (
             <div className="flex w-full items-center justify-center">
@@ -488,55 +588,20 @@ export function PublishModal({
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <Tooltip
-            hideTooltip={
-              !!publishRequestName.trim().length &&
-              !isRuleSetterOpened &&
-              !isNothingSelectedAndNoRuleChanges
-            }
-            tooltip={
-              !publishRequestName.trim().length
-                ? t('Enter a name for the publish request')
-                : isRuleSetterOpened
-                  ? t('Accept or reject rule changes')
-                  : t('Nothing is selected and rules have not changed')
-            }
+            hideTooltip={isSendBtnTooltipHidden}
+            tooltip={t(tooltipText)}
           >
             <button
               className="button button-primary py-2"
-              onClick={handlePublish}
+              type="submit"
               data-qa="publish"
-              disabled={
-                !publishRequestName.trim().length ||
-                isRuleSetterOpened ||
-                isNothingSelectedAndNoRuleChanges
-              }
+              disabled={isSendBtnDisabled}
             >
               {t('Send request')}
             </button>
           </Tooltip>
         </div>
-      </div>
-      <ChangePathDialog
-        initiallySelectedFolderId={entity.id}
-        isOpen={isChangeFolderModalOpened}
-        onClose={(folderId) => {
-          if (typeof folderId === 'string') {
-            setPath(folderId);
-          }
-
-          setIsChangeFolderModalOpened(false);
-        }}
-        type={type}
-        depth={depth}
-        rootFolderId={getRootId({
-          featureType:
-            type === SharingType.Conversation ||
-            type === SharingType.ConversationFolder
-              ? FeatureType.Chat
-              : FeatureType.Prompt,
-          bucket: PUBLIC_URL_PREFIX,
-        })}
-      />
+      </form>
     </Modal>
   );
 }

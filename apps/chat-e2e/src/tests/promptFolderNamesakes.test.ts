@@ -1,5 +1,6 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -13,13 +14,15 @@ dialTest(
     promptBar,
     folderPrompts,
     promptDropdownMenu,
-    errorToast,
+    toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2969');
     const duplicatedFolderName = 'Folder prompt';
 
     await dialTest.step('Create 2 new prompt folders', async () => {
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 2; i++) {
@@ -40,7 +43,7 @@ dialTest(
         ExpectedConstants.newFolderWithIndexTitle(1),
       );
       await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
+      await folderPrompts.renameEmptyFolderWithTick(duplicatedFolderName);
     });
 
     await dialTest.step(
@@ -50,10 +53,8 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(2),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick(duplicatedFolderName, {
-          isHttpMethodTriggered: false,
-        });
-        const errorMessage = await errorToast.getElementContent();
+        await folderPrompts.renameEmptyFolderWithTick(duplicatedFolderName);
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -72,7 +73,8 @@ dialTest(
     dialHomePage,
     promptBar,
     folderPrompts,
-    errorToast,
+    toast,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2970');
@@ -81,6 +83,11 @@ dialTest(
     await dialTest.step(
       'Create 2 folders and move one into another. Create one more',
       async () => {
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
+        );
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
@@ -126,12 +133,9 @@ dialTest(
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -151,13 +155,19 @@ dialTest(
     promptBar,
     folderPrompts,
     folderDropdownMenu,
-    errorToast,
+    toast,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2971');
     const duplicatedFolderName = 'New folder 2';
 
     await dialTest.step('Create 3 folders', async () => {
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 3; i++) {
@@ -197,7 +207,7 @@ dialTest(
         ExpectedConstants.newFolderWithIndexTitle(3),
       );
       await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await folderPrompts.editFolderNameWithTick(
+      await folderPrompts.renameEmptyFolderWithTick(
         ExpectedConstants.newFolderWithIndexTitle(2),
       );
     });
@@ -216,12 +226,9 @@ dialTest(
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -240,12 +247,18 @@ dialTest(
     dialHomePage,
     promptBar,
     folderPrompts,
-    errorToast,
+    toast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2972');
 
     await dialTest.step('Create 3 folders', async () => {
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
+      await localStorageManager.setShowSideBarPanels();
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 2; i++) {
@@ -287,19 +300,16 @@ dialTest(
     await dialTest.step(
       'Drag & drop "New folder 2"  located in "New folder 1" to the root and expect an error',
       async () => {
-        await promptBar.dragFolderToRoot(
+        await promptBar.dragAndDropFolderToRoot(
           folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(2),
           ),
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(

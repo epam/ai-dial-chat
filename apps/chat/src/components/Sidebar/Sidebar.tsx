@@ -2,38 +2,48 @@ import {
   DragEvent,
   ReactNode,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
+
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { isMediumScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
 import { hasDragEventEntityData } from '@/src/utils/app/move';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { SidebarSide } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
-import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import {
+  MOBILE_SIDEBAR_MIN_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+} from '@/src/constants/default-ui-settings';
 
-import Loader from '../Common/Loader';
-import { NoData } from '../Common/NoData';
-import { NoResultsFound } from '../Common/NoResultsFound';
-import Search from '../Search';
+import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
+import { Loader } from '@/src/components/Common/Loader';
+import { NoData } from '@/src/components/Common/NoData';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import {
+  CreateNewConversation,
+  CreateNewPrompt,
+} from '@/src/components/Header/CreateNewEntity';
+import { Search } from '@/src/components/Search/Search';
+
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 
 import trimEnd from 'lodash-es/trimEnd';
@@ -46,21 +56,19 @@ interface Props<T> {
   filteredFolders: FolderInterface[];
   itemComponent: ReactNode;
   folderComponent: ReactNode;
-  actionButtons: ReactNode;
   footerComponent?: ReactNode;
   searchTerm: string;
   searchFilters: SearchFilters;
   featureType: FeatureType;
-  handleSearchTerm: (searchTerm: string) => void;
-  handleSearchFilters: (searchFilters: SearchFilters) => void;
+  onSearchTerm: (searchTerm: string) => void;
+  onSearchFilters: (searchFilters: SearchFilters) => void;
+  onDrop: (e: DragEvent<HTMLDivElement>) => void;
   toggleOpen?: () => void;
-  handleDrop: (e: DragEvent<HTMLDivElement>) => void;
   areEntitiesUploaded: boolean;
 }
 
-const Sidebar = <T,>({
+export const Sidebar = <T,>({
   isOpen,
-  actionButtons,
   side,
   filteredItems,
   filteredFolders,
@@ -70,17 +78,21 @@ const Sidebar = <T,>({
   searchTerm,
   searchFilters,
   featureType,
-  handleSearchTerm,
-  handleSearchFilters,
-  handleDrop,
+  onSearchTerm,
+  onSearchFilters,
+  onDrop,
   areEntitiesUploaded,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.PromptBar);
+
+  const dispatch = useAppDispatch();
+
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+
   const dragDropElement = useRef<HTMLDivElement>(null);
   const sideBarElementRef = useRef<Resizable>(null);
-  const dispatch = useAppDispatch();
+
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
 
@@ -89,11 +101,22 @@ const Sidebar = <T,>({
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
+  const isNavigationVisible = useAppSelector(
+    UISelectors.selectIsNavigationVisible,
+  );
+
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth;
     }
   });
+
+  const screenState = useScreenState();
+
+  const sidebarMinWidth =
+    screenState === ScreenState.SM
+      ? MOBILE_SIDEBAR_MIN_WIDTH
+      : SIDEBAR_MIN_WIDTH;
 
   const isLeftSidebar = side === SidebarSide.Left;
   const isRightSidebar = side === SidebarSide.Right;
@@ -103,33 +126,32 @@ const Sidebar = <T,>({
     [isLeftSidebar],
   );
 
-  const resizeTriggerColor = classNames(
-    'xl:bg-accent-primary xl:text-accent-primary',
-    isResizing ? 'bg-accent-primary text-accent-primary' : '',
-  );
-
   const resizeTriggerClassName = classNames(
-    'invisible h-full w-0.5 bg-layer-3 text-secondary group-hover:visible md:visible',
-    resizeTriggerColor,
-    isResizing ? 'xl:visible' : 'xl:invisible',
+    'invisible h-full w-0.5 group-hover:visible md:visible xl:bg-accent-primary xl:text-accent-primary',
+    isResizing
+      ? 'bg-accent-primary text-accent-primary xl:visible'
+      : 'bg-layer-3 text-secondary xl:invisible',
   );
 
-  const sidebarWidth = useMemo(
-    () => (isLeftSidebar ? chatbarWidth : promptbarWidth),
-    [isLeftSidebar, chatbarWidth, promptbarWidth],
-  );
+  const sidebarWidth = useMemo(() => {
+    if (windowWidth && isSmallScreen()) {
+      return MOBILE_SIDEBAR_MIN_WIDTH;
+    } else {
+      return isLeftSidebar ? chatbarWidth : promptbarWidth;
+    }
+  }, [windowWidth, isLeftSidebar, chatbarWidth, promptbarWidth]);
 
   const centralChatMinWidth =
-    windowWidth && isMediumScreen()
-      ? windowWidth / 12 // windowWidth / 12 = 8% of the windowWidth
+    windowWidth && isTabletScreen()
+      ? 104 // widget panel width + close button width
       : CENTRAL_CHAT_MIN_WIDTH; // fallback min width
 
   const oppositeSidebarMinWidth = useMemo(
     () =>
       (isLeftSidebar && isPromptbarOpen) || (!isLeftSidebar && isChatbarOpen)
-        ? SIDEBAR_MIN_WIDTH
+        ? sidebarMinWidth
         : 0,
-    [isChatbarOpen, isLeftSidebar, isPromptbarOpen],
+    [isChatbarOpen, isLeftSidebar, isPromptbarOpen, sidebarMinWidth],
   );
 
   const maxWidth = useMemo(() => {
@@ -189,15 +211,15 @@ const Sidebar = <T,>({
     const resizableWidth =
       sidebarCurrentWidth && Math.round(sidebarCurrentWidth);
 
-    const width = resizableWidth ?? SIDEBAR_MIN_WIDTH;
+    const width = resizableWidth ?? sidebarMinWidth;
     const sidebarAndCentralWidth = width + centralChatMinWidth;
     const maxOppositeSidebarWidth = windowWidth - sidebarAndCentralWidth;
     const maxSafeOppositeSidebarWidth =
-      maxOppositeSidebarWidth > SIDEBAR_MIN_WIDTH
+      maxOppositeSidebarWidth > sidebarMinWidth
         ? maxOppositeSidebarWidth
-        : SIDEBAR_MIN_WIDTH;
+        : sidebarMinWidth;
 
-    if (!isMediumScreen()) {
+    if (!isTabletScreen()) {
       if (
         isLeftSidebar &&
         centralChatWidth({
@@ -221,13 +243,14 @@ const Sidebar = <T,>({
       }
     }
   }, [
-    dispatch,
+    windowWidth,
+    sidebarMinWidth,
+    centralChatMinWidth,
     isLeftSidebar,
+    promptbarWidth,
     isRightSidebar,
     chatbarWidth,
-    promptbarWidth,
-    windowWidth,
-    centralChatMinWidth,
+    dispatch,
   ]);
 
   const onResizeStop = useCallback(() => {
@@ -238,7 +261,7 @@ const Sidebar = <T,>({
         sideBarElementRef.current?.resizable?.getClientRects()[0].width,
       );
 
-    const width = resizableWidth ?? SIDEBAR_MIN_WIDTH;
+    const width = resizableWidth ?? sidebarMinWidth;
 
     if (isLeftSidebar) {
       dispatch(UIActions.setChatbarWidth(width));
@@ -247,19 +270,19 @@ const Sidebar = <T,>({
     if (isRightSidebar) {
       dispatch(UIActions.setPromptbarWidth(width));
     }
-  }, [dispatch, isLeftSidebar, isRightSidebar]);
+  }, [dispatch, isLeftSidebar, isRightSidebar, sidebarMinWidth]);
 
   const resizeSettings: ResizableProps = useMemo(() => {
     return {
       defaultSize: {
-        width: sidebarWidth ?? SIDEBAR_MIN_WIDTH,
+        width: sidebarWidth ?? sidebarMinWidth,
         height: SIDEBAR_HEIGHT,
       },
-      minWidth: SIDEBAR_MIN_WIDTH,
+      minWidth: sidebarMinWidth,
       maxWidth,
 
       size: {
-        width: sidebarWidth ?? SIDEBAR_MIN_WIDTH,
+        width: sidebarWidth ?? sidebarMinWidth,
         height: SIDEBAR_HEIGHT,
       },
       enable: {
@@ -286,43 +309,79 @@ const Sidebar = <T,>({
       onResize: onResize,
     };
   }, [
+    sidebarWidth,
+    sidebarMinWidth,
+    maxWidth,
+    isLeftSidebar,
+    isRightSidebar,
+    resizeTriggerClassName,
     onResizeStart,
     onResizeStop,
     onResize,
-    resizeTriggerClassName,
-    isLeftSidebar,
-    isRightSidebar,
-    SIDEBAR_HEIGHT,
-    sidebarWidth,
-    maxWidth,
   ]);
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+  const handleClose = () => {
+    if (isLeftSidebar) {
+      dispatch(UIActions.setShowChatbar(false));
+    } else {
+      dispatch(UIActions.setShowPromptbar(false));
+    }
+  };
 
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setWindowWidth(window.innerWidth);
   }, []);
+  useWindowResizeEvent(handleResize);
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
     isLeftSidebar
-      ? 'sidebar-left left-0 border-r'
+      ? 'sidebar-left left-0 border-r xl:left-0'
       : 'sidebar-right right-0 border-l',
-    isOverlay ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
+    isLeftSidebar &&
+      isNavigationVisible &&
+      (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
+    (screenState === ScreenState.SM || screenState === ScreenState.MD) &&
+      '!h-full',
+    screenState !== ScreenState.SM &&
+      screenState !== ScreenState.MD &&
+      (isOverlay
+        ? 'top-9 !h-[calc(100%-36px)]'
+        : 'top-12 !h-[calc(100%-48px)]'),
   );
 
-  return isOpen ? (
+  if (!isOpen) {
+    return null;
+  }
+
+  const createIconSize = isOverlay ? 18 : 24;
+
+  return (
     <Resizable
       ref={sideBarElementRef}
       {...resizeSettings}
       className={resizableWrapperClassName}
       data-qa={dataQa}
     >
+      <CloseSidebarButton isLeftSide={isLeftSidebar} onClose={handleClose} />
       <div className="group/sidebar flex size-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
         {areEntitiesUploaded ? (
           <>
+            <div
+              className={classNames(
+                'flex items-center justify-between px-5',
+                isOverlay ? 'min-h-[35px]' : 'min-h-12',
+              )}
+            >
+              <p className="text-base font-semibold">
+                {t(isLeftSidebar ? 'Conversations' : 'Prompts')}
+              </p>
+              {isLeftSidebar ? (
+                <CreateNewConversation iconSize={createIconSize} />
+              ) : (
+                <CreateNewPrompt iconSize={createIconSize} />
+              )}
+            </div>
             <Search
               placeholder={t('Search {{name}}...', {
                 name: trimEnd(
@@ -332,12 +391,10 @@ const Sidebar = <T,>({
               })}
               searchTerm={searchTerm}
               searchFilters={searchFilters}
-              onSearch={handleSearchTerm}
-              onSearchFiltersChanged={handleSearchFilters}
+              onSearch={onSearchTerm}
+              onSearchFiltersChanged={onSearchFilters}
               featureType={featureType}
             />
-
-            {actionButtons}
 
             <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
               {folderComponent}
@@ -351,7 +408,7 @@ const Sidebar = <T,>({
                   )}
                   onDrop={(e) => {
                     setIsDraggingOver(false);
-                    handleDrop(e);
+                    onDrop(e);
                   }}
                   onDragOver={allowDrop}
                   onDragEnter={highlightDrop}
@@ -377,7 +434,5 @@ const Sidebar = <T,>({
         )}
       </div>
     </Resizable>
-  ) : null;
+  );
 };
-
-export default Sidebar;

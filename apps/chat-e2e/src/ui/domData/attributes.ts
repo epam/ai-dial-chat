@@ -16,4 +16,9 @@ export enum Attributes {
   download = 'download',
   href = 'href',
   dataQA = 'data-qa',
+  ariaSelected = 'aria-selected',
+  id = 'id',
+  ariaExpanded = 'aria-expanded',
+  ariaDetails = 'aria-details',
+  ariaColcount = 'aria-colcount',
 }

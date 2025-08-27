@@ -1,8 +1,12 @@
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
 import { ApiKeys, FeatureType } from '@/src/types/common';
+
+import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
-import { splitEntityId } from './folders';
 import { EnumMapper } from './mappers';
 
 export const getRootId = ({
@@ -32,7 +36,7 @@ export const getFileRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.File, bucket });
 
 export const isRootId = (id?: string) => {
-  return id?.split('/').length === 2 ?? false;
+  return id?.split('/').length === 2;
 };
 
 export const isRootConversationsId = (id?: string) =>
@@ -43,12 +47,77 @@ export const isRootPromptId = (id?: string) => isRootId(id) && isPromptId(id);
 export const isFolderId = (id: string) => id.endsWith('/');
 
 export const isConversationId = (id?: string) =>
-  id?.startsWith(`${ApiKeys.Conversations}/`);
+  id?.startsWith(`${ApiKeys.Conversations}/`) ?? false;
 
 export const isPromptId = (id?: string) =>
-  id?.startsWith(`${ApiKeys.Prompts}/`);
+  id?.startsWith(`${ApiKeys.Prompts}/`) ?? false;
 
-export const isFileId = (id?: string) => id?.startsWith(`${ApiKeys.Files}/`);
+export const isFileId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Files}/`) ?? false;
 
 export const getIdWithoutRootPathSegments = (id: string) =>
   id.split('/').slice(2).join('/');
+
+export const isApplicationId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Applications}/`) ?? false;
+
+export const isToolsetId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Toolsets}/`) ?? false;
+
+export const getApplicationRootId = (bucket?: string) =>
+  getRootId({ featureType: FeatureType.Application, bucket });
+
+export const getToolsetRootId = (bucket?: string) =>
+  getRootId({ featureType: FeatureType.Toolset, bucket });
+
+export const getEntityBucket = (entity: { id: string }) =>
+  entity.id.split('/')[1];
+
+export const isEntityIdLocal = (entity: { id: string }) =>
+  getEntityBucket(entity) === LOCAL_BUCKET;
+
+export const isEntityIdExternal = (entity: { id: string }) => {
+  const bucket = getEntityBucket(entity);
+  return bucket !== LOCAL_BUCKET && bucket !== BucketService.getBucket();
+};
+
+export const isMyBucket = (bucket: string) => {
+  return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
+};
+
+export const isMyEntity = (entity: { id: string }) =>
+  isMyBucket(getEntityBucket(entity));
+
+export const isMyApplication = (entity: { id: string }) =>
+  entity.id === DRAFT_APPLICATION_ID || isMyEntity(entity);
+
+export const filterIdsByFeatureType = (
+  ids: string[],
+  featureType: FeatureType,
+) => {
+  if (featureType === FeatureType.Chat) {
+    return ids.filter(isConversationId);
+  } else if (featureType === FeatureType.Prompt) {
+    return ids.filter(isPromptId);
+  } else if (featureType === FeatureType.Application) {
+    return ids.filter(isApplicationId);
+  } else if (featureType === FeatureType.File) {
+    return ids.filter(isFileId);
+  }
+
+  return [];
+};
+
+export const isRootEntity = (id: string) => {
+  return id.split('/').length === 3;
+};
+
+export const getIdWithoutFeatureType = (id: string) =>
+  id.split('/').slice(1).join('/');
+
+export const areEntitiesBucketsTheSame = (
+  firstId: string,
+  secondId: string,
+) => {
+  return getEntityBucket({ id: firstId }) === getEntityBucket({ id: secondId });
+};

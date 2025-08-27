@@ -5,9 +5,8 @@ export enum Tags {
   input = 'input',
   div = 'div',
   svg = 'svg',
+  img = 'img',
   a = 'a',
-  desc = 'desc',
-  closingTag = '/>',
   table = 'table',
   thead = 'thead',
   th = 'th',
@@ -15,4 +14,7 @@ export enum Tags {
   td = 'td',
   html = 'html',
   label = 'label',
+  dialog = 'dialog',
+  p = 'p',
+  section = 'section',
 }

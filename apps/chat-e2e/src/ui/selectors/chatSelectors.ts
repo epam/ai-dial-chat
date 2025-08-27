@@ -1,7 +1,7 @@
 import { Rate } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 
-export const appContainer = '#theme-main';
+export const layoutContainer = '#theme-main';
 export const overlayFrame = '[name="overlay"]';
 
 export const SendMessageSelectors = {
@@ -13,30 +13,25 @@ export const SendMessageSelectors = {
 };
 
 export const ChatSettingsSelectors = {
-  conversationSettingsSelector: '[data-qa="conversation-settings"]',
   entitySelector: '[data-qa="entity-selector"]',
-  entitySettings: '[data-qa="entity-settings"]',
-  seeFullList: '[data-qa="see-full-list"]',
+  searchOnMyApplications: '[data-qa="search-on-my-app"]',
   recentEntities: '[data-qa="recent"]',
-  groupEntity: '[data-qa="group-entity"]',
-  groupEntityName: '[data-qa="group-entity-name"]',
-  groupEntityVersion: '[data-qa="model-version-select-trigger"]',
-  groupEntityDescr: '[data-qa="group-entity-descr"]',
-  expandGroupEntity: '[data-qa="expand-group-entity"]',
-  selectedGroupEntity: '.border-accent-primary',
-  systemPrompt: '[data-qa="system-prompt"]',
-  temperatureSlider: '[data-qa="temp-slider"]',
-  slider: '.temperature-slider',
-  addons: '[data-qa="addons"]',
-  selectedAddons: '[data-qa="selected-addons"]',
-  recentAddons: '[data-qa="recent-addons"]',
-  seeAllSelectors: '[data-qa="see-all-addons"]',
-  moreInfo: '[data-qa="more-info"]',
-  entityInfo: '[data-qa="entity-info"]',
-  entityDescription: '[data-qa="entity-descr"]',
-  applyChanges: '[data-qa="apply-changes"]',
+  talkToEntity: '[data-qa="talk-to-entity"]',
+  talkToEntityName: '[data-qa="talk-to-entity-name"]',
+  talkToEntityVersion: '[data-qa="version"]',
+  talkToEntityDescr: '[data-qa="talk-to-entity-descr"]',
+  expandTalkToEntity: '[data-qa="expand-talk-to-entity"]',
+  selectedTalkToEntity: '.border-accent-primary',
+  agentInfoContainer: '[data-qa="agent-info-container"]',
+  agentInfo: '[data-qa="agent-info"]',
+  agentName: '[data-qa="entity-name"]',
+  agentDescription: '[data-qa="agent-descr"]',
+  agentVersion: '[data-qa="version"]',
+  agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   playbackButton: '[data-qa="Playback"]',
   replayAsIsButton: '[data-qa="Replay as is"]',
+  configureSettingsButton: '[data-qa="configure-settings"]',
+  changeAgentButton: '[data-qa="change-agent"]',
 };
 
 export const MessageInputSelectors = {
@@ -46,11 +41,12 @@ export const MessageInputSelectors = {
   inputAttachmentsContainer: '[data-qa="attachment-container"]',
   inputAttachment: '[data-qa="chat-attachment"]',
   inputAttachmentName: '[data-qa="attachment-name"]',
+  inputAttachedFolderName: '[data-qa="attached-folder-name"]',
 };
 
 export const PlaybackSelectors = {
   playbackContainer: '[data-qa="playback"]',
-  playbackAppTitle: '[data-qa="app-name"]',
+  playbackAppTitle: '[data-qa="entity-name"]',
   playbackChatTitle: '[data-qa="conversation-name"]',
   playbackControl: '[data-qa="playback-control"]',
   playbackMessage: '[data-qa="playback-message"]',
@@ -61,13 +57,6 @@ export const PlaybackSelectors = {
   playbackPrevious: '[data-qa="playback-prev"]',
   playbackPreviousDisabled: () =>
     `${PlaybackSelectors.playbackPrevious}[${Attributes.disabled}]`,
-};
-
-export const ModelControlSelectors = {
-  modelSelector: '[data-qa="model-selector"]',
-  listbox: '[role="listbox"]',
-  listOptions: '[role="option"]',
-  combobox: '[role="combobox"]',
 };
 
 export const PromptListSelectors = {
@@ -86,23 +75,29 @@ export const ReplaySelectors = {
 export const ChatHeaderSelectors = {
   chatHeader: '[data-qa="chat-header"]',
   chatTitle: '[data-qa="chat-title"]',
-  chatModel: '[data-qa="chat-model"]',
+  chatAgent: '[data-qa="chat-model"]',
   chatAddons: '[data-qa="chat-addons"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
   leavePlayback: '[data-qa="cancel-playback-mode"]',
   deleteFromCompareIcon: '[data-qa="delete-from-compare"]',
+  version: '[data-qa="version"]',
+  dotsMenu: '[data-qa="dots-menu"]',
 };
 
 export const CompareSelectors = {
   showAllCheckbox: '[name="showAllCheckbox"]',
   conversationToCompare: '[data-qa="conversation-to-compare"]',
   compareMode: '[data-qa="compare-mode"]',
+  conversationRow: '[data-qa="conversation-row"]',
+  noConversationsAvailable: '[data-qa="no-conversations-available"]',
+  searchCompareConversation: '[data-qa="search-compare-conversation"]',
+  loader: '[compare-loader]',
 };
 
 export const ToastSelectors = {
   chatLoader: '[data-qa="chat-loader"]',
-  errorToast: '.chat-toast',
+  toast: '.chat-toast',
   conversationNotFound: '[data-qa="not-found"]',
 };
 
@@ -111,6 +106,7 @@ export const ErrorLabelSelectors = {
   notAllowedModel: '[data-qa="not-allowed-model-error"]',
   fieldError: '.text-error',
   errorText: '[data-qa="error-text"]',
+  errorContainer: '[data-qa="error-message-container"]',
 };
 
 export const ImportExportSelectors = {
@@ -123,7 +119,9 @@ export const ChatSelectors = {
   spinner: '[data-qa="spinner"]',
   chatMessages: '[data-qa="chat-messages"]',
   chatMessage: '[data-qa="chat-message"]',
-  compareChatMessage: '[data-qa="compare-message-row"]',
+  compareChatMessageRow: '[data-qa="compare-message-row"]',
+  lastCompareChatMessageRow: () =>
+    `${ChatSelectors.compareChatMessageRow}[itemprop='last-row']`,
   messageIcon: '[data-qa="message-icon"]',
   messageContent: '[data-qa="message-content"]',
   messageStage: '[data-qa="message-stage"]',
@@ -141,11 +139,13 @@ export const ChatSelectors = {
   attachmentExpanded: '[data-qa="attachment-expanded"]',
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
   attachmentsGroup: '[data-qa="grouped-attachments"]',
-  messageSpinner: '[data-qa="message-input-spinner"]',
+  entitySpinner: '[data-qa="entity-spinner"]',
   plotlyContainer: '.plot-container',
   maxWidth: '.max-w-none',
   showMore: '[data-qa="show-more"]',
   showLess: '[data-qa="show-less"]',
+  iconSelector: '[data-qa="entity-icon"]',
+  addModelToWorkspace: '[data-qa="add-model-to-workspace"]',
 };
 
 export const TableSelectors = {
@@ -154,4 +154,26 @@ export const TableSelectors = {
   copyAsCsvIcon: '[data-qa="csv-icon"]',
   copyAsTxtIcon: '[data-qa="txt-icon"]',
   copyAsMdIcon: '[data-qa="md-icon"]',
+};
+
+export const PublicationReviewControls = {
+  reviewContainer: '[data-qa="chat-review-container"]',
+  previousButton: '[data-qa="prev-chat-review-button"]',
+  nextButton: '[data-qa="next-chat-review-button"]',
+  backToPublication: '[data-qa="back-to-publication"]',
+};
+
+export const RenameConversationModalSelectors = {
+  modal: '[data-qa="rename-conversation-modal"]',
+  saveButton: '[data-qa="save"]',
+  cancelButton: '[data-qa="cancel"]',
+  title: '[data-qa="title"]',
+};
+
+export const PublishingRulesSelectors = {
+  rulesContainer: '[data-qa="rules-container"]',
+  path: '[data-qa="published-path"]',
+  rulesList: '[data-qa="rules-list"]',
+  rule: '[data-qa="rule"]',
+  addRuleButton: '[data-qa="add-rule"]',
 };

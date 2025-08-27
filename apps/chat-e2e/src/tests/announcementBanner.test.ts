@@ -1,109 +1,109 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { AccountMenuOptions, ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 
 dialTest(
   'Banner is shown.\n' +
     'Banner text contains html link.\n' +
     "Banner doesn't appear if to close it",
-  async ({
-    dialHomePage,
-    conversationData,
-    dataInjector,
-    chatBar,
-    promptBar,
-    conversations,
-    banner,
-    header,
-    appContainer,
-    chatMessages,
-    accountSettings,
-    accountDropdownMenu,
-    confirmationDialog,
-    loginPage,
-    setTestIds,
-  }) => {
+  async (
+    {
+      dialHomePage,
+      conversationData,
+      dataInjector,
+      chatBar,
+      promptBar,
+      conversations,
+      banner,
+      header,
+      appContainer,
+      providerLogin,
+      setTestIds,
+      localStorageManager,
+      navigationPanel,
+      baseAssertion,
+      accountSettings,
+    },
+    testInfo,
+  ) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
     let conversation: Conversation;
     let chatBarBounding;
+    let navigationPanelBounding;
     let promptBarBounding;
 
     await dialTest.step('Prepare any conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       'Open app and verify announcement banner is shown between side panels',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        const bannerMessage =
-          await banner.bannerMessage.getElementInnerContent();
-        expect
-          .soft(bannerMessage, ExpectedMessages.bannerMessageIsValid)
-          .toBe(
-            'Welcome to AI Dial! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
-          );
-        const bannerIcon = banner.bannerIcon;
-        expect
-          .soft(bannerIcon.isVisible(), ExpectedMessages.entityIconIsValid)
-          .toBeTruthy();
+        await dialHomePage.waitForPageLoaded();
+        await baseAssertion.assertElementInnerText(
+          banner.bannerMessage,
+          [
+            'Welcome to AI DIAL! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
+          ],
+          ExpectedMessages.bannerMessageIsValid,
+        );
+        await baseAssertion.assertElementState(
+          banner.bannerIcon,
+          'visible',
+          ExpectedMessages.entityIconIsValid,
+        );
 
+        navigationPanelBounding = await navigationPanel.getElementBoundingBox();
         chatBarBounding = await chatBar.getElementBoundingBox();
         const bannerBounding = await banner.getElementBoundingBox();
         promptBarBounding = await promptBar.getElementBoundingBox();
-        expect
-          .soft(
-            bannerBounding!.x === chatBarBounding!.width,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            bannerBounding!.x + bannerBounding!.width === promptBarBounding!.x,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
+        baseAssertion.assertValue(
+          bannerBounding!.x,
+          chatBarBounding!.width + navigationPanelBounding!.width,
+          ExpectedMessages.bannerWidthIsValid,
+        );
+        baseAssertion.assertValue(
+          bannerBounding!.x + bannerBounding!.width,
+          promptBarBounding!.x,
+          ExpectedMessages.bannerWidthIsValid,
+        );
       },
     );
 
     await dialTest.step(
       'Select conversation in chat panel and verify announcement banner is shown between side panels',
       async () => {
-        await conversations.selectConversation(conversation.name);
+        await conversations.selectEntity(conversation.name);
         const bannerBounding = await banner.getElementBoundingBox();
-        expect
-          .soft(
-            bannerBounding!.x === chatBarBounding!.width,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            bannerBounding!.x + bannerBounding!.width === promptBarBounding!.x,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
+        baseAssertion.assertValue(
+          bannerBounding!.x,
+          chatBarBounding!.width + navigationPanelBounding!.width,
+          ExpectedMessages.bannerWidthIsValid,
+        );
+        baseAssertion.assertValue(
+          bannerBounding!.x + bannerBounding!.width,
+          promptBarBounding!.x,
+          ExpectedMessages.bannerWidthIsValid,
+        );
       },
     );
 
     await dialTest.step(
       'Hide side panels and verify announcement banner is shown on full window width',
       async () => {
-        await header.chatPanelToggle.click();
-        await header.promptsPanelToggle.click();
+        await header.leftPanelToggle.click();
+        await header.rightPanelToggle.click();
         const appBounding = await appContainer.getElementBoundingBox();
         const bannerBounding = await banner.getElementBoundingBox();
-        expect
-          .soft(
-            bannerBounding!.width === appBounding!.width,
-            ExpectedMessages.bannerWidthIsValid,
-          )
-          .toBeTruthy();
+        baseAssertion.assertValue(
+          bannerBounding!.width,
+          appBounding!.width - navigationPanelBounding!.width,
+          ExpectedMessages.bannerWidthIsValid,
+        );
       },
     );
 
@@ -124,9 +124,11 @@ dialTest(
       async () => {
         await dialHomePage.bringPageToFront();
         await banner.closeButton.click();
-        await expect
-          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
-          .toBeHidden();
+        await baseAssertion.assertElementState(
+          banner,
+          'hidden',
+          ExpectedMessages.bannerIsClosed,
+        );
       },
     );
 
@@ -134,24 +136,31 @@ dialTest(
       'Refresh page and verify banner is not shown',
       async () => {
         await dialHomePage.reloadPage();
-        await chatMessages.waitForState({ state: 'attached' });
-        await expect
-          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
-          .toBeHidden();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await baseAssertion.assertElementState(
+          banner,
+          'hidden',
+          ExpectedMessages.bannerIsClosed,
+        );
       },
     );
 
     await dialTest.step(
       'Re-login to app and verify banner is not shown',
       async () => {
-        await accountSettings.openAccountDropdownMenu();
-        await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
-        await confirmationDialog.confirm();
-        await loginPage.ssoSignInButton.click();
-        await chatMessages.waitForState({ state: 'attached' });
-        await expect
-          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
-          .toBeHidden();
+        await accountSettings.logout();
+        await providerLogin.login(
+          testInfo,
+          process.env.E2E_USERNAME!.split(',')[+testInfo.parallelIndex],
+          process.env.E2E_PASSWORD!,
+          false,
+        );
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await baseAssertion.assertElementState(
+          banner,
+          'hidden',
+          ExpectedMessages.bannerIsClosed,
+        );
       },
     );
   },

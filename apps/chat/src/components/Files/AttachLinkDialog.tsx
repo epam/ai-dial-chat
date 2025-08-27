@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FormValidations, getFieldClassnames } from '@/src/utils/app/forms';
 
@@ -9,9 +9,10 @@ import { DialLink } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import Modal from '@/src/components/Common/Modal';
+import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
-import { FieldErrorMessage } from '../Common/Forms/FieldError';
+import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
+import { Modal } from '@/src/components/Common/Modal';
 
 interface Props {
   onClose: (link?: DialLink) => void;
@@ -27,12 +28,12 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
 
   const {
     register,
-    handleSubmit,
+    handleSubmit: submitWrapper,
     setFocus,
     formState: { errors, isValid, dirtyFields, touchedFields },
   } = useForm<Inputs>({ mode: 'all' });
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const handleSubmit: SubmitHandler<Inputs> = (data) => {
     if (isValid) {
       const link: DialLink = {
         title: data.title,
@@ -59,8 +60,9 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       overlayClassName="fixed inset-0"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
       heading={t('Attach link')}
+      dismissProps={OUTSIDE_PRESS}
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={submitWrapper(handleSubmit)}>
         <div className="mb-4">
           <label
             className="mb-1 flex text-xs text-secondary"
@@ -71,7 +73,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           </label>
           <input
             title=""
-            placeholder={t('Paste link') ?? ''}
+            placeholder={t('Paste link')}
             type="url"
             className={getFieldClassnames<Inputs>('href', 'input', {
               errors,
@@ -86,7 +88,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
             })}
           />
 
-          <FieldErrorMessage error={errors.href} />
+          <FieldErrorMessage error={errors.href?.message} className="mb-4" />
         </div>
 
         <div className="mb-5">
@@ -98,7 +100,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           </label>
           <input
             title=""
-            placeholder={t('Write text') ?? ''}
+            placeholder={t('Write text')}
             type="text"
             className={getFieldClassnames<Inputs>('title', 'input', {
               errors,

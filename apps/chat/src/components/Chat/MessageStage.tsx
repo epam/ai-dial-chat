@@ -3,19 +3,20 @@ import { useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { Stage } from '@/src/types/chat';
 import { DialAIEntityAddon } from '@/src/types/models';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
+import { AddonsSelectors } from '@/src/store/selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
-import CircleCheck from '../../../public/images/icons/circle-check.svg';
-import { Spinner } from '../Common/Spinner';
-import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
+
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
+import CircleCheck from '@/public/images/icons/circle-check.svg';
+import { Stage } from '@epam/ai-dial-shared';
 
 interface StageTitleProps {
   isOpened: boolean;
@@ -65,7 +66,7 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
   );
 };
 
-export interface Props {
+interface Props {
   stage: Stage;
 }
 
@@ -83,7 +84,7 @@ export const MessageStage = ({ stage }: Props) => {
     <div className="block min-w-0 shrink rounded border border-secondary bg-layer-1">
       {hasContent ? (
         <button
-          className="flex w-full min-w-0 shrink items-center gap-2 p-2"
+          className="flex w-full min-w-0 shrink items-center justify-between gap-2 p-2"
           onClick={() => {
             setIsOpened((opened) => !opened);
           }}

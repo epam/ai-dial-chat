@@ -1,17 +1,17 @@
 import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
 
-import { getThemeIconUrl } from '../utils/app/themes';
-
-import i18nextConfig from '../../next-i18next.config';
+import i18nextConfig from '@/next-i18next.config';
+import { documentWithJss } from '@epam/ai-dial-modulify-ui';
 
 type Props = DocumentProps & {
   //
 };
 
-export default function Document(props: Props) {
+function Document(props: Props) {
   const currentLocale =
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
+
   return (
     <Html lang={currentLocale}>
       <Head>
@@ -20,25 +20,16 @@ export default function Document(props: Props) {
             href={`${process.env.APP_BASE_ORIGIN}${process.env.APP_BASE_PATH}/`}
           ></base>
         )}
+
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-title"
-          content={process.env.NEXT_PUBLIC_APP_NAME || 'AI Dial'}
+          content={process.env.NEXT_PUBLIC_APP_NAME || 'AI DIAL'}
         ></meta>
         {!!process.env.THEMES_CONFIG_HOST && (
-          <link rel="stylesheet" href={'api/themes/styles'} />
+          <link rel="stylesheet" href={'/api/themes/styles'} />
         )}
-        <link
-          rel="icon"
-          href={getThemeIconUrl('favicon')}
-          sizes="any"
-          type="image/png"
-        />
-        <link
-          rel="apple-touch-icon"
-          href={getThemeIconUrl('favicon')}
-          type="image/png"
-        />
+        <link rel="manifest" href="/api/manifest" />
       </Head>
       <body>
         <Script id="theme-script" strategy="beforeInteractive">
@@ -53,3 +44,5 @@ export default function Document(props: Props) {
     </Html>
   );
 }
+
+export default documentWithJss(Document);

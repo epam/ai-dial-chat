@@ -1,6 +1,6 @@
 import { ModalState } from '@/src/types/modal';
 
-import Modal, { Props as ModalProps } from './Modal';
+import { Modal, Props as ModalProps } from './Modal';
 import { Spinner } from './Spinner';
 
 interface Props {

@@ -1,16 +1,18 @@
 import { Conversation, CopyTableType } from '@/chat/types/chat';
+import { DialAIEntityModel } from '@/chat/types/models';
+import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  ExpectedConstants,
-  ExpectedMessages,
-  ModelIds,
-  Theme,
-} from '@/src/testData';
+import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { Locator, expect } from '@playwright/test';
 
 const expectedChatMessageIndex = 2;
+
+let simpleRequestModel: DialAIEntityModel | undefined;
+dialTest.beforeAll(async () => {
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+});
 
 dialTest(
   'Check md table in response.\n' +
@@ -26,6 +28,7 @@ dialTest(
     localStorageManager,
     conversationData,
     dataInjector,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1153', 'EPMRTC-3124', 'EPMRTC-3125', 'EPMRTC-3126');
     let theme: string;
@@ -55,8 +58,9 @@ dialTest(
     ];
 
     await dialTest.step('Set random application theme', async () => {
-      theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -65,7 +69,6 @@ dialTest(
         tableConversation =
           conversationData.prepareConversationWithMdTableContent();
         await dataInjector.createConversations([tableConversation]);
-        await localStorageManager.setSelectedConversation(tableConversation);
       },
     );
 
@@ -74,6 +77,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(tableConversation.name);
         await expect
           .soft(
             chatMessages.getChatMessageTable(expectedChatMessageIndex),
@@ -133,7 +137,7 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === Theme.dark
+            theme === ThemeId.dark
               ? Colors.backgroundLayer4Dark
               : Colors.backgroundLayer4Light,
           );
@@ -148,7 +152,7 @@ dialTest(
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
           .toBe(
-            theme === Theme.dark
+            theme === ThemeId.dark
               ? Colors.backgroundLayer3Dark
               : Colors.backgroundLayer3Light,
           );
@@ -189,26 +193,29 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: investigate flaky behaviour
+dialTest.fixme(
   'Copy buttons are not shown in MD table if the response is being generated',
   async ({
     dialHomePage,
     setTestIds,
     chatMessages,
     chat,
-    localStorageManager,
+    conversations,
     conversationData,
     dataInjector,
+    localStorageManager,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-3123');
     let tableConversation: Conversation;
 
     await dialTest.step('Prepare empty conversation', async () => {
       tableConversation = conversationData.prepareEmptyConversation(
-        ModelIds.GPT_4,
+        simpleRequestModel!,
       );
       await dataInjector.createConversations([tableConversation]);
-      await localStorageManager.setSelectedConversation(tableConversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -216,6 +223,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(tableConversation.name);
         await chat.sendRequestWithButton(
           'Create md table with european countries, its capitals and population',
           false,

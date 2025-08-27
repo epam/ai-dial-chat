@@ -1,12 +1,8 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
 
-import { RootState } from '../index';
-
-export interface ServiceState {
-  isSuccessfullySent: true | undefined;
-}
+import { ServiceState } from './service.types';
 
 const initialState: ServiceState = {
   isSuccessfullySent: undefined,
@@ -34,14 +30,5 @@ export const serviceSlice = createSlice({
     },
   },
 });
-
-const rootSelector = (state: RootState): ServiceState => state.service;
-
-const selectIsSuccessfullySent = createSelector(
-  [rootSelector],
-  (state) => state.isSuccessfullySent,
-);
-
-export const ServiceSelectors = { selectIsSuccessfullySent };
 
 export const ServiceActions = serviceSlice.actions;

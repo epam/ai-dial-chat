@@ -1,6 +1,11 @@
 import { ChatOverlay } from './ChatOverlay';
 
-import { ChatOverlayOptions, setStyles } from '@epam/ai-dial-shared';
+import {
+  ChatOverlayOptions,
+  LatestExportConversationsFormat,
+  Message,
+  setStyles,
+} from '@epam/ai-dial-shared';
 
 export type OverlayPosition =
   | 'left-bottom'
@@ -162,6 +167,7 @@ export class ChatOverlayManager {
    */
   public createOverlay(options: ChatOverlayManagerOptions) {
     const container = document.createElement('div');
+    container.id = 'frame-container';
 
     const overlayContainer = document.createElement('div');
     const controlsContainer = document.createElement('div');
@@ -247,6 +253,7 @@ export class ChatOverlayManager {
     });
 
     button.innerHTML = options?.iconSvg || overlayToggleIconOptions.iconSvg;
+    button.ariaLabel = 'Open chat';
     button.name = 'open';
     return button;
   }
@@ -257,6 +264,8 @@ export class ChatOverlayManager {
    */
   public createFullscreenButton(): HTMLButtonElement {
     const button = document.createElement('button');
+    button.id = 'full-screen-button';
+    button.ariaLabel = 'Open full screen';
 
     setStyles(button, {
       appearance: 'none',
@@ -296,6 +305,7 @@ export class ChatOverlayManager {
    */
   public createCloseButton(): HTMLButtonElement {
     const closeButton = document.createElement('button');
+    closeButton.ariaLabel = 'Collapse';
 
     setStyles(closeButton, {
       boxSizing: 'border-box',
@@ -314,6 +324,7 @@ export class ChatOverlayManager {
     });
 
     const closeButtonInnerElement = document.createElement('span');
+    closeButtonInnerElement.id = 'collapse-button';
 
     setStyles(closeButtonInnerElement, {
       boxSizing: 'border-box',
@@ -330,41 +341,43 @@ export class ChatOverlayManager {
 
   /**
    * Destroys overlay with specified id and removes from this.overlays
-   * @param id {string} id of overlay that should be deleted
+   * @param overlayId {string} id of overlay that should be deleted
    */
-  public removeOverlay(id: string) {
-    const { overlay, container, toggleButton } = this.getOverlay(id);
+  public removeOverlay(overlayId: string) {
+    const { overlay, container, toggleButton } = this.getOverlay(overlayId);
 
     overlay.destroy();
 
-    this.overlays = this.overlays.filter(({ options }) => options.id !== id);
+    this.overlays = this.overlays.filter(
+      ({ options }) => options.id !== overlayId,
+    );
 
     document.body.removeChild(container);
     document.body.removeChild(toggleButton);
   }
 
-  public openFullscreen(id: string) {
-    const { overlay } = this.getOverlay(id);
+  public openFullscreen(overlayId: string) {
+    const { overlay } = this.getOverlay(overlayId);
 
     overlay.openFullscreen();
   }
 
   /**
    * Shows overlay with specified id
-   * @param id {string} id of overlay that should be shown
+   * @param overlayId {string} id of overlay that should be shown
    */
-  public showOverlay(id: string) {
-    const overlay = this.getOverlay(id);
+  public showOverlay(overlayId: string) {
+    const overlay = this.getOverlay(overlayId);
 
     overlay.isHidden = false;
     overlay.container.style.transform = 'scale(1) translate(0, 0)';
   }
   /**
    * Hides overlay with specified id
-   * @param id {string} id of overlay that should be hidden
+   * @param overlayId {string} id of overlay that should be hidden
    */
-  public hideOverlay(id: string) {
-    const overlay = this.getOverlay(id);
+  public hideOverlay(overlayId: string) {
+    const overlay = this.getOverlay(overlayId);
 
     overlay.isHidden = true;
     overlay.container.style.transform = `scale(1) ${overlay.position.transform}`;
@@ -372,10 +385,10 @@ export class ChatOverlayManager {
 
   /**
    * Checks the current viewport and updates position, styles if needed
-   * @param id {string} id of overlay that should be updated
+   * @param overlayId {string} id of overlay that should be updated
    */
-  public updateOverlay(id: string) {
-    const { container, options, isHidden } = this.getOverlay(id);
+  public updateOverlay(overlayId: string) {
+    const { container, options, isHidden } = this.getOverlay(overlayId);
 
     const mobileHeight = `${window.innerHeight}px`;
 
@@ -408,36 +421,140 @@ export class ChatOverlayManager {
     });
   }
 
-  public setSystemPrompt(id: string, systemPrompt: string) {
-    const { overlay } = this.getOverlay(id);
+  public setSystemPrompt(overlayId: string, systemPrompt: string) {
+    const { overlay } = this.getOverlay(overlayId);
 
     return overlay.setSystemPrompt(systemPrompt);
   }
 
-  public async getMessages(id: string) {
-    const { overlay } = this.getOverlay(id);
+  public async getMessages(overlayId: string) {
+    const { overlay } = this.getOverlay(overlayId);
 
     return overlay.getMessages();
   }
 
-  public async sendMessage(id: string, content: string) {
-    const { overlay } = this.getOverlay(id);
+  public async sendMessage(overlayId: string, content: string) {
+    const { overlay } = this.getOverlay(overlayId);
 
     return overlay.sendMessage(content);
   }
 
-  public async setOverlayOptions(id: string, options: ChatOverlayOptions) {
-    const { overlay } = this.getOverlay(id);
+  public async deleteMessage(overlayId: string, index: number) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.deleteMessage(index);
+  }
+
+  public async updateMessage(
+    overlayId: string,
+    index: number,
+    updatedMessageFields: Partial<Message>,
+  ) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.updateMessage(index, updatedMessageFields);
+  }
+
+  public async setInputContent(overlayId: string, content: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.setInputContent(content);
+  }
+
+  public async getConversations(overlayId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.getConversations();
+  }
+
+  public async getSelectedConversations(overlayId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.getSelectedConversations();
+  }
+
+  public async createConversation(
+    overlayId: string,
+    parentPath?: string | null,
+  ) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.createConversation(parentPath);
+  }
+
+  public async createLocalConversation(overlayId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.createLocalConversation();
+  }
+
+  public async selectConversation(overlayId: string, conversationId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.selectConversation(conversationId);
+  }
+
+  public async renameConversation(
+    overlayId: string,
+    conversationId: string,
+    newName: string,
+  ) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.renameConversation(conversationId, newName);
+  }
+
+  public async setOverlayOptions(
+    overlayId: string,
+    options: ChatOverlayOptions,
+  ) {
+    const { overlay } = this.getOverlay(overlayId);
 
     return overlay.setOverlayOptions(options);
   }
 
+  public async deleteConversation(overlayId: string, conversationId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.deleteConversation(conversationId);
+  }
+
+  public async createPlaybackConversation(
+    overlayId: string,
+    conversationId: string,
+  ) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.createPlaybackConversation(conversationId);
+  }
+
+  public async stopSelectedPlaybackConversation(overlayId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.stopSelectedPlaybackConversation();
+  }
+
+  public async exportConversation(overlayId: string, conversationId: string) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.exportConversation(conversationId);
+  }
+
+  public async importConversation(
+    overlayId: string,
+    importedConversation: LatestExportConversationsFormat,
+  ) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.importConversation(importedConversation);
+  }
+
   public subscribe(
-    id: string,
+    overlayId: string,
     eventType: string,
     callback: (payload?: unknown) => void,
   ) {
-    const { overlay } = this.getOverlay(id);
+    const { overlay } = this.getOverlay(overlayId);
 
     return overlay.subscribe(eventType, callback);
   }
@@ -445,13 +562,15 @@ export class ChatOverlayManager {
   /**
    * Get reference to overlay from this.overlay with specified id
    * Throws exception if there is no such overlay with specified id
-   * @param id {string} id of overlay that should be returned
+   * @param overlayId {string} id of overlay that should be returned
    * @returns {Overlay} reference to overlay with specified id
    */
-  protected getOverlay(id: string): Overlay {
-    const overlay = this.overlays.find(({ options }) => options.id === id);
+  protected getOverlay(overlayId: string): Overlay {
+    const overlay = this.overlays.find(
+      ({ options }) => options.id === overlayId,
+    );
 
-    if (!overlay) throw new Error(`There is no overlay with ${id}`);
+    if (!overlay) throw new Error(`There is no overlay with ${overlayId}`);
 
     return overlay;
   }

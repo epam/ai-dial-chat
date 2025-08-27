@@ -1,12 +1,14 @@
+import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AccountMenuOptions,
-  Theme,
+  ThemeId,
   ToggleState,
   toTitleCase,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { Styles, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
   'Menu on user name',
@@ -17,16 +19,16 @@ dialTest(
     setTestIds,
     chatBar,
     accountSettingsAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-812');
 
     await dialTest.step(
       'Open account menu and verify icon is changed to expanded',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
         await accountSettingsAssertion.assertCaretState('expanded');
       },
@@ -58,19 +60,19 @@ dialTest(
     settingsModalAssertion,
     setTestIds,
     settingsModal,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-360');
 
     await dialTest.step(
       'Open account settings and verify "Theme" field has "Dark" value, "Save" button is available',
       async () => {
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
-        await settingsModalAssertion.assertThemeValue(Theme.dark);
+        await settingsModalAssertion.assertThemeValue(ThemeId.dark);
         await settingsModalAssertion.assertSaveButtonState('visible');
       },
     );
@@ -79,7 +81,9 @@ dialTest(
       'Expand "Theme" dropdown and verify available options',
       async () => {
         await settingsModal.theme.click();
-        const expectedThemes = Object.values(Theme).map((t) => toTitleCase(t));
+        const expectedThemes = Object.values(ThemeId).map((t) =>
+          toTitleCase(t),
+        );
         await settingsModalAssertion.assertThemeMenuOptions(...expectedThemes);
       },
     );
@@ -103,24 +107,25 @@ dialTest(
     chatHeaderAssertion,
     conversationData,
     dataInjector,
+    conversations,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1704', 'EPMRTC-1705', 'EPMRTC-1708');
     let sendMessageInputInitWidth: number;
+    let conversation: Conversation;
 
     await dialTest.step(
       'Create conversation with more than 160 symbols name and message',
       async () => {
         const request = GeneratorUtil.randomString(170);
         const name = GeneratorUtil.randomString(170);
-        const conversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            ModelsUtil.getDefaultModel()!,
-            [request],
-            name,
-          );
+        conversation = conversationData.prepareModelConversationBasedOnRequests(
+          [request],
+          ModelsUtil.getDefaultAgent()!,
+          name,
+        );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -128,13 +133,15 @@ dialTest(
       'Open account settings and verify "Full width chat" is toggled-off by default',
       async () => {
         await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
         await settingsModalAssertion.assertFullWidthChatToggleState(
           ToggleState.off,
         );
         await settingsModalAssertion.assertFullWidthChatToggleColor(
-          Colors.controlsTextDisable,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsTextDisable),
         );
       },
     );

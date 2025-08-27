@@ -1,17 +1,22 @@
 import { PlotParams } from 'react-plotly.js';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
+import { LastConversationSettings } from '@/src/types/settings';
 
-import { CustomVisualizerData } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  ConversationInfo,
+  CustomVisualizerData,
+  Message,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export interface ConversationsState {
+  initialized: boolean;
   conversations: ConversationInfo[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
-  temporaryFolders: FolderInterface[];
   searchTerm: string;
   searchFilters: SearchFilters;
   conversationSignal: AbortController;
@@ -21,10 +26,11 @@ export interface ConversationsState {
   newAddedFolderId?: string;
   conversationsLoaded: boolean;
   areSelectedConversationsLoaded: boolean;
+  areConversationsWithContentUploading: boolean;
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
-  isActiveNewConversationRequest: boolean;
+  isNewConversationUpdating: boolean;
   isMessageSending: boolean;
   loadedCharts: { url: string; data: PlotParams }[];
   chartLoading: boolean;
@@ -32,4 +38,26 @@ export interface ConversationsState {
   loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[];
   customAttachmentDataLoading: boolean;
   chosenConversationIds: string[];
+  chosenEmptyFoldersIds: string[];
+  lastConversationSettings?: LastConversationSettings;
+  renamingConversationId?: string | null;
+  talkToConversationId?: string | null;
+  isStartedCustomViewerConversation: boolean;
+  previewConversationId?: string | null;
+  preselectedAction?: string | null;
+}
+
+export interface BaseSendMessagePayload {
+  message: Message;
+  deleteCount: number;
+  activeReplayIndex: number;
+  skipRecentModelsUpdate?: boolean;
+}
+
+export interface SendMessagePayload extends BaseSendMessagePayload {
+  conversation: Conversation;
+}
+
+export interface SendMessagesPayload extends BaseSendMessagePayload {
+  conversations: Conversation[];
 }

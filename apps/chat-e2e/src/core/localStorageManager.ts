@@ -3,6 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import { Settings } from '@/chat/types/settings';
+import { CollapsedSections, DefaultModelReference } from '@/src/testData';
 import { Page } from '@playwright/test';
 
 export class LocalStorageManager {
@@ -28,6 +29,14 @@ export class LocalStorageManager {
     window.localStorage.setItem('selectedConversationIds', selected);
   };
 
+  private setChatCollapsedSectionKey = () => (collapsed: string) => {
+    window.localStorage.setItem('chatCollapsedSections', collapsed);
+  };
+
+  private setPromptCollapsedSectionKey = () => (collapsed: string) => {
+    window.localStorage.setItem('promptCollapsedSections', collapsed);
+  };
+
   setSettingsKey = () => (settings: string) => {
     window.localStorage.setItem('settings', settings);
   };
@@ -36,8 +45,20 @@ export class LocalStorageManager {
     window.localStorage.setItem('recentModelsIds', modelIds);
   };
 
+  setRecentAddonsIdsKey = () => (addonIds: string) => {
+    window.localStorage.setItem('recentAddonsIds', addonIds);
+  };
+
   setChatbarWidthKey = () => (width: string) => {
     window.localStorage.setItem('chatbarWidth', width);
+  };
+
+  setShowChatBarKey = () => (isDisplayed: boolean) => {
+    window.localStorage.setItem('showChatbar', JSON.stringify(isDisplayed));
+  };
+
+  setShowPromptBarKey = () => (isDisplayed: boolean) => {
+    window.localStorage.setItem('showPromptbar', JSON.stringify(isDisplayed));
   };
 
   async setConversationHistory(...conversation: Conversation[]) {
@@ -68,6 +89,20 @@ export class LocalStorageManager {
     );
   }
 
+  async setChatCollapsedSection(...sections: CollapsedSections[]) {
+    await this.page.addInitScript(
+      this.setChatCollapsedSectionKey(),
+      JSON.stringify(sections),
+    );
+  }
+
+  async setPromptCollapsedSection(...sections: CollapsedSections[]) {
+    await this.page.addInitScript(
+      this.setPromptCollapsedSectionKey(),
+      JSON.stringify(sections),
+    );
+  }
+
   async setFolders(...folders: FolderInterface[]) {
     await this.page.addInitScript(
       this.setFoldersKey(),
@@ -93,6 +128,12 @@ export class LocalStorageManager {
     );
   }
 
+  async removeFromLocalStorage(key: string) {
+    await this.page.evaluate((storageKey) => {
+      window.localStorage.removeItem(storageKey);
+    }, key);
+  }
+
   async getRecentModels() {
     return this.page.evaluate(
       () => window.localStorage.getItem('recentModelsIds') ?? undefined,
@@ -107,14 +148,152 @@ export class LocalStorageManager {
     );
   }
 
-  async setRecentModelsIds(...models: DialAIEntityModel[]) {
+  //agent's reference should be set not id
+  async setRecentModelsIds(...models: (DialAIEntityModel | string)[]) {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
-      JSON.stringify(models.map((m) => m.id)),
+      JSON.stringify(
+        models.map((m) => (typeof m === 'string' ? m : m.reference)),
+      ),
+    );
+  }
+
+  async useLastConversationSettingsOnce(temp?: number) {
+    await this.setLocalStorageItemOnce('lastConversationSettings', {
+      temperature: temp ?? 1,
+    });
+  }
+
+  async setLocalStorageItemOnce<T>(
+    localStorageKey: string,
+    value: T,
+    transform: (value: T) => string = JSON.stringify,
+  ) {
+    const uniqueKey = Date.now().toLocaleString();
+    await this.page.addInitScript(
+      (data) => {
+        const { localStorageKey, value, key } = data;
+        if (!sessionStorage.getItem(key)) {
+          localStorage.setItem(localStorageKey, value);
+          sessionStorage.setItem(key, 'true');
+        }
+      },
+      {
+        localStorageKey,
+        value: transform(value),
+        key: uniqueKey,
+      },
+    );
+  }
+
+  async setLastConversationSettings(storageValue: string) {
+    await this.page.addInitScript(
+      (data) => {
+        const { storageKey, storageValue } = data;
+        localStorage.setItem(storageKey, storageValue);
+      },
+      {
+        storageKey: 'lastConversationSettings',
+        storageValue: storageValue,
+      },
+    );
+  }
+
+  async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
+    await this.page.addInitScript(
+      this.setRecentAddonsIdsKey(),
+      JSON.stringify(addons.map((a) => a.id)),
     );
   }
 
   async setChatbarWidth(width: string) {
     await this.page.addInitScript(this.setChatbarWidthKey(), width);
+  }
+
+  async setShowChatBar(isDisplayed: boolean) {
+    await this.page.addInitScript(this.setShowChatBarKey(), isDisplayed);
+  }
+
+  async setShowPromptBar(isDisplayed: boolean) {
+    await this.page.addInitScript(this.setShowPromptBarKey(), isDisplayed);
+  }
+
+  async setShowSideBarPanels(
+    options: {
+      isChatBarDisplayed: boolean;
+      isPromptBarDisplayed: boolean;
+    } = { isChatBarDisplayed: true, isPromptBarDisplayed: true },
+  ) {
+    await this.setShowChatBar(options.isChatBarDisplayed);
+    await this.setShowPromptBar(options.isPromptBarDisplayed);
+  }
+
+  async getSelectedConversationIds(originHost?: string) {
+    const selectedConversationIds = await this.getKey(
+      'selectedConversationIds',
+      originHost,
+    );
+    return selectedConversationIds ? JSON.parse(selectedConversationIds) : '';
+  }
+
+  async getRecentModelsIds(originHost?: string) {
+    const recentModelsIds = await this.getKey('recentModelsIds', originHost);
+    return recentModelsIds ? JSON.parse(recentModelsIds) : '';
+  }
+
+  async getSettings(originHost?: string) {
+    const settings = await this.getKey('settings', originHost);
+    return settings ? JSON.parse(settings) : '';
+  }
+
+  private async getKey(key: string, originHost?: string) {
+    const storage = await this.page.context().storageState();
+    const origin = originHost
+      ? storage.origins.find((o) => o.origin === originHost)
+      : storage.origins[0];
+    return origin?.localStorage.find((s) => s.name === key)?.value;
+  }
+
+  setDefaultModelReferenceKey = () => (defaultModelReference: string) => {
+    window.localStorage.setItem('defaultModelReference', defaultModelReference);
+  };
+
+  async setDefaultModelReference(option: DefaultModelReference) {
+    await this.page.addInitScript(this.setDefaultModelReferenceKey(), option);
+  }
+
+  async setRecentModelsIdsAndUseLastModel(
+    ...models: (DialAIEntityModel | string)[]
+  ) {
+    await this.setRecentModelsIds(...models);
+    await this.setDefaultModelReference(DefaultModelReference.lastUsedModel);
+  }
+
+  async setRecentModelsIdsOnceWithTemporaryLastUsedModel(
+    ...models: DialAIEntityModel[]
+  ) {
+    await this.setLocalStorageItemOnce(
+      'recentModelsIds',
+      models.map((m) => m.id),
+    );
+
+    await this.setLocalStorageItemOnce(
+      'defaultModelReference',
+      '"last-used-agent"',
+    );
+  }
+
+  async setRecentModelsIdsOnceWithPermanentLastUsedModel(
+    ...models: DialAIEntityModel[]
+  ) {
+    await this.setLocalStorageItemOnce(
+      'recentModelsIds',
+      models.map((m) => m.id),
+    );
+
+    await this.page.addInitScript(
+      this.setDefaultModelReferenceKey(),
+      DefaultModelReference.lastUsedModel,
+    );
   }
 }

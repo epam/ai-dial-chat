@@ -1,11 +1,11 @@
-import { FolderType } from '@/chat/types/folder';
+import { FeatureType } from '@/chat/types/common';
 import { FolderBuilder } from '@/src/testData/conversationHistory/folderBuilder';
 import { GeneratorUtil } from '@/src/utils';
 
 export class FolderData {
   private folderBuilder: FolderBuilder;
 
-  constructor(type: FolderType) {
+  constructor(type: FeatureType) {
     this.folderBuilder = new FolderBuilder().withType(type);
   }
 
@@ -25,7 +25,7 @@ export class FolderData {
 
   public prepareNestedFolder(
     nestedLevel: number,
-    type: FolderType,
+    type: FeatureType,
     folderNames?: Record<number, string>,
   ) {
     const rootFolder = this.prepareFolder(

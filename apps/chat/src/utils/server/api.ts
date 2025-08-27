@@ -1,16 +1,30 @@
 import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import {
+  constructPath,
+  isPlaybackConversation,
+  isReplayConversation,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { ServerUtils } from '@/src/utils/server/server';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { ApplicationInfo } from '@/src/types/applications';
+import { Conversation } from '@/src/types/chat';
+import { ApiKeys, CoreApiKeys, ParseOptions } from '@/src/types/common';
+import { HttpErrorStatus } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
+import { ServerSlugs } from '@/src/types/slugs-types';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
+import { NA_VERSION } from '@/src/constants/publication';
+import { validVersionRegEx } from '@/src/constants/versions';
 
-import { constructPath } from '../app/file';
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
-const pathKeySeparator = '__';
+export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
 
 export enum PseudoModel {
@@ -34,56 +48,139 @@ export const isPseudoModel = (modelId: string | undefined) =>
   modelId ? Object.values(PseudoModel).includes(modelId as PseudoModel) : false;
 
 const getModelApiIdFromConversation = (conversation: Conversation): string => {
-  if (conversation.replay?.isReplay ?? conversation.isReplay)
-    return PseudoModel.Replay;
-  if (conversation.playback?.isPlayback ?? conversation.isPlayback)
-    return PseudoModel.Playback;
+  if (isReplayConversation(conversation)) return PseudoModel.Replay;
+  if (isPlaybackConversation(conversation)) return PseudoModel.Playback;
   return conversation.model.id;
 };
 
-// Format key: {modelId}__{name}
+// Format key: {modelId}__{name} or {modelId}__{name}__{version} if conversation is public
 export const getConversationApiKey = (
-  conversation: Omit<ConversationInfo, 'id'>,
+  conversation: Omit<ConversationInfo, 'id' | 'folderId'>,
 ): string => {
   if (conversation.model.id === EMPTY_MODEL_ID) {
     return conversation.name;
   }
-  return [
+
+  const keyParts = [
     encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
-  ].join(pathKeySeparator);
+  ];
+
+  if (
+    conversation.publicationInfo?.version &&
+    conversation.publicationInfo.version !== NA_VERSION
+  ) {
+    keyParts.push(conversation.publicationInfo.version);
+  }
+
+  return keyParts.join(pathKeySeparator);
 };
 
 // Format key: {modelId}__{name}
 export const parseConversationApiKey = (
   apiKey: string,
+  options?: ParseOptions,
 ): Omit<ConversationInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
 
   const [modelId, name] =
     parts.length < 2
-      ? [EMPTY_MODEL_ID, apiKey] // receive without postfix with model i.e. {name}
+      ? [EMPTY_MODEL_ID, apiKey] // receive without prefix with model i.e. {name}
       : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
-  return {
+  const parsedApiKey: Omit<ConversationInfo, 'folderId' | 'id'> = {
     model: { id: modelId },
     name,
     isPlayback: modelId === PseudoModel.Playback,
     isReplay: modelId === PseudoModel.Replay,
   };
+
+  if (options?.parseVersion) {
+    const version = getVersionFromId(apiKey);
+
+    parsedApiKey.publicationInfo = { version };
+
+    if (version && version !== NA_VERSION) {
+      parsedApiKey.name = getPublicItemIdWithoutVersion(version, name);
+    }
+  }
+
+  return parsedApiKey;
 };
 
-// Format key: {name}
-export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
-  return prompt.name;
+// Format key: {name} or {name}__{version} if prompt is public
+export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
+  if (
+    !prompt.publicationInfo ||
+    prompt.publicationInfo.version === NA_VERSION
+  ) {
+    return prompt.name;
+  }
+
+  return [prompt.name, prompt.publicationInfo.version].join(pathKeySeparator);
 };
 
 // Format key: {name}
 export const parsePromptApiKey = (
-  name: string,
+  apiKey: string,
+  options?: ParseOptions,
 ): Omit<PromptInfo, 'folderId' | 'id'> => {
+  const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
+    name: apiKey,
+  };
+
+  if (options?.parseVersion) {
+    const version = getVersionFromId(apiKey);
+
+    parsedApiKey.publicationInfo = { version };
+    if (version !== NA_VERSION) {
+      parsedApiKey.name = getPublicItemIdWithoutVersion(version, apiKey);
+    }
+  }
+
+  return parsedApiKey;
+};
+
+// Format key: {name}__{version}
+export const getApplicationApiKey = (
+  application: Omit<ApplicationInfo, 'folderId' | 'id'>,
+): string => {
+  return [application.name, application.version].join(pathKeySeparator);
+};
+
+// Format key: {name}__{version}
+export const getToolsetApiKey = (
+  toolset: Omit<ToolsetModel, 'folderId' | 'id'>,
+) => {
+  return [toolset.name, toolset.version].join(pathKeySeparator);
+};
+
+// Format key: {name}__{version}
+export const parseApplicationApiKey = (
+  apiKey: string,
+): Omit<ApplicationInfo, 'folderId' | 'id'> => {
+  const parts = apiKey.split(pathKeySeparator);
+  const [name, version] =
+    parts.length < 2
+      ? [apiKey, '1.0.0'] // receive without postfix with version i.e. {name}
+      : [
+          `${decodeModelId(
+            parts.slice(0, parts.length - 1).join(pathKeySeparator),
+          )}${parts.at(-1)?.startsWith('_') ? '_' : ''}`, // handle even underscore case
+          parts[parts.length - 1].replace(/^_/, ''),
+        ]; // receive correct format {name}__{version}
   return {
     name,
+    version,
+  };
+};
+
+export const parseFileApiKey = (
+  apiKey: string,
+): { name: string; publicationInfo: { version: string } } => {
+  return {
+    name: apiKey,
+    publicationInfo: { version: NA_VERSION },
   };
 };
 
@@ -111,6 +208,29 @@ export class ApiUtils {
         if (!response.ok) {
           return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
             switchMap((errorMessage) => {
+              const error: HttpErrorStatus = new Error(
+                errorMessage || response.status + '',
+              );
+              error.status = response.status;
+              return throwError(() => error);
+            }),
+          );
+        }
+
+        return from(response.json());
+      }),
+    );
+  }
+
+  static requestText(url: string, options?: RequestInit) {
+    return fromFetch(constructPath('/api', url), {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    }).pipe(
+      switchMap((response) => {
+        if (!response.ok) {
+          return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
+            switchMap((errorMessage) => {
               return throwError(
                 () => new Error(errorMessage || response.status + ''),
               );
@@ -118,7 +238,7 @@ export class ApiUtils {
           );
         }
 
-        return from(response.json());
+        return from(response.text());
       }),
     );
   }
@@ -130,7 +250,7 @@ export class ApiUtils {
     body,
   }: {
     url: string | URL;
-    method: string;
+    method: HTTPMethod;
     async: boolean;
     body: XMLHttpRequestBodyInit | Document | null | undefined;
   }): Observable<{ percent?: number; result?: unknown }> {
@@ -171,3 +291,62 @@ export class ApiUtils {
     });
   }
 }
+
+export const getModelIdWithoutVersion = (id: string) => {
+  const parts = id.split(pathKeySeparator);
+  const name = parts.slice(0, -1).join(pathKeySeparator);
+  if (parts.at(-1)?.startsWith('_')) {
+    return `${name}_`;
+  }
+  return name;
+};
+
+export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
+  if (version === NA_VERSION) {
+    return id;
+  }
+
+  return getModelIdWithoutVersion(id);
+};
+
+export const addVersionToId = (id: string, version: string) =>
+  [id, version].join(pathKeySeparator);
+
+export const isValidEntityApiType = (apiKey: string): boolean => {
+  return (
+    Object.values(ApiKeys).includes(apiKey as ApiKeys) ||
+    Object.values(CoreApiKeys).includes(apiKey as CoreApiKeys)
+  );
+};
+
+export const getIdWithoutVersionFromApiKey = (
+  id: string,
+  parseMethod:
+    | typeof parseApplicationApiKey
+    | typeof parseConversationApiKey
+    | typeof parsePromptApiKey,
+) => {
+  const parsedApiKey = parseMethod(splitEntityId(id).name, {
+    parseVersion: true,
+  });
+
+  return getPublicItemIdWithoutVersion(
+    parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+    id,
+  );
+};
+
+export const getVersionFromId = (id: string) => {
+  const parts = id.split(pathKeySeparator);
+  const version = parts.at(-1)?.replace(/^_/, '');
+
+  // conversations also have model (example: conversations/public/gpt-3.5-turbo__name__0.0.1)
+  if (id.startsWith(`${ApiKeys.Conversations}/`) && parts.length <= 2) {
+    return NA_VERSION;
+  }
+
+  return version && validVersionRegEx.test(version) ? version : NA_VERSION;
+};
+
+export const getOpsApiUrl = (slug: ServerSlugs, ...params: string[]): string =>
+  constructPath('/api/ops', slug, ...params);

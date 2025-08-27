@@ -4,42 +4,49 @@ import {
   IconFolderPlus,
   IconPencilMinus,
   IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
   IconUpload,
   IconUserShare,
-  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId } from '@/src/utils/app/id';
-import { isItemPublic } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
+import { isEntityIdExternal, isMyEntity } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { FeatureType } from '@/src/types/common';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import {
+  FilesSelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
-import ContextMenu from './ContextMenu';
+import { ContextMenu } from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface FolderContextMenuProps {
   folder: FolderInterface;
   featureType: FeatureType;
   isOpen?: boolean;
   isEmpty?: boolean;
-  isSidePanelFolder?: boolean;
+  additionalItemData?: AdditionalItemData;
+  canSelectFolders?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
@@ -51,11 +58,14 @@ interface FolderContextMenuProps {
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
+  isSelected?: boolean;
+  hideTriggerIcon?: boolean;
 }
 
 export const FolderContextMenu = ({
   folder,
   featureType,
+  canSelectFolders,
   onDelete,
   onRename,
   onAddFolder,
@@ -66,39 +76,74 @@ export const FolderContextMenu = ({
   onUnpublish,
   onPublishUpdate,
   onUpload,
+  onSelect,
   isOpen,
   isEmpty,
-  isSidePanelFolder,
-  onSelect,
+  additionalItemData,
+  isSelected,
+  hideTriggerIcon,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, featureType),
+    SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, featureType),
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+  const publication = useAppSelector((state) =>
+    additionalItemData?.publicationUrl
+      ? PublicationSelectors.selectPublicationByUrl(
+          state,
+          additionalItemData?.publicationUrl,
+        )
+      : undefined,
   );
 
+  const { isPublicationReviewFolder, isUnpublishFolder } = useMemo(() => {
+    const reviewChildren =
+      publication?.resources?.filter((entity) =>
+        entity.reviewUrl.startsWith(`${folder.id}/`),
+      ) ?? [];
+
+    return {
+      isPublicationReviewFolder: !!reviewChildren.length,
+      isUnpublishFolder: reviewChildren.some(
+        ({ action }) => action === PublishActions.DELETE,
+      ),
+    };
+  }, [folder.id, publication?.resources]);
+
+  const isExternal = isEntityIdExternal(folder);
   const isNameInvalid = isEntityNameInvalid(folder.name);
   const isInvalidPath = hasInvalidNameInPath(folder.folderId);
   const disableAll = isNameInvalid || isInvalidPath;
 
+  const canEditShared = useMemo(() => {
+    return canEditSharedFolderOrParent(folders, folder.folderId);
+  }, [folder.folderId, folders]);
+
+  const isMyFolder = useMemo(() => isMyEntity(folder), [folder]);
+
+  const isMyOrCanEdit = isMyFolder || canEditShared;
+  const isTemporaryFolder = 'temporary' in folder && folder.temporary;
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Select'),
-        display: !isExternal && !!onSelect && featureType !== FeatureType.File,
+        name: t(isSelected ? 'Unselect' : 'Select'),
+        display:
+          !isExternal &&
+          !!onSelect &&
+          (featureType !== FeatureType.File || !!canSelectFolders),
         dataQa: 'select',
-        Icon: IconSquareCheck,
+        Icon: isSelected ? IconSquareOff : IconSquareCheck,
         onClick: onSelect,
       },
       {
         name: t('Upload'),
-        display: !!onUpload && !isExternal,
+        display: !!onUpload && isMyOrCanEdit,
         dataQa: 'upload',
         Icon: IconUpload,
         onClick: onUpload,
@@ -106,7 +151,10 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Rename'),
-        display: (!!onRename && !isExternal) || !!folder.temporary,
+        display:
+          !!onRename &&
+          (!isExternal || isPublicationReviewFolder || isTemporaryFolder) &&
+          !isUnpublishFolder,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -122,10 +170,9 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Unshare'),
-        display:
-          isSharingEnabled && !!onUnshare && !isExternal && !!folder.isShared,
+        display: !!onUnshare && !!folder.sharedWithMe,
         dataQa: 'unshare',
-        Icon: IconUserX,
+        Icon: IconUserUnshare,
         onClick: onUnshare,
         disabled: disableAll,
       },
@@ -159,67 +206,61 @@ export const FolderContextMenu = ({
         dataQa: 'unpublish',
         display:
           isPublishingEnabled &&
-          isItemPublic(folder.id) &&
+          isEntityIdPublic(folder) &&
           !!onUnpublish &&
-          isSidePanelFolder,
+          !!additionalItemData?.isSidePanelItem,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
       },
       {
         name: t('Delete'),
-        display:
-          (!!onDelete &&
-            folder.id.startsWith(
-              getRootId({
-                featureType,
-              }),
-            )) ||
-          !!folder.temporary,
+        display: !!onDelete && (isMyEntity(folder) || isTemporaryFolder),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
       },
-      {
-        name: t('Delete'),
-        display: !!onDelete && !!folder.sharedWithMe,
-        dataQa: 'delete',
-        Icon: IconTrashX,
-        onClick: onDelete,
-      },
+
       {
         name: t('Add new folder'),
-        display: !!onAddFolder,
+        display:
+          !!onAddFolder &&
+          (isMyOrCanEdit || !!additionalItemData?.isChangePathFolder),
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
-        disabled: disableAll,
+        disabled:
+          (disableAll && !additionalItemData?.isChangePathFolder) ||
+          isNameInvalid,
       },
     ],
     [
       t,
+      isSelected,
       isExternal,
       onSelect,
-      disableAll,
+      featureType,
+      canSelectFolders,
       onUpload,
+      isMyOrCanEdit,
+      disableAll,
       onRename,
-      folder.temporary,
-      folder.isShared,
-      folder.isPublished,
-      folder.id,
-      folder.sharedWithMe,
+      isPublicationReviewFolder,
+      isTemporaryFolder,
+      isUnpublishFolder,
       isNameInvalid,
       isEmpty,
       isSharingEnabled,
       onShare,
       onUnshare,
+      folder,
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,
       onUnpublish,
-      isSidePanelFolder,
+      additionalItemData?.isSidePanelItem,
+      additionalItemData?.isChangePathFolder,
       onDelete,
-      featureType,
       onAddFolder,
     ],
   );
@@ -232,8 +273,9 @@ export const FolderContextMenu = ({
     <ContextMenu
       menuItems={menuItems}
       TriggerIcon={IconDots}
+      hideTriggerIcon={hideTriggerIcon}
       triggerIconSize={18}
-      className="m-0 justify-self-end"
+      className="m-0 justify-self-end p-2"
       featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}

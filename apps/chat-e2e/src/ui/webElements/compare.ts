@@ -1,7 +1,11 @@
 import { BaseElement } from './baseElement';
-import { ConversationSettings } from './conversationSettings';
 
-import { CompareSelectors } from '@/src/ui/selectors';
+import {
+  ChatSelectors,
+  ChatSettingsSelectors,
+  CompareSelectors,
+} from '@/src/ui/selectors';
+import { AgentInfo } from '@/src/ui/webElements/agentInfo';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { ChatMessages } from '@/src/ui/webElements/chatMessages';
 import { ConversationToCompare } from '@/src/ui/webElements/conversationToCompare';
@@ -11,34 +15,41 @@ export class Compare extends BaseElement {
   constructor(page: Page) {
     super(page, CompareSelectors.compareMode);
   }
-  private leftConversationSettings!: ConversationSettings;
-  private rightConversationSettings!: ConversationSettings;
+  private leftAgentInfo!: AgentInfo;
+  private rightAgentInfo!: AgentInfo;
   private chatMessages!: ChatMessages;
   private conversationToCompare!: ConversationToCompare;
   private rightChatHeader!: ChatHeader;
   private leftChatHeader!: ChatHeader;
 
-  getLeftConversationSettings(): ConversationSettings {
-    if (!this.leftConversationSettings) {
-      this.leftConversationSettings = new ConversationSettings(this.page);
+  public duplicateButton = this.getChildElementBySelector(
+    ChatSelectors.duplicate,
+  );
+
+  public leftConfigureSettingsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.configureSettingsButton,
+  ).getNthElement(1);
+  public rightConfigureSettingsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.configureSettingsButton,
+  ).getNthElement(2);
+
+  getLeftAgentInfo(): AgentInfo {
+    if (!this.leftAgentInfo) {
+      this.leftAgentInfo = new AgentInfo(this.page, this.rootLocator);
     }
-    return this.leftConversationSettings;
+    return this.leftAgentInfo;
   }
 
-  getRightConversationSettings(): ConversationSettings {
-    if (!this.rightConversationSettings) {
-      this.rightConversationSettings = new ConversationSettings(
-        this.page,
-        undefined,
-        2,
-      );
+  getRightAgentInfo(): AgentInfo {
+    if (!this.rightAgentInfo) {
+      this.rightAgentInfo = new AgentInfo(this.page, this.rootLocator, 2);
     }
-    return this.rightConversationSettings;
+    return this.rightAgentInfo;
   }
 
   getChatMessages(): ChatMessages {
     if (!this.chatMessages) {
-      this.chatMessages = new ChatMessages(this.page);
+      this.chatMessages = new ChatMessages(this.page, this.rootLocator);
     }
     return this.chatMessages;
   }
@@ -66,8 +77,8 @@ export class Compare extends BaseElement {
 
   public async getConversationsCount() {
     return (
-      (await this.getLeftConversationSettings().getElementsCount()) +
-      (await this.getRightConversationSettings().getElementsCount())
+      (await this.getLeftAgentInfo().getElementsCount()) +
+      (await this.getRightAgentInfo().getElementsCount())
     );
   }
 

@@ -1,8 +1,12 @@
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanConversation } from '@/src/utils/app/clean';
-import { prepareEntityName } from '@/src/utils/app/common';
 import {
+  getDefaultConversationProps,
+  prepareEntityName,
+} from '@/src/utils/app/common';
+import {
+  getConversationInfoFromId,
   getGeneratedConversationId,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
@@ -12,6 +16,8 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
+  getEntityBucket,
+  isEntityIdLocal,
   isRootConversationsId,
 } from '@/src/utils/app/id';
 import {
@@ -19,13 +25,17 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ApiKeys, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { ApiKeys } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
+import { RootState } from '@/src/types/store';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
-import { RootState } from '@/src/store';
+import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
 export class ConversationApiStorage extends ApiEntityStorage<
   ConversationInfo,
@@ -35,7 +45,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
     return {
       ...entity,
       ...info,
-      lastActivityDate: info.lastActivityDate ?? entity.lastActivityDate,
+      updatedAt: info.updatedAt ?? entity.updatedAt,
       model: entity.model,
     };
   }
@@ -57,19 +67,35 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 }
 
-export const getOrUploadConversation = (
-  payload: { id: string },
+export const getOrUploadConversation = <T extends { id: string }>(
+  payload: T,
   state: RootState,
 ): Observable<{
   conversation: Conversation | null;
-  payload: { id: string };
+  payload: T;
+  wasUploaded: boolean;
 }> => {
-  const conversation = ConversationsSelectors.selectConversation(
+  let conversation = ConversationsSelectors.selectConversation(
     state,
     payload.id,
-  ) as Conversation;
+  );
+  const entityBucket = getEntityBucket(payload);
+  const resourcesToReview = PublicationSelectors.selectResourcesToReview(state);
+  const isResourceOnReview = resourcesToReview?.some(
+    (r) => getEntityBucket({ id: r.reviewUrl }) === entityBucket,
+  );
 
-  if (conversation?.status !== UploadStatus.LOADED) {
+  if (!conversation) {
+    conversation = getConversationInfoFromId(payload.id, {
+      parseVersion: isResourceOnReview,
+    });
+  }
+
+  if (
+    conversation &&
+    conversation?.status !== UploadStatus.LOADED &&
+    !isEntityIdLocal(conversation)
+  ) {
     return forkJoin({
       conversation: ConversationService.getConversation(conversation).pipe(
         catchError((err) => {
@@ -78,11 +104,13 @@ export const getOrUploadConversation = (
         }),
       ),
       payload: of(payload),
+      wasUploaded: of(true),
     });
   } else {
-    return forkJoin({
-      conversation: of(conversation),
-      payload: of(payload),
+    return of({
+      conversation: (conversation as Conversation) ?? null,
+      payload: payload,
+      wasUploaded: false,
     });
   }
 };
@@ -117,15 +145,15 @@ export const getPreparedConversations = ({
       name: newName,
       folderId,
     });
-  }); // to send conversation with proper parentPath and lastActivityDate order
+  }); // to send conversation with proper parentPath and updatedAt order
 
 export const getImportPreparedConversations = ({
   conversations,
   conversationsFolders,
 }: {
-  conversations: Conversation[] | ConversationInfo[];
+  conversations: Conversation[];
   conversationsFolders: FolderInterface[];
-}) =>
+}): Conversation[] =>
   conversations.map((conv) => {
     const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
       forRenaming: false,
@@ -139,6 +167,7 @@ export const getImportPreparedConversations = ({
 
     return {
       ...conv,
+      ...getDefaultConversationProps(),
       id: getGeneratedConversationId({
         ...conv,
         name: newName,
@@ -147,4 +176,4 @@ export const getImportPreparedConversations = ({
       name: newName,
       folderId: folderId,
     };
-  }); // to send conversation with proper parentPath and lastActivityDate order
+  }); // to send conversation with proper parentPath and updatedAt order

@@ -8,7 +8,7 @@ DIAL Chat Visualizer Connector is a library for connecting custom visualizers - 
 
 ## Prerequisites
 
-For security reason your Dial Chat application should configure sources where your custom visualizers hosted:
+For security reason your DIAL Chat application should configure sources where your custom visualizers hosted:
 
 - `ALLOWED_IFRAME_SOURCES` - list of allowed iframe sources in `<source> <source>` format.
 
@@ -49,12 +49,13 @@ CUSTOM_VISUALIZERS=[
 
 ```
 
-Futhermore, model or application should send data in **json**-like format which should include layout property. This layout object should have **width** and **height** properties. All other properties could be set to anything you need for your **Visualizer**.
+Futhermore, model or application should send data in **json**-like format which should include layout property. This layout object should have **width**, **height** and **themeId** properties. All other properties could be set to anything you need for your **Visualizer**.
 
 ```typescript
 export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
+  themeId: string;
 }
 
 export interface CustomVisualizerData {
@@ -62,7 +63,7 @@ export interface CustomVisualizerData {
 }
 ```
 
-## To integrate **Visualizer** with _DIAL CHAT_.
+## To integrate **Visualizer** with _DIAL CHAT_
 
 1. Install library
 
@@ -101,12 +102,13 @@ export interface AttachmentData {
 ```
 
 `CustomVisualizerDataLayout` - interface for the layout you will get from the _DIAL CHAT_.
-Properties **width** and **height** is needed for the proper rendering in the _DIAL CHAT_.
+Properties **width**, **height** and **themeId** is needed for the proper rendering in the _DIAL CHAT_.
 
 ```typescript
 export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
+  themeId: string;
 }
 ```
 
@@ -161,7 +163,7 @@ useEffect(() => {
 _Note: Data send by model/application from DIAL CHAT should be the same type as you expect._
 
 ```typescript
-//layout should include width and height properties
+//layout should include width, height and themeId properties
 interface YourVisualizerLayout extends CustomVisualizerDataLayout {
   //any other layout properties expected from the model/application output
 }
@@ -174,7 +176,7 @@ data.visualizerData as { dataToRender: string; layout: YourVisualizerLayout };
 <div>{typedVisualizerData.dataToRender}</div>
 ```
 
-### Full React code example to connect your custom visualizer:
+### Full React code example to connect your custom visualizer
 
 `Module.tsx`
 

@@ -1,23 +1,17 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { translate } from '@/src/utils/app/translation';
 
 import { ErrorMessage } from '@/src/types/error';
-import { DialAIEntityAddon } from '@/src/types/models';
+import { AddonsMap, DialAIEntityAddon } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { RootState } from '../index';
-
-export interface AddonsState {
-  isLoading: boolean;
-  error: ErrorMessage | undefined;
-  addons: DialAIEntityAddon[];
-  addonsMap: Partial<Record<string, DialAIEntityAddon>>;
-  recentAddonsIds: string[];
-}
+import { AddonsState } from './addons.types';
 
 const initialState: AddonsState = {
+  initialized: false,
   isLoading: false,
   error: undefined,
   addons: [],
@@ -30,6 +24,9 @@ export const addonsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     getAddons: (state) => {
       state.isLoading = true;
     },
@@ -46,7 +43,7 @@ export const addonsSlice = createSlice({
 
           return acc;
         },
-        {} as Record<string, DialAIEntityAddon>,
+        {} as AddonsMap,
       );
     },
     getAddonsFail: (
@@ -63,7 +60,11 @@ export const addonsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [translate(errorsMessages.generalServer, { ns: 'common' })],
+          : [
+              translate(errorsMessages.generalServer, {
+                ns: Translation.Common,
+              }),
+            ],
       } as ErrorMessage;
     },
     initRecentAddons: (
@@ -94,31 +95,5 @@ export const addonsSlice = createSlice({
     },
   },
 });
-
-const rootSelector = (state: RootState): AddonsState => state.addons;
-
-const selectAddonsIsLoading = createSelector([rootSelector], (state) => {
-  return state.isLoading;
-});
-const selectAddonsError = createSelector([rootSelector], (state) => {
-  return state.error;
-});
-const selectAddons = createSelector([rootSelector], (state) => {
-  return state.addons;
-});
-const selectAddonsMap = createSelector([rootSelector], (state) => {
-  return state.addonsMap;
-});
-const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
-  return state.recentAddonsIds;
-});
-
-export const AddonsSelectors = {
-  selectAddonsIsLoading,
-  selectAddonsError,
-  selectAddons,
-  selectAddonsMap,
-  selectRecentAddonsIds,
-};
 
 export const AddonsActions = addonsSlice.actions;

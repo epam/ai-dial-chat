@@ -1,10 +1,13 @@
-import { Provider } from 'next-auth/providers';
+import { OAuthProviderType, Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
+import AzureB2CProvider from 'next-auth/providers/azure-ad-b2c';
 import CognitoProvider from 'next-auth/providers/cognito';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
+
+import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
 import { tokenConfig } from './auth-callbacks';
 import { GitLab } from './custom-gitlab';
@@ -27,6 +30,26 @@ const allProviders: (Provider | boolean)[] = [
           scope:
             process.env.AUTH_AZURE_AD_SCOPE ||
             'openid profile user.Read email offline_access',
+        },
+      },
+      token: tokenConfig,
+    }),
+
+  !!process.env.AUTH_AZURE_B2C_CLIENT_ID &&
+    !!process.env.AUTH_AZURE_B2C_CLIENT_SECRET &&
+    !!process.env.AUTH_AZURE_B2C_TENANT_ID &&
+    !!process.env.AUTH_AZURE_B2C_USER_FLOW &&
+    AzureB2CProvider({
+      clientId: process.env.AUTH_AZURE_B2C_CLIENT_ID,
+      clientSecret: process.env.AUTH_AZURE_B2C_CLIENT_SECRET,
+      tenantId: process.env.AUTH_AZURE_B2C_TENANT_ID,
+      primaryUserFlow: process.env.AUTH_AZURE_B2C_USER_FLOW,
+      name: process.env.AUTH_AZURE_B2C_NAME ?? DEFAULT_NAME,
+      authorization: {
+        params: {
+          scope:
+            process.env.AUTH_AZURE_B2C_SCOPE ||
+            'openid profile email offline_access',
         },
       },
       token: tokenConfig,
@@ -155,6 +178,27 @@ const allProviders: (Provider | boolean)[] = [
 ];
 
 export const authProviders = allProviders.filter(Boolean) as Provider[];
+
+/**
+ * Sets the DEFAULT_PROVIDER to the single available provider's ID if:
+ * - There is only one authentication provider configured.
+ * - The provider supports federated logout.
+ *
+ * This allows us to skip the NextAuth provider selection page and
+ * directly use the single available provider for authentication.
+ * By ensuring the provider supports federated logout, we maintain
+ * proper session management and user experience during logout operations.
+ */
+const FEDERATED_LOGOUT_PROVIDERS = parseCommaSeparatedList(
+  process.env.FEDERATED_LOGOUT_PROVIDERS,
+);
+
+export const DEFAULT_PROVIDER: OAuthProviderType | null =
+  authProviders.length === 1 &&
+  process.env.SKIP_AUTH_PROVIDER_SELECTION &&
+  FEDERATED_LOGOUT_PROVIDERS.includes(authProviders[0]?.id as OAuthProviderType)
+    ? (authProviders[0]?.id as OAuthProviderType)
+    : null;
 
 /**
  * Is authorization enabled

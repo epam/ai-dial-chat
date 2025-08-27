@@ -7,6 +7,11 @@ export const errorsMessages = {
   401: 'Authorization failed. Please reload the page and login again.',
   403: 'Forbidden',
   400: 'Invalid request',
+  404: 'Not found',
+  ModelDeprecated:
+    'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
+  noAssistantModelSelected:
+    'No assistant model selected. Please select an assistant model and try again.',
   contentFiltering:
     'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
   unsupportedConversationsDataFormat:
@@ -33,6 +38,8 @@ export const errorsMessages = {
     'An error occurred while uploading prompts and folders',
   exportFailed: 'Export failed',
   shareFailed: 'Sharing failed. Please try again later.',
+  shareWithExternalFilesFailed:
+    'Sharing failed. You are only allowed to share conversations with attachments from "All files"',
   acceptShareFailed:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
   acceptShareNotExists:
@@ -51,6 +58,8 @@ export const errorsMessages = {
   entityNameInvalidExternal: 'The name is invalid',
   entityPathInvalidExternal: 'The parent folder name is invalid',
   publicationFailed: 'Creation of publication failed. Please try again later.',
+  publicationWithExternalFilesFailed:
+    'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
   publicationsUploadFailed: 'Publications uploading failed.',
   publicationUploadFailed: 'Publication uploading failed.',
   publishedItemsUploadFailed: 'Published items uploading failed.',
@@ -58,4 +67,12 @@ export const errorsMessages = {
   publicationRejectFailed: 'Publication rejecting failed.',
   publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
   rulesUploadingFailed: 'Rules uploading failed.',
+  createFailed:
+    'Failed to create {{entity}}. Please check your input and try again.',
+  fetchDetailsFailed:
+    'Fetching application details failed. Please try again later.',
+  fetchSchemasFailed:
+    'Fetching application schemas failed. Please try again later.',
+  fetchSchemaFailed:
+    'Fetching application schema failed. Please try again later.',
 };

@@ -1,0 +1,94 @@
+import { FloatingOverlay } from '@floating-ui/react';
+import { useEffect } from 'react';
+
+import { useRouter } from 'next/router';
+
+import { useScreenState } from '@/src/hooks/useScreenState';
+
+import { ScreenState } from '@/src/types/common';
+
+import { MarketplaceActions, UIActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  MarketplaceSelectors,
+  ModelsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
+
+import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
+
+import { Spinner } from '@/src/components/Common/Spinner';
+import { AgentsTabRenderer } from '@/src/components/Marketplace/AgentsTabRenderer';
+
+import { TabHeader } from './TabHeader';
+import { ToolsTabRenderer } from './ToolsTabRenderer';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
+
+export const Marketplace = () => {
+  const dispatch = useAppDispatch();
+
+  const router = useRouter();
+
+  const isFilterbarOpen = useAppSelector(
+    UISelectors.selectShowMarketplaceFilterbar,
+  );
+  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
+  const isLoading = useAppSelector(ModelsSelectors.selectAreModelsLoading);
+  const applyModelStatus = useAppSelector(
+    MarketplaceSelectors.selectApplyModelStatus,
+  );
+  const isBannerVisible = useAppSelector(
+    MarketplaceSelectors.selectIsBannerVisible,
+  );
+
+  const selectedEntitiesTab = useAppSelector(
+    MarketplaceSelectors.selectSelectedEntitiesTab,
+  );
+
+  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
+  const screenState = useScreenState();
+
+  const showOverlay =
+    (isFilterbarOpen || isProfileOpen) &&
+    (screenState === ScreenState.SM || screenState === ScreenState.MD);
+
+  const handleCloseOverlay = () => {
+    dispatch(UIActions.closeAllPanels());
+  };
+
+  useEffect(() => {
+    if (applyModelStatus === UploadStatus.LOADED) {
+      dispatch(
+        MarketplaceActions.setApplyModelStatus(UploadStatus.UNINITIALIZED),
+      );
+      router.push(Routes.Chat);
+    }
+  }, [applyModelStatus, router, dispatch]);
+
+  return (
+    <div
+      className="flex grow flex-col overflow-auto py-4 md:py-5 xl:py-6"
+      data-qa="marketplace"
+    >
+      {isLoading ? (
+        <div className="flex h-full items-center justify-center">
+          <Spinner size={45} className="mx-auto" />
+        </div>
+      ) : (
+        <>
+          <TabHeader isBannerVisible={isBannerVisible} />
+          {isAgentsTab ? <AgentsTabRenderer /> : <ToolsTabRenderer />}
+          {showOverlay && (
+            <FloatingOverlay
+              className="z-30 bg-blackout"
+              onClick={handleCloseOverlay}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+};

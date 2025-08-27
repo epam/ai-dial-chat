@@ -5,59 +5,50 @@ import { userEvent } from '@testing-library/user-event';
 
 import { MutableRefObject } from 'react';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { AppAction } from '@/src/types/store';
 
-import { Role } from '@/src/types/chat';
-
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { ConversationsActions } from '@/src/store/actions';
+import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { PlaybackControls } from '@/src/components/Chat/Playback/PlaybackControls';
 
-vi.mock('@/src/components/Common/FooterMessage', () => ({
-  FooterMessage: () => <div data-qa="footer-message">footer</div>,
-}));
+import { Role } from '@epam/ai-dial-shared';
 
 vi.mock('@/src/store/hooks', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useAppSelector: (selector: any) => selector({}),
-    useAppDispatch: () => (action: AnyAction) => action,
+    useAppDispatch: () => (action: AppAction) => action,
   };
 });
-vi.mock('@/src/store/conversations/conversations.reducers', async () => {
+
+vi.mock('@/src/store/actions', async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const actual: any = await vi.importActual(
-    '@/src/store/conversations/conversations.reducers',
-  );
+  const actual: any = await vi.importActual('@/src/store/actions');
   return {
     ...actual,
     ConversationsActions: {
       playbackPrevMessage: vi.fn(),
       playbackNextMessageStart: vi.fn(),
     },
-    ConversationsSelectors: {
-      selectIsPlaybackSelectedConversations: vi.fn(),
-      selectSelectedConversations: vi.fn(),
-      selectIsConversationsStreaming: vi.fn(),
-      selectPlaybackActiveIndex: vi.fn(),
-    },
   };
 });
 
-vi.mock('@/src/store/ui/ui.reducers', async () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const actual: any = await vi.importActual('@/src/store/ui/ui.reducers');
-  return {
-    ...actual,
-    UISelectors: {
-      selectIsChatFullWidth: vi.fn(),
-    },
-  };
-});
+vi.mock('@/src/store/selectors', () => ({
+  ConversationsSelectors: {
+    selectIsPlaybackSelectedConversations: vi.fn(),
+    selectSelectedConversations: vi.fn(),
+    selectIsConversationsStreaming: vi.fn(),
+    selectPlaybackActiveIndex: vi.fn(),
+  },
+  UISelectors: {
+    selectIsChatFullWidth: vi.fn(),
+  },
+  SettingsSelectors: {
+    isFeatureEnabled: vi.fn(),
+    selectFeatureData: vi.fn(),
+  },
+}));
 
 window.ResizeObserver =
   window.ResizeObserver ||
@@ -76,6 +67,7 @@ describe('PlaybackControls', () => {
 
   // cleanup
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
     ).mockReturnValue(true);
@@ -111,7 +103,7 @@ describe('PlaybackControls', () => {
           activePlaybackIndex: 1,
         },
         model: {
-          id: 'gpt-4-0613',
+          id: 'gpt-4o',
         },
         messages: [],
         prompt: '',
@@ -138,7 +130,6 @@ describe('PlaybackControls', () => {
         showScrollDownButton
       />,
     );
-    const footer = screen.getByTestId('footer-message');
     const scrollDownButton = screen.getByTestId('scroll-down-button');
     const buttons = screen.getAllByRole('button');
     const messageBox = screen.getByTestId('playback-message-content');
@@ -146,7 +137,6 @@ describe('PlaybackControls', () => {
 
     expect(buttons.length).toBe(3);
     expect(messageBox).toBeInTheDocument();
-    expect(footer).toBeVisible();
     expect(scrollDownButton).toBeInTheDocument();
     expect(spinner).toBeNull();
   });

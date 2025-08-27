@@ -1,7 +1,6 @@
 import { ChatHeaderSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { Locator, Page } from '@playwright/test';
 
@@ -18,11 +17,14 @@ export class ChatHeader extends BaseElement {
   public chatTitle = this.getChildElementBySelector(
     ChatHeaderSelectors.chatTitle,
   );
-  public chatModel = this.getChildElementBySelector(
-    ChatHeaderSelectors.chatModel,
+  public chatAgent = this.getChildElementBySelector(
+    ChatHeaderSelectors.chatAgent,
   );
   public chatModelIcon = this.getChildElementBySelector(
-    `${ChatHeaderSelectors.chatModel} >> ${Tags.svg}`,
+    `${ChatHeaderSelectors.chatAgent} >> ${Tags.img}`,
+  );
+  public chatModelArrowIcon = this.getChildElementBySelector(
+    `${ChatHeaderSelectors.chatAgent} >> ${SideBarSelectors.arrowAdditionalIcon}`,
   );
   public chatAddonIcons = this.getChildElementBySelector(
     `${ChatHeaderSelectors.chatAddons} > ${Tags.span}`,
@@ -30,7 +32,7 @@ export class ChatHeader extends BaseElement {
   public deleteConversationFromComparison = this.getChildElementBySelector(
     ChatHeaderSelectors.deleteFromCompareIcon,
   );
-  public openConversationSettings = this.getChildElementBySelector(
+  public conversationSettings = this.getChildElementBySelector(
     ChatHeaderSelectors.conversationSettingsIcon,
   );
   public clearConversation = this.getChildElementBySelector(
@@ -39,31 +41,34 @@ export class ChatHeader extends BaseElement {
   public leavePlaybackMode = this.getChildElementBySelector(
     ChatHeaderSelectors.leavePlayback,
   );
+  public version = this.getChildElementBySelector(ChatHeaderSelectors.version);
+  public dotsMenu = this.getChildElementBySelector(
+    ChatHeaderSelectors.dotsMenu,
+  );
 
   public async isArrowIconVisible() {
-    return this.chatModel
+    return this.chatAgent
       .getChildElementBySelector(SideBarSelectors.arrowAdditionalIcon)
       .isVisible();
   }
 
   async getHeaderModelIcon() {
-    await this.chatModelIcon.waitForState();
-    return this.getElementIconHtml(this.rootLocator);
+    return this.getElementIcon(this.rootLocator);
   }
 
   async getHeaderAddonsIcons() {
-    return this.getElementIcons(this.chatAddonIcons, Tags.desc);
+    return this.getElementIcons(this.chatAddonIcons);
   }
 
   async openConversationSettingsPopup() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.openConversationSettings.click();
-    await modelsResponsePromise;
-    await addonsResponsePromise;
+    await this.conversationSettings.click();
   }
 
   public async hoverOverChatModel() {
-    await this.chatModel.hoverOver();
+    await this.chatAgent.hoverOver();
+  }
+
+  public async hoverOverChatSettings() {
+    await this.conversationSettings.hoverOver();
   }
 }

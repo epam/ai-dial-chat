@@ -1,41 +1,47 @@
 import {
+  getLastPathSegment,
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
+import {
+  getConfigurationSchema,
+  getConfigurationValue,
+  getFormValueDefinitions,
+  isConversationWithFormSchema,
+} from '@/src/utils/app/form-schema';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  ApiUtils,
+  getConversationApiKey,
+  parseConversationApiKey,
+} from '@/src/utils/server/api';
+
+import { EntityType, ParseOptions, PartialBy } from '@/src/types/common';
+import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
+
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+
+import { DefaultsService } from './data/defaults-service';
+import { constructPath } from './file';
+import {
+  getConversationRootId,
+  getEntityBucket,
+  getFileRootId,
+  isEntityIdLocal,
+} from './id';
 
 import {
   Conversation,
   ConversationInfo,
   Message,
   MessageSettings,
+  Replay,
   Role,
-} from '@/src/types/chat';
-import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
-import {
-  DialAIEntity,
-  DialAIEntityAddon,
-  DialAIEntityModel,
-} from '@/src/types/models';
-
-import { getConversationApiKey, parseConversationApiKey } from '../server/api';
-import { constructPath } from './file';
-import { splitEntityId } from './folders';
-import { getConversationRootId } from './id';
-
-import groupBy from 'lodash-es/groupBy';
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
-import uniqBy from 'lodash-es/uniqBy';
-
-export const getAssitantModelId = (
-  modelType: EntityType,
-  defaultAssistantModelId: string,
-  conversationAssistantModelId?: string,
-): string | undefined => {
-  return modelType === EntityType.Assistant
-    ? conversationAssistantModelId ?? defaultAssistantModelId
-    : undefined;
-};
 
 export const getValidEntitiesFromIds = <T>(
   entitiesIds: string[],
@@ -45,7 +51,7 @@ export const getValidEntitiesFromIds = <T>(
 
 export const getSelectedAddons = (
   selectedAddons: string[],
-  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
+  addonsMap: AddonsMap,
   model?: DialAIEntityModel,
 ) => {
   if (model && model.type !== EntityType.Application) {
@@ -96,19 +102,26 @@ export const getNewConversationName = (
   const convName = prepareEntityName(conversation.name);
   const content = prepareEntityName(message.content);
 
+  const formValue = getConfigurationValue(message);
+  const configurationSchema = getConfigurationSchema(message);
+
   if (content.length > 0) {
     return content;
   } else if (message.custom_content?.attachments?.length) {
     const { title, reference_url } = message.custom_content.attachments[0];
 
     return prepareEntityName(!title && reference_url ? reference_url : title);
+  } else if (formValue && configurationSchema) {
+    const definitions = getFormValueDefinitions(formValue, configurationSchema);
+
+    if (definitions.length) return prepareEntityName(definitions[0].title);
   }
 
   return convName;
 };
 
-export const getGeneratedConversationId = <T extends ConversationInfo>(
-  conversation: Omit<T, 'id'>,
+export const getGeneratedConversationId = (
+  conversation: PartialBy<ConversationInfo, 'id'>,
 ): string => {
   if (conversation.folderId) {
     return constructPath(
@@ -117,7 +130,9 @@ export const getGeneratedConversationId = <T extends ConversationInfo>(
     );
   }
   return constructPath(
-    getConversationRootId(),
+    getConversationRootId(
+      conversation.id ? getEntityBucket({ id: conversation.id }) : undefined,
+    ),
     getConversationApiKey(conversation),
   );
 };
@@ -135,10 +150,14 @@ export const regenerateConversationId = <T extends ConversationInfo>(
   return conversation as T;
 };
 
-export const getConversationInfoFromId = (id: string): ConversationInfo => {
+export const getConversationInfoFromId = (
+  id: string,
+  options?: ParseOptions,
+): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
+
   return regenerateConversationId({
-    ...parseConversationApiKey(name),
+    ...parseConversationApiKey(name, options),
     folderId: constructPath(apiKey, bucket, parentPath),
   });
 };
@@ -148,7 +167,7 @@ export const sortByDateAndName = <T extends ConversationInfo>(
 ): T[] =>
   orderBy(
     conversations,
-    ['lastActivityDate', (conv) => conv.name.toLowerCase()],
+    ['updatedAt', (conv) => conv.name.toLowerCase()],
     ['desc', 'desc'],
   );
 
@@ -167,12 +186,15 @@ export const isValidConversationForCompare = (
   dontCompareNames?: boolean,
 ): boolean => {
   if (
-    candidate.isReplay ||
-    candidate.isPlayback ||
+    isReplayConversation(candidate) ||
+    isPlaybackConversation(candidate) ||
+    isEntityIdLocal(candidate) ||
     isEntityNameOrPathInvalid(candidate)
   ) {
     return false;
   }
+
+  if (isConversationWithFormSchema(candidate as Conversation)) return false;
 
   if (candidate.id === selectedConversation.id) {
     return false;
@@ -189,8 +211,8 @@ export const isChosenConversationValidForCompare = (
 ): boolean => {
   if (
     chosenSelection.status !== UploadStatus.LOADED ||
-    chosenSelection.replay?.isReplay ||
-    chosenSelection.playback?.isPlayback
+    isReplayConversation(chosenSelection) ||
+    isPlaybackConversation(chosenSelection)
   ) {
     return false;
   }
@@ -211,32 +233,8 @@ export const isChosenConversationValidForCompare = (
   return true;
 };
 
-export const getOpenAIEntityFullName = (model: DialAIEntity) =>
-  [model.name, model.version].filter(Boolean).join(' ') || model.id;
-
-interface ModelGroup {
-  groupName: string;
-  entities: DialAIEntity[];
-}
-
-export const groupModelsAndSaveOrder = (
-  models: DialAIEntity[],
-): ModelGroup[] => {
-  const uniqModels = uniqBy(models, 'id');
-  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);
-  const insertedSet = new Set();
-  const result: ModelGroup[] = [];
-
-  uniqModels.forEach((m) => {
-    const key = m.name ?? m.id;
-    if (!insertedSet.has(key)) {
-      result.push({ groupName: key, entities: groupedModels[key] });
-      insertedSet.add(key);
-    }
-  });
-
-  return result;
-};
+export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
+  model.name || model.id;
 
 export const addPausedError = (
   conversation: Conversation,
@@ -250,40 +248,163 @@ export const addPausedError = (
   ) {
     return messages;
   }
-  let assistentMessageIndex = -1;
+  let assistantMessageIndex = -1;
   messages.forEach((message, index) => {
     if (message.role === Role.Assistant) {
-      assistentMessageIndex = index;
+      assistantMessageIndex = index;
     }
   });
   if (
-    assistentMessageIndex === -1 ||
-    assistentMessageIndex !== messages.length - 1
+    assistantMessageIndex === -1 ||
+    assistantMessageIndex !== messages.length - 1
   ) {
     return messages;
   }
 
-  const assistentMessage = messages[assistentMessageIndex];
+  const assistantMessage = messages[assistantMessageIndex];
   const updatedMessage: Message = {
-    ...assistentMessage,
-    ...(assistentMessage.custom_content?.stages?.length && {
+    ...assistantMessage,
+    ...(assistantMessage.custom_content?.stages?.length && {
       custom_content: {
-        ...assistentMessage.custom_content,
-        stages: assistentMessage.custom_content.stages.filter(
+        ...assistantMessage.custom_content,
+        stages: assistantMessage.custom_content.stages.filter(
           (stage) => stage.status != null,
         ),
       },
     }),
     errorMessage:
-      assistentMessage.errorMessage ??
+      assistantMessage.errorMessage ??
       'Response generation was stopped. Please regenerate to continue working with conversation',
   };
 
   return messages.map((message, index) => {
-    if (index === assistentMessageIndex) {
+    if (index === assistantMessageIndex) {
       return updatedMessage;
     }
 
     return message;
   });
+};
+
+export const getConversationModelParams = (
+  conversation: Conversation,
+  modelId: string | undefined,
+  modelsMap: ModelsMap,
+  addonsMap: AddonsMap,
+): Partial<Conversation> => {
+  if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
+    return {
+      replay: {
+        ...conversation.replay,
+        replayAsIs: true,
+      },
+    };
+  }
+  const newAiEntity = modelId ? modelsMap[modelId] : undefined;
+  if (!modelId || !newAiEntity) {
+    return {};
+  }
+
+  const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
+    ? conversation.replay
+    : {
+        ...conversation.replay,
+        replayAsIs: false,
+      };
+  const updatedAddons =
+    isReplayConversation(conversation) &&
+    isReplayAsIsConversation(conversation) &&
+    !updatedReplay?.replayAsIs
+      ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
+      : conversation.selectedAddons;
+
+  return {
+    model: { id: newAiEntity.reference },
+    assistantModelId:
+      newAiEntity.type === EntityType.Assistant
+        ? DefaultsService.get(
+            'assistantSubmodelId',
+            FALLBACK_ASSISTANT_SUBMODEL_ID,
+          )
+        : undefined,
+    replay: updatedReplay,
+    selectedAddons: updatedAddons,
+  };
+};
+
+export const isSystemMessage = (message?: Message) =>
+  message?.role === Role.System;
+
+export const excludeSystemMessages = (messages: Message[]) =>
+  messages.filter((m) => !isSystemMessage(m));
+
+export const getSystemMessageContent = (
+  messages: Message[],
+): string | undefined => messages.filter((m) => isSystemMessage(m))[0]?.content;
+
+export const getDefaultModelReference = ({
+  recentModelReferences,
+  modelReferences,
+  defaultModelReference,
+}: {
+  recentModelReferences: string[];
+  modelReferences: string[];
+  defaultModelReference: string;
+}) => {
+  return [
+    ...modelReferences.filter(
+      (reference) => reference === defaultModelReference,
+    ),
+    ...recentModelReferences,
+    ...modelReferences,
+  ][0];
+};
+
+export const isOldConversationReplay = (replay: Replay | undefined) =>
+  replay &&
+  replay.isReplay &&
+  replay.replayUserMessagesStack &&
+  replay.replayUserMessagesStack.some((message) => !message.model);
+
+export const isPlaybackConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).playback?.isPlayback ??
+  conversation.isPlayback ??
+  false;
+
+export const isReplayConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).replay?.isReplay ??
+  conversation.isReplay ??
+  false;
+
+export const isReplayAsIsConversation = (conversation: ConversationInfo) =>
+  (conversation as Conversation).replay?.replayAsIs ?? false;
+
+export const getQuickAttachmentsSavingPath = () => {
+  const date = new Date();
+
+  return `${getFileRootId()}/uploads/${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+};
+
+export const updateMessagesAttachmentsTitles = (
+  messages: Message[],
+  titlesToUpdate: string[],
+) => {
+  return messages.map((message) => ({
+    ...message,
+    custom_content: {
+      ...message.custom_content,
+      attachments: message.custom_content?.attachments?.map((attachment) => {
+        const title = ApiUtils.decodeApiUrl(
+          getLastPathSegment(attachment.url ?? ''),
+        );
+
+        return titlesToUpdate.includes(title)
+          ? {
+              ...attachment,
+              title: title ?? 'Attachment',
+            }
+          : attachment;
+      }),
+    },
+  }));
 };

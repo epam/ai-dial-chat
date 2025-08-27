@@ -31,7 +31,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     if (!response.ok) {
       const serverErrorMessage = await response.text();
-      throw new DialAIError(serverErrorMessage, '', '', response.status + '');
+      throw new DialAIError(serverErrorMessage, response.status, req);
     }
 
     const json = (await response.json()) as { bucket: string };

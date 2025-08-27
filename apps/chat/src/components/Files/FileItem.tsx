@@ -5,23 +5,35 @@ import {
   IconReload,
   IconX,
 } from '@tabler/icons-react';
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import {
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { isTabletScreen } from '@/src/utils/app/mobile';
+
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
 
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import ShareIcon from '../Common/ShareIcon';
-import Tooltip from '../Common/Tooltip';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
 import { FileItemContextMenu } from './FileItemContextMenu';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -29,14 +41,17 @@ export enum FileItemEventIds {
   Toggle = 'toggle',
   ToggleFolder = 'toggleFolder',
   Delete = 'delete',
+  Unshare = 'unshare',
 }
 
 interface Props {
   item: DialFile;
   level: number;
-  additionalItemData?: Record<string, unknown>;
-
+  additionalItemData?: AdditionalItemData;
+  iconClassNames?: string;
+  wrapperClassNames?: string;
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
+  onSave?: (fileId: string) => void;
 }
 
 const cancelAllowedStatuses = new Set([
@@ -48,7 +63,10 @@ export const FileItem = ({
   item,
   level,
   additionalItemData,
+  iconClassNames,
+  wrapperClassNames,
   onEvent,
+  onSave,
 }: Props) => {
   const { t } = useTranslation(Translation.Files);
 
@@ -57,18 +75,31 @@ export const FileItem = ({
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const [isRemoveAccessConfirmOpened, setIsRemoveAccessConfirmOpened] =
+    useState(false);
+
+  const fileRef = useRef<HTMLDivElement>(null);
 
   const canAttachFiles = !!additionalItemData?.canAttachFiles;
+
+  const handleContextMenuOpen = useCallback(() => {
+    setIsContextMenu(true);
+  }, []);
+
+  useContextMenuTrigger(handleContextMenuOpen, fileRef);
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
   }, [item.id, onEvent]);
 
   const handleToggleFile = useCallback(() => {
+    if (!canAttachFiles) {
+      return;
+    }
+
     setIsSelected((value) => !value);
     onEvent?.(FileItemEventIds.Toggle, item.id);
-  }, [item.id, onEvent]);
+  }, [canAttachFiles, item.id, onEvent]);
 
   const handleRetry = useCallback(() => {
     onEvent?.(FileItemEventIds.Retry, item.id);
@@ -79,9 +110,14 @@ export const FileItem = ({
     onEvent?.(FileItemEventIds.Delete, item.id);
   }, [item.id, onEvent]);
 
-  const handleUnshare: MouseEventHandler<HTMLButtonElement> =
+  const handleUnshare = useCallback(() => {
+    setIsContextMenu(false);
+    onEvent?.(FileItemEventIds.Unshare, item.id);
+  }, [item.id, onEvent]);
+
+  const handleRemoveAccess: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsUnshareConfirmOpened(true);
+      setIsRemoveAccessConfirmOpened(true);
       setIsContextMenu(false);
     }, []);
 
@@ -92,19 +128,14 @@ export const FileItem = ({
 
   useEffect(() => {
     setIsSelected(
-      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
-        item.id,
-      ) ||
-        (!!additionalItemData?.selectedFolderIds &&
-          (additionalItemData.selectedFolderIds as string[]).some((folderId) =>
-            item.id.startsWith(folderId),
-          )),
+      (additionalItemData?.selectedFilesIds ?? []).includes(item.id) ||
+        (additionalItemData?.selectedFolderIds ?? []).some((folderId) =>
+          item.id.startsWith(folderId),
+        ),
     );
 
     setIsHighlighted(
-      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
-        item.id,
-      ),
+      (additionalItemData?.selectedFilesIds ?? []).includes(item.id),
     );
   }, [
     additionalItemData?.selectedFilesIds,
@@ -112,19 +143,28 @@ export const FileItem = ({
     item.id,
   ]);
 
+  const isMobileCheckboxVisible =
+    canAttachFiles && isContextMenu && isTabletScreen();
+
   return (
     <div
       className={classNames(
-        'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
+        'group/file-item flex select-none justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
         (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
+        wrapperClassNames,
       )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
-      data-qa="attached-file"
+      ref={fileRef}
+      data-qa="file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary" data-qa="attached-file-icon">
+        <div
+          onClick={handleToggleFile}
+          className="text-secondary"
+          data-qa="attached-file-icon"
+        >
           {(!canAttachFiles || !isSelected) &&
           item.status !== UploadStatus.FAILED ? (
             <ShareIcon
@@ -133,6 +173,7 @@ export const FileItem = ({
                 item.status !== UploadStatus.LOADING &&
                   canAttachFiles &&
                   'group-hover/file-item:hidden',
+                isMobileCheckboxVisible && 'hidden',
               )}
               featureType={FeatureType.Chat}
               isHighlighted={isSelected}
@@ -141,7 +182,8 @@ export const FileItem = ({
                 className={classNames(
                   item.status !== UploadStatus.LOADING &&
                     canAttachFiles &&
-                    'group-hover/file-item:hidden',
+                    'text-secondary group-hover/file-item:hidden',
+                  iconClassNames,
                 )}
                 size={18}
               />
@@ -165,14 +207,16 @@ export const FileItem = ({
               <div
                 className={classNames(
                   'relative size-[18px] group-hover/file-item:flex',
-                  isSelected ? 'flex' : 'hidden',
+                  isSelected || isMobileCheckboxVisible ? 'flex' : 'hidden',
                 )}
+                data-qa={isSelected ? 'selected' : null}
               >
                 <input
                   className="checkbox peer size-[18px] bg-layer-3"
                   type="checkbox"
+                  readOnly
                   checked={isSelected}
-                  onChange={handleToggleFile}
+                  data-qa={isSelected ? 'checked' : 'unchecked'}
                 />
                 <IconCheck
                   size={18}
@@ -182,9 +226,11 @@ export const FileItem = ({
             )}
         </div>
         <Tooltip
+          hideTooltip={isContextMenu}
           tooltip={item.name}
+          isTriggerClickable={isContextMenu}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
-          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+          contentClassName="break-all"
         >
           <span
             className={classNames(
@@ -192,7 +238,7 @@ export const FileItem = ({
               item.status === UploadStatus.FAILED && 'text-error',
               isSelected && 'text-accent-primary',
             )}
-            data-qa="attached-file-name"
+            data-qa="entity-name"
           >
             {item.name}
           </span>
@@ -226,28 +272,37 @@ export const FileItem = ({
           </button>
         ) : (
           <FileItemContextMenu
+            isSelected={isSelected}
             file={item}
             onDelete={handleDelete}
-            onOpenChange={setIsContextMenu}
             onUnshare={handleUnshare}
+            isOpen={isContextMenu}
+            onOpenChange={setIsContextMenu}
+            onRemoveAccess={handleRemoveAccess}
             onUnpublish={handleOpenUnpublishing}
-            className="invisible group-hover/file-item:visible"
+            onSelect={canAttachFiles ? handleToggleFile : undefined}
+            className={classNames(
+              'group-hover/file-item:block',
+              isContextMenu ? 'block' : 'hidden',
+            )}
+            onSave={onSave}
           />
         )}
       </div>
-      {isUnshareConfirmOpened && (
+      {isRemoveAccessConfirmOpened && (
         <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm unsharing: {{fileName}}', {
+          isOpen={isRemoveAccessConfirmOpened}
+          showHeadingTooltip
+          heading={t('Confirm removing access: {{fileName}}', {
             fileName: item.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this file?') || ''
-          }
-          confirmLabel={t('Unshare')}
+          description={t(
+            'Are you sure you want to remove access to the file for all users?',
+          )}
+          confirmLabel={t('Confirm')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
+            setIsRemoveAccessConfirmOpened(false);
             if (result) {
               dispatch(
                 ShareActions.revokeAccess({

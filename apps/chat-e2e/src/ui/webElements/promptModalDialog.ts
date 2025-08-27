@@ -1,17 +1,23 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
+import { API } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { ErrorLabelSelectors } from '@/src/ui/selectors';
 import { PromptModal } from '@/src/ui/selectors/dialogSelectors';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { FieldLabel } from '@/src/ui/webElements/fieldLabel';
 import { Page } from '@playwright/test';
 
 export class PromptModalDialog extends BaseElement {
+  protected fieldLabelHelper: FieldLabel;
+
   constructor(page: Page) {
     super(page, PromptModal.promptModalDialog);
+    this.fieldLabelHelper = new FieldLabel(page, this.rootLocator);
   }
 
+  public title = this.getChildElementBySelector(PromptModal.title);
   public name = this.getChildElementBySelector(PromptModal.promptName);
   public description = this.getChildElementBySelector(
     PromptModal.promptDescription,
@@ -27,7 +33,7 @@ export class PromptModalDialog extends BaseElement {
   public async fillPromptDetails(
     name: string,
     description: string | undefined,
-    value: string,
+    value: string | undefined,
   ) {
     await this.name.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
@@ -35,11 +41,19 @@ export class PromptModalDialog extends BaseElement {
     await this.description.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     if (description !== undefined) {
-      await this.description.typeInInput(description);
+      const descrLines = description.split('\n');
+      for (let i = 0; i < descrLines.length; i++) {
+        await this.description.typeInInput(descrLines[i]);
+        if (i !== descrLines.length - 1) {
+          await this.page.keyboard.press(keys.shiftPlusEnter);
+        }
+      }
     }
-    await this.prompt.click();
-    await this.page.keyboard.press(keys.ctrlPlusA);
-    await this.prompt.typeInInput(value);
+    if (value !== undefined) {
+      await this.prompt.click();
+      await this.page.keyboard.press(keys.ctrlPlusA);
+      await this.prompt.typeInInput(value);
+    }
   }
 
   public async setField(field: BaseElement, value: string) {
@@ -51,20 +65,20 @@ export class PromptModalDialog extends BaseElement {
 
   public async updatePromptDetailsWithButton(
     name: string,
-    description: string | undefined,
-    value: string,
+    description?: string | undefined,
+    value?: string | undefined,
   ) {
-    await this.updatePromptDetails(name, description, value, () =>
+    return this.updatePromptDetails(name, description, value, () =>
       this.saveButton.click(),
     );
   }
 
   public async updatePromptDetailsWithEnter(
     name: string,
-    description: string,
-    value: string,
+    description?: string,
+    value?: string | undefined,
   ) {
-    await this.updatePromptDetails(name, description, value, () =>
+    return this.updatePromptDetails(name, description, value, () =>
       this.page.keyboard.press(keys.enter),
     );
   }
@@ -72,16 +86,21 @@ export class PromptModalDialog extends BaseElement {
   public async updatePromptDetails(
     name: string,
     description: string | undefined,
-    value: string,
+    value: string | undefined,
     method: () => Promise<void>,
   ) {
+    const isNameUpdated = (await this.getName()) !== name;
     await this.fillPromptDetails(name, description, value);
     if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
+      const respPromise = this.page.waitForResponse((resp) => {
+        const url = resp.request().url();
+        return isNameUpdated
+          ? url.includes(API.moveHost)
+          : url.includes(API.promptHost);
+      });
       await method();
-      return respPromise;
+      const response = await respPromise;
+      return response.request().postDataJSON();
     }
     await method();
   }
@@ -98,7 +117,7 @@ export class PromptModalDialog extends BaseElement {
     return this.prompt.getElementContent();
   }
 
-  public async isFieldHasAsterisk(label: string) {
-    return this.fieldLabel(label).getElementLocatorByText('*').isVisible();
+  public getFieldAsterisk(fieldName: string) {
+    return this.fieldLabelHelper.getFieldRequiredIndicator(fieldName);
   }
 }

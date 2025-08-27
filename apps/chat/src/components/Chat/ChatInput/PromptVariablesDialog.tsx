@@ -12,9 +12,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
@@ -23,10 +23,11 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
-import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
-import Tooltip from '../../Common/Tooltip';
+import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface Props {
   prompt: Prompt;
@@ -82,7 +83,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       const content = prompt.content as string;
 
       const newContent = content.replace(
-        PROMPT_VARIABLE_REGEX,
+        PROMPT_VARIABLE_REGEX_GLOBAL,
         (_, variable) => {
           return updatedVariables.find((v) => v.key === variable)?.value ?? '';
         },
@@ -139,6 +140,10 @@ export const PromptVariablesDialog: FC<Props> = ({
     };
   }, [ignoreOutsideClicks, onClose]);
 
+  useEffect(() => {
+    inputsRefs.current?.[0]?.focus?.();
+  }, []);
+
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
     submitted: submitted,
@@ -159,8 +164,8 @@ export const PromptVariablesDialog: FC<Props> = ({
       >
         <Tooltip
           tooltip={prompt.name}
-          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
           triggerClassName="mb-4 truncate whitespace-pre text-base font-bold block"
+          contentClassName="break-all"
           dataQa="variable-prompt-name"
         >
           {prompt.name}
@@ -171,7 +176,7 @@ export const PromptVariablesDialog: FC<Props> = ({
             className="mb-5 whitespace-pre-wrap italic"
             data-qa="variable-prompt-descr"
           >
-            {prompt.description}
+            <TemplateRenderer template={prompt.description} />
           </div>
         )}
 
@@ -202,11 +207,9 @@ export const PromptVariablesDialog: FC<Props> = ({
               style={{ resize: 'none' }}
               required
               title=""
-              placeholder={
-                t('Enter a value for {{key}}...', {
-                  key: variable.key,
-                }) as string
-              }
+              placeholder={t('Enter a value for {{key}}...', {
+                key: variable.key,
+              })}
               value={variable.value}
               onBlur={(e) => {
                 handleOnBlur(index, e);

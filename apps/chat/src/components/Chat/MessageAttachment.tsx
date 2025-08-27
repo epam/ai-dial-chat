@@ -3,49 +3,38 @@ import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
-import { Attachment } from '@/src/types/chat';
-import { ImageMIMEType, MIMEType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
-import { PLOTLY_CONTENT_TYPE, stopBubbling } from '@/src/constants/chat';
+import {
+  IMAGE_TYPES_SET,
+  PLOTLY_CONTENT_TYPE,
+  stopBubbling,
+} from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
+import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/VisualizerRenderer';
 
-import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
-import Tooltip from '../Common/Tooltip';
-import ChatMDComponent from '../Markdown/ChatMDComponent';
-import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
-
+import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
+import { Attachment, MIMEType } from '@epam/ai-dial-shared';
 import { sanitize } from 'isomorphic-dompurify';
-
-const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/apng',
-  'image/webp',
-  'image/avif',
-  'image/svg+xml',
-  'image/bmp',
-  'image/vnd.microsoft.icon',
-  'image/x-icon',
-]);
 
 interface AttachmentDataRendererProps {
   attachment: Attachment;
@@ -60,7 +49,7 @@ const AttachmentDataRenderer = ({
     return null;
   }
 
-  if (imageTypes.has(attachment.type)) {
+  if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
       <img
         src={`data:${attachment.type};base64,${attachment.data}`}
@@ -122,7 +111,7 @@ const AttachmentUrlRenderer = ({
     return null;
   }
 
-  if (imageTypes.has(attachmentType)) {
+  if (IMAGE_TYPES_SET.has(attachmentType)) {
     return (
       <img
         src={attachmentUrl}
@@ -199,9 +188,12 @@ const AttachmentUrlRendererComponent = ({
   const mappedVisualizers = useAppSelector(
     SettingsSelectors.selectMappedVisualizers,
   );
-
-  const isCustomAttachmentType = useAppSelector((state) =>
-    SettingsSelectors.selectIsCustomAttachmentType(state, attachmentType),
+  const selectIsCustomAttachmentTypeSelector = useMemo(
+    () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
+    [attachmentType],
+  );
+  const isCustomAttachmentType = useAppSelector(
+    selectIsCustomAttachmentTypeSelector,
   );
 
   if (mappedVisualizers && isCustomAttachmentType) {
@@ -233,8 +225,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const isCustomAttachmentType = useAppSelector((state) =>
-    SettingsSelectors.selectIsCustomAttachmentType(state, attachment.type),
+  const selectIsCustomAttachmentTypeSelector = useMemo(
+    () => SettingsSelectors.selectIsCustomAttachmentType(attachment.type),
+    [attachment.type],
+  );
+  const isCustomAttachmentType = useAppSelector(
+    selectIsCustomAttachmentTypeSelector,
   );
 
   useEffect(() => {
@@ -267,7 +263,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
 
   const isOpenable =
     attachment.data ||
-    (attachment.url && imageTypes.has(attachment.type)) ||
+    (attachment.url && IMAGE_TYPES_SET.has(attachment.type)) ||
     attachment.type === PLOTLY_CONTENT_TYPE ||
     isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
@@ -298,7 +294,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 className="shrink-0"
                 rel="noopener noreferrer"
               >
-                <Link
+                <LinkIcon
                   height={18}
                   width={18}
                   className="text-secondary hover:text-accent-primary"
@@ -331,13 +327,13 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 ? 'max-w-full'
                 : 'max-w-[calc(100%-30px)]',
             )}
-            title={attachment.title || attachment.url || t('Attachment') || ''}
+            title={attachment.title || attachment.url || t('Attachment')}
           >
             {attachment.title || attachment.url || t('Attachment')}
           </span>
           {isOpenable && !isFolder ? (
             <div className="flex gap-2">
-              {imageTypes.has(attachment.type) && (
+              {IMAGE_TYPES_SET.has(attachment.type) && (
                 <a
                   download={attachment.title}
                   href={mappedAttachmentUrl}

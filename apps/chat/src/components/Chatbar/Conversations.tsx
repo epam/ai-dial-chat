@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { getConversationRootId } from '@/src/utils/app/id';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { Translation } from '@/src/types/translation';
+import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 
 import { ConversationsRenderer } from './ConversationsRenderer';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -34,20 +33,9 @@ interface SortedConversations {
   other: SortedBlock;
 }
 
-const conversationsDateBlocksNames = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  lastSevenDays: 'Last 7 days',
-  lastThirtyDays: 'Last 30 days',
-  older: 'Older',
-  other: 'Other',
-};
-
-export const Conversations = ({ conversations }: Props) => {
+const ConversationsView = ({ conversations }: Props) => {
   const [sortedConversations, setSortedConversations] =
     useState<SortedConversations>();
-
-  const { t } = useTranslation(Translation.SideBar);
 
   const conversationsToDisplay = useMemo(() => {
     const conversationRootId = getConversationRootId();
@@ -72,7 +60,8 @@ export const Conversations = ({ conversations }: Props) => {
       other: [],
     };
     sortByDateAndName(conversationsToDisplay).forEach((conv) => {
-      const lastActivityDateNumber = conv.lastActivityDate;
+      const lastActivityDateNumber = conv.updatedAt;
+
       if (
         !lastActivityDateNumber ||
         typeof lastActivityDateNumber !== 'number'
@@ -109,27 +98,27 @@ export const Conversations = ({ conversations }: Props) => {
     setSortedConversations({
       today: {
         conversations: allConversations.today,
-        name: conversationsDateBlocksNames.today,
+        name: CONVERSATIONS_DATE_SECTIONS.today,
       },
       yesterday: {
         conversations: allConversations.yesterday,
-        name: conversationsDateBlocksNames.yesterday,
+        name: CONVERSATIONS_DATE_SECTIONS.yesterday,
       },
       lastSevenDays: {
         conversations: allConversations.lastSevenDays,
-        name: conversationsDateBlocksNames.lastSevenDays,
+        name: CONVERSATIONS_DATE_SECTIONS.lastSevenDays,
       },
       lastThirtyDays: {
         conversations: allConversations.lastThirtyDays,
-        name: conversationsDateBlocksNames.lastThirtyDays,
+        name: CONVERSATIONS_DATE_SECTIONS.lastThirtyDays,
       },
       lastYear: {
         conversations: allConversations.older,
-        name: conversationsDateBlocksNames.older,
+        name: CONVERSATIONS_DATE_SECTIONS.older,
       },
       other: {
         conversations: allConversations.other,
-        name: conversationsDateBlocksNames.other,
+        name: CONVERSATIONS_DATE_SECTIONS.other,
       },
     });
   }, [
@@ -147,9 +136,11 @@ export const Conversations = ({ conversations }: Props) => {
           <ConversationsRenderer
             key={key}
             conversations={value.conversations}
-            label={t('{{name}}', { name: value.name })}
+            label={value.name}
           />
         ))}
     </div>
   );
 };
+
+export const Conversations = memo(ConversationsView);

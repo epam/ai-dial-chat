@@ -1,17 +1,13 @@
-'use client';
+import { ChatOverlayManagerWrapper } from '../components/chatOverlayManagerWrapper';
+import { commonOverlayProps } from '../components/chatOverlayWrapper';
 
-import {
-  ChatOverlayManager,
-  ChatOverlayManagerOptions,
-} from '@epam/ai-dial-overlay';
-import { Feature } from '@epam/ai-dial-shared';
-import { useEffect, useRef } from 'react';
+import { ChatOverlayManagerOptions, Feature } from '@epam/ai-dial-overlay';
 
 const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
   id: 'test',
+  ...commonOverlayProps,
   domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
   theme: 'light',
-  modelId: 'gpt-4',
   enabledFeatures: [
     Feature.ConversationsSection,
     Feature.PromptsSection,
@@ -26,11 +22,6 @@ const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
     Feature.ReportAnIssue,
     Feature.Likes,
   ],
-  requestTimeout: 20000,
-  loaderStyles: {
-    background: 'white',
-    fontSize: '24px',
-  },
   allowFullscreen: true,
   iconSvg: `<svg viewBox="0 0 62 62" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M31 62C48.1208 62 62 48.1208 62 31C62 13.8792 48.1208 0 31 0C13.8792 0 0 13.8792 0 31C0 48.1208 13.8792 62 31 62Z" fill="url(#paint0_linear_601_2793)" fill-opacity="0.6"></path>
@@ -45,80 +36,5 @@ const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
 };
 
 export default function Index() {
-  const overlayManager = useRef<ChatOverlayManager | null>(null);
-
-  useEffect(() => {
-    if (!overlayManager.current) {
-      overlayManager.current = new ChatOverlayManager();
-      overlayManager.current.createOverlay({
-        ...overlayOptions,
-        hostDomain: window.location.origin,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    overlayManager.current?.subscribe(
-      overlayOptions.id,
-      '@DIAL_OVERLAY/GPT_END_GENERATING',
-      () => console.info('END GENERATING'),
-    );
-
-    overlayManager.current?.subscribe(
-      overlayOptions.id,
-      '@DIAL_OVERLAY/GPT_START_GENERATING',
-      () => console.info('START GENERATING'),
-    );
-
-    overlayManager.current?.getMessages(overlayOptions.id).then((messages) => {
-      console.info(messages);
-    });
-  }, [overlayManager]);
-
-  return (
-    <div className="flex flex-col gap-2 p-2">
-      <div className="flex gap-2">
-        <button
-          className="rounded bg-gray-200 p-2"
-          onClick={() => {
-            overlayManager.current?.sendMessage(overlayOptions.id, 'Hello');
-          }}
-        >
-          Send &apos;Hello&apos; to Chat
-        </button>
-
-        <button
-          className="rounded bg-gray-200 p-2"
-          onClick={() => {
-            const newOptions = {
-              ...overlayOptions,
-              hostDomain: window.location.origin,
-            };
-
-            newOptions.theme = 'dark';
-            newOptions.modelId = 'stability.stable-diffusion-xl';
-
-            overlayManager.current?.setOverlayOptions(
-              overlayOptions.id,
-              newOptions,
-            );
-          }}
-        >
-          Update configuration on the fly
-        </button>
-
-        <button
-          className="rounded bg-gray-200 p-2"
-          onClick={() => {
-            overlayManager.current?.setSystemPrompt(
-              overlayOptions.id,
-              'End each word with string "!?!?!"',
-            );
-          }}
-        >
-          End each word with string &quot;!?!?!&quot;
-        </button>
-      </div>
-    </div>
-  );
+  return <ChatOverlayManagerWrapper overlayManagerOptions={overlayOptions} />;
 }

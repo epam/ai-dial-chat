@@ -3,7 +3,8 @@ import { Prompt } from '@/chat/types/prompt';
 import { BucketUtil } from '@/src/utils/bucketUtil';
 
 export class ItemUtil {
-  static conversationIdSeparator = '__';
+  static entityIdSeparator = '__';
+  static urlSeparator = '/';
 
   public static getConversationBucketPath(bucket?: string) {
     return bucket
@@ -11,8 +12,8 @@ export class ItemUtil {
       : `conversations/${BucketUtil.getBucket()}`;
   }
 
-  public static getPromptBucketPath() {
-    return `prompts/${BucketUtil.getBucket()}`;
+  public static getPromptBucketPath(bucket?: string) {
+    return bucket ? `prompts/${bucket}` : `prompts/${BucketUtil.getBucket()}`;
   }
 
   public static getApiConversationId(
@@ -23,16 +24,20 @@ export class ItemUtil {
     return `${bucketPath}/${conversation.id}`;
   }
 
-  public static getApiPromptId(prompt: Prompt) {
-    const bucketPath = ItemUtil.getPromptBucketPath();
-    return `${bucketPath}/${prompt.id}`;
+  public static getApiPromptId(prompt: Prompt, bucket?: string) {
+    const bucketPath = ItemUtil.getPromptBucketPath(bucket);
+    return prompt.id.includes(bucketPath)
+      ? prompt.id
+      : `${bucketPath}/${prompt.id}`;
   }
 
-  public static getApiPromptFolderId(prompt: Prompt) {
-    const promptBucket = ItemUtil.getPromptBucketPath();
+  public static getApiPromptFolderId(prompt: Prompt, bucket?: string) {
+    const promptBucket = ItemUtil.getPromptBucketPath(bucket);
     return prompt.folderId?.length === 0
       ? promptBucket
-      : `${promptBucket}/${prompt.folderId}`;
+      : prompt.folderId.includes(promptBucket)
+        ? prompt.folderId
+        : `${promptBucket}/${prompt.folderId}`;
   }
 
   public static getApiConversationFolderId(
@@ -46,13 +51,31 @@ export class ItemUtil {
   }
 
   public static getEncodedItemId(itemId: string) {
-    const separatorIndex = itemId.lastIndexOf(ItemUtil.conversationIdSeparator);
-    if (separatorIndex !== -1) {
-      const itemName = itemId.substring(
-        separatorIndex + ItemUtil.conversationIdSeparator.length + 1,
-      );
-      return itemId.replace(itemName, encodeURIComponent(itemName));
+    const encodedItemId = itemId
+      .split(ItemUtil.urlSeparator)
+      .map((f) => encodeURIComponent(f))
+      .join(ItemUtil.urlSeparator);
+    return itemId.replace(itemId, encodedItemId);
+  }
+
+  // Helper function to extract relative path from URL
+  public static extractRelativePath(url: string): string {
+    const pathParts = url.split('/');
+    let relativePath = '';
+    const publicSegmentIndex = pathParts.indexOf('public');
+
+    if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex < pathParts.length - 2
+    ) {
+      relativePath =
+        pathParts.slice(publicSegmentIndex + 1, -1).join('/') + '/';
+    } else if (
+      publicSegmentIndex !== -1 &&
+      publicSegmentIndex === pathParts.length - 2
+    ) {
+      relativePath = '';
     }
-    return itemId;
+    return relativePath;
   }
 }

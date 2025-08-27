@@ -12,15 +12,34 @@ export class Header extends BaseElement {
 
   public getAccountSettings() {
     if (!this.accountSettings) {
-      this.accountSettings = new AccountSettings(this.page);
+      this.accountSettings = new AccountSettings(this.page, this.rootLocator);
     }
     return this.accountSettings;
   }
 
-  public chatPanelToggle = this.getChildElementBySelector(
-    HeaderSelectors.chatPanelToggle,
+  public leftPanelToggle = this.getChildElementBySelector(
+    HeaderSelectors.leftPanelToggle,
   );
-  public promptsPanelToggle = this.getChildElementBySelector(
-    HeaderSelectors.promptsPanelToggle,
+  public rightPanelToggle = this.getChildElementBySelector(
+    HeaderSelectors.rightPanelToggle,
   );
+
+  public newEntityButton = this.getChildElementBySelector(
+    HeaderSelectors.newEntity,
+  );
+
+  public logo = this.getChildElementBySelector(HeaderSelectors.logo);
+
+  public async createNewConversation(options?: { triggeredHttpHost?: string }) {
+    if (options?.triggeredHttpHost) {
+      const respPromise = this.page.waitForResponse(
+        (r) =>
+          r.url().includes(options.triggeredHttpHost!) && r.status() === 200,
+      );
+      await this.newEntityButton.click();
+      await respPromise;
+    } else {
+      await this.newEntityButton.click();
+    }
+  }
 }

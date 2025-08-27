@@ -1,20 +1,34 @@
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntity } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
-import { ShareInterface } from '@/src/types/share';
 
 import { getOpenAIEntityFullName } from './conversation';
-import { getConversationRootId, getPromptRootId } from './id';
+import { getConversationRootId, getFileRootId, getPromptRootId } from './id';
+
+import {
+  ConversationInfo,
+  ShareEntity,
+  ShareInterface,
+} from '@epam/ai-dial-shared';
+import { IFuseOptions } from 'fuse.js';
 
 export const doesEntityContainSearchTerm = (
-  entity: ShareEntity,
+  entity: { name: string },
   searchTerm: string,
 ) => {
-  return entity.name.toLowerCase().includes(searchTerm.toLowerCase());
+  return entity.name
+    .toLowerCase()
+    .trim()
+    .includes(searchTerm.toLowerCase().trim());
 };
+
+export const isHiddenEntity = (entity: { name: string }) =>
+  entity?.name?.startsWith('.');
+
+export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>
+  !searchTerm || doesEntityContainSearchTerm(entity, searchTerm);
 
 export const doesOpenAIEntityContainSearchTerm = (
   model: DialAIEntity,
@@ -45,7 +59,8 @@ export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
 
 export const MyItemFilter: EntityFilter<ShareEntity> = (item) =>
   item.folderId === getConversationRootId() ||
-  item.folderId === getPromptRootId(); // only my root items
+  item.folderId === getPromptRootId() ||
+  item.folderId === getFileRootId();
 
 export const SharedWithMeFilters: EntityFilters = {
   searchFilter: TrueFilter,
@@ -58,6 +73,7 @@ export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
 export const PublishedWithMeFilter: EntityFilters = {
   searchFilter: TrueFilter,
   sectionFilter: (item) => !!item.publishedWithMe,
+  versionFilter: (item, version) => item.publicationInfo?.version === version,
 };
 
 export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
@@ -100,3 +116,15 @@ export const getMyItemsFilters = (
 });
 
 export const defaultMyItemsFilters = getMyItemsFilters();
+
+export const getEntitySearchOptions = <T>(): IFuseOptions<T> => ({
+  keys: ['name', 'version'],
+  threshold: 0.2,
+  distance: 100,
+  minMatchCharLength: 1,
+  ignoreLocation: true,
+  useExtendedSearch: false,
+  findAllMatches: false,
+  isCaseSensitive: false,
+  includeScore: false,
+});

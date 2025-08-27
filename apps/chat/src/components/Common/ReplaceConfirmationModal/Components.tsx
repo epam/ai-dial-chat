@@ -4,32 +4,46 @@ import {
   ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { DialFile } from '@/src/types/files';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import {
-  MappedReplaceActions,
+  isPlaybackConversation,
+  isReplayConversation,
+} from '@/src/utils/app/conversation';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+
+import {
+  AdditionalItemData,
+  EntityType,
+  FeatureType,
   ReplaceOptions,
-} from '@/src/types/import-export';
+} from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/selectors';
 
-import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
-import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import { Select, SelectOption } from '../Select';
-import Tooltip from '../Tooltip';
+import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { Select, SelectOption } from '@/src/components/Common/Select';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { Checkbox } from '../Checkbox';
+
+import {
+  ConversationInfo,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 
 interface ReplaceSelectorProps {
   selectedOption: ReplaceOptions;
@@ -62,11 +76,12 @@ export const ReplaceSelector = ({
 
 interface EntityRowProps {
   children?: ReactElement;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   entityId: string;
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   entityRowClassNames?: string;
+  dataQA?: string;
 }
 
 export const EntityRow = ({
@@ -76,17 +91,10 @@ export const EntityRow = ({
   additionalItemData,
   onEvent,
   entityRowClassNames,
+  dataQA,
 }: EntityRowProps) => {
   const [selectedOption, setSelectedOption] = useState<ReplaceOptions>(
     ReplaceOptions.Postfix,
-  );
-
-  const mappedActions = useMemo(
-    () =>
-      additionalItemData &&
-      (additionalItemData as { mappedActions: MappedReplaceActions })
-        .mappedActions,
-    [additionalItemData],
   );
 
   const onOptionChangeHandler = useCallback(
@@ -99,10 +107,11 @@ export const EntityRow = ({
   );
 
   useEffect(() => {
-    setSelectedOption(() =>
-      mappedActions ? mappedActions[entityId] : ReplaceOptions.Postfix,
+    setSelectedOption(
+      () =>
+        additionalItemData?.mappedActions?.[entityId] ?? ReplaceOptions.Postfix,
     );
-  }, [additionalItemData, mappedActions, entityId]);
+  }, [additionalItemData, additionalItemData?.mappedActions, entityId]);
 
   return (
     <div
@@ -111,11 +120,12 @@ export const EntityRow = ({
         entityRowClassNames,
       )}
       style={{
-        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+        paddingLeft: (level && `${level * 24 + 16}px`) || '0.875rem',
       }}
+      data-qa={dataQA}
     >
       {children}
-      {!!mappedActions && (
+      {!!additionalItemData?.mappedActions && (
         <ReplaceSelector
           selectedOption={selectedOption}
           onOptionChangeHandler={onOptionChangeHandler}
@@ -127,69 +137,90 @@ export const EntityRow = ({
 
 interface FeatureContainerProps {
   children: ReactNode | ReactNode[];
-  selectorGroup?: string;
+  containerClassNames?: string;
 }
-const FeatureContainer = ({ children }: FeatureContainerProps) => (
-  <span className="flex w-2/3 flex-row items-center gap-2">{children}</span>
+const FeatureContainer = ({
+  children,
+  containerClassNames,
+}: FeatureContainerProps) => (
+  <span
+    className={classNames(
+      'flex w-2/3 flex-row items-center gap-2',
+      containerClassNames,
+    )}
+  >
+    {children}
+  </span>
 );
 
 interface ConversationViewProps {
   item: ConversationInfo;
   onSelect?: (ids: string[]) => void;
   isChosen?: boolean;
+  featureContainerClassNames?: string;
 }
 
 const ConversationView = ({
   item: conversation,
   onSelect,
   isChosen,
+  featureContainerClassNames,
 }: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const isReplay = isReplayConversation(conversation);
+  const isPlayback = isPlaybackConversation(conversation);
+
+  const handleOnSelect = useCallback(() => {
+    if (onSelect) {
+      onSelect([conversation.id]);
+    }
+  }, [onSelect, conversation.id]);
 
   return (
-    <FeatureContainer>
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
-        <div className="relative flex size-[18px] shrink-0">
-          <input
-            className="checkbox peer size-[18px] bg-layer-3"
-            type="checkbox"
-            checked={isChosen}
-            onChange={() => {
-              onSelect([conversation.id]);
-            }}
-          />
-          <IconCheck
-            size={18}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
+          <Checkbox checked={isChosen} onChange={handleOnSelect} />
         </div>
       )}
-      {conversation.isReplay && (
-        <span className="flex shrink-0">
-          <ReplayAsIsIcon size={18} />
-        </span>
-      )}
-      {conversation.isPlayback && (
-        <span className="flex shrink-0">
-          <PlaybackIcon size={18} />
-        </span>
-      )}
-      {!conversation.isReplay && !conversation.isPlayback && (
-        <ModelIcon
-          size={18}
-          entityId={conversation.model.id}
-          entity={modelsMap[conversation.model.id]}
-        />
-      )}
+      <ShareIcon
+        featureType={FeatureType.Chat}
+        isHighlighted={false}
+        iconClassName="bg-layer-2"
+        iconWrapperClassName="!bg-layer-2"
+        {...conversation}
+      >
+        {isReplay && (
+          <span className="flex shrink-0">
+            <ReplayAsIsIcon size={18} />
+          </span>
+        )}
+        {isPlayback && (
+          <span className="flex shrink-0">
+            <PlaybackIcon size={18} />
+          </span>
+        )}
+        {!isReplay && !isPlayback && (
+          <ModelIcon
+            size={18}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
+          />
+        )}
+      </ShareIcon>
       <Tooltip
         tooltip={conversation.name}
-        contentClassName="max-w-[400px] break-all"
+        contentClassName="break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
           conversation.publicationInfo?.isNotExist && 'text-secondary',
           conversation.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
+        dataQa="entity-name"
       >
         {conversation.name}
       </Tooltip>
@@ -197,10 +228,10 @@ const ConversationView = ({
   );
 };
 
-export interface ConversationRowProps extends ConversationViewProps {
+interface ConversationRowProps extends ConversationViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -212,6 +243,7 @@ export const ConversationRow = ({
   itemComponentClassNames,
   onSelect,
   isChosen,
+  featureContainerClassNames,
 }: ConversationRowProps) => {
   return (
     <EntityRow
@@ -220,8 +252,10 @@ export const ConversationRow = ({
       additionalItemData={additionalItemData}
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
+      dataQA="conversation"
     >
       <ConversationView
+        featureContainerClassNames={featureContainerClassNames}
         isChosen={isChosen}
         onSelect={onSelect}
         item={conversation}
@@ -234,17 +268,27 @@ interface PromptViewProps {
   item: Prompt;
   onSelect?: (ids: string[]) => void;
   isChosen?: boolean;
+  featureContainerClassNames?: string;
 }
 
-const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
+const PromptView = ({
+  item: prompt,
+  onSelect,
+  isChosen,
+  featureContainerClassNames,
+}: PromptViewProps) => {
   return (
-    <FeatureContainer>
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
-        <div className="relative flex size-[18px] shrink-0">
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
             checked={isChosen}
+            data-qa={isChosen ? 'checked' : 'unchecked'}
             onChange={() => {
               onSelect([prompt.id]);
             }}
@@ -260,13 +304,14 @@ const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
       </span>
       <Tooltip
         tooltip={prompt.name}
-        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        contentClassName="break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
           prompt.publicationInfo?.isNotExist && 'text-secondary',
           prompt.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
+        dataQa="entity-name"
       >
         {prompt.name}
       </Tooltip>
@@ -274,10 +319,10 @@ const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
   );
 };
 
-export interface PromptRowProps extends PromptViewProps {
+interface PromptRowProps extends PromptViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -297,6 +342,7 @@ export const PromptsRow = ({
       additionalItemData={additionalItemData}
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
+      dataQA="prompt"
     >
       <PromptView isChosen={isChosen} onSelect={onSelect} item={prompt} />
     </EntityRow>
@@ -307,17 +353,27 @@ interface FileViewProps {
   item: DialFile;
   onSelect?: (ids: string[]) => void;
   isChosen?: boolean;
+  featureContainerClassNames?: string;
 }
 
-const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
+const FileView = ({
+  item: file,
+  onSelect,
+  isChosen,
+  featureContainerClassNames,
+}: FileViewProps) => {
   return (
-    <FeatureContainer>
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
-        <div className="relative flex size-[18px] shrink-0">
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
             checked={isChosen}
+            data-qa={isChosen ? 'checked' : 'unchecked'}
             onChange={() => {
               onSelect([file.id]);
             }}
@@ -333,7 +389,7 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
       </span>
       <Tooltip
         tooltip={file.name}
-        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        contentClassName="break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
           file.publicationInfo?.isNotExist &&
@@ -341,6 +397,7 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
           file.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
+        dataQa="entity-name"
       >
         {file.name}
       </Tooltip>
@@ -348,10 +405,10 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
   );
 };
 
-export interface FileRowProps extends FileViewProps {
+interface FileRowProps extends FileViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -362,6 +419,7 @@ export const FilesRow = ({
   onEvent,
   itemComponentClassNames,
   isChosen,
+  featureContainerClassNames,
   onSelect,
 }: FileRowProps) => {
   return (
@@ -371,8 +429,111 @@ export const FilesRow = ({
       additionalItemData={additionalItemData}
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
+      dataQA="file"
     >
-      <FileView onSelect={onSelect} isChosen={isChosen} item={item} />
+      <FileView
+        featureContainerClassNames={featureContainerClassNames}
+        onSelect={onSelect}
+        isChosen={isChosen}
+        item={item}
+      />
+    </EntityRow>
+  );
+};
+
+interface ApplicationViewProps {
+  item: ShareEntity;
+  isChosen?: boolean;
+  featureContainerClassNames?: string;
+  onSelect?: (ids: string[]) => void;
+}
+
+interface ApplicationRowProps extends ApplicationViewProps {
+  level?: number;
+  additionalItemData?: Record<string, unknown>;
+  itemComponentClassNames?: string;
+  onEvent?: (eventId: ReplaceOptions, data: string) => void;
+}
+
+const ApplicationView = ({
+  item: application,
+  isChosen,
+  featureContainerClassNames,
+  onSelect,
+}: ApplicationViewProps) => {
+  const entity = {
+    ...application,
+    folderId: getFolderIdFromEntityId(application.name),
+    type: EntityType.Application,
+  };
+
+  return (
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
+      {onSelect && (
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            data-qa={isChosen ? 'checked' : 'unchecked'}
+            onChange={() => {
+              onSelect([application.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
+      <span className="flex shrink-0">
+        <ModelIcon entity={entity} entityId={application.id} size={18} />
+      </span>
+      <Tooltip
+        tooltip={application.name}
+        contentClassName="break-all"
+        triggerClassName={classNames(
+          'truncate whitespace-pre',
+          application.publicationInfo?.isNotExist && 'text-secondary',
+          application.publicationInfo?.action === PublishActions.DELETE &&
+            'text-error',
+        )}
+        dataQa="entity-name"
+      >
+        {application.name}
+      </Tooltip>
+    </FeatureContainer>
+  );
+};
+
+export const ApplicationRow = ({
+  level,
+  item: application,
+  additionalItemData,
+  itemComponentClassNames,
+  isChosen,
+  featureContainerClassNames,
+  onEvent,
+  onSelect,
+}: ApplicationRowProps) => {
+  return (
+    <EntityRow
+      entityId={application.id}
+      level={level}
+      additionalItemData={additionalItemData}
+      onEvent={onEvent}
+      entityRowClassNames={itemComponentClassNames}
+      dataQA="application"
+    >
+      <ApplicationView
+        isChosen={isChosen}
+        featureContainerClassNames={featureContainerClassNames}
+        onSelect={onSelect}
+        item={application}
+      />
     </EntityRow>
   );
 };

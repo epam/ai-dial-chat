@@ -1,7 +1,6 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -13,57 +12,62 @@ let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels();
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
   'Selected settings are saved if to switch from Model1 to Model2',
   async ({
     dialHomePage,
-    entitySettings,
+    agentSettings,
+    conversationSettingsModal,
     temperatureSlider,
     addons,
     setTestIds,
-    talkToSelector,
-    talkToRecentGroupEntities,
+    talkToAgentDialog,
+    chat,
+    agentSettingAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1046');
     const randomModel = GeneratorUtil.randomArrayElement(
       models.filter(
-        (m) => m.id !== defaultModel.id && m.features?.systemPrompt === true,
+        (m) =>
+          m.id !== defaultModel.id &&
+          ModelsUtil.doesModelAllowSystemPrompt(m) &&
+          ModelsUtil.doesModelAllowTemperature(m),
       ),
     );
-    await localStorageManager.setRecentModelsIds(randomModel);
+    await localStorageManager.setRecentModelsIdsAndUseLastModel(
+      defaultModel,
+      randomModel,
+    );
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
 
-    await talkToSelector.selectModel(randomModel);
-    await talkToRecentGroupEntities.waitForGroupEntitySelected(randomModel);
-    await entitySettings.setSystemPrompt(sysPrompt);
-    await temperatureSlider.setTemperature(temp);
+    await chat.configureSettingsButton.click();
+    if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {
+      await agentSettings.setSystemPrompt(sysPrompt);
+    }
+    if (ModelsUtil.doesModelAllowTemperature(defaultModel)) {
+      await temperatureSlider.setTemperature(temp);
+    }
+    await conversationSettingsModal.applyChangesButton.click();
 
-    const modelBorderColors = await talkToRecentGroupEntities
-      .groupEntity(randomModel)
-      .getAllBorderColors();
-    Object.values(modelBorderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
-        expect
-          .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-          .toBe(Colors.controlsBackgroundAccent);
-      });
-    });
+    await chat.changeAgentButton.click();
+    await talkToAgentDialog.selectAgent(randomModel);
 
-    const systemPromptVisible = await entitySettings.getSystemPrompt();
-    expect
-      .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
-      .toBe(sysPrompt);
-
-    const temperature = await temperatureSlider.getTemperature();
-    expect
-      .soft(temperature, ExpectedMessages.temperatureIsValid)
-      .toBe(temp.toString());
-
+    await chat.configureSettingsButton.click();
+    if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {
+      await agentSettingAssertion.assertSystemPromptValue(sysPrompt);
+    }
+    if (ModelsUtil.doesModelAllowTemperature(defaultModel)) {
+      const temperature = await temperatureSlider.getTemperature();
+      expect
+        .soft(temperature, ExpectedMessages.temperatureIsValid)
+        .toBe(temp.toString());
+    }
     const selectedAddons = await addons.getSelectedAddons();
     expect
       .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
@@ -73,7 +77,14 @@ dialTest(
 
 dialTest(
   'System prompt contains combinations with :',
-  async ({ dialHomePage, entitySettings, setTestIds }) => {
+  async ({
+    dialHomePage,
+    agentSettings,
+    agentSettingAssertion,
+    chat,
+    setTestIds,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-1084');
     const prompts = [
       'test:',
@@ -82,15 +93,14 @@ dialTest(
       ' test:',
       'test test. test:',
     ];
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
+    await chat.configureSettingsButton.click();
     for (const prompt of prompts) {
-      await entitySettings.setSystemPrompt(prompt);
-      const systemPrompt = await entitySettings.getSystemPrompt();
-      expect
-        .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-        .toBe(prompt);
-      await entitySettings.clearSystemPrompt();
+      await agentSettings.setSystemPrompt(prompt);
+      await agentSettingAssertion.assertSystemPromptValue(prompt);
+      await agentSettings.clearSystemPrompt();
     }
   },
 );

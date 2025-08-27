@@ -8,11 +8,12 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     setTestIds,
     chatMessages,
     chatMessagesAssertion,
+    conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1757');
     let conversation: Conversation;
@@ -23,11 +24,11 @@ dialTest(
       'Prepare conversation with 3+ stages in response',
       async () => {
         conversation = conversationData.prepareConversationWithStagesInResponse(
-          ModelsUtil.getDefaultModel()!,
+          ModelsUtil.getDefaultAgent()!,
           stagesCount,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -36,6 +37,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         await chatMessagesAssertion.assertMessageStagesCount(
           2,
           maxDisplayedStagesCount,

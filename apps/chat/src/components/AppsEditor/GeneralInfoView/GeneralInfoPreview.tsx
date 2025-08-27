@@ -1,0 +1,122 @@
+import { IconArrowsMinimize } from '@tabler/icons-react';
+import { useCallback, useMemo, useState } from 'react';
+
+import { useRouter } from 'next/router';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { fakeCallback } from '@/src/utils/app/common';
+
+import { DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/selectors';
+
+import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
+import { ApplicationDetailsContent } from '@/src/components/Marketplace/ApplicationDetails/ApplicationContent';
+import { ApplicationDetailsHeader } from '@/src/components/Marketplace/ApplicationDetails/ApplicationHeader';
+
+interface GeneralInfoPreviewProps {
+  entity: DialAIEntityModel;
+  onClosePreview: () => void;
+}
+
+export const GeneralInfoPreview = ({
+  entity,
+  onClosePreview,
+}: GeneralInfoPreviewProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const router = useRouter();
+  const { publicationUrl } = router.query;
+
+  const publication = useAppSelector((state) =>
+    PublicationSelectors.selectPublicationByUrl(
+      state,
+      (publicationUrl ?? '') as string,
+    ),
+  );
+
+  const [isDetailed, setIsDetailed] = useState(true);
+
+  const handleSwitch = useCallback(() => {
+    setIsDetailed((p) => !p);
+  }, []);
+
+  const cardEntity = useMemo(() => {
+    if (publication) {
+      return {
+        ...entity,
+        owner: publication.displayAuthor ?? publication.author,
+        createdAt: publication.createdAt,
+      };
+    }
+
+    return entity;
+  }, [entity, publication]);
+
+  return (
+    <div
+      className="flex h-full flex-col px-5 py-4 xl:p-6"
+      data-qa="app-preview-general-info-full-container"
+    >
+      <div className="hidden max-w-full items-center justify-between md:flex xl:justify-end">
+        <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary xl:hidden">
+          {t('Preview')}
+        </span>
+        <div className="w-min border-r border-secondary pr-3 xl:border-none xl:pr-0">
+          <ToggleSwitchLabeled
+            isOn={isDetailed}
+            handleSwitch={handleSwitch}
+            labelText="Detailed"
+            isLabelOnRight
+            switchOnText={t('ON')}
+            switchOFFText={t('OFF')}
+          />
+        </div>
+        <button
+          className="hidden pl-3 text-secondary hover:text-accent-primary max-xl:flex"
+          onClick={onClosePreview}
+        >
+          <Tooltip tooltip={t('Hide preview')}>
+            <IconArrowsMinimize size={24} />
+          </Tooltip>
+        </button>
+      </div>
+      <div className="flex flex-1 items-center justify-center">
+        <div
+          className="w-full max-w-[700px] xl:max-w-[720px]"
+          data-qa="app-preview-general-info"
+        >
+          {isDetailed ? (
+            <div className="flex w-full flex-col divide-y divide-tertiary rounded bg-layer-3">
+              <ApplicationDetailsHeader entity={cardEntity} isPreview />
+              <ApplicationDetailsContent entity={cardEntity} />
+            </div>
+          ) : (
+            <ApplicationCard
+              entity={cardEntity}
+              onClick={fakeCallback}
+              isPreview
+              onDelete={fakeCallback}
+              onPublish={fakeCallback}
+            />
+          )}
+        </div>
+      </div>
+      <div className="flex md:hidden">
+        <ToggleSwitchLabeled
+          isOn={isDetailed}
+          handleSwitch={handleSwitch}
+          labelText="Detailed"
+          isLabelOnRight
+          switchOnText={t('ON')}
+          switchOFFText={t('OFF')}
+        />
+      </div>
+    </div>
+  );
+};

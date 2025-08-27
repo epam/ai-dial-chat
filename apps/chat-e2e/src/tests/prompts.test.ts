@@ -2,108 +2,125 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  CollapsedSections,
+  EditPromptFormFields,
   ExpectedConstants,
   ExpectedMessages,
+  ExpectedPromptModalConst,
   MenuOptions,
 } from '@/src/testData';
-import { Colors, Cursors } from '@/src/ui/domData';
+import { Cursors, StyleValues, ThemeColorAttributes } from '@/src/ui/domData';
+import { DateUtil, GeneratorUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 const newName = 'test prompt';
-const newDescr = 'test description';
+const newDescr = 'test description\nsecond line\nthird line';
 const newValue = 'what is {{}}';
 
 dialTest(
-  'Create new prompt',
+  'Create new prompt.\n' +
+    'Prompt name can not be empty.\n' +
+    'Prompt body can not be empty.\n' +
+    '[View prompt] View prompt modal appears after prompt creation.\n' +
+    '[View prompt] Description, body is shown with line breaks.\n' +
+    '[View prompt] Long prompt name is not truncated but is shown in lines.\n' +
+    `View prompt: 'Use prompt' button is enabled for just created new prompt if there is a chat with available input field selected.\n` +
+    `View prompt: on 'Use prompt' button click the modal is closed, the prompt is entered to the input user field. Prompt is without parameters.`,
   async ({
     dialHomePage,
     promptBar,
-    prompts,
-    conversationSettings,
     promptModalDialog,
     setTestIds,
+    header,
+    baseAssertion,
+    promptPreviewModal,
+    promptModalAssertion,
+    promptPreviewModalAssertion,
+    promptAssertion,
+    sendMessageAssertion,
   }) => {
-    setTestIds('EPMRTC-945', 'EPMRTC-956', 'EPMRTC-1452');
+    setTestIds(
+      'EPMRTC-945',
+      'EPMRTC-956',
+      'EPMRTC-1452',
+      'EPMRTC-6141',
+      'EPMRTC-6113',
+      'EPMRTC-6114',
+      'EPMRTC-6043',
+      'EPMRTC-6044',
+    );
+    const expectedValidFieldBorderColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
+
     await dialTest.step(
       'Hover over "New prompt" button and verify cursor type and color highlight.\n' +
         'Prompt name can not be empty.\n' +
         'Prompt body can not be empty',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await conversationSettings.waitForState();
-        await promptBar.hoverOverNewEntity();
-        const newPromptCursor = await promptBar.getNewEntityCursor();
-        expect
-          .soft(
-            newPromptCursor[0],
-            ExpectedMessages.newPromptButtonCursorIsPointer,
-          )
-          .toBe(Cursors.pointer);
-
-        const newPromptColor = await promptBar.getNewEntityBackgroundColor();
-        expect
-          .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
-          .toBe(Colors.backgroundAccentTertiary);
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await header.rightPanelToggle.click();
+        await baseAssertion.assertElementState(promptBar, 'visible');
+        await promptBar.newEntityButton.hoverOver();
+        await baseAssertion.assertElementCursor(
+          promptBar.newEntityButton,
+          Cursors.pointer,
+        );
+        const expectedColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textPrimary,
+        );
+        await baseAssertion.assertElementColor(
+          promptBar.newEntityButton,
+          expectedColor,
+        );
+        await baseAssertion.assertElementBorderColors(
+          promptBar.newEntityButton,
+          expectedColor,
+        );
       },
     );
 
     await dialTest.step(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
-        await promptBar.createNewPrompt();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptNameLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            await promptModalDialog.isFieldHasAsterisk(
-              ExpectedConstants.promptContentLabel,
-            ),
-            ExpectedMessages.fieldIsRequired,
-          )
-          .toBeTruthy();
+        await promptBar.createNewEntity();
+        await baseAssertion.assertElementText(
+          promptModalDialog.title,
+          ExpectedPromptModalConst.createPromptModalTitle,
+        );
+        await baseAssertion.assertElementState(
+          promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
+        await baseAssertion.assertElementState(
+          promptModalDialog.getFieldAsterisk(
+            EditPromptFormFields.promptContent,
+          ),
+          'visible',
+          ExpectedMessages.fieldIsRequired,
+        );
       },
     );
 
     await dialTest.step(
-      'Clear Name field and verify error message is shown, field has red border, Save button is disabled',
+      'Set Description field, clear Name field and verify error message is shown, field has red border, Save button is disabled',
       async () => {
+        await promptModalDialog.setField(
+          promptModalDialog.description,
+          newDescr,
+        );
         await promptModalDialog.setField(promptModalDialog.name, '');
         await promptModalDialog.description.click();
-        const nameBorderColors =
-          await promptModalDialog.name.getAllBorderColors();
-        Object.values(nameBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertNameFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -112,38 +129,14 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.name, '   ');
         await promptModalDialog.description.click();
-        const nameBorderColors =
-          await promptModalDialog.name.getAllBorderColors();
-        Object.values(nameBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.getName(),
-            ExpectedMessages.promptNameUpdated,
-          )
-          .toBe('');
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertNameFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertNameFieldIsEmpty();
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -151,19 +144,14 @@ dialTest(
       'Type value in Name field and verify error message disappears, field has blue border, Save button is enabled',
       async () => {
         await promptModalDialog.setField(promptModalDialog.name, newName);
-        const nameBorderColors =
-          await promptModalDialog.name.getAllBorderColors();
-        Object.values(nameBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithBlue)
-              .toBe(Colors.controlsBackgroundAccent);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor({ state: 'hidden' });
+        await promptModalAssertion.assertElementBorderColors(
+          promptModalDialog.name,
+          expectedValidFieldBorderColor,
+        );
+        await promptModalAssertion.assertElementState(
+          promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
+          'hidden',
+        );
       },
     );
 
@@ -172,32 +160,13 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.prompt, '');
         await promptModalDialog.description.click();
-        const promptBorderColors =
-          await promptModalDialog.prompt.getAllBorderColors();
-        Object.values(promptBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertPromptFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -206,38 +175,17 @@ dialTest(
       async () => {
         await promptModalDialog.setField(promptModalDialog.prompt, '   ');
         await promptModalDialog.description.click();
-        const promptBorderColors =
-          await promptModalDialog.prompt.getAllBorderColors();
-        Object.values(promptBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
-              .toBe(Colors.textError);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor();
-        await expect
-          .soft(
-            promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
-            ExpectedMessages.fieldIsHighlightedWithRed,
-          )
-          .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
-
-        expect
-          .soft(
-            await promptModalDialog.getPrompt(),
-            ExpectedMessages.promptValueUpdated,
-          )
-          .toBe('');
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeFalsy();
+        await promptModalAssertion.assertPromptFieldIsInvalid(
+          ExpectedConstants.requiredFieldErrorMessage,
+        );
+        await promptModalAssertion.assertElementText(
+          promptModalDialog.prompt,
+          '',
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'disabled',
+        );
       },
     );
 
@@ -245,79 +193,146 @@ dialTest(
       'Type value in Prompt field and verify error message disappears, field has blue border, Save button is enabled',
       async () => {
         await promptModalDialog.setField(promptModalDialog.prompt, newValue);
-        const promptBorderColors =
-          await promptModalDialog.prompt.getAllBorderColors();
-        Object.values(promptBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithBlue)
-              .toBe(Colors.controlsBackgroundAccent);
-          });
-        });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor({ state: 'hidden' });
-
-        expect
-          .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
-            ExpectedMessages.buttonIsEnabled,
-          )
-          .toBeTruthy();
+        await promptModalAssertion.assertElementBorderColors(
+          promptModalDialog.prompt,
+          expectedValidFieldBorderColor,
+        );
+        await promptModalAssertion.assertElementState(
+          promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
+          'hidden',
+        );
+        await promptModalAssertion.assertElementActionabilityState(
+          promptModalDialog.saveButton,
+          'enabled',
+        );
       },
     );
 
     await dialTest.step(
-      'Set Description field value, click Save and verify prompt is created',
+      'Click Save and verify prompt is created, prompt view modal is opened',
       async () => {
-        await promptModalDialog.setField(
-          promptModalDialog.description,
-          newDescr,
-        );
         await promptModalDialog.saveButton.click();
-        await prompts.getEntityByName(newName).waitFor();
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
+        await promptAssertion.assertEntityState({ name: newName }, 'visible');
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal,
+          'visible',
+        );
+        await promptPreviewModalAssertion.assertPromptName(newName);
+        await promptPreviewModalAssertion.assertPromptDescription(newDescr);
+        await promptPreviewModalAssertion.assertPromptContent(newValue);
+        await promptPreviewModalAssertion.assertElementActionabilityState(
+          promptPreviewModal.usePromptButton,
+          'enabled',
+        );
+        await promptPreviewModalAssertion.assertElementBackgroundColors(
+          promptPreviewModal.usePromptButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+        );
+        await promptPreviewModalAssertion.assertElementTextWrap(
+          promptPreviewModal.promptName,
+          StyleValues.breakWord,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Hover over "Use prompt" button and verify its color changes',
+      async () => {
+        await promptPreviewModal.usePromptButton.hoverOver();
+        await promptPreviewModalAssertion.assertElementBackgroundColors(
+          promptPreviewModal.usePromptButton,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.controlsBgAccentHover,
+          ),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Use prompt" button and verify modal is closed, prompt content is set in the request field',
+      async () => {
+        await promptPreviewModal.usePromptButton.click();
+        await promptPreviewModalAssertion.assertElementState(
+          promptPreviewModal.usePromptButton,
+          'hidden',
+        );
+        await sendMessageAssertion.assertMessageValue(newValue);
       },
     );
   },
 );
 
 dialTest(
-  'Prompt menu',
+  'Prompt menu.\n' +
+    'Info option in context menu in side panel.\n' +
+    'Metadata for Created by me prompt from Recent section.\n' +
+    'Date format depends on local settings',
   async ({
     dialHomePage,
     promptData,
     prompts,
     dataInjector,
-    promptDropdownMenu,
     setTestIds,
+    localStorageManager,
+    promptDropdownMenu,
+    informationModal,
+    informationModalAssertion,
+    promptDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-952');
-    const prompt = promptData.prepareDefaultPrompt();
-    await dataInjector.createPrompts([prompt]);
+    setTestIds('EPMRTC-952', 'EPMRTC-5562', 'EPMRTC-5564', 'EPMRTC-5566');
+    const currentDate = DateUtil.getCurrentLocalDate();
+    let prompt: Prompt;
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await prompts.openEntityDropdownMenu(prompt.name);
+    await dialTest.step('Create a new prompt', async () => {
+      prompt = promptData.prepareDefaultPrompt();
+      await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setShowSideBarPanels();
+    });
 
-    const menuOptions = await promptDropdownMenu.getAllMenuOptions();
-    expect
-      .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([
-        MenuOptions.select,
-        MenuOptions.edit,
-        MenuOptions.duplicate,
-        MenuOptions.export,
-        MenuOptions.moveTo,
-        MenuOptions.share,
-        MenuOptions.publish,
-        MenuOptions.delete,
-      ]);
+    await dialTest.step(
+      'Open prompt dropdown menu and verify available options',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.use,
+          MenuOptions.view,
+          MenuOptions.select,
+          MenuOptions.edit,
+          MenuOptions.duplicate,
+          MenuOptions.export,
+          MenuOptions.moveTo,
+          MenuOptions.share,
+          MenuOptions.publish,
+          MenuOptions.info,
+          MenuOptions.delete,
+        ]);
+      },
+    );
+
+    await dialTest.step(
+      'Select "Info" option and verify modal data',
+      async () => {
+        await promptDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          lastUpdatedDate: currentDate,
+        });
+        await informationModal.cancelButton.click();
+      },
+    );
   },
 );
 
 dialTest(
-  'Edit prompt. Cancel',
+  'Edit prompt. Cancel.\n' + 'Edit prompt. Click on X and Save',
   async ({
     dialHomePage,
     promptData,
@@ -325,34 +340,75 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     promptModalDialog,
-    promptBar,
+    promptModalAssertion,
     setTestIds,
+    localStorageManager,
+    confirmationDialog,
+    promptAssertion,
+    confirmationDialogAssertion,
+    promptPreviewModalAssertion,
   }) => {
-    setTestIds('EPMRTC-953');
+    setTestIds('EPMRTC-953', 'EPMRTC-1272');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await prompts.openEntityDropdownMenu(prompt.name);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
-    // eslint-disable-next-line playwright/no-force-option
-    await promptBar.click({ force: true });
+    await dialTest.step(
+      'Update prompt details, click on Close button and verify changes are not saves',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
 
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
+        await promptModalDialog.closeButton.click();
+        await confirmationDialog.cancelButton.click();
+        await promptModalAssertion.assertElementState(
+          promptModalDialog,
+          'hidden',
+        );
+        await promptAssertion.assertEntityState(
+          { name: prompt.name },
+          'visible',
+        );
+      },
+    );
 
-    await expect
-      .soft(
-        prompts.getEntityByName(prompt.name),
-        ExpectedMessages.promptNotUpdated,
-      )
-      .toBeVisible();
+    await dialTest.step(
+      'Update prompt details, click on X button and verify confirmation popup is displayed',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
+        await promptModalDialog.closeButton.click();
+        await confirmationDialogAssertion.assertElementState(
+          confirmationDialog,
+          'visible',
+        );
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.promptEditConfirmationDialogTitle,
+        );
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.promptEditConfirmationDialogMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Save button and verify changes are applied',
+      async () => {
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await promptModalAssertion.assertElementState(
+          promptModalDialog,
+          'hidden',
+        );
+        await promptPreviewModalAssertion.assertPromptName(newName);
+        await promptPreviewModalAssertion.assertPromptDescription(newDescr);
+        await promptPreviewModalAssertion.assertPromptContent(newValue);
+        await promptAssertion.assertEntityState({ name: newName }, 'visible');
+      },
+    );
   },
 );
 
@@ -366,10 +422,15 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     setTestIds,
+    localStorageManager,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
+    promptAssertion,
   }) => {
     setTestIds('EPMRTC-954');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -380,43 +441,31 @@ dialTest(
       newDescr,
       newValue,
     );
-
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
-
-    await expect
-      .soft(prompts.getEntityByName(newName), ExpectedMessages.promptNotUpdated)
-      .toBeVisible();
-
-    await prompts.openEntityDropdownMenu(newName);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    expect
-      .soft(
-        await promptModalDialog.getName(),
-        ExpectedMessages.promptNameUpdated,
-      )
-      .toBe(newName);
-    expect
-      .soft(
-        await promptModalDialog.getDescription(),
-        ExpectedMessages.promptDescriptionUpdated,
-      )
-      .toBe(newDescr);
-    expect
-      .soft(
-        await promptModalDialog.getPrompt(),
-        ExpectedMessages.promptValueUpdated,
-      )
-      .toBe(newValue);
+    await promptPreviewModalAssertion.assertElementState(
+      promptPreviewModal,
+      'visible',
+    );
+    await promptAssertion.assertEntityState({ name: newName }, 'visible');
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptName,
+      newName,
+      ExpectedMessages.promptNameUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptDescription,
+      newDescr,
+      ExpectedMessages.promptDescriptionUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptContent,
+      newValue,
+      ExpectedMessages.promptValueUpdated,
+    );
   },
 );
 
 dialTest(
-  'Edit prompt on Enter.\n' + 'Special characters are allowed in prompt name',
+  'Edit prompt on Enter.\n' + 'Prompt name: allowed special characters',
   async ({
     dialHomePage,
     promptData,
@@ -425,10 +474,15 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     setTestIds,
+    localStorageManager,
+    promptPreviewModal,
+    promptPreviewModalAssertion,
+    promptAssertion,
   }) => {
     setTestIds('EPMRTC-955', 'EPMRTC-1278');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -439,41 +493,29 @@ dialTest(
       newDescr,
       newValue,
     );
-
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
-
-    await expect
-      .soft(
-        prompts.getEntityByName(ExpectedConstants.allowedSpecialChars),
-        ExpectedMessages.promptNotUpdated,
-      )
-      .toBeVisible();
-
-    await prompts.openEntityDropdownMenu(ExpectedConstants.allowedSpecialChars);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    expect
-      .soft(
-        await promptModalDialog.getName(),
-        ExpectedMessages.promptNameUpdated,
-      )
-      .toBe(ExpectedConstants.allowedSpecialChars);
-    expect
-      .soft(
-        await promptModalDialog.getDescription(),
-        ExpectedMessages.promptDescriptionUpdated,
-      )
-      .toBe(newDescr);
-    expect
-      .soft(
-        await promptModalDialog.getPrompt(),
-        ExpectedMessages.promptValueUpdated,
-      )
-      .toBe(newValue);
+    await promptPreviewModalAssertion.assertElementState(
+      promptPreviewModal,
+      'visible',
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptName,
+      ExpectedConstants.allowedSpecialChars,
+      ExpectedMessages.promptNameUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptDescription,
+      newDescr,
+      ExpectedMessages.promptDescriptionUpdated,
+    );
+    await promptPreviewModalAssertion.assertElementText(
+      promptPreviewModal.promptContent,
+      newValue,
+      ExpectedMessages.promptValueUpdated,
+    );
+    await promptAssertion.assertEntityState(
+      { name: ExpectedConstants.allowedSpecialChars },
+      'visible',
+    );
   },
 );
 
@@ -487,10 +529,12 @@ dialTest(
     promptDropdownMenu,
     setTestIds,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-969');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -516,10 +560,12 @@ dialTest(
     promptDropdownMenu,
     setTestIds,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-970');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -549,6 +595,7 @@ dialTest(
     confirmationDialog,
     prompts,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-971');
     const singlePrompt = promptData.prepareDefaultPrompt();
@@ -568,6 +615,7 @@ dialTest(
       [singleConversation, ...conversationInFolder.conversations],
       conversationInFolder.folders,
     );
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -649,6 +697,7 @@ dialTest(
     conversationData.resetData();
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -661,6 +710,10 @@ dialTest(
         singleConversation,
         ...conversationInFolder.conversations,
       ]);
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
     } else {
       await dataInjector.updatePrompts(
         [singlePrompt, ...promptInFolder.prompts],
@@ -768,10 +821,11 @@ dialTest(
 
 dialTest(
   `[UI] Delete all prompts button doesn't exist if not prompts are created`,
-  async ({ dialHomePage, promptBar, setTestIds }) => {
+  async ({ dialHomePage, promptBar, setTestIds, localStorageManager }) => {
     setTestIds('EPMRTC-973');
+    await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
 
     await expect
       .soft(
@@ -795,6 +849,7 @@ dialTest(
     variableModalAssertion,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1012', 'EPMRTC-2007', 'EPMRTC-2911');
     const promptDescription = 'Prompt description';
@@ -808,6 +863,7 @@ dialTest(
       promptDescription,
     );
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -845,6 +901,7 @@ dialTest(
     variableModalDialog,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1013');
     const promptContent = (first: string, second: string) =>
@@ -855,6 +912,7 @@ dialTest(
       promptContent(`{{${aVariable}}}`, `{{${bVariable}}}`),
     );
     await dataInjector.createPrompts([prompt]);
+    await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -885,9 +943,11 @@ dialTest(
     dataInjector,
     prompts,
     promptData,
-    promptBar,
     promptBarSearch,
+    promptBar,
+    promptBarAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1173');
     let firstPrompt: Prompt;
@@ -896,7 +956,7 @@ dialTest(
     let fourthPrompt: Prompt;
     let fifthPrompt: Prompt;
     const promptContent = 'Prompt search test';
-    const notMatchingSearchTerm = 'abc';
+    const notMatchingSearchTerm = GeneratorUtil.randomString(10);
     const searchTerm = 'test';
     const specialSymbolSearchTerm = '@';
 
@@ -910,7 +970,7 @@ dialTest(
       fourthPrompt = promptData.prepareDefaultPrompt();
       promptData.resetData();
       fifthPrompt = promptData.prepareDefaultPrompt(
-        'Prompt_!@$^&()_[]"\'.<>-`~',
+        `Prompt${ExpectedConstants.allowedSpecialChars}`,
       );
 
       await dataInjector.createPrompts([
@@ -920,21 +980,20 @@ dialTest(
         fourthPrompt,
         fifthPrompt,
       ]);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       'Type not matching search term and in "Search prompt.." field and verify no results found',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await promptBarSearch.setSearchValue(notMatchingSearchTerm);
-        const noResult =
-          await promptBar.noResultFoundIcon.getElementInnerContent();
-        expect
-          .soft(noResult, ExpectedMessages.noResultsFound)
-          .toBe(ExpectedConstants.noResults);
+        await promptBarAssertion.assertElementText(
+          promptBar.noResultFoundIcon,
+          ExpectedConstants.noResults,
+          ExpectedMessages.noResultsFound,
+        );
       },
     );
 

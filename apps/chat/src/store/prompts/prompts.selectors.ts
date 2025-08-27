@@ -1,173 +1,195 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
-  getChildAndCurrentFoldersById,
+  isSearchFilterMatched,
+  isSectionFilterMatched,
+  isVersionFilterMatched,
+} from '@/src/utils/app/common';
+import {
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
-  sortByName,
-  splitEntityId,
+  getPartialAndFullyChosenFolders,
+  isFolderEmpty,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
-  PublishedWithMeFilter,
   doesEntityContainSearchTerm,
   getMyItemsFilters,
+  isSearchTermMatched,
 } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
-import { ShareEntity } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+import { RootState } from '@/src/types/store';
+
+import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import {
   DEFAULT_FOLDER_NAME,
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
-import { RootState } from '../index';
-import { PromptsState } from './prompts.types';
+import { ShareEntity } from '@epam/ai-dial-shared';
 
-const rootSelector = (state: RootState): PromptsState => state.prompts;
+const rootSelector = (state: RootState) => state.prompts;
 
-export const selectPrompts = createSelector([rootSelector], (state) => {
-  return state.prompts;
-});
+const selectPrompts = (state: RootState) => rootSelector(state).prompts;
 
-export const selectFilteredPrompts = createSelector(
-  [
-    selectPrompts,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
-      ignoreSectionFilter,
-  ],
-  (prompts, filters, searchTerm?, ignoreSectionFilter?) => {
-    return prompts.filter(
-      (prompt) =>
-        (!searchTerm || doesEntityContainSearchTerm(prompt, searchTerm)) &&
-        (filters.searchFilter?.(prompt) ?? true) &&
-        (ignoreSectionFilter || (filters.sectionFilter?.(prompt) ?? true)),
-    );
-  },
-);
+const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
-export const selectPrompt = createSelector(
+const selectFilteredPrompts = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  ignoreFilters?: Partial<{
+    ignoreSectionFilter: boolean;
+    ignoreVersionFilter: boolean;
+  }>,
+) =>
+  createSelector(
+    [selectPrompts, PublicationSelectors.selectPublicVersionGroups],
+    (prompts, versionGroups) => {
+      return prompts.filter(
+        (prompt) =>
+          isSearchTermMatched(prompt, searchTerm) &&
+          isSearchFilterMatched(prompt, filters) &&
+          isSectionFilterMatched(
+            prompt,
+            filters,
+            ignoreFilters?.ignoreSectionFilter,
+          ) &&
+          isVersionFilterMatched(
+            prompt,
+            filters,
+            versionGroups,
+            ignoreFilters?.ignoreVersionFilter,
+          ),
+      );
+    },
+  );
+
+const selectPrompt = createSelector(
   [selectPrompts, (_state, promptId: string) => promptId],
   (prompts, promptId) => {
     return prompts.find((prompt) => prompt.id === promptId);
   },
 );
 
-export const selectFolders = createSelector([rootSelector], (state) => {
-  return state.folders;
+const selectFolders = (state: RootState) => rootSelector(state).folders;
+
+const selectMyFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) =>
+    folder.id.startsWith(`${getPromptRootId()}/`),
+  );
 });
 
-export const selectEmptyFolderIds = createSelector(
+const selectMyFoldersWithSearchTerm = createSelector(
+  [selectMyFolders, (_state, searchTerm: string) => searchTerm],
+  (folders, searchTerm) => {
+    const filtered = folders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm),
+    );
+
+    return getParentAndChildFolders(folders, filtered);
+  },
+);
+
+const selectFolderById = createSelector(
+  [selectFolders, (_state, id: string) => id],
+  (folders, id) => {
+    return folders.find((folder) => folder.id === id);
+  },
+);
+
+const selectFoldersByFolderId = createSelector(
+  [selectFolders, (_state, folderId: string) => folderId],
+  (folders, folderId) => {
+    const folderPath = `${folderId}/`;
+
+    return folders.filter((folder) => folder.id.startsWith(folderPath));
+  },
+);
+
+const selectEmptyFolderIds = createSelector(
   [selectFolders, selectPrompts],
   (folders, prompts) => {
     return folders
-      .filter(
-        ({ id }) =>
-          !folders.some((folder) => folder.folderId === id) &&
-          !prompts.some((conv) => conv.folderId === id),
-      )
+      .filter(({ id }) => isFolderEmpty({ id, folders, entities: prompts }))
       .map(({ id }) => id);
   },
 );
 
-export const selectFilteredFolders = createSelector(
-  [
-    (state) => state,
-    selectFolders,
-    selectEmptyFolderIds,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?, includeEmptyFolders?: boolean) =>
-      includeEmptyFolders,
-  ],
-  (
-    state,
-    allFolders,
-    emptyFolderIds,
-    filters,
-    searchTerm?,
-    includeEmptyFolders?,
-  ) =>
-    getFilteredFolders({
-      allFolders,
-      emptyFolderIds,
-      filters,
-      entities: selectFilteredPrompts(state, filters, searchTerm, true),
-      searchTerm,
-      includeEmptyFolders,
-    }),
-);
+const selectFilteredFolders = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  includeEmptyFolders?: boolean,
+) =>
+  createSelector(
+    [
+      selectFolders,
+      selectEmptyFolderIds,
+      selectFilteredPrompts(filters, searchTerm, {
+        ignoreSectionFilter: true,
+        ignoreVersionFilter: true,
+      }),
+    ],
+    (allFolders, emptyFolderIds, filteredPrompts) =>
+      getFilteredFolders({
+        allFolders,
+        emptyFolderIds,
+        filters,
+        entities: filteredPrompts,
+        searchTerm,
+        includeEmptyFolders,
+      }),
+  );
 
-export const selectParentFolders = createSelector(
-  [selectFolders, (_state, folderId: string) => folderId],
+const selectParentFolders = createSelector(
+  [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
     return getParentAndCurrentFoldersById(folders, folderId);
   },
 );
 
-export const selectParentFoldersIds = createSelector(
-  [selectParentFolders],
-  (folders) => {
-    return folders.map((folder) => folder.id);
+const selectPromptsByFolderId = createSelector(
+  [selectPrompts, (_state, folderId: string) => folderId],
+  (prompts, folderId) => {
+    const folderPath = `${folderId}/`;
+    return prompts.filter((prompt) => prompt.id.startsWith(folderPath));
   },
 );
 
-export const selectSearchTerm = createSelector([rootSelector], (state) => {
-  return state.searchTerm;
-});
+const selectSearchFilters = (state: RootState) =>
+  rootSelector(state).searchFilters;
 
-export const selectSearchFilters = createSelector(
-  [rootSelector],
-  (state) => state.searchFilters,
-);
+const selectIsEmptySearchFilter = (state: RootState) =>
+  selectSearchFilters(state) === SearchFilters.None;
 
-export const selectIsEmptySearchFilter = createSelector(
-  [rootSelector],
-  (state) => state.searchFilters === SearchFilters.None,
-);
-
-export const selectMyItemsFilters = createSelector(
+const selectMyItemsFilters = createSelector(
   [selectSearchFilters],
   (searchFilters) => getMyItemsFilters(searchFilters),
 );
 
-export const selectSearchedPrompts = createSelector(
-  [selectPrompts, selectSearchTerm],
-  (prompts, searchTerm) => {
-    return prompts.filter((prompt) =>
-      doesEntityContainSearchTerm(prompt, searchTerm),
-    );
-  },
-);
+const selectIsPromptModalOpen = (state: RootState) =>
+  rootSelector(state).isPromptModalOpen;
 
-export const selectIsEditModalOpen = createSelector([rootSelector], (state) => {
+const selectIsPromptModalInitModelEdit = (state: RootState) =>
+  rootSelector(state).isPromptModalInitModeEdit;
+
+const selectSelectedPromptId = createSelector([rootSelector], (state) => {
   return {
-    showModal: state.isEditModalOpen,
-    isModalPreviewMode: state.isModalPreviewMode,
+    selectedPromptId: state.selectedPromptId,
+    isSelectedPromptApproveRequiredResource:
+      state.isSelectedPromptApproveRequiredResource,
   };
 });
 
-export const selectSelectedPromptId = createSelector(
-  [rootSelector],
-  (state) => {
-    return {
-      selectedPromptId: state.selectedPromptId,
-      isSelectedPromptApproveRequiredResource:
-        state.isSelectedPromptApproveRequiredResource,
-    };
-  },
-);
-
-export const selectSelectedPrompt = createSelector(
+const selectSelectedPrompt = createSelector(
   [selectPrompts, selectSelectedPromptId],
   (prompts, { selectedPromptId }): Prompt | undefined => {
     if (!selectedPromptId) {
@@ -178,34 +200,21 @@ export const selectSelectedPrompt = createSelector(
   },
 );
 
-export const selectSelectedPromptFoldersIds = createSelector(
-  [selectSelectedPrompt, (state) => state],
-  (prompt, state) => {
-    let selectedFolders: string[] = [];
+const selectSelectedPromptFoldersIds = createSelector(
+  [selectSelectedPrompt, selectFolders],
+  (prompt, folders) => {
+    if (!prompt) return [];
 
-    selectedFolders = prompt
-      ? selectedFolders.concat(selectParentFoldersIds(state, prompt.folderId))
-      : [];
-
-    return selectedFolders;
+    return getParentAndCurrentFoldersById(folders, prompt.folderId).map(
+      ({ id }) => id,
+    );
   },
 );
 
-export const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId: string) => folderId],
-  (folders, folderId) => {
-    if (!folderId.startsWith(getPromptRootId())) {
-      return true;
-    }
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isEntityExternal(folder));
-  },
-);
-
-export const selectDoesAnyMyItemExist = createSelector(
+const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectPrompts],
   (folders, prompts) => {
-    const promptRootId = getPromptRootId();
+    const promptRootId = `${getPromptRootId()}/`;
     return (
       prompts.some((prompt) => prompt.id.startsWith(promptRootId)) ||
       folders.some((folder) => folder.id.startsWith(promptRootId))
@@ -213,68 +222,24 @@ export const selectDoesAnyMyItemExist = createSelector(
   },
 );
 
-export const selectTemporaryFolders = createSelector(
-  [rootSelector],
-  (state: PromptsState) => {
-    return state.temporaryFolders;
-  },
-);
-
-export const selectPublishedWithMeFolders = createSelector(
-  [selectFolders],
-  (folders) => {
-    return folders.filter(
-      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? true,
-    );
-  },
-);
-
-export const selectTemporaryAndPublishedFolders = createSelector(
-  [
-    selectFolders,
-    selectPublishedWithMeFolders,
-    selectTemporaryFolders,
-    (_state, searchTerm?: string) => searchTerm,
-  ],
-  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
-    const allPublishedFolders = publishedFolders.flatMap((folder) =>
-      getChildAndCurrentFoldersById(folder.id, allFolders),
-    );
-    const filteredFolders = [
-      ...sortByName(allPublishedFolders),
-      ...temporaryFolders,
-    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
-
-    return getParentAndChildFolders(
-      sortByName([...allFolders, ...temporaryFolders]),
-      filteredFolders,
-    );
-  },
-);
-
-export const selectNewAddedFolderId = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.newAddedFolderId;
-  },
-);
-export const selectLoadingFolderIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.loadingFolderIds;
-  },
-);
-
-export const arePromptsUploaded = createSelector([rootSelector], (state) => {
-  return state.promptsLoaded;
+const selectPublicFolders = createSelector([selectFolders], (folders) => {
+  return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
 });
 
-export const isPromptLoading = createSelector([rootSelector], (state) => {
-  return state.isPromptLoading;
-});
+const selectNewAddedFolderId = (state: RootState) =>
+  rootSelector(state).newAddedFolderId;
+
+const selectLoadingFolderIds = (state: RootState) =>
+  rootSelector(state).loadingFolderIds;
+
+const arePromptsUploaded = (state: RootState) =>
+  rootSelector(state).promptsLoaded;
+
+const isPromptLoading = (state: RootState) =>
+  rootSelector(state).isPromptLoading;
 
 // default name with counter
-export const selectNewFolderName = createSelector(
+const selectNewFolderName = createSelector(
   [
     selectFolders,
     (_state: RootState, folderId: string | undefined) => folderId,
@@ -287,12 +252,10 @@ export const selectNewFolderName = createSelector(
   },
 );
 
-export const selectIsNewPromptCreating = createSelector(
-  [rootSelector],
-  (state) => state.isNewPromptCreating,
-);
+const selectIsNewPromptCreating = (state: RootState) =>
+  rootSelector(state).isNewPromptCreating;
 
-export const getNewPrompt = createSelector([selectPrompts], (prompts) => {
+const getNewPrompt = createSelector([selectPrompts], (prompts) => {
   const promptRootId = getPromptRootId();
   return regeneratePromptId({
     name: getNextDefaultName(
@@ -305,7 +268,7 @@ export const getNewPrompt = createSelector([selectPrompts], (prompts) => {
   });
 });
 
-export const selectSelectedOrNewPrompt = createSelector(
+const selectSelectedOrNewPrompt = createSelector(
   [selectIsNewPromptCreating, (state: RootState) => state],
   (isNewPromptCreating: boolean, state: RootState) => {
     return isNewPromptCreating
@@ -314,7 +277,7 @@ export const selectSelectedOrNewPrompt = createSelector(
   },
 );
 
-export const selectDuplicatedPrompt = createSelector(
+const selectDuplicatedPrompt = createSelector(
   [
     selectPrompts,
     (
@@ -334,49 +297,94 @@ export const selectDuplicatedPrompt = createSelector(
   },
 );
 
-export const selectPublicationFolders = createSelector(
-  [rootSelector],
-  (state: PromptsState) => {
-    return state.folders.filter((f) => f.isPublicationFolder);
+const selectSelectedItems = (state: RootState) =>
+  rootSelector(state).chosenPromptIds;
+
+const selectChosenEmptyFolderIds = (state: RootState) =>
+  rootSelector(state).chosenEmptyFoldersIds;
+
+const selectIsSelectMode = createSelector(
+  [selectSelectedItems, selectChosenEmptyFolderIds],
+  (chosenPromptIds, chosenEmptyFoldersIds) => {
+    return chosenPromptIds.length > 0 || chosenEmptyFoldersIds.length > 0;
   },
 );
 
-export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return state.chosenPromptIds.length > 0;
-});
-
-export const selectSelectedItems = createSelector([rootSelector], (state) => {
-  return state.chosenPromptIds;
-});
-
-export const selectChosenFolderIds = createSelector(
-  [
-    selectSelectedItems,
-    selectFolders,
-    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
-  ],
-  (selectedItems, folders, itemsShouldBeChosen) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
-      )
-      .filter((folderId) =>
-        itemsShouldBeChosen
-          .filter((item) => item.id.startsWith(folderId))
-          .every((item) => selectedItems.includes(item.id)),
-      );
-
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            selectedItems.some((entityId) => entityId.startsWith(folderId))) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
-
-    return { fullyChosenFolderIds, partialChosenFolderIds };
+const selectIsFolderEmpty = createSelector(
+  [selectEmptyFolderIds, (_state, folderId: string) => folderId],
+  (emptyFolderIds, folderId) => {
+    return emptyFolderIds.includes(folderId);
   },
 );
+
+const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
+  createSelector(
+    [
+      selectSelectedItems,
+      selectFolders,
+      selectEmptyFolderIds,
+      selectChosenEmptyFolderIds,
+    ],
+    (selectedItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
+      return getPartialAndFullyChosenFolders(
+        folders,
+        itemsShouldBeChosen,
+        selectedItems,
+        emptyFolderIds,
+        chosenEmptyFolderIds,
+      );
+    },
+  );
+
+const selectInitialized = (state: RootState) => rootSelector(state).initialized;
+
+const selectPromptWithVariablesForApply = (state: RootState) =>
+  rootSelector(state).promptWithVariablesForApply;
+
+const selectDeletingPrompt = (state: RootState) =>
+  rootSelector(state).deletingPrompt;
+
+const selectMoveToPrompt = (state: RootState) =>
+  rootSelector(state).moveToPrompt;
+
+export const PromptsSelectors = {
+  selectPrompts,
+  selectSearchTerm,
+  selectFilteredPrompts,
+  selectPrompt,
+  selectFolders,
+  selectMyFolders,
+  selectMyFoldersWithSearchTerm,
+  selectFolderById,
+  selectFoldersByFolderId,
+  selectEmptyFolderIds,
+  selectFilteredFolders,
+  selectParentFolders,
+  selectPromptsByFolderId,
+  selectSearchFilters,
+  selectMyItemsFilters,
+  selectIsEmptySearchFilter,
+  selectDoesAnyMyItemExist,
+  selectPublicFolders,
+  selectNewAddedFolderId,
+  selectLoadingFolderIds,
+  arePromptsUploaded,
+  isPromptLoading,
+  selectNewFolderName,
+  selectIsNewPromptCreating,
+  selectSelectedPrompt,
+  selectSelectedPromptFoldersIds,
+  selectSelectedOrNewPrompt,
+  selectDuplicatedPrompt,
+  selectSelectedItems,
+  selectIsSelectMode,
+  selectChosenFolderIds,
+  selectIsPromptModalOpen,
+  selectIsPromptModalInitModelEdit,
+  selectSelectedPromptId,
+  selectIsFolderEmpty,
+  selectInitialized,
+  selectPromptWithVariablesForApply,
+  selectDeletingPrompt,
+  selectMoveToPrompt,
+};
