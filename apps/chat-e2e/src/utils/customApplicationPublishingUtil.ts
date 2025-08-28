@@ -41,7 +41,11 @@ export class CustomApplicationPublishingUtil {
     appName?: string,
     ...namesToExclude: string[]
   ): Promise<CustomAppAttributes> {
-    const appData = await this.createCustomApp(appName, namesToExclude);
+    const appData = await this.createCustomApp(
+      appName,
+      ['*/*'],
+      ...namesToExclude,
+    );
     const publishRequest = this.publishRequestBuilder!.withName(
       GeneratorUtil.randomPublicationRequestName(),
     )
