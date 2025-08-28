@@ -1,5 +1,5 @@
 import { DialAIEntityFeatures, DialAIEntityModel } from './models';
-import { QuickAppConfig } from './quick-apps';
+import { QuickApp2Config, QuickAppConfig } from './quick-apps';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
 
@@ -108,6 +108,7 @@ export interface ApplicationInfo extends ShareEntity {
 
 export type ApplicationPropertiesType =
   | QuickAppConfig
+  | QuickApp2Config
   | (Record<string, unknown> & ExternalAppConfig)
   | null;
 

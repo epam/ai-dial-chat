@@ -241,9 +241,6 @@ export const getApplicationData = (
 
   if (quickApp2SchemaId.endsWith(type) && !preparedData.applicationProperties) {
     preparedData.applicationProperties = {
-      // model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-      // document_relative_url: [],
-      // temperature: DEFAULT_TEMPERATURE,
       orchestrator: {
         deployment: {
           name: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
