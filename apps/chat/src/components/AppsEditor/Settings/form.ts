@@ -447,7 +447,7 @@ export const getQuickAppData2 = (
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const documentRelativeUrls =
     formData.documentRelativeUrl?.map((url) => ({
-      url: ApiUtils.encodeApiUrl(url),
+      url,
       type: 'file',
     })) ?? [];
   const dialDeploymentsToolsets = formData.agentsOrToolsets
@@ -472,7 +472,6 @@ export const getQuickAppData2 = (
       };
     })
     .filter(Boolean);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dialMCPToolsets = formData.agentsOrToolsets
     .map((agentOrToolset) => {
       const entity = allEntitiesMap[agentOrToolset];
