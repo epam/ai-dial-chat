@@ -1,6 +1,5 @@
 import { SortOrder } from '@/src/types/common';
-import { MarketplaceFilters } from '@/src/types/marketplace';
-import { DialAIEntityModel } from '@/src/types/models';
+import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
 
 import {
   DeleteType,
@@ -27,5 +26,5 @@ export interface MarketplaceState {
   };
   isBannerVisible: boolean;
 
-  deleteModel: { entity: DialAIEntityModel; action: DeleteType } | undefined;
+  deleteEntity: { entity: MarketplaceEntity; action: DeleteType } | undefined;
 }

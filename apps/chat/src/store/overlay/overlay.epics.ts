@@ -45,6 +45,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
+import { customSignOut } from '@/src/utils/auth/signOut';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -1180,6 +1181,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       const _savedOverlayOptions = state$.value.overlay._savedOverlayOptions;
       const isOverlayOptionsReceived = state$.value.overlay.optionsReceived;
       const actions = [];
+      const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);
 
       const isOptionChanged = (optionName: keyof ChatOverlayOptions) => {
         return !isEqual(
@@ -1228,18 +1230,11 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         }
 
         if (features.every(validateFeature)) {
-          const isLoginRequired = AuthSelectors.selectIsShouldLogin(
-            state$.value,
-          );
-
           actions.push(
             of(SettingsActions.setEnabledFeatures(features as Feature[])),
           );
 
-          if (
-            !isLoginRequired &&
-            features.includes(Feature.ConversationsSharing)
-          ) {
+          if (!shouldLogIn && features.includes(Feature.ConversationsSharing)) {
             actions.push(
               of(ShareActions.triggerGettingSharedConversationListings()),
             );
@@ -1260,8 +1255,6 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           of(SettingsActions.setEnabledFeaturesData(enabledFeaturesData)),
         );
       }
-
-      const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);
 
       if (!shouldLogIn) {
         if (modelId && isOptionChanged('modelId')) {
@@ -1297,6 +1290,14 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       }
 
       if (isOptionChanged('signInOptions')) {
+        actions.push(
+          of(
+            OverlayActions.setValidationUserEmail(
+              signInOptions?.validationUserEmail ?? null,
+            ),
+          ),
+        );
+
         actions.push(of(OverlayActions.signInOptionsSet({ signInOptions })));
       }
 
@@ -1325,8 +1326,20 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 const signInOptionsSet: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.signInOptionsSet.type),
-    tap(({ payload: { signInOptions } }) => {
+    tap(async ({ payload: { signInOptions } }) => {
       const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
+      const isShouldLogout =
+        signInOptions?.validationUserEmail &&
+        AuthSelectors.selectIsShouldLogout(
+          state$.value,
+          signInOptions?.validationUserEmail,
+        );
+
+      if (isShouldLogout) {
+        await customSignOut();
+
+        return;
+      }
 
       if (
         isShouldLogin &&
@@ -1382,8 +1395,14 @@ const checkReadyToInteract: AppEpic = (action$, state$) =>
           const areConvLoaded =
             ConversationsSelectors.selectAreSelectedConversationsLoaded(state);
           const isShouldLogin = AuthSelectors.selectIsShouldLogin(state);
+          const isShouldLogout =
+            state.overlay.validationUserEmail &&
+            AuthSelectors.selectIsShouldLogout(
+              state,
+              state.overlay.validationUserEmail,
+            );
 
-          return areConvLoaded && !isShouldLogin;
+          return areConvLoaded && !isShouldLogin && !isShouldLogout;
         }),
         switchMap(() =>
           !OverlaySelectors.selectReadyToInteractSent(state$.value)

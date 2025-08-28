@@ -34,7 +34,7 @@ export class MarketplaceContainer extends BaseLayoutContainer<Header> {
   }
 
   getChatLoader(): BaseElement {
-    return this.getChildElementBySelector(ChatSelectors.messageSpinner);
+    return this.getChildElementBySelector(ChatSelectors.entitySpinner);
   }
 
   public async goToMarketplaceHome() {

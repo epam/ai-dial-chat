@@ -1,4 +1,5 @@
 import {
+  ChatSelectors,
   EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
@@ -60,6 +61,15 @@ export class SideBarEntitiesTree extends EntitiesTree {
     );
   };
 
+  entityDotsMenuSpinner = (
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) => {
+    return this.entityDotsMenu(name, indexOrOptions).locator(
+      ChatSelectors.entitySpinner,
+    );
+  };
+
   getEntityArrowIcon(name: string, index?: number) {
     return this.getEntityByName(name, index).locator(
       SideBarSelectors.arrowAdditionalIcon,
@@ -75,6 +85,9 @@ export class SideBarEntitiesTree extends EntitiesTree {
     await entity.hover({ force: true });
     // eslint-disable-next-line playwright/no-force-option
     await this.entityDotsMenu(name, indexOrOptions).click({ force: true });
+    await this.entityDotsMenuSpinner(name, indexOrOptions).waitFor({
+      state: 'hidden',
+    });
     await this.getDropdownMenu().waitForState();
   }
 

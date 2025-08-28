@@ -2,39 +2,35 @@ import { useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
-
 import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
-interface Props {
-  entity: DialAIEntityModel;
-  disabledActions?: {
-    copyLink?: boolean;
-    deploy?: boolean;
-    edit?: boolean;
-    share?: boolean;
-    unshare?: boolean;
-    publish?: boolean;
-    unpublish?: boolean;
-    logs?: boolean;
-    delete?: boolean;
-  };
+interface Props<T, D> {
+  entity: T;
+  featureType: FeatureType;
+  disabledActions?: D;
   className?: string;
   isPreview?: boolean;
   triggerIconSize?: number;
+  useMenuItems: (params: {
+    entity: T;
+    disabledActions?: D;
+    isPreview?: boolean;
+  }) => DisplayMenuItemProps[];
 }
 
-export const AgentContextMenu: React.FC<Props> = ({
+export function MarketplaceEntityContextMenu<T, D>({
   entity,
-  disabledActions = {},
+  featureType,
+  disabledActions = {} as D,
   className,
   isPreview = false,
   triggerIconSize = 18,
-}) => {
-  const agentMenuItemsParams = useMemo(
+  useMenuItems,
+}: Props<T, D>) {
+  const params = useMemo(
     () => ({
       entity,
       disabledActions,
@@ -43,15 +39,15 @@ export const AgentContextMenu: React.FC<Props> = ({
     [disabledActions, entity, isPreview],
   );
 
-  const menuItems = useAgentMenuItems(agentMenuItemsParams);
+  const menuItems = useMenuItems(params);
 
   return (
     <ContextMenu
       menuItems={menuItems}
-      featureType={FeatureType.Application}
+      featureType={featureType}
       triggerIconHighlight
       triggerIconSize={triggerIconSize}
       className={classNames('m-0', className)}
     />
   );
-};
+}

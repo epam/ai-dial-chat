@@ -14,6 +14,7 @@ export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
   tab = 'tab',
+  entitiesTab = 'entitiesTab',
   types = 'types',
   topics = 'topics',
   search = 'search',
@@ -45,8 +46,8 @@ export const ChangeAgentTabs = {
 };
 
 export enum DeleteType {
-  DELETE,
-  REMOVE,
+  DELETE = 'Delete',
+  REMOVE = 'Remove',
 }
 
 export const ENTITY_TYPES = [

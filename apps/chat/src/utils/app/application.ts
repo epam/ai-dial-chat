@@ -18,6 +18,7 @@ import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
@@ -340,8 +341,9 @@ export const getSharedTooltip = (context: string) => {
   );
 };
 
-export const isApplicationPublic = (entity: DialAIEntityModel) =>
-  isEntityIdPublic(entity) || entity.id === entity.reference;
+export const isMarketplaceEntityPublic = (
+  entity: DialAIEntityModel | ToolsetModel,
+) => isEntityIdPublic(entity) || entity.id === entity.reference;
 
 export const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
