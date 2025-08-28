@@ -15,11 +15,12 @@ export const customSignOut = async (): Promise<void> => {
     const res = await fetch('/api/auth/federated-logout');
     const { url }: { url: string | null } = await res.json();
 
-    await signOut({ redirect: true });
-
     if (url) {
       const parsedUrl = parseUrl(url);
+      await signOut({ redirect: false });
       window.location.href = parsedUrl.href;
+    } else {
+      await signOut({ redirect: true });
     }
   } catch (error) {
     await signOut({ redirect: true });
