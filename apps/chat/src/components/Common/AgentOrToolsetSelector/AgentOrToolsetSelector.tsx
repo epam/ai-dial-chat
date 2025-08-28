@@ -61,12 +61,12 @@ export const AgentOrToolsetSelector: React.FC<AgentOrToolsetSelectorProps> = ({
     setSelectModalOpen(false);
   }, []);
 
-  const handleRemoveItem = (idToRemove: string) => {
-    onChange(value.filter((id) => id !== idToRemove));
+  const handleRemoveItem = (referenceToRemove: string) => {
+    onChange(value.filter((reference) => reference !== referenceToRemove));
   };
 
   const handleConfirmSelection = (newItems: AgentOrToolset[]) => {
-    onChange(newItems.map((item) => item.id));
+    onChange(newItems.map((item) => item.reference));
     setSelectModalOpen(false);
   };
 

@@ -278,7 +278,7 @@ const AgentOrToolsetModalView = ({
             </div>
             <div className="flex gap-2">
               {entityType === 'agents' ? (
-                <>
+                <div className="flex gap-2">
                   <ScopeTabButton
                     tab={MarketplaceTabs.MY_WORKSPACE}
                     setTab={setScopeTab}
@@ -291,9 +291,9 @@ const AgentOrToolsetModalView = ({
                     currentTab={scopeTab}
                     textMap={ChangeAgentTabs}
                   />
-                </>
+                </div>
               ) : (
-                <div>
+                <div className="flex gap-2">
                   <ScopeTabButton
                     tab={MarketplaceEntitiesTabs.AGENTS}
                     setTab={setScopeTab}

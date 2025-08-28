@@ -26,7 +26,12 @@ import {
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
-import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
+import {
+  QuickApp2Config,
+  QuickAppConfig,
+  isDialDeploymentToolset,
+  isMcpToolset,
+} from '@/src/types/quick-apps';
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
@@ -287,13 +292,11 @@ export const getQuickAppDefaultValues2 = ({
   app: CustomApplicationModel;
 }): QuickAppFormData2 => {
   const appProperties = app.applicationProperties as QuickApp2Config;
-  const agentToolsets =
-    appProperties.tool_sets
-      .filter((toolset) => toolset.type === 'dial-deployment')
-      .at(0)?.tools ?? [];
-  const mcpToolsets = appProperties.tool_sets.filter(
-    (toolset) => toolset.type === 'dial-mcp',
-  );
+  const agentToolsets = appProperties.tool_sets
+    .filter(isDialDeploymentToolset)
+    .flatMap((toolset) => toolset.tools);
+
+  const mcpToolsets = appProperties.tool_sets.filter(isMcpToolset);
 
   return {
     ...getApplicationGeneralDefaultValues(app),

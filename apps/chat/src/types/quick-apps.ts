@@ -60,3 +60,13 @@ export interface QuickApp2Config {
   contexts: FileContext[];
   tool_sets: ToolSet[];
 }
+
+export function isDialDeploymentToolset(
+  toolset: ToolSet,
+): toolset is DialDeploymentToolset {
+  return toolset.type === 'dial-deployment';
+}
+
+export function isMcpToolset(toolset: ToolSet): toolset is MCPToolset {
+  return toolset.type === 'dial-mcp';
+}
