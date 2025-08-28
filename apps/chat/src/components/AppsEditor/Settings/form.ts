@@ -24,8 +24,9 @@ import {
   Toolsets,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import { ModelsMap } from '@/src/types/models';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   FEATURES_ENDPOINTS,
@@ -64,6 +65,8 @@ export interface ExternalAppFormData extends ApplicationGeneralInfo {
   applicationProperties: ApplicationPropertiesType;
 }
 
+export type AgentOrToolset = DialAIEntityModel | ToolsetModel;
+
 export interface QuickAppFormData extends ApplicationGeneralInfo {
   instructions: string;
   temperature: number;
@@ -71,6 +74,14 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
   [Toolsets.McpToolset]?: string;
   documentRelativeUrl?: string[];
   model: string;
+}
+
+export interface QuickAppFormData2 extends ApplicationGeneralInfo {
+  instructions: string;
+  temperature: number;
+  documentRelativeUrl?: string[];
+  model: string;
+  agentsOrToolsets: string[];
 }
 
 export interface CodeAppFormData extends ApplicationGeneralInfo {
@@ -268,6 +279,36 @@ export const getQuickAppDefaultValues = ({
   };
 };
 
+export const getQuickAppDefaultValues2 = ({
+  app,
+}: {
+  app: CustomApplicationModel;
+}): QuickAppFormData2 => {
+  const agentsOrToolsetsAsObjects = Array.isArray(
+    app.applicationProperties?.agentsOrToolsets,
+  )
+    ? app.applicationProperties.agentsOrToolsets
+    : [];
+  return {
+    ...getApplicationGeneralDefaultValues(app),
+    completionUrl: app.completionUrl ?? '',
+    documentRelativeUrl: getQuickAppDocumentUrl(app) ?? [],
+    model:
+      typeof app.applicationProperties?.model === 'string'
+        ? app.applicationProperties?.model
+        : DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+    instructions:
+      typeof app.applicationProperties?.instructions === 'string'
+        ? app.applicationProperties.instructions
+        : '',
+    temperature:
+      typeof app.applicationProperties?.temperature === 'number'
+        ? app.applicationProperties.temperature
+        : DEFAULT_TEMPERATURE,
+    agentsOrToolsets: agentsOrToolsetsAsObjects.map((item) => item.id),
+  };
+};
+
 export const getExternalAppDefaultValues = ({
   app,
 }: {
@@ -286,6 +327,7 @@ const getGeneralApplicationData = (
   formData:
     | CustomApplicationFormData
     | QuickAppFormData
+    | QuickAppFormData2
     | CodeAppFormData
     | ExternalAppFormData,
 ) => ({
@@ -382,6 +424,33 @@ export const getQuickAppData = (
       }),
       model: modelsMap[formData.model]?.id ?? formData.model,
       document_relative_url: formData.documentRelativeUrl,
+    },
+    completionUrl: constructPath(
+      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
+      'openai/deployments',
+      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
+      'chat/completions',
+    ),
+    isDefault: false,
+    folderId: '',
+  };
+};
+
+export const getQuickAppData2 = (
+  formData: QuickAppFormData2,
+  modelsMap: ModelsMap,
+  allEntitiesMap: Record<string, AgentOrToolset | undefined>,
+): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+  return {
+    ...getGeneralApplicationData(formData),
+    applicationProperties: {
+      instructions: formData.instructions,
+      temperature: formData.temperature,
+      model: modelsMap[formData.model]?.id ?? formData.model,
+      document_relative_url: formData.documentRelativeUrl,
+      agentsOrToolsets: formData.agentsOrToolsets
+        ?.map((id) => allEntitiesMap[id])
+        .filter((item): item is AgentOrToolset => !!item),
     },
     completionUrl: constructPath(
       DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),

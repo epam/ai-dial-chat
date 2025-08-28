@@ -27,6 +27,7 @@ import {
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
@@ -174,6 +175,10 @@ export const getApplicationData = (
     'quickAppsSchemaId',
     DEFAULT_QUICK_APPS_SCHEMA_ID,
   );
+  const quickApp2SchemaId = DefaultsService.get(
+    'quickAppsSchemaId2',
+    DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+  );
 
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
@@ -231,6 +236,62 @@ export const getApplicationData = (
       temperature: DEFAULT_TEMPERATURE,
       web_api_toolset: [],
       mcp_toolset: [],
+    };
+  }
+
+  if (quickApp2SchemaId.endsWith(type) && !preparedData.applicationProperties) {
+    preparedData.applicationProperties = {
+      // model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+      // document_relative_url: [],
+      // temperature: DEFAULT_TEMPERATURE,
+      orchestrator: {
+        deployment: {
+          name: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+          parameters: {
+            temperature: DEFAULT_TEMPERATURE,
+          },
+        },
+        system_prompt: {
+          type: 'custom',
+          variables: {},
+          content: '',
+        },
+      },
+      contexts: [
+        // {
+        //   url: "",
+        //   type: 'file'
+        // },
+      ],
+      tool_sets: [
+        // {
+        //   name: "DeepWiki toolset name",
+        //   dial_id: "DeepWiki",
+        //   description: "DeepWiki tool from DIAL MCP",
+        //   type: "dial-mcp",
+        // },
+        {
+          name: 'dial-deployment-tool-set',
+          type: 'dial-deployment',
+          tools: [
+            {
+              open_ai_tool: {
+                function: {
+                  parameters: {
+                    type: 'object',
+                    properties: {},
+                  },
+                  description: '',
+                  name: 'dall-e-3',
+                },
+              },
+              deployment: {
+                name: 'dall-e-3',
+              },
+            },
+          ],
+        },
+      ],
     };
   }
 

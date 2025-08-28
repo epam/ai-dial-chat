@@ -37,6 +37,7 @@ import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { DEFAULT_QUICK_APPS_MODEL } from '@/src/constants/quick-apps';
 
+import { AgentOrToolset } from '@/src/components/AppsEditor/Settings/form';
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
@@ -67,6 +68,7 @@ export interface FormData extends CodeData {
   [Toolsets.WebApiToolset]: string;
   model: string;
   documentRelativeUrl: string[];
+  agentsOrToolsets: AgentOrToolset[];
 }
 
 type Options<T extends Path<FormData>> = Omit<
@@ -360,6 +362,7 @@ export const getDefaultValues = ({
       quickAppConfig?.model ??
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     documentRelativeUrl: getQuickAppDocumentUrl(app) ?? [],
+    agentsOrToolsets: [],
   };
 };
 

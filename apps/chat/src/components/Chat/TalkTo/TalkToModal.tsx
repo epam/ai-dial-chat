@@ -1,5 +1,12 @@
 import { IconSearch } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import {
+  MouseEvent,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useDispatch } from 'react-redux';
 
 import Link from 'next/link';
@@ -48,8 +55,13 @@ import { SuggestedCard } from '@/src/constants/talkTo';
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
+import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
 
-import { TalkToSlider } from './TalkToSlider';
+import {
+  TalkToNotFound,
+  TalkToSliderItem,
+  TalkToSliderItemProps,
+} from './TalkToSliderItem';
 
 import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
@@ -87,11 +99,13 @@ const TalkToModalView = ({
   onClose,
 }: TalkToModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch();
 
   const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
   const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
@@ -119,6 +133,12 @@ const TalkToModalView = ({
     searchTerm,
     MODELS_SEARCH_OPTIONS,
   );
+
+  useLayoutEffect(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.offsetHeight);
+    }
+  }, []);
 
   const sortedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -290,6 +310,18 @@ const TalkToModalView = ({
     [isPlayback, dispatch],
   );
 
+  const sliderItemProps = {
+    conversation,
+    onSelectModel: handleSelectModel,
+    onOpenMarketplaceTab: () => setTab(MarketplaceTabs.HOME),
+    isMyWorkspace,
+  };
+
+  const SliderResetDependencies = useMemo(
+    () => [isMyWorkspace, searchTerm],
+    [isMyWorkspace, searchTerm],
+  );
+
   return (
     <>
       <h3 className="text-base font-semibold">
@@ -297,44 +329,53 @@ const TalkToModalView = ({
           `Select an agent for ${isCompareMode ? (isRight ? 'right side' : 'left side') : ''} conversation`,
         )}
       </h3>
-      <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse">
-        <div className="relative flex grow">
-          <IconSearch
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            size={18}
-          />
-          <input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={t('Search')}
-            className="input-form peer m-0 pl-[38px]"
-            data-qa="search-agents"
-            autoFocus={isOverlay || !isSmallScreenOrTouchable()}
-          />
+      <div className="flex max-h-full min-h-0 w-full flex-1 flex-col">
+        <div
+          ref={headerRef}
+          className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse"
+        >
+          <div className="relative flex grow">
+            <IconSearch
+              className="absolute left-3 top-1/2 -translate-y-1/2"
+              size={18}
+            />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('Search')}
+              className="input-form peer m-0 pl-[38px]"
+              data-qa="search-agents"
+              autoFocus={isOverlay || !isSmallScreenOrTouchable()}
+            />
+          </div>
+          <div className="flex gap-2">
+            <AgentsTabButton
+              tab={MarketplaceTabs.MY_WORKSPACE}
+              setTab={setTab}
+              currentTab={tab}
+            />
+            <AgentsTabButton
+              tab={MarketplaceTabs.HOME}
+              setTab={setTab}
+              currentTab={tab}
+            />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <AgentsTabButton
-            tab={MarketplaceTabs.MY_WORKSPACE}
-            setTab={setTab}
-            currentTab={tab}
-          />
-          <AgentsTabButton
-            tab={MarketplaceTabs.HOME}
-            setTab={setTab}
-            currentTab={tab}
-          />
-        </div>
+
+        <SliderGrid<CardType, Omit<TalkToSliderItemProps, 'groupItem'>>
+          items={displayedModels}
+          SliderItem={TalkToSliderItem}
+          notFound={
+            <TalkToNotFound
+              isMyWorkspace={isMyWorkspace}
+              onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
+            />
+          }
+          sliderResetDependencies={SliderResetDependencies}
+          itemProps={sliderItemProps}
+          modalHeaderHeight={headerHeight}
+        />
       </div>
-
-      <TalkToSlider
-        conversation={conversation}
-        items={displayedModels}
-        onSelectModel={handleSelectModel}
-        isMyWorkspace={isMyWorkspace}
-        onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
-        searchTerm={searchTerm}
-      />
-
       {isMarketplaceEnabled && (
         <Link
           href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`}

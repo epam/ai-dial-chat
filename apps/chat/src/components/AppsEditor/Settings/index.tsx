@@ -59,7 +59,10 @@ import {
 
 import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
-import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
+import {
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
+} from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
 import { GeneralInfoPreview } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoPreview';
@@ -72,6 +75,7 @@ import { CustomApplicationEditorView } from './CustomApplicationEditorView';
 import { ExternalAppView } from './ExternalAppView';
 import { ApplicationPreviewChat } from './Previews/ApplicationPreviewChat';
 import { QuickAppView } from './QuickAppView';
+import { QuickAppView2 } from './QuickAppView2';
 import {
   CodeAppFormData,
   CustomApplicationFormData,
@@ -80,6 +84,7 @@ import {
   getCustomApplicationDefaultValues,
   getExternalAppDefaultValues,
   getQuickAppDefaultValues,
+  getQuickAppDefaultValues2,
 } from './form';
 
 interface Props {
@@ -182,6 +187,13 @@ export const ApplicationSettings: React.FC<Props> = ({
     );
   }, []);
 
+  const quickAppSchemaId2 = useMemo(() => {
+    return DefaultsService.get(
+      'quickAppsSchemaId2',
+      DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+    );
+  }, []);
+
   const externalAppsSchemaId = useMemo(() => {
     return DefaultsService.get(
       'externalAppsSchemaId',
@@ -193,6 +205,12 @@ export const ApplicationSettings: React.FC<Props> = ({
     (type: string) => {
       if (quickAppSchemaId.endsWith(type)) {
         return getQuickAppDefaultValues({
+          app: applicationData,
+        });
+      }
+
+      if (quickAppSchemaId2.endsWith(type)) {
+        return getQuickAppDefaultValues2({
           app: applicationData,
         });
       }
@@ -217,7 +235,13 @@ export const ApplicationSettings: React.FC<Props> = ({
       };
       return defaultValues[type] ?? null;
     },
-    [applicationData, externalAppsSchemaId, pythonVersions, quickAppSchemaId],
+    [
+      applicationData,
+      externalAppsSchemaId,
+      pythonVersions,
+      quickAppSchemaId,
+      quickAppSchemaId2,
+    ],
   );
 
   const getFormView = (type: string) => {
@@ -228,6 +252,18 @@ export const ApplicationSettings: React.FC<Props> = ({
     if (quickAppSchemaId.endsWith(type)) {
       return (
         <QuickAppView
+          schema={schema}
+          isSharedWithMe={modelFromState?.sharedWithMe ?? false}
+          oldApplication={applicationData}
+          isShared={modelFromState?.isShared ?? false}
+          publicationUrl={publicationUrl}
+        />
+      );
+    }
+
+    if (quickAppSchemaId2.endsWith(type)) {
+      return (
+        <QuickAppView2
           schema={schema}
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
           oldApplication={applicationData}

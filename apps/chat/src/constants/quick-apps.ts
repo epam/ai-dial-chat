@@ -5,3 +5,6 @@ export const DEFAULT_QUICK_APPS_HOST =
 
 export const DEFAULT_QUICK_APPS_SCHEMA_ID =
   'https://mydial.epam.com/custom_application_schemas/quickapps';
+
+export const DEFAULT_QUICK_APPS_SCHEMA_2_ID =
+  'https://mydial.epam.com/custom_application_schemas/quickapps2';

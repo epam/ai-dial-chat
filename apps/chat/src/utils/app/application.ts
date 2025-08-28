@@ -240,6 +240,7 @@ export const getQuickAppConfig = (
         model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
         temperature: DEFAULT_TEMPERATURE,
         web_api_toolset: {},
+        agentsOrToolsets: [],
       };
 };
 
