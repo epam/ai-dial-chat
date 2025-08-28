@@ -7,27 +7,27 @@ import { Translation } from '@/src/types/translation';
 
 import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
 
-import { AgentOrToolset } from '@/src/components/AppsEditor/Settings/form';
+import { AgentAndToolset } from '@/src/components/AppsEditor/Settings/form';
 import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
-export interface AgentOrToolsetSelectItemPassthroughProps {
-  selectedItems: AgentOrToolset[];
-  onToggleSelectItem: (item: AgentOrToolset) => void;
+export interface AgentAndToolsetSelectItemPassthroughProps {
+  selectedItems: AgentAndToolset[];
+  onToggleSelectItem: (item: AgentAndToolset) => void;
 }
 
-interface AgentOrToolsetSelectItemOwnProps {
-  groupItem: AgentOrToolset;
+interface AgentAndToolsetSelectItemOwnProps {
+  groupItem: AgentAndToolset;
 }
 
-export type AgentOrToolsetSelectItemProps =
-  AgentOrToolsetSelectItemPassthroughProps & AgentOrToolsetSelectItemOwnProps;
+export type AgentAndToolsetSelectItemProps =
+  AgentAndToolsetSelectItemPassthroughProps & AgentAndToolsetSelectItemOwnProps;
 
-export const AgentOrToolsetSelectItem = ({
+export const AgentAndToolsetSelectItem = ({
   groupItem,
   selectedItems,
   onToggleSelectItem,
-}: AgentOrToolsetSelectItemProps) => {
+}: AgentAndToolsetSelectItemProps) => {
   const isSelected = selectedItems.some(
     (selected) => selected.id === groupItem.id,
   );

@@ -39,18 +39,18 @@ import {
 } from '@/src/constants/marketplace';
 import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 
-import { AgentOrToolset } from '@/src/components/AppsEditor/Settings/form';
+import { AgentAndToolset } from '@/src/components/AppsEditor/Settings/form';
 import { TabButton } from '@/src/components/Buttons/TabButton';
+import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
-import { AgentOrToolsetChip } from '@/src/components/Common/AgentOrToolsetSelector/AgentOrToolsetChip';
 import { Modal } from '@/src/components/Common/Modal';
 import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
 
 import { NoResultsFound } from '../NoResultsFound';
 import {
-  AgentOrToolsetSelectItem,
-  AgentOrToolsetSelectItemProps,
-} from './AgentOrToolsetSelectItem';
+  AgentAndToolsetSelectItem,
+  AgentAndToolsetSelectItemProps,
+} from './AgentAndToolsetSelectItem';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -110,17 +110,17 @@ function ScopeTabButton({
   );
 }
 
-interface AgentOrToolsetModalViewProps {
+interface AgentAndToolsetModalViewProps {
   onClose: () => void;
-  onConfirm: (selectedItems: AgentOrToolset[]) => void;
-  defaultSelectedItems: AgentOrToolset[];
+  onConfirm: (selectedItems: AgentAndToolset[]) => void;
+  defaultSelectedItems: AgentAndToolset[];
 }
 
-const AgentOrToolsetModalView = ({
+const AgentAndToolsetModalView = ({
   onClose,
   onConfirm,
   defaultSelectedItems,
-}: AgentOrToolsetModalViewProps) => {
+}: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useDispatch();
   const headerRef = useRef<HTMLDivElement>(null);
@@ -135,7 +135,7 @@ const AgentOrToolsetModalView = ({
   >(MarketplaceTabs.MY_WORKSPACE);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] =
-    useState<AgentOrToolset[]>(defaultSelectedItems);
+    useState<AgentAndToolset[]>(defaultSelectedItems);
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -180,18 +180,21 @@ const AgentOrToolsetModalView = ({
     }
   }, [entityType]);
 
-  const handleToggleSelectItem = useCallback((itemToToggle: AgentOrToolset) => {
-    setSelectedItems((prevSelected) => {
-      const isAlreadySelected = prevSelected.some(
-        (item) => item.id === itemToToggle.id,
-      );
-      if (isAlreadySelected) {
-        return prevSelected.filter((item) => item.id !== itemToToggle.id);
-      } else {
-        return [...prevSelected, itemToToggle];
-      }
-    });
-  }, []);
+  const handleToggleSelectItem = useCallback(
+    (itemToToggle: AgentAndToolset) => {
+      setSelectedItems((prevSelected) => {
+        const isAlreadySelected = prevSelected.some(
+          (item) => item.id === itemToToggle.id,
+        );
+        if (isAlreadySelected) {
+          return prevSelected.filter((item) => item.id !== itemToToggle.id);
+        } else {
+          return [...prevSelected, itemToToggle];
+        }
+      });
+    },
+    [],
+  );
 
   const handleRemoveItem = useCallback(
     (idToRemove: string) => {
@@ -316,7 +319,7 @@ const AgentOrToolsetModalView = ({
           <div className="my-2 flex  flex-wrap gap-2">
             {selectedItems.length ? (
               selectedItems.map((item) => (
-                <AgentOrToolsetChip
+                <AgentAndToolsetChip
                   key={item.id}
                   item={item}
                   onRemove={handleRemoveItem}
@@ -334,11 +337,11 @@ const AgentOrToolsetModalView = ({
           </span>
         </div>
         <SliderGrid<
-          AgentOrToolset,
-          Omit<AgentOrToolsetSelectItemProps, 'groupItem'>
+          AgentAndToolset,
+          Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
         >
           items={displayedItems}
-          SliderItem={AgentOrToolsetSelectItem}
+          SliderItem={AgentAndToolsetSelectItem}
           notFound={<NoResultsFound />}
           sliderResetDependencies={SliderResetDependencies}
           itemProps={sliderItemProps}
@@ -383,11 +386,11 @@ const AgentOrToolsetModalView = ({
 
 interface Props {
   onClose: () => void;
-  onConfirm: (selectedItems: AgentOrToolset[]) => void;
-  defaultSelectedItems: AgentOrToolset[];
+  onConfirm: (selectedItems: AgentAndToolset[]) => void;
+  defaultSelectedItems: AgentAndToolset[];
 }
 
-export const AgentOrToolsetModal = ({
+export const AgentAndToolsetModal = ({
   onClose,
   onConfirm,
   defaultSelectedItems,
@@ -401,7 +404,7 @@ export const AgentOrToolsetModal = ({
       onClose={onClose}
       heading
     >
-      <AgentOrToolsetModalView
+      <AgentAndToolsetModalView
         onClose={onClose}
         onConfirm={onConfirm}
         defaultSelectedItems={defaultSelectedItems}

@@ -7,13 +7,13 @@ import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
-import { AgentOrToolset } from '@/src/components/AppsEditor/Settings/form';
+import { AgentAndToolset } from '@/src/components/AppsEditor/Settings/form';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { AgentOrToolsetChip } from './AgentOrToolsetChip';
-import { AgentOrToolsetModal } from './AgentOrToolsetModal';
+import { AgentAndToolsetChip } from './AgentAndToolsetChip';
+import { AgentAndToolsetModal } from './AgentAndToolsetModal';
 
-const NoAgentsOrToolsets: React.FC = () => {
+const NoAgentsAndToolsets: React.FC = () => {
   const { t } = useTranslation(Translation.Common);
   return (
     <div className="flex flex-col items-center justify-center rounded border border-primary py-4">
@@ -23,16 +23,18 @@ const NoAgentsOrToolsets: React.FC = () => {
   );
 };
 
-interface AgentOrToolsetSelectorProps {
+interface AgentAndToolsetSelectorProps {
   value: string[];
-  onChange: (agentOrToolset: string[]) => void;
+  onChange: (agentAndToolset: string[]) => void;
   readonly?: boolean;
   addBtnTooltip?: string;
-  allItemsMap: Record<string, AgentOrToolset | undefined>;
+  allItemsMap: Record<string, AgentAndToolset | undefined>;
   tooltip?: string;
 }
 
-export const AgentOrToolsetSelector: React.FC<AgentOrToolsetSelectorProps> = ({
+export const AgentAndToolsetSelector: React.FC<
+  AgentAndToolsetSelectorProps
+> = ({
   value = [],
   readonly,
   addBtnTooltip,
@@ -48,7 +50,7 @@ export const AgentOrToolsetSelector: React.FC<AgentOrToolsetSelectorProps> = ({
     () =>
       value
         .map((id) => allItemsMap[id])
-        .filter((item): item is AgentOrToolset => !!item),
+        .filter((item): item is AgentAndToolset => !!item),
     [value, allItemsMap],
   );
 
@@ -65,7 +67,7 @@ export const AgentOrToolsetSelector: React.FC<AgentOrToolsetSelectorProps> = ({
     onChange(value.filter((reference) => reference !== referenceToRemove));
   };
 
-  const handleConfirmSelection = (newItems: AgentOrToolset[]) => {
+  const handleConfirmSelection = (newItems: AgentAndToolset[]) => {
     onChange(newItems.map((item) => item.reference));
     setSelectModalOpen(false);
   };
@@ -90,11 +92,11 @@ export const AgentOrToolsetSelector: React.FC<AgentOrToolsetSelectorProps> = ({
             </Tooltip>
           </div>
           {!value.length ? (
-            <NoAgentsOrToolsets />
+            <NoAgentsAndToolsets />
           ) : (
             <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
               {selectedItems.map((item) => (
-                <AgentOrToolsetChip
+                <AgentAndToolsetChip
                   key={item.id}
                   item={item}
                   onRemove={handleRemoveItem}
@@ -105,7 +107,7 @@ export const AgentOrToolsetSelector: React.FC<AgentOrToolsetSelectorProps> = ({
         </div>
 
         {isSelectModalOpen && !readonly && (
-          <AgentOrToolsetModal
+          <AgentAndToolsetModal
             defaultSelectedItems={selectedItems}
             onClose={handleCloseModal}
             onConfirm={handleConfirmSelection}

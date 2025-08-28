@@ -36,7 +36,7 @@ import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
-import { AgentOrToolsetSelector } from '@/src/components/Common/AgentOrToolsetSelector/AgentOrToolsetSelector';
+import { AgentAndToolsetSelector } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetSelector';
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
@@ -49,8 +49,8 @@ import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
-const AgentOrToolsetSelectorField = withErrorMessage(
-  withLabel(AgentOrToolsetSelector),
+const AgentAndToolsetSelectorField = withErrorMessage(
+  withLabel(AgentAndToolsetSelector),
 );
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
@@ -263,10 +263,10 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
           )}
         />
         <Controller
-          name="agentsOrToolsets"
+          name="agentsAndToolsets"
           control={control}
           render={({ field }) => (
-            <AgentOrToolsetSelectorField
+            <AgentAndToolsetSelectorField
               value={field.value}
               onChange={field.onChange}
               allItemsMap={allEntitiesMap}

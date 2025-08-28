@@ -1,13 +1,13 @@
 import { IconX } from '@tabler/icons-react';
 import React from 'react';
 
-import { AgentOrToolset } from '@/src/components/AppsEditor/Settings/form';
+import { AgentAndToolset } from '@/src/components/AppsEditor/Settings/form';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
-const AgentTooltipContent = ({ item }: { item: AgentOrToolset }) => {
+const AgentTooltipContent = ({ item }: { item: AgentAndToolset }) => {
   return (
     <div className="flex max-h-[166px] w-full max-w-[440px] flex-col gap-3 p-3">
       <div className="flex min-h-0 items-center gap-3">
@@ -37,12 +37,12 @@ const AgentTooltipContent = ({ item }: { item: AgentOrToolset }) => {
   );
 };
 
-interface AgentOrToolsetChipProps {
-  item: AgentOrToolset;
+interface AgentAndToolsetChipProps {
+  item: AgentAndToolset;
   onRemove: (id: string) => void;
   readonly?: boolean;
 }
-export const AgentOrToolsetChip: React.FC<AgentOrToolsetChipProps> = ({
+export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   item,
   onRemove,
   readonly,

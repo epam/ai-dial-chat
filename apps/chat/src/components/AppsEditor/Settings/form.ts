@@ -71,7 +71,7 @@ export interface ExternalAppFormData extends ApplicationGeneralInfo {
   applicationProperties: ApplicationPropertiesType;
 }
 
-export type AgentOrToolset = DialAIEntityModel | ToolsetModel;
+export type AgentAndToolset = DialAIEntityModel | ToolsetModel;
 
 export interface QuickAppFormData extends ApplicationGeneralInfo {
   instructions: string;
@@ -87,7 +87,7 @@ export interface QuickAppFormData2 extends ApplicationGeneralInfo {
   temperature: number;
   documentRelativeUrl?: string[];
   model: string;
-  agentsOrToolsets: string[];
+  agentsAndToolsets: string[];
 }
 
 export interface CodeAppFormData extends ApplicationGeneralInfo {
@@ -309,7 +309,7 @@ export const getQuickAppDefaultValues2 = ({
     temperature:
       appProperties.orchestrator.deployment.parameters.temperature ??
       DEFAULT_TEMPERATURE,
-    agentsOrToolsets: [
+    agentsAndToolsets: [
       ...agentToolsets.map((agentToolset) => agentToolset.deployment.name),
       ...mcpToolsets.map((mcpToolset) => mcpToolset.dial_id),
     ],
@@ -446,16 +446,16 @@ export const getQuickAppData = (
 export const getQuickAppData2 = (
   formData: QuickAppFormData2,
   modelsMap: ModelsMap,
-  allEntitiesMap: Record<string, AgentOrToolset | undefined>,
+  allEntitiesMap: Record<string, AgentAndToolset | undefined>,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const documentRelativeUrls =
     formData.documentRelativeUrl?.map((url) => ({
       url,
       type: 'file',
     })) ?? [];
-  const dialDeploymentsToolsets = formData.agentsOrToolsets
-    .map((agentOrToolset) => {
-      const entity = allEntitiesMap[agentOrToolset];
+  const dialDeploymentsToolsets = formData.agentsAndToolsets
+    .map((agentsAndToolset) => {
+      const entity = allEntitiesMap[agentsAndToolset];
       if (!entity || entity.type === EntityType.Toolset) return undefined;
 
       return {
@@ -475,9 +475,9 @@ export const getQuickAppData2 = (
       };
     })
     .filter(Boolean);
-  const dialMCPToolsets = formData.agentsOrToolsets
-    .map((agentOrToolset) => {
-      const entity = allEntitiesMap[agentOrToolset];
+  const dialMCPToolsets = formData.agentsAndToolsets
+    .map((agentAndToolset) => {
+      const entity = allEntitiesMap[agentAndToolset];
       if (!entity || entity.type !== EntityType.Toolset) return undefined;
 
       return {
