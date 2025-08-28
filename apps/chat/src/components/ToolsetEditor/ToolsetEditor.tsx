@@ -20,7 +20,6 @@ import {
   getDefaultFormData,
 } from '@/src/components/ToolsetEditor/form';
 
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 export const ToolsetEditor = () => {
@@ -50,9 +49,6 @@ export const ToolsetEditor = () => {
         folderId: '',
         reference: '',
         type: EntityType.Toolset,
-        authSettings: {
-          authenticationType: ToolsetAuthTypes.NONE,
-        },
         ...(toolsetDetails && toolsetDetails),
         name: data.name,
         endpoint: data.endpoint,
@@ -62,6 +58,10 @@ export const ToolsetEditor = () => {
         topics: data.topics,
         allowedTools: data.allowedTools,
         version: data.version,
+        authSettings: {
+          ...(toolsetDetails?.authSettings && toolsetDetails?.authSettings),
+          authenticationType: data.authenticationType,
+        },
       } as ToolsetModel;
 
       if (toolsetDetails) {

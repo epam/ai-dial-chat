@@ -251,7 +251,7 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
               ),
             ),
             catchError((err) => {
-              console.error('Failed to update toolset:', err);
+              console.error('Failed to update toolset:', err.message);
               return of(
                 ToolsetActions.updateToolsetFailed({
                   oldToolset: payload.oldToolset,
@@ -497,7 +497,7 @@ const startSignInProcess: AppEpic = (action$, _state, { router }) =>
         url.searchParams.set('client_id', authSettings.clientId as string);
         url.searchParams.set(
           'redirect_uri',
-          `${router.basePath}${Routes.ToolsetSignIn}`,
+          `${window.location.origin}${Routes.ToolsetSignIn}`,
         );
         url.searchParams.set(
           'code_challenge',
@@ -533,12 +533,28 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
       };
 
       return ToolsetService.signIn(data).pipe(
-        switchMap(() =>
-          refreshToolset$(
+        switchMap(() => {
+          if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
+            let callbackUrl = '/';
+
+            try {
+              const url = new URL(payload.callbackUrl ?? '', window.location.origin);
+              if (url.origin === window.location.origin) {
+                callbackUrl = url.href;
+              }
+            } catch (error) {
+              console.error('Invalid callbackUrl', error);
+            } finally {
+              window.location.href = callbackUrl;
+            }
+            return EMPTY;
+          }
+
+          return refreshToolset$(
             getIdWithoutFeatureType(payload.toolsetId),
             router.pathname,
-          ),
-        ),
+          );
+        }),
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
           return of(

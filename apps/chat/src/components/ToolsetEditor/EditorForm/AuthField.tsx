@@ -12,18 +12,20 @@ import {
   useCallback,
   useState,
 } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ToolsetCredentialsLevel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
+
+import { Routes } from '@/src/constants/routes';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { RadioButton } from '@/src/components/Common/Forms/RadioButton';
@@ -158,7 +160,11 @@ export const AuthField = () => {
   const dispatch = useAppDispatch();
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const { control } = useFormContext<ToolsetEditorForm>();
+  const { control, trigger } = useFormContext<ToolsetEditorForm>();
+  const [endpoint, transport, allowedTools] = useWatch<ToolsetEditorForm>({
+    name: ['endpoint', 'protocol', 'allowedTools'],
+    control,
+  });
 
   const [logoutModal, setLogoutModal] = useState(false);
 
@@ -184,26 +190,38 @@ export const AuthField = () => {
 
   const handleLogIn = useCallback(
     (data: ToolsetLoginFormType) => {
-      if (toolsetDetails) {
-        dispatch(
-          ToolsetActions.updateToolset({
-            oldToolset: toolsetDetails,
-            newToolset: {
-              ...toolsetDetails,
-              authSettings: {
-                ...toolsetDetails.authSettings,
-                authenticationType: data.type,
-                apiKeyHeader: data.keyHeader,
+      trigger(['endpoint']).then((isValid) => {
+        if (toolsetDetails && isValid) {
+          dispatch(
+            ToolsetActions.updateToolset({
+              oldToolset: toolsetDetails,
+              newToolset: {
+                ...toolsetDetails,
+                endpoint,
+                transport,
+                allowedTools,
+                authSettings: {
+                  ...toolsetDetails.authSettings,
+                  authenticationType: data.type,
+                  apiKeyHeader:
+                    data.type === ToolsetAuthTypes.API_KEY
+                      ? data.keyHeader
+                      : undefined,
+                  redirectUri:
+                    data.type === ToolsetAuthTypes.OAUTH
+                      ? `${window.location.origin}${Routes.ToolsetSignIn}`
+                      : undefined,
+                },
+              } as ToolsetModel,
+              auth: {
+                apiKey: data.apiKey,
               },
-            },
-            auth: {
-              apiKey: data.apiKey,
-            },
-          }),
-        );
-      }
+            }),
+          );
+        }
+      });
     },
-    [dispatch, toolsetDetails],
+    [allowedTools, dispatch, endpoint, toolsetDetails, transport, trigger],
   );
 
   return (

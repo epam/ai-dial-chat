@@ -178,6 +178,7 @@ export const toolsetSlice = createSlice({
         authType: ToolsetAuthTypes;
         code?: string;
         apiKey?: string;
+        callbackUrl?: string;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;

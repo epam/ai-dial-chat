@@ -12,6 +12,14 @@ import {
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
 
+export const parseToolsetApiAuthStatus = (data?: Toolset) => {
+  return {
+    [ToolsetCredentialsLevel.GLOBAL]: data?.auth_settings?.global_auth_status ?? ToolsetAuthStatus.SIGNED_OUT,
+    [ToolsetCredentialsLevel.USER]: data?.auth_settings?.user_level_auth_status ?? ToolsetAuthStatus.SIGNED_OUT,
+    [ToolsetCredentialsLevel.APP]: ToolsetAuthStatus.SIGNED_OUT,
+  };
+}
+
 export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
   const id = ApiUtils.decodeApiUrl(data.id ?? data.toolset ?? data.name ?? '');
 
@@ -36,19 +44,15 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     updatedAt: data.updated_at,
 
     authSettings: {
-      authenticationType: ToolsetAuthTypes.NONE, //data.auth_settings.authentication_type,
-      authStatus: {
-        [ToolsetCredentialsLevel.GLOBAL]: ToolsetAuthStatus.SIGNED_OUT, //data.auth_settings.global_auth_status,
-        [ToolsetCredentialsLevel.USER]: ToolsetAuthStatus.SIGNED_OUT, //data.auth_settings.user_level_auth_status,
-        [ToolsetCredentialsLevel.APP]: ToolsetAuthStatus.SIGNED_OUT,
-      },
-      // clientId: data.auth_settings.client_id,
-      // clientSecret: data.auth_settings.client_secret,
-      // authorizationEndpoint: data.auth_settings.authorization_endpoint,
-      // redirectUri: data.auth_settings.redirect_uri,
-      // apiKeyHeader: data.auth_settings.api_key_header,
-      // codeChallenge: data.auth_settings.code_challenge;
-      // codeChallengeMethod: data.auth_settings.code_challenge_method;
+      authenticationType: data.auth_settings?.authentication_type ?? ToolsetAuthTypes.NONE,
+      authStatus: parseToolsetApiAuthStatus(data),
+      clientId: data.auth_settings.client_id,
+      clientSecret: data.auth_settings.client_secret,
+      authorizationEndpoint: data.auth_settings.authorization_endpoint,
+      redirectUri: data.auth_settings.redirect_uri,
+      apiKeyHeader: data.auth_settings.api_key_header,
+      codeChallenge: data.auth_settings.code_challenge,
+      codeChallengeMethod: data.auth_settings.code_challenge_method,
     },
   };
 };
@@ -58,6 +62,7 @@ export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
   transport: data.transport,
   allowed_tools: data.allowedTools,
   display_version: data.version,
+  ...(data.reference && { reference: data.reference }),
 
   display_name: data.name,
   description: data.description,
@@ -68,7 +73,6 @@ export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
     authentication_type: data.authSettings.authenticationType,
     client_id: data.authSettings.clientId,
     client_secret: data.authSettings.clientSecret,
-    authorization_endpoint: data.authSettings.authorizationEndpoint,
     redirect_uri: data.authSettings.redirectUri,
     api_key_header: data.authSettings.apiKeyHeader,
   },

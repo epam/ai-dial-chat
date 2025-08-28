@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -8,56 +8,60 @@ import { isServerSessionValid } from '@/src/utils/auth/session';
 
 import { ToolsetCredentialsLevel } from '@/src/types/toolsets';
 
+import { ToolsetActions } from '@/src/store/actions';
+import { useAppDispatch } from '@/src/store/hooks';
+
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+
 interface RedirectState {
-  toolset: string;
-  level?: ToolsetCredentialsLevel;
-  application?: string;
+  toolsetId: string;
+  credentialsLevel?: ToolsetCredentialsLevel;
   callbackUrl?: string;
 }
 
 export default function ToolsetSignin() {
   const router = useRouter();
-
-  const handleRedirect = useCallback((stateQuery?: string) => {
-    let state: RedirectState | undefined;
-    try {
-      state = JSON.parse(stateQuery ?? '');
-    } catch {
-      state = undefined;
-    }
-
-    let callbackUrl = '/';
-    try {
-      const url = new URL(state?.callbackUrl ?? '', window.location.origin);
-      if (url.origin === window.location.origin) {
-        callbackUrl = url.href;
-      }
-    } catch (e) {
-      console.error('Invalid callbackUrl: ', e);
-    }
-
-    window.location.href = callbackUrl;
-  }, []);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const { code = '', state = '' } = router.query;
+    let parsedState: RedirectState;
 
-    if (!code) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    try {
+      parsedState = JSON.parse(decodeURIComponent(state.toString())) as RedirectState;
+    } catch {
+      console.error('Invalid state');
+      window.location.assign(window.location.origin);
+      return;
+    }
+    if (!code || !parsedState.toolsetId) {
       console.error('Toolset signin failed');
+      window.location.assign(window.location.origin);
+      return;
     }
 
-    console.log('Code: ', code?.slice(0, 5));
-    console.log('State: ', state);
+    console.log('Code: ', code.toString());
+    console.log('State: ', parsedState);
 
-    handleRedirect(state.toString());
-  }, [handleRedirect, router]);
+    dispatch(
+      ToolsetActions.logInToolset({
+        toolsetId: parsedState.toolsetId,
+        authLevel: parsedState.credentialsLevel ?? ToolsetCredentialsLevel.GLOBAL,
+        authType: ToolsetAuthTypes.OAUTH,
+        callbackUrl: parsedState.callbackUrl,
+        code: code.toString(),
+      }),
+    );
+  }, [dispatch, router]);
 
   return (
-    <div className="flex h-full items-center justify-center bg-auth-layer-1">
+    <div className="flex h-screen w-full items-center justify-center bg-auth-layer-1">
       <Spinner size={45} className="mx-auto" />
     </div>
   );

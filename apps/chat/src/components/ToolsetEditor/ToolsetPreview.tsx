@@ -10,12 +10,17 @@ import { EntityType } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
+
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
 import { ToolsetDetailsContent } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsContent';
 import { ToolsetDetailsHeader } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsHeader';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
+
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { parseToolsetApiAuthStatus } from '@/src/utils/app/toolsets';
 
 interface ToolsetPreviewProps {
   onClosePreview?: () => void;
@@ -62,23 +67,13 @@ export const ToolsetPreview = ({
       owner: currentToolset?.author,
       folderId: currentToolset?.folderId ?? 'folder-id-placeholder',
       reference: currentToolset?.reference ?? 'reference-placeholder',
-      id: currentToolset?.id ?? 'id-placeholder',
+      id: currentToolset?.id ?? DRAFT_TOOLSET_ID,
+      authSettings: currentToolset?.authSettings ?? {
+        authenticationType: ToolsetAuthTypes.NONE,
+        authStatus: parseToolsetApiAuthStatus(),
+      },
     }),
-    [
-      allowedTools,
-      currentToolset?.author,
-      currentToolset?.createdAt,
-      currentToolset?.folderId,
-      currentToolset?.id,
-      currentToolset?.reference,
-      currentToolset?.updatedAt,
-      description,
-      iconUrl,
-      name,
-      topics,
-      transport,
-      version,
-    ],
+    [allowedTools, currentToolset?.authSettings, currentToolset?.author, currentToolset?.createdAt, currentToolset?.folderId, currentToolset?.id, currentToolset?.reference, currentToolset?.updatedAt, description, iconUrl, name, topics, transport, version],
   );
 
   const handleSwitch = useCallback(() => {
