@@ -89,15 +89,33 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  const docUrls = properties?.document_relative_url as string[] | undefined;
-  if (docUrls?.length) {
-    return {
-      ...properties,
-      document_relative_url: docUrls.map((url) => ApiUtils.encodeApiUrl(url)),
-    };
+  let documentsRelativeUrls:
+    | QuickApp2Config['contexts']
+    | QuickAppConfig['document_relative_url'];
+  const propertiesQA = properties as QuickAppConfig;
+  const propertiesQA2 = properties as QuickApp2Config;
+  const result = {
+    ...properties,
+  };
+
+  if (propertiesQA2.contexts) {
+    documentsRelativeUrls = propertiesQA2.contexts.map((context) => ({
+      ...context,
+      url: ApiUtils.encodeApiUrl(context.url),
+    }));
+    (result as QuickApp2Config).contexts = documentsRelativeUrls;
+  } else {
+    if (!propertiesQA.document_relative_url) {
+      (result as QuickAppConfig).document_relative_url = [];
+    } else {
+      documentsRelativeUrls = propertiesQA.document_relative_url.map((url) =>
+        ApiUtils.encodeApiUrl(url),
+      );
+      (result as QuickAppConfig).document_relative_url = documentsRelativeUrls;
+    }
   }
 
-  return properties;
+  return result;
 };
 
 export const convertApplicationToApi = (
@@ -155,29 +173,41 @@ export const convertApplicationToApi = (
 };
 
 // migrate document_relative_url: string to document_relative_url: string[]
-type DocumentRelativeUrlApiType = string[] | string | undefined;
 export const mapApplicationPropertiesFromApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  if (applicationProperties?.tool_sets?.length) {
-    return properties;
-  }
-  const documentsRelativeUrls =
-    properties?.document_relative_url as DocumentRelativeUrlApiType;
+  let documentsRelativeUrls:
+    | QuickApp2Config['contexts']
+    | QuickAppConfig['document_relative_url'];
+  const propertiesQA = properties as QuickAppConfig;
+  const propertiesQA2 = properties as QuickApp2Config;
+  const result = {
+    ...properties,
+  };
 
-  if (documentsRelativeUrls) {
-    const documentsRelativeUrlArr = Array.isArray(documentsRelativeUrls)
-      ? documentsRelativeUrls
-      : [documentsRelativeUrls];
-
-    return {
-      ...properties,
-      document_relative_url: documentsRelativeUrlArr.map((url) =>
-        ApiUtils.decodeApiUrl(url),
-      ),
-    };
+  if (propertiesQA2.contexts) {
+    documentsRelativeUrls = propertiesQA2.contexts.map((context) => ({
+      ...context,
+      url: ApiUtils.decodeApiUrl(context.url),
+    }));
+    (result as QuickApp2Config).contexts = documentsRelativeUrls;
+  } else {
+    if (!propertiesQA.document_relative_url) {
+      (result as QuickAppConfig).document_relative_url = [];
+    } else {
+      const documentsRelativeUrlArr = Array.isArray(
+        propertiesQA.document_relative_url,
+      )
+        ? propertiesQA.document_relative_url
+        : [propertiesQA.document_relative_url];
+      documentsRelativeUrls = documentsRelativeUrlArr.map(
+        ApiUtils.decodeApiUrl,
+      );
+      (result as QuickAppConfig).document_relative_url = documentsRelativeUrls;
+    }
   }
-  return properties;
+
+  return result;
 };
 
 export const convertApplicationFromApi = (
@@ -243,7 +273,6 @@ export const getQuickAppConfig = (
         model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
         temperature: DEFAULT_TEMPERATURE,
         web_api_toolset: {},
-        agentsOrToolsets: [],
       };
 };
 
