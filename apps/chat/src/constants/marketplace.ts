@@ -46,8 +46,8 @@ export const ChangeAgentTabs = {
 };
 
 export enum DeleteType {
-  DELETE,
-  REMOVE,
+  DELETE = 'Delete',
+  REMOVE = 'Remove',
 }
 
 export const ENTITY_TYPES = [
