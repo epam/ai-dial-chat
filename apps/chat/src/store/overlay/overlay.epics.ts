@@ -1,4 +1,4 @@
-import { signIn, signOut } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 
 import {
   EMPTY,
@@ -45,6 +45,7 @@ import {
 } from '@/src/utils/app/overlay';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
+import { customSignOut } from '@/src/utils/auth/signOut';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -1335,7 +1336,7 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
         );
 
       if (isShouldLogout) {
-        await signOut({ redirect: true });
+        await customSignOut();
 
         return;
       }
