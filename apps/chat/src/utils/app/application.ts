@@ -17,7 +17,7 @@ import {
 import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
-import { QuickAppConfig } from '@/src/types/quick-apps';
+import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
@@ -159,6 +159,9 @@ type DocumentRelativeUrlApiType = string[] | string | undefined;
 export const mapApplicationPropertiesFromApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
+  if (applicationProperties?.tool_sets?.length) {
+    return properties;
+  }
   const documentsRelativeUrls =
     properties?.document_relative_url as DocumentRelativeUrlApiType;
 
@@ -244,8 +247,20 @@ export const getQuickAppConfig = (
       };
 };
 
+export const getQuickApp2Config = (
+  entity: CustomApplicationModel,
+): QuickApp2Config => {
+  return entity.applicationProperties as QuickApp2Config;
+};
+
 export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
   return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
+};
+
+export const getQuick2AppDocumentUrl = (entity?: CustomApplicationModel) => {
+  return entity
+    ? getQuickApp2Config(entity).contexts.map((context) => context.url)
+    : undefined;
 };
 
 export const getToolsetStr = (

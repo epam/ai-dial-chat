@@ -43,7 +43,10 @@ export interface ApiApplicationResponseBase {
   endpoint: string;
   function?: ApiApplicationFunctionType;
   application_type_schema_id?: string;
-  application_properties?: QuickAppConfig | Record<string, unknown>;
+  application_properties?:
+    | QuickAppConfig
+    | QuickApp2Config
+    | Record<string, unknown>;
 }
 
 export interface ApiApplicationResponsePublication

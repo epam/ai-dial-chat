@@ -254,41 +254,8 @@ export const getApplicationData = (
           content: '',
         },
       },
-      contexts: [
-        // {
-        //   url: "",
-        //   type: 'file'
-        // },
-      ],
-      tool_sets: [
-        // {
-        //   name: "DeepWiki toolset name",
-        //   dial_id: "DeepWiki",
-        //   description: "DeepWiki tool from DIAL MCP",
-        //   type: "dial-mcp",
-        // },
-        {
-          name: 'dial-deployment-tool-set',
-          type: 'dial-deployment',
-          tools: [
-            {
-              open_ai_tool: {
-                function: {
-                  parameters: {
-                    type: 'object',
-                    properties: {},
-                  },
-                  description: '',
-                  name: 'dall-e-3',
-                },
-              },
-              deployment: {
-                name: 'dall-e-3',
-              },
-            },
-          ],
-        },
-      ],
+      contexts: [],
+      tool_sets: [],
     };
   }
 

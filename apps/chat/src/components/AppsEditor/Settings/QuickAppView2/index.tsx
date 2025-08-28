@@ -73,6 +73,7 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
   publicationUrl,
 }) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const {
