@@ -5,7 +5,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 
 import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
 
-export interface Props {
+export interface AgentAndToolsetSelectItemProps {
   selectedItems: MarketplaceEntity[];
   onToggleSelectItem: (item: MarketplaceEntity) => void;
   groupItem: MarketplaceEntity;
@@ -15,7 +15,7 @@ export const AgentAndToolsetSelectItem = ({
   groupItem,
   selectedItems,
   onToggleSelectItem,
-}: Props) => {
+}: AgentAndToolsetSelectItemProps) => {
   const isSelected = selectedItems.some(
     (selected) => selected.id === groupItem.id,
   );
