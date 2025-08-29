@@ -56,12 +56,9 @@ import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
+import { TalkToNotFound } from '@/src/components/Common/TalkToNotFound';
 
-import {
-  TalkToNotFound,
-  TalkToSliderItem,
-  TalkToSliderItemProps,
-} from './TalkToSliderItem';
+import { TalkToSliderItem, TalkToSliderItemProps } from './TalkToSliderItem';
 
 import { Feature } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';

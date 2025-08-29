@@ -17,10 +17,9 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
-import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import { SuggestionButton } from '@/src/components/Common/SuggestionButton';
 
 import { ItemCardView } from './ItemCardView';
 
@@ -84,45 +83,5 @@ export const TalkToSliderItem = ({
       onClick={() => onSelectModel(groupItem as DialAIEntityModel)}
       onSelectVersion={onSelectModel}
     />
-  );
-};
-
-interface TalkToNotFound {
-  isMyWorkspace: boolean;
-  onOpenMarketplaceTab: () => void;
-}
-
-export const TalkToNotFound = ({
-  isMyWorkspace,
-  onOpenMarketplaceTab,
-}: TalkToNotFound) => {
-  const { t } = useTranslation(Translation.Chat);
-
-  return (
-    <div className="flex size-full items-center justify-center">
-      <NoResultsFound
-        additionalText={
-          isMyWorkspace
-            ? t(` in ${ChangeAgentTabs[MarketplaceTabs.MY_WORKSPACE]}`)
-            : ''
-        }
-      >
-        {isMyWorkspace && <SuggestionButton onClick={onOpenMarketplaceTab} />}
-      </NoResultsFound>
-    </div>
-  );
-};
-
-interface SuggestionButtonProps {
-  onClick?: () => void;
-}
-
-const SuggestionButton = ({ onClick }: SuggestionButtonProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
-  return (
-    <button className="text-accent-primary" onClick={onClick}>
-      {t(`See results from ${ChangeAgentTabs[MarketplaceTabs.HOME]}`)}
-    </button>
   );
 };
