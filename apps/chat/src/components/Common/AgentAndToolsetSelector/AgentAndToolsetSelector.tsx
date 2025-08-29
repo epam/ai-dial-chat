@@ -5,9 +5,9 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { AgentAndToolset } from '@/src/components/AppsEditor/Settings/form';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
@@ -28,7 +28,7 @@ interface AgentAndToolsetSelectorProps {
   onChange: (agentAndToolset: string[]) => void;
   readonly?: boolean;
   addBtnTooltip?: string;
-  allItemsMap: Record<string, AgentAndToolset | undefined>;
+  allItemsMap: Record<string, MarketplaceEntity | undefined>;
   tooltip?: string;
 }
 
@@ -50,7 +50,7 @@ export const AgentAndToolsetSelector: React.FC<
     () =>
       value
         .map((id) => allItemsMap[id])
-        .filter((item): item is AgentAndToolset => !!item),
+        .filter((item): item is MarketplaceEntity => !!item),
     [value, allItemsMap],
   );
 
@@ -67,7 +67,7 @@ export const AgentAndToolsetSelector: React.FC<
     onChange(value.filter((reference) => reference !== referenceToRemove));
   };
 
-  const handleConfirmSelection = (newItems: AgentAndToolset[]) => {
+  const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
     onChange(newItems.map((item) => item.reference));
     setSelectModalOpen(false);
   };

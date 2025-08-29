@@ -1,27 +1,21 @@
 import React from 'react';
 
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { AgentAndToolset } from '@/src/components/AppsEditor/Settings/form';
 import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
 
-export interface AgentAndToolsetSelectItemPassthroughProps {
-  selectedItems: AgentAndToolset[];
-  onToggleSelectItem: (item: AgentAndToolset) => void;
+export interface Props {
+  selectedItems: MarketplaceEntity[];
+  onToggleSelectItem: (item: MarketplaceEntity) => void;
+  groupItem: MarketplaceEntity;
 }
-
-interface AgentAndToolsetSelectItemOwnProps {
-  groupItem: AgentAndToolset;
-}
-
-export type AgentAndToolsetSelectItemProps =
-  AgentAndToolsetSelectItemPassthroughProps & AgentAndToolsetSelectItemOwnProps;
 
 export const AgentAndToolsetSelectItem = ({
   groupItem,
   selectedItems,
   onToggleSelectItem,
-}: AgentAndToolsetSelectItemProps) => {
+}: Props) => {
   const isSelected = selectedItems.some(
     (selected) => selected.id === groupItem.id,
   );

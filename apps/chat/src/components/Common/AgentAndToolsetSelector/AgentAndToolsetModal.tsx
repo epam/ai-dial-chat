@@ -19,6 +19,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -39,7 +40,6 @@ import {
 } from '@/src/constants/marketplace';
 import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
 
-import { AgentAndToolset } from '@/src/components/AppsEditor/Settings/form';
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
@@ -112,8 +112,8 @@ function ScopeTabButton({
 
 interface AgentAndToolsetModalViewProps {
   onClose: () => void;
-  onConfirm: (selectedItems: AgentAndToolset[]) => void;
-  defaultSelectedItems: AgentAndToolset[];
+  onConfirm: (selectedItems: MarketplaceEntity[]) => void;
+  defaultSelectedItems: MarketplaceEntity[];
 }
 
 const AgentAndToolsetModalView = ({
@@ -135,7 +135,7 @@ const AgentAndToolsetModalView = ({
   >(MarketplaceTabs.MY_WORKSPACE);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] =
-    useState<AgentAndToolset[]>(defaultSelectedItems);
+    useState<MarketplaceEntity[]>(defaultSelectedItems);
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -181,7 +181,7 @@ const AgentAndToolsetModalView = ({
   }, [entityType]);
 
   const handleToggleSelectItem = useCallback(
-    (itemToToggle: AgentAndToolset) => {
+    (itemToToggle: MarketplaceEntity) => {
       setSelectedItems((prevSelected) => {
         const isAlreadySelected = prevSelected.some(
           (item) => item.id === itemToToggle.id,
@@ -337,7 +337,7 @@ const AgentAndToolsetModalView = ({
           </span>
         </div>
         <SliderGrid<
-          AgentAndToolset,
+          MarketplaceEntity,
           Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
         >
           items={displayedItems}
@@ -386,8 +386,8 @@ const AgentAndToolsetModalView = ({
 
 interface Props {
   onClose: () => void;
-  onConfirm: (selectedItems: AgentAndToolset[]) => void;
-  defaultSelectedItems: AgentAndToolset[];
+  onConfirm: (selectedItems: MarketplaceEntity[]) => void;
+  defaultSelectedItems: MarketplaceEntity[];
 }
 
 export const AgentAndToolsetModal = ({

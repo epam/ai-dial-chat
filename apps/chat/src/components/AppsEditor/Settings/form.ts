@@ -25,7 +25,8 @@ import {
   Toolsets,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ModelsMap } from '@/src/types/models';
 import {
   DialDeploymentTool,
   FileContext,
@@ -35,7 +36,6 @@ import {
   isDialDeploymentToolset,
   isMcpToolset,
 } from '@/src/types/quick-apps';
-import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   FEATURES_ENDPOINTS,
@@ -74,8 +74,6 @@ export interface ExternalAppFormData extends ApplicationGeneralInfo {
   externalUrl: string;
   applicationProperties: ApplicationPropertiesType;
 }
-
-export type AgentAndToolset = DialAIEntityModel | ToolsetModel;
 
 export interface QuickAppFormData extends ApplicationGeneralInfo {
   instructions: string;
@@ -450,7 +448,7 @@ export const getQuickAppData = (
 export const getQuickAppData2 = (
   formData: QuickAppFormData2,
   modelsMap: ModelsMap,
-  allEntitiesMap: Record<string, AgentAndToolset | undefined>,
+  allEntitiesMap: Record<string, MarketplaceEntity | undefined>,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const documentRelativeUrls: FileContext[] =
     formData.documentRelativeUrl?.map((url) => ({
