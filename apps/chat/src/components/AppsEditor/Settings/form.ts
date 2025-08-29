@@ -27,6 +27,9 @@ import {
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import {
+  DialDeploymentTool,
+  FileContext,
+  MCPToolset,
   QuickApp2Config,
   QuickAppConfig,
   isDialDeploymentToolset,
@@ -43,6 +46,7 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
+  ToolsetTypes,
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
@@ -448,17 +452,20 @@ export const getQuickAppData2 = (
   modelsMap: ModelsMap,
   allEntitiesMap: Record<string, AgentAndToolset | undefined>,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
-  const documentRelativeUrls =
+  const documentRelativeUrls: FileContext[] =
     formData.documentRelativeUrl?.map((url) => ({
       url,
       type: 'file',
     })) ?? [];
-  const dialDeploymentsToolsets = formData.agentsAndToolsets
-    .map((agentsAndToolset) => {
+  const dialDeploymentsToolsets: DialDeploymentTool[] =
+    formData.agentsAndToolsets.flatMap((agentsAndToolset) => {
       const entity = allEntitiesMap[agentsAndToolset];
-      if (!entity || entity.type === EntityType.Toolset) return undefined;
+      if (!entity || entity.type === EntityType.Toolset) return [];
 
       return {
+        deployment: {
+          name: entity.id,
+        },
         open_ai_tool: {
           function: {
             parameters: {
@@ -469,25 +476,23 @@ export const getQuickAppData2 = (
             name: entity.name,
           },
         },
-        deployment: {
-          name: entity.id,
-        },
       };
-    })
-    .filter(Boolean);
-  const dialMCPToolsets = formData.agentsAndToolsets
-    .map((agentAndToolset) => {
+    });
+  const dialMCPToolsets: MCPToolset[] = formData.agentsAndToolsets.flatMap(
+    (agentAndToolset) => {
       const entity = allEntitiesMap[agentAndToolset];
-      if (!entity || entity.type !== EntityType.Toolset) return undefined;
+      if (!entity || entity.type !== EntityType.Toolset) return [];
 
-      return {
-        name: entity.name,
-        dial_id: entity.id,
-        description: entity.description,
-        type: 'dial-mcp',
-      };
-    })
-    .filter(Boolean);
+      return [
+        {
+          name: entity.name,
+          dial_id: entity.id,
+          description: entity.description,
+          type: ToolsetTypes.DialMcp,
+        },
+      ];
+    },
+  );
 
   return {
     ...getGeneralApplicationData(formData),
@@ -510,7 +515,7 @@ export const getQuickAppData2 = (
         ...dialMCPToolsets,
         {
           name: 'dial-deployment-tool-set',
-          type: 'dial-deployment',
+          type: ToolsetTypes.DialDeployment,
           tools: [...dialDeploymentsToolsets],
         },
       ],

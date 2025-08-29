@@ -89,6 +89,10 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
+  if (!properties) {
+    return properties;
+  }
+
   let documentsRelativeUrls:
     | QuickApp2Config['contexts']
     | QuickAppConfig['document_relative_url'];
@@ -176,6 +180,10 @@ export const convertApplicationToApi = (
 export const mapApplicationPropertiesFromApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
+  if (!properties) {
+    return properties;
+  }
+
   let documentsRelativeUrls:
     | QuickApp2Config['contexts']
     | QuickAppConfig['document_relative_url'];
