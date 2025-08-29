@@ -162,6 +162,15 @@ export const toolsetSlice = createSlice({
       state.installedToolsets = payload.installedToolsets;
     },
     updateInstalledToolsetsFail: (state) => state,
+    deleteToolset: (state, _action: PayloadAction<{ reference: string }>) =>
+      state,
+    deleteToolsetSuccess: (
+      state,
+      { payload }: PayloadAction<{ reference: string }>,
+    ) => {
+      state.toolsetsMap = omit(state.toolsetsMap, [payload.reference]);
+    },
+    deleteToolsetFail: (state) => state,
 
     startSignInProcess: (
       state,

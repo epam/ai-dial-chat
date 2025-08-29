@@ -446,6 +446,35 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const deleteToolsetEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ToolsetActions.deleteToolset.type),
+    switchMap(({ payload }) => {
+      const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state$.value);
+      const targetToolset = toolsetsMap[payload.reference];
+
+      if (!targetToolset) {
+        return of(ToolsetActions.deleteToolsetFail());
+      }
+
+      return ToolsetService.deleteToolset(
+        getIdWithoutFeatureType(targetToolset.id),
+      ).pipe(
+        switchMap(() => of(ToolsetActions.deleteToolsetSuccess(payload))),
+        catchError((err) => {
+          console.error('Failed to delete toolset', err);
+          return of(ToolsetActions.deleteToolsetFail());
+        }),
+      );
+    }),
+  );
+
+const deleteToolsetFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.deleteToolsetFail.type),
+    map(() => UIActions.showErrorToast(translate('Failed to delete toolset'))),
+  );
+
 const refreshToolset$ = (path: string, route?: string) =>
   ToolsetService.getToolsetByPath(path).pipe(
     switchMap((toolset) => {
@@ -603,6 +632,10 @@ export const ToolsetEpics = combineEpics(
   createToolsetFailedEpic,
   getToolsetDetailsEpic,
   updateToolsetEpic,
+
+  //Delete
+  deleteToolsetEpic,
+  deleteToolsetFailEpic,
 
   //Bookmark
   getInstalledToolsetsEpic,

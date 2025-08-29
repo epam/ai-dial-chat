@@ -31,6 +31,7 @@ import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { CredentialsStatusIndicator } from '@/src/components/Marketplace/CredentialsStatusIndicator';
 import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
+import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
@@ -107,8 +108,14 @@ export const ApplicationCard = memo(
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
             {!isPreview && (
               <>
-                {isDialAiEntityModel(entity) && (
+                {isDialAiEntityModel(entity) ? (
                   <AgentContextMenu
+                    isPreview={isPreview}
+                    className="xl:invisible group-hover:xl:visible"
+                    entity={entity}
+                  />
+                ) : (
+                  <ToolsetContextMenu
                     isPreview={isPreview}
                     className="xl:invisible group-hover:xl:visible"
                     entity={entity}

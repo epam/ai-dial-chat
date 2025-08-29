@@ -1326,6 +1326,20 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.signInOptionsSet.type),
     tap(async ({ payload: { signInOptions } }) => {
+      const login = () => {
+        if (signInOptions?.autoSignIn && signInOptions?.signInProvider) {
+          if (signInOptions?.signInInNewWindow) {
+            //will open '/auth/signin?provider=' in a new page
+            signInInOverlay(
+              `/auth/signin?provider=${signInOptions.signInProvider}`,
+            );
+          } else {
+            //will try to signin in the iframe
+            signIn(signInOptions?.signInProvider);
+          }
+        }
+      };
+
       const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
       const isShouldLogout =
         signInOptions?.validationUserEmail &&
@@ -1335,25 +1349,15 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
         );
 
       if (isShouldLogout) {
-        await signOut({ redirect: true });
+        await signOut({ redirect: false });
+
+        login();
 
         return;
       }
 
-      if (
-        isShouldLogin &&
-        signInOptions?.autoSignIn &&
-        signInOptions?.signInProvider
-      ) {
-        if (signInOptions?.signInInNewWindow) {
-          //will open '/auth/signin?provider=' in a new page
-          signInInOverlay(
-            `/auth/signin?provider=${signInOptions.signInProvider}`,
-          );
-        } else {
-          //will try to signin in the iframe
-          signIn(signInOptions?.signInProvider);
-        }
+      if (isShouldLogin) {
+        login();
       }
     }),
     ignoreElements(),

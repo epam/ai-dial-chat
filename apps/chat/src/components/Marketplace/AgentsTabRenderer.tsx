@@ -89,7 +89,7 @@ export function AgentsTabRenderer() {
     (entity: DialAIEntityModel) => {
       if (installedModelIds.has(entity.reference)) {
         dispatch(
-          MarketplaceActions.setDeleteModel({
+          MarketplaceActions.setDeleteEntity({
             entity,
             action: DeleteType.REMOVE,
           }),

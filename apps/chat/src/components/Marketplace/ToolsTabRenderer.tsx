@@ -10,6 +10,8 @@ import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
 
+import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
+
 import { ResultsView, ResultsViewProps } from './TabResults';
 import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
 
@@ -108,6 +110,8 @@ export function ToolsTabRenderer() {
           onBookmarkClick={handleBookmarkClick}
         />
       )}
+
+      <DeleteMarketplaceEntityDialog />
     </>
   );
 }

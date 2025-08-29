@@ -26,6 +26,7 @@ export interface ToolsetModel extends ShareEntity {
   iconUrl?: string;
   userRoles?: string[];
   maxRetryAttempts?: number;
+  isDefault?: false;
 
   authSettings: {
     authenticationType: ToolsetAuthTypes;
