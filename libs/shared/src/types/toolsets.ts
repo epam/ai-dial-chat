@@ -48,5 +48,5 @@ export interface Toolset {
     code_challenge_method?: string;
     global_auth_status?: ToolsetAuthStatus;
     user_level_auth_status?: ToolsetAuthStatus;
-  }
+  };
 }
