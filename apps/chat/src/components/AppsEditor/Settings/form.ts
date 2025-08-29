@@ -27,6 +27,8 @@ import {
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import {
+  DialDeploymentToolset,
+  MCPToolset,
   QuickApp2Config,
   QuickAppConfig,
   isDialDeploymentToolset,
@@ -451,43 +453,44 @@ export const getQuickAppData2 = (
   const documentRelativeUrls =
     formData.documentRelativeUrl?.map((url) => ({
       url,
-      type: 'file',
+      type: 'file' as const,
     })) ?? [];
-  const dialDeploymentsToolsets = formData.agentsAndToolsets
-    .map((agentsAndToolset) => {
+  const dialDeploymentsToolsets: DialDeploymentToolset['tools'] =
+    formData.agentsAndToolsets.flatMap((agentsAndToolset) => {
       const entity = allEntitiesMap[agentsAndToolset];
-      if (!entity || entity.type === EntityType.Toolset) return undefined;
+      if (!entity || entity.type === EntityType.Toolset) return [];
 
       return {
+        deployment: {
+          name: entity.id,
+        },
         open_ai_tool: {
           function: {
             parameters: {
-              type: 'object',
+              type: 'object' as const,
               properties: {},
             },
             description: entity.description,
             name: entity.name,
           },
         },
-        deployment: {
-          name: entity.id,
-        },
       };
-    })
-    .filter(Boolean);
-  const dialMCPToolsets = formData.agentsAndToolsets
-    .map((agentAndToolset) => {
+    });
+  const dialMCPToolsets: MCPToolset[] = formData.agentsAndToolsets.flatMap(
+    (agentAndToolset) => {
       const entity = allEntitiesMap[agentAndToolset];
-      if (!entity || entity.type !== EntityType.Toolset) return undefined;
+      if (!entity || entity.type !== EntityType.Toolset) return [];
 
-      return {
-        name: entity.name,
-        dial_id: entity.id,
-        description: entity.description,
-        type: 'dial-mcp',
-      };
-    })
-    .filter(Boolean);
+      return [
+        {
+          name: entity.name,
+          dial_id: entity.id,
+          description: entity.description,
+          type: 'dial-mcp',
+        },
+      ];
+    },
+  );
 
   return {
     ...getGeneralApplicationData(formData),

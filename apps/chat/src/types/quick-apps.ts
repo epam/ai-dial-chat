@@ -12,36 +12,34 @@ interface FileContext {
   type: 'file';
 }
 
-interface DialDeploymentToolset {
+export interface DialDeploymentToolset {
   name: 'dial-deployment-tool-set';
   type: 'dial-deployment';
-  tools: [
-    {
-      deployment: {
-        name: string;
-      };
-      open_ai_tool: {
-        function: {
-          parameters: {
-            type: 'object';
-            properties: object;
-          };
-          description: string;
-          name: string;
+  tools: {
+    deployment: {
+      name: string;
+    };
+    open_ai_tool: {
+      function: {
+        parameters: {
+          type: 'object';
+          properties: object;
         };
+        name: string;
+        description?: string;
       };
-    },
-  ];
+    };
+  }[];
 }
 
-interface MCPToolset {
+export interface MCPToolset {
   name: string;
   type: 'dial-mcp';
   dial_id: string;
-  description: string;
+  description?: string;
 }
 
-type ToolSet = DialDeploymentToolset | MCPToolset;
+export type AnyToolset = DialDeploymentToolset | MCPToolset;
 
 export interface QuickApp2Config {
   orchestrator: {
@@ -58,15 +56,15 @@ export interface QuickApp2Config {
     };
   };
   contexts: FileContext[];
-  tool_sets: ToolSet[];
+  tool_sets: AnyToolset[];
 }
 
 export function isDialDeploymentToolset(
-  toolset: ToolSet,
+  toolset: AnyToolset,
 ): toolset is DialDeploymentToolset {
   return toolset.type === 'dial-deployment';
 }
 
-export function isMcpToolset(toolset: ToolSet): toolset is MCPToolset {
+export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
   return toolset.type === 'dial-mcp';
 }
