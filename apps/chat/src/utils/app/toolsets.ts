@@ -4,7 +4,13 @@ import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
 import { ApiUtils, getToolsetApiKey } from '@/src/utils/server/api';
 
 import { EntityType, PartialBy } from '@/src/types/common';
-import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import {
+  ToolsetCredentialsLevel,
+  ToolsetModel,
+  ToolsetRedirectState,
+} from '@/src/types/toolsets';
+
+import { Routes } from '@/src/constants/routes';
 
 import {
   Toolset,
@@ -14,11 +20,14 @@ import {
 
 export const parseToolsetApiAuthStatus = (data?: Toolset) => {
   return {
-    [ToolsetCredentialsLevel.GLOBAL]: data?.auth_settings?.global_auth_status ?? ToolsetAuthStatus.SIGNED_OUT,
-    [ToolsetCredentialsLevel.USER]: data?.auth_settings?.user_level_auth_status ?? ToolsetAuthStatus.SIGNED_OUT,
+    [ToolsetCredentialsLevel.GLOBAL]:
+      data?.auth_settings?.global_auth_status ?? ToolsetAuthStatus.SIGNED_OUT,
+    [ToolsetCredentialsLevel.USER]:
+      data?.auth_settings?.user_level_auth_status ??
+      ToolsetAuthStatus.SIGNED_OUT,
     [ToolsetCredentialsLevel.APP]: ToolsetAuthStatus.SIGNED_OUT,
   };
-}
+};
 
 export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
   const id = ApiUtils.decodeApiUrl(data.id ?? data.toolset ?? data.name ?? '');
@@ -44,7 +53,8 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     updatedAt: data.updated_at,
 
     authSettings: {
-      authenticationType: data.auth_settings?.authentication_type ?? ToolsetAuthTypes.NONE,
+      authenticationType:
+        data.auth_settings?.authentication_type ?? ToolsetAuthTypes.NONE,
       authStatus: parseToolsetApiAuthStatus(data),
       clientId: data.auth_settings.client_id,
       clientSecret: data.auth_settings.client_secret,
@@ -55,6 +65,30 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
       codeChallengeMethod: data.auth_settings.code_challenge_method,
     },
   };
+};
+
+export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
+  switch (data.authSettings.authenticationType) {
+    case ToolsetAuthTypes.API_KEY:
+      return {
+        authentication_type: data.authSettings.authenticationType,
+        api_key_header: data.authSettings.apiKeyHeader,
+      };
+    case ToolsetAuthTypes.OAUTH:
+      return {
+        authentication_type: data.authSettings.authenticationType,
+        redirect_uri: data.authSettings.redirectUri,
+        ...(data.authSettings.clientId && {
+          client_id: data.authSettings.clientId,
+          client_secret: data.authSettings.clientSecret,
+        }),
+      };
+    default:
+    case ToolsetAuthTypes.NONE:
+      return {
+        authentication_type: data.authSettings.authenticationType,
+      };
+  }
 };
 
 export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
@@ -69,13 +103,7 @@ export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
   icon_url: ApiUtils.encodeApiUrl(data.iconUrl ?? ''),
   description_keywords: data.topics,
 
-  auth_settings: {
-    authentication_type: data.authSettings.authenticationType,
-    client_id: data.authSettings.clientId,
-    client_secret: data.authSettings.clientSecret,
-    redirect_uri: data.authSettings.redirectUri,
-    api_key_header: data.authSettings.apiKeyHeader,
-  },
+  auth_settings: convertToolsetAuthSettingsToApi(data),
 });
 
 export const getGeneratedToolsetId = (
@@ -106,3 +134,18 @@ export const regenerateToolsetId = (
 
   return toolset as ToolsetModel;
 };
+
+export const encodeToolsetRedirectState = (
+  state: ToolsetRedirectState,
+): string => {
+  return encodeURIComponent(JSON.stringify(state));
+};
+
+export const decodeToolsetRedirectState = (
+  state: string,
+): ToolsetRedirectState => {
+  return JSON.parse(decodeURIComponent(state)) as ToolsetRedirectState;
+};
+
+export const getToolsetRedirectUri = () =>
+  `${window.location.origin}${Routes.ToolsetSignIn}`;

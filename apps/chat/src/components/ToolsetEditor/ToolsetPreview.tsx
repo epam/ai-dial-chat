@@ -5,6 +5,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { fakeCallback } from '@/src/utils/app/common';
+import { parseToolsetApiAuthStatus } from '@/src/utils/app/toolsets';
 
 import { EntityType } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -20,7 +21,6 @@ import { ToolsetDetailsHeader } from '@/src/components/Marketplace/ToolsetsDetai
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import { parseToolsetApiAuthStatus } from '@/src/utils/app/toolsets';
 
 interface ToolsetPreviewProps {
   onClosePreview?: () => void;
@@ -73,7 +73,22 @@ export const ToolsetPreview = ({
         authStatus: parseToolsetApiAuthStatus(),
       },
     }),
-    [allowedTools, currentToolset?.authSettings, currentToolset?.author, currentToolset?.createdAt, currentToolset?.folderId, currentToolset?.id, currentToolset?.reference, currentToolset?.updatedAt, description, iconUrl, name, topics, transport, version],
+    [
+      allowedTools,
+      currentToolset?.authSettings,
+      currentToolset?.author,
+      currentToolset?.createdAt,
+      currentToolset?.folderId,
+      currentToolset?.id,
+      currentToolset?.reference,
+      currentToolset?.updatedAt,
+      description,
+      iconUrl,
+      name,
+      topics,
+      transport,
+      version,
+    ],
   );
 
   const handleSwitch = useCallback(() => {

@@ -14,6 +14,7 @@ import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -28,6 +29,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
+import { CredentialsStatusIndicator } from '@/src/components/Marketplace/CredentialsStatusIndicator';
 import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
@@ -168,8 +170,12 @@ export const ApplicationCard = memo(
                   <span className="truncate" data-qa="entity-name">
                     {entity.name}
                   </span>
-                  {isAgentsTab && isDialAiEntityModel(entity) && (
+                  {isAgentsTab && isDialAiEntityModel(entity) ? (
                     <FunctionStatusIndicator entity={entity} />
+                  ) : (
+                    <CredentialsStatusIndicator
+                      entity={entity as ToolsetModel}
+                    />
                   )}
                 </div>
               </div>

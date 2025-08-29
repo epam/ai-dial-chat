@@ -18,14 +18,14 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getToolsetRedirectUri } from '@/src/utils/app/toolsets';
+
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
-
-import { Routes } from '@/src/constants/routes';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { RadioButton } from '@/src/components/Common/Forms/RadioButton';
@@ -209,7 +209,7 @@ export const AuthField = () => {
                       : undefined,
                   redirectUri:
                     data.type === ToolsetAuthTypes.OAUTH
-                      ? `${window.location.origin}${Routes.ToolsetSignIn}`
+                      ? getToolsetRedirectUri()
                       : undefined,
                 },
               } as ToolsetModel,

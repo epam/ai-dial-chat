@@ -67,3 +67,9 @@ export interface InstalledToolset {
   reference: string;
   pinned?: boolean;
 }
+
+export interface ToolsetRedirectState {
+  toolsetId: string;
+  credentialsLevel?: ToolsetCredentialsLevel;
+  callbackUrl?: string;
+}

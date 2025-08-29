@@ -19,12 +19,14 @@ import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { getIdWithoutFeatureType, isMyEntity } from '@/src/utils/app/id';
 import {
   convertToolsetModelToApi,
+  encodeToolsetRedirectState,
+  getToolsetRedirectUri,
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { AppEpic, AppAction } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 import {
   ToolsetAuthPayload,
   ToolsetCredentialsLevel,
@@ -462,7 +464,7 @@ const refreshToolset$ = (path: string, route?: string) =>
     }),
   );
 
-const startSignInProcess: AppEpic = (action$, _state, { router }) =>
+const startSignInProcess: AppEpic = (action$, _state) =>
   action$.pipe(
     ofType(ToolsetActions.startSignInProcess.type),
     switchMap(({ payload }) => {
@@ -485,7 +487,7 @@ const startSignInProcess: AppEpic = (action$, _state, { router }) =>
         authSettings?.authorizationEndpoint &&
         typeof window !== 'undefined'
       ) {
-        const callbackUrl = router.asPath;
+        const callbackUrl = `${window.location.pathname}${window.location.search}`;
         const state = {
           callbackUrl,
           toolsetId: payload.toolset.id,
@@ -495,10 +497,7 @@ const startSignInProcess: AppEpic = (action$, _state, { router }) =>
         const url = new URL(authSettings.authorizationEndpoint);
         url.searchParams.set('response_type', 'code');
         url.searchParams.set('client_id', authSettings.clientId as string);
-        url.searchParams.set(
-          'redirect_uri',
-          `${window.location.origin}${Routes.ToolsetSignIn}`,
-        );
+        url.searchParams.set('redirect_uri', getToolsetRedirectUri());
         url.searchParams.set(
           'code_challenge',
           authSettings.codeChallenge as string,
@@ -507,10 +506,7 @@ const startSignInProcess: AppEpic = (action$, _state, { router }) =>
           'code_challenge_method',
           authSettings.codeChallengeMethod as string,
         );
-        url.searchParams.set(
-          'state',
-          encodeURIComponent(JSON.stringify(state)),
-        );
+        url.searchParams.set('state', encodeToolsetRedirectState(state));
 
         window.location.assign(url.toString());
       }
@@ -532,21 +528,25 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
           : { api_key: payload.apiKey as string }),
       };
 
+      let callbackUrl = '/';
+      if (payload.authType === ToolsetAuthTypes.OAUTH) {
+        try {
+          const url = new URL(
+            payload.callbackUrl ?? '',
+            window.location.origin,
+          );
+          if (url.origin === window.location.origin) {
+            callbackUrl = url.href;
+          }
+        } catch {
+          console.error('Invalid callback url');
+        }
+      }
+
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
-            let callbackUrl = '/';
-
-            try {
-              const url = new URL(payload.callbackUrl ?? '', window.location.origin);
-              if (url.origin === window.location.origin) {
-                callbackUrl = url.href;
-              }
-            } catch (error) {
-              console.error('Invalid callbackUrl', error);
-            } finally {
-              window.location.href = callbackUrl;
-            }
+            window.location.href = callbackUrl;
             return EMPTY;
           }
 
@@ -557,8 +557,14 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
         }),
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
-          return of(
-            UIActions.showErrorToast(translate('Failed to sign in toolset')),
+          if (payload.authType === ToolsetAuthTypes.OAUTH) {
+            window.location.href = callbackUrl;
+          }
+          return concat(
+            of(ToolsetActions.logInToolsetFail()),
+            of(
+              UIActions.showErrorToast(translate('Failed to sign in toolset')),
+            ),
           );
         }),
       );

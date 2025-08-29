@@ -4,9 +4,13 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { useRouter } from 'next/router';
 
+import { decodeToolsetRedirectState } from '@/src/utils/app/toolsets';
 import { isServerSessionValid } from '@/src/utils/auth/session';
 
-import { ToolsetCredentialsLevel } from '@/src/types/toolsets';
+import {
+  ToolsetCredentialsLevel,
+  ToolsetRedirectState,
+} from '@/src/types/toolsets';
 
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -17,24 +21,18 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
-interface RedirectState {
-  toolsetId: string;
-  credentialsLevel?: ToolsetCredentialsLevel;
-  callbackUrl?: string;
-}
-
 export default function ToolsetSignin() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     const { code = '', state = '' } = router.query;
-    let parsedState: RedirectState;
+    let parsedState: ToolsetRedirectState;
 
     window.history.replaceState({}, document.title, window.location.pathname);
 
     try {
-      parsedState = JSON.parse(decodeURIComponent(state.toString())) as RedirectState;
+      parsedState = decodeToolsetRedirectState(state.toString());
     } catch {
       console.error('Invalid state');
       window.location.assign(window.location.origin);
@@ -46,13 +44,11 @@ export default function ToolsetSignin() {
       return;
     }
 
-    console.log('Code: ', code.toString());
-    console.log('State: ', parsedState);
-
     dispatch(
       ToolsetActions.logInToolset({
         toolsetId: parsedState.toolsetId,
-        authLevel: parsedState.credentialsLevel ?? ToolsetCredentialsLevel.GLOBAL,
+        authLevel:
+          parsedState.credentialsLevel ?? ToolsetCredentialsLevel.GLOBAL,
         authType: ToolsetAuthTypes.OAUTH,
         callbackUrl: parsedState.callbackUrl,
         code: code.toString(),

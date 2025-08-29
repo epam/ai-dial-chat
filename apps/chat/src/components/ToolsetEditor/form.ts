@@ -74,7 +74,7 @@ export const getDefaultFormData = (
     endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.SSE,
     authenticationType:
-      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.OAUTH,
+      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',

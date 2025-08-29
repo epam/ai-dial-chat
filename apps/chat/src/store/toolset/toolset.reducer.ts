@@ -3,6 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
+
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ToolsetAuthTypes, UploadStatus } from '@epam/ai-dial-shared';
@@ -182,6 +183,9 @@ export const toolsetSlice = createSlice({
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    logInToolsetFail: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
     logOutToolset: (
       state,
