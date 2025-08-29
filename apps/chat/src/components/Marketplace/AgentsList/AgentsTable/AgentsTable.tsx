@@ -64,13 +64,13 @@ const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
 DataRowContainer.displayName = 'DataRowContainer';
 
 interface DataRowItemProps {
-  suggestedResults: DialAIEntityModel[];
-  entity: DialAIEntityModel | string;
+  suggestedResults: MarketplaceEntity[];
+  entity: MarketplaceEntity | string;
   virtualRow: VirtualItem;
   children: ReactNode;
 }
 
-const DataRowItem: React.FC<DataRowItemProps<MarketplaceEntity>> = ({
+const DataRowItem: React.FC<DataRowItemProps> = ({
   entity,
   suggestedResults,
   virtualRow,
