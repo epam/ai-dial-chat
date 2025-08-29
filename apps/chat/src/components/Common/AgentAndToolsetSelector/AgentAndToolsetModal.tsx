@@ -246,12 +246,15 @@ const AgentAndToolsetModalView = ({
     dispatch(ConversationsActions.setTalkToConversationId(null));
   }, [dispatch]);
 
-  const sliderItemProps = {
-    selectedItems,
-    onToggleSelectItem: handleToggleSelectItem,
-  };
+  const sliderItemProps = useMemo(
+    () => ({
+      selectedItems,
+      onToggleSelectItem: handleToggleSelectItem,
+    }),
+    [selectedItems, handleToggleSelectItem],
+  );
 
-  const SliderResetDependencies = useMemo(
+  const sliderResetDependencies = useMemo(
     () => [isMyWorkspace, searchTerm],
     [isMyWorkspace, searchTerm],
   );
@@ -343,7 +346,7 @@ const AgentAndToolsetModalView = ({
           items={displayedItems}
           SliderItem={AgentAndToolsetSelectItem}
           notFound={<NoResultsFound />}
-          sliderResetDependencies={SliderResetDependencies}
+          sliderResetDependencies={sliderResetDependencies}
           itemProps={sliderItemProps}
           modalHeaderHeight={headerHeight}
           modalFooterHeight={footerHeight}

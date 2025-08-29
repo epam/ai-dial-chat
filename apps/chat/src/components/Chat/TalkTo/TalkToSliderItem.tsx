@@ -80,7 +80,7 @@ export const TalkToSliderItem = ({
       }
       key={groupItem.id}
       entity={groupItem as DialAIEntityModel}
-      onClick={() => onSelectModel(groupItem as DialAIEntityModel)}
+      onClick={onSelectModel}
       onSelectVersion={onSelectModel}
     />
   );

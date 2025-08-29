@@ -41,7 +41,7 @@ import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 interface ItemCardViewProps {
   entity: DialAIEntityModel;
   isSelected: boolean;
-  onClick: () => void;
+  onClick: (entity: DialAIEntityModel) => void;
   conversation?: Conversation;
   disabled?: boolean;
   isUnavailableModel?: boolean;
@@ -97,7 +97,7 @@ export const ItemCardView = ({
     <div
       onClick={() => {
         if (!disabled) {
-          onClick();
+          onClick(entity);
         }
       }}
       className={classNames(

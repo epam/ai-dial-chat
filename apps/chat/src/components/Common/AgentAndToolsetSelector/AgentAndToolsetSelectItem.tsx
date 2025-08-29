@@ -24,7 +24,7 @@ export const AgentAndToolsetSelectItem = ({
     <ItemCardView
       entity={groupItem as DialAIEntityModel}
       isSelected={isSelected}
-      onClick={() => onToggleSelectItem(groupItem)}
+      onClick={onToggleSelectItem}
       className="bg-layer-3 hover:border-hover active:border-accent-primary"
     />
   );

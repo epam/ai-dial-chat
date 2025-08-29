@@ -307,14 +307,17 @@ const TalkToModalView = ({
     [isPlayback, dispatch],
   );
 
-  const sliderItemProps = {
-    conversation,
-    onSelectModel: handleSelectModel,
-    onOpenMarketplaceTab: () => setTab(MarketplaceTabs.HOME),
-    isMyWorkspace,
-  };
+  const sliderItemProps = useMemo(
+    () => ({
+      conversation,
+      onSelectModel: handleSelectModel,
+      onOpenMarketplaceTab: () => setTab(MarketplaceTabs.HOME),
+      isMyWorkspace,
+    }),
+    [conversation, handleSelectModel, setTab, isMyWorkspace],
+  );
 
-  const SliderResetDependencies = useMemo(
+  const sliderResetDependencies = useMemo(
     () => [isMyWorkspace, searchTerm],
     [isMyWorkspace, searchTerm],
   );
@@ -346,16 +349,16 @@ const TalkToModalView = ({
             />
           </div>
           <div className="flex gap-2">
-            <AgentsTabButton
-              tab={MarketplaceTabs.MY_WORKSPACE}
-              setTab={setTab}
-              currentTab={tab}
-            />
-            <AgentsTabButton
-              tab={MarketplaceTabs.HOME}
-              setTab={setTab}
-              currentTab={tab}
-            />
+            {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
+              (marketplaceTab) => (
+                <AgentsTabButton
+                  key={marketplaceTab}
+                  tab={marketplaceTab}
+                  setTab={setTab}
+                  currentTab={tab}
+                />
+              ),
+            )}
           </div>
         </div>
 
@@ -368,7 +371,7 @@ const TalkToModalView = ({
               onOpenMarketplaceTab={() => setTab(MarketplaceTabs.HOME)}
             />
           }
-          sliderResetDependencies={SliderResetDependencies}
+          sliderResetDependencies={sliderResetDependencies}
           itemProps={sliderItemProps}
           modalHeaderHeight={headerHeight}
         />
