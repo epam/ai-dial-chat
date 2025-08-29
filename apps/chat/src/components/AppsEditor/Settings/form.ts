@@ -46,7 +46,7 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
-  ToolSetsTypes,
+  ToolsetTypes,
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
@@ -488,7 +488,7 @@ export const getQuickAppData2 = (
           name: entity.name,
           dial_id: entity.id,
           description: entity.description,
-          type: ToolSetsTypes.DialMcp,
+          type: ToolsetTypes.DialMcp,
         },
       ];
     },
@@ -515,7 +515,7 @@ export const getQuickAppData2 = (
         ...dialMCPToolsets,
         {
           name: 'dial-deployment-tool-set',
-          type: ToolSetsTypes.DialDeployment,
+          type: ToolsetTypes.DialDeployment,
           tools: [...dialDeploymentsToolsets],
         },
       ],

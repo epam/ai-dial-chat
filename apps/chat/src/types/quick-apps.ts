@@ -1,4 +1,4 @@
-import { ToolSetsTypes } from '@/src/constants/quick-apps';
+import { ToolsetTypes } from '@/src/constants/quick-apps';
 
 export interface QuickAppConfig {
   instructions: string;
@@ -32,13 +32,13 @@ export interface DialDeploymentTool {
 
 export interface DialDeploymentToolset {
   name: 'dial-deployment-tool-set';
-  type: ToolSetsTypes.DialDeployment;
+  type: ToolsetTypes.DialDeployment;
   tools: DialDeploymentTool[];
 }
 
 export interface MCPToolset {
   name: string;
-  type: ToolSetsTypes.DialMcp;
+  type: ToolsetTypes.DialMcp;
   dial_id: string;
   description?: string;
 }
@@ -66,9 +66,9 @@ export interface QuickApp2Config {
 export function isDialDeploymentToolset(
   toolset: AnyToolset,
 ): toolset is DialDeploymentToolset {
-  return toolset.type === ToolSetsTypes.DialDeployment;
+  return toolset.type === ToolsetTypes.DialDeployment;
 }
 
 export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
-  return toolset.type === ToolSetsTypes.DialMcp;
+  return toolset.type === ToolsetTypes.DialMcp;
 }
