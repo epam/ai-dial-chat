@@ -27,7 +27,8 @@ import {
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import {
-  DialDeploymentToolset,
+  DialDeploymentTool,
+  FileContext,
   MCPToolset,
   QuickApp2Config,
   QuickAppConfig,
@@ -45,6 +46,7 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
+  ToolSetsTypes,
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
@@ -450,12 +452,12 @@ export const getQuickAppData2 = (
   modelsMap: ModelsMap,
   allEntitiesMap: Record<string, AgentAndToolset | undefined>,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
-  const documentRelativeUrls =
+  const documentRelativeUrls: FileContext[] =
     formData.documentRelativeUrl?.map((url) => ({
       url,
-      type: 'file' as const,
+      type: 'file',
     })) ?? [];
-  const dialDeploymentsToolsets: DialDeploymentToolset['tools'] =
+  const dialDeploymentsToolsets: DialDeploymentTool[] =
     formData.agentsAndToolsets.flatMap((agentsAndToolset) => {
       const entity = allEntitiesMap[agentsAndToolset];
       if (!entity || entity.type === EntityType.Toolset) return [];
@@ -467,7 +469,7 @@ export const getQuickAppData2 = (
         open_ai_tool: {
           function: {
             parameters: {
-              type: 'object' as const,
+              type: 'object',
               properties: {},
             },
             description: entity.description,
@@ -486,7 +488,7 @@ export const getQuickAppData2 = (
           name: entity.name,
           dial_id: entity.id,
           description: entity.description,
-          type: 'dial-mcp',
+          type: ToolSetsTypes.DialMcp,
         },
       ];
     },
@@ -513,7 +515,7 @@ export const getQuickAppData2 = (
         ...dialMCPToolsets,
         {
           name: 'dial-deployment-tool-set',
-          type: 'dial-deployment',
+          type: ToolSetsTypes.DialDeployment,
           tools: [...dialDeploymentsToolsets],
         },
       ],

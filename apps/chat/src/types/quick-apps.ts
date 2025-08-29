@@ -1,3 +1,5 @@
+import { ToolSetsTypes } from '@/src/constants/quick-apps';
+
 export interface QuickAppConfig {
   instructions: string;
   model: string;
@@ -7,34 +9,36 @@ export interface QuickAppConfig {
   document_relative_url?: string[];
 }
 
-interface FileContext {
+export interface FileContext {
   url: string;
   type: 'file';
 }
 
+export interface DialDeploymentTool {
+  deployment: {
+    name: string;
+  };
+  open_ai_tool: {
+    function: {
+      parameters: {
+        type: 'object';
+        properties: object;
+      };
+      name: string;
+      description?: string;
+    };
+  };
+}
+
 export interface DialDeploymentToolset {
   name: 'dial-deployment-tool-set';
-  type: 'dial-deployment';
-  tools: {
-    deployment: {
-      name: string;
-    };
-    open_ai_tool: {
-      function: {
-        parameters: {
-          type: 'object';
-          properties: object;
-        };
-        name: string;
-        description?: string;
-      };
-    };
-  }[];
+  type: ToolSetsTypes.DialDeployment;
+  tools: DialDeploymentTool[];
 }
 
 export interface MCPToolset {
   name: string;
-  type: 'dial-mcp';
+  type: ToolSetsTypes.DialMcp;
   dial_id: string;
   description?: string;
 }
@@ -62,9 +66,9 @@ export interface QuickApp2Config {
 export function isDialDeploymentToolset(
   toolset: AnyToolset,
 ): toolset is DialDeploymentToolset {
-  return toolset.type === 'dial-deployment';
+  return toolset.type === ToolSetsTypes.DialDeployment;
 }
 
 export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
-  return toolset.type === 'dial-mcp';
+  return toolset.type === ToolSetsTypes.DialMcp;
 }

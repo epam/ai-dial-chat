@@ -8,3 +8,8 @@ export const DEFAULT_QUICK_APPS_SCHEMA_ID =
 
 export const DEFAULT_QUICK_APPS_SCHEMA_2_ID =
   'https://mydial.epam.com/custom_application_schemas/quickapps2';
+
+export enum ToolSetsTypes {
+  DialMcp = 'dial-mcp',
+  DialDeployment = 'dial-deployment',
+}
