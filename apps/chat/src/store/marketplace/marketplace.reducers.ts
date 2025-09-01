@@ -1,7 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
 
@@ -39,7 +39,7 @@ const initialState: MarketplaceState = {
   },
   isBannerVisible: true,
 
-  deleteModel: undefined,
+  deleteEntity: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -130,15 +130,15 @@ export const marketplaceSlice = createSlice({
     ) => {
       state.isBannerVisible = payload.isVisible;
     },
-    setDeleteModel(
+    setDeleteEntity(
       state,
       {
         payload,
       }: PayloadAction<
-        { entity: DialAIEntityModel; action: DeleteType } | undefined
+        { entity: MarketplaceEntity; action: DeleteType } | undefined
       >,
     ) {
-      state.deleteModel = payload;
+      state.deleteEntity = payload;
     },
   },
 });

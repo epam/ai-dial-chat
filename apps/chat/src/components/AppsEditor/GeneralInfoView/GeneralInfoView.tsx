@@ -18,6 +18,7 @@ import {
 import { ScreenState } from '@/src/types/common';
 import { PreviewMode } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
+import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -79,13 +80,22 @@ export const GeneralInfoView: React.FC<Props> = ({
   useEffect(() => {
     // sourceFolder and document_relative_url fields could be updated by core in case of publication update, if we change application id
     // core updates sourceFolder bucket along with application id, targetUrl and reviewUrl
+    const qaProperties =
+      applicationData?.applicationProperties as QuickAppConfig;
+    const qa2Properties =
+      applicationData?.applicationProperties as QuickApp2Config;
+
     if (applicationData?.function?.sourceFolder) {
       methods.setValue('sources', applicationData.function.sourceFolder);
-    } else if (applicationData?.applicationProperties?.document_relative_url) {
+    } else if (applicationData && qa2Properties?.contexts) {
       methods.setValue('applicationProperties', {
         ...applicationData.applicationProperties,
-        document_relative_url:
-          applicationData.applicationProperties.document_relative_url,
+        contexts: qa2Properties.contexts,
+      });
+    } else if (applicationData && qaProperties?.document_relative_url) {
+      methods.setValue('applicationProperties', {
+        ...applicationData.applicationProperties,
+        document_relative_url: qaProperties.document_relative_url,
       });
     }
 
@@ -98,6 +108,7 @@ export const GeneralInfoView: React.FC<Props> = ({
     applicationData?.applicationProperties,
     methods,
     applicationData?.iconUrl,
+    applicationData,
   ]);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(

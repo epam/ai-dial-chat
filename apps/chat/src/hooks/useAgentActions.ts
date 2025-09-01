@@ -139,7 +139,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.preventDefault();
       e.stopPropagation();
       dispatch(
-        MarketplaceActions.setDeleteModel({
+        MarketplaceActions.setDeleteEntity({
           entity,
           action: DeleteType.DELETE,
         }),
