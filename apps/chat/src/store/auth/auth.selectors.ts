@@ -35,13 +35,14 @@ const selectIsShouldLogout = createSelector(
     selectStatus,
     (state: RootState) => state.settings.isAuthDisabled,
     (state: RootState) => state.auth.session?.data?.user.email,
-    (state: RootState, userEmail: string) => userEmail,
+    (state: RootState, userEmail?: string | null) => userEmail,
   ],
   (session, sessionStatus, isAuthDisabled, stateUserEmail, userEmail) => {
     return (
       !isAuthDisabled &&
       sessionStatus === 'authenticated' &&
       isClientSessionValid(session) &&
+      userEmail &&
       userEmail !== stateUserEmail
     );
   },
