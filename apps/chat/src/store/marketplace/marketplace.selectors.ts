@@ -90,7 +90,8 @@ const selectSourceTypes = createSelector(
   },
 );
 
-const selectDeleteModel = (state: RootState) => rootSelector(state).deleteModel;
+const selectDeleteEntity = (state: RootState) =>
+  rootSelector(state).deleteEntity;
 
 export const MarketplaceSelectors = {
   selectSelectedViewType,
@@ -105,5 +106,5 @@ export const MarketplaceSelectors = {
   selectIsApplyingModel,
   selectDetailsModel,
   selectSourceTypes,
-  selectDeleteModel,
+  selectDeleteEntity,
 };
