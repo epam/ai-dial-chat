@@ -160,8 +160,8 @@ export const getServerSideProps: GetServerSideProps = async ({
     'Content-Security-Policy',
     getContentSecurityPolicyDirectives(),
   );
-
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
   if (isServerSessionValid(session, true)) {
     return {
