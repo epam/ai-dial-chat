@@ -21,6 +21,7 @@ import {
   Toolsets,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures } from '@/src/types/models';
 
 import {
@@ -67,6 +68,7 @@ export interface FormData extends CodeData {
   [Toolsets.WebApiToolset]: string;
   model: string;
   documentRelativeUrl: string[];
+  agentsAndToolsets: MarketplaceEntity[];
 }
 
 type Options<T extends Path<FormData>> = Omit<
@@ -360,6 +362,7 @@ export const getDefaultValues = ({
       quickAppConfig?.model ??
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     documentRelativeUrl: getQuickAppDocumentUrl(app) ?? [],
+    agentsAndToolsets: [],
   };
 };
 

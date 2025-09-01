@@ -38,14 +38,15 @@ import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
-interface ApplicationCardProps {
+interface ItemCardViewProps {
   entity: DialAIEntityModel;
-  conversation: Conversation;
   isSelected: boolean;
-  disabled: boolean;
-  isUnavailableModel: boolean;
   onClick: (entity: DialAIEntityModel) => void;
-  onSelectVersion: (entity: DialAIEntityModel) => void;
+  conversation?: Conversation;
+  disabled?: boolean;
+  isUnavailableModel?: boolean;
+  onSelectVersion?: (entity: DialAIEntityModel) => void;
+  className?: string;
 }
 
 const disabledActions = {
@@ -53,15 +54,16 @@ const disabledActions = {
   unpublish: true,
 };
 
-export const TalkToCard = ({
+export const ItemCardView = ({
   entity,
-  conversation,
   isSelected,
+  onClick,
+  conversation,
   disabled,
   isUnavailableModel,
-  onClick,
   onSelectVersion,
-}: ApplicationCardProps) => {
+  className,
+}: ItemCardViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const allModels = useAppSelector(ModelsSelectors.selectModels);
@@ -81,12 +83,13 @@ export const TalkToCard = ({
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
-      onSelectVersion(model);
+      onSelectVersion?.(model);
     },
     [onSelectVersion],
   );
 
   const isOldReplay =
+    conversation &&
     entity.id === REPLAY_AS_IS_MODEL &&
     isOldConversationReplay(conversation.replay);
 
@@ -104,6 +107,7 @@ export const TalkToCard = ({
         isUnavailableModel && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
+        className,
       )}
       aria-selected={isSelected}
       data-qa="agent"
@@ -138,7 +142,7 @@ export const TalkToCard = ({
                 isHighlighted={false}
                 size={shareIconSize}
                 featureType={FeatureType.Application}
-                iconClassName="bg-layer-2 group-hover:bg-transparent"
+                iconClassName="bg-layer-3 group-hover:bg-transparent"
                 isMyEntity={isMyEntity}
                 isExternal={isExternalApp(entity)}
               >
@@ -155,7 +159,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
-                readonly={isPlaybackConversation(conversation)}
+                readonly={conversation && isPlaybackConversation(conversation)}
                 className="h-max truncate text-xs"
                 triggerClassName="text-xs"
                 entities={versionsToSelect}
