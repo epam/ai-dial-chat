@@ -1,10 +1,11 @@
+import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
+
 import { ApplicationLogs } from './ApplicationLogs';
-import { ConfirmAgentDeleteDialog } from './ConfirmAgentDeleteDialog';
 import { PublishAgentDialog } from './PublishAgentDialog';
 
 export const AgentDialogs = () => (
   <>
-    <ConfirmAgentDeleteDialog />
+    <DeleteMarketplaceEntityDialog />
     <PublishAgentDialog />
     <ApplicationLogs />
   </>

@@ -7,6 +7,7 @@ import {
 
 import {
   getMcpToolsetStr,
+  getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
   getWebAPIToolsetStr,
   safeStringifyApplicationFeatures,
@@ -24,8 +25,17 @@ import {
   Toolsets,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModelsMap } from '@/src/types/models';
-import { QuickAppConfig } from '@/src/types/quick-apps';
+import {
+  DialDeploymentTool,
+  FileContext,
+  MCPToolset,
+  QuickApp2Config,
+  QuickAppConfig,
+  isDialDeploymentToolset,
+  isMcpToolset,
+} from '@/src/types/quick-apps';
 
 import {
   FEATURES_ENDPOINTS,
@@ -36,6 +46,7 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
+  ToolsetTypes,
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
@@ -71,6 +82,14 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
   [Toolsets.McpToolset]?: string;
   documentRelativeUrl?: string[];
   model: string;
+}
+
+export interface QuickAppFormData2 extends ApplicationGeneralInfo {
+  instructions: string;
+  temperature: number;
+  documentRelativeUrl?: string[];
+  model: string;
+  agentsAndToolsets: string[];
 }
 
 export interface CodeAppFormData extends ApplicationGeneralInfo {
@@ -240,31 +259,62 @@ export const getQuickAppDefaultValues = ({
 }: {
   app: CustomApplicationModel;
 }): QuickAppFormData => {
+  const appProperties = app.applicationProperties as QuickAppConfig;
   return {
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.completionUrl ?? '',
     documentRelativeUrl: getQuickAppDocumentUrl(app) ?? [],
     model:
-      typeof app.applicationProperties?.model === 'string'
-        ? app.applicationProperties?.model
+      typeof appProperties?.model === 'string'
+        ? appProperties?.model
         : DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     instructions:
-      typeof app.applicationProperties?.instructions === 'string'
-        ? app.applicationProperties.instructions
+      typeof appProperties?.instructions === 'string'
+        ? appProperties.instructions
         : '',
     temperature:
-      typeof app.applicationProperties?.temperature === 'number'
-        ? app.applicationProperties.temperature
+      typeof appProperties?.temperature === 'number'
+        ? appProperties.temperature
         : DEFAULT_TEMPERATURE,
     [Toolsets.WebApiToolset]:
       getWebAPIToolsetStr({
-        web_api_toolset: app.applicationProperties?.web_api_toolset ?? [],
+        web_api_toolset: appProperties?.web_api_toolset ?? [],
       } as QuickAppConfig) ?? '',
 
     [Toolsets.McpToolset]:
       getMcpToolsetStr({
-        mcp_toolset: app.applicationProperties?.mcp_toolset ?? [],
+        mcp_toolset: appProperties?.mcp_toolset ?? [],
       } as QuickAppConfig) ?? '',
+  };
+};
+
+export const getQuickAppDefaultValues2 = ({
+  app,
+}: {
+  app: CustomApplicationModel;
+}): QuickAppFormData2 => {
+  const appProperties = app.applicationProperties as QuickApp2Config;
+  const agentToolsets = appProperties.tool_sets
+    .filter(isDialDeploymentToolset)
+    .flatMap((toolset) => toolset.tools);
+
+  const mcpToolsets = appProperties.tool_sets.filter(isMcpToolset);
+
+  return {
+    ...getApplicationGeneralDefaultValues(app),
+    completionUrl: app.completionUrl ?? '',
+    documentRelativeUrl: getQuick2AppDocumentUrl(app) ?? [],
+    model:
+      appProperties.orchestrator.deployment.name ??
+      DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+    instructions: appProperties.orchestrator.system_prompt.content ?? '',
+    temperature:
+      appProperties.orchestrator.deployment.parameters.temperature ??
+      DEFAULT_TEMPERATURE,
+    agentsAndToolsets: [
+      ...agentToolsets.map((agentToolset) => agentToolset.deployment.name),
+      ...mcpToolsets.map((mcpToolset) => mcpToolset.dial_id),
+    ],
   };
 };
 
@@ -286,6 +336,7 @@ const getGeneralApplicationData = (
   formData:
     | CustomApplicationFormData
     | QuickAppFormData
+    | QuickAppFormData2
     | CodeAppFormData
     | ExternalAppFormData,
 ) => ({
@@ -382,6 +433,90 @@ export const getQuickAppData = (
       }),
       model: modelsMap[formData.model]?.id ?? formData.model,
       document_relative_url: formData.documentRelativeUrl,
+    },
+    completionUrl: constructPath(
+      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
+      'openai/deployments',
+      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
+      'chat/completions',
+    ),
+    isDefault: false,
+    folderId: '',
+  };
+};
+
+export const getQuickAppData2 = (
+  formData: QuickAppFormData2,
+  modelsMap: ModelsMap,
+  allEntitiesMap: Record<string, MarketplaceEntity | undefined>,
+): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+  const documentRelativeUrls: FileContext[] =
+    formData.documentRelativeUrl?.map((url) => ({
+      url,
+      type: 'file',
+    })) ?? [];
+  const dialDeploymentsToolsets: DialDeploymentTool[] =
+    formData.agentsAndToolsets.flatMap((agentsAndToolset) => {
+      const entity = allEntitiesMap[agentsAndToolset];
+      if (!entity || entity.type === EntityType.Toolset) return [];
+
+      return {
+        deployment: {
+          name: entity.id,
+        },
+        open_ai_tool: {
+          function: {
+            parameters: {
+              type: 'object',
+              properties: {},
+            },
+            description: entity.description,
+            name: entity.name,
+          },
+        },
+      };
+    });
+  const dialMCPToolsets: MCPToolset[] = formData.agentsAndToolsets.flatMap(
+    (agentAndToolset) => {
+      const entity = allEntitiesMap[agentAndToolset];
+      if (!entity || entity.type !== EntityType.Toolset) return [];
+
+      return [
+        {
+          name: entity.name,
+          dial_id: entity.id,
+          description: entity.description,
+          type: ToolsetTypes.DialMcp,
+        },
+      ];
+    },
+  );
+
+  return {
+    ...getGeneralApplicationData(formData),
+    applicationProperties: {
+      orchestrator: {
+        deployment: {
+          name: modelsMap[formData.model]?.id ?? formData.model,
+          parameters: {
+            temperature: formData.temperature,
+          },
+        },
+        system_prompt: {
+          type: 'custom',
+          variables: {},
+          content: formData.instructions,
+        },
+      },
+      contexts: documentRelativeUrls,
+      tool_sets: [
+        ...dialMCPToolsets,
+        {
+          name: 'dial-deployment-tool-set',
+          type: ToolsetTypes.DialDeployment,
+          tools: [...dialDeploymentsToolsets],
+        },
+      ],
     },
     completionUrl: constructPath(
       DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
