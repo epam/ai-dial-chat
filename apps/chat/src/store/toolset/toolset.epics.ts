@@ -493,7 +493,7 @@ const refreshToolset$ = (toolsetId: string, route?: string) =>
     }),
   );
 
-const startSignInProcess: AppEpic = (action$) =>
+const startSignInProcessEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.startSignInProcess.type),
     switchMap(({ payload }) => {
@@ -644,7 +644,7 @@ export const ToolsetEpics = combineEpics(
   addInstalledToolsetsEpic,
 
   //Signin
-  startSignInProcess,
+  startSignInProcessEpic,
   logInToolsetEpic,
   logOutToolsetEpic,
   logOutToolsetFailEpic,

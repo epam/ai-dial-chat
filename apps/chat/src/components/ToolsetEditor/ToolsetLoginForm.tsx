@@ -15,7 +15,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 
 import { ToolsetLoginFormSchema, ToolsetLoginFormType } from './form';
 
-import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const getDefaultFormData = ({

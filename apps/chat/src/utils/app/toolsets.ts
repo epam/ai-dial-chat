@@ -4,6 +4,7 @@ import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
 import { ApiUtils, getToolsetApiKey } from '@/src/utils/server/api';
 
 import { EntityType, PartialBy } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import {
   ToolsetCredentialsLevel,
   ToolsetModel,
@@ -154,5 +155,11 @@ export const isToolsetSignedIn = (
   toolset: ToolsetModel,
   level = ToolsetCredentialsLevel.GLOBAL,
 ) => {
-  return toolset.authSettings.authStatus[level] === ToolsetAuthStatus.SIGNED_IN;
+  return (
+    toolset.authSettings.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
+  );
 };
+
+export const isToolsetEntityModel = (
+  entity: MarketplaceEntity,
+): entity is ToolsetModel => entity?.type === EntityType.Toolset;

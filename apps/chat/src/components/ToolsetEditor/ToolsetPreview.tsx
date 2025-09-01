@@ -5,7 +5,6 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { fakeCallback } from '@/src/utils/app/common';
-import { parseToolsetApiAuthStatus } from '@/src/utils/app/toolsets';
 
 import { EntityType } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -49,7 +48,7 @@ export const ToolsetPreview = ({
       ],
     });
 
-  const cardEntity: ToolsetModel = useMemo(
+  const cardEntity = useMemo(
     () => ({
       type: EntityType.Toolset,
       isDefault: false,
@@ -70,7 +69,6 @@ export const ToolsetPreview = ({
       id: currentToolset?.id ?? DRAFT_TOOLSET_ID,
       authSettings: currentToolset?.authSettings ?? {
         authenticationType: ToolsetAuthTypes.NONE,
-        authStatus: parseToolsetApiAuthStatus(),
       },
     }),
     [

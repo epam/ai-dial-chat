@@ -8,8 +8,6 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import { CredentialsStatusIndicator } from '@/src/components/Marketplace/CredentialsStatusIndicator';
-
 import { EntityHeader } from '../EntityDetailsHeader';
 
 import { Feature, FeatureType } from '@epam/ai-dial-shared';
@@ -53,7 +51,6 @@ export function ToolsetDetailsHeader({ entity, isPreview }: Props) {
       isMyEntity={isMyToolset}
       isPreview={isPreview}
       shareAction={shareAction}
-      StatusIndicator={CredentialsStatusIndicator}
       //TODO add ToolsetCopyLink and ToolsetStatusIndicator
       //   copyLinkAction={{
       //     isPublic: isPublicApp,

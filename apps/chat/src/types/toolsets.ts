@@ -20,13 +20,13 @@ export interface ToolsetModel extends ShareEntity {
   reference: string;
   description: string;
   topics: string[];
-  type: EntityType.Toolset;
+  type: EntityType;
 
   endpoint?: string;
   iconUrl?: string;
   userRoles?: string[];
   maxRetryAttempts?: number;
-  isDefault?: false;
+  isDefault?: boolean;
 
   authSettings: {
     authenticationType: ToolsetAuthTypes;
@@ -39,8 +39,8 @@ export interface ToolsetModel extends ShareEntity {
     clientSecret?: string;
     authorizationEndpoint?: string;
     redirectUri?: string;
-    // Auth status field
-    authStatus: Record<ToolsetCredentialsLevel, ToolsetAuthStatus>;
+    // Authentication status map
+    authStatus?: Record<ToolsetCredentialsLevel, ToolsetAuthStatus>;
   };
 }
 

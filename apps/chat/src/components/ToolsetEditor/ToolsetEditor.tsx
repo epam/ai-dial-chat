@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 
 import { EntityType } from '@/src/types/common';
-import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
@@ -48,8 +48,8 @@ export const ToolsetEditor = () => {
         id: '',
         folderId: '',
         reference: '',
-        type: EntityType.Toolset,
         ...(toolsetDetails && toolsetDetails),
+        type: EntityType.Toolset,
         name: data.name,
         endpoint: data.endpoint,
         iconUrl: data.iconUrl,
@@ -62,7 +62,7 @@ export const ToolsetEditor = () => {
           ...(toolsetDetails?.authSettings && toolsetDetails?.authSettings),
           authenticationType: data.authenticationType,
         },
-      } as ToolsetModel;
+      };
 
       if (toolsetDetails) {
         dispatch(
