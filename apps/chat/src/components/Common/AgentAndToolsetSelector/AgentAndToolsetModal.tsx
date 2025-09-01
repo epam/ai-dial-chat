@@ -7,11 +7,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useDispatch } from 'react-redux';
-
-import Link from 'next/link';
-
-import classNames from 'classnames';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -23,7 +18,6 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ModelsSelectors,
@@ -35,7 +29,6 @@ import {
   ChangeAgentTabs,
   ChangeToolsetTabs,
   MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
@@ -51,8 +44,6 @@ import {
   AgentAndToolsetSelectItem,
   AgentAndToolsetSelectItemProps,
 } from './AgentAndToolsetSelectItem';
-
-import { Feature } from '@epam/ai-dial-shared';
 
 export type EntityType = 'agents' | 'toolsets';
 
@@ -122,7 +113,6 @@ const AgentAndToolsetModalView = ({
   defaultSelectedItems,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-  const dispatch = useDispatch();
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
@@ -167,9 +157,6 @@ const AgentAndToolsetModalView = ({
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
 
-  const isMarketplaceEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
-  );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   useEffect(() => {
@@ -241,10 +228,6 @@ const AgentAndToolsetModalView = ({
     installedAgentsSet,
     installedToolsetsSet,
   ]);
-
-  const handleGoToWorkspace = useCallback(() => {
-    dispatch(ConversationsActions.setTalkToConversationId(null));
-  }, [dispatch]);
 
   const sliderItemProps = useMemo(
     () => ({
@@ -352,20 +335,6 @@ const AgentAndToolsetModalView = ({
           modalFooterHeight={footerHeight}
         />
       </div>
-
-      {isMarketplaceEnabled && (
-        <Link
-          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${scopeTab}` : ''}`}
-          shallow
-          onClick={handleGoToWorkspace}
-          className={classNames(
-            'm-auto mt-4 text-accent-primary md:absolute md:bottom-[100px] md:right-6',
-          )}
-          data-qa={isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'}
-        >
-          {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
-        </Link>
-      )}
 
       <AgentDialogs />
 
