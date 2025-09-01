@@ -149,3 +149,10 @@ export const decodeToolsetRedirectState = (
 
 export const getToolsetRedirectUri = () =>
   `${window.location.origin}${Routes.ToolsetSignIn}`;
+
+export const isToolsetSignedIn = (
+  toolset: ToolsetModel,
+  level = ToolsetCredentialsLevel.GLOBAL,
+) => {
+  return toolset.authSettings.authStatus[level] === ToolsetAuthStatus.SIGNED_IN;
+};

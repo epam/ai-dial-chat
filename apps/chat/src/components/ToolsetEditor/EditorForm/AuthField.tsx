@@ -18,7 +18,10 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getToolsetRedirectUri } from '@/src/utils/app/toolsets';
+import {
+  getToolsetRedirectUri,
+  isToolsetSignedIn,
+} from '@/src/utils/app/toolsets';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
@@ -84,6 +87,7 @@ const AuthTypeSection = ({
 
   const [withLogin, setWithLogin] = useState(WithLogin.WithLogin);
   const isWithLogin = withLogin === WithLogin.WithLogin;
+  const isSignedIn = toolsetDetails && isToolsetSignedIn(toolsetDetails);
 
   const handleWithLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
     setWithLogin(e.currentTarget.value as WithLogin);
@@ -91,15 +95,18 @@ const AuthTypeSection = ({
 
   const { Icon, name } = authTypeOptions[type];
 
+  const handleOnClick = useCallback(() => {
+    if (!isSignedIn) onClick(type);
+  }, [isSignedIn, onClick, type]);
+
   return (
     <div className="overflow-hidden rounded bg-layer-3">
       <div
-        onClick={() => onClick(type)}
+        onClick={handleOnClick}
         className={classNames(
           'flex gap-3 border-l p-4',
-          isSelected
-            ? 'border-accent-primary'
-            : 'cursor-pointer border-transparent',
+          isSelected ? 'border-accent-primary' : 'border-transparent',
+          !isSelected && !isSignedIn && 'cursor-pointer',
         )}
       >
         <Icon
@@ -147,6 +154,7 @@ const AuthTypeSection = ({
               onChange={handleWithLoginChange}
               value={WithLogin.WithoutLogin}
               checked={!isWithLogin}
+              disabled={isSignedIn}
             />
           </div>
         </div>

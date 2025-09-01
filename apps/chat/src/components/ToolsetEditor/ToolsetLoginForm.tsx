@@ -6,6 +6,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
@@ -62,10 +64,7 @@ export const ToolsetLoginForm = ({
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
-  const authStatus =
-    toolset?.authSettings?.authStatus?.[credentialsLevel] ??
-    ToolsetAuthStatus.SIGNED_OUT;
-  const isLoggedIn = authStatus === ToolsetAuthStatus.SIGNED_IN;
+  const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
   const { reset, register, formState, getValues, trigger } =
     useForm<ToolsetLoginFormType>({
@@ -78,7 +77,7 @@ export const ToolsetLoginForm = ({
   const errors = formState.errors;
 
   const handleSubmit = useCallback(() => {
-    if (authStatus === ToolsetAuthStatus.SIGNED_IN) {
+    if (isSignedIn) {
       onLogout?.();
     } else {
       trigger().then((isValid) => {
@@ -87,7 +86,7 @@ export const ToolsetLoginForm = ({
         onLogin?.(data);
       });
     }
-  }, [authStatus, onLogout, trigger, getValues, onLogin]);
+  }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
 
   useEffect(() => {
     reset(getDefaultFormData({ type, toolset, prevData: getValues() }));
@@ -95,7 +94,7 @@ export const ToolsetLoginForm = ({
 
   return (
     <div className={classNames('flex flex-col gap-4', className)}>
-      {type === ToolsetAuthTypes.API_KEY && !isLoggedIn && (
+      {type === ToolsetAuthTypes.API_KEY && !isSignedIn && (
         <>
           <Field
             {...register('keyHeader')}
@@ -119,12 +118,19 @@ export const ToolsetLoginForm = ({
       )}
 
       <button
-        className="button button-primary flex w-fit items-center gap-2 py-2"
-        disabled={disabled || (!isValid && !isLoggedIn)}
+        className={classNames(
+          'button flex w-fit items-center gap-2 py-2',
+          isSignedIn ? 'button-secondary' : 'button-primary',
+        )}
+        disabled={disabled || (!isValid && !isSignedIn)}
         onClick={handleSubmit}
       >
-        {isLoggedIn ? <IconLogout size={18} /> : <IconLogin size={18} />}
-        {t(isLoggedIn ? 'Log out' : 'Log in')}
+        {isSignedIn ? (
+          <IconLogout className="text-secondary" size={18} />
+        ) : (
+          <IconLogin size={18} />
+        )}
+        {t(isSignedIn ? 'Log out' : 'Log in')}
       </button>
     </div>
   );

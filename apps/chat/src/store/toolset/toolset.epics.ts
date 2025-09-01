@@ -475,8 +475,8 @@ const deleteToolsetFailEpic: AppEpic = (action$) =>
     map(() => UIActions.showErrorToast(translate('Failed to delete toolset'))),
   );
 
-const refreshToolset$ = (path: string, route?: string) =>
-  ToolsetService.getToolsetByPath(path).pipe(
+const refreshToolset$ = (toolsetId: string, route?: string) =>
+  ToolsetService.getToolsetByPath(getIdWithoutFeatureType(toolsetId)).pipe(
     switchMap((toolset) => {
       const shouldUpdateDetails = route === Routes.ToolsetEditor;
       return concat(
@@ -493,7 +493,7 @@ const refreshToolset$ = (path: string, route?: string) =>
     }),
   );
 
-const startSignInProcess: AppEpic = (action$, _state) =>
+const startSignInProcess: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.startSignInProcess.type),
     switchMap(({ payload }) => {
@@ -579,10 +579,7 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
             return EMPTY;
           }
 
-          return refreshToolset$(
-            getIdWithoutFeatureType(payload.toolsetId),
-            router.pathname,
-          );
+          return refreshToolset$(payload.toolsetId, router.pathname);
         }),
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
@@ -610,19 +607,22 @@ const logOutToolsetEpic: AppEpic = (action$, _state, { router }) =>
         credentials_level: payload.authLevel,
       }).pipe(
         switchMap(() => {
-          return refreshToolset$(
-            getIdWithoutFeatureType(payload.toolsetId),
-            router.pathname,
-          );
+          return refreshToolset$(payload.toolsetId, router.pathname);
         }),
         catchError((err) => {
           console.error('Failed to sign out toolset', err);
-          return of(
-            UIActions.showErrorToast(translate('Failed to sign out toolset')),
-          );
+          return of(ToolsetActions.logOutToolsetFail());
         }),
       );
     }),
+  );
+
+const logOutToolsetFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.logOutToolsetFail.type),
+    map(() =>
+      UIActions.showErrorToast(translate('Failed to sign out toolset')),
+    ),
   );
 
 export const ToolsetEpics = combineEpics(
@@ -647,4 +647,5 @@ export const ToolsetEpics = combineEpics(
   startSignInProcess,
   logInToolsetEpic,
   logOutToolsetEpic,
+  logOutToolsetFailEpic,
 );
