@@ -57,6 +57,14 @@ export class YourAuthProviderPage extends BasePage implements LoginInterface {
 
 In the `baseFixtures.ts` file, the `providerLogin` fixture checks the `AUTH_PROVIDER` environment variable to determine the login provider. If the `AUTH_PROVIDER` is undefined, it defaults to using the `Auth0` provider.
 
+## User roles
+
+In order to run tests for publishing rules, corresponding Dial roles should be assigned to the e2e users:
+
+- **QA** role for the main users
+- **Manager** role for the first additional users
+- **Developer** and **Manager** roles for the second additional users
+
 ## API tests configuration
 
 DIAL API tests are divided into several groups based on their functionality:

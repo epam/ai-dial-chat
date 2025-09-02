@@ -30,11 +30,13 @@ dialAdminTest(
       promptDropdownMenu,
       publishingRequestModal,
       publishingRequestModalAssertion,
+      publishingRulesAssertion,
       promptToPublishAssertion,
       promptsToPublishTree,
       tooltipAssertion,
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
+      adminPublishingRulesAssertion,
       adminPublishingApprovalModal,
       adminApproveRequiredPrompts,
       adminPromptsToApprove,
@@ -101,6 +103,8 @@ dialAdminTest(
           unpublishFromLabel: 'visible',
           unpublishFrom: PublishPath.Organization,
           authorLabel: 'hidden',
+        });
+        await publishingRulesAssertion.assertLabels({
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
@@ -194,6 +198,8 @@ dialAdminTest(
           publishTo: PublishPath.Organization,
           requestCreated: publishApiModels.response,
           author: author,
+        });
+        await adminPublishingRulesAssertion.assertLabels({
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
