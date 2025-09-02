@@ -88,7 +88,7 @@ export const ToolsetEditor = () => {
       formMethods.trigger().then((isValid) => {
         if (!isValid) return;
 
-        if (isDirty) {
+        if (isDirty || !toolsetDetails) {
           void formMethods
             .handleSubmit(submitHandler)()
             .then(() => cb?.());
@@ -97,7 +97,7 @@ export const ToolsetEditor = () => {
         }
       });
     },
-    [formMethods, submitHandler, isDirty],
+    [formMethods, isDirty, toolsetDetails, submitHandler],
   );
 
   const handleSaveAndExit = useCallback(() => {
