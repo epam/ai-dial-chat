@@ -1,12 +1,12 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
 
 import { DeleteType } from '@/src/constants/marketplace';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { ToolsetAuthTypes, UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 
 type ToolsetsMap = Record<string, ToolsetModel>;
@@ -91,6 +91,9 @@ export const toolsetSlice = createSlice({
       }: PayloadAction<{
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
+        auth?: {
+          apiKey?: string;
+        };
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
@@ -168,6 +171,44 @@ export const toolsetSlice = createSlice({
       state.toolsetsMap = omit(state.toolsetsMap, [payload.reference]);
     },
     deleteToolsetFail: (state) => state,
+
+    startSignInProcess: (
+      state,
+      _action: PayloadAction<{
+        authLevel: ToolsetCredentialsLevel;
+        apiKey?: string;
+        toolset: ToolsetModel;
+      }>,
+    ) => state,
+    logInToolset: (
+      state,
+      _action: PayloadAction<{
+        toolsetId: string;
+        authLevel: ToolsetCredentialsLevel;
+        authType: ToolsetAuthTypes;
+        code?: string;
+        apiKey?: string;
+        callbackUrl?: string;
+      }>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    logInToolsetFail: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
+    },
+    logOutToolset: (
+      state,
+      _action: PayloadAction<{
+        toolsetId: string;
+        authType: ToolsetAuthTypes;
+        authLevel: ToolsetCredentialsLevel;
+      }>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    logOutToolsetFail: (state) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
+    },
   },
 });
 

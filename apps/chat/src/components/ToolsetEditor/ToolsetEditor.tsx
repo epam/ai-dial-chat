@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 
 import { EntityType } from '@/src/types/common';
-import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
@@ -44,12 +44,12 @@ export const ToolsetEditor = () => {
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
-      const payloadToolset: ToolsetModel = {
+      const payloadToolset = {
         id: '',
         folderId: '',
         reference: '',
-        type: EntityType.Toolset,
         ...(toolsetDetails && toolsetDetails),
+        type: EntityType.Toolset,
         name: data.name,
         endpoint: data.endpoint,
         iconUrl: data.iconUrl,
@@ -58,6 +58,10 @@ export const ToolsetEditor = () => {
         topics: data.topics,
         allowedTools: data.allowedTools,
         version: data.version,
+        authSettings: {
+          ...(toolsetDetails?.authSettings && toolsetDetails?.authSettings),
+          authenticationType: data.authenticationType,
+        },
       };
 
       if (toolsetDetails) {
@@ -84,7 +88,7 @@ export const ToolsetEditor = () => {
       formMethods.trigger().then((isValid) => {
         if (!isValid) return;
 
-        if (isDirty) {
+        if (isDirty || !toolsetDetails) {
           void formMethods
             .handleSubmit(submitHandler)()
             .then(() => cb?.());
@@ -93,7 +97,7 @@ export const ToolsetEditor = () => {
         }
       });
     },
-    [formMethods, submitHandler, isDirty],
+    [formMethods, isDirty, toolsetDetails, submitHandler],
   );
 
   const handleSaveAndExit = useCallback(() => {

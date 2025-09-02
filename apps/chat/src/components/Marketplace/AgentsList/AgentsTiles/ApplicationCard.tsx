@@ -30,7 +30,7 @@ import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
 import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
-import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
+import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -175,9 +175,7 @@ export const ApplicationCard = memo(
                   <span className="truncate" data-qa="entity-name">
                     {entity.name}
                   </span>
-                  {isAgentsTab && isDialAiEntityModel(entity) && (
-                    <FunctionStatusIndicator entity={entity} />
-                  )}
+                  <MarketplaceEntityIndicator entity={entity} />
                 </div>
               </div>
               <div
