@@ -16,6 +16,7 @@ import { combineEpics, ofType } from 'redux-observable';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import { getIdWithoutFeatureType, isMyEntity } from '@/src/utils/app/id';
 import {
   convertToolsetModelToApi,
@@ -473,24 +474,6 @@ const deleteToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.deleteToolsetFail.type),
     map(() => UIActions.showErrorToast(translate('Failed to delete toolset'))),
-  );
-
-const refreshToolset$ = (toolsetId: string, route?: string) =>
-  ToolsetService.getToolsetByPath(getIdWithoutFeatureType(toolsetId)).pipe(
-    switchMap((toolset) => {
-      const shouldUpdateDetails = route === Routes.ToolsetEditor;
-      return concat(
-        of(ToolsetActions.setToolsets([toolset])),
-        iif(
-          () => shouldUpdateDetails,
-          of(ToolsetActions.getToolsetDetailsSuccess(toolset)),
-          EMPTY,
-        ),
-      );
-    }),
-    catchError(() => {
-      return of(UIActions.showErrorToast(translate('Failed to get toolset')));
-    }),
   );
 
 const startSignInProcessEpic: AppEpic = (action$) =>

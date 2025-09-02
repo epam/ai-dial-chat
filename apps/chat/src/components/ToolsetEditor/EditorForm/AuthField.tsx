@@ -23,7 +23,7 @@ import {
   isToolsetSignedIn,
 } from '@/src/utils/app/toolsets';
 
-import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { ToolsetActions } from '@/src/store/actions';
@@ -169,7 +169,7 @@ export const AuthField = () => {
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const { control, trigger } = useFormContext<ToolsetEditorForm>();
-  const [endpoint, transport, allowedTools] = useWatch<ToolsetEditorForm>({
+  const [endpoint, transport, allowedTools] = useWatch({
     name: ['endpoint', 'protocol', 'allowedTools'],
     control,
   });
@@ -220,7 +220,7 @@ export const AuthField = () => {
                       ? getToolsetRedirectUri()
                       : undefined,
                 },
-              } as ToolsetModel,
+              },
               auth: {
                 apiKey: data.apiKey,
               },
