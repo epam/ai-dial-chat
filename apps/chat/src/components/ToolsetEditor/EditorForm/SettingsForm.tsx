@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
+import classNames from 'classnames';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DropdownSelectorOption } from '@/src/types/common';
@@ -11,6 +13,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { AuthField } from '@/src/components/ToolsetEditor/EditorForm/AuthField';
 import {
   ENDPOINT_PLACEHOLDER,
   ToolsetEditorForm,
@@ -31,6 +34,34 @@ const toOption = (s: string) => ({
   label: s,
   value: s,
 });
+
+interface FormSectionProps {
+  title?: string;
+  subtitle?: string;
+  children?: React.ReactNode;
+  className?: string;
+}
+
+const FormSection = ({
+  children,
+  className,
+  title,
+  subtitle,
+}: FormSectionProps) => {
+  return (
+    <div className={classNames('flex flex-col gap-4', className)}>
+      {(!!title || !!subtitle) && (
+        <div>
+          {!!title && (
+            <h5 className="text-base font-semibold text-primary">{title}</h5>
+          )}
+          {!!subtitle && <h6 className="text-sm text-secondary">{subtitle}</h6>}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+};
 
 export const SettingsForm = () => {
   const { t } = useTranslation(Translation.Common);
@@ -55,55 +86,75 @@ export const SettingsForm = () => {
   }, [clearErrors, endpointField, setValue]);
 
   return (
-    <div className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
-      <Field
-        {...register('endpoint')}
-        label={t('Endpoint')}
-        mandatory
-        placeholder={t('Enter endpoint')}
-        id="endpoint"
-        error={errors.endpoint?.message}
-      />
-      <Controller
-        name="protocol"
-        control={control}
-        render={({ field }) => (
-          <SelectorField
-            label={t('Transport protocol')}
-            isSearchable={false}
-            isClearable={false}
-            value={toOption(field.value)}
-            onChange={(option) =>
-              field.onChange(
-                (option as unknown as DropdownSelectorOption).value,
-              )
-            }
-            mandatory
-            id="protocol"
-            options={protocolOptions}
-            closeMenuOnSelect
-          />
+    <div className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
+      <FormSection title={t('Definition')}>
+        <Field
+          {...register('endpoint')}
+          label={t('Endpoint')}
+          mandatory
+          placeholder={t('Enter endpoint')}
+          id="endpoint"
+          error={errors.endpoint?.message}
+        />
+        <Controller
+          name="protocol"
+          control={control}
+          render={({ field }) => (
+            <SelectorField
+              label={t('Transport protocol')}
+              isSearchable={false}
+              isClearable={false}
+              value={toOption(field.value)}
+              onChange={(option) =>
+                field.onChange(
+                  (option as unknown as DropdownSelectorOption).value,
+                )
+              }
+              mandatory
+              id="protocol"
+              options={protocolOptions}
+              closeMenuOnSelect
+            />
+          )}
+        />
+      </FormSection>
+
+      <FormSection
+        title={t('Authentication')}
+        subtitle={t(
+          'Select one of the methods below that will be used to authenticate',
         )}
-      />
-      <Controller
-        name="allowedTools"
-        control={control}
-        render={({ field }) => (
-          <ComboBoxField
-            label={t('Allowed tools')}
-            initialSelectedItems={field.value}
-            getItemLabel={getComboBoxLabel}
-            getItemValue={getComboBoxLabel}
-            onChangeSelectedItems={field.onChange}
-            placeholder={t('Enter one or more tools')}
-            id="allowedTools"
-            className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
-            hasDeleteAll
-            hideSuggestions
-            itemHeightClassName="h-[31px]"
-          />
+        className="pt-4"
+      >
+        <AuthField />
+      </FormSection>
+
+      <FormSection
+        title={t('Allowed tools')}
+        subtitle={t(
+          'The list of tools will be available after filling in the definition and authentication section',
         )}
-      />
+        className="pt-4"
+      >
+        <Controller
+          name="allowedTools"
+          control={control}
+          render={({ field }) => (
+            <ComboBoxField
+              initialSelectedItems={field.value}
+              getItemLabel={getComboBoxLabel}
+              getItemValue={getComboBoxLabel}
+              onChangeSelectedItems={field.onChange}
+              placeholder={t('Enter one or more tools')}
+              id="allowedTools"
+              className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+              hasDeleteAll
+              hideSuggestions
+              itemHeightClassName="h-[31px]"
+            />
+          )}
+        />
+      </FormSection>
     </div>
   );
 };

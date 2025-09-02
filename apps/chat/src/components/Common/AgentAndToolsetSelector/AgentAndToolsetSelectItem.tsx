@@ -25,6 +25,7 @@ export const AgentAndToolsetSelectItem = ({
       entity={groupItem as DialAIEntityModel}
       isSelected={isSelected}
       onClick={onToggleSelectItem}
+      hasContextMenu={false}
       className="bg-layer-3 hover:border-hover active:border-accent-primary"
     />
   );

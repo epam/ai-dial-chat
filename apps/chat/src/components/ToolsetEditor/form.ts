@@ -12,7 +12,7 @@ import {
 } from '@/src/constants/form-errors';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 
-import { ToolsetTransportType } from '@epam/ai-dial-shared';
+import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
 import { z as zodValidation } from 'zod';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
@@ -56,6 +56,7 @@ export const ToolsetEditorFormSchema = zodValidation.object({
   allowedTools: zodValidation.array(zodValidation.string()),
   iconUrl: zodValidation.string(),
   topics: zodValidation.array(zodValidation.string()),
+  authenticationType: zodValidation.enum(ToolsetAuthTypes),
 });
 
 export type ToolsetEditorForm = zodValidation.infer<
@@ -72,6 +73,8 @@ export const getDefaultFormData = (
       getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
     endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.SSE,
+    authenticationType:
+      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
@@ -79,3 +82,31 @@ export const getDefaultFormData = (
     topics: toolset?.topics ?? [],
   };
 };
+
+export const ToolsetLoginFormSchema = zodValidation
+  .object({
+    type: zodValidation.enum(ToolsetAuthTypes),
+    keyHeader: zodValidation.string().optional(),
+    apiKey: zodValidation.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === ToolsetAuthTypes.API_KEY) {
+      if (!data.keyHeader?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['keyHeader'],
+          message: 'Key name is required',
+        });
+      }
+      if (!data.apiKey?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['apiKey'],
+          message: 'API key is required',
+        });
+      }
+    }
+  }); // TODO: add login & password schema when ready
+export type ToolsetLoginFormType = zodValidation.infer<
+  typeof ToolsetLoginFormSchema
+>;

@@ -446,6 +446,8 @@ export const PublishingExpectedMessages = {
   publishAuthorPublicNameIsValid: 'Publish author public name is valid',
   publicationFeaturesDataIsValid: 'Publication features data is valid',
   publicationTopicsAreValid: 'Publication topics are valid',
+  publishedResourceIsAvailable: (resource: string) =>
+    `Published resource: ${resource} is available`,
 };
 
 export const MarketplaceExpectedMessages = {
