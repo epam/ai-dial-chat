@@ -13,6 +13,7 @@ import { HeaderIconSizes } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 
 import { TopicsList } from './TopicsList';
 
@@ -34,7 +35,6 @@ interface EntityHeaderProps<T> {
     Component: React.ComponentType<{ entity: T; withText: boolean }>;
   };
   // Optional custom components
-  StatusIndicator?: React.ComponentType<{ entity: T }>;
   dataQa?: string;
 }
 
@@ -46,7 +46,6 @@ export function EntityHeader<T extends MarketplaceEntity>({
   isPreview = false,
   shareAction,
   copyLinkAction,
-  StatusIndicator,
   dataQa = 'entity-header',
 }: EntityHeaderProps<T>) {
   const { t } = useTranslation(Translation.Marketplace);
@@ -108,7 +107,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
                 >
                   {entity.name}
                 </div>
-                {StatusIndicator && <StatusIndicator entity={entity} />}
+                <MarketplaceEntityIndicator entity={entity} />
               </div>
             </div>
           </div>
