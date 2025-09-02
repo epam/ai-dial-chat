@@ -17,6 +17,7 @@ import {
   PublicationReviewControl,
   PublishingApprovalModal,
   PublishingRequestModal,
+  PublishingRules,
   SelectFolderModal,
   Toast,
   VariableModalDialog,
@@ -44,6 +45,7 @@ import {
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
+import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
@@ -162,12 +164,14 @@ const dialAdminTest = dialTest.extend<{
   adminAgentDetailsModal: AgentDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
   adminAppsToPublishTree: ApplicationsToPublishTree;
+  adminPublishingRules: PublishingRules;
   adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
   adminMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   adminAgentDetailsModalAssertion: AgentDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
   adminPublishingRequestModalAssertion: PublishingRequestModalAssertion;
   adminAppToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
+  adminPublishingRulesAssertion: PublishingRulesAssertion;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -649,6 +653,11 @@ const dialAdminTest = dialTest.extend<{
       adminPublishingRequestModal.getApplicationsToPublishTree();
     await use(adminAppsToPublishTree);
   },
+  adminPublishingRules: async ({ adminPublishingApprovalModal }, use) => {
+    const adminPublishingRules =
+      adminPublishingApprovalModal.getPublishingRules();
+    await use(adminPublishingRules);
+  },
   adminManageAttachmentsAssertion: async ({ adminAttachFilesModal }, use) => {
     const adminManageAttachmentsAssertion = new ManageAttachmentsAssertion(
       adminAttachFilesModal,
@@ -691,6 +700,12 @@ const dialAdminTest = dialTest.extend<{
         adminAppsToPublishTree,
       );
     await use(adminAppToPublishAssertion);
+  },
+  adminPublishingRulesAssertion: async ({ adminPublishingRules }, use) => {
+    const adminPublishingRulesAssertion = new PublishingRulesAssertion(
+      adminPublishingRules,
+    );
+    await use(adminPublishingRulesAssertion);
   },
 });
 

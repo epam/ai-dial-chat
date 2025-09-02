@@ -23,6 +23,7 @@ import {
   ListboxMenu,
   MessageTemplateModal,
   PromptBar,
+  PublishingFilter,
   PublishingRules,
   SelectFolderModal,
   SendMessage,
@@ -67,6 +68,7 @@ import {
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
+import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
@@ -74,6 +76,7 @@ import { ManageAttachmentFoldersAssertion } from '@/src/assertions/manageAttachm
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
+import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -295,7 +298,10 @@ const dialTest = test.extend<{
   folderConversationsToPublish: FolderConversationsToPublish;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
+  additionalShareUserPublicationApiHelper: PublicationApiHelper;
+  additionalSecondShareUserPublicationApiHelper: PublicationApiHelper;
   publishingRules: PublishingRules;
+  publishingFilter: PublishingFilter;
   informationModal: InformationModal;
   listboxMenu: ListboxMenu;
   informationModalAssertion: InformationModalAssertion;
@@ -364,6 +370,10 @@ const dialTest = test.extend<{
   adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
   customApplicationPublishingUtil: CustomApplicationPublishingUtil;
   organizationFolderPromptAssertions: FolderAssertion<Folders>;
+  publishingRulesAssertion: PublishingRulesAssertion;
+  publicationApiAssertion: PublicationApiAssertion;
+  additionalShareUserPublicationApiAssertion: PublicationApiAssertion;
+  additionalSecondShareUserPublicationApiAssertion: PublicationApiAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -1029,9 +1039,34 @@ const dialTest = test.extend<{
     );
     await use(adminPublicationApiHelper);
   },
+  additionalShareUserPublicationApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserPublicationApiHelper = new PublicationApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    );
+    await use(additionalShareUserPublicationApiHelper);
+  },
+  additionalSecondShareUserPublicationApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondShareUserPublicationApiHelper =
+      new PublicationApiHelper(
+        additionalSecondShareUserRequestContext,
+        BucketUtil.getAdditionalSecondShareUserBucket(),
+      );
+    await use(additionalSecondShareUserPublicationApiHelper);
+  },
   publishingRules: async ({ publishingRequestModal }, use) => {
     const publishingRules = publishingRequestModal.getPublishingRules();
     await use(publishingRules);
+  },
+  publishingFilter: async ({ publishingRules }, use) => {
+    const publishingFilter = publishingRules.gePublishingFilter();
+    await use(publishingFilter);
   },
   informationModal: async ({ page }, use) => {
     const informationModal = new InformationModal(page);
@@ -1410,6 +1445,36 @@ const dialTest = test.extend<{
       organizationFolderPrompts,
     );
     await use(organizationFolderPromptAssertions);
+  },
+  publishingRulesAssertion: async ({ publishingRules }, use) => {
+    const publishingRulesAssertion = new PublishingRulesAssertion(
+      publishingRules,
+    );
+    await use(publishingRulesAssertion);
+  },
+  publicationApiAssertion: async ({ publicationApiHelper }, use) => {
+    const publicationApiAssertion = new PublicationApiAssertion(
+      publicationApiHelper,
+    );
+    await use(publicationApiAssertion);
+  },
+  additionalShareUserPublicationApiAssertion: async (
+    { additionalShareUserPublicationApiHelper },
+    use,
+  ) => {
+    const additionalShareUserPublicationApiAssertion =
+      new PublicationApiAssertion(additionalShareUserPublicationApiHelper);
+    await use(additionalShareUserPublicationApiAssertion);
+  },
+  additionalSecondShareUserPublicationApiAssertion: async (
+    { additionalSecondShareUserPublicationApiHelper },
+    use,
+  ) => {
+    const additionalSecondShareUserPublicationApiAssertion =
+      new PublicationApiAssertion(
+        additionalSecondShareUserPublicationApiHelper,
+      );
+    await use(additionalSecondShareUserPublicationApiAssertion);
   },
 });
 

@@ -13,8 +13,6 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
-import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
-
 import { EntityHeader } from '../EntityDetailsHeader';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
@@ -68,7 +66,6 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
       isPreview={isPreview}
       shareAction={shareAction}
       copyLinkAction={copyLinkAction}
-      StatusIndicator={FunctionStatusIndicator}
       dataQa="application-header"
     />
   );

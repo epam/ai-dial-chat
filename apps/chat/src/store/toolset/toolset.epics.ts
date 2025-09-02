@@ -5,6 +5,7 @@ import {
   concat,
   filter,
   forkJoin,
+  iif,
   map,
   of,
   switchMap,
@@ -15,15 +16,22 @@ import { combineEpics, ofType } from 'redux-observable';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import { getIdWithoutFeatureType, isMyEntity } from '@/src/utils/app/id';
 import {
   convertToolsetModelToApi,
+  encodeToolsetRedirectState,
+  getToolsetRedirectUri,
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { AppAction, AppEpic } from '@/src/types/store';
+import {
+  ToolsetAuthPayload,
+  ToolsetCredentialsLevel,
+} from '@/src/types/toolsets';
 
 import { UIActions } from '@/src/store/actions';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
@@ -34,6 +42,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { uniq } from 'lodash-es';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -209,24 +218,43 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
             convertToolsetModelToApi(updatedToolset),
             getIdWithoutFeatureType(updatedToolset.id),
           ).pipe(
-            switchMap(() => {
-              if (shouldUpdateQuery) {
-                void router.push({
-                  query: {
-                    [ToolsetEditorQuery.Id]: updatedToolset.reference,
-                  },
-                });
-              }
+            switchMap(() =>
+              ToolsetService.getToolsetByPath(
+                getIdWithoutFeatureType(updatedToolset.id),
+              ).pipe(
+                switchMap((updatedToolset) => {
+                  if (shouldUpdateQuery) {
+                    void router.push({
+                      query: {
+                        [ToolsetEditorQuery.Id]: updatedToolset.reference,
+                      },
+                    });
+                  }
 
-              return of(
-                ToolsetActions.updateToolsetSuccess({
-                  oldToolset: payload.oldToolset,
-                  newToolset: updatedToolset,
+                  return concat(
+                    of(
+                      ToolsetActions.updateToolsetSuccess({
+                        oldToolset: payload.oldToolset,
+                        newToolset: updatedToolset,
+                      }),
+                    ),
+                    iif(
+                      () => !!payload.auth,
+                      of(
+                        ToolsetActions.startSignInProcess({
+                          authLevel: ToolsetCredentialsLevel.GLOBAL,
+                          apiKey: payload?.auth?.apiKey,
+                          toolset: updatedToolset,
+                        }),
+                      ),
+                      EMPTY,
+                    ),
+                  );
                 }),
-              );
-            }),
+              ),
+            ),
             catchError((err) => {
-              console.error('Failed to update toolset:', err);
+              console.error('Failed to update toolset:', err.message);
               return of(
                 ToolsetActions.updateToolsetFailed({
                   oldToolset: payload.oldToolset,
@@ -448,6 +476,138 @@ const deleteToolsetFailEpic: AppEpic = (action$) =>
     map(() => UIActions.showErrorToast(translate('Failed to delete toolset'))),
   );
 
+const startSignInProcessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.startSignInProcess.type),
+    switchMap(({ payload }) => {
+      const authSettings = payload.toolset.authSettings;
+      if (
+        authSettings?.authenticationType === ToolsetAuthTypes.API_KEY &&
+        payload.apiKey
+      ) {
+        return of(
+          ToolsetActions.logInToolset({
+            toolsetId: payload.toolset.id,
+            authLevel: payload.authLevel,
+            authType: ToolsetAuthTypes.API_KEY,
+            apiKey: payload.apiKey,
+          }),
+        );
+      }
+      if (
+        authSettings?.authenticationType === ToolsetAuthTypes.OAUTH &&
+        authSettings?.authorizationEndpoint &&
+        typeof window !== 'undefined'
+      ) {
+        const callbackUrl = `${window.location.pathname}${window.location.search}`;
+        const state = {
+          callbackUrl,
+          toolsetId: payload.toolset.id,
+          credentialsLevel: payload.authLevel,
+        };
+
+        const url = new URL(authSettings.authorizationEndpoint);
+        url.searchParams.set('response_type', 'code');
+        url.searchParams.set('client_id', authSettings.clientId as string);
+        url.searchParams.set('redirect_uri', getToolsetRedirectUri());
+        url.searchParams.set(
+          'code_challenge',
+          authSettings.codeChallenge as string,
+        );
+        url.searchParams.set(
+          'code_challenge_method',
+          authSettings.codeChallengeMethod as string,
+        );
+        url.searchParams.set('state', encodeToolsetRedirectState(state));
+
+        window.location.assign(url.toString());
+      }
+
+      return EMPTY;
+    }),
+  );
+
+const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
+  action$.pipe(
+    ofType(ToolsetActions.logInToolset.type),
+    switchMap(({ payload }) => {
+      const data: ToolsetAuthPayload = {
+        url: payload.toolsetId,
+        authenticationType: payload.authType,
+        credentialsLevel: payload.authLevel,
+        ...(payload.authType === ToolsetAuthTypes.OAUTH
+          ? { code: payload.code as string }
+          : { apiKey: payload.apiKey as string }),
+      };
+
+      let callbackUrl = '/';
+      if (payload.authType === ToolsetAuthTypes.OAUTH) {
+        try {
+          const url = new URL(
+            payload.callbackUrl ?? '',
+            window.location.origin,
+          );
+          if (url.origin === window.location.origin) {
+            callbackUrl = url.href;
+          }
+        } catch {
+          console.error('Invalid callback url');
+        }
+      }
+
+      return ToolsetService.signIn(data).pipe(
+        switchMap(() => {
+          if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
+            window.location.href = callbackUrl;
+            return EMPTY;
+          }
+
+          return refreshToolset$(payload.toolsetId, router.pathname);
+        }),
+        catchError((err) => {
+          console.error('Failed to sign in toolset', err);
+          if (payload.authType === ToolsetAuthTypes.OAUTH) {
+            window.location.href = callbackUrl;
+          }
+          return concat(
+            of(ToolsetActions.logInToolsetFail()),
+            of(
+              UIActions.showErrorToast(translate('Failed to sign in toolset')),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const logOutToolsetEpic: AppEpic = (action$, _state, { router }) =>
+  action$.pipe(
+    ofType(ToolsetActions.logOutToolset.type),
+    switchMap(({ payload }) => {
+      return ToolsetService.signOut({
+        url: payload.toolsetId,
+        authenticationType: payload.authType,
+        credentialsLevel: payload.authLevel,
+      }).pipe(
+        switchMap(() => {
+          return refreshToolset$(payload.toolsetId, router.pathname);
+        }),
+        catchError((err) => {
+          console.error('Failed to sign out toolset', err);
+          return of(ToolsetActions.logOutToolsetFail());
+        }),
+      );
+    }),
+  );
+
+const logOutToolsetFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.logOutToolsetFail.type),
+    map(() =>
+      UIActions.showErrorToast(translate('Failed to sign out toolset')),
+    ),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -465,4 +625,10 @@ export const ToolsetEpics = combineEpics(
   getInstalledToolsetsFailEpic,
   removeFromInstalledToolsetsEpic,
   addInstalledToolsetsEpic,
+
+  //Signin
+  startSignInProcessEpic,
+  logInToolsetEpic,
+  logOutToolsetEpic,
+  logOutToolsetFailEpic,
 );

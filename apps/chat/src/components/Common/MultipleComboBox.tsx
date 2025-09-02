@@ -269,7 +269,7 @@ export function MultipleComboBox<T>({
                         'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
                         itemHeightClassName ? itemHeightClassName : 'h-[23px]',
                       )}
-                      data-qa="attachment-type-pill"
+                      data-qa="combobox-pill"
                       {...getSelectedItemProps({
                         selectedItem: selectedItemForRender,
                         index,
@@ -318,6 +318,7 @@ export function MultipleComboBox<T>({
                   ref: inputRef,
                 }),
               })}
+              data-qa="filter-value-input"
             />
           </div>
 
@@ -336,6 +337,7 @@ export function MultipleComboBox<T>({
               left: x ?? '',
               width: `${floatingWidth}px`,
             }}
+            data-qa="value-suggestion"
           >
             {displayedItems?.length > 0
               ? displayedItems.map((item, index) => (

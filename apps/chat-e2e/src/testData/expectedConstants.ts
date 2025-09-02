@@ -189,6 +189,7 @@ export const ExpectedConstants = {
   noChangesLabel: 'No changes',
   availabilityLabel:
     'This publication will be available to all users in the organization',
+  seeChangesLabel: 'See changes',
   unpublishFromLabel: 'Unpublish from',
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
@@ -277,6 +278,9 @@ export const ExpectedConstants = {
   promptEditConfirmationDialogTitle: 'Unsaved changes',
   promptEditConfirmationDialogMessage:
     'There are unsaved changes. Do you want to save them before closing?',
+  publishingFilterDefaultValue: 'Select',
+  publishingFilterValuePlaceholder: 'Enter one or more options...',
+  dialRolesField: 'dial_roles',
   fileUploadFolder: 'uploads',
   fileUploadedToastMessage: (fileFolder: string) =>
     `The file has been uploaded successfully to "${ExpectedConstants.fileUploadFolder}/${fileFolder}"`,
@@ -583,4 +587,21 @@ export const ExpectedPromptModalConst = {
 export enum DefaultModelReference {
   defaultAgent = '"default-agent"',
   lastUsedModel = '"last-used-agent"',
+}
+
+export enum PublishingRulesFilterTarget {
+  title = 'Title',
+  jobTitle = 'Job Title',
+  role = 'Role',
+  dialRoles = 'Dial Roles',
+}
+
+export enum BooleanOperator {
+  or = 'or',
+}
+
+export enum E2EUserRole {
+  qa = 'QA',
+  developer = 'Developer',
+  manager = 'Manager',
 }
