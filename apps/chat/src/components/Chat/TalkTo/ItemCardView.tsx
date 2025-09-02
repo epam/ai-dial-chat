@@ -63,7 +63,7 @@ export const ItemCardView = ({
   disabled,
   isUnavailableModel,
   onSelectVersion,
-  hasContextMenu,
+  hasContextMenu = true,
   className,
 }: ItemCardViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
