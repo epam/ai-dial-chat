@@ -58,20 +58,21 @@ const initEpic: AppEpic = (action$, state$) =>
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
       const firstRoutePart = previousRoute?.split('/')[1];
       const firstRoutePartWithoutParams = firstRoutePart?.split('?')[0];
+      const isPreviousRouteEditor =
+        !!firstRoutePartWithoutParams &&
+        ['apps-editor', 'toolset-editor'].includes(firstRoutePartWithoutParams);
 
       return concat(
         of(
           MarketplaceActions.initSuccess({
-            saveFilters:
-              !!firstRoutePartWithoutParams &&
-              ['apps-editor', 'toolset-editor'].includes(
-                firstRoutePartWithoutParams,
-              ),
+            saveFilters: isPreviousRouteEditor,
           }),
         ),
         of(
           MarketplaceActions.setSelectedTab(
-            workSpaceTab ? MarketplaceTabs.MY_WORKSPACE : MarketplaceTabs.HOME,
+            workSpaceTab || isPreviousRouteEditor
+              ? MarketplaceTabs.MY_WORKSPACE
+              : MarketplaceTabs.HOME,
           ),
         ),
       );

@@ -27,9 +27,9 @@ import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import {
-  addMessageAttachmentsToPublication,
-  getSetUpdatedItemsToApproveAction,
-  getUpdateApplicationGeneralInfoAction,
+  addMessageAttachmentsToPublication$,
+  getSetUpdatedItemsToApproveAction$,
+  getUpdateApplicationGeneralInfoAction$,
 } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import { constructPath } from '@/src/utils/app/file';
 import {
@@ -1595,7 +1595,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
             PublicationSelectors.selectSelectedItemsToApprove(state);
 
           return concat(
-            getUpdateApplicationGeneralInfoAction(
+            getUpdateApplicationGeneralInfoAction$(
               // oldApplication is not exist after update, so we need to replace it with newApplication.id
               { ...oldApplication, id: newApplication.id },
               newApplication,
@@ -1694,7 +1694,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
             PublicationSelectors.selectSelectedItemsToApprove(state);
 
           return concat(
-            getUpdateApplicationGeneralInfoAction(
+            getUpdateApplicationGeneralInfoAction$(
               payload.oldApplication,
               newApplicationWithMappedIconUrl,
             ),
@@ -1825,7 +1825,7 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
 
           return concat(
             ...actions,
-            getSetUpdatedItemsToApproveAction(
+            getSetUpdatedItemsToApproveAction$(
               state,
               oldPublicationResources,
               newPublicationResources,
@@ -2122,7 +2122,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                       version: getVersionFromId(application.id),
                     };
 
-                    return getUpdateApplicationGeneralInfoAction(
+                    return getUpdateApplicationGeneralInfoAction$(
                       application,
                       newApplication,
                     );
@@ -2152,7 +2152,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
 
               return concat(
                 ...actions,
-                getSetUpdatedItemsToApproveAction(
+                getSetUpdatedItemsToApproveAction$(
                   state,
                   oldPublicationResources,
                   newPublicationResources,
@@ -2226,7 +2226,7 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
     switchMap(({ payload }) => {
       const state = state$.value;
 
-      return addMessageAttachmentsToPublication(
+      return addMessageAttachmentsToPublication$(
         payload.message,
         getFolderIdFromEntityId(payload.conversationId),
         payload.publicationUrl,
@@ -2331,7 +2331,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
       const state = state$.value;
       const { sendMessagePayload, publicationUrl } = payload;
 
-      return addMessageAttachmentsToPublication(
+      return addMessageAttachmentsToPublication$(
         sendMessagePayload.message,
         sendMessagePayload.conversation.folderId,
         publicationUrl,

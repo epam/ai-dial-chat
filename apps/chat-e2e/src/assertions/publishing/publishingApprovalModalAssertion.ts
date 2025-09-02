@@ -49,30 +49,6 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
     );
   }
 
-  public async assertAllowAccessLabelState(expectedState: ElementState) {
-    await this.assertElementState(
-      this.publishingApprovalModal.allowAccessLabel,
-      expectedState,
-      ExpectedConstants.allowAccessLabel,
-    );
-  }
-
-  public async assertNoChangesLabelState(expectedState: ElementState) {
-    await this.assertElementState(
-      this.publishingApprovalModal.noChangesLabel,
-      expectedState,
-      ExpectedConstants.noChangesLabel,
-    );
-  }
-
-  public async assertAvailabilityLabelState(expectedState: ElementState) {
-    await this.assertElementState(
-      this.publishingApprovalModal.availabilityLabel,
-      expectedState,
-      ExpectedConstants.availabilityLabel,
-    );
-  }
-
   public async assertReviewButtonTitle(expectedTitle: string) {
     await this.assertElementText(
       this.publishingApprovalModal.goToReviewButton,
@@ -90,9 +66,6 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
     publicAuthor?: string;
     requestCreatedLabel?: ElementState;
     requestCreated?: Publication;
-    allowAccessLabel?: ElementState;
-    availabilityLabel?: ElementState;
-    noChangesLabel?: ElementState;
   }) {
     if (fieldsToVerify.requestName) {
       await this.assertElementText(
@@ -170,36 +143,6 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
     }
     if (fieldsToVerify.requestCreated) {
       await this.assertRequestCreationDate(fieldsToVerify.requestCreated);
-    }
-    if (fieldsToVerify.allowAccessLabel) {
-      await this.assertElementState(
-        this.publishingApprovalModal.allowAccessLabel,
-        fieldsToVerify.allowAccessLabel,
-      );
-      await this.assertElementText(
-        this.publishingApprovalModal.allowAccessLabel,
-        ExpectedConstants.allowAccessLabel,
-      );
-    }
-    if (fieldsToVerify.availabilityLabel) {
-      await this.assertElementState(
-        this.publishingApprovalModal.availabilityLabel,
-        fieldsToVerify.availabilityLabel,
-      );
-      await this.assertElementText(
-        this.publishingApprovalModal.availabilityLabel,
-        ExpectedConstants.availabilityLabel,
-      );
-    }
-    if (fieldsToVerify.noChangesLabel) {
-      await this.assertElementState(
-        this.publishingApprovalModal.noChangesLabel,
-        fieldsToVerify.noChangesLabel,
-      );
-      await this.assertElementText(
-        this.publishingApprovalModal.noChangesLabel,
-        ExpectedConstants.noChangesLabel,
-      );
     }
   }
 

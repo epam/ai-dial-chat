@@ -274,6 +274,7 @@ export function TargetAudienceFilterComponent({
           onChangeSelectedItems={handleChangeFilterParams}
           fontSize="text-xs"
           placeholder={t('Enter one or more options...')}
+          dataQa="filter-values-container"
         />
       )}
       {/* } */}

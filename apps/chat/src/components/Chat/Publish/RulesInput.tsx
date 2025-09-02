@@ -57,14 +57,22 @@ export const RulesInput = ({
           <div className="flex items-center gap-1" key={item.id} data-qa="rule">
             <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
               <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
-                <span className="font-semibold">
+                <span className="font-semibold" data-qa="rule-target">
                   {startCase(toLower(item.id))}
                 </span>
-                <span className="italic">{toLower(item.filterFunction)}</span>
+                <span className="italic" data-qa="rule-function">
+                  {toLower(item.filterFunction)}
+                </span>
                 {item.filterParams.map((param, index) => (
                   <Fragment key={index}>
-                    {index > 0 && <span className="italic">{t('or')}</span>}
-                    <span className="font-semibold">{param}</span>
+                    {index > 0 && (
+                      <span className="italic" data-qa="inner-operator">
+                        {t('or')}
+                      </span>
+                    )}
+                    <span className="font-semibold" data-qa="rule-value">
+                      {param}
+                    </span>
                   </Fragment>
                 ))}
               </div>
@@ -75,7 +83,12 @@ export const RulesInput = ({
                 className="mr-3 shrink-0 cursor-pointer text-secondary"
               />
             </div>
-            <span className="text-xs italic text-secondary">{t('or')}</span>
+            <span
+              className="text-xs italic text-secondary"
+              data-qa="rule-operator"
+            >
+              {t('or')}
+            </span>
           </div>
         ))}
         {!isOpen && (
@@ -93,6 +106,7 @@ export const RulesInput = ({
             stroke="2"
             onClick={handleClear}
             className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
+            name="cancel-all-rules"
           />
         )}
       </div>
