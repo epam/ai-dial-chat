@@ -46,15 +46,15 @@ export interface ToolsetModel extends ShareEntity {
 
 export interface ToolsetAuthPayloadBase {
   url: string;
-  credentials_level: ToolsetCredentialsLevel;
-  authentication_type: ToolsetAuthTypes;
+  credentialsLevel: ToolsetCredentialsLevel;
+  authenticationType: ToolsetAuthTypes;
 }
 
 interface ToolsetOAuthPayload extends ToolsetAuthPayloadBase {
   code: string;
 }
 interface ToolsetApiKeyPayload extends ToolsetAuthPayloadBase {
-  api_key: string;
+  apiKey: string;
 }
 
 export type ToolsetAuthPayload = ToolsetOAuthPayload | ToolsetApiKeyPayload;

@@ -533,11 +533,11 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
     switchMap(({ payload }) => {
       const data: ToolsetAuthPayload = {
         url: payload.toolsetId,
-        authentication_type: payload.authType,
-        credentials_level: payload.authLevel,
+        authenticationType: payload.authType,
+        credentialsLevel: payload.authLevel,
         ...(payload.authType === ToolsetAuthTypes.OAUTH
           ? { code: payload.code as string }
-          : { api_key: payload.apiKey as string }),
+          : { apiKey: payload.apiKey as string }),
       };
 
       let callbackUrl = '/';
@@ -586,8 +586,8 @@ const logOutToolsetEpic: AppEpic = (action$, _state, { router }) =>
     switchMap(({ payload }) => {
       return ToolsetService.signOut({
         url: payload.toolsetId,
-        authentication_type: payload.authType,
-        credentials_level: payload.authLevel,
+        authenticationType: payload.authType,
+        credentialsLevel: payload.authLevel,
       }).pipe(
         switchMap(() => {
           return refreshToolset$(payload.toolsetId, router.pathname);
