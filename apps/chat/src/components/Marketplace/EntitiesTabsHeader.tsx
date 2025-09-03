@@ -1,9 +1,5 @@
 import { useCallback } from 'react';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { Translation } from '@/src/types/translation';
-
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
@@ -19,8 +15,6 @@ const entitiesTabs = [
 
 export function EntitiesTabsHeader() {
   const dispatch = useAppDispatch();
-
-  const { t } = useTranslation(Translation.Marketplace);
 
   const selectedEntitiesTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
@@ -42,9 +36,8 @@ export function EntitiesTabsHeader() {
           selected={selectedEntitiesTab === key}
           onClick={handleSelectTab}
           className="flex-1 text-center md:flex-auto md:text-left"
-        >
-          {t(label)}
-        </TabButton>
+          label={label}
+        />
       ))}
     </div>
   );
