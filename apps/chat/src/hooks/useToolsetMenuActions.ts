@@ -50,13 +50,13 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
       e.preventDefault();
       e.stopPropagation();
       dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings));
-      dispatch(ToolsetActions.getToolsetDetails({ id: toolset.id }));
+      dispatch(ToolsetActions.setToolsetDetails());
       void router.push({
         pathname: Routes.ToolsetEditor,
         query: { [ToolsetEditorQuery.Id]: toolset.reference },
       });
     },
-    [dispatch, router, toolset.id, toolset.reference],
+    [dispatch, router, toolset.reference],
   );
 
   const handlePublish = useCallback((e: React.MouseEvent) => {
