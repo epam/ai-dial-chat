@@ -32,6 +32,7 @@ export interface Toolset {
   user_roles?: string[];
   description_keywords?: string[];
   max_retry_attempts?: number;
+  owner?: string;
   author?: string;
   created_at?: number;
   updated_at?: number;

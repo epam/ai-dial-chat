@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 
 import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -49,6 +49,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings));
       dispatch(ToolsetActions.getToolsetDetails({ id: toolset.id }));
       void router.push({
         pathname: Routes.ToolsetEditor,

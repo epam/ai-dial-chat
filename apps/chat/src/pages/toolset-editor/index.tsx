@@ -21,6 +21,7 @@ import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 function ToolsetEditorPage() {
   const router = useRouter();
+
   useToolsetEditorValidation();
 
   const toolsetDetailsStatus = useAppSelector(
