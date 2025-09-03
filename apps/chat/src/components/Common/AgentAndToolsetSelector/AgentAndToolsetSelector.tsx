@@ -77,7 +77,7 @@ export const AgentAndToolsetSelector: React.FC<
       <div className="relative grow space-y-4">
         <div className="flex flex-col">
           <div className="absolute right-0 top-[-22px]">
-            <Tooltip tooltip={addBtnTooltip ?? t('Add Agent or Toolset')}>
+            <Tooltip tooltip={addBtnTooltip ?? t('Add Agents and Toolsets')}>
               <button
                 disabled={readonly}
                 className={classNames(

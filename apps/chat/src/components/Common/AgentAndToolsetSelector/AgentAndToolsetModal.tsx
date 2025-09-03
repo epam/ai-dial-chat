@@ -7,24 +7,33 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isExternalApp } from '@/src/utils/app/application';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
+import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
+import { DialAIEntityModel } from '@/src/types/models';
+import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
+import { ModelsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
+  WidgetsSelectors,
 } from '@/src/store/selectors';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import {
   ChangeAgentTabs,
   ChangeToolsetTabs,
@@ -32,6 +41,7 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
+import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
@@ -45,7 +55,7 @@ import {
   AgentAndToolsetSelectItemProps,
 } from './AgentAndToolsetSelectItem';
 
-export type EntityType = 'agents' | 'toolsets';
+import { orderBy } from 'lodash-es';
 
 interface EntityTypeTabsProps {
   currentType: EntityType;
@@ -57,15 +67,15 @@ function EntityTypeTabs({ currentType, setType }: EntityTypeTabsProps) {
   return (
     <div className="flex gap-2">
       <TabButton
-        selected={currentType === 'agents'}
-        onClick={() => setType('agents')}
+        selected={currentType === EntityType.Application}
+        onClick={() => setType(EntityType.Application)}
         dataQA="entity-type-agents"
       >
         {t('Agents')}
       </TabButton>
       <TabButton
-        selected={currentType === 'toolsets'}
-        onClick={() => setType('toolsets')}
+        selected={currentType === EntityType.Toolset}
+        onClick={() => setType(EntityType.Toolset)}
         dataQA="entity-type-toolsets"
       >
         {t('Toolsets')}
@@ -113,13 +123,17 @@ const AgentAndToolsetModalView = ({
   defaultSelectedItems,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useDispatch();
+
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  const [entityType, setEntityType] = useState<EntityType>('agents');
+  const [entityType, setEntityType] = useState<EntityType>(
+    EntityType.Application,
+  );
   const [scopeTab, setScopeTab] = useState<
     MarketplaceTabs | MarketplaceEntitiesTabs
   >(MarketplaceTabs.MY_WORKSPACE);
@@ -130,6 +144,11 @@ const AgentAndToolsetModalView = ({
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
   const allAgents = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const installedModelIdsSet = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+
   const rawToolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
   const allToolsets = useMemo(() => {
     return Object.values(rawToolsetsMap).map((toolset) => ({
@@ -137,6 +156,11 @@ const AgentAndToolsetModalView = ({
       isDefault: false,
     }));
   }, [rawToolsetsMap]);
+
+  const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const widgetsSchemaIds = useAppSelector(
+    WidgetsSelectors.selectWidgetsSchemaIds,
+  );
 
   useLayoutEffect(() => {
     if (footerRef.current) {
@@ -160,7 +184,7 @@ const AgentAndToolsetModalView = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   useEffect(() => {
-    if (entityType === 'agents') {
+    if (entityType === EntityType.Application) {
       setScopeTab(MarketplaceTabs.MY_WORKSPACE);
     } else {
       setScopeTab(MarketplaceEntitiesTabs.AGENTS);
@@ -204,14 +228,40 @@ const AgentAndToolsetModalView = ({
     MODELS_SEARCH_OPTIONS,
   );
 
+  const sortedModels = useMemo(() => {
+    const recentInstalledModels = recentModelIds
+      .filter((id) => installedModelIdsSet.has(id) && modelsMap[id])
+      .map((id) => modelsMap[id]) as DialAIEntityModel[];
+    const installedModels = searchedAgents.filter(
+      (model) =>
+        installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
+    );
+    return [...recentInstalledModels, ...installedModels];
+  }, [recentModelIds, searchedAgents, installedModelIdsSet, modelsMap]);
+
   const displayedItems = useMemo(() => {
+    const filteredModels = sortedModels.filter(
+      (entity) =>
+        !isExternalApp(entity) &&
+        !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
+        !!searchedAgents.find((m) => m.reference === entity.reference),
+    );
+    const groupedModels = groupModelsAndSaveOrder(filteredModels);
+    const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
+      return orderBy(entities, 'version', 'desc')[0];
+    });
+
+    if (isMyWorkspace && searchTerm.length > 0 && orderedModels.length > 0) {
+      orderedModels.push(SuggestedCard);
+    }
+
     const isMyWorkspaceView =
       scopeTab === MarketplaceTabs.MY_WORKSPACE ||
       scopeTab === MarketplaceEntitiesTabs.AGENTS;
 
-    if (entityType === 'agents') {
+    if (entityType === EntityType.Application) {
       if (!isMyWorkspaceView) return searchedAgents;
-      return searchedAgents.filter((item) =>
+      return orderedModels.filter((item) =>
         isInstalledEntity(item, installedAgentsSet),
       );
     } else {
@@ -221,20 +271,36 @@ const AgentAndToolsetModalView = ({
       );
     }
   }, [
-    entityType,
+    sortedModels,
+    isMyWorkspace,
+    searchTerm.length,
     scopeTab,
+    entityType,
+    widgetsSchemaIds,
     searchedAgents,
-    searchedToolsets,
     installedAgentsSet,
+    searchedToolsets,
     installedToolsetsSet,
   ]);
+
+  const handleSelectModel = useCallback(
+    (entity: MarketplaceEntity) => {
+      if (entity.type === EntityType.Application) {
+        const model = modelsMap[entity.reference];
+      } else {
+        const toolset = rawToolsetsMap[entity.reference];
+      }
+    },
+    [dispatch, modelsMap, rawToolsetsMap],
+  );
 
   const sliderItemProps = useMemo(
     () => ({
       selectedItems,
+      onSelectModel: handleSelectModel,
       onToggleSelectItem: handleToggleSelectItem,
     }),
-    [selectedItems, handleToggleSelectItem],
+    [selectedItems, handleSelectModel, handleToggleSelectItem],
   );
 
   const sliderResetDependencies = useMemo(
@@ -266,7 +332,7 @@ const AgentAndToolsetModalView = ({
               />
             </div>
             <div className="flex gap-2">
-              {entityType === 'agents' ? (
+              {entityType === EntityType.Application ? (
                 <div className="flex gap-2">
                   <ScopeTabButton
                     tab={MarketplaceTabs.MY_WORKSPACE}

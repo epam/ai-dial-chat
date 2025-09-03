@@ -17,6 +17,7 @@ const AgentTooltipContent = ({ item }: { item: MarketplaceEntity }) => {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="truncate text-base font-bold">{item.version}</span>
           <span className="truncate text-base font-bold">{item.name}</span>
           {item.description && (
             <EntityMarkdownDescription
