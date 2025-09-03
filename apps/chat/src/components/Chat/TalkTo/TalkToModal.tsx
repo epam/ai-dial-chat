@@ -71,11 +71,13 @@ interface TabButtonProps {
 
 function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
   const { t } = useTranslation(Translation.Marketplace);
+
   return (
     <TabButton
+      tabKey={tab}
       selected={currentTab === tab}
-      onClick={() => setTab(tab)}
-      dataQA={tab.toString()}
+      onClick={setTab}
+      dataQA={tab}
     >
       {t(ChangeAgentTabs[tab])}
     </TabButton>

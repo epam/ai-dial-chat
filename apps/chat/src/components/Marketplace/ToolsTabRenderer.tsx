@@ -8,7 +8,11 @@ import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
-import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  FilterTypes,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
 
@@ -32,6 +36,15 @@ export function ToolsTabRenderer() {
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
   );
+  const selectedFilters = useAppSelector(
+    MarketplaceSelectors.selectSelectedFilters,
+  );
+  const searchTerm = useAppSelector(
+    MarketplaceSelectors.selectTrimmedSearchTerm,
+  );
+
+  const areAllFiltersEmpty =
+    !searchTerm.length && !selectedFilters[FilterTypes.TOPICS].length;
 
   const { displayedEntities: displayedToolsets, suggestedResults } =
     useMarketplaceDisplayedEntities(allToolsets, installedToolsetsSet);
@@ -92,7 +105,7 @@ export function ToolsTabRenderer() {
         entities={displayedToolsets}
         suggestedResults={suggestedResults}
         selectedTab={selectedTab}
-        areAllFiltersEmpty
+        areAllFiltersEmpty={areAllFiltersEmpty}
         selectedViewType={selectedViewType}
         onCardClick={handleSetDetailsToolset}
         onBookmarkClick={handleBookmarkClick}

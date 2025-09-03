@@ -1,20 +1,27 @@
 import classNames from 'classnames';
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+type ButtonProps = Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onClick'
+>;
 
-interface Props extends ButtonProps {
+interface Props<T> extends ButtonProps {
+  tabKey: T;
   selected?: boolean;
   dataQA?: string;
+  onClick: (key: T) => void;
 }
 
-export const TabButton = ({
+export const TabButton = <T,>({
+  tabKey,
   children,
   selected,
   dataQA,
   className,
   disabled,
+  onClick,
   ...rest
-}: Props) => (
+}: Props<T>) => (
   <button
     {...rest}
     className={classNames(
@@ -29,6 +36,7 @@ export const TabButton = ({
     )}
     data-qa={dataQA ?? 'tab-button'}
     disabled={disabled}
+    onClick={() => onClick(tabKey)}
   >
     {children}
   </button>
