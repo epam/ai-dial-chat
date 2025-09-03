@@ -42,7 +42,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { uniq } from 'lodash-es';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -481,49 +481,68 @@ const startSignInProcessEpic: AppEpic = (action$) =>
     ofType(ToolsetActions.startSignInProcess.type),
     switchMap(({ payload }) => {
       const authSettings = payload.toolset.authSettings;
-      if (
-        authSettings?.authenticationType === ToolsetAuthTypes.API_KEY &&
-        payload.apiKey
-      ) {
-        return of(
-          ToolsetActions.logInToolset({
-            toolsetId: payload.toolset.id,
-            authLevel: payload.authLevel,
-            authType: ToolsetAuthTypes.API_KEY,
-            apiKey: payload.apiKey,
-          }),
-        );
-      }
-      if (
-        authSettings?.authenticationType === ToolsetAuthTypes.OAUTH &&
-        authSettings?.authorizationEndpoint &&
-        typeof window !== 'undefined'
-      ) {
-        const callbackUrl = `${window.location.pathname}${window.location.search}`;
-        const state = {
-          callbackUrl,
-          toolsetId: payload.toolset.id,
-          credentialsLevel: payload.authLevel,
-        };
 
-        const url = new URL(authSettings.authorizationEndpoint);
-        url.searchParams.set('response_type', 'code');
-        url.searchParams.set('client_id', authSettings.clientId as string);
-        url.searchParams.set('redirect_uri', getToolsetRedirectUri());
-        url.searchParams.set(
-          'code_challenge',
-          authSettings.codeChallenge as string,
-        );
-        url.searchParams.set(
-          'code_challenge_method',
-          authSettings.codeChallengeMethod as string,
-        );
-        url.searchParams.set('state', encodeToolsetRedirectState(state));
+      return forkJoin({
+        result:
+          authSettings.authStatus?.[payload.authLevel] ===
+          ToolsetAuthStatus.FAILED
+            ? ToolsetService.signOut({
+                url: payload.toolset.id,
+                authenticationType: authSettings.authenticationType,
+                credentialsLevel: payload.authLevel,
+              })
+            : of(undefined),
+      }).pipe(
+        switchMap(() => {
+          if (
+            authSettings?.authenticationType === ToolsetAuthTypes.API_KEY &&
+            payload.apiKey
+          ) {
+            return of(
+              ToolsetActions.logInToolset({
+                toolsetId: payload.toolset.id,
+                authLevel: payload.authLevel,
+                authType: ToolsetAuthTypes.API_KEY,
+                apiKey: payload.apiKey,
+              }),
+            );
+          }
+          if (
+            authSettings?.authenticationType === ToolsetAuthTypes.OAUTH &&
+            authSettings?.authorizationEndpoint &&
+            typeof window !== 'undefined'
+          ) {
+            const callbackUrl = `${window.location.pathname}${window.location.search}`;
+            const state = {
+              callbackUrl,
+              toolsetId: payload.toolset.id,
+              credentialsLevel: payload.authLevel,
+            };
 
-        window.location.assign(url.toString());
-      }
+            const url = new URL(authSettings.authorizationEndpoint);
+            url.searchParams.set('response_type', 'code');
+            url.searchParams.set('client_id', authSettings.clientId as string);
+            url.searchParams.set('redirect_uri', getToolsetRedirectUri());
+            url.searchParams.set(
+              'code_challenge',
+              authSettings.codeChallenge as string,
+            );
+            url.searchParams.set(
+              'code_challenge_method',
+              authSettings.codeChallengeMethod as string,
+            );
+            url.searchParams.set('state', encodeToolsetRedirectState(state));
 
-      return EMPTY;
+            window.location.assign(url.toString());
+          }
+
+          return EMPTY;
+        }),
+        catchError((err) => {
+          console.error('Failed to login', err);
+          return of(ToolsetActions.logInToolsetFail());
+        }),
+      );
     }),
   );
 
