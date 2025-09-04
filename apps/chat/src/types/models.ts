@@ -1,6 +1,7 @@
 import { ApplicationStatus } from '@/src/types/applications';
 
 import { EntityType } from './common';
+import { MarketplaceEntity } from './marketplace';
 
 import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
 import { TiktokenEncoding } from 'tiktoken';
@@ -121,7 +122,7 @@ export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
   publicationInfo: EntityPublicationInfo;
 }
 
-export interface ModelsGroup {
+export interface ModelsGroup<T extends MarketplaceEntity> {
   groupName: string;
-  entities: DialAIEntityModel[];
+  entities: T[];
 }

@@ -2,6 +2,7 @@ import { getModelIdWithoutVersion } from '@/src/utils/server/api';
 
 import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import {
   DialAIEntity,
   DialAIEntityModel,
@@ -42,7 +43,7 @@ export const doesModelHaveConfiguration = (model?: DialAIEntity): boolean => {
   return !!model?.features?.configuration;
 };
 
-export const getGroupModelKey = (model: DialAIEntityModel) => {
+export const getGroupModelKey = (model: MarketplaceEntity) => {
   if (model.id === model.reference) {
     return model.name;
   }
@@ -52,13 +53,13 @@ export const getGroupModelKey = (model: DialAIEntityModel) => {
   return constructPath(...bucket, ...name); // ignore public folder as result
 };
 
-export const groupModelsAndSaveOrder = (
-  models: DialAIEntityModel[],
-): ModelsGroup[] => {
+export const groupModelsAndSaveOrder = <T extends MarketplaceEntity>(
+  models: T[],
+): ModelsGroup<T>[] => {
   const uniqModels = uniqBy(models, 'reference');
   const groupedModels = groupBy(uniqModels, getGroupModelKey);
   const insertedSet = new Set();
-  const result: ModelsGroup[] = [];
+  const result: ModelsGroup<T>[] = [];
 
   uniqModels.forEach((model) => {
     const key = getGroupModelKey(model);

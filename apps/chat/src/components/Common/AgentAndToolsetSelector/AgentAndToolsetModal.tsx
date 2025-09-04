@@ -20,7 +20,6 @@ import { isInstalledEntity } from '@/src/utils/marketplace';
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
-import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -230,23 +229,23 @@ const AgentAndToolsetModalView = ({
     ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
 
     const groupedAndOrderedToolsets = groupToolsetsAndSaveOrder(
-      searchedToolsets as ToolsetModel[],
+      searchedToolsets,
     ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
 
     if (entityType === EntityType.Application) {
       if (isMyWorkspaceView) {
         return groupedAndOrderedAgents.filter((item) =>
           isInstalledEntity(item, installedAgentsSet),
-        ) as MarketplaceEntity[];
+        );
       }
-      return groupedAndOrderedAgents as MarketplaceEntity[];
+      return groupedAndOrderedAgents;
     } else {
       if (isMyWorkspaceView) {
         return groupedAndOrderedToolsets.filter((item) =>
           isInstalledEntity(item, installedToolsetsSet),
-        ) as MarketplaceEntity[];
+        );
       }
-      return groupedAndOrderedToolsets as MarketplaceEntity[];
+      return groupedAndOrderedToolsets;
     }
   }, [
     scopeTab,
