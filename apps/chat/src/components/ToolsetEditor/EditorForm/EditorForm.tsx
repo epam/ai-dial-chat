@@ -4,7 +4,7 @@ import { GeneralForm } from '@/src/components/ToolsetEditor/EditorForm/GeneralFo
 import { SettingsForm } from '@/src/components/ToolsetEditor/EditorForm/SettingsForm';
 
 interface EditorFormProps {
-  onNextClick: () => void;
+  onNextClick: (e: React.FormEvent<HTMLFormElement>) => void;
   currentStep: ToolsetEditorSteps;
 }
 

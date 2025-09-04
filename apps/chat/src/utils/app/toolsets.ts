@@ -32,6 +32,7 @@ export const parseToolsetApiAuthStatus = (data?: Toolset) => {
 
 export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
   const id = ApiUtils.decodeApiUrl(data.id ?? data.toolset ?? data.name ?? '');
+  const author = data.owner ?? data.author;
 
   return {
     endpoint: data.endpoint,
@@ -49,7 +50,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     topics: data.description_keywords ?? [],
     userRoles: data.user_roles,
     maxRetryAttempts: data.max_retry_attempts,
-    author: data.author,
+    author,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
 
