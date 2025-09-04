@@ -96,11 +96,7 @@ const DeleteMarketplaceEntityDialogView = () => {
           handleDelete(deleteEntity);
         }
 
-        if (isDialAiEntityModel(deleteEntity)) {
-          dispatch(MarketplaceActions.setDetailsEntity());
-        } else {
-          dispatch(ToolsetActions.setToolsetDetails());
-        }
+        dispatch(MarketplaceActions.setDetailsEntity());
       }
       dispatch(MarketplaceActions.setDeleteEntity());
     },
