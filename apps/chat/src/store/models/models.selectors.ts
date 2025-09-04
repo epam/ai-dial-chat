@@ -2,8 +2,8 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import {
-  getGroupModelKey,
-  groupModelsAndSaveOrder,
+  getGroupMarketplaceEntityKey,
+  groupMarketplaceEntityAndSaveOrder,
 } from '@/src/utils/app/models';
 
 import { EntityType } from '@/src/types/common';
@@ -38,15 +38,15 @@ const _selectModels = (state: RootState) => rootSelector(state).models;
 
 const selectModels = createSelector([_selectModels], (models) => {
   const sortedResponse = sortBy(models, (model) => model.name.toLowerCase());
-  const sortedAgents = groupModelsAndSaveOrder(sortedResponse).flatMap(
-    ({ entities }) => {
-      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
-        sortItemsVersions(entities);
-      }
+  const sortedAgents = groupMarketplaceEntityAndSaveOrder(
+    sortedResponse,
+  ).flatMap(({ entities }) => {
+    if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+      sortItemsVersions(entities);
+    }
 
-      return entities;
-    },
-  );
+    return entities;
+  });
   return sortedAgents;
 });
 
@@ -101,7 +101,7 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
     references
       .map((reference) => modelsMap[reference])
       .filter(Boolean)
-      .map((model) => getGroupModelKey(model!)),
+      .map((model) => getGroupMarketplaceEntityKey(model!)),
   );
 };
 

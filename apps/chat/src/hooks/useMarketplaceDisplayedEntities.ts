@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/models';
 import {
   doesMarketplaceEntityMatchFilters,
   isInstalledEntity,
@@ -119,7 +119,7 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     );
 
     if (isSelectedAgentsTab) {
-      entitiesToDisplay = groupModelsAndSaveOrder(
+      entitiesToDisplay = groupMarketplaceEntityAndSaveOrder(
         entitiesToDisplay as DialAIEntityModel[],
       ).map(({ entities }) => entities[0]) as T[];
     }
