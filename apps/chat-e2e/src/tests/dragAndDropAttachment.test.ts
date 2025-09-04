@@ -36,14 +36,15 @@ dialTest(
           version: appData.version,
           reference: appData.reference,
         } as DialAIEntityModel;
+
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step(
       'Drag the file on the central part of the page and verify drag attachment icon and messages are displayed',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
-        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.executeReactOnDragOver(fileDropArea);
@@ -151,6 +152,9 @@ dialTest(
           version: appData.version,
           reference: appData.reference,
         } as DialAIEntityModel;
+
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -173,8 +177,6 @@ dialTest(
     await dialTest.step(
       'Select replay conversation, drop the file and verify it is displayed in the field, conversation remains in the replay mode',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
-        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
@@ -246,6 +248,9 @@ dialTest(
           version: appData.version,
           reference: appData.reference,
         } as DialAIEntityModel;
+
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
     await dialTest.step('Create a simple prompt via API', async () => {
@@ -256,8 +261,6 @@ dialTest(
     await dialTest.step(
       'Drag the file on the central part of the page and verify error attachment messages is displayed',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
-        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.executeReactOnDragOver(fileDropArea);
@@ -339,6 +342,10 @@ dialAdminTest(
           name: appData.name,
           version: appData.version,
         });
+
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -405,8 +412,6 @@ dialAdminTest(
     await dialTest.step(
       'Drag not a file dataTransfer type on the central part of the page and verify nothing happens',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
-        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.executeReactOnDragOver(fileDropArea, 'onDragOver', [
@@ -481,7 +486,6 @@ dialAdminTest(
     await dialAdminTest.step(
       `By admin select conversation from "Approve required" section, drag the file over the central part and verify no attachments allowed is displayed`,
       async () => {
-        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
