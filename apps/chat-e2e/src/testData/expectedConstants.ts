@@ -65,8 +65,10 @@ export const ExpectedConstants = {
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
-  removeFolderAccessMessage: (name: string) =>
+  removeAccessForAllMessage: (name: string) =>
     `Are you sure you want to remove access for all users to ${name}?`,
+  removeYourAccessMessage: (name: string) =>
+    `Are you sure you want to remove your access to ${name}?`,
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -85,8 +87,8 @@ export const ExpectedConstants = {
   regenerateResponseToContinueTooltip:
     'Please regenerate response to continue working with chat',
   regenerateResponseTooltip: 'Regenerate response',
-  sharedConversationTooltip: 'Shared',
-  sharedConversationName: (name: string) => `Share: ${name}`,
+  sharedEntityTooltip: 'Shared',
+  sharedEntityName: (name: string) => `Share: ${name}`,
   sharedLink: (invitationLink: string) => {
     const invitationPath = '/v1/invitations/';
     const startIndex =
@@ -109,20 +111,25 @@ export const ExpectedConstants = {
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
+  shareLinkText: 'This link is temporary and will be active for 3 days.',
   shareConversationText:
-    'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+    'This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+  shareAppText:
+    'This application and its updates will be visible to users with the link.',
   sharePromptText:
-    'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+    'This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
   shareApplicationText:
     'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
-    'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+    'This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   notSharedFolderText: 'This folder has not been shared with anyone yet.',
   notSharedChatText: 'This chat has not been shared with anyone yet.',
   removeAccessText: 'Remove access for all users',
   notSharedPromptText: 'This prompt has not been shared with anyone yet.',
+  notSharedAppText: 'This app has not been shared with anyone yet.',
   sharePromptFolderText:
-    'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+    'This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  allowEditingSharedEntityText: 'Allow editing by other users',
   chatNotFoundMessage:
     'Conversation not found.Please select another conversation.',
   requiredFieldErrorMessage: 'Please fill in all required fields',

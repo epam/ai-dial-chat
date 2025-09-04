@@ -1,7 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
-import { expect } from '@playwright/test';
 
 export class ShareModalAssertion extends BaseAssertion {
   readonly shareModal: ShareModal;
@@ -12,22 +11,14 @@ export class ShareModalAssertion extends BaseAssertion {
   }
 
   public async assertModalState(expectedState: ElementState) {
-    const modalLocator = this.shareModal.getElementLocator();
-    expectedState === 'visible'
-      ? await expect
-          .soft(modalLocator, ExpectedMessages.modalWindowIsOpened)
-          .toBeVisible()
-      : await expect
-          .soft(modalLocator, ExpectedMessages.modalWindowIsClosed)
-          .toBeHidden();
+    await this.assertElementState(this.shareModal, expectedState);
   }
 
-  public async assertMessageContent(expectedMessage: string) {
-    expect
-      .soft(
-        await this.shareModal.getShareTextContent(),
-        ExpectedMessages.sharedModalTextIsValid,
-      )
-      .toBe(expectedMessage);
+  public async assertMessageContent(expectedMessages: string[]) {
+    await this.assertElementText(
+      this.shareModal.shareText,
+      expectedMessages,
+      ExpectedMessages.sharedModalTextIsValid,
+    );
   }
 }

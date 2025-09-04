@@ -68,3 +68,4 @@ export * from './notFound';
 export * from './informationModal';
 export * from './listboxMenu';
 export * from './publishingFilter';
+export * from './marketplace/shareAppModal';

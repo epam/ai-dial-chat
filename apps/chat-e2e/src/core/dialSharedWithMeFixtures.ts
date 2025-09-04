@@ -18,6 +18,7 @@ import {
   MarketplaceAgents,
   MarketplaceContainer,
   MarketplaceFilter,
+  MarketplaceHeader,
   MarketplaceSidebar,
   ModelInfoTooltip,
   PromptBar,
@@ -37,10 +38,12 @@ import {
   ConversationAssertion,
   DownloadAssertion,
   ManageAttachmentsAssertion,
+  MarketplaceAgentsAssertion,
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
 } from '@/src/assertions';
+import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
@@ -99,6 +102,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChatHeader: ChatHeader;
   additionalShareUserModelApiHelper: ModelApiHelper;
   additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
+  additionalShareUserTalkToAgents: MarketplaceAgents;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserSendMessage: SendMessage;
   additionalShareUserModelInfoTooltip: ModelInfoTooltip;
@@ -157,6 +161,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserNavigationPanel: NavigationPanel;
   additionalShareUserMarketplaceFilter: MarketplaceFilter;
   additionalShareUserMarketplace: Marketplace;
+  additionalShareUserMarketplaceHeader: MarketplaceHeader;
   additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
   additionalShareUserMarketplaceAgents: MarketplaceAgents;
   additionalShareUserAgentDetailsModal: AgentDetailsModal;
@@ -164,6 +169,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSelectFolders: Folders;
   additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
+  additionalShareUserAgentDetailsModalAssertion: AgentDetailsModalAssertion;
+  additionalShareUserMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -442,6 +449,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPage,
     );
     await use(additionalShareUserTalkToAgentDialog);
+  },
+  additionalShareUserTalkToAgents: async (
+    { additionalShareUserTalkToAgentDialog },
+    use,
+  ) => {
+    const additionalShareUserT =
+      additionalShareUserTalkToAgentDialog.getAgents();
+    await use(additionalShareUserT);
   },
   additionalShareUserChatMessages: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatMessages =
@@ -807,6 +822,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserMarketplaceContainer.getMarketplace();
     await use(additionalShareUserMarketplace);
   },
+  additionalShareUserMarketplaceHeader: async (
+    { additionalShareUserMarketplace },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceHeader =
+      additionalShareUserMarketplace.getMarketplaceHeader();
+    await use(additionalShareUserMarketplaceHeader);
+  },
   additionalShareUserMarketplaceAgentsSection: async (
     { additionalShareUserMarketplace },
     use,
@@ -864,6 +887,22 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSelectFolderModalAssertion =
       new SelectFolderModalAssertion(additionalShareUserSelectFolderModal);
     await use(additionalShareUserSelectFolderModalAssertion);
+  },
+  additionalShareUserAgentDetailsModalAssertion: async (
+    { additionalShareUserAgentDetailsModal },
+    use,
+  ) => {
+    const additionalShareUserAgentDetailsModalAssertion =
+      new AgentDetailsModalAssertion(additionalShareUserAgentDetailsModal);
+    await use(additionalShareUserAgentDetailsModalAssertion);
+  },
+  additionalShareUserMarketplaceAgentsAssertion: async (
+    { additionalShareUserMarketplaceAgents },
+    use,
+  ) => {
+    const additionalShareUserMarketplaceAgentsAssertion =
+      new MarketplaceAgentsAssertion(additionalShareUserMarketplaceAgents);
+    await use(additionalShareUserMarketplaceAgentsAssertion);
   },
 });
 

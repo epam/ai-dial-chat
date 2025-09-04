@@ -27,6 +27,7 @@ import {
   PublishingRules,
   SelectFolderModal,
   SendMessage,
+  ShareAppModal,
   TopicsTooltip,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
@@ -245,6 +246,7 @@ const dialTest = test.extend<{
   errorPopup: ErrorPopup;
   playbackControl: PlaybackControl;
   shareModal: ShareModal;
+  shareAppModal: ShareAppModal;
   chatBarSearch: Search;
   promptBarSearch: Search;
   chatFilter: Filter;
@@ -787,6 +789,10 @@ const dialTest = test.extend<{
   shareModal: async ({ page }, use) => {
     const shareModal = new ShareModal(page);
     await use(shareModal);
+  },
+  shareAppModal: async ({ page }, use) => {
+    const shareAppModal = new ShareAppModal(page);
+    await use(shareAppModal);
   },
   modelApiHelper: async ({ request }, use) => {
     const modelApiHelper = new ModelApiHelper(request);

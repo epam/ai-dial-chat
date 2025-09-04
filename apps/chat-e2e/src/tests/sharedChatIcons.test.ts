@@ -83,9 +83,10 @@ dialTest(
           await conversationDropdownMenu.selectShareMenuOption();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        await shareModalAssertion.assertMessageContent(
+        await shareModalAssertion.assertMessageContent([
+          ExpectedConstants.shareLinkText,
           ExpectedConstants.shareConversationText,
-        );
+        ]);
         await shareModalAssertion.assertElementState(
           shareModal.notSharedEntityLabel,
           'visible',
@@ -142,7 +143,7 @@ dialTest(
         const tooltipChatName = await tooltip.getContent();
         expect
           .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationName(conversation.name));
+          .toBe(ExpectedConstants.sharedEntityName(conversation.name));
 
         const isTooltipChatNameTruncated =
           await tooltip.isElementWidthTruncated();
@@ -648,7 +649,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
 
@@ -661,7 +662,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
   },
@@ -869,10 +870,10 @@ dialTest(
         shareLinkResponse = (await folderConversations.selectShareMenuOption())
           .response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        shareModalAssertion.assertValue(
-          await shareModal.getShareTextContent(),
+        shareModalAssertion.assertMessageContent([
+          ExpectedConstants.shareLinkText,
           ExpectedConstants.shareConversationFolderText,
-        );
+        ]);
         await shareModalAssertion.assertElementText(
           shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedFolderText,
