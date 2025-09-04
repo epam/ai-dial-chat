@@ -37,6 +37,7 @@ export const ToolsetEditorView = ({
   currentStep,
 }: ToolsetEditorViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+
   const screenState = useScreenState();
 
   const isToolsetDetailsLoading = useAppSelector(
@@ -82,15 +83,17 @@ export const ToolsetEditorView = ({
           selected={isPreviewClosed}
           onClick={handlePreviewModeChange}
           className="w-full"
-          label="Info"
-        />
+        >
+          {t('Info')}
+        </TabButton>
         <TabButton
           tabKey={PreviewMode.full}
           selected={isPreviewFull}
           onClick={handlePreviewModeChange}
           className="w-full"
-          label="Preview"
-        />
+        >
+          {t('Preview')}
+        </TabButton>
       </div>
 
       <div className="flex w-full grow overflow-hidden">

@@ -70,14 +70,17 @@ interface TabButtonProps {
 }
 
 function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
+  const { t } = useTranslation(Translation.Chat);
+
   return (
     <TabButton
       tabKey={tab}
       selected={currentTab === tab}
       onClick={setTab}
       dataQA={tab}
-      label={ChangeAgentTabs[tab]}
-    />
+    >
+      {t(ChangeAgentTabs[tab])}
+    </TabButton>
   );
 }
 

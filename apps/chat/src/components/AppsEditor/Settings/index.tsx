@@ -441,15 +441,17 @@ export const ApplicationSettings: React.FC<Props> = ({
           selected={!isPreviewFull}
           onClick={handlePreviewModeChange}
           className="w-full"
-          label="Settings"
-        />
+        >
+          {t('Settings')}
+        </TabButton>
         <TabButton
           tabKey={PreviewMode.full}
           selected={isPreviewFull}
           onClick={handlePreviewModeChange}
           className="w-full"
-          label="Preview"
-        />
+        >
+          {t('Preview')}
+        </TabButton>
       </div>
 
       <div className="flex w-full grow overflow-hidden">

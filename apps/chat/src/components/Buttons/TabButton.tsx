@@ -1,8 +1,4 @@
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
-
-import { Translation } from '@/src/types/translation';
 
 type ButtonProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -10,8 +6,7 @@ type ButtonProps = Omit<
 >;
 
 interface Props<T> extends ButtonProps {
-  tabKey: T;
-  label: string;
+  tabKey?: T;
   selected?: boolean;
   dataQA?: string;
   onClick: (key: T) => void;
@@ -19,7 +14,7 @@ interface Props<T> extends ButtonProps {
 
 export const TabButton = <T,>({
   tabKey,
-  label,
+  children,
   selected,
   dataQA,
   className,
@@ -27,8 +22,6 @@ export const TabButton = <T,>({
   onClick,
   ...rest
 }: Props<T>) => {
-  const { t } = useTranslation(Translation.Common);
-
   return (
     <button
       {...rest}
@@ -44,9 +37,9 @@ export const TabButton = <T,>({
       )}
       data-qa={dataQA ?? 'tab-button'}
       disabled={disabled}
-      onClick={() => onClick(tabKey)}
+      onClick={() => onClick(tabKey as T)}
     >
-      {t(label)}
+      {children}
     </button>
   );
 };

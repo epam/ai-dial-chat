@@ -51,6 +51,8 @@ interface EntityTypeTabsProps {
 }
 
 function EntityTypeTabs({ currentType, setType }: EntityTypeTabsProps) {
+  const { t } = useTranslation(Translation.Chat);
+
   return (
     <div className="flex gap-2">
       <TabButton
@@ -58,15 +60,17 @@ function EntityTypeTabs({ currentType, setType }: EntityTypeTabsProps) {
         selected={currentType === MarketplaceEntitiesTabs.AGENTS}
         onClick={setType}
         dataQA="entity-type-agents"
-        label="Agents"
-      />
+      >
+        {t('Agents')}
+      </TabButton>
       <TabButton
         tabKey={MarketplaceEntitiesTabs.TOOLSETS}
         selected={currentType === MarketplaceEntitiesTabs.TOOLSETS}
         onClick={setType}
         dataQA="entity-type-toolsets"
-        label="Toolsets"
-      />
+      >
+        {t('Toolsets')}
+      </TabButton>
     </div>
   );
 }
@@ -85,6 +89,8 @@ function ScopeTabButton({
   currentTab,
   textMap,
 }: ScopeTabButtonProps) {
+  const { t } = useTranslation(Translation.Chat);
+
   const buttonText = textMap[tab] || tab;
 
   return (
@@ -93,8 +99,9 @@ function ScopeTabButton({
       selected={currentTab === tab}
       onClick={setTab}
       dataQA={tab}
-      label={buttonText}
-    />
+    >
+      {t(buttonText)}
+    </TabButton>
   );
 }
 

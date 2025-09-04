@@ -144,15 +144,17 @@ export const GeneralInfoView: React.FC<Props> = ({
           selected={isPreviewClosed}
           onClick={handlePreviewModeChange}
           className="w-full"
-          label="Info"
-        />
+        >
+          {t('Info')}
+        </TabButton>
         <TabButton
           tabKey={PreviewMode.full}
           selected={isPreviewFull}
           onClick={handlePreviewModeChange}
           className="w-full"
-          label="Preview"
-        />
+        >
+          {t('Preview')}
+        </TabButton>
       </div>
       <div className="flex w-full grow overflow-hidden">
         <div

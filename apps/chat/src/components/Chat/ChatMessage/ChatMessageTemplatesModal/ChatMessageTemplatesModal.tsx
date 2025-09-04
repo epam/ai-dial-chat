@@ -37,11 +37,6 @@ interface Props {
 const EMPTY_ROW: TemplateMapping = ['', ''];
 const MAX_SHORT_MESSAGE_LENGTH = 160;
 
-enum PreviewMode {
-  SetTemplate = 'set',
-  Preview = 'preview',
-}
-
 export const ChatMessageTemplatesModal = ({
   isOpen,
   onClose,
@@ -55,7 +50,7 @@ export const ChatMessageTemplatesModal = ({
   const showMore = message.content.length > MAX_SHORT_MESSAGE_LENGTH;
 
   const [collapsed, setCollapsed] = useState(showMore);
-  const [previewMode, setPreviewMode] = useState(PreviewMode.SetTemplate);
+  const [previewMode, setPreviewMode] = useState(true);
   const [templates, setTemplates] = useState<TemplateMapping[]>([
     ...getEntitiesFromTemplateMapping(message.templateMapping),
     EMPTY_ROW,
@@ -150,20 +145,20 @@ export const ChatMessageTemplatesModal = ({
     >
       <div className="flex gap-4 px-3 pb-4 md:px-6">
         <TabButton
-          tabKey={PreviewMode.SetTemplate}
-          selected={previewMode === PreviewMode.SetTemplate}
-          onClick={setPreviewMode}
+          selected={previewMode}
+          onClick={() => setPreviewMode(true)}
           dataQA="set-template-tab"
-          label="Set template"
-        />
+        >
+          {t('Set template')}
+        </TabButton>
         <TabButton
-          tabKey={PreviewMode.Preview}
-          selected={previewMode === PreviewMode.Preview}
-          onClick={setPreviewMode}
+          selected={!previewMode}
+          onClick={() => setPreviewMode(false)}
           dataQA="preview-tab"
           disabled={isInvalid}
-          label="Preview"
-        />
+        >
+          {t('Preview')}
+        </TabButton>
       </div>
       <div className="relative flex min-h-20 shrink flex-col">
         <div

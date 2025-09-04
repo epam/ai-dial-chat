@@ -1,5 +1,9 @@
 import { useCallback } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
+import { Translation } from '@/src/types/translation';
+
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
@@ -14,6 +18,8 @@ const entitiesTabs = [
 ];
 
 export function EntitiesTabsHeader() {
+  const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const selectedEntitiesTab = useAppSelector(
@@ -36,8 +42,9 @@ export function EntitiesTabsHeader() {
           selected={selectedEntitiesTab === key}
           onClick={handleSelectTab}
           className="flex-1 text-center md:flex-auto md:text-left"
-          label={label}
-        />
+        >
+          {t(label)}
+        </TabButton>
       ))}
     </div>
   );
