@@ -15,7 +15,7 @@ import { Toolset } from '@epam/ai-dial-shared';
 
 export class ToolsetService {
   public static getToolsets(): Observable<ToolsetModel[]> {
-    return ApiUtils.request('/api/toolsets/listing', {
+    return ApiUtils.request('/api/toolsets-listing', {
       method: HTTPMethod.GET,
     }).pipe(
       map((res) => res.data.map(convertToolsetFromApi)),
@@ -42,6 +42,13 @@ export class ToolsetService {
   }
 
   public static saveToolset(data: Toolset, path: string): Observable<void> {
+    return ApiUtils.request(`/api/toolsets/${path}`, {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+
+  public static updateToolset(data: Toolset, path: string): Observable<void> {
     return ApiUtils.request(`/api/toolsets/${path}`, {
       method: HTTPMethod.PUT,
       body: JSON.stringify(data),

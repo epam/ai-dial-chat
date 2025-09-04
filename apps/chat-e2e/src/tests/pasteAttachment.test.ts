@@ -61,7 +61,7 @@ dialTest(
       'EPMRTC-6231',
       'EPMRTC-6225',
     );
-    let yearMonthSubfolder: string;
+    const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
     let responses: BackendDataEntity[] | undefined;
 
     await dialTest.step(
@@ -83,19 +83,19 @@ dialTest(
       'Create a conversation with custom app via API',
       async () => {
         await createConversation(conversationData, dataInjector);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step(
       'Copy file to the buffer, paste using keyboard and verify it appears in the send input',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
-        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
-        yearMonthSubfolder = DateUtil.getCurrentYearMonth();
-        await dialHomePage.copyFileToClipboard(Attachment.fileToCopyName);
+        await dialHomePage.copyImageContentToClipboard(
+          Attachment.fileToCopyName,
+        );
         await dialHomePage.pasteFromClipboard({
           triggeredApiResponses: [
             {
@@ -151,6 +151,10 @@ dialTest(
         responses = await dialHomePage.triggerPasteFilesEvent(
           [Attachment.restrictedCharsFilename],
           { pasteToElement: sendMessage.messageInput },
+        );
+        baseAssertion.assertValue(
+          responses[0].name,
+          expectedRestrictedCharsFilename,
         );
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
           expectedRestrictedCharsFilename,
@@ -294,7 +298,7 @@ dialTest(
     setTestIds('EPMRTC-6222', 'EPMRTC-6224');
 
     await dialTest.step(
-      'Create a custom app with set of allowed attachment types via API',
+      'Create a custom app without allowed attachments via API',
       async () => {
         const appData = await customApplicationPublishingUtil.createCustomApp();
         appEntity = {
@@ -309,17 +313,19 @@ dialTest(
       'Create a conversation with custom app via API',
       async () => {
         await createConversation(conversationData, dataInjector);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialTest.step(
       'Copy any file to the buffer, paste using keyboard and verify nothing happens',
       async () => {
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
-        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.copyFileToClipboard(Attachment.fileToCopyName);
+        await dialHomePage.copyImageContentToClipboard(
+          Attachment.fileToCopyName,
+        );
         await dialHomePage.pasteFromClipboard();
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
           Attachment.fileToCopyName,

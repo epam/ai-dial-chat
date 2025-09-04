@@ -286,7 +286,10 @@ export const ExpectedConstants = {
     `The file has been uploaded successfully to "${ExpectedConstants.fileUploadFolder}/${fileFolder}"`,
   replacedRestrictedCharsName: (restrictedCharsName: string) =>
     restrictedCharsName.replace(
-      new RegExp(`[${ExpectedConstants.restrictedNameChars}]`, 'g'),
+      new RegExp(
+        `[${ExpectedConstants.restrictedNameChars.replaceAll('//', '////')}]`,
+        'g',
+      ),
       '_',
     ),
   dragFileTitle: 'Attach files',
