@@ -48,13 +48,13 @@ export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
   return constructPath(...bucket, ...name); // ignore public folder as result
 };
 
-export const groupMarketplaceEntityAndSaveOrder = (
-  entity: MarketplaceEntity[],
-): EntitiesGroup[] => {
+export const groupMarketplaceEntityAndSaveOrder = <T extends MarketplaceEntity>(
+  entity: T[],
+): EntitiesGroup<T>[] => {
   const uniqEntities = uniqBy(entity, 'reference');
   const groupedEntities = groupBy(uniqEntities, getGroupMarketplaceEntityKey);
   const insertedSet = new Set();
-  const result: EntitiesGroup[] = [];
+  const result: EntitiesGroup<T>[] = [];
 
   uniqEntities.forEach((entity) => {
     const key = getGroupMarketplaceEntityKey(entity);
