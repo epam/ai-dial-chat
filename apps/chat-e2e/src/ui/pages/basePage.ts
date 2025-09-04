@@ -349,7 +349,8 @@ export class BasePage {
   // This is why pasted images get generic names like "image.png"
   public async copyImageContentToClipboard(filename: string): Promise<void> {
     try {
-      const fileMetadata = await this.getAttachmentFileMetadata(filename);
+      const fileMetadata =
+        await this.getAttachmentFileMetadataAndContent(filename);
 
       // Throw error if not PNG
       if (fileMetadata.mimeType !== 'image/png') {
@@ -396,7 +397,8 @@ export class BasePage {
 
     for (const filename of filenames) {
       // 2. Read the file and prepare the data payload.
-      const fileMetadata = await this.getAttachmentFileMetadata(filename);
+      const fileMetadata =
+        await this.getAttachmentFileMetadataAndContent(filename);
       filesMetadata.push(fileMetadata);
 
       if (isHttpMethodTriggered) {
@@ -534,7 +536,7 @@ export class BasePage {
     return await Promise.all(responsePromises);
   }
 
-  public async getAttachmentFileMetadata(
+  public async getAttachmentFileMetadataAndContent(
     filename: string,
   ): Promise<FileMetadata> {
     const resolvedPath = path.join(Attachment.attachmentPath, filename);
