@@ -983,13 +983,13 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               state$.value,
             );
 
-            const acceptedApplicationReference =
-              acceptedId && modelsMap[acceptedId]?.reference;
+            const acceptedApplication =
+              (acceptedId && modelsMap[acceptedId]) || undefined;
 
-            if (acceptedApplicationReference) {
+            if (acceptedApplication) {
               updateSharedActions.push(
-                MarketplaceActions.setDetailsModel({
-                  reference: acceptedApplicationReference,
+                MarketplaceActions.setDetailsEntity({
+                  entity: acceptedApplication,
                   isSuggested: false,
                 }),
               );
@@ -1293,7 +1293,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             EMPTY,
           ),
 
-          of(MarketplaceActions.setDetailsModel()),
+          of(MarketplaceActions.setDetailsEntity()),
         );
       }
 

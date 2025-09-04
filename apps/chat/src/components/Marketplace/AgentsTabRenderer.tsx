@@ -41,7 +41,6 @@ export function AgentsTabRenderer() {
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
   );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const areAllFiltersEmpty =
     !searchTerm.length &&
@@ -53,10 +52,10 @@ export function AgentsTabRenderer() {
     useMarketplaceDisplayedEntities(allModels, installedModelIds);
 
   const handleSetDetailsModel = useCallback(
-    (model: { reference: string }) => {
+    (model: DialAIEntityModel) => {
       dispatch(
-        MarketplaceActions.setDetailsModel({
-          reference: model.reference,
+        MarketplaceActions.setDetailsEntity({
+          entity: model,
           isSuggested: suggestedResults
             .map((item) => item.reference)
             .includes(model.reference),
@@ -70,9 +69,9 @@ export function AgentsTabRenderer() {
     (model: DialAIEntityModel) => {
       if (detailsModel) {
         dispatch(
-          MarketplaceActions.setDetailsModel({
-            ...detailsModel,
-            reference: model.reference,
+          MarketplaceActions.setDetailsEntity({
+            isSuggested: detailsModel.isSuggested,
+            entity: model,
           }),
         );
       }
@@ -81,7 +80,7 @@ export function AgentsTabRenderer() {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => dispatch(MarketplaceActions.setDetailsModel()),
+    () => dispatch(MarketplaceActions.setDetailsEntity()),
     [dispatch],
   );
 
@@ -106,7 +105,7 @@ export function AgentsTabRenderer() {
     [dispatch, installedModelIds],
   );
 
-  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
+  const currentDetailsModel = detailsModel?.entity;
 
   return (
     <>

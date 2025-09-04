@@ -19,12 +19,14 @@ export interface MarketplaceState {
   applyModelStatus: UploadStatus;
   selectedView: ViewTypes;
   applyModelId?: string;
-  detailsModel: { reference: string; isSuggested: boolean } | undefined;
   tableSort: {
     column: TableColumnSortKeys;
     order: SortOrder;
   };
   isBannerVisible: boolean;
 
+  detailsEntity:
+    | { entity: MarketplaceEntity; isSuggested: boolean }
+    | undefined;
   deleteEntity: { entity: MarketplaceEntity; action: DeleteType } | undefined;
 }

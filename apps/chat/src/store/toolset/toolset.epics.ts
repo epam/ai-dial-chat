@@ -33,7 +33,7 @@ import {
   ToolsetCredentialsLevel,
 } from '@/src/types/toolsets';
 
-import { UIActions } from '@/src/store/actions';
+import { MarketplaceActions, UIActions } from '@/src/store/actions';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -65,6 +65,7 @@ const getToolsetsEpic: AppEpic = (action$) =>
           concat(
             of(ToolsetActions.getToolsetsSuccess(toolsets)),
             of(ToolsetActions.getInstalledToolsets()),
+            of(MarketplaceActions.initQueryParams()),
           ),
         ),
         catchError((err) => {

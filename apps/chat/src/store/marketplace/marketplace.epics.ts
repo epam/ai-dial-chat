@@ -5,6 +5,7 @@ import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 import { combineEpics, ofType } from 'redux-observable';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
@@ -17,6 +18,7 @@ import {
 import {
   MarketplaceSelectors,
   ModelsSelectors,
+  ToolsetSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
@@ -84,7 +86,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
     ofType(
       MarketplaceActions.setSelectedTab.type,
       MarketplaceActions.setSelectedEntitiesTab.type,
-      MarketplaceActions.setDetailsModel.type,
+      MarketplaceActions.setDetailsEntity.type,
       MarketplaceActions.setSelectedFilters.type,
       MarketplaceActions.setState.type,
       MarketplaceActions.setSearchTerm.type,
@@ -116,9 +118,12 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
           : undefined,
       );
       // application link
-      const reference =
-        MarketplaceSelectors.selectDetailsModel(state)?.reference;
-      addToQuery(query, MarketplaceQueryParams.model, reference ?? undefined);
+      const detailsEntity = MarketplaceSelectors.selectDetailsEntity(state);
+      const referenceQuery =
+        detailsEntity && isToolsetEntityModel(detailsEntity.entity)
+          ? MarketplaceQueryParams.toolset
+          : MarketplaceQueryParams.model;
+      addToQuery(query, referenceQuery, detailsEntity?.entity?.reference);
       // filters
       const filters = MarketplaceSelectors.selectSelectedFilters(state);
       addToQuery(
@@ -174,25 +179,40 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
 const initQueryParamsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(MarketplaceActions.initQueryParams.type),
+    filter(
+      () =>
+        ModelsSelectors.selectAreModelsLoaded(state$.value) &&
+        ToolsetSelectors.selectAreToolsetsLoaded(state$.value),
+    ),
     switchMap(() => {
       const query = parse(window.location.search.slice(1));
       const state = state$.value;
 
       const updatedMarketplaceState: Partial<MarketplaceState> = {};
       // application link
-      const modelReference = query[MarketplaceQueryParams.model];
+      const modelReference = query[MarketplaceQueryParams.model]?.toString();
+      const toolsetReference =
+        query[MarketplaceQueryParams.toolset]?.toString();
       const modelsMap = ModelsSelectors.selectModelsMap(state);
+      const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
       const model =
         typeof modelReference === 'string'
           ? modelsMap[modelReference]
           : undefined;
-      updatedMarketplaceState.detailsModel =
-        modelReference && model
-          ? {
-              reference: modelReference as string,
-              isSuggested: false,
-            }
+      const toolset =
+        typeof toolsetReference === 'string'
+          ? toolsetsMap[toolsetReference]
           : undefined;
+
+      const detailsEntity =
+        (modelReference && model) || (toolsetReference && toolset) || undefined;
+
+      updatedMarketplaceState.detailsEntity = detailsEntity
+        ? {
+            entity: detailsEntity,
+            isSuggested: false,
+          }
+        : undefined;
       // workspace tab
       const workSpaceTab =
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
@@ -253,6 +273,9 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         of(MarketplaceActions.setState(updatedMarketplaceState)),
         modelReference && !model
           ? of(UIActions.showErrorToast('Agent by this link not found'))
+          : EMPTY,
+        toolsetReference && !toolset
+          ? of(UIActions.showErrorToast('Toolset by this link not found'))
           : EMPTY,
       );
     }),
