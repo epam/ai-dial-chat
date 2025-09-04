@@ -45,6 +45,17 @@ import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { uniq } from 'lodash-es';
+import { parse } from 'querystring';
+
+const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
+  switch (step) {
+    case ToolsetEditorSteps.Settings:
+    case ToolsetEditorSteps.General:
+      return true;
+    default:
+      return false;
+  }
+};
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -81,7 +92,7 @@ const getToolsetsEpic: AppEpic = (action$) =>
     ),
   );
 
-const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
+const createToolsetEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.createToolset.type),
     switchMap(({ payload }) => {
@@ -89,7 +100,6 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
       const apiPayload = convertToolsetModelToApi(data);
 
       const path = ApiUtils.encodeApiUrl(getIdWithoutFeatureType(data.id));
-      const shouldUpdateQuery = router.pathname === Routes.ToolsetEditor;
 
       return ToolsetService.saveToolset(apiPayload, path).pipe(
         switchMap(() =>
@@ -97,14 +107,6 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
             toolset: ToolsetService.getToolsetByPath(path),
           }).pipe(
             switchMap(({ toolset }) => {
-              if (toolset && shouldUpdateQuery) {
-                void router.push({
-                  query: {
-                    [ToolsetEditorQuery.Id]: toolset.reference,
-                  },
-                });
-              }
-
               return toolset
                 ? concat(
                     of(
@@ -179,15 +181,13 @@ const getToolsetDetailsEpic: AppEpic = (action$) =>
     }),
   );
 
-const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
+const updateToolsetEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.updateToolset.type),
     switchMap(({ payload }) => {
       const updatedToolset = regenerateToolsetId(payload.newToolset);
 
       const isMoved = payload.oldToolset.id !== updatedToolset.id;
-      const shouldUpdateQuery =
-        router.pathname === Routes.ToolsetEditor && isMoved;
 
       const move$ = isMoved
         ? DataService.getDataStorage()
@@ -242,14 +242,6 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
                 getIdWithoutFeatureType(updatedToolset.id),
               ).pipe(
                 switchMap((updatedToolset) => {
-                  if (shouldUpdateQuery) {
-                    void router.push({
-                      query: {
-                        [ToolsetEditorQuery.Id]: updatedToolset.reference,
-                      },
-                    });
-                  }
-
                   return concat(
                     of(
                       ToolsetActions.updateToolsetSuccess({
@@ -658,6 +650,58 @@ const logOutToolsetFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
+  action$.pipe(
+    ofType(
+      ToolsetActions.setEditorStep.type,
+      ToolsetActions.setToolsetDetails.type,
+      ToolsetActions.getToolsetDetailsSuccess.type,
+      ToolsetActions.updateToolsetSuccess.type,
+    ),
+    filter(() => router.route === Routes.ToolsetEditor),
+    switchMap(() => {
+      const state = state$.value;
+      const query = parse(window.location.search.slice(1));
+      const pathname = window.location.pathname;
+
+      // editor step
+      query[ToolsetEditorQuery.Step] = ToolsetSelectors.selectEditorStep(state);
+
+      // toolset reference
+      const toolset = ToolsetSelectors.selectToolsetDetails(state);
+      if (toolset?.reference) {
+        query[ToolsetEditorQuery.Id] = toolset.reference;
+      }
+
+      void router.push(
+        {
+          pathname,
+          query,
+        },
+        undefined,
+        {
+          shallow: true,
+        },
+      );
+
+      return EMPTY;
+    }),
+  );
+
+const initQueryParamsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.initQueryParams.type),
+    switchMap(() => {
+      const query = parse(window.location.search.slice(1));
+      const stepParam = query[ToolsetEditorQuery.Step]?.toString() ?? '';
+      const editorStep = isToolsetEditorStep(stepParam)
+        ? stepParam
+        : ToolsetEditorSteps.General;
+
+      return of(ToolsetActions.setEditorStep(editorStep));
+    }),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -665,6 +709,8 @@ export const ToolsetEpics = combineEpics(
   createToolsetFailedEpic,
   getToolsetDetailsEpic,
   updateToolsetEpic,
+  setQueryParamsEpic,
+  initQueryParamsEpic,
 
   //Delete
   deleteToolsetEpic,

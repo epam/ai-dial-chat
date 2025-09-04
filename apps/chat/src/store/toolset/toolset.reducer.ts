@@ -221,6 +221,7 @@ export const toolsetSlice = createSlice({
     setEditorStep: (state, { payload }: PayloadAction<ToolsetEditorSteps>) => {
       state.editorStep = payload;
     },
+    initQueryParams: (state) => state,
   },
 });
 

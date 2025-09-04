@@ -49,11 +49,13 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings));
       dispatch(ToolsetActions.setToolsetDetails());
       void router.push({
         pathname: Routes.ToolsetEditor,
-        query: { [ToolsetEditorQuery.Id]: toolset.reference },
+        query: {
+          [ToolsetEditorQuery.Id]: toolset.reference,
+          [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
+        },
       });
     },
     [dispatch, router, toolset.reference],

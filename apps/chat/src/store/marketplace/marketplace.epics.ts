@@ -164,7 +164,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
           : undefined,
       );
 
-      Router.push(
+      void Router.push(
         {
           pathname,
           query,
