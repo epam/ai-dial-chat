@@ -99,6 +99,15 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, toolset],
   );
 
+  const handleLogin = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(MarketplaceActions.setLoginEntity(toolset));
+    },
+    [dispatch, toolset],
+  );
+
   return {
     handleCopy,
     handleEdit,
@@ -107,5 +116,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     handleDelete,
     handleOpenSharing,
     handleOpenUnshare,
+    handleLogin,
   };
 };

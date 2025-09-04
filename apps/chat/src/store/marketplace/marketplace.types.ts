@@ -1,5 +1,6 @@
 import { SortOrder } from '@/src/types/common';
 import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   DeleteType,
@@ -29,4 +30,5 @@ export interface MarketplaceState {
     | { entity: MarketplaceEntity; isSuggested: boolean }
     | undefined;
   deleteEntity: { entity: MarketplaceEntity; action: DeleteType } | undefined;
+  loginEntity: ToolsetModel | undefined;
 }

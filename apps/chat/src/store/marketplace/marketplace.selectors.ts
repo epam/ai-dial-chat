@@ -112,6 +112,8 @@ const selectSourceTypes = createSelector(
 const selectDeleteEntity = (state: RootState) =>
   rootSelector(state).deleteEntity;
 
+const selectLoginEntity = (state: RootState) => rootSelector(state).loginEntity;
+
 export const MarketplaceSelectors = {
   selectSelectedViewType,
   selectTableSort,
@@ -128,4 +130,5 @@ export const MarketplaceSelectors = {
   selectDeleteEntity,
   selectDetailsEntity,
   selectDetailsToolset,
+  selectLoginEntity,
 };

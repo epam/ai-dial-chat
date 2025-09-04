@@ -567,7 +567,7 @@ const startSignInProcessEpic: AppEpic = (action$) =>
     }),
   );
 
-const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
+const logInToolsetEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ToolsetActions.logInToolset.type),
     switchMap(({ payload }) => {
@@ -602,7 +602,7 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
             return EMPTY;
           }
 
-          return refreshToolset$(payload.toolsetId, router.pathname);
+          return refreshToolset$(payload.toolsetId, state$.value);
         }),
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
@@ -622,7 +622,7 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
     }),
   );
 
-const logOutToolsetEpic: AppEpic = (action$, _state, { router }) =>
+const logOutToolsetEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ToolsetActions.logOutToolset.type),
     switchMap(({ payload }) => {
@@ -632,7 +632,7 @@ const logOutToolsetEpic: AppEpic = (action$, _state, { router }) =>
         credentialsLevel: payload.authLevel,
       }).pipe(
         switchMap(() => {
-          return refreshToolset$(payload.toolsetId, router.pathname);
+          return refreshToolset$(payload.toolsetId, state$.value);
         }),
         catchError((err) => {
           console.error('Failed to sign out toolset', err);

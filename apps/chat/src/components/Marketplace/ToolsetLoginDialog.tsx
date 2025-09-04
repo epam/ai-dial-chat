@@ -1,26 +1,65 @@
+import { useCallback } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ModalState } from '@/src/types/modal';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/selectors';
+
 import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
+import { ToolsetLoginFormType } from '@/src/components/ToolsetEditor/form';
 
-interface ToolsetLoginDialogProps {
-  entity: ToolsetModel;
-  onClose: () => void;
-}
-
-export const ToolsetLoginDialog = ({
-  entity,
-  onClose,
-}: ToolsetLoginDialogProps) => {
+export const ToolsetLoginDialogView = () => {
   const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
 
-  const isSignedIn = entity && isToolsetSignedIn(entity);
+  const entity = useAppSelector(
+    MarketplaceSelectors.selectLoginEntity,
+  ) as ToolsetModel;
+
+  const isSignedIn = isToolsetSignedIn(entity);
+
+  const handleClose = useCallback(() => {
+    dispatch(MarketplaceActions.setLoginEntity());
+  }, [dispatch]);
+
+  const handleLogin = useCallback(
+    (data: ToolsetLoginFormType) => {
+      dispatch(
+        ToolsetActions.startSignInProcess({
+          authLevel: ToolsetCredentialsLevel.GLOBAL,
+          apiKey: data.apiKey,
+          toolset: entity,
+        }),
+      );
+      handleClose();
+    },
+    [dispatch, entity, handleClose],
+  );
+
+  const handleLogout = useCallback(() => {
+    dispatch(
+      ToolsetActions.logOutToolset({
+        authLevel: ToolsetCredentialsLevel.GLOBAL,
+        authType: entity.authSettings.authenticationType,
+        toolsetId: entity.id,
+      }),
+    );
+    handleClose();
+  }, [
+    dispatch,
+    entity.authSettings.authenticationType,
+    entity.id,
+    handleClose,
+  ]);
 
   return (
     <Modal
@@ -28,7 +67,7 @@ export const ToolsetLoginDialog = ({
       state={ModalState.OPENED}
       dataQa="marketplace-toolset-signin"
       containerClassName="flex flex-col gap-4 w-full xl:max-w-[450px] p-6"
-      onClose={onClose}
+      onClose={handleClose}
     >
       <div className="flex flex-col gap-2">
         <h3 className="text-base font-semibold leading-6 text-primary">
@@ -43,7 +82,13 @@ export const ToolsetLoginDialog = ({
         type={entity.authSettings.authenticationType}
         toolset={entity}
         buttonClassName="ml-auto"
+        onLogin={handleLogin}
+        onLogout={handleLogout}
       />
     </Modal>
   );
 };
+
+export const ToolsetLoginDialog = withRenderWhen(
+  MarketplaceSelectors.selectLoginEntity,
+)(ToolsetLoginDialogView);

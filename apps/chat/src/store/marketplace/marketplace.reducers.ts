@@ -2,6 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
 
@@ -40,6 +41,7 @@ const initialState: MarketplaceState = {
 
   deleteEntity: undefined,
   detailsEntity: undefined,
+  loginEntity: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -142,6 +144,12 @@ export const marketplaceSlice = createSlice({
       >,
     ) => {
       state.detailsEntity = payload;
+    },
+    setLoginEntity: (
+      state,
+      { payload }: PayloadAction<ToolsetModel | undefined>,
+    ) => {
+      state.loginEntity = payload;
     },
   },
 });
