@@ -50,7 +50,7 @@ export const ChatMessageTemplatesModal = ({
   const showMore = message.content.length > MAX_SHORT_MESSAGE_LENGTH;
 
   const [collapsed, setCollapsed] = useState(showMore);
-  const [previewMode, setPreviewMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState(false);
   const [templates, setTemplates] = useState<TemplateMapping[]>([
     ...getEntitiesFromTemplateMapping(message.templateMapping),
     EMPTY_ROW,
@@ -145,15 +145,15 @@ export const ChatMessageTemplatesModal = ({
     >
       <div className="flex gap-4 px-3 pb-4 md:px-6">
         <TabButton
-          selected={previewMode}
-          onClick={() => setPreviewMode(true)}
+          selected={!previewMode}
+          onClick={() => setPreviewMode(false)}
           dataQA="set-template-tab"
         >
           {t('Set template')}
         </TabButton>
         <TabButton
-          selected={!previewMode}
-          onClick={() => setPreviewMode(false)}
+          selected={previewMode}
+          onClick={() => setPreviewMode(true)}
           dataQA="preview-tab"
           disabled={isInvalid}
         >
