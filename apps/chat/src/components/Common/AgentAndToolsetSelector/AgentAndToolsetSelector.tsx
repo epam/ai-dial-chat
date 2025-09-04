@@ -24,7 +24,7 @@ const NoAgentsAndToolsets: React.FC = () => {
 };
 
 interface AgentAndToolsetSelectorProps {
-  value: string[];
+  values: string[];
   onChange: (agentAndToolset: string[]) => void;
   readonly?: boolean;
   addBtnTooltip?: string;
@@ -35,7 +35,7 @@ interface AgentAndToolsetSelectorProps {
 export const AgentAndToolsetSelector: React.FC<
   AgentAndToolsetSelectorProps
 > = ({
-  value = [],
+  values = [],
   readonly,
   addBtnTooltip,
   tooltip,
@@ -48,10 +48,10 @@ export const AgentAndToolsetSelector: React.FC<
 
   const selectedItems = useMemo(
     () =>
-      value
+      values
         .map((id) => allItemsMap[id])
         .filter((item): item is MarketplaceEntity => !!item),
-    [value, allItemsMap],
+    [values, allItemsMap],
   );
 
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
@@ -63,12 +63,12 @@ export const AgentAndToolsetSelector: React.FC<
     setSelectModalOpen(false);
   }, []);
 
-  const handleRemoveItem = (referenceToRemove: string) => {
-    onChange(value.filter((reference) => reference !== referenceToRemove));
+  const handleRemoveItem = (idToRemove: string) => {
+    onChange(values.filter((id) => id !== idToRemove));
   };
 
   const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
-    onChange(newItems.map((item) => item.reference));
+    onChange(newItems.map((item) => item.id));
     setSelectModalOpen(false);
   };
 
@@ -91,7 +91,7 @@ export const AgentAndToolsetSelector: React.FC<
               </button>
             </Tooltip>
           </div>
-          {!value.length ? (
+          {!values.length ? (
             <NoAgentsAndToolsets />
           ) : (
             <div className="flex flex-wrap gap-2 rounded border border-primary p-2">

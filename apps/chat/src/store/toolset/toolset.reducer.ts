@@ -1,5 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import {
+  addToToolsetsMap,
+  deleteFromToolsetsMap,
+} from '@/src/utils/app/toolsets';
+
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
@@ -7,9 +12,8 @@ import { ToolsetState } from '@/src/store/toolset/toolset.types';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ToolsetAuthTypes, UploadStatus } from '@epam/ai-dial-shared';
-import omit from 'lodash-es/omit';
 
-type ToolsetsMap = Record<string, ToolsetModel>;
+export type ToolsetsMap = Record<string, ToolsetModel>;
 
 const initialState: ToolsetState = {
   initialized: false,
@@ -34,22 +38,11 @@ export const toolsetSlice = createSlice({
       state.toolsetsStatus = UploadStatus.LOADING;
     },
     getToolsetsSuccess: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
-      state.toolsetsMap = payload.reduce<ToolsetsMap>((acc, toolset) => {
-        acc[toolset.reference] = toolset;
-
-        return acc;
-      }, {});
+      state.toolsetsMap = addToToolsetsMap(state.toolsetsMap ?? {}, ...payload);
       state.toolsetsStatus = UploadStatus.LOADED;
     },
     setToolsets: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
-      state.toolsetsMap = {
-        ...state.toolsetsMap,
-        ...payload.reduce<ToolsetsMap>((acc, toolset) => {
-          acc[toolset.reference] = toolset;
-
-          return acc;
-        }, {}),
-      };
+      state.toolsetsMap = addToToolsetsMap(state.toolsetsMap, ...payload);
     },
 
     createToolset: (
@@ -73,7 +66,7 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload;
-      state.toolsetsMap[payload.reference] = payload;
+      state.toolsetsMap = addToToolsetsMap(state.toolsetsMap, payload);
     },
     getToolsetDetailsFailed: (state) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
@@ -121,10 +114,11 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload.newToolset;
-      state.toolsetsMap = {
-        ...omit(state.toolsetsMap, [payload.oldToolset.reference]),
-        [payload.newToolset.reference]: payload.newToolset,
-      };
+      const tempMap = deleteFromToolsetsMap(
+        state.toolsetsMap,
+        payload.oldToolset.reference,
+      );
+      state.toolsetsMap = addToToolsetsMap(tempMap, payload.newToolset);
     },
     setToolsetDetails: (
       state,
@@ -168,7 +162,10 @@ export const toolsetSlice = createSlice({
       state,
       { payload }: PayloadAction<{ reference: string }>,
     ) => {
-      state.toolsetsMap = omit(state.toolsetsMap, [payload.reference]);
+      state.toolsetsMap = deleteFromToolsetsMap(
+        state.toolsetsMap,
+        payload.reference,
+      );
     },
     deleteToolsetFail: (state) => state,
 

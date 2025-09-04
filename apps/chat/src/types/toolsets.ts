@@ -74,3 +74,8 @@ export interface ToolsetRedirectState {
   credentialsLevel?: ToolsetCredentialsLevel;
   callbackUrl?: string;
 }
+
+export interface ToolsetsGroup {
+  groupName: string;
+  entities: ToolsetModel[];
+}

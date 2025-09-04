@@ -267,7 +267,7 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
           control={control}
           render={({ field }) => (
             <AgentAndToolsetSelectorField
-              value={field.value}
+              values={field.value}
               onChange={field.onChange}
               allItemsMap={allEntitiesMap}
               label={t('Agents & Toolsets')}

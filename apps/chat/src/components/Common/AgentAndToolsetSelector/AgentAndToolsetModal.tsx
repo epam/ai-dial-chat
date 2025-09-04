@@ -11,11 +11,16 @@ import {
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isExternalApp } from '@/src/utils/app/application';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
+import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { groupToolsetsAndSaveOrder } from '@/src/utils/app/toolsets';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
+import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -23,6 +28,7 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
+  WidgetsSelectors,
 } from '@/src/store/selectors';
 
 import {
@@ -45,7 +51,7 @@ import {
   AgentAndToolsetSelectItemProps,
 } from './AgentAndToolsetSelectItem';
 
-export type EntityType = 'agents' | 'toolsets';
+import { orderBy } from 'lodash-es';
 
 interface EntityTypeTabsProps {
   currentType: EntityType;
@@ -57,15 +63,15 @@ function EntityTypeTabs({ currentType, setType }: EntityTypeTabsProps) {
   return (
     <div className="flex gap-2">
       <TabButton
-        selected={currentType === 'agents'}
-        onClick={() => setType('agents')}
+        selected={currentType === EntityType.Application}
+        onClick={() => setType(EntityType.Application)}
         dataQA="entity-type-agents"
       >
         {t('Agents')}
       </TabButton>
       <TabButton
-        selected={currentType === 'toolsets'}
-        onClick={() => setType('toolsets')}
+        selected={currentType === EntityType.Toolset}
+        onClick={() => setType(EntityType.Toolset)}
         dataQA="entity-type-toolsets"
       >
         {t('Toolsets')}
@@ -119,7 +125,9 @@ const AgentAndToolsetModalView = ({
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  const [entityType, setEntityType] = useState<EntityType>('agents');
+  const [entityType, setEntityType] = useState<EntityType>(
+    EntityType.Application,
+  );
   const [scopeTab, setScopeTab] = useState<
     MarketplaceTabs | MarketplaceEntitiesTabs
   >(MarketplaceTabs.MY_WORKSPACE);
@@ -137,6 +145,10 @@ const AgentAndToolsetModalView = ({
       isDefault: false,
     }));
   }, [rawToolsetsMap]);
+
+  const widgetsSchemaIds = useAppSelector(
+    WidgetsSelectors.selectWidgetsSchemaIds,
+  );
 
   useLayoutEffect(() => {
     if (footerRef.current) {
@@ -160,7 +172,7 @@ const AgentAndToolsetModalView = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   useEffect(() => {
-    if (entityType === 'agents') {
+    if (entityType === EntityType.Application) {
       setScopeTab(MarketplaceTabs.MY_WORKSPACE);
     } else {
       setScopeTab(MarketplaceEntitiesTabs.AGENTS);
@@ -209,23 +221,40 @@ const AgentAndToolsetModalView = ({
       scopeTab === MarketplaceTabs.MY_WORKSPACE ||
       scopeTab === MarketplaceEntitiesTabs.AGENTS;
 
-    if (entityType === 'agents') {
-      if (!isMyWorkspaceView) return searchedAgents;
-      return searchedAgents.filter((item) =>
-        isInstalledEntity(item, installedAgentsSet),
-      );
+    const groupedAndOrderedAgents = groupModelsAndSaveOrder(
+      searchedAgents.filter(
+        (entity) =>
+          !isExternalApp(entity) &&
+          !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string),
+      ),
+    ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
+
+    const groupedAndOrderedToolsets = groupToolsetsAndSaveOrder(
+      searchedToolsets as ToolsetModel[],
+    ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
+
+    if (entityType === EntityType.Application) {
+      if (isMyWorkspaceView) {
+        return groupedAndOrderedAgents.filter((item) =>
+          isInstalledEntity(item, installedAgentsSet),
+        ) as MarketplaceEntity[];
+      }
+      return groupedAndOrderedAgents as MarketplaceEntity[];
     } else {
-      if (!isMyWorkspaceView) return searchedToolsets;
-      return searchedToolsets.filter((item) =>
-        isInstalledEntity(item, installedToolsetsSet),
-      );
+      if (isMyWorkspaceView) {
+        return groupedAndOrderedToolsets.filter((item) =>
+          isInstalledEntity(item, installedToolsetsSet),
+        ) as MarketplaceEntity[];
+      }
+      return groupedAndOrderedToolsets as MarketplaceEntity[];
     }
   }, [
-    entityType,
     scopeTab,
+    entityType,
+    widgetsSchemaIds,
     searchedAgents,
-    searchedToolsets,
     installedAgentsSet,
+    searchedToolsets,
     installedToolsetsSet,
   ]);
 
@@ -266,7 +295,7 @@ const AgentAndToolsetModalView = ({
               />
             </div>
             <div className="flex gap-2">
-              {entityType === 'agents' ? (
+              {entityType === EntityType.Application ? (
                 <div className="flex gap-2">
                   <ScopeTabButton
                     tab={MarketplaceTabs.MY_WORKSPACE}

@@ -1,7 +1,11 @@
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
-import { ApiUtils, getToolsetApiKey } from '@/src/utils/server/api';
+import {
+  ApiUtils,
+  getModelIdWithoutVersion,
+  getToolsetApiKey,
+} from '@/src/utils/server/api';
 
 import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -9,7 +13,10 @@ import {
   ToolsetCredentialsLevel,
   ToolsetModel,
   ToolsetRedirectState,
+  ToolsetsGroup,
 } from '@/src/types/toolsets';
+
+import { ToolsetsMap } from '@/src/store/toolset/toolset.reducer';
 
 import { Routes } from '@/src/constants/routes';
 
@@ -18,6 +25,8 @@ import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
+import { groupBy, uniqBy } from 'lodash-es';
+import omit from 'lodash-es/omit';
 
 export const parseToolsetApiAuthStatus = (data?: Toolset) => {
   return {
@@ -163,3 +172,56 @@ export const isToolsetSignedIn = (
 export const isToolsetEntityModel = (
   entity: MarketplaceEntity,
 ): entity is ToolsetModel => entity?.type === EntityType.Toolset;
+
+export const getGroupToolsetKey = (toolset: ToolsetModel) => {
+  if (toolset.id === toolset.reference) {
+    return toolset.name;
+  }
+  const pathParts = getModelIdWithoutVersion(toolset.id).split('/');
+  const bucket = pathParts.slice(0, 2); // type and bucket
+  const name = pathParts.slice(-1); // name
+  return constructPath(...bucket, ...name); // ignore public folder as result
+};
+
+export const groupToolsetsAndSaveOrder = (
+  toolsets: ToolsetModel[],
+): ToolsetsGroup[] => {
+  const uniqToolsets = uniqBy(toolsets, 'reference');
+  const groupedToolsets = groupBy(uniqToolsets, getGroupToolsetKey);
+  const insertedSet = new Set();
+  const result: ToolsetsGroup[] = [];
+
+  uniqToolsets.forEach((toolset) => {
+    const key = getGroupToolsetKey(toolset);
+    if (!insertedSet.has(key)) {
+      result.push({ groupName: key, entities: groupedToolsets[key] });
+      insertedSet.add(key);
+    }
+  });
+
+  return result;
+};
+
+export const addToToolsetsMap = (
+  toolsetsMap: ToolsetsMap,
+  ...toolsets: ToolsetModel[]
+) => {
+  toolsets.forEach((toolset) => {
+    toolsetsMap[toolset.id] = toolset;
+    if (toolset.id !== toolset.reference) {
+      toolsetsMap[toolset.reference] = toolset;
+    }
+  });
+  return toolsetsMap;
+};
+
+export const deleteFromToolsetsMap = (
+  toolsetsMap: ToolsetsMap,
+  ...ids: string[]
+) => {
+  const toolset = ids.map((id) => toolsetsMap[id]).filter(Boolean)[0];
+  if (toolset) {
+    return omit(toolsetsMap, toolset.reference, toolset.id);
+  }
+  return toolsetsMap;
+};
