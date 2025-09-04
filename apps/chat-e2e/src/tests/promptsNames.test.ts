@@ -100,7 +100,7 @@ dialTest(
     await dialTest.step(
       'Copy and paste restricted characters to the prompt name and verify the name',
       async () => {
-        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
+        await dialHomePage.copyTextToClipboard(nameWithRestrictedChars);
         await promptModalDialog.name.click();
         await dialHomePage.pasteFromClipboard();
         await promptModalAssertion.assertPromptName(expectedPromptName);

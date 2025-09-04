@@ -117,9 +117,15 @@ export const ToolsetEditor = () => {
   const handleNextClick = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      handleSubmit();
+      if (!isDirty && toolsetDetails) {
+        handleSubmit(() =>
+          dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings)),
+        );
+      } else {
+        handleSubmit();
+      }
     },
-    [handleSubmit],
+    [dispatch, handleSubmit, isDirty, toolsetDetails],
   );
 
   return (
