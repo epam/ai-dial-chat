@@ -35,10 +35,7 @@ import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import {
-  MODELS_SEARCH_OPTIONS,
-  TOOLSETS_SEARCH_OPTIONS,
-} from '@/src/constants/search';
+import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
@@ -203,12 +200,12 @@ const AgentAndToolsetModalView = ({
   const searchedAgents = useFuseSearch(
     allAgents,
     searchTerm,
-    MODELS_SEARCH_OPTIONS,
+    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
   const searchedToolsets = useFuseSearch(
     allToolsets,
     searchTerm,
-    TOOLSETS_SEARCH_OPTIONS,
+    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
   const displayedItems = useMemo(() => {

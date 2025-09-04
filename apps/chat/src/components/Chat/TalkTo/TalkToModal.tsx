@@ -49,7 +49,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
+import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
@@ -128,7 +128,7 @@ const TalkToModalView = ({
   const searchedModels = useFuseSearch(
     allModels,
     searchTerm,
-    MODELS_SEARCH_OPTIONS,
+    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
   useLayoutEffect(() => {
