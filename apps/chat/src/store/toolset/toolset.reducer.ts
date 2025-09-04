@@ -1,9 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
-  addToToolsetsMap,
-  deleteFromToolsetsMap,
-} from '@/src/utils/app/toolsets';
+  addToMarketplaceEntitiesMap,
+  deleteFromMarketplaceEntitiesMap,
+} from '@/src/utils/app/models';
 
 import {
   ToolsetCredentialsLevel,
@@ -42,11 +42,17 @@ export const toolsetSlice = createSlice({
       state.toolsetsStatus = UploadStatus.LOADING;
     },
     getToolsetsSuccess: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
-      state.toolsetsMap = addToToolsetsMap(state.toolsetsMap ?? {}, ...payload);
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        state.toolsetsMap ?? {},
+        ...payload,
+      );
       state.toolsetsStatus = UploadStatus.LOADED;
     },
     setToolsets: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
-      state.toolsetsMap = addToToolsetsMap(state.toolsetsMap, ...payload);
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        state.toolsetsMap,
+        ...payload,
+      );
     },
 
     createToolset: (
@@ -73,7 +79,10 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload;
-      state.toolsetsMap = addToToolsetsMap(state.toolsetsMap, payload);
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        state.toolsetsMap,
+        payload,
+      );
     },
     getToolsetDetailsFailed: (state) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
@@ -121,11 +130,14 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload.newToolset;
-      const tempMap = deleteFromToolsetsMap(
+      const tempMap = deleteFromMarketplaceEntitiesMap(
         state.toolsetsMap,
         payload.oldToolset.reference,
       );
-      state.toolsetsMap = addToToolsetsMap(tempMap, payload.newToolset);
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        tempMap,
+        payload.newToolset,
+      );
     },
     setToolsetDetails: (
       state,
@@ -169,7 +181,7 @@ export const toolsetSlice = createSlice({
       state,
       { payload }: PayloadAction<{ reference: string }>,
     ) => {
-      state.toolsetsMap = deleteFromToolsetsMap(
+      state.toolsetsMap = deleteFromMarketplaceEntitiesMap(
         state.toolsetsMap,
         payload.reference,
       );

@@ -14,7 +14,7 @@ import {
   isPlaybackConversation,
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/models';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -79,7 +79,8 @@ export const ItemCardView = ({
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
-        getGroupModelKey(entity) === getGroupModelKey(model) && entity.version,
+        getGroupMarketplaceEntityKey(entity) ===
+          getGroupMarketplaceEntityKey(model) && entity.version,
     );
   }, [allModels, entity]);
 

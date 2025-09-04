@@ -9,7 +9,6 @@ import {
   ToolsetCredentialsLevel,
   ToolsetModel,
   ToolsetRedirectState,
-  ToolsetsMap,
 } from '@/src/types/toolsets';
 
 import { Routes } from '@/src/constants/routes';
@@ -19,7 +18,6 @@ import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
-import omit from 'lodash-es/omit';
 
 export const parseToolsetApiAuthStatus = (data?: Toolset) => {
   return {
@@ -166,27 +164,3 @@ export const isToolsetSignedIn = (
 export const isToolsetEntityModel = (
   entity: MarketplaceEntity,
 ): entity is ToolsetModel => entity?.type === EntityType.Toolset;
-
-export const addToToolsetsMap = (
-  toolsetsMap: ToolsetsMap,
-  ...toolsets: ToolsetModel[]
-) => {
-  toolsets.forEach((toolset) => {
-    toolsetsMap[toolset.id] = toolset;
-    if (toolset.id !== toolset.reference) {
-      toolsetsMap[toolset.reference] = toolset;
-    }
-  });
-  return toolsetsMap;
-};
-
-export const deleteFromToolsetsMap = (
-  toolsetsMap: ToolsetsMap,
-  ...ids: string[]
-) => {
-  const toolset = ids.map((id) => toolsetsMap[id]).filter(Boolean)[0];
-  if (toolset) {
-    return omit(toolsetsMap, toolset.reference, toolset.id);
-  }
-  return toolsetsMap;
-};

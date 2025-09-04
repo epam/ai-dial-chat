@@ -75,4 +75,4 @@ export interface ToolsetRedirectState {
   callbackUrl?: string;
 }
 
-export type ToolsetsMap = Record<string, ToolsetModel>;
+export type ToolsetsMap = Partial<Record<string, ToolsetModel>>;

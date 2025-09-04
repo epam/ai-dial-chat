@@ -67,25 +67,30 @@ export const groupMarketplaceEntityAndSaveOrder = <T extends MarketplaceEntity>(
   return result;
 };
 
-export const addToModelsMap = (
-  modelsMap: ModelsMap,
-  ...models: DialAIEntityModel[]
+export const addToMarketplaceEntitiesMap = <T extends MarketplaceEntity>(
+  entitiesMap: Partial<Record<string, T>>,
+  ...entities: T[]
 ) => {
-  models.forEach((model) => {
-    modelsMap[model.id] = model;
-    if (model.id !== model.reference) {
-      modelsMap[model.reference] = model;
+  entities.forEach((entity) => {
+    entitiesMap[entity.id] = entity;
+    if (entity.id !== entity.reference) {
+      entitiesMap[entity.reference] = entity;
     }
   });
-  return modelsMap;
+  return entitiesMap;
 };
 
-export const deleteFromModelsMap = (modelsMap: ModelsMap, ...ids: string[]) => {
-  const model = ids.map((id) => modelsMap[id]).filter(Boolean)[0];
-  if (model) {
-    return omit(modelsMap, model.reference, model.id);
+export const deleteFromMarketplaceEntitiesMap = <
+  T extends Partial<Record<string, MarketplaceEntity>>,
+>(
+  entitiesMap: T,
+  ...ids: string[]
+) => {
+  const entity = ids.map((id) => entitiesMap[id]).filter(Boolean)[0];
+  if (entity) {
+    return omit(entitiesMap, entity.reference, entity.id);
   }
-  return modelsMap;
+  return entitiesMap;
 };
 
 export const checkIsNotAllowedModelUtil = (
