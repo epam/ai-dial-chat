@@ -1,4 +1,8 @@
-import { ToolsetEditorSteps, ToolsetModel, ToolsetsMap } from '@/src/types/toolsets';
+import {
+  ToolsetEditorSteps,
+  ToolsetModel,
+  ToolsetsMap,
+} from '@/src/types/toolsets';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
