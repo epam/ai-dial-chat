@@ -5,6 +5,7 @@ import router from 'next/router';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { AddMarketplaceEntityMenuItem } from '@/src/types/menu';
+import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { ToolsetActions } from '@/src/store/actions';
@@ -31,6 +32,7 @@ export function AddToolsButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.General));
             dispatch(ToolsetActions.clearToolsetDetails());
             void router.push(Routes.ToolsetEditor);
           },

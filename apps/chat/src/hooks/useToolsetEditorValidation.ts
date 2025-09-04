@@ -83,7 +83,7 @@ export const useToolsetEditorValidation = () => {
       return;
     }
 
-    if (!toolsetDetails) {
+    if (!toolsetDetails || !toolsetDetails?.endpoint) {
       dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
     }
 
