@@ -12,8 +12,8 @@ import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isExternalApp } from '@/src/utils/app/application';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
-import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/models';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { EntityType } from '@/src/types/common';
@@ -35,7 +35,10 @@ import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
+import {
+  MODELS_SEARCH_OPTIONS,
+  TOOLSETS_SEARCH_OPTIONS,
+} from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
@@ -136,13 +139,7 @@ const AgentAndToolsetModalView = ({
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
   const allAgents = useAppSelector(ModelsSelectors.selectModels);
-  const rawToolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
-  const allToolsets = useMemo(() => {
-    return Object.values(rawToolsetsMap).map((toolset) => ({
-      ...toolset,
-      isDefault: false,
-    }));
-  }, [rawToolsetsMap]);
+  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
 
   const widgetsSchemaIds = useAppSelector(
     WidgetsSelectors.selectWidgetsSchemaIds,
@@ -211,7 +208,7 @@ const AgentAndToolsetModalView = ({
   const searchedToolsets = useFuseSearch(
     allToolsets,
     searchTerm,
-    MODELS_SEARCH_OPTIONS,
+    TOOLSETS_SEARCH_OPTIONS,
   );
 
   const displayedItems = useMemo(() => {

@@ -14,7 +14,7 @@ import {
   isPlaybackConversation,
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupMarketplaceEntityKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';

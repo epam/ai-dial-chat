@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/models';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import {
   doesMarketplaceEntityMatchFilters,
   isInstalledEntity,

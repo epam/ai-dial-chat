@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupMarketplaceEntityKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';

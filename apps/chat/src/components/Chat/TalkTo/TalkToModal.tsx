@@ -23,8 +23,8 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
-import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/models';
 import { PseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';

@@ -1,16 +1,8 @@
-import { getModelIdWithoutVersion } from '@/src/utils/server/api';
-
 import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import { EntitiesGroup, MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntity, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
-import { constructPath } from './file';
-
 import { Conversation, Role } from '@epam/ai-dial-shared';
-import groupBy from 'lodash-es/groupBy';
-import omit from 'lodash-es/omit';
-import uniqBy from 'lodash-es/uniqBy';
 
 export const doesModelAllowSystemPrompt = (
   model: DialAIEntityModel | undefined,
@@ -36,61 +28,6 @@ export const doesModelHaveSettings = (model: DialAIEntityModel | undefined) => {
 
 export const doesModelHaveConfiguration = (model?: DialAIEntity): boolean => {
   return !!model?.features?.configuration;
-};
-
-export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
-  if (entity.id === entity.reference) {
-    return entity.name;
-  }
-  const pathParts = getModelIdWithoutVersion(entity.id).split('/');
-  const bucket = pathParts.slice(0, 2); // type and bucket
-  const name = pathParts.slice(-1); // name
-  return constructPath(...bucket, ...name); // ignore public folder as result
-};
-
-export const groupMarketplaceEntityAndSaveOrder = <T extends MarketplaceEntity>(
-  entity: T[],
-): EntitiesGroup<T>[] => {
-  const uniqEntities = uniqBy(entity, 'reference');
-  const groupedEntities = groupBy(uniqEntities, getGroupMarketplaceEntityKey);
-  const insertedSet = new Set();
-  const result: EntitiesGroup<T>[] = [];
-
-  uniqEntities.forEach((entity) => {
-    const key = getGroupMarketplaceEntityKey(entity);
-    if (!insertedSet.has(key)) {
-      result.push({ groupName: key, entities: groupedEntities[key] });
-      insertedSet.add(key);
-    }
-  });
-
-  return result;
-};
-
-export const addToMarketplaceEntitiesMap = <T extends MarketplaceEntity>(
-  entitiesMap: Partial<Record<string, T>>,
-  ...entities: T[]
-) => {
-  entities.forEach((entity) => {
-    entitiesMap[entity.id] = entity;
-    if (entity.id !== entity.reference) {
-      entitiesMap[entity.reference] = entity;
-    }
-  });
-  return entitiesMap;
-};
-
-export const deleteFromMarketplaceEntitiesMap = <
-  T extends Partial<Record<string, MarketplaceEntity>>,
->(
-  entitiesMap: T,
-  ...ids: string[]
-) => {
-  const entity = ids.map((id) => entitiesMap[id]).filter(Boolean)[0];
-  if (entity) {
-    return omit(entitiesMap, entity.reference, entity.id);
-  }
-  return entitiesMap;
 };
 
 export const checkIsNotAllowedModelUtil = (

@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import {
   addToMarketplaceEntitiesMap,
   deleteFromMarketplaceEntitiesMap,
-} from '@/src/utils/app/models';
+} from '@/src/utils/app/marketplace';
 
 import {
   ToolsetCredentialsLevel,

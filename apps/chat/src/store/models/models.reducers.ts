@@ -5,7 +5,7 @@ import {
   addToMarketplaceEntitiesMap,
   deleteFromMarketplaceEntitiesMap,
   getGroupMarketplaceEntityKey,
-} from '@/src/utils/app/models';
+} from '@/src/utils/app/marketplace';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';

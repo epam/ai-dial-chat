@@ -4,7 +4,7 @@ import { sortItemsVersions } from '@/src/utils/app/common';
 import {
   getGroupMarketplaceEntityKey,
   groupMarketplaceEntityAndSaveOrder,
-} from '@/src/utils/app/models';
+} from '@/src/utils/app/marketplace';
 
 import { EntityType } from '@/src/types/common';
 import { RootState } from '@/src/types/store';

@@ -27,7 +27,7 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupMarketplaceEntityKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
