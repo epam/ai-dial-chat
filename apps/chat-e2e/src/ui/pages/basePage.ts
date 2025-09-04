@@ -5,11 +5,11 @@ import { BackendDataEntity } from '@/chat/types/common';
 import { API, Attachment, ExpectedConstants, Import } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
 import { BucketUtil, FileUtil, ItemUtil } from '@/src/utils';
-import { Locator, Page } from '@playwright/test';
+import { JSHandle, Locator, Page } from '@playwright/test';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'node:fs';
 import path from 'path';
-import { CDPSession, Download, JSHandle } from 'playwright-chromium';
+import { CDPSession, Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
   path: string;
