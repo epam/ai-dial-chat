@@ -5,11 +5,11 @@ import { BackendDataEntity } from '@/chat/types/common';
 import { API, Attachment, ExpectedConstants, Import } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
 import { BucketUtil, FileUtil, ItemUtil } from '@/src/utils';
-import { Locator, Page } from '@playwright/test';
+import { JSHandle, Locator, Page } from '@playwright/test';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'node:fs';
 import path from 'path';
-import { CDPSession, Download, JSHandle } from 'playwright-chromium';
+import { CDPSession, Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
   path: string;
@@ -353,31 +353,32 @@ export class BasePage {
   // Chrome standardized on image/png as the only universally reliable and safely supported format
   // The Clipboard API has no standard mechanism to include metadata like filenames when copying binary content
   // This is why pasted images get generic names like "image.png"
-  public async copyFileToClipboard(filename: string): Promise<void> {
+  public async copyImageContentToClipboard(filename: string): Promise<void> {
     try {
-      const fileToCopy = await this.getAttachmentFileMetadata(filename);
+      const fileMetadata =
+        await this.getAttachmentFileMetadataAndContent(filename);
 
       // Throw error if not PNG
-      if (fileToCopy.mimeType !== 'image/png') {
+      if (fileMetadata.mimeType !== 'image/png') {
         throw new Error(
-          `Only PNG images are supported. Detected type: ${fileToCopy}`,
+          `Only PNG images are supported. Detected type: ${fileMetadata.mimeType}`,
         );
       }
 
       // Copy PNG to clipboard
-      await this.page.evaluate(async (fileToCopy) => {
+      await this.page.evaluate(async (metadata) => {
         const response = await fetch(
-          `data:${fileToCopy.mimeType};base64,${fileToCopy.buffer}`,
+          `data:${metadata.mimeType};base64,${metadata.buffer}`,
         );
         const blob = await response.blob();
 
         // use the newly created blob with the Clipboard API
         await navigator.clipboard.write([
-          new ClipboardItem({ [fileToCopy.mimeType]: blob }),
+          new ClipboardItem({ [metadata.mimeType]: blob }),
         ]);
-      }, fileToCopy);
+      }, fileMetadata);
     } catch (error) {
-      console.error(`Error copying file to clipboard: ${filename}`, error);
+      console.error(`Error copying content to clipboard: ${filename}`, error);
       throw error;
     }
   }
@@ -397,13 +398,14 @@ export class BasePage {
       await pasteToElement.click({ force: true });
     }
 
-    const filesToPaste: FileMetadata[] = [];
+    const filesMetadata: FileMetadata[] = [];
     const expectedApiResponses: ExpectedApiResponse[] = [];
 
     for (const filename of filenames) {
       // 2. Read the file and prepare the data payload.
-      const fileToPaste = await this.getAttachmentFileMetadata(filename);
-      filesToPaste.push(fileToPaste);
+      const fileMetadata =
+        await this.getAttachmentFileMetadataAndContent(filename);
+      filesMetadata.push(fileMetadata);
 
       if (isHttpMethodTriggered) {
         // Compose urlPattern to match the following requirements:
@@ -421,7 +423,7 @@ export class BasePage {
 
     // 3. Create a DataTransfer object in the browser context and dispatch a 'paste' event
     const responses = await this.waitForExpectedResponses(
-      () => this.firePasteFilesEvent(filesToPaste),
+      () => this.firePasteFilesEvent(filesMetadata),
       expectedApiResponses,
     );
 
@@ -622,16 +624,15 @@ export class BasePage {
     return await Promise.all(responsePromises);
   }
 
-  public async getAttachmentFileMetadata(
+  public async getAttachmentFileMetadataAndContent(
     filename: string,
   ): Promise<FileMetadata> {
     const resolvedPath = path.join(Attachment.attachmentPath, filename);
-    const buffer = FileUtil.readPlainFileData(resolvedPath);
     const fileTypeResult = await fileTypeFromFile(resolvedPath);
     return {
       name: filename,
       mimeType: fileTypeResult?.mime || 'application/octet-stream',
-      buffer: buffer.toString('base64'),
+      buffer: FileUtil.getBase64FileContent(resolvedPath),
     };
   }
 
@@ -644,13 +645,16 @@ export class BasePage {
   private async createBrowserFiles(
     filesMetadata: FileMetadata[],
   ): Promise<JSHandle<File[]>> {
-    return this.page.evaluateHandle(async (files) => {
-      const filePromises = files.map(async (file) => {
+    return this.page.evaluateHandle(async (metadataArray) => {
+      const filePromises = metadataArray.map(async (metadata) => {
+        // the 'fetch' API converts the Base64-encoded data URL into a response object
         const response = await fetch(
-          `data:${file.mimeType};base64,${file.buffer}`,
+          `data:${metadata.mimeType};base64,${metadata.buffer}`,
         );
+        // convert the response object into a low-level binary object representing binary file data
         const blob = await response.blob();
-        return new File([blob], file.name, { type: file.mimeType });
+        // create a browser-compatible File object from the blob
+        return new File([blob], metadata.name, { type: metadata.mimeType });
       });
       return Promise.all(filePromises);
     }, filesMetadata);

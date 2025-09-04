@@ -50,4 +50,9 @@ export class FileUtil {
         .filter((file) => fs.statSync(file).isFile());
     }
   }
+
+  public static getBase64FileContent(path: string) {
+    const buffer = FileUtil.readPlainFileData(path);
+    return buffer.toString('base64');
+  }
 }

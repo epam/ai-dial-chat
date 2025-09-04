@@ -96,6 +96,7 @@ export function DropdownSelector({
             ':hover': {
               backgroundColor: state.data.backgroundColor,
             },
+            color: 'var(--text-primary)',
           }),
           dropdownIndicator: (styles, state) => ({
             ...styles,
@@ -155,6 +156,10 @@ export function DropdownSelector({
             ':hover': {
               border: '1px solid var(--stroke-accent-primary)',
             },
+          }),
+          singleValue: (styles) => ({
+            ...styles,
+            color: 'var(--text-primary)',
           }),
         }}
         noOptionsMessage={() => t('No options')}
