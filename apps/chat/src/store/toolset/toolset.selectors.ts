@@ -51,6 +51,8 @@ const selectInstalledToolsetsSet = createSelector(
   },
 );
 
+const selectEditorStep = (state: RootState) => rootSelector(state).editorStep;
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -63,4 +65,5 @@ export const ToolsetSelectors = {
   selectIsToolsetDetailsLoading,
   selectInstalledToolsets,
   selectInstalledToolsetsSet,
+  selectEditorStep,
 };

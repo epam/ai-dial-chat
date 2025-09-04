@@ -5,7 +5,11 @@ import {
   deleteFromToolsetsMap,
 } from '@/src/utils/app/toolsets';
 
-import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import {
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+  ToolsetModel,
+} from '@/src/types/toolsets';
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
 
@@ -24,6 +28,8 @@ const initialState: ToolsetState = {
   toolsetDetailsStatus: UploadStatus.UNINITIALIZED,
   installedToolsets: [],
   isInstalledToolsetsInitialized: false,
+
+  editorStep: ToolsetEditorSteps.General,
 };
 
 export const toolsetSlice = createSlice({
@@ -53,7 +59,10 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADING;
     },
-    createToolsetFailed: (state) => {
+    createToolsetFailed: (
+      state,
+      _action: PayloadAction<{ message: string } | undefined>,
+    ) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
     },
 
@@ -205,6 +214,9 @@ export const toolsetSlice = createSlice({
     },
     logOutToolsetFail: (state) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
+    },
+    setEditorStep: (state, { payload }: PayloadAction<ToolsetEditorSteps>) => {
+      state.editorStep = payload;
     },
   },
 });
