@@ -20,6 +20,7 @@ import {
   getDefaultFormData,
 } from '@/src/components/ToolsetEditor/form';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 export const ToolsetEditor = () => {
@@ -60,6 +61,10 @@ export const ToolsetEditor = () => {
         version: data.version,
         authSettings: {
           ...(toolsetDetails?.authSettings && toolsetDetails?.authSettings),
+          ...(data.authenticationType === ToolsetAuthTypes.API_KEY && {
+            apiKeyHeader:
+              toolsetDetails?.authSettings?.apiKeyHeader ?? 'api_key',
+          }),
           authenticationType: data.authenticationType,
         },
       };
