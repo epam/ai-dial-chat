@@ -2,12 +2,8 @@ import { getModelIdWithoutVersion } from '@/src/utils/server/api';
 
 import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import {
-  DialAIEntity,
-  DialAIEntityModel,
-  ModelsGroup,
-  ModelsMap,
-} from '@/src/types/models';
+import { EntitiesGroup, MarketplaceEntity } from '@/src/types/marketplace';
+import { DialAIEntity, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { constructPath } from './file';
 
@@ -42,28 +38,28 @@ export const doesModelHaveConfiguration = (model?: DialAIEntity): boolean => {
   return !!model?.features?.configuration;
 };
 
-export const getGroupModelKey = (model: DialAIEntityModel) => {
-  if (model.id === model.reference) {
-    return model.name;
+export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
+  if (entity.id === entity.reference) {
+    return entity.name;
   }
-  const pathParts = getModelIdWithoutVersion(model.id).split('/');
+  const pathParts = getModelIdWithoutVersion(entity.id).split('/');
   const bucket = pathParts.slice(0, 2); // type and bucket
   const name = pathParts.slice(-1); // name
   return constructPath(...bucket, ...name); // ignore public folder as result
 };
 
-export const groupModelsAndSaveOrder = (
-  models: DialAIEntityModel[],
-): ModelsGroup[] => {
-  const uniqModels = uniqBy(models, 'reference');
-  const groupedModels = groupBy(uniqModels, getGroupModelKey);
+export const groupMarketplaceEntityAndSaveOrder = (
+  entity: MarketplaceEntity[],
+): EntitiesGroup[] => {
+  const uniqEntities = uniqBy(entity, 'reference');
+  const groupedEntities = groupBy(uniqEntities, getGroupMarketplaceEntityKey);
   const insertedSet = new Set();
-  const result: ModelsGroup[] = [];
+  const result: EntitiesGroup[] = [];
 
-  uniqModels.forEach((model) => {
-    const key = getGroupModelKey(model);
+  uniqEntities.forEach((entity) => {
+    const key = getGroupMarketplaceEntityKey(entity);
     if (!insertedSet.has(key)) {
-      result.push({ groupName: key, entities: groupedModels[key] });
+      result.push({ groupName: key, entities: groupedEntities[key] });
       insertedSet.add(key);
     }
   });

@@ -24,7 +24,7 @@ import {
   isReplayConversation,
 } from '@/src/utils/app/conversation';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/models';
 import { PseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -182,7 +182,7 @@ const TalkToModalView = ({
         !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
         !!searchedModels.find((m) => m.reference === entity.reference),
     );
-    const groupedModels = groupModelsAndSaveOrder(filteredModels);
+    const groupedModels = groupMarketplaceEntityAndSaveOrder(filteredModels);
     const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
       const selectedEntity = entities.find(
         ({ reference }) => reference === conversation.model.id,

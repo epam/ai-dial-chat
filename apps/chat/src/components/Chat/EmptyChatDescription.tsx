@@ -13,7 +13,7 @@ import {
   isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/models';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Conversation } from '@/src/types/chat';
@@ -88,10 +88,11 @@ const EmptyChatDescriptionView = ({
     () =>
       model
         ? models.filter(
-            (m) =>
+            (m: DialAIEntityModel) =>
               (installedModelIds.has(m.reference) ||
                 model.reference === m.reference) &&
-              getGroupModelKey(m) === getGroupModelKey(model),
+              getGroupMarketplaceEntityKey(m) ===
+                getGroupMarketplaceEntityKey(model),
           )
         : [],
     [installedModelIds, model, models],

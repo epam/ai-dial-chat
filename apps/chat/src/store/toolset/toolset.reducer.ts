@@ -17,8 +17,6 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { ToolsetAuthTypes, UploadStatus } from '@epam/ai-dial-shared';
 
-export type ToolsetsMap = Record<string, ToolsetModel>;
-
 const initialState: ToolsetState = {
   initialized: false,
   toolsetsMap: {},

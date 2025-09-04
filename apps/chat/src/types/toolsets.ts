@@ -75,7 +75,4 @@ export interface ToolsetRedirectState {
   callbackUrl?: string;
 }
 
-export interface ToolsetsGroup {
-  groupName: string;
-  entities: ToolsetModel[];
-}
+export type ToolsetsMap = Record<string, ToolsetModel>;

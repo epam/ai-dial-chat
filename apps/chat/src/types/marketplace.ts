@@ -18,3 +18,8 @@ export enum PreviewMode {
 }
 
 export type MarketplaceEntity = DialAIEntityModel | ToolsetModel;
+
+export interface EntitiesGroup {
+  groupName: string;
+  entities: MarketplaceEntity[];
+}

@@ -13,14 +13,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isExternalApp } from '@/src/utils/app/application';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
-import { groupToolsetsAndSaveOrder } from '@/src/utils/app/toolsets';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/models';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
-import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -51,7 +49,7 @@ import {
   AgentAndToolsetSelectItemProps,
 } from './AgentAndToolsetSelectItem';
 
-import { orderBy } from 'lodash-es';
+import orderBy from 'lodash-es/orderBy';
 
 interface EntityTypeTabsProps {
   currentType: EntityType;
@@ -221,7 +219,7 @@ const AgentAndToolsetModalView = ({
       scopeTab === MarketplaceTabs.MY_WORKSPACE ||
       scopeTab === MarketplaceEntitiesTabs.AGENTS;
 
-    const groupedAndOrderedAgents = groupModelsAndSaveOrder(
+    const groupedAndOrderedAgents = groupMarketplaceEntityAndSaveOrder(
       searchedAgents.filter(
         (entity) =>
           !isExternalApp(entity) &&
@@ -229,24 +227,24 @@ const AgentAndToolsetModalView = ({
       ),
     ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
 
-    const groupedAndOrderedToolsets = groupToolsetsAndSaveOrder(
-      searchedToolsets as ToolsetModel[],
+    const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
+      searchedToolsets,
     ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
 
     if (entityType === EntityType.Application) {
       if (isMyWorkspaceView) {
         return groupedAndOrderedAgents.filter((item) =>
           isInstalledEntity(item, installedAgentsSet),
-        ) as MarketplaceEntity[];
+        );
       }
-      return groupedAndOrderedAgents as MarketplaceEntity[];
+      return groupedAndOrderedAgents;
     } else {
       if (isMyWorkspaceView) {
         return groupedAndOrderedToolsets.filter((item) =>
           isInstalledEntity(item, installedToolsetsSet),
-        ) as MarketplaceEntity[];
+        );
       }
-      return groupedAndOrderedToolsets as MarketplaceEntity[];
+      return groupedAndOrderedToolsets;
     }
   }, [
     scopeTab,

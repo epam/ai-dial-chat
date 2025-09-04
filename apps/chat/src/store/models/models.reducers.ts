@@ -4,7 +4,7 @@ import { combineEntities } from '@/src/utils/app/common';
 import {
   addToModelsMap,
   deleteFromModelsMap,
-  getGroupModelKey,
+  getGroupMarketplaceEntityKey,
 } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 
@@ -168,7 +168,9 @@ export const modelsSlice = createSlice({
         .map((id) => state.modelsMap[id])
         .filter(Boolean);
       const oldIndex = recentModels.findIndex(
-        (m) => getGroupModelKey(m!) === getGroupModelKey(newModel),
+        (m) =>
+          getGroupMarketplaceEntityKey(m!) ===
+          getGroupMarketplaceEntityKey(newModel),
       );
       if (oldIndex >= 0) {
         if (recentModels[oldIndex]?.reference !== payload.modelId) {
