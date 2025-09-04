@@ -66,9 +66,10 @@ dialTest(
       'Drop the file on the central part of the page and verify it appears in the send input and placed under uploads folder',
       async () => {
         yearMonthSubfolder = DateUtil.getCurrentYearMonth();
-        const fileMetadata = await dialHomePage.getAttachmentFileMetadata(
-          Attachment.sunImageName,
-        );
+        const fileMetadata =
+          await dialHomePage.getAttachmentFileMetadataAndContent(
+            Attachment.sunImageName,
+          );
         const responses = await fileDropArea.dragAndDropFiles([fileMetadata], {
           implementation: dialHomePage.executeReactOnDrop,
         });
@@ -99,7 +100,7 @@ dialTest(
         const filesMetadata = [];
         for (const fileToDrop of filesToDrop) {
           filesMetadata.push(
-            await dialHomePage.getAttachmentFileMetadata(fileToDrop),
+            await dialHomePage.getAttachmentFileMetadataAndContent(fileToDrop),
           );
         }
         await fileDropArea.dragAndDropFiles(filesMetadata, {
@@ -177,9 +178,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
-        const fileMetadata = await dialHomePage.getAttachmentFileMetadata(
-          Attachment.sunImageName,
-        );
+        const fileMetadata =
+          await dialHomePage.getAttachmentFileMetadataAndContent(
+            Attachment.sunImageName,
+          );
         await fileDropArea.dragAndDropFiles([fileMetadata], {
           implementation: dialHomePage.executeReactOnDrop,
         });
@@ -199,9 +201,10 @@ dialTest(
           { exactMatch: true },
         );
         await chatMessages.openEditMessageMode(1);
-        const fileMetadata = await dialHomePage.getAttachmentFileMetadata(
-          Attachment.flowerImageName,
-        );
+        const fileMetadata =
+          await dialHomePage.getAttachmentFileMetadataAndContent(
+            Attachment.flowerImageName,
+          );
         await fileDropArea.dragAndDropFiles([fileMetadata], {
           implementation: dialHomePage.executeReactOnDrop,
         });
