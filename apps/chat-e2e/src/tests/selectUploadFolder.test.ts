@@ -163,7 +163,7 @@ dialTest(
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
+        await dialHomePage.copyTextToClipboard(nameWithRestrictedChars);
 
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDevice();

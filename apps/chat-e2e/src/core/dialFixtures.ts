@@ -202,6 +202,7 @@ const dialTest = test.extend<{
   attachmentDropdownMenu: DropdownMenu;
   sendMessageInputAttachments: InputAttachments;
   sendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
+  editMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
   conversations: ConversationsTree;
   prompts: PromptsTree;
   folderConversations: FolderConversations;
@@ -363,6 +364,7 @@ const dialTest = test.extend<{
   agentDetailsModalAssertion: AgentDetailsModalAssertion;
   attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
   adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
+  customApplicationPublishingUtil: CustomApplicationPublishingUtil;
   organizationFolderPromptAssertions: FolderAssertion<Folders>;
   publishingRulesAssertion: PublishingRulesAssertion;
   publicationApiAssertion: PublicationApiAssertion;
@@ -396,6 +398,14 @@ const dialTest = test.extend<{
     const sendMessageInputAttachmentsAssertions =
       new InputAttachmentsAssertions(sendMessageInputAttachments);
     await use(sendMessageInputAttachmentsAssertions);
+  },
+  editMessageInputAttachmentsAssertions: async (
+    { editMessageInputAttachments },
+    use,
+  ) => {
+    const editMessageInputAttachmentsAssertions =
+      new InputAttachmentsAssertions(editMessageInputAttachments);
+    await use(editMessageInputAttachmentsAssertions);
   },
   localStorageAssertion: async ({ localStorageManager }, use) => {
     const localStorageAssertion = new LocalStorageAssertion(
@@ -1404,6 +1414,16 @@ const dialTest = test.extend<{
         fileApiHelper,
       );
     await use(adminCustomApplicationPublishingUtil);
+  },
+  customApplicationPublishingUtil: async (
+    { customApplicationBuilder, applicationApiHelper },
+    use,
+  ) => {
+    const customApplicationPublishingUtil = new CustomApplicationPublishingUtil(
+      customApplicationBuilder,
+      applicationApiHelper,
+    );
+    await use(customApplicationPublishingUtil);
   },
   organizationFolderPromptAssertions: async (
     { organizationFolderPrompts },
