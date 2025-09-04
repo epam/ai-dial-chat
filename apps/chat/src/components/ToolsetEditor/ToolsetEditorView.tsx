@@ -26,7 +26,7 @@ import { ToolsetPreview } from '@/src/components/ToolsetEditor/ToolsetPreview';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
 interface ToolsetEditorViewProps {
-  onNextClick: () => void;
+  onNextClick: (e: React.FormEvent<HTMLFormElement>) => void;
   currentToolset?: ToolsetModel;
   currentStep: ToolsetEditorSteps;
 }

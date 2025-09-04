@@ -31,6 +31,7 @@ import { AppAction, AppEpic } from '@/src/types/store';
 import {
   ToolsetAuthPayload,
   ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
 } from '@/src/types/toolsets';
 
 import { MarketplaceActions, UIActions } from '@/src/store/actions';
@@ -106,6 +107,9 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
 
               return toolset
                 ? concat(
+                    of(
+                      ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings),
+                    ),
                     of(ToolsetActions.setToolsets([toolset])),
                     of(ToolsetActions.getToolsetDetailsSuccess(toolset)),
                     of(
@@ -128,6 +132,19 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
             }),
           ),
         ),
+        catchError((err) => {
+          if (err.status === 412) {
+            return of(
+              ToolsetActions.createToolsetFailed({
+                message: translate(
+                  'A toolset with this name and this version already exists.',
+                ),
+              }),
+            );
+          }
+
+          return of(ToolsetActions.createToolsetFailed());
+        }),
       );
     }),
   );
@@ -135,12 +152,13 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
 const createToolsetFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.createToolsetFailed.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.createFailed, {
-            entity: 'toolset',
-          }),
+          payload?.message ??
+            translate(errorsMessages.createFailed, {
+              entity: 'toolset',
+            }),
         ),
       );
     }),
@@ -215,7 +233,7 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
           if (!moveResult.success) {
             return of(...moveResult.actions);
           }
-          return ToolsetService.saveToolset(
+          return ToolsetService.updateToolset(
             convertToolsetModelToApi(updatedToolset),
             getIdWithoutFeatureType(updatedToolset.id),
           ).pipe(

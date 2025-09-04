@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -25,14 +25,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
+
   const router = useRouter();
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
-
-  const [editorStep, setEditorStep] = useState(
-    toolsetDetails ? ToolsetEditorSteps.Settings : ToolsetEditorSteps.General,
-  );
+  const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -102,7 +100,7 @@ export const ToolsetEditor = () => {
         }
       });
     },
-    [formMethods, isDirty, toolsetDetails, submitHandler],
+    [formMethods, isDirty, submitHandler, toolsetDetails],
   );
 
   const handleSaveAndExit = useCallback(() => {
@@ -116,14 +114,24 @@ export const ToolsetEditor = () => {
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
       if (tab === editorStep) return;
-      handleSubmit(() => setEditorStep(tab));
+      handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)));
     },
-    [editorStep, handleSubmit],
+    [editorStep, handleSubmit, dispatch],
   );
 
-  const handleNextClick = useCallback(() => {
-    handleSubmit(() => setEditorStep(ToolsetEditorSteps.Settings));
-  }, [handleSubmit]);
+  const handleNextClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!isDirty && toolsetDetails) {
+        handleSubmit(() =>
+          dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings)),
+        );
+      } else {
+        handleSubmit();
+      }
+    },
+    [dispatch, handleSubmit, isDirty, toolsetDetails],
+  );
 
   return (
     <FormProvider {...formMethods}>
