@@ -68,9 +68,11 @@ const getToolsetsEpic: AppEpic = (action$) =>
           ),
         ),
         catchError((err) => {
-          console.error('Failed to get toolsets: ', err);
+          console.error('Failed to get toolsets', err);
           return of(
-            UIActions.showErrorToast(translate('Failed to get toolsets')),
+            UIActions.showErrorToast(
+              translate(errorsMessages.toolsetsGetFailed),
+            ),
           );
         }),
       ),
@@ -117,8 +119,8 @@ const createToolsetEpic: AppEpic = (action$, _state$, { router }) =>
               console.error('Failed to get toolset: ', err);
               return of(
                 UIActions.showErrorToast(
-                  translate('Failed to get toolset: {{entity}}', {
-                    entity: path,
+                  translate(errorsMessages.toolsetGetFailed, {
+                    name: path,
                   }),
                 ),
               );
@@ -186,9 +188,7 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
                         oldToolset: payload.oldToolset,
                       }),
                       UIActions.showErrorToast(
-                        translate(
-                          'A toolset with this name and this version already exists.',
-                        ),
+                        translate(errorsMessages.toolsetAlreadyExists),
                       ),
                     ],
                   });
@@ -201,7 +201,7 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
                       oldToolset: payload.oldToolset,
                     }),
                     UIActions.showErrorToast(
-                      translate('Failed to move toolset'),
+                      translate(errorsMessages.toolsetMoveFailed),
                     ),
                   ],
                 });
@@ -254,12 +254,18 @@ const updateToolsetEpic: AppEpic = (action$, _state, { router }) =>
               ),
             ),
             catchError((err) => {
-              console.error('Failed to update toolset:', err.message);
+              console.error('Failed to update toolset', err.message);
               return of(
                 ToolsetActions.updateToolsetFailed({
                   oldToolset: payload.oldToolset,
                 }),
-                UIActions.showErrorToast(translate('Failed to update toolset')),
+                UIActions.showErrorToast(
+                  translate(
+                    err.status === 400
+                      ? errorsMessages.toolsetOAuthNotSupported
+                      : errorsMessages.toolsetUpdateFailed,
+                  ),
+                ),
               );
             }),
           );
@@ -383,7 +389,9 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
           return of(
             UIActions.showErrorToast(
               translate(
-                `Failed to remove toolset${payload.references.length > 1 ? 's' : ''} from my workspace`,
+                errorsMessages.toolsetRemoveFailed(
+                  payload.references.length > 1,
+                ),
               ),
             ),
           );
@@ -438,7 +446,7 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
           return of(
             UIActions.showErrorToast(
               translate(
-                `Failed to add toolset${payload.references.length > 1 ? 's' : ''} to my workspace`,
+                errorsMessages.toolsetAddFailed(payload.references.length > 1),
               ),
             ),
           );
@@ -473,7 +481,9 @@ const deleteToolsetEpic: AppEpic = (action$, state$) =>
 const deleteToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.deleteToolsetFail.type),
-    map(() => UIActions.showErrorToast(translate('Failed to delete toolset'))),
+    map(() =>
+      UIActions.showErrorToast(translate(errorsMessages.toolsetDeleteFailed)),
+    ),
   );
 
 const startSignInProcessEpic: AppEpic = (action$) =>
@@ -591,7 +601,9 @@ const logInToolsetEpic: AppEpic = (action$, _state, { router }) =>
           return concat(
             of(ToolsetActions.logInToolsetFail()),
             of(
-              UIActions.showErrorToast(translate('Failed to sign in toolset')),
+              UIActions.showErrorToast(
+                translate(errorsMessages.toolsetSignInFailed),
+              ),
             ),
           );
         }),
@@ -623,7 +635,7 @@ const logOutToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.logOutToolsetFail.type),
     map(() =>
-      UIActions.showErrorToast(translate('Failed to sign out toolset')),
+      UIActions.showErrorToast(translate(errorsMessages.toolsetSignOutFailed)),
     ),
   );
 

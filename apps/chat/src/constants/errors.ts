@@ -75,4 +75,22 @@ export const errorsMessages = {
     'Fetching application schemas failed. Please try again later.',
   fetchSchemaFailed:
     'Fetching application schema failed. Please try again later.',
+
+  // Toolsets
+  // params: {{name}}
+  toolsetGetFailed: 'Filed to get toolset: {{name}}',
+  // params: {{entity}}
+  toolsetsGetFailed: 'Failed to get toolsets',
+  toolsetUpdateFailed: 'Failed to update toolset',
+  toolsetOAuthNotSupported: 'MCP server does not support OAuth authentication',
+  toolsetAlreadyExists:
+    'A toolset with this name and this version already exists',
+  toolsetMoveFailed: 'Failed to move toolset',
+  toolsetRemoveFailed: (plural = false) =>
+    `Failed to remove toolset${plural ? 's' : ''} from my workspace`,
+  toolsetAddFailed: (plural = false) =>
+    `Failed to add toolset${plural ? 's' : ''} to my workspace`,
+  toolsetDeleteFailed: 'Failed to delete toolset',
+  toolsetSignInFailed: 'Failed to sign in toolset',
+  toolsetSignOutFailed: 'Failed to sign out toolset',
 };
