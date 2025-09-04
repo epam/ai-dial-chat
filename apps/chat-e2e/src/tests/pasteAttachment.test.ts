@@ -26,6 +26,7 @@ dialTest(
     'File extension is changed to lower case.\n' +
     'The postfix to the file name is added automatically if to paste the file with the name already exists in the uploads folder.\n' +
     'Ctrl-V or drag&drop a file without extension.\n' +
+    'Toast Error appears if to attach txt file when image is available only.\n' +
     'Ctrl-V pastes 10 files into input' +
     'Ctrl-V pastes a file into user-message in edit mode. Successful message',
   async ({
@@ -58,6 +59,7 @@ dialTest(
       'EPMRTC-6363',
       'EPMRTC-6232',
       'EPMRTC-6239',
+      'EPMRTC-6230',
       'EPMRTC-6231',
       'EPMRTC-6225',
     );
