@@ -63,12 +63,12 @@ export const AgentAndToolsetSelector: React.FC<
     setSelectModalOpen(false);
   }, []);
 
-  const handleRemoveItem = (referenceToRemove: string) => {
-    onChange(value.filter((reference) => reference !== referenceToRemove));
+  const handleRemoveItem = (idToRemove: string) => {
+    onChange(value.filter((id) => id !== idToRemove));
   };
 
   const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
-    onChange(newItems.map((item) => item.reference));
+    onChange(newItems.map((item) => item.id));
     setSelectModalOpen(false);
   };
 
