@@ -122,7 +122,7 @@ const AgentAndToolsetModalView = ({
   defaultSelectedItems,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-  
+
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
