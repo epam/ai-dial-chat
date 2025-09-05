@@ -400,8 +400,8 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
           return of(
             UIActions.showErrorToast(
               translate(
-                errorsMessages.toolsetRemoveFailed(
-                  payload.references.length > 1,
+                errorsMessages.removeFromMarketplaceFailed(
+                  payload.references.length > 1 ? 'toolsets' : 'toolset',
                 ),
               ),
             ),
@@ -457,7 +457,9 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
           return of(
             UIActions.showErrorToast(
               translate(
-                errorsMessages.toolsetAddFailed(payload.references.length > 1),
+                errorsMessages.addToMarketplaceFailed(
+                  payload.references.length > 1 ? 'toolsets' : 'toolset',
+                ),
               ),
             ),
           );
