@@ -12,6 +12,7 @@ import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isExternalApp } from '@/src/utils/app/application';
+import { sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
 import { isInstalledEntity } from '@/src/utils/marketplace';
@@ -48,8 +49,6 @@ import {
   AgentAndToolsetSelectItem,
   AgentAndToolsetSelectItemProps,
 } from './AgentAndToolsetSelectItem';
-
-import orderBy from 'lodash-es/orderBy';
 
 interface EntityTypeTabsProps {
   currentType: EntityType;
@@ -219,11 +218,11 @@ const AgentAndToolsetModalView = ({
           !isExternalApp(entity) &&
           !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string),
       ),
-    ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
+    ).map(({ entities }) => sortItemsVersions(entities)[0]);
 
     const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
       searchedToolsets,
-    ).map(({ entities }) => orderBy(entities, 'version', 'desc')[0]);
+    ).map(({ entities }) => sortItemsVersions(entities)[0]);
 
     if (entityType === EntityType.Application) {
       if (isMyWorkspaceView) {
