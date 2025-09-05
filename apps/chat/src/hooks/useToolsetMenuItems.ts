@@ -1,6 +1,8 @@
 import {
   IconEye,
   IconLink,
+  IconLogin,
+  IconLogout,
   IconPencilMinus,
   IconTrashX,
 } from '@tabler/icons-react';
@@ -14,6 +16,7 @@ import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -21,6 +24,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
+
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ToolsetModel;
@@ -32,6 +37,7 @@ interface Props {
     publish?: boolean;
     unpublish?: boolean;
     delete?: boolean;
+    login?: boolean;
   };
   isPreview?: boolean;
   triggerIconSize?: number;
@@ -53,6 +59,7 @@ export const useToolsetMenuItems = ({
     handleCopy,
     handleDelete,
     handleEdit,
+    handleLogin,
     // handleOpenSharing,
     // handleOpenUnshare,
     // handlePublish,
@@ -65,6 +72,9 @@ export const useToolsetMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
+  const isSignedIn = isToolsetSignedIn(entity);
+  const isWithAuth =
+    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
 
   const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
 
@@ -83,6 +93,13 @@ export const useToolsetMenuItems = ({
         display: canEditOrView && disabledActions.edit !== true,
         Icon: isAppIdPublic ? IconEye : IconPencilMinus,
         onClick: handleEdit,
+      },
+      {
+        name: t(isSignedIn ? 'Log out' : 'Log in'),
+        dataQa: 'toolset-login',
+        display: canEditOrView && disabledActions.login !== true && isWithAuth,
+        Icon: isSignedIn ? IconLogout : IconLogin,
+        onClick: handleLogin,
       },
       // {
       //   name: t('Share'),
@@ -132,11 +149,15 @@ export const useToolsetMenuItems = ({
       isPublicApp,
       disabledActions.copyLink,
       disabledActions.edit,
+      disabledActions.login,
       disabledActions.delete,
       handleCopy,
       isAppIdPublic,
       canEditOrView,
       handleEdit,
+      isSignedIn,
+      isWithAuth,
+      handleLogin,
       isMyAppOrPreview,
       handleDelete,
     ],

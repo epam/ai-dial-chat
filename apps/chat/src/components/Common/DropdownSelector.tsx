@@ -94,7 +94,12 @@ export function DropdownSelector({
             backgroundColor: '',
             cursor: 'pointer',
             ':hover': {
-              backgroundColor: state.data.backgroundColor,
+              backgroundColor:
+                state.data.backgroundColor ?? 'var(--bg-accent-primary-alpha)',
+            },
+            ':active': {
+              backgroundColor:
+                state.data.backgroundColor ?? 'var(--bg-accent-primary-alpha)',
             },
             color: 'var(--text-primary)',
           }),

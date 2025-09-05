@@ -51,6 +51,7 @@ interface ToolsetLoginFormProps {
   credentialsLevel?: ToolsetCredentialsLevel;
   disabled?: boolean;
   className?: string;
+  buttonClassName?: string;
 }
 
 export const ToolsetLoginForm = ({
@@ -61,6 +62,7 @@ export const ToolsetLoginForm = ({
   credentialsLevel = ToolsetCredentialsLevel.GLOBAL,
   disabled = false,
   className,
+  buttonClassName,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -120,6 +122,7 @@ export const ToolsetLoginForm = ({
       <button
         className={classNames(
           'button flex w-fit items-center gap-2 py-2',
+          buttonClassName,
           isSignedIn ? 'button-secondary' : 'button-primary',
         )}
         disabled={disabled || (!isValid && !isSignedIn)}
