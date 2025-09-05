@@ -1,6 +1,11 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
+  addToMarketplaceEntitiesMap,
+  deleteFromMarketplaceEntitiesMap,
+} from '@/src/utils/app/marketplace';
+
+import {
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
   ToolsetModel,
@@ -11,9 +16,6 @@ import { ToolsetState } from '@/src/store/toolset/toolset.types';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ToolsetAuthTypes, UploadStatus } from '@epam/ai-dial-shared';
-import omit from 'lodash-es/omit';
-
-type ToolsetsMap = Record<string, ToolsetModel>;
 
 const initialState: ToolsetState = {
   initialized: false,
@@ -40,22 +42,17 @@ export const toolsetSlice = createSlice({
       state.toolsetsStatus = UploadStatus.LOADING;
     },
     getToolsetsSuccess: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
-      state.toolsetsMap = payload.reduce<ToolsetsMap>((acc, toolset) => {
-        acc[toolset.reference] = toolset;
-
-        return acc;
-      }, {});
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        state.toolsetsMap ?? {},
+        ...payload,
+      );
       state.toolsetsStatus = UploadStatus.LOADED;
     },
     setToolsets: (state, { payload }: PayloadAction<ToolsetModel[]>) => {
-      state.toolsetsMap = {
-        ...state.toolsetsMap,
-        ...payload.reduce<ToolsetsMap>((acc, toolset) => {
-          acc[toolset.reference] = toolset;
-
-          return acc;
-        }, {}),
-      };
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        state.toolsetsMap,
+        ...payload,
+      );
     },
 
     createToolset: (
@@ -82,7 +79,10 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload;
-      state.toolsetsMap[payload.reference] = payload;
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        state.toolsetsMap,
+        payload,
+      );
     },
     getToolsetDetailsFailed: (state) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
@@ -130,10 +130,14 @@ export const toolsetSlice = createSlice({
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
       state.toolsetDetails = payload.newToolset;
-      state.toolsetsMap = {
-        ...omit(state.toolsetsMap, [payload.oldToolset.reference]),
-        [payload.newToolset.reference]: payload.newToolset,
-      };
+      const tempMap = deleteFromMarketplaceEntitiesMap(
+        state.toolsetsMap,
+        payload.oldToolset.reference,
+      );
+      state.toolsetsMap = addToMarketplaceEntitiesMap(
+        tempMap,
+        payload.newToolset,
+      );
     },
     setToolsetDetails: (
       state,
@@ -177,7 +181,10 @@ export const toolsetSlice = createSlice({
       state,
       { payload }: PayloadAction<{ reference: string }>,
     ) => {
-      state.toolsetsMap = omit(state.toolsetsMap, [payload.reference]);
+      state.toolsetsMap = deleteFromMarketplaceEntitiesMap(
+        state.toolsetsMap,
+        payload.reference,
+      );
     },
     deleteToolsetFail: (state) => state,
 
