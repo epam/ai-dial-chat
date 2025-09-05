@@ -23,6 +23,7 @@ export interface DialDeploymentTool {
       parameters: {
         type: 'object';
         properties: object;
+        required: ['query'];
       };
       name: string;
       description?: string;

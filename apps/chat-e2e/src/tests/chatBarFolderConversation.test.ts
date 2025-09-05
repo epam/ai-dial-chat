@@ -292,7 +292,7 @@ dialTest(
     await dialTest.step(
       'Paste prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await dialHomePage.copyToClipboard(
+        await dialHomePage.copyTextToClipboard(
           ExpectedConstants.restrictedNameChars,
         );
         await editFolderInput.click();
