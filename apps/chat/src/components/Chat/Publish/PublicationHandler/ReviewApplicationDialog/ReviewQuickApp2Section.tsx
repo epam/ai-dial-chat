@@ -1,26 +1,25 @@
 import { IconDownload, IconFile } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getMcpToolsetStr,
-  getQuickAppConfig,
-  getWebAPIToolsetStr,
-  isQuickApp,
-} from '@/src/utils/app/application';
+import { getQuickApp2Config, isQuickApp2 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CustomApplicationModel, Toolsets } from '@/src/types/applications';
-import { QuickAppConfig } from '@/src/types/quick-apps';
+import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  DialDeploymentTool,
+  MCPToolset,
+  QuickApp2Config,
+  isDialDeploymentToolset,
+} from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
-import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface DocumentFieldProps {
@@ -65,53 +64,44 @@ const DocumentField = ({ url }: DocumentFieldProps) => {
   );
 };
 
-const editorOptions = {
-  readOnly: true,
-};
-
-interface ReviewQuickAppSectionViewProps {
-  config: QuickAppConfig;
+interface ReviewQuickApp2SectionViewProps {
+  config: QuickApp2Config;
 }
 
-const ReviewQuickAppSectionView = ({
+const ReviewQuickApp2SectionView = ({
   config,
-}: ReviewQuickAppSectionViewProps) => {
+}: ReviewQuickApp2SectionViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const { agents, toolsets } = useMemo(
+    () =>
+      config.tool_sets?.reduce<{
+        agents: DialDeploymentTool[];
+        toolsets: MCPToolset[];
+      }>(
+        (acc, toolset) => {
+          if (isDialDeploymentToolset(toolset)) {
+            acc.agents = toolset.tools;
+          } else {
+            acc.toolsets = [...acc.toolsets, toolset];
+          }
+
+          return acc;
+        },
+        { agents: [], toolsets: [] },
+      ),
+    [config.tool_sets],
+  );
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const editorTabs = useMemo(() => {
-    return [
-      {
-        id: Toolsets.WebApiToolset,
-        label: 'Web API',
-        value: getWebAPIToolsetStr(config),
-        language: 'json',
-      },
-      {
-        id: Toolsets.McpToolset,
-        label: 'MCP',
-        value: getMcpToolsetStr(config),
-        language: 'json',
-      },
-    ];
-  }, [config]);
-
-  const [activeTabId, setActiveTabId] = useState<Toolsets | undefined>(
-    () => editorTabs[0]?.id,
-  );
-
-  const handleTabChange = (id: string) => {
-    setActiveTabId(id as Toolsets);
-  };
-
   return (
     <>
-      {modelsMap[config.model] && (
+      {modelsMap[config.orchestrator.deployment.name] && (
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Model: ')}</span>
           <span className="max-w-[414px] break-all text-primary">
-            {modelsMap[config.model]?.name}
+            {modelsMap[config.orchestrator.deployment.name]?.name}
           </span>
         </div>
       )}
@@ -119,64 +109,70 @@ const ReviewQuickAppSectionView = ({
       <div className="flex gap-4">
         <span className="w-[122px] text-secondary">{t('Temperature: ')}</span>
         <span className="max-w-[414px] break-all text-primary">
-          {config.temperature}
+          {config.orchestrator.deployment.parameters.temperature}
         </span>
       </div>
 
-      {!!config.document_relative_url?.length && (
+      {!!config.contexts?.length && (
         <div className="flex items-center gap-4">
           <span className="w-[122px] shrink-0 self-start text-secondary">
             {t('Document URLs: ')}
           </span>
           <span className="flex min-w-0 flex-col gap-2">
-            {config.document_relative_url.map((url) => (
+            {config.contexts.map(({ url }) => (
               <DocumentField key={url} url={url} />
             ))}
           </span>
         </div>
       )}
 
-      {config.instructions && (
+      {config.orchestrator.system_prompt.content && (
         <div className="flex gap-4">
           <span className="w-[122px] shrink-0 text-secondary">
             {t('Instructions: ')}
           </span>
           <span className="grow break-all text-primary">
-            {config.instructions}
+            {config.orchestrator.system_prompt.content}
           </span>
         </div>
       )}
 
-      {(config.web_api_toolset || config.mcp_toolset) && (
+      {agents.length > 0 && (
+        <div className="flex gap-4">
+          <span className="w-[122px] shrink-0 text-secondary">
+            {t('Agents: ')}
+          </span>
+          <span className="max-w-[414px] break-all text-primary">
+            {agents.map((agent) => agent.deployment.name).join(', ')}
+          </span>
+        </div>
+      )}
+
+      {toolsets.length > 0 && (
         <div className="flex gap-4">
           <span className="w-[122px] shrink-0 text-secondary">
             {t('Toolsets: ')}
           </span>
-          <MonacoEditor
-            height={400}
-            options={editorOptions}
-            allowFullScreen
-            files={editorTabs}
-            activeFileId={activeTabId}
-            onTabChange={handleTabChange}
-          />
+          <span className="max-w-[414px] break-all text-primary">
+            {toolsets.map((toolset) => toolset.name).join(', ')}
+          </span>
         </div>
       )}
     </>
   );
 };
 
-interface ReviewQuickAppSectionProps {
+interface ReviewQuickApp2SectionProps {
   application?: CustomApplicationModel;
 }
 
-export const ReviewQuickAppSection = ({
+export const ReviewQuickApp2Section = ({
   application,
-}: ReviewQuickAppSectionProps) => {
-  const isQuickApplication = application && isQuickApp(application);
-  const config = isQuickApplication ? getQuickAppConfig(application) : null;
+}: ReviewQuickApp2SectionProps) => {
+  const isQuickApplication = application && isQuickApp2(application);
+  const config = isQuickApplication ? getQuickApp2Config(application) : null;
 
   if (!isQuickApplication || !config) return null;
 
-  return <ReviewQuickAppSectionView config={config} />;
+  return <ReviewQuickApp2SectionView config={config} />;
 };
