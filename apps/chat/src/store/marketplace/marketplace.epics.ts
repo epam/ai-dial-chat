@@ -4,8 +4,8 @@ import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
-import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { EntityType, SortOrder } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
@@ -120,10 +120,10 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       // application link
       const detailsEntity = MarketplaceSelectors.selectDetailsEntity(state);
       const referenceQuery =
-        detailsEntity && isToolsetEntityModel(detailsEntity.entity)
+        detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
           ? MarketplaceQueryParams.toolset
           : MarketplaceQueryParams.model;
-      addToQuery(query, referenceQuery, detailsEntity?.entity?.reference);
+      addToQuery(query, referenceQuery, detailsEntity?.reference);
       // filters
       const filters = MarketplaceSelectors.selectSelectedFilters(state);
       addToQuery(
@@ -209,8 +209,11 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
 
       updatedMarketplaceState.detailsEntity = detailsEntity
         ? {
-            entity: detailsEntity,
+            reference: detailsEntity.reference,
             isSuggested: false,
+            type: isDialAiEntityModel(detailsEntity)
+              ? MarketplaceEntitiesTabs.AGENTS
+              : MarketplaceEntitiesTabs.TOOLSETS,
           }
         : undefined;
       // workspace tab

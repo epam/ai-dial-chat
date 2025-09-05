@@ -140,7 +140,12 @@ export const marketplaceSlice = createSlice({
       {
         payload,
       }: PayloadAction<
-        { entity: MarketplaceEntity; isSuggested: boolean } | undefined
+        | {
+            reference: string;
+            isSuggested: boolean;
+            type: MarketplaceEntitiesTabs;
+          }
+        | undefined
       >,
     ) => {
       state.detailsEntity = payload;

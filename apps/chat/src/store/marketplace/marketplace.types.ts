@@ -27,7 +27,7 @@ export interface MarketplaceState {
   isBannerVisible: boolean;
 
   detailsEntity:
-    | { entity: MarketplaceEntity; isSuggested: boolean }
+    | { reference: string; isSuggested: boolean; type: MarketplaceEntitiesTabs }
     | undefined;
   deleteEntity: { entity: MarketplaceEntity; action: DeleteType } | undefined;
   loginEntity: ToolsetModel | undefined;

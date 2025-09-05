@@ -11,6 +11,7 @@ import { MarketplaceSelectors, ModelsSelectors } from '@/src/store/selectors';
 import {
   DeleteType,
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
@@ -37,6 +38,7 @@ export function AgentsTabRenderer() {
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
@@ -55,7 +57,8 @@ export function AgentsTabRenderer() {
     (model: DialAIEntityModel) => {
       dispatch(
         MarketplaceActions.setDetailsEntity({
-          entity: model,
+          reference: model.reference,
+          type: MarketplaceEntitiesTabs.AGENTS,
           isSuggested: suggestedResults
             .map((item) => item.reference)
             .includes(model.reference),
@@ -70,8 +73,8 @@ export function AgentsTabRenderer() {
       if (detailsModel) {
         dispatch(
           MarketplaceActions.setDetailsEntity({
-            isSuggested: detailsModel.isSuggested,
-            entity: model,
+            ...detailsModel,
+            reference: model.reference,
           }),
         );
       }
@@ -105,7 +108,9 @@ export function AgentsTabRenderer() {
     [dispatch, installedModelIds],
   );
 
-  const currentDetailsModel = detailsModel?.entity;
+  const currentDetailsModel = detailsModel
+    ? modelsMap[detailsModel.reference]
+    : undefined;
 
   return (
     <>
@@ -129,7 +134,7 @@ export function AgentsTabRenderer() {
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
-          isSuggested={detailsModel.isSuggested}
+          isSuggested={detailsModel?.isSuggested}
         />
       )}
 

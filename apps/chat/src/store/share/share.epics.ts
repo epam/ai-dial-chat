@@ -79,7 +79,10 @@ import {
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { DeleteType } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
@@ -989,7 +992,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             if (acceptedApplication) {
               updateSharedActions.push(
                 MarketplaceActions.setDetailsEntity({
-                  entity: acceptedApplication,
+                  reference: acceptedApplication.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
                   isSuggested: false,
                 }),
               );

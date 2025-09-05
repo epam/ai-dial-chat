@@ -8,7 +8,11 @@ import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
-import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
@@ -26,7 +30,8 @@ export function ToolsTabRenderer() {
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
-  const selectedToolset = useAppSelector(
+  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+  const detailsToolset = useAppSelector(
     MarketplaceSelectors.selectDetailsToolset,
   );
   const installedToolsetsSet = useAppSelector(
@@ -35,6 +40,9 @@ export function ToolsTabRenderer() {
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
   );
+  const selectedToolset = detailsToolset
+    ? toolsetsMap[detailsToolset.reference]
+    : undefined;
 
   const { displayedEntities: displayedToolsets, suggestedResults } =
     useMarketplaceDisplayedEntities(allToolsets, installedToolsetsSet);
@@ -43,8 +51,9 @@ export function ToolsTabRenderer() {
     (toolset: ToolsetModel) => {
       dispatch(
         MarketplaceActions.setDetailsEntity({
-          entity: toolset,
+          reference: toolset.reference,
           isSuggested: false,
+          type: MarketplaceEntitiesTabs.TOOLSETS,
         }),
       );
     },
@@ -74,16 +83,16 @@ export function ToolsTabRenderer() {
 
   const handleSetVersion = useCallback(
     (toolset: ToolsetModel) => {
-      if (selectedToolset) {
+      if (detailsToolset) {
         dispatch(
           MarketplaceActions.setDetailsEntity({
-            entity: toolset,
-            isSuggested: selectedToolset.isSuggested,
+            ...detailsToolset,
+            reference: toolset.reference,
           }),
         );
       }
     },
-    [selectedToolset, dispatch],
+    [detailsToolset, dispatch],
   );
 
   const handleCloseDetailsDialog = useCallback(
@@ -105,9 +114,9 @@ export function ToolsTabRenderer() {
 
       {/* MODALS */}
 
-      {selectedToolset?.entity && (
+      {selectedToolset && (
         <ToolsetDetails
-          entity={selectedToolset.entity}
+          entity={selectedToolset}
           allEntities={allToolsets}
           isMyWorkspaceTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           onClose={handleCloseDetailsDialog}

@@ -3,23 +3,21 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   getApplicationType,
   isApplicationTypeKey,
-  isDialAiEntityModel,
   isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication } from '@/src/utils/app/id';
-import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
-import { ToolsetModel } from '@/src/types/toolsets';
 
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import {
   ApplicationTypeToSourceType,
+  MarketplaceEntitiesTabs,
   SourceType,
 } from '@/src/constants/marketplace';
 
@@ -62,16 +60,16 @@ const selectDetailsEntity = (state: RootState) =>
 const selectDetailsModel = createSelector(
   [selectDetailsEntity],
   (detailsEntity) =>
-    detailsEntity && isDialAiEntityModel(detailsEntity.entity)
-      ? (detailsEntity as { entity: DialAIEntityModel; isSuggested: boolean })
+    detailsEntity?.type === MarketplaceEntitiesTabs.AGENTS
+      ? detailsEntity
       : undefined,
 );
 
 const selectDetailsToolset = createSelector(
   [selectDetailsEntity],
   (detailsEntity) =>
-    detailsEntity && isToolsetEntityModel(detailsEntity.entity)
-      ? (detailsEntity as { entity: ToolsetModel; isSuggested: boolean })
+    detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
+      ? detailsEntity
       : undefined,
 );
 
