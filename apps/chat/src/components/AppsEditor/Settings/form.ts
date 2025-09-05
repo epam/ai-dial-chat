@@ -309,7 +309,7 @@ export const getQuickAppDefaultValues2 = ({
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     instructions: appProperties.orchestrator.system_prompt.content ?? '',
     temperature:
-      appProperties.orchestrator.deployment.parameters.temperature ??
+      appProperties.orchestrator.deployment.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
     agentsAndToolsets: [
       ...agentToolsets.map((agentToolset) => agentToolset.deployment.name),

@@ -27,7 +27,7 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
@@ -80,7 +80,7 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
           const filteredRecentModels = recentModelsIds?.filter(
             (resentModelId: string) =>
               models.some(
-                ({ reference, id }) =>
+                ({ reference, id }: DialAIEntityModel) =>
                   resentModelId === reference || resentModelId === id,
               ),
           );
@@ -197,8 +197,11 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
       const allModels = ModelsSelectors.selectModels(state$.value);
 
       const myAppIds = allModels
-        .filter((model) => isMyApplication(model) || model.sharedWithMe)
-        .map((app) => app.reference);
+        .filter(
+          (model: DialAIEntityModel) =>
+            isMyApplication(model) || model.sharedWithMe,
+        )
+        .map((app: DialAIEntityModel) => app.reference);
 
       return ClientDataService.getInstalledDeployments().pipe(
         switchMap((installedModels) => {
@@ -227,11 +230,13 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
           );
 
           const referencesToInstall = allModels
-            .filter((model) => modelKeys.has(getGroupModelKey(model)))
-            .map((model) => model.reference);
+            .filter((model: DialAIEntityModel) =>
+              modelKeys.has(getGroupMarketplaceEntityKey(model)),
+            )
+            .map((model: DialAIEntityModel) => model.reference);
 
           const modelsToInstall = referencesToInstall.filter(
-            (reference) => !installedModelIds.has(reference),
+            (reference: string) => !installedModelIds.has(reference),
           );
 
           if (modelsToInstall.length) {
@@ -306,8 +311,10 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
 
       const deletedReferences = new Set(
         models
-          .filter((model) => modelGroupKeys.has(getGroupModelKey(model)))
-          .map((model) => model.reference),
+          .filter((model: DialAIEntityModel) =>
+            modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
+          )
+          .map((model: DialAIEntityModel) => model.reference),
       );
 
       const newInstalledModels = installedModels.filter(
@@ -380,8 +387,10 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         [
           ...installedModels,
           ...models
-            .filter((model) => modelGroupKeys.has(getGroupModelKey(model)))
-            .map((model) => ({
+            .filter((model: DialAIEntityModel) =>
+              modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
+            )
+            .map((model: DialAIEntityModel) => ({
               id: model.reference,
             })),
         ],

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import {
   doesMarketplaceEntityMatchFilters,
   isInstalledEntity,
@@ -21,14 +21,10 @@ import {
   MarketplaceTabs,
   ViewTypes,
 } from '@/src/constants/marketplace';
-import {
-  MODELS_SEARCH_OPTIONS,
-  TOOLSETS_SEARCH_OPTIONS,
-} from '@/src/constants/search';
+import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { useFuseSearch } from './useFuseSearch';
 
-import { IFuseOptions } from 'fuse.js';
 import uniqBy from 'lodash-es/uniqBy';
 
 export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
@@ -60,9 +56,7 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
   const searchedEntities = useFuseSearch<T>(
     allEntities,
     searchTerm,
-    (isSelectedAgentsTab
-      ? MODELS_SEARCH_OPTIONS
-      : TOOLSETS_SEARCH_OPTIONS) as IFuseOptions<T>,
+    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
   const isSomeAgentsFilterNotEmpty =
@@ -119,7 +113,7 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     );
 
     if (isSelectedAgentsTab) {
-      entitiesToDisplay = groupModelsAndSaveOrder(
+      entitiesToDisplay = groupMarketplaceEntityAndSaveOrder(
         entitiesToDisplay as DialAIEntityModel[],
       ).map(({ entities }) => entities[0]) as T[];
     }
