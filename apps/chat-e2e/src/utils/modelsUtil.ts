@@ -133,7 +133,9 @@ export class ModelsUtil {
 
   public static getLatestModelsWithAttachment(excludeSlowModels = true) {
     return ModelsUtil.getLatestModels(excludeSlowModels).filter(
-      (m) => m.inputAttachmentTypes !== undefined,
+      (m) =>
+        m.inputAttachmentTypes !== undefined &&
+        m.inputAttachmentTypes.length > 0,
     );
   }
 

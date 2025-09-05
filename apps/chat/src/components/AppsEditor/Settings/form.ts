@@ -468,7 +468,19 @@ export const getQuickAppData2 = (
           function: {
             parameters: {
               type: 'object',
-              properties: {},
+              properties: {
+                query: {
+                  type: 'string',
+                  description: '',
+                  display: {
+                    stage: {
+                      show_value_in_stage_title: true,
+                      name: '**Prompt:** ',
+                    },
+                  },
+                },
+              },
+              required: ['query'],
             },
             description: entity.description,
             name: entity.name,

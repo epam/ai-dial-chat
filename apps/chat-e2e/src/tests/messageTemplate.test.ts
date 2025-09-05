@@ -494,7 +494,7 @@ dialTest(
         await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         await messageTemplateModal.getTemplateRowContent(1).click();
-        await dialHomePage.copyToClipboard(firstRowMismatchContent);
+        await dialHomePage.copyTextToClipboard(firstRowMismatchContent);
         await dialHomePage.pasteFromClipboard();
         for (let i = 1; i <= 2; i++) {
           await page.keyboard.press(keys.backspace);
