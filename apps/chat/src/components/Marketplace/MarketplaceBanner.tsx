@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
@@ -37,29 +39,27 @@ const getBannerSrc = (theme: string, tab: MarketplaceTabs) => {
     : lightBanner.src;
 };
 
-const getBannerCssVariable = (theme: string, tab: MarketplaceTabs) => {
-  const fallbackBannerSrc = getBannerSrc(theme, tab);
-  const tabBannerCssVariableName =
-    tab === MarketplaceTabs.MY_WORKSPACE
-      ? '--my-workspace-banner'
-      : '--marketplace-banner';
-
-  const bannerCssVariable = `var(${tabBannerCssVariableName}, url(${fallbackBannerSrc}))`;
-  return bannerCssVariable;
-};
-
 export const MarketplaceBanner = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const selectedTheme = useAppSelector(UISelectors.selectThemeState);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
+  const bannerStyleVariable = useMemo(() => {
+    const fallbackBannerSrc = getBannerSrc(selectedTheme, selectedTab);
+    const tabBannerCssVariableName =
+      selectedTab === MarketplaceTabs.MY_WORKSPACE
+        ? '--my-workspace-banner'
+        : '--marketplace-banner';
+
+    const bannerCssVariable = `var(${tabBannerCssVariableName}, url(${fallbackBannerSrc}))`;
+    return { backgroundImage: bannerCssVariable };
+  }, [selectedTab, selectedTheme]);
+
   return (
     <div
       className="hidden rounded-md bg-cover bg-center bg-no-repeat py-6 md:block"
-      style={{
-        backgroundImage: getBannerCssVariable(selectedTheme, selectedTab),
-      }}
+      style={bannerStyleVariable}
     >
       <h1 className="text-center text-xl font-semibold">
         {t(bannerText.title[selectedTab])}
