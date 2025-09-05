@@ -50,7 +50,16 @@ export const RadioButton = ({
         <IconCircle size={18} className="text-secondary" strokeWidth={1} />
       </span>
 
-      {!!caption && <span className="text-sm text-primary">{caption}</span>}
+      {!!caption && (
+        <span
+          className={classNames(
+            'text-sm',
+            rest.disabled ? 'text-secondary' : 'text-primary',
+          )}
+        >
+          {caption}
+        </span>
+      )}
     </label>
   );
 };

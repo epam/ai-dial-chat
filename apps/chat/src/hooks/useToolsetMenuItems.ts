@@ -25,6 +25,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+
 interface Props {
   entity: ToolsetModel;
   disabledActions?: {
@@ -71,6 +73,8 @@ export const useToolsetMenuItems = ({
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const isSignedIn = isToolsetSignedIn(entity);
+  const isWithAuth =
+    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
 
   const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
 
@@ -93,7 +97,7 @@ export const useToolsetMenuItems = ({
       {
         name: t(isSignedIn ? 'Log out' : 'Log in'),
         dataQa: 'toolset-login',
-        display: canEditOrView && disabledActions.login !== true,
+        display: canEditOrView && disabledActions.login !== true && isWithAuth,
         Icon: isSignedIn ? IconLogout : IconLogin,
         onClick: handleLogin,
       },
@@ -145,11 +149,15 @@ export const useToolsetMenuItems = ({
       isPublicApp,
       disabledActions.copyLink,
       disabledActions.edit,
+      disabledActions.login,
       disabledActions.delete,
       handleCopy,
       isAppIdPublic,
       canEditOrView,
       handleEdit,
+      isSignedIn,
+      isWithAuth,
+      handleLogin,
       isMyAppOrPreview,
       handleDelete,
     ],
