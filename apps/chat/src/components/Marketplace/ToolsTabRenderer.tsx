@@ -4,17 +4,19 @@ import { useMarketplaceDisplayedEntities } from '@/src/hooks/useMarketplaceDispl
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
-import { ToolsetActions } from '@/src/store/actions';
+import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import {
   DeleteType,
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
 import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { ResultsView, ResultsViewProps } from './TabResults';
 import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
@@ -29,13 +31,17 @@ export function ToolsTabRenderer() {
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
-  const selectedToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+  const detailsToolset = useAppSelector(
+    MarketplaceSelectors.selectDetailsToolset,
+  );
   const installedToolsetsSet = useAppSelector(
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
   );
+
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
@@ -45,15 +51,20 @@ export function ToolsTabRenderer() {
 
   const areAllFiltersEmpty =
     !searchTerm.length && !selectedFilters[FilterTypes.TOPICS].length;
+  const selectedToolset = detailsToolset
+    ? toolsetsMap[detailsToolset.reference]
+    : undefined;
 
   const { displayedEntities: displayedToolsets, suggestedResults } =
     useMarketplaceDisplayedEntities(allToolsets, installedToolsetsSet);
 
   const handleSetDetailsToolset = useCallback(
-    (toolset: { reference: string }) => {
+    (toolset: ToolsetModel) => {
       dispatch(
-        ToolsetActions.setToolsetDetails({
+        MarketplaceActions.setDetailsEntity({
           reference: toolset.reference,
+          isSuggested: false,
+          type: MarketplaceEntitiesTabs.TOOLSETS,
         }),
       );
     },
@@ -83,19 +94,20 @@ export function ToolsTabRenderer() {
 
   const handleSetVersion = useCallback(
     (toolset: ToolsetModel) => {
-      if (selectedToolset) {
+      if (detailsToolset) {
         dispatch(
-          ToolsetActions.setToolsetDetails({
+          MarketplaceActions.setDetailsEntity({
+            ...detailsToolset,
             reference: toolset.reference,
           }),
         );
       }
     },
-    [selectedToolset, dispatch],
+    [detailsToolset, dispatch],
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => dispatch(ToolsetActions.setToolsetDetails()),
+    () => dispatch(MarketplaceActions.setDetailsEntity()),
     [dispatch],
   );
 
@@ -124,6 +136,7 @@ export function ToolsTabRenderer() {
         />
       )}
 
+      <ToolsetLoginDialog />
       <DeleteMarketplaceEntityDialog />
     </>
   );

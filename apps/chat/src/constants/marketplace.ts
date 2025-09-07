@@ -13,6 +13,7 @@ import LoaderIcon from '@/public/images/icons/loader.svg';
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
+  toolset = 'toolset',
   tab = 'tab',
   entitiesTab = 'entitiesTab',
   types = 'types',

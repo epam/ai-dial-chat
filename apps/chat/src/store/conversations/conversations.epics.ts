@@ -3365,7 +3365,7 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
           PublicationSelectors.selectSelectedPublicationUrl(state$.value);
 
         return concat(
-          of(MarketplaceActions.setDetailsModel()),
+          of(MarketplaceActions.setDetailsEntity()),
           of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADING)),
           iif(
             () => shouldUpload && !!conversation,

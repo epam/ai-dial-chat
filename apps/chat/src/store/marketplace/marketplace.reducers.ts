@@ -2,6 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { SortOrder } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
 
@@ -31,7 +32,6 @@ const initialState: MarketplaceState = {
   selectedTab: MarketplaceTabs.HOME,
   selectedEntitiesTab: MarketplaceEntitiesTabs.AGENTS,
   applyModelStatus: UploadStatus.UNINITIALIZED,
-  detailsModel: undefined,
   selectedView: ViewTypes.CARD,
   tableSort: {
     column: TableColumnSortKeys.NAME,
@@ -40,6 +40,8 @@ const initialState: MarketplaceState = {
   isBannerVisible: true,
 
   deleteEntity: undefined,
+  detailsEntity: undefined,
+  loginEntity: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -96,14 +98,6 @@ export const marketplaceSlice = createSlice({
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
     },
-    setDetailsModel: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
-    ) => {
-      state.detailsModel = payload;
-    },
     setSelectedView: (
       state,
       { payload }: PayloadAction<{ viewType: ViewTypes }>,
@@ -131,15 +125,36 @@ export const marketplaceSlice = createSlice({
     ) => {
       state.isBannerVisible = payload.isVisible;
     },
-    setDeleteEntity(
+    setDeleteEntity: (
       state,
       {
         payload,
       }: PayloadAction<
         { entity: MarketplaceEntity; action: DeleteType } | undefined
       >,
-    ) {
+    ) => {
       state.deleteEntity = payload;
+    },
+    setDetailsEntity: (
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        | {
+            reference: string;
+            isSuggested: boolean;
+            type: MarketplaceEntitiesTabs;
+          }
+        | undefined
+      >,
+    ) => {
+      state.detailsEntity = payload;
+    },
+    setLoginEntity: (
+      state,
+      { payload }: PayloadAction<ToolsetModel | undefined>,
+    ) => {
+      state.loginEntity = payload;
     },
   },
 });
