@@ -4,12 +4,18 @@ import { useRouter } from 'next/router';
 
 import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 
-import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
+import {
+  MarketplaceActions,
+  PublicationActions,
+  ToolsetActions,
+} from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 export const useToolsetMenuActions = (toolset: ToolsetModel) => {
   // const { t } = useTranslation(Translation.Marketplace);
@@ -61,17 +67,19 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, router, toolset.reference],
   );
 
-  const handlePublish = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // TODO: Implement toolset publishing
-    // dispatch(
-    //   PublicationActions.setPublishModel({
-    //     entity,
-    //     action: PublishActions.ADD,
-    //   }),
-    // );
-  }, []);
+  const handlePublish = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(
+        PublicationActions.setPublishModel({
+          entity: toolset,
+          action: PublishActions.ADD,
+        }),
+      );
+    },
+    [dispatch, toolset],
+  );
 
   const handleUnpublish = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

@@ -302,7 +302,9 @@ export function PublishModal<
                       ? FeatureType.Chat
                       : type === SharingType.Application
                         ? FeatureType.Application
-                        : FeatureType.Prompt,
+                        : type === SharingType.Toolset
+                          ? FeatureType.Toolset
+                          : FeatureType.Prompt,
                     trimmedPath,
                     type === SharingType.ConversationFolder ||
                       type === SharingType.PromptFolder

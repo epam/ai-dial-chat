@@ -33,6 +33,7 @@ export const ToolsetEditor = () => {
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
 
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
+  const saveAndExitRef = useRef<boolean>(false);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -75,6 +76,7 @@ export const ToolsetEditor = () => {
             oldToolset: toolsetDetails,
             newToolset: payloadToolset,
             tabToOpen: changeEditorTabRef.current ?? undefined,
+            isSaveAndExit: saveAndExitRef.current,
           }),
         );
       } else {
@@ -86,6 +88,7 @@ export const ToolsetEditor = () => {
       }
 
       changeEditorTabRef.current = null;
+      saveAndExitRef.current = false;
       formMethods.reset(getDefaultFormData(payloadToolset));
     },
     [dispatch, formMethods, toolsetDetails],
@@ -105,6 +108,7 @@ export const ToolsetEditor = () => {
             .then(() => cb?.());
         } else {
           changeEditorTabRef.current = null;
+          saveAndExitRef.current = false;
           cb?.();
         }
       });
@@ -117,7 +121,9 @@ export const ToolsetEditor = () => {
       void router.push(Routes.Marketplace);
       return;
     }
-    handleSubmit(() => router.push(Routes.Marketplace));
+
+    saveAndExitRef.current = true;
+    handleSubmit();
   }, [handleSubmit, router, toolsetDetails]);
 
   const handleTabClick = useCallback(

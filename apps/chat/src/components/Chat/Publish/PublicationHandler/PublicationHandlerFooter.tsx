@@ -23,6 +23,7 @@ import {
   isConversationId,
   isFileId,
   isPromptId,
+  isToolsetId,
 } from '@/src/utils/app/id';
 import {
   allEditedFoldersAreValid,
@@ -40,6 +41,7 @@ import {
   ConversationsActions,
   PromptsActions,
   PublicationActions,
+  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
@@ -197,6 +199,8 @@ export const PublicationHandlerFooter = ({
       getReviewItems(publication, resourcesToReview, isPromptId);
     const { toReview: applicationsToReview, reviewed: reviewedApplications } =
       getReviewItems(publication, resourcesToReview, isApplicationId);
+    const { toReview: toolsetsToReview, reviewed: reviewedToolsets } =
+      getReviewItems(publication, resourcesToReview, isToolsetId);
 
     const startConversationsReview = () => {
       expandFoldersByFeatureType(
@@ -220,6 +224,16 @@ export const PublicationHandlerFooter = ({
       );
       dispatch(ApplicationActions.get({ applicationId }));
       dispatch(PublicationActions.setIsApplicationReview(true));
+    };
+
+    const startToolsetReview = () => {
+      const toolsetId = getFirstReviewUrl(toolsetsToReview, reviewedToolsets);
+      dispatch(
+        ToolsetActions.getToolsetDetails({
+          id: toolsetId,
+        }),
+      );
+      dispatch(PublicationActions.setIsToolsetReview(true));
     };
 
     const startPromptsReview = () => {
@@ -260,12 +274,19 @@ export const PublicationHandlerFooter = ({
       return;
     }
 
+    if (toolsetsToReview.length) {
+      startToolsetReview();
+      return;
+    }
+
     if (reviewedConversations.length) {
       startConversationsReview();
     } else if (reviewedPrompts.length) {
       startPromptsReview();
-    } else {
+    } else if (reviewedApplications.length) {
       startApplicationsReview();
+    } else if (reviewedToolsets.length) {
+      startToolsetReview();
     }
   }, [dispatch, expandFoldersByFeatureType, publication, resourcesToReview]);
 

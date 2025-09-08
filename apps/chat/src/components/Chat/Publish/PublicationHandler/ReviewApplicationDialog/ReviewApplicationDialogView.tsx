@@ -37,6 +37,7 @@ import isEmpty from 'lodash-es/isEmpty';
 
 function ReviewApplicationDialogContent() {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const application = useAppSelector(
@@ -48,7 +49,6 @@ function ReviewApplicationDialogContent() {
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
-
   const isResourceUnpublishing = useAppSelector((state) =>
     PublicationSelectors.selectIsResourceUnpublishing(
       state,
