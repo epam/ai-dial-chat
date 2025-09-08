@@ -5,6 +5,7 @@ import { ToolsetModel } from '@/src/types/toolsets';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
+import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState) => state.toolset;
 
@@ -13,7 +14,7 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectToolsetsMap = (state: RootState) => rootSelector(state).toolsetsMap;
 
 const selectToolsets = createSelector([selectToolsetsMap], (toolsetsMap) => {
-  const toolsets = Object.values(toolsetsMap) as ToolsetModel[];
+  const toolsets = uniq(Object.values(toolsetsMap)) as ToolsetModel[];
 
   return sortBy(toolsets, (toolset) => toolset.name.toLowerCase());
 });
