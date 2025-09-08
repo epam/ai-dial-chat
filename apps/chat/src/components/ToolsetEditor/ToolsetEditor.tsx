@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -31,6 +31,8 @@ export const ToolsetEditor = () => {
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
+
+  const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -72,6 +74,7 @@ export const ToolsetEditor = () => {
           ToolsetActions.updateToolset({
             oldToolset: toolsetDetails,
             newToolset: payloadToolset,
+            tabToOpen: changeEditorTabRef.current ?? undefined,
           }),
         );
       } else {
@@ -81,6 +84,8 @@ export const ToolsetEditor = () => {
           }),
         );
       }
+
+      changeEditorTabRef.current = null;
       formMethods.reset(getDefaultFormData(payloadToolset));
     },
     [dispatch, formMethods, toolsetDetails],
@@ -89,13 +94,17 @@ export const ToolsetEditor = () => {
   const handleSubmit = useCallback(
     (cb?: () => void) => {
       formMethods.trigger().then((isValid) => {
-        if (!isValid) return;
+        if (!isValid) {
+          changeEditorTabRef.current = null;
+          return;
+        }
 
         if (isDirty || !toolsetDetails) {
           void formMethods
             .handleSubmit(submitHandler)()
             .then(() => cb?.());
         } else {
+          changeEditorTabRef.current = null;
           cb?.();
         }
       });
@@ -114,9 +123,14 @@ export const ToolsetEditor = () => {
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
       if (tab === editorStep) return;
-      handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)));
+      if (!isDirty && toolsetDetails) {
+        handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)));
+      } else {
+        changeEditorTabRef.current = tab;
+        handleSubmit();
+      }
     },
-    [editorStep, handleSubmit, dispatch],
+    [editorStep, isDirty, toolsetDetails, handleSubmit, dispatch],
   );
 
   const handleNextClick = useCallback(
@@ -127,6 +141,7 @@ export const ToolsetEditor = () => {
           dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings)),
         );
       } else {
+        changeEditorTabRef.current = ToolsetEditorSteps.Settings;
         handleSubmit();
       }
     },
