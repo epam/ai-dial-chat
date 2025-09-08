@@ -39,6 +39,8 @@ function ReviewToolsetDialogContent() {
     PublicationSelectors.selectSelectedPublicationUrl,
   );
 
+  console.log(toolset);
+
   const isResourceUnpublishing = useAppSelector((state) =>
     PublicationSelectors.selectIsResourceUnpublishing(
       state,
@@ -76,26 +78,26 @@ function ReviewToolsetDialogContent() {
           <h2 className="text-base font-semibold">{t('Application')}</h2>
         </div>
         <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Name: ')}</span>
+          <span className="w-[135px] text-secondary">{t('Name: ')}</span>
           <span className="max-w-[414px] text-primary" data-qa="app-name">
             {toolset?.name}
           </span>
         </div>
         <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Version: ')}</span>
+          <span className="w-[135px] text-secondary">{t('Version: ')}</span>
           <span className="max-w-[414px] text-primary" data-qa="app-version">
             {toolset?.version}
           </span>
         </div>
         <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Icon: ')}</span>
+          <span className="w-[135px] text-secondary">{t('Icon: ')}</span>
           {toolset && (
             <ModelIcon entity={toolset} entityId={toolset.id} size={60} />
           )}
         </div>
         {!!(toolset && getModelDescription(toolset)) && (
           <div className="flex gap-4">
-            <span className="w-[122px] shrink-0 text-secondary">
+            <span className="w-[135px] shrink-0 text-secondary">
               {t('Description: ')}
             </span>
             <span className="grow text-primary" data-qa="app-description">
@@ -105,7 +107,7 @@ function ReviewToolsetDialogContent() {
         )}
         {!!toolset?.topics?.length && (
           <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">{t('Topics: ')}</span>
+            <span className="w-[135px] text-secondary">{t('Topics: ')}</span>
             <div className="flex max-w-[414px] flex-wrap gap-1">
               {toolset.topics.map((topic) => (
                 <ApplicationTopic key={topic} topic={topic} />
@@ -115,7 +117,7 @@ function ReviewToolsetDialogContent() {
         )}
         {toolset?.endpoint && (
           <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">{t('Endpoint: ')}</span>
+            <span className="w-[135px] text-secondary">{t('Endpoint: ')}</span>
             <span className="max-w-[414px] text-primary" data-qa="app-endpoint">
               {toolset.endpoint}
             </span>
@@ -123,7 +125,7 @@ function ReviewToolsetDialogContent() {
         )}
         {toolset?.transport && (
           <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">
+            <span className="w-[135px] text-secondary">
               {t('Transport protocol: ')}
             </span>
             <span
@@ -136,7 +138,7 @@ function ReviewToolsetDialogContent() {
         )}
         {toolset?.authSettings?.authenticationType && (
           <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">
+            <span className="w-[135px] text-secondary">
               {t('Authentication type: ')}
             </span>
             <span
@@ -147,9 +149,9 @@ function ReviewToolsetDialogContent() {
             </span>
           </div>
         )}
-        {toolset?.allowedTools?.length && (
+        {!!toolset?.allowedTools?.length && (
           <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">
+            <span className="w-[135px] text-secondary">
               {t('Allowed tools: ')}
             </span>
             <span

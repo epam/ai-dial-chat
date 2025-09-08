@@ -50,6 +50,7 @@ import {
   isPromptId,
   isRootEntity,
   isRootId,
+  isToolsetId,
 } from '@/src/utils/app/id';
 import { getPromptInfoFromId } from '@/src/utils/app/prompts';
 import {
@@ -85,6 +86,7 @@ import {
   ModelsActions,
   PromptsActions,
   PublicationActions,
+  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import {
@@ -94,6 +96,7 @@ import {
   PromptsSelectors,
   PublicationSelectors,
   SettingsSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -406,8 +409,8 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
               );
             }
 
-            const applicationResources = publication.resources.filter((r) =>
-              isApplicationId(r.targetUrl),
+            const applicationResources = publication.resources.filter(
+              (r) => isApplicationId(r.targetUrl) || isToolsetId(r.targetUrl),
             );
 
             if (applicationResources.length) {
@@ -435,6 +438,46 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                             r.action === PublishActions.DELETE &&
                             !allModels.some(
                               (model) => model.id === r.reviewUrl,
+                            ),
+                          publicationUrl: payload.url,
+                        },
+                        owner: r.author ?? 'Unknown',
+                      };
+                    }),
+                  }),
+                ),
+              );
+            }
+
+            const toolsetResources = publication.resources.filter((r) =>
+              isToolsetId(r.targetUrl),
+            );
+
+            if (toolsetResources.length) {
+              const allToolsets = ToolsetSelectors.selectToolsets(state$.value);
+
+              actions.push(
+                of(
+                  ToolsetActions.addPublishRequestToolsets({
+                    toolsets: toolsetResources.map((r) => {
+                      const parsedApiKey = parsePromptApiKey(
+                        splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
+                      );
+
+                      return {
+                        id: r.reviewUrl,
+                        name: parsedApiKey.name,
+                        isDefault: false,
+                        reference: r.reviewUrl,
+                        type: EntityType.Toolset,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        publicationInfo: {
+                          action: r.action,
+                          isNotExist:
+                            r.action === PublishActions.DELETE &&
+                            !allToolsets.some(
+                              (toolset) => toolset.id === r.reviewUrl,
                             ),
                           publicationUrl: payload.url,
                         },

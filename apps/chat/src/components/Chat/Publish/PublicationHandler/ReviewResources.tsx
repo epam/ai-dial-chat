@@ -13,6 +13,7 @@ import {
   FilesSelectors,
   ModelsSelectors,
   PromptsSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import { PublicationApplicationRow } from './ReviewRowItems/PublicationApplicationRow';
@@ -20,6 +21,7 @@ import { PublicationConversationRow } from './ReviewRowItems/PublicationConversa
 import { PublicationFileRow } from './ReviewRowItems/PublicationFileRow';
 import { PublicationFolderRow } from './ReviewRowItems/PublicationFolderRow';
 import { PublicationPromptRow } from './ReviewRowItems/PublicationPromptRow';
+import { PublicationToolsetRow } from './ReviewRowItems/PublicationToolsetRow';
 
 import { FolderInterface } from '@epam/ai-dial-shared';
 
@@ -131,6 +133,26 @@ export const ApplicationPublicationResources = ({ resources }: Props) => {
           item={application}
           level={0}
         />
+      ))}
+    </>
+  );
+};
+
+export const ToolsetPublicationResources = ({ resources }: Props) => {
+  const toolsets = useAppSelector(
+    ToolsetSelectors.selectPublishRequestToolsets,
+  );
+
+  const filteredToolsets = useMemo(() => {
+    const resourcesIds = resources.map((resource) => resource.reviewUrl);
+
+    return toolsets.filter((toolset) => resourcesIds.includes(toolset.id));
+  }, [toolsets, resources]);
+
+  return (
+    <>
+      {filteredToolsets.map((toolset) => (
+        <PublicationToolsetRow key={toolset.id} item={toolset} level={0} />
       ))}
     </>
   );

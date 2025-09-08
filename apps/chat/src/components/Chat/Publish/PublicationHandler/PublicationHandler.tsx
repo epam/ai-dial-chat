@@ -50,7 +50,9 @@ import {
   ConversationPublicationResources,
   FilePublicationResources,
   PromptPublicationResources,
+  ToolsetPublicationResources,
 } from './ReviewResources';
+import { ReviewToolsetDialog } from './ReviewToolset/ReviewToolsetDialog';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
@@ -86,6 +88,12 @@ const sections = [
     dataQa: 'files-to-approve',
     Component: FilePublicationResources,
   },
+  {
+    featureType: FeatureType.Toolset,
+    sectionName: translate('Toolsets'),
+    dataQa: 'toolsets-to-approve',
+    Component: ToolsetPublicationResources,
+  },
 ];
 
 export function PublicationHandler({ publication }: Props) {
@@ -101,6 +109,9 @@ export function PublicationHandler({ publication }: Props) {
   );
   const isApplicationReview = useAppSelector(
     PublicationSelectors.selectIsApplicationReview,
+  );
+  const isToolsetReview = useAppSelector(
+    PublicationSelectors.selectIsToolsetReview,
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
@@ -522,6 +533,7 @@ export function PublicationHandler({ publication }: Props) {
         />
       )}
       {isApplicationReview && <ReviewApplicationDialog />}
+      {isToolsetReview && <ReviewToolsetDialog />}
     </div>
   );
 }
