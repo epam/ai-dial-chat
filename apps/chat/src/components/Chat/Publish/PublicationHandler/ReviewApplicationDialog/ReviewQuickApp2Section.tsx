@@ -14,7 +14,9 @@ import {
   DialDeploymentTool,
   MCPToolset,
   QuickApp2Config,
+  isCodeInterpreterToolset,
   isDialDeploymentToolset,
+  isMcpToolset,
 } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
@@ -78,28 +80,41 @@ const ReviewQuickApp2SectionView = ({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
 
-  const { agents, toolsets } = useMemo(
+  const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
       config.tool_sets?.reduce<{
         agents: DialDeploymentTool[];
         toolsets: MCPToolset[];
+        isCodeInterpreter: boolean;
       }>(
         (acc, toolset) => {
           if (isDialDeploymentToolset(toolset)) {
             acc.agents = toolset.tools;
-          } else {
+          } else if (isMcpToolset(toolset)) {
             acc.toolsets = [...acc.toolsets, toolset];
+          } else if (isCodeInterpreterToolset(toolset)) {
+            acc.isCodeInterpreter = true;
           }
 
           return acc;
         },
-        { agents: [], toolsets: [] },
+        { agents: [], toolsets: [], isCodeInterpreter: false },
       ),
     [config.tool_sets],
   );
 
   return (
     <>
+      {isCodeInterpreter && (
+        <div className="flex gap-4">
+          <span className="w-[122px] text-secondary">
+            {t('Code Interpreter: ')}
+          </span>
+          <span className="max-w-[414px] break-all text-primary">
+            {t(isCodeInterpreter ? 'On' : 'Off')}
+          </span>
+        </div>
+      )}
       {modelsMap[config.orchestrator.deployment.name] && (
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Model: ')}</span>
