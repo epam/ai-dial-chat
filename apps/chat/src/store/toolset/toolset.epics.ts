@@ -244,6 +244,9 @@ const updateToolsetEpic: AppEpic = (action$) =>
                 switchMap((updatedToolset) => {
                   return concat(
                     of(
+                      ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings),
+                    ),
+                    of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
                         newToolset: updatedToolset,
