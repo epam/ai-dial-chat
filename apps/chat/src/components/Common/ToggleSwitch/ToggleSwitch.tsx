@@ -22,6 +22,7 @@ export function ToggleSwitch({
   isOn,
   switchOnText,
   switchOFFText,
+  className,
   handleSwitch,
 }: ToggleSwitchProps) {
   const switchText = isOn ? switchOnText : switchOFFText;
@@ -31,7 +32,7 @@ export function ToggleSwitch({
   );
 
   return (
-    <div data-qa="toggle-switch">
+    <div data-qa="toggle-switch" className={className}>
       <input
         type="checkbox"
         onChange={handleSwitch}
