@@ -17,7 +17,6 @@ import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace'
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
-import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -51,24 +50,27 @@ import {
 } from './AgentAndToolsetSelectItem';
 
 interface EntityTypeTabsProps {
-  currentType: EntityType;
-  setType: (type: EntityType) => void;
+  currentType: MarketplaceEntitiesTabs;
+  setType: (type: MarketplaceEntitiesTabs) => void;
 }
 
 function EntityTypeTabs({ currentType, setType }: EntityTypeTabsProps) {
-  const { t } = useTranslation(Translation.Common);
+  const { t } = useTranslation(Translation.Chat);
+
   return (
     <div className="flex gap-2">
       <TabButton
-        selected={currentType === EntityType.Application}
-        onClick={() => setType(EntityType.Application)}
+        tabKey={MarketplaceEntitiesTabs.AGENTS}
+        selected={currentType === MarketplaceEntitiesTabs.AGENTS}
+        onClick={setType}
         dataQA="entity-type-agents"
       >
         {t('Agents')}
       </TabButton>
       <TabButton
-        selected={currentType === EntityType.Toolset}
-        onClick={() => setType(EntityType.Toolset)}
+        tabKey={MarketplaceEntitiesTabs.TOOLSETS}
+        selected={currentType === MarketplaceEntitiesTabs.TOOLSETS}
+        onClick={setType}
         dataQA="entity-type-toolsets"
       >
         {t('Toolsets')}
@@ -91,13 +93,16 @@ function ScopeTabButton({
   currentTab,
   textMap,
 }: ScopeTabButtonProps) {
-  const { t } = useTranslation(Translation.Marketplace);
-  const buttonText = textMap[tab] || tab.toString();
+  const { t } = useTranslation(Translation.Chat);
+
+  const buttonText = textMap[tab] || tab;
+
   return (
     <TabButton
+      tabKey={tab}
       selected={currentTab === tab}
-      onClick={() => setTab(tab)}
-      dataQA={tab.toString()}
+      onClick={setTab}
+      dataQA={tab}
     >
       {t(buttonText)}
     </TabButton>
@@ -116,14 +121,15 @@ const AgentAndToolsetModalView = ({
   defaultSelectedItems,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  const [entityType, setEntityType] = useState<EntityType>(
-    EntityType.Application,
+  const [entityType, setEntityType] = useState<MarketplaceEntitiesTabs>(
+    MarketplaceEntitiesTabs.AGENTS,
   );
   const [scopeTab, setScopeTab] = useState<
     MarketplaceTabs | MarketplaceEntitiesTabs
@@ -163,7 +169,7 @@ const AgentAndToolsetModalView = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   useEffect(() => {
-    if (entityType === EntityType.Application) {
+    if (entityType === MarketplaceEntitiesTabs.AGENTS) {
       setScopeTab(MarketplaceTabs.MY_WORKSPACE);
     } else {
       setScopeTab(MarketplaceEntitiesTabs.AGENTS);
@@ -224,7 +230,7 @@ const AgentAndToolsetModalView = ({
       searchedToolsets,
     ).map(({ entities }) => sortItemsVersions(entities)[0]);
 
-    if (entityType === EntityType.Application) {
+    if (entityType === MarketplaceEntitiesTabs.AGENTS) {
       if (isMyWorkspaceView) {
         return groupedAndOrderedAgents.filter((item) =>
           isInstalledEntity(item, installedAgentsSet),
@@ -286,7 +292,7 @@ const AgentAndToolsetModalView = ({
               />
             </div>
             <div className="flex gap-2">
-              {entityType === EntityType.Application ? (
+              {entityType === MarketplaceEntitiesTabs.AGENTS ? (
                 <div className="flex gap-2">
                   <ScopeTabButton
                     tab={MarketplaceTabs.MY_WORKSPACE}
