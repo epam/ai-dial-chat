@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { useRouter } from 'next/router';
-
 import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -113,8 +111,6 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
     ? CONFIRM_DOCUMENT_VALUES
     : undefined;
 
-  const router = useRouter();
-
   const handleSubmit = useCallback(
     (data: QuickAppFormData2) => {
       const hasChanged = !isEqual(data, lastSubmittedValuesRef.current);
@@ -211,7 +207,6 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
     exitAfterSave,
     isFormValid,
     shouldSaveApplication,
-    router,
     t,
   ]);
 
