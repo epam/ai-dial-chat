@@ -309,7 +309,7 @@ export const getQuickAppDefaultValues2 = ({
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     instructions: appProperties.orchestrator.system_prompt.content ?? '',
     temperature:
-      appProperties.orchestrator.deployment.parameters.temperature ??
+      appProperties.orchestrator.deployment.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
     agentsAndToolsets: [
       ...agentToolsets.map((agentToolset) => agentToolset.deployment.name),
@@ -468,7 +468,19 @@ export const getQuickAppData2 = (
           function: {
             parameters: {
               type: 'object',
-              properties: {},
+              properties: {
+                query: {
+                  type: 'string',
+                  description: '',
+                  display: {
+                    stage: {
+                      show_value_in_stage_title: true,
+                      name: '**Prompt:** ',
+                    },
+                  },
+                },
+              },
+              required: ['query'],
             },
             description: entity.description,
             name: entity.name,

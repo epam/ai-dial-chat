@@ -1,8 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
-// Import other types if needed
 import { Toast } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
 
 export class ToastAssertion extends BaseAssertion {
   readonly toast: Toast;
@@ -13,18 +11,19 @@ export class ToastAssertion extends BaseAssertion {
   }
 
   public async assertToastIsVisible() {
-    await expect
-      .soft(this.toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
-      .toBeVisible();
+    await this.assertElementState(
+      this.toast,
+      'visible',
+      ExpectedMessages.errorToastIsShown,
+    );
   }
 
   public async assertToastIsHidden() {
-    await expect
-      .soft(
-        this.toast.getElementLocator(),
-        ExpectedMessages.noErrorToastIsShown,
-      )
-      .toBeHidden();
+    await this.assertElementState(
+      this.toast,
+      'hidden',
+      ExpectedMessages.noErrorToastIsShown,
+    );
   }
 
   public async assertToastMessage(
