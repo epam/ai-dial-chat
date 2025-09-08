@@ -42,6 +42,7 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
+import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 
 import { QuickAppFormData2, getQuickAppData2 } from '../form';
 
@@ -53,6 +54,7 @@ const AgentAndToolsetSelectorField = withErrorMessage(
   withLabel(AgentAndToolsetSelector),
 );
 const Slider = withLabel(TemperatureSlider, true);
+const ToggleSwitchField = withLabel(ToggleSwitch);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 
 const myFilesFilter = new Set([FileSourceType.MY_FILES]);
@@ -286,6 +288,21 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
           id="instructions"
           disabled={isAppPublic}
           tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+        />
+
+        <Controller
+          name="codeInterpreter"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              label={t('Code Interpreter')}
+              isOn={field.value}
+              handleSwitch={field.onChange}
+              switchOnText={t('ON')}
+              switchOFFText={t('OFF')}
+              className="flex"
+            />
+          )}
         />
 
         <Controller
