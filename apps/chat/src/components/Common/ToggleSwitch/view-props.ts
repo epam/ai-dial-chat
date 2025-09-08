@@ -3,4 +3,5 @@ export interface ToggleSwitchProps {
   handleSwitch: () => void;
   switchOnText?: string | null;
   switchOFFText?: string | null;
+  className?: string;
 }
