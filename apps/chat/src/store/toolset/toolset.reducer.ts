@@ -100,6 +100,7 @@ export const toolsetSlice = createSlice({
       }: PayloadAction<{
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
+        tabToOpen?: ToolsetEditorSteps;
         auth?: {
           apiKey?: string;
         };
