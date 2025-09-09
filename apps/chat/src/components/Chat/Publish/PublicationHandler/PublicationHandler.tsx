@@ -44,14 +44,12 @@ import { PublishToSection } from '../PublishToSection';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
+import { ApplicationPublicationResources } from './PublicationReviewResources/ApplicationPublicationResources';
+import { ConversationPublicationResources } from './PublicationReviewResources/ConversationPublicationResources';
+import { FilePublicationResources } from './PublicationReviewResources/FilePublicationResources';
+import { PromptPublicationResources } from './PublicationReviewResources/PromptPublicationResources';
+import { ToolsetPublicationResources } from './PublicationReviewResources/ToolsetPublicationResources';
 import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
-import {
-  ApplicationPublicationResources,
-  ConversationPublicationResources,
-  FilePublicationResources,
-  PromptPublicationResources,
-  ToolsetPublicationResources,
-} from './ReviewResources';
 import { ReviewToolsetDialog } from './ReviewToolset/ReviewToolsetDialog';
 
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -301,6 +299,10 @@ export function PublicationHandler({ publication }: Props) {
     [dispatch, displayAuthorEditState.length],
   );
 
+  const handleCloseCompareModal = useCallback(() => {
+    setIsCompareModalOpened(false);
+  }, []);
+
   const publishToUrl = editedPublishToUrl
     ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
     : '';
@@ -528,7 +530,7 @@ export function PublicationHandler({ publication }: Props) {
           allRuleEntries={filteredRuleEntries}
           newRulesToCompare={newRules}
           oldRulesToCompare={rules[publication.targetFolder]}
-          onClose={() => setIsCompareModalOpened(false)}
+          onClose={handleCloseCompareModal}
           newRulesPath={publication.targetFolder}
         />
       )}
