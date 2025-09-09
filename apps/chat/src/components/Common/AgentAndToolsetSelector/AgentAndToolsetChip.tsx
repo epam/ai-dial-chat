@@ -18,7 +18,7 @@ import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 interface AgentAndToolsetChipProps {
   id: string;
   item?: MarketplaceEntity;
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   readonly?: boolean;
 }
 
@@ -55,7 +55,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
           )}
           onClick={(e) => {
             e.stopPropagation();
-            onRemove(id);
+            onRemove?.(id);
           }}
         >
           <IconX size={14} />
