@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 
 import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -49,13 +49,16 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(ToolsetActions.getToolsetDetails({ id: toolset.id }));
+      dispatch(ToolsetActions.setToolsetDetails());
       void router.push({
         pathname: Routes.ToolsetEditor,
-        query: { [ToolsetEditorQuery.Id]: toolset.reference },
+        query: {
+          [ToolsetEditorQuery.Id]: toolset.reference,
+          [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
+        },
       });
     },
-    [dispatch, router, toolset.id, toolset.reference],
+    [dispatch, router, toolset.reference],
   );
 
   const handlePublish = useCallback((e: React.MouseEvent) => {
@@ -96,6 +99,15 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, toolset],
   );
 
+  const handleLogin = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(MarketplaceActions.setLoginEntity(toolset));
+    },
+    [dispatch, toolset],
+  );
+
   return {
     handleCopy,
     handleEdit,
@@ -104,5 +116,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     handleDelete,
     handleOpenSharing,
     handleOpenUnshare,
+    handleLogin,
   };
 };

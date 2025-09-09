@@ -1,10 +1,10 @@
 import {
   IconEye,
   IconLink,
+  IconLogin,
+  IconLogout,
   IconPencilMinus,
   IconTrashX,
-  IconUserShare,
-  IconWorldShare,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
@@ -16,17 +16,16 @@ import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { AuthSelectors, SettingsSelectors } from '@/src/store/selectors';
+import { AuthSelectors } from '@/src/store/selectors';
 
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
-import { Feature } from '@epam/ai-dial-shared';
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ToolsetModel;
@@ -38,6 +37,7 @@ interface Props {
     publish?: boolean;
     unpublish?: boolean;
     delete?: boolean;
+    login?: boolean;
   };
   isPreview?: boolean;
   triggerIconSize?: number;
@@ -50,19 +50,20 @@ export const useToolsetMenuItems = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const isApplicationsSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
-  );
+  // const isApplicationsSharingEnabled = useAppSelector((state) =>
+  //   SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  // );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const {
     handleCopy,
     handleDelete,
     handleEdit,
-    handleOpenSharing,
-    handleOpenUnshare,
-    handlePublish,
-    handleUnpublish,
+    handleLogin,
+    // handleOpenSharing,
+    // handleOpenUnshare,
+    // handlePublish,
+    // handleUnpublish,
   } = useToolsetMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -71,6 +72,9 @@ export const useToolsetMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
+  const isSignedIn = isToolsetSignedIn(entity);
+  const isWithAuth =
+    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
 
   const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
 
@@ -91,39 +95,46 @@ export const useToolsetMenuItems = ({
         onClick: handleEdit,
       },
       {
-        name: t('Share'),
-        dataQa: 'share',
-        display:
-          isMyApp &&
-          isApplicationsSharingEnabled &&
-          disabledActions.share !== true,
-        Icon: IconUserShare,
-        onClick: handleOpenSharing,
+        name: t(isSignedIn ? 'Log out' : 'Log in'),
+        dataQa: 'toolset-login',
+        display: canEditOrView && disabledActions.login !== true && isWithAuth,
+        Icon: isSignedIn ? IconLogout : IconLogin,
+        onClick: handleLogin,
       },
-      {
-        name: t('Unshare'),
-        dataQa: 'unshare',
-        display:
-          !!entity.sharedWithMe &&
-          isApplicationsSharingEnabled &&
-          disabledActions.unshare !== true,
-        Icon: IconUserUnshare,
-        onClick: handleOpenUnshare,
-      },
-      {
-        name: t('Publish'),
-        dataQa: 'publish',
-        display: isMyAppOrPreview && disabledActions.publish !== true,
-        Icon: IconWorldShare,
-        onClick: handlePublish,
-      },
-      {
-        name: t('Unpublish'),
-        dataQa: 'unpublish',
-        display: isAppIdPublic && disabledActions.unpublish !== true,
-        Icon: UnpublishIcon,
-        onClick: handleUnpublish,
-      },
+      // {
+      //   name: t('Share'),
+      //   dataQa: 'share',
+      //   display:
+      //     isMyApp &&
+      //     isApplicationsSharingEnabled &&
+      //     disabledActions.share !== true,
+      //   Icon: IconUserShare,
+      //   onClick: handleOpenSharing,
+      // },
+      // {
+      //   name: t('Unshare'),
+      //   dataQa: 'unshare',
+      //   display:
+      //     !!entity.sharedWithMe &&
+      //     isApplicationsSharingEnabled &&
+      //     disabledActions.unshare !== true,
+      //   Icon: IconUserUnshare,
+      //   onClick: handleOpenUnshare,
+      // },
+      // {
+      //   name: t('Publish'),
+      //   dataQa: 'publish',
+      //   display: isMyAppOrPreview && disabledActions.publish !== true,
+      //   Icon: IconWorldShare,
+      //   onClick: handlePublish,
+      // },
+      // {
+      //   name: t('Unpublish'),
+      //   dataQa: 'unpublish',
+      //   display: isAppIdPublic && disabledActions.unpublish !== true,
+      //   Icon: UnpublishIcon,
+      //   onClick: handleUnpublish,
+      // },
       {
         name: t('Delete'),
         dataQa: 'delete',
@@ -138,23 +149,16 @@ export const useToolsetMenuItems = ({
       isPublicApp,
       disabledActions.copyLink,
       disabledActions.edit,
-      disabledActions.share,
-      disabledActions.unshare,
-      disabledActions.publish,
-      disabledActions.unpublish,
+      disabledActions.login,
       disabledActions.delete,
       handleCopy,
       isAppIdPublic,
       canEditOrView,
       handleEdit,
-      isMyApp,
-      isApplicationsSharingEnabled,
-      handleOpenSharing,
-      entity.sharedWithMe,
-      handleOpenUnshare,
+      isSignedIn,
+      isWithAuth,
+      handleLogin,
       isMyAppOrPreview,
-      handlePublish,
-      handleUnpublish,
       handleDelete,
     ],
   );

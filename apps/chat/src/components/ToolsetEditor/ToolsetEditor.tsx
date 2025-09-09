@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -20,18 +20,19 @@ import {
   getDefaultFormData,
 } from '@/src/components/ToolsetEditor/form';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
+
   const router = useRouter();
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
 
-  const [editorStep, setEditorStep] = useState(
-    toolsetDetails ? ToolsetEditorSteps.Settings : ToolsetEditorSteps.General,
-  );
+  const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -60,6 +61,10 @@ export const ToolsetEditor = () => {
         version: data.version,
         authSettings: {
           ...(toolsetDetails?.authSettings && toolsetDetails?.authSettings),
+          ...(data.authenticationType === ToolsetAuthTypes.API_KEY && {
+            apiKeyHeader:
+              toolsetDetails?.authSettings?.apiKeyHeader ?? 'api_key',
+          }),
           authenticationType: data.authenticationType,
         },
       };
@@ -69,6 +74,7 @@ export const ToolsetEditor = () => {
           ToolsetActions.updateToolset({
             oldToolset: toolsetDetails,
             newToolset: payloadToolset,
+            tabToOpen: changeEditorTabRef.current ?? undefined,
           }),
         );
       } else {
@@ -78,6 +84,8 @@ export const ToolsetEditor = () => {
           }),
         );
       }
+
+      changeEditorTabRef.current = null;
       formMethods.reset(getDefaultFormData(payloadToolset));
     },
     [dispatch, formMethods, toolsetDetails],
@@ -86,18 +94,22 @@ export const ToolsetEditor = () => {
   const handleSubmit = useCallback(
     (cb?: () => void) => {
       formMethods.trigger().then((isValid) => {
-        if (!isValid) return;
+        if (!isValid) {
+          changeEditorTabRef.current = null;
+          return;
+        }
 
         if (isDirty || !toolsetDetails) {
           void formMethods
             .handleSubmit(submitHandler)()
             .then(() => cb?.());
         } else {
+          changeEditorTabRef.current = null;
           cb?.();
         }
       });
     },
-    [formMethods, isDirty, toolsetDetails, submitHandler],
+    [formMethods, isDirty, submitHandler, toolsetDetails],
   );
 
   const handleSaveAndExit = useCallback(() => {
@@ -111,14 +123,30 @@ export const ToolsetEditor = () => {
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
       if (tab === editorStep) return;
-      handleSubmit(() => setEditorStep(tab));
+      if (!isDirty && toolsetDetails) {
+        handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)));
+      } else {
+        changeEditorTabRef.current = tab;
+        handleSubmit();
+      }
     },
-    [editorStep, handleSubmit],
+    [editorStep, isDirty, toolsetDetails, handleSubmit, dispatch],
   );
 
-  const handleNextClick = useCallback(() => {
-    handleSubmit(() => setEditorStep(ToolsetEditorSteps.Settings));
-  }, [handleSubmit]);
+  const handleNextClick = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!isDirty && toolsetDetails) {
+        handleSubmit(() =>
+          dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings)),
+        );
+      } else {
+        changeEditorTabRef.current = ToolsetEditorSteps.Settings;
+        handleSubmit();
+      }
+    },
+    [dispatch, handleSubmit, isDirty, toolsetDetails],
+  );
 
   return (
     <FormProvider {...formMethods}>

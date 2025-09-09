@@ -141,7 +141,7 @@ dialTest(
           );
         }
         await agentDetailsModal.closeButton.click();
-        cardCopiedLink = await marketplacePage.readFromClipboard();
+        cardCopiedLink = await marketplacePage.readTextFromClipboard();
       },
     );
 
@@ -159,7 +159,7 @@ dialTest(
           ExpectedConstants.copiedToastMessage,
         );
         await toast.closeToast();
-        dotsMenuCopiedLink = await marketplacePage.readFromClipboard();
+        dotsMenuCopiedLink = await marketplacePage.readTextFromClipboard();
       },
     );
 

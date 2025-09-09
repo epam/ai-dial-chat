@@ -32,6 +32,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { RadioButton } from '@/src/components/Common/Forms/RadioButton';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
 import {
   ToolsetEditorForm,
@@ -100,66 +101,72 @@ const AuthTypeSection = ({
   }, [isSignedIn, onClick, type]);
 
   return (
-    <div className="overflow-hidden rounded bg-layer-3">
-      <div
-        onClick={handleOnClick}
-        className={classNames(
-          'flex gap-3 border-l p-4',
-          isSelected ? 'border-accent-primary' : 'border-transparent',
-          !isSelected && !isSignedIn && 'cursor-pointer',
-        )}
-      >
-        <Icon
-          size={18}
+    <Tooltip
+      hideTooltip={!isSignedIn || isSelected}
+      tooltip={t('Log out before changing authentication type')}
+      triggerClassName="w-full"
+    >
+      <div className="overflow-hidden rounded bg-layer-3">
+        <div
+          onClick={handleOnClick}
           className={classNames(
-            isSelected ? 'text-accent-primary' : 'text-secondary',
-          )}
-        />
-
-        <span
-          className={classNames(
-            'text-sm font-semibold',
-            isSelected ? 'text-accent-primary' : 'text-primary',
+            'flex gap-3 border-l p-4',
+            isSelected ? 'border-accent-primary' : 'border-transparent',
+            !isSelected && !isSignedIn && 'cursor-pointer',
           )}
         >
-          {name}
-        </span>
-      </div>
+          <Icon
+            size={18}
+            className={classNames(
+              isSelected ? 'text-accent-primary' : 'text-secondary',
+            )}
+          />
 
-      {isSelected && type !== ToolsetAuthTypes.NONE && (
-        <div className="grid grid-cols-2 border-t border-tertiary">
-          <div className="flex flex-col gap-4 p-4">
-            <RadioButton
-              id={WithLogin.WithLogin}
-              name="with-auth"
-              caption={t(WithLogin.WithLogin)}
-              onChange={handleWithLoginChange}
-              value={WithLogin.WithLogin}
-              checked={isWithLogin}
-            />
-
-            <ToolsetLoginForm
-              onLogin={onLogin}
-              type={type}
-              toolset={toolsetDetails}
-              disabled={!isWithLogin}
-              onLogout={onLogout}
-            />
-          </div>
-          <div className="p-4">
-            <RadioButton
-              id={WithLogin.WithoutLogin}
-              name="with-auth"
-              caption={t(WithLogin.WithoutLogin)}
-              onChange={handleWithLoginChange}
-              value={WithLogin.WithoutLogin}
-              checked={!isWithLogin}
-              disabled={isSignedIn}
-            />
-          </div>
+          <span
+            className={classNames(
+              'text-sm font-semibold',
+              isSelected ? 'text-accent-primary' : 'text-primary',
+            )}
+          >
+            {name}
+          </span>
         </div>
-      )}
-    </div>
+
+        {isSelected && type !== ToolsetAuthTypes.NONE && (
+          <div className="grid grid-cols-2 border-t border-tertiary">
+            <div className="flex flex-col gap-4 p-4">
+              <RadioButton
+                id={WithLogin.WithLogin}
+                name="with-auth"
+                caption={t(WithLogin.WithLogin)}
+                onChange={handleWithLoginChange}
+                value={WithLogin.WithLogin}
+                checked={isWithLogin}
+              />
+
+              <ToolsetLoginForm
+                onLogin={onLogin}
+                type={type}
+                toolset={toolsetDetails}
+                disabled={!isWithLogin}
+                onLogout={onLogout}
+              />
+            </div>
+            <div className="p-4">
+              <RadioButton
+                id={WithLogin.WithoutLogin}
+                name="with-auth"
+                caption={t(WithLogin.WithoutLogin)}
+                onChange={handleWithLoginChange}
+                value={WithLogin.WithoutLogin}
+                checked={!isWithLogin}
+                disabled={isSignedIn}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </Tooltip>
   );
 };
 

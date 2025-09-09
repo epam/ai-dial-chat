@@ -79,7 +79,10 @@ import {
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { DeleteType } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
@@ -983,13 +986,14 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               state$.value,
             );
 
-            const acceptedApplicationReference =
-              acceptedId && modelsMap[acceptedId]?.reference;
+            const acceptedApplication =
+              (acceptedId && modelsMap[acceptedId]) || undefined;
 
-            if (acceptedApplicationReference) {
+            if (acceptedApplication) {
               updateSharedActions.push(
-                MarketplaceActions.setDetailsModel({
-                  reference: acceptedApplicationReference,
+                MarketplaceActions.setDetailsEntity({
+                  reference: acceptedApplication.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
                   isSuggested: false,
                 }),
               );
@@ -1293,7 +1297,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             EMPTY,
           ),
 
-          of(MarketplaceActions.setDetailsModel()),
+          of(MarketplaceActions.setDetailsEntity()),
         );
       }
 
