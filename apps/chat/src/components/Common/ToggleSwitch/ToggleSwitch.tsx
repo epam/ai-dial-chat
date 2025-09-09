@@ -30,8 +30,9 @@ export function ToggleSwitch({
 }: ToggleSwitchProps) {
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
-    'flex min-w-[50px] shrink-0 cursor-pointer items-center gap-1 rounded-full p-1.5 transition-all duration-200',
+    'flex min-w-[50px] shrink-0 items-center gap-1 rounded-full p-1.5 transition-all duration-200',
     isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-4',
+    disabled ? 'cursor-not-allowed' : 'cursor-pointer',
   );
 
   return (

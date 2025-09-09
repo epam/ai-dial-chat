@@ -99,7 +99,8 @@ export const AgentAndToolsetSelector: React.FC<
                 <AgentAndToolsetChip
                   key={item.id}
                   item={item}
-                  onRemove={handleRemoveItem}
+                  onRemove={readonly ? undefined : handleRemoveItem}
+                  readonly={readonly}
                 />
               ))}
             </div>

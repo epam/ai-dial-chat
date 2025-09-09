@@ -1,6 +1,8 @@
 import { IconX } from '@tabler/icons-react';
 import React from 'react';
 
+import classNames from 'classnames';
+
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -51,7 +53,10 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   return (
     <Tooltip
       isTriggerClickable
-      triggerClassName="flex h-[34px] cursor-pointer items-center gap-2 rounded bg-accent-primary-alpha px-2 py-1.5 text-primary"
+      triggerClassName={classNames(
+        'flex h-[34px] items-center gap-2 rounded bg-accent-primary-alpha px-2 py-1.5 text-primary',
+        readonly ? 'cursor-default' : 'cursor-pointer',
+      )}
       tooltip={<AgentTooltipContent item={item} />}
     >
       <ModelIcon entityId={item.id} entity={item} size={18} />

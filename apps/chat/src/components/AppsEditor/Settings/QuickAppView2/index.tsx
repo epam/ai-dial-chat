@@ -295,7 +295,7 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
               handleSwitch={field.onChange}
               switchOnText={t('ON')}
               switchOFFText={t('OFF')}
-              className="flex"
+              className="flex w-fit"
               disabled={isAppPublic}
               tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             />
