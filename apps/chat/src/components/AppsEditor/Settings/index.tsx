@@ -437,15 +437,17 @@ export const ApplicationSettings: React.FC<Props> = ({
     <div className="flex size-full flex-col">
       <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
         <TabButton
+          tabKey={PreviewMode.closed}
           selected={!isPreviewFull}
-          onClick={() => handlePreviewModeChange(PreviewMode.closed)}
+          onClick={handlePreviewModeChange}
           className="w-full"
         >
           {t('Settings')}
         </TabButton>
         <TabButton
+          tabKey={PreviewMode.full}
           selected={isPreviewFull}
-          onClick={() => handlePreviewModeChange(PreviewMode.full)}
+          onClick={handlePreviewModeChange}
           className="w-full"
         >
           {t('Preview')}

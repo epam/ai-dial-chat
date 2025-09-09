@@ -44,8 +44,11 @@ export const ChatMessageTemplatesModal = ({
   conversation,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
   const showMore = message.content.length > MAX_SHORT_MESSAGE_LENGTH;
+
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
   const [templates, setTemplates] = useState<TemplateMapping[]>([
