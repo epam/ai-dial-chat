@@ -118,12 +118,9 @@ export const ToolsetEditor = () => {
 
   const handleSaveAndExit = useCallback(() => {
     if ((!isDirty && toolsetDetails) || !toolsetDetails) {
-      if (router.query.publicationUrl) {
-        void router.push(Routes.Chat);
-      } else {
-        void router.push(Routes.Marketplace);
-      }
-
+      void router.push(
+        router.query.publicationUrl ? Routes.Chat : Routes.Marketplace,
+      );
       return;
     }
 
