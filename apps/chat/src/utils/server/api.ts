@@ -301,6 +301,20 @@ export const getModelIdWithoutVersion = (id: string) => {
   return name;
 };
 
+export const getEntityNameFromId = (id: string): string => {
+  const versionSeparatorIndex = id.lastIndexOf(pathKeySeparator);
+  let baseId = id;
+  if (versionSeparatorIndex !== -1) {
+    baseId = id.substring(0, versionSeparatorIndex);
+  }
+
+  const pathSeparatorIndex = baseId.lastIndexOf('/');
+  if (pathSeparatorIndex !== -1) {
+    return baseId.substring(pathSeparatorIndex + 1);
+  }
+  return baseId;
+};
+
 export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
   if (version === NA_VERSION) {
     return id;
