@@ -40,31 +40,33 @@ const AgentTooltipContent = ({ item }: { item: MarketplaceEntity }) => {
 
 interface AgentAndToolsetChipProps {
   item: MarketplaceEntity;
-  onRemove: (id: string) => void;
   readonly?: boolean;
+  onRemove?: (id: string) => void;
 }
 export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   item,
-  onRemove,
   readonly,
+  onRemove,
 }) => {
   return (
-    <Tooltip isTriggerClickable tooltip={<AgentTooltipContent item={item} />}>
-      <div className="flex h-[34px] cursor-pointer items-center gap-2 rounded bg-accent-primary-alpha px-2 py-1.5 text-primary">
-        <ModelIcon entityId={item.id} entity={item} size={18} />
-        <span className="max-w-[200px] truncate">{item.name}</span>
-        {!readonly && (
-          <button
-            className="text-secondary hover:text-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(item.id);
-            }}
-          >
-            <IconX size={14} />
-          </button>
-        )}
-      </div>
+    <Tooltip
+      isTriggerClickable
+      triggerClassName="flex h-[34px] cursor-pointer items-center gap-2 rounded bg-accent-primary-alpha px-2 py-1.5 text-primary"
+      tooltip={<AgentTooltipContent item={item} />}
+    >
+      <ModelIcon entityId={item.id} entity={item} size={18} />
+      <span className="max-w-[200px] truncate">{item.name}</span>
+      {!readonly && (
+        <button
+          className="text-secondary hover:text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove?.(item.id);
+          }}
+        >
+          <IconX size={14} />
+        </button>
+      )}
     </Tooltip>
   );
 };

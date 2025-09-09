@@ -44,7 +44,15 @@ export interface MCPToolset {
   description?: string;
 }
 
-export type AnyToolset = DialDeploymentToolset | MCPToolset;
+export interface CodeInterpreterToolset {
+  template_name: 'py_interpreter';
+  type: ToolsetTypes.CodeInterpreter;
+}
+
+export type AnyToolset =
+  | DialDeploymentToolset
+  | MCPToolset
+  | CodeInterpreterToolset;
 
 export interface QuickApp2Config {
   orchestrator: {
@@ -72,4 +80,10 @@ export function isDialDeploymentToolset(
 
 export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
   return toolset.type === ToolsetTypes.DialMcp;
+}
+
+export function isCodeInterpreterToolset(
+  toolset: AnyToolset,
+): toolset is CodeInterpreterToolset {
+  return toolset.type === ToolsetTypes.CodeInterpreter;
 }
