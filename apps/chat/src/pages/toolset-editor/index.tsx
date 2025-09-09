@@ -1,16 +1,18 @@
+import { getSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 
 import { useToolsetEditorValidation } from '@/src/hooks/useToolsetEditorValidation';
 
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
+import { canUserUseFeature } from '@/src/utils/session';
 
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors, ToolsetSelectors } from '@/src/store/selectors';
+import { ToolsetSelectors } from '@/src/store/selectors';
 
-import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { getLayout } from '@/src/pages/_app';
@@ -33,9 +35,7 @@ function ToolsetEditorPage() {
     ToolsetSelectors.selectAreToolsetsLoaded,
   );
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const areToolsetsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.Toolsets),
-  );
+
   const { [ToolsetEditorQuery.Id]: toolsetIdQuery } = router.query;
   const toolsetId = toolsetIdQuery?.toString();
 
@@ -45,12 +45,6 @@ function ToolsetEditorPage() {
       (toolsetDetailsStatus === UploadStatus.LOADING ||
         toolsetDetailsStatus === UploadStatus.UNINITIALIZED)) ||
     !areToolsetsLoaded;
-
-  useEffect(() => {
-    if (!areToolsetsEnabled) {
-      void router.push(Routes.Chat);
-    }
-  }, [areToolsetsEnabled, router]);
 
   useEffect(() => {
     dispatch(ToolsetActions.initQueryParams());
@@ -74,4 +68,17 @@ ToolsetEditorPage.getLayout = getLayout;
 
 export default ToolsetEditorPage;
 
-export const getServerSideProps = getCommonPageProps;
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const session = await getSession(context);
+  const canCreateToolsets = canUserUseFeature(session, Feature.Toolsets);
+
+  const id = context.query[ToolsetEditorQuery.Id];
+
+  if (!id && !canCreateToolsets) {
+    return {
+      notFound: true,
+    };
+  }
+
+  return getCommonPageProps(context);
+};
