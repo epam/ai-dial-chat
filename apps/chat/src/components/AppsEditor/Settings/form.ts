@@ -90,6 +90,7 @@ export interface QuickAppFormData2 extends ApplicationGeneralInfo {
   documentRelativeUrl?: string[];
   model: string;
   agentsAndToolsets: string[];
+  codeInterpreter: boolean;
 }
 
 export interface CodeAppFormData extends ApplicationGeneralInfo {
@@ -315,6 +316,9 @@ export const getQuickAppDefaultValues2 = ({
       ...agentToolsets.map((agentToolset) => agentToolset.deployment.name),
       ...mcpToolsets.map((mcpToolset) => mcpToolset.dial_id),
     ],
+    codeInterpreter: appProperties.tool_sets.some(
+      (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
+    ),
   };
 };
 
@@ -528,6 +532,14 @@ export const getQuickAppData2 = (
           type: ToolsetTypes.DialDeployment,
           tools: [...dialDeploymentsToolsets],
         },
+        ...(formData.codeInterpreter
+          ? [
+              {
+                template_name: 'py_interpreter',
+                type: ToolsetTypes.CodeInterpreter,
+              },
+            ]
+          : []),
       ],
     },
     completionUrl: constructPath(
