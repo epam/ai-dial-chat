@@ -117,14 +117,19 @@ export const ToolsetEditor = () => {
   );
 
   const handleSaveAndExit = useCallback(() => {
-    if (!toolsetDetails) {
-      void router.push(Routes.Marketplace);
+    if ((!isDirty && toolsetDetails) || !toolsetDetails) {
+      if (router.query.publicationUrl) {
+        void router.push(Routes.Chat);
+      } else {
+        void router.push(Routes.Marketplace);
+      }
+
       return;
     }
 
     saveAndExitRef.current = true;
     handleSubmit();
-  }, [handleSubmit, router, toolsetDetails]);
+  }, [handleSubmit, isDirty, router, toolsetDetails]);
 
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
