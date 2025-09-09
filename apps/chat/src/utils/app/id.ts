@@ -9,6 +9,8 @@ import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
 import { EnumMapper } from './mappers';
 
+export const pathKeySeparator = '__';
+
 export const getRootId = ({
   featureType,
   id,
@@ -120,4 +122,17 @@ export const areEntitiesBucketsTheSame = (
   secondId: string,
 ) => {
   return getEntityBucket({ id: firstId }) === getEntityBucket({ id: secondId });
+};
+
+export const getEntityNameFromId = (
+  id: string,
+  options?: { removeVersion?: boolean },
+): string => {
+  const name = id.split('/').at(-1) ?? id;
+
+  if (options?.removeVersion) {
+    return name.split(pathKeySeparator).at(0) ?? name;
+  }
+
+  return name;
 };

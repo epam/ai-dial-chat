@@ -5,7 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getEntityNameFromId, getVersionFromId } from '@/src/utils/server/api';
+import { getEntityNameFromId } from '@/src/utils/app/id';
+import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
