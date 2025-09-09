@@ -296,6 +296,8 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
               switchOnText={t('ON')}
               switchOFFText={t('OFF')}
               className="flex"
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
             />
           )}
         />

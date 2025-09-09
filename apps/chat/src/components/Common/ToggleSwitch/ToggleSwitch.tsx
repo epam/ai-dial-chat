@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 
+import { Tooltip } from '../Tooltip';
 import { ToggleSwitchProps } from './view-props';
 
 interface SwitchStateTextProps {
@@ -23,6 +24,8 @@ export function ToggleSwitch({
   switchOnText,
   switchOFFText,
   className,
+  tooltip,
+  disabled,
   handleSwitch,
 }: ToggleSwitchProps) {
   const switchText = isOn ? switchOnText : switchOFFText;
@@ -32,18 +35,23 @@ export function ToggleSwitch({
   );
 
   return (
-    <div data-qa="toggle-switch" className={className}>
-      <input
-        type="checkbox"
-        onChange={handleSwitch}
-        id="toggle"
-        className="sr-only"
-        checked={isOn}
-      />
-      <label htmlFor="toggle" className={switchClassName}>
-        {switchText && <SwitchStateText switchText={switchText} isOn={isOn} />}
-        <span className="size-3 rounded-full bg-controls-permanent"></span>
-      </label>
-    </div>
+    <Tooltip triggerClassName={className} tooltip={tooltip}>
+      <div data-qa="toggle-switch">
+        <input
+          type="checkbox"
+          disabled={disabled}
+          onChange={handleSwitch}
+          id="toggle"
+          className="sr-only"
+          checked={isOn}
+        />
+        <label htmlFor="toggle" className={switchClassName}>
+          {switchText && (
+            <SwitchStateText switchText={switchText} isOn={isOn} />
+          )}
+          <span className="size-3 rounded-full bg-controls-permanent"></span>
+        </label>
+      </div>
+    </Tooltip>
   );
 }
