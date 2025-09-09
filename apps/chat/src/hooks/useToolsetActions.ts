@@ -81,17 +81,19 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, toolset],
   );
 
-  const handleUnpublish = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // TODO: Implement toolset unpublishing
-    // dispatch(
-    //   PublicationActions.setPublishModel({
-    //     entity,
-    //     action: PublishActions.DELETE,
-    //   }),
-    // );
-  }, []);
+  const handleUnpublish = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(
+        PublicationActions.setPublishModel({
+          entity: toolset,
+          action: PublishActions.DELETE,
+        }),
+      );
+    },
+    [dispatch, toolset],
+  );
 
   const handleDelete = useCallback(
     (e: React.MouseEvent) => {
