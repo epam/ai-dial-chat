@@ -1,4 +1,5 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { pathKeySeparator } from '@/src/utils/server/api';
 
 import { ApiKeys, FeatureType } from '@/src/types/common';
 
@@ -8,8 +9,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
 import { EnumMapper } from './mappers';
-
-export const pathKeySeparator = '__';
 
 export const getRootId = ({
   featureType,
