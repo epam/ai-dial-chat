@@ -283,6 +283,17 @@ export const ExpectedConstants = {
   publishingFilterDefaultValue: 'Select',
   publishingFilterValuePlaceholder: 'Enter one or more options...',
   dialRolesField: 'dial_roles',
+  fileUploadFolder: 'uploads',
+  fileUploadedToastMessage: (fileFolder: string) =>
+    `The file has been uploaded successfully to "${ExpectedConstants.fileUploadFolder}/${fileFolder}"`,
+  replacedRestrictedCharsName: (restrictedCharsName: string) =>
+    restrictedCharsName.replace(
+      new RegExp(
+        `[${ExpectedConstants.restrictedNameChars.replaceAll('//', '////')}]`,
+        'g',
+      ),
+      '_',
+    ),
 };
 
 export enum Types {
@@ -463,6 +474,7 @@ export const Attachment = {
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
   flowerImageName: 'flower.jpg',
+  fileToCopyName: 'image.png',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
   specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
   textName: 'text.txt',
@@ -475,6 +487,7 @@ export const Attachment = {
   dotExtensionImageName: 'testdot..JPg',
   restrictedSemicolonCharFilename: 'restricted;char.jpg',
   restrictedEqualCharFilename: 'restricted=char.jpg',
+  restrictedCharsFilename: 'restricted=,;{}%&.JPG',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',

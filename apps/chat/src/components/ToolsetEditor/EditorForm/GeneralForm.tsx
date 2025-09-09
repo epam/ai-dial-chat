@@ -1,12 +1,13 @@
 import { FormEvent, useCallback, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
-import { isMobile } from '@/src/utils/app/mobile';
 
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
@@ -29,7 +30,7 @@ const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
 interface GeneralFormProps {
-  onNextClick: () => void;
+  onNextClick: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
 export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
@@ -40,7 +41,9 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
   const isToolsetDetailsLoading = useAppSelector(
     ToolsetSelectors.selectIsToolsetDetailsLoading,
   );
-  const isMobileView = isMobile();
+
+  const screenState = useScreenState();
+  const isMobileView = screenState === ScreenState.SM;
 
   const {
     register,

@@ -21,7 +21,7 @@ export class FileUtil {
     return content.length > 0 ? JSON.parse(content) : undefined;
   }
 
-  public static readPlainFileData(path: string): Buffer | undefined {
+  public static readPlainFileData(path: string): Buffer {
     return fs.readFileSync(path);
   }
 
@@ -49,5 +49,10 @@ export class FileUtil {
         .map((file) => path.join(Import.exportPath, file))
         .filter((file) => fs.statSync(file).isFile());
     }
+  }
+
+  public static getBase64FileContent(path: string) {
+    const buffer = FileUtil.readPlainFileData(path);
+    return buffer.toString('base64');
   }
 }

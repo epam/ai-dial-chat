@@ -23,8 +23,8 @@ import {
   isReplayAsIsConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
-import { groupModelsAndSaveOrder } from '@/src/utils/app/models';
 import { PseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -49,7 +49,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { MODELS_SEARCH_OPTIONS } from '@/src/constants/search';
+import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
@@ -70,12 +70,14 @@ interface TabButtonProps {
 }
 
 function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
-  const { t } = useTranslation(Translation.Marketplace);
+  const { t } = useTranslation(Translation.Chat);
+
   return (
     <TabButton
+      tabKey={tab}
       selected={currentTab === tab}
-      onClick={() => setTab(tab)}
-      dataQA={tab.toString()}
+      onClick={setTab}
+      dataQA={tab}
     >
       {t(ChangeAgentTabs[tab])}
     </TabButton>
@@ -128,7 +130,7 @@ const TalkToModalView = ({
   const searchedModels = useFuseSearch(
     allModels,
     searchTerm,
-    MODELS_SEARCH_OPTIONS,
+    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
   useLayoutEffect(() => {
@@ -182,7 +184,7 @@ const TalkToModalView = ({
         !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
         !!searchedModels.find((m) => m.reference === entity.reference),
     );
-    const groupedModels = groupModelsAndSaveOrder(filteredModels);
+    const groupedModels = groupMarketplaceEntityAndSaveOrder(filteredModels);
     const orderedModels: CardType[] = groupedModels.map(({ entities }) => {
       const selectedEntity = entities.find(
         ({ reference }) => reference === conversation.model.id,

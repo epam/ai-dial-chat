@@ -1,7 +1,9 @@
-import { IconCircle, IconCircleDot } from '@tabler/icons-react';
+import { IconCircle } from '@tabler/icons-react';
 import { InputHTMLAttributes, useId } from 'react';
 
 import classNames from 'classnames';
+
+import IconCircleChecked from '@/public/images/icons/radio-checked.svg';
 
 interface RadioButtonProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -38,13 +40,26 @@ export const RadioButton = ({
       />
 
       <span className="hidden peer-checked:block">
-        <IconCircleDot size={18} className="text-accent-primary" />
+        <IconCircleChecked
+          width={17}
+          height={17}
+          className="text-accent-primary"
+        />
       </span>
       <span className="block peer-checked:hidden">
-        <IconCircle size={18} className="text-secondary" />
+        <IconCircle size={18} className="text-secondary" strokeWidth={1} />
       </span>
 
-      {!!caption && <span className="text-sm text-primary">{caption}</span>}
+      {!!caption && (
+        <span
+          className={classNames(
+            'text-sm',
+            rest.disabled ? 'text-secondary' : 'text-primary',
+          )}
+        >
+          {caption}
+        </span>
+      )}
     </label>
   );
 };
