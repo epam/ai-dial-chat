@@ -409,8 +409,8 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
               );
             }
 
-            const applicationResources = publication.resources.filter(
-              (r) => isApplicationId(r.targetUrl) || isToolsetId(r.targetUrl),
+            const applicationResources = publication.resources.filter((r) =>
+              isApplicationId(r.targetUrl),
             );
 
             if (applicationResources.length) {

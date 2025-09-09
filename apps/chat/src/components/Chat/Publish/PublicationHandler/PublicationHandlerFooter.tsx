@@ -51,6 +51,7 @@ import {
   ConversationsSelectors,
   PromptsSelectors,
   PublicationSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
@@ -90,6 +91,9 @@ export const PublicationHandlerFooter = ({
   );
   const applications = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
+  );
+  const toolsets = useAppSelector(
+    ToolsetSelectors.selectPublishRequestToolsets,
   );
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
@@ -145,10 +149,14 @@ export const PublicationHandlerFooter = ({
 
   const notExistEntities = useMemo(
     () =>
-      [...files, ...conversations, ...prompts, ...applications].filter(
-        (entity) => entity.publicationInfo?.isNotExist,
-      ),
-    [conversations, files, prompts, applications],
+      [
+        ...files,
+        ...conversations,
+        ...prompts,
+        ...applications,
+        ...toolsets,
+      ].filter((entity) => entity.publicationInfo?.isNotExist),
+    [conversations, files, prompts, applications, toolsets],
   );
 
   const resourcesToReviewIds = useMemo(

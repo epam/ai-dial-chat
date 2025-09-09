@@ -1,6 +1,6 @@
 import Router from 'next/router';
 
-import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
+import { EMPTY, concat, filter, iif, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -70,12 +70,16 @@ const initEpic: AppEpic = (action$, state$) =>
             saveFilters: isPreviousRouteEditor,
           }),
         ),
-        of(
-          MarketplaceActions.setSelectedTab(
-            workSpaceTab || isPreviousRouteEditor
-              ? MarketplaceTabs.MY_WORKSPACE
-              : MarketplaceTabs.HOME,
+        iif(
+          () => !!isPreviousRouteEditor,
+          of(
+            MarketplaceActions.setSelectedTab(
+              workSpaceTab
+                ? MarketplaceTabs.MY_WORKSPACE
+                : MarketplaceTabs.HOME,
+            ),
           ),
+          EMPTY,
         ),
       );
     }),
