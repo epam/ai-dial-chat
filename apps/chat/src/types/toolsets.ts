@@ -74,3 +74,5 @@ export interface ToolsetRedirectState {
   credentialsLevel?: ToolsetCredentialsLevel;
   callbackUrl?: string;
 }
+
+export type ToolsetsMap = Partial<Record<string, ToolsetModel>>;

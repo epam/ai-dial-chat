@@ -12,4 +12,5 @@ export const DEFAULT_QUICK_APPS_SCHEMA_2_ID =
 export enum ToolsetTypes {
   DialMcp = 'dial-mcp',
   DialDeployment = 'dial-deployment',
+  CodeInterpreter = 'predefined',
 }

@@ -19,8 +19,6 @@ import { ToolsetDetailsContent } from '@/src/components/Marketplace/ToolsetsDeta
 import { ToolsetDetailsHeader } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsHeader';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
-
 interface ToolsetPreviewProps {
   onClosePreview?: () => void;
   currentToolset?: ToolsetModel;
@@ -34,19 +32,28 @@ export const ToolsetPreview = ({
   const { control } = useFormContext<ToolsetEditorForm>();
   const [isDetailed, setIsDetailed] = useState(false);
 
-  const [name, description, iconUrl, topics, version, allowedTools, transport] =
-    useWatch({
-      control,
-      name: [
-        'name',
-        'description',
-        'iconUrl',
-        'topics',
-        'version',
-        'allowedTools',
-        'protocol',
-      ],
-    });
+  const [
+    name,
+    description,
+    iconUrl,
+    topics,
+    version,
+    allowedTools,
+    transport,
+    authenticationType,
+  ] = useWatch({
+    control,
+    name: [
+      'name',
+      'description',
+      'iconUrl',
+      'topics',
+      'version',
+      'allowedTools',
+      'protocol',
+      'authenticationType',
+    ],
+  });
 
   const cardEntity = useMemo(
     () => ({
@@ -67,12 +74,14 @@ export const ToolsetPreview = ({
       folderId: currentToolset?.folderId ?? 'folder-id-placeholder',
       reference: currentToolset?.reference ?? 'reference-placeholder',
       id: currentToolset?.id ?? DRAFT_TOOLSET_ID,
-      authSettings: currentToolset?.authSettings ?? {
-        authenticationType: ToolsetAuthTypes.NONE,
+      authSettings: {
+        ...(currentToolset?.authSettings && currentToolset.authSettings),
+        authenticationType,
       },
     }),
     [
       allowedTools,
+      authenticationType,
       currentToolset?.authSettings,
       currentToolset?.author,
       currentToolset?.createdAt,

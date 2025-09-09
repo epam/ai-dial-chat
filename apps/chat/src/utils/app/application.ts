@@ -28,6 +28,7 @@ import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
@@ -259,6 +260,10 @@ export const convertApplicationFromApi = (
 export const isQuickApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===
   DefaultsService.get('quickAppsSchemaId', DEFAULT_QUICK_APPS_SCHEMA_ID);
+
+export const isQuickApp2 = (entity: DialAIEntityModel) =>
+  entity.applicationTypeSchemaId ===
+  DefaultsService.get('quickAppsSchemaId2', DEFAULT_QUICK_APPS_SCHEMA_2_ID);
 
 export const isExternalApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===

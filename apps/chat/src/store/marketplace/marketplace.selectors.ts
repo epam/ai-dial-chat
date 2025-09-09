@@ -17,6 +17,7 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 
 import {
   ApplicationTypeToSourceType,
+  MarketplaceEntitiesTabs,
   SourceType,
 } from '@/src/constants/marketplace';
 
@@ -53,8 +54,24 @@ const selectIsApplyingModel = (state: RootState) =>
   selectApplyModelStatus(state) !== UploadStatus.UNINITIALIZED &&
   selectApplyModelStatus(state) !== UploadStatus.FAILED;
 
-const selectDetailsModel = (state: RootState) =>
-  rootSelector(state).detailsModel;
+const selectDetailsEntity = (state: RootState) =>
+  rootSelector(state).detailsEntity;
+
+const selectDetailsModel = createSelector(
+  [selectDetailsEntity],
+  (detailsEntity) =>
+    detailsEntity?.type === MarketplaceEntitiesTabs.AGENTS
+      ? detailsEntity
+      : undefined,
+);
+
+const selectDetailsToolset = createSelector(
+  [selectDetailsEntity],
+  (detailsEntity) =>
+    detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
+      ? detailsEntity
+      : undefined,
+);
 
 const selectSourceTypes = createSelector(
   [
@@ -93,6 +110,8 @@ const selectSourceTypes = createSelector(
 const selectDeleteEntity = (state: RootState) =>
   rootSelector(state).deleteEntity;
 
+const selectLoginEntity = (state: RootState) => rootSelector(state).loginEntity;
+
 export const MarketplaceSelectors = {
   selectSelectedViewType,
   selectTableSort,
@@ -107,4 +126,7 @@ export const MarketplaceSelectors = {
   selectDetailsModel,
   selectSourceTypes,
   selectDeleteEntity,
+  selectDetailsEntity,
+  selectDetailsToolset,
+  selectLoginEntity,
 };
