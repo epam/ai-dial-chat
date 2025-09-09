@@ -39,8 +39,6 @@ function ReviewToolsetDialogContent() {
     PublicationSelectors.selectSelectedPublicationUrl,
   );
 
-  console.log(toolset);
-
   const isResourceUnpublishing = useAppSelector((state) =>
     PublicationSelectors.selectIsResourceUnpublishing(
       state,
