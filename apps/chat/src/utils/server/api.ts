@@ -301,18 +301,17 @@ export const getModelIdWithoutVersion = (id: string) => {
   return name;
 };
 
-export const getEntityNameFromId = (id: string): string => {
-  const versionSeparatorIndex = id.lastIndexOf(pathKeySeparator);
-  let baseId = id;
-  if (versionSeparatorIndex !== -1) {
-    baseId = id.substring(0, versionSeparatorIndex);
+export const getEntityNameFromId = (
+  id: string,
+  options?: { removeVersion?: boolean },
+): string => {
+  const name = id.split('/').at(-1) ?? id;
+
+  if (options?.removeVersion) {
+    return name.split(pathKeySeparator).at(0) ?? name;
   }
 
-  const pathSeparatorIndex = baseId.lastIndexOf('/');
-  if (pathSeparatorIndex !== -1) {
-    return baseId.substring(pathSeparatorIndex + 1);
-  }
-  return baseId;
+  return name;
 };
 
 export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
