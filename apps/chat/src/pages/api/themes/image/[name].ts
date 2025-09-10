@@ -17,10 +17,6 @@ const getImageUrl = (theme: ThemesConfig, name: string): string | undefined => {
   return theme.images[name as keyof ThemesConfig['images']];
 };
 
-export const dynamic = 'force-static';
-export const revalidate = false;
-export const forceCache = 'force-cache';
-
 const getImage = async (
   req: NextApiRequest,
   res: NextApiResponse,
@@ -49,7 +45,7 @@ const getImage = async (
   return res
     .status(200)
     .setHeader('Content-Type', contentType || 'image/png')
-    .setHeader('Cache-Control', 'immutable, public, max-age=31536000')
+    .setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400')
     .send(Buffer.from(await response.arrayBuffer()));
 };
 
