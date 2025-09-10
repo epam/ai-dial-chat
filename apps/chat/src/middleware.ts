@@ -18,7 +18,6 @@ export function middleware(request: NextRequest) {
     object-src 'none';
     base-uri 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
-    img-src 'self' https://authjs.dev/img/providers/ blob: data:;
     upgrade-insecure-requests;
     ${ancestorsDirective};
     ${frameSrcDirective};
