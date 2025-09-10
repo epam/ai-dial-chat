@@ -274,7 +274,7 @@ const AgentAndToolsetModalView = ({
         {t('Agents & Toolsets')}
       </h3>
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col px-5 pb-2 pt-6">
-        <div ref={headerRef}>
+        <div ref={headerRef} className="mb-2">
           <EntityTypeTabs currentType={entityType} setType={setEntityType} />
           <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse">
             <div className="relative flex grow">
@@ -345,7 +345,7 @@ const AgentAndToolsetModalView = ({
             )}
           </div>
 
-          <span className="col-span-1 my-2 whitespace-pre-wrap break-words text-xs text-secondary">
+          <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
             {t('All')}
           </span>
         </div>
