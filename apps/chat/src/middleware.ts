@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
 
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? 'unsafe-eval' : ''};
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' ${isDev ? 'unsafe-eval' : ''};
     style-src 'self' 'unsafe-inline';
     img-src 'self' https://authjs.dev/img/providers/;
     upgrade-insecure-requests;
