@@ -29,16 +29,16 @@ import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ToolsetModel;
-  disabledActions?: {
-    copyLink?: boolean;
-    edit?: boolean;
-    share?: boolean;
-    unshare?: boolean;
-    publish?: boolean;
-    unpublish?: boolean;
-    delete?: boolean;
-    login?: boolean;
-  };
+  disabledActions?: Partial<{
+    copyLink: boolean;
+    edit: boolean;
+    share: boolean;
+    unshare: boolean;
+    publish: boolean;
+    unpublish: boolean;
+    delete: boolean;
+    login: boolean;
+  }>;
   isPreview?: boolean;
   triggerIconSize?: number;
 }

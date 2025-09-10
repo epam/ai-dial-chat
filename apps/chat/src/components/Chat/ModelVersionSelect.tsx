@@ -4,8 +4,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
@@ -26,21 +25,20 @@ const VersionPrefix = () => {
   );
 };
 
-const getDisplayValue = <T extends ToolsetModel | DialAIEntityModel>(
-  entity: T,
-) => entity.version || entity.id;
+const getDisplayValue = (entity: MarketplaceEntity) =>
+  entity.version || entity.id;
 
-interface EntityVersionSelectProps<T extends ToolsetModel | DialAIEntityModel> {
-  entities: T[];
-  currentEntity: T;
+interface EntityVersionSelectProps {
+  entities: MarketplaceEntity[];
+  currentEntity: MarketplaceEntity;
   className?: string;
   showVersionPrefix?: boolean;
   readonly?: boolean;
-  onSelect: (entity: T) => void;
+  onSelect: (entity: MarketplaceEntity) => void;
   triggerClassName?: string;
 }
 
-export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
+export const ModelVersionSelect = ({
   entities,
   currentEntity,
   className,
@@ -48,10 +46,10 @@ export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
   readonly = false,
   onSelect,
   triggerClassName,
-}: EntityVersionSelectProps<T>) => {
+}: EntityVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleChange = (entity: T) => {
+  const handleChange = (entity: MarketplaceEntity) => {
     onSelect(entity);
     setIsOpen(false);
   };
