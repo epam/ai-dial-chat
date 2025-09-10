@@ -1,6 +1,12 @@
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
-import { SettingsActions } from '@/src/store/actions';
-import { useAppDispatch } from '@/src/store/hooks';
+import { getProviders, signIn, useSession } from 'next-auth/react';
+import { Suspense, useCallback, useEffect, useMemo } from 'react';
+
+import { GetServerSideProps } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { Provider } from 'next-auth/providers';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import {
@@ -13,13 +19,11 @@ import {
 } from '@/src/utils/auth/session';
 import { getContentSecurityPolicyDirectives } from '@/src/utils/server/get-common-page-props';
 import { cleanHeaderDirectives } from '@/src/utils/server/headers-helpers';
-import { GetServerSideProps } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { Provider } from 'next-auth/providers';
-import { getProviders, signIn, useSession } from 'next-auth/react';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-import { Suspense, useCallback, useEffect, useMemo } from 'react';
+
+import { SettingsActions } from '@/src/store/actions';
+import { useAppDispatch } from '@/src/store/hooks';
+
+import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 interface PageProps {
   providers: Provider[];
