@@ -31,6 +31,7 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
 import { ReviewExternalAppSection } from './ReviewExternalAppSection';
+import { ReviewQuickApp2Section } from './ReviewQuickApp2Section';
 import { ReviewQuickAppSection } from './ReviewQuickAppSection';
 
 import isEmpty from 'lodash-es/isEmpty';
@@ -208,6 +209,8 @@ function ReviewApplicationDialogContent() {
         <ReviewCodeAppSection application={application} />
 
         <ReviewQuickAppSection application={application} />
+
+        <ReviewQuickApp2Section application={application} />
 
         <ReviewExternalAppSection application={application} />
       </div>
