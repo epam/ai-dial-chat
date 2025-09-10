@@ -108,20 +108,20 @@ function ScopeTabButton({
     </TabButton>
   );
 }
-
 interface AgentAndToolsetModalViewProps {
   onClose: () => void;
   onConfirm: (selectedItems: MarketplaceEntity[]) => void;
-  defaultSelectedItems: MarketplaceEntity[];
+  initialSelectedIds: string[];
+  allItemsMap: Record<string, MarketplaceEntity | undefined>;
 }
 
 const AgentAndToolsetModalView = ({
   onClose,
   onConfirm,
-  defaultSelectedItems,
+  initialSelectedIds,
+  allItemsMap,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
@@ -135,8 +135,9 @@ const AgentAndToolsetModalView = ({
     MarketplaceTabs | MarketplaceEntitiesTabs
   >(MarketplaceTabs.MY_WORKSPACE);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItems, setSelectedItems] =
-    useState<MarketplaceEntity[]>(defaultSelectedItems);
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    initialSelectedIds ?? [],
+  );
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -157,7 +158,7 @@ const AgentAndToolsetModalView = ({
     if (headerRef.current) {
       setHeaderHeight(headerRef.current.offsetHeight);
     }
-  }, [selectedItems]);
+  }, [selectedIds]);
 
   const installedAgentsSet = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -178,29 +179,19 @@ const AgentAndToolsetModalView = ({
 
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
-      setSelectedItems((prevSelected) => {
-        const isAlreadySelected = prevSelected.some(
-          (item) => item.id === itemToToggle.id,
-        );
-        if (isAlreadySelected) {
-          return prevSelected.filter((item) => item.id !== itemToToggle.id);
-        } else {
-          return [...prevSelected, itemToToggle];
+      setSelectedIds((prevIds) => {
+        if (prevIds.includes(itemToToggle.id)) {
+          return prevIds.filter((id) => id !== itemToToggle.id);
         }
+        return [...prevIds, itemToToggle.id];
       });
     },
     [],
   );
 
-  const handleRemoveItem = useCallback(
-    (idToRemove: string) => {
-      const itemToRemove = selectedItems.find((item) => item.id === idToRemove);
-      if (itemToRemove) {
-        handleToggleSelectItem(itemToRemove);
-      }
-    },
-    [selectedItems, handleToggleSelectItem],
-  );
+  const handleRemoveItem = useCallback((idToRemove: string) => {
+    setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
+  }, []);
 
   const searchedAgents = useFuseSearch(
     allAgents,
@@ -255,18 +246,27 @@ const AgentAndToolsetModalView = ({
     installedToolsetsSet,
   ]);
 
+  const selectedIdsSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
   const sliderItemProps = useMemo(
     () => ({
-      selectedItems,
+      selectedIdsSet,
       onToggleSelectItem: handleToggleSelectItem,
     }),
-    [selectedItems, handleToggleSelectItem],
+    [selectedIdsSet, handleToggleSelectItem],
   );
 
   const sliderResetDependencies = useMemo(
-    () => [isMyWorkspace, searchTerm],
-    [isMyWorkspace, searchTerm],
+    () => [isMyWorkspace, searchTerm, entityType],
+    [isMyWorkspace, searchTerm, entityType],
   );
+
+  const handleConfirm = useCallback(() => {
+    const itemsToConfirm = selectedIds
+      .map((id) => allItemsMap[id])
+      .filter((item): item is MarketplaceEntity => !!item);
+    onConfirm(itemsToConfirm);
+  }, [selectedIds, allItemsMap, onConfirm]);
 
   return (
     <>
@@ -329,11 +329,12 @@ const AgentAndToolsetModalView = ({
             {t('Selected')}
           </span>
           <div className="my-2 flex  flex-wrap gap-2">
-            {selectedItems.length ? (
-              selectedItems.map((item) => (
+            {selectedIds.length ? (
+              selectedIds.map((id) => (
                 <AgentAndToolsetChip
-                  key={item.id}
-                  item={item}
+                  key={id}
+                  id={id}
+                  item={allItemsMap[id]}
                   onRemove={handleRemoveItem}
                 />
               ))
@@ -371,10 +372,7 @@ const AgentAndToolsetModalView = ({
         <button className="button button-secondary" onClick={onClose}>
           {t('Cancel')}
         </button>
-        <button
-          className="button button-primary"
-          onClick={() => onConfirm(selectedItems)}
-        >
+        <button className="button button-primary" onClick={handleConfirm}>
           {t('Confirm')}
         </button>
       </div>
@@ -385,13 +383,15 @@ const AgentAndToolsetModalView = ({
 interface Props {
   onClose: () => void;
   onConfirm: (selectedItems: MarketplaceEntity[]) => void;
-  defaultSelectedItems: MarketplaceEntity[];
+  initialSelectedIds: string[];
+  allItemsMap: Record<string, MarketplaceEntity | undefined>;
 }
 
 export const AgentAndToolsetModal = ({
   onClose,
   onConfirm,
-  defaultSelectedItems,
+  initialSelectedIds,
+  allItemsMap,
 }: Props) => {
   return (
     <Modal
@@ -405,7 +405,8 @@ export const AgentAndToolsetModal = ({
       <AgentAndToolsetModalView
         onClose={onClose}
         onConfirm={onConfirm}
-        defaultSelectedItems={defaultSelectedItems}
+        initialSelectedIds={initialSelectedIds}
+        allItemsMap={allItemsMap}
       />
     </Modal>
   );
