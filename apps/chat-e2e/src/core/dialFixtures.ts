@@ -1427,19 +1427,20 @@ const dialTest = test.extend<{
       new CustomApplicationPublishingUtil(
         customApplicationBuilder,
         adminApplicationApiHelper,
+        fileApiHelper,
         publishRequestBuilder,
         adminPublicationApiHelper,
-        fileApiHelper,
       );
     await use(adminCustomApplicationPublishingUtil);
   },
   customApplicationPublishingUtil: async (
-    { customApplicationBuilder, applicationApiHelper },
+    { customApplicationBuilder, applicationApiHelper, fileApiHelper },
     use,
   ) => {
     const customApplicationPublishingUtil = new CustomApplicationPublishingUtil(
       customApplicationBuilder,
       applicationApiHelper,
+      fileApiHelper,
     );
     await use(customApplicationPublishingUtil);
   },

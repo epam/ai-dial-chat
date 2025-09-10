@@ -106,6 +106,8 @@ export const ExpectedConstants = {
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
   removeAccessTitle: 'Confirm removing access',
+  unshareFileTitle: 'Confirm unsharing file',
+  unshareFileMessage: 'Are you sure that you want to unshare this file?',
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,

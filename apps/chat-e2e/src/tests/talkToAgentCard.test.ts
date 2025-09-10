@@ -1020,11 +1020,11 @@ dialTest(
         const secondAppName = GeneratorUtil.randomApplicationName();
         secondAppFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            secondAppName,
+            { appName: secondAppName },
           );
         secondAppSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            secondAppName,
+            { appName: secondAppName },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
           secondAppFirstVersion.version,

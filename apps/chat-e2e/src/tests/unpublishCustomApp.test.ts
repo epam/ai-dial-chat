@@ -692,7 +692,7 @@ dialAdminTest(
         for (let i = 1; i <= 2; i++) {
           const appAttributes =
             await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-              appName,
+              { appName: appName },
             );
           if (i === 1) {
             appFirstVersion = appAttributes.version;

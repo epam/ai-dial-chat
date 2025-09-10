@@ -83,11 +83,14 @@ export class ShareApiHelper extends BaseApiHelper {
     return JSON.parse(responseText) as ShareByLinkResponseModel;
   }
 
-  public async shareAppByLink(app: BackendEntity) {
+  public async shareAppByLink(app: BackendEntity, iconUrl?: string) {
     const resources: { url: string }[] = [];
     const url = '';
     if (!resources.find((r) => r.url === url)) {
       resources.push({ url: app.url });
+    }
+    if (iconUrl) {
+      resources.push({ url: iconUrl });
     }
 
     const requestData: ShareRequestModel = {

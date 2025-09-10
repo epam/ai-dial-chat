@@ -19,16 +19,16 @@ export interface CustomAppAttributes {
 export class CustomApplicationPublishingUtil {
   private customApplicationBuilder: CustomApplicationBuilder;
   private applicationApiHelper: ApplicationApiHelper;
+  private fileApiHelper: FileApiHelper;
   private publishRequestBuilder?: PublishRequestBuilder;
   private publicationApiHelper?: PublicationApiHelper;
-  private fileApiHelper?: FileApiHelper;
 
   constructor(
     customApplicationBuilder: CustomApplicationBuilder,
     applicationApiHelper: ApplicationApiHelper,
+    fileApiHelper: FileApiHelper,
     publishRequestBuilder?: PublishRequestBuilder,
     publicationApiHelper?: PublicationApiHelper,
-    fileApiHelper?: FileApiHelper,
   ) {
     this.customApplicationBuilder = customApplicationBuilder;
     this.applicationApiHelper = applicationApiHelper;
@@ -37,15 +37,11 @@ export class CustomApplicationPublishingUtil {
     this.fileApiHelper = fileApiHelper;
   }
 
-  public async publishApplicationWithVersion(
-    appName?: string,
-    ...namesToExclude: string[]
-  ): Promise<CustomAppAttributes> {
-    const appData = await this.createCustomApp(
-      appName,
-      ['*/*'],
-      ...namesToExclude,
-    );
+  public async publishApplicationWithVersion(options?: {
+    appName?: string;
+    namesToExclude?: string[];
+  }): Promise<CustomAppAttributes> {
+    const appData = await this.createCustomApp(options);
     const publishRequest = this.publishRequestBuilder!.withName(
       GeneratorUtil.randomPublicationRequestName(),
     )
@@ -72,18 +68,24 @@ export class CustomApplicationPublishingUtil {
     );
   }
 
-  public async createCustomApp(
-    appName?: string,
-    inputAttachmentTypes?: string[],
-    ...namesToExclude: string[]
-  ) {
-    appName = appName ?? GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion(namesToExclude);
-    const applicationModel = this.customApplicationBuilder
+  public async createCustomApp(options?: {
+    appName?: string;
+    inputAttachmentTypes?: string[];
+    iconUrl?: string;
+    namesToExclude?: string[];
+  }) {
+    const appName = options?.appName ?? GeneratorUtil.randomApplicationName();
+    const appVersion = GeneratorUtil.randomApplicationVersion(
+      options?.namesToExclude,
+    );
+    const builder = this.customApplicationBuilder
       .withDisplayName(appName)
       .withDisplayVersion(appVersion)
-      .withInputAttachmentTypes(...(inputAttachmentTypes ?? []))
-      .build();
+      .withInputAttachmentTypes(...(options?.inputAttachmentTypes ?? []));
+    if (options?.iconUrl) {
+      builder.withIconUrl(options?.iconUrl);
+    }
+    const applicationModel = builder.build();
     const backendEntity =
       await this.applicationApiHelper.createApplication(applicationModel);
     return {
@@ -91,6 +93,7 @@ export class CustomApplicationPublishingUtil {
       name: appName,
       version: appVersion,
       reference: applicationModel.reference!,
+      iconUrl: options?.iconUrl,
     };
   }
 }

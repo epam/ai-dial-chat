@@ -69,10 +69,9 @@ dialTest(
     await dialTest.step(
       'Create a custom app with set of allowed attachment types via API',
       async () => {
-        const appData = await customApplicationPublishingUtil.createCustomApp(
-          undefined,
-          [Attachment.imageTypesExtension],
-        );
+        const appData = await customApplicationPublishingUtil.createCustomApp({
+          inputAttachmentTypes: [Attachment.imageTypesExtension],
+        });
         appEntity = {
           name: appData.name,
           version: appData.version,

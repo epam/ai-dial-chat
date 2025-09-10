@@ -69,16 +69,19 @@ dialTest(
 
         appFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
+            {
+              appName: appName,
+              namesToExclude: recentNames.concat(recentVersions),
+            },
           );
         appSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version),
+            },
           );
       },
     );
@@ -194,11 +197,13 @@ dialTest(
       async () => {
         appThirdVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
-            ...appSecondVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version)
+                .concat(appSecondVersion.version),
+            },
           );
       },
     );
@@ -378,16 +383,19 @@ dialTest(
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
         const appFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
+            {
+              appName: appName,
+              namesToExclude: recentNames.concat(recentVersions),
+            },
           );
         const appSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version),
+            },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
           appFirstVersion.version,
@@ -502,16 +510,19 @@ dialTest(
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
         const appFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
+            {
+              appName: appName,
+              namesToExclude: recentNames.concat(recentVersions),
+            },
           );
         const appSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version),
+            },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
           appFirstVersion.version,
