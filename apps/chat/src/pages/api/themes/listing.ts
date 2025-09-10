@@ -12,7 +12,6 @@ import fetch from 'node-fetch';
 let cachedThemes: Theme[] = [];
 let cachedThemesExpiration: number | undefined;
 
-
 export const dynamic = 'force-static';
 export const revalidate = false;
 export const forceCache = 'force-cache';
@@ -40,7 +39,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       method: HTTPMethod.GET,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'immutable, public, max-age=31536000'
+        'Cache-Control': 'immutable, public, max-age=31536000',
       },
       signal: controller.signal,
     },
