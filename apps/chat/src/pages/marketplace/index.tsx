@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -33,14 +33,12 @@ function Marketplace() {
   if (!isMarketplaceEnabled) return <Loader />;
 
   return (
-    <Suspense>
-      <div className="flex size-full flex-col sm:pt-0">
-        <MarketplaceHeader />
-        <div className="flex size-full grow overflow-hidden">
-          <MarketplaceView />
-        </div>
+    <div className="flex size-full flex-col sm:pt-0">
+      <MarketplaceHeader />
+      <div className="flex size-full grow overflow-hidden">
+        <MarketplaceView />
       </div>
-    </Suspense>
+    </div>
   );
 }
 

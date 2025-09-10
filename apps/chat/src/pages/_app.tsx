@@ -1,5 +1,5 @@
 import { SessionProvider, SessionProviderProps } from 'next-auth/react';
-import { ReactElement, ReactNode, Suspense } from 'react';
+import { ReactElement, ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
 import { NextPage } from 'next';
@@ -26,11 +26,7 @@ export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
 };
 
 export function getLayout(page: ReactElement, settings: SettingsState) {
-  return (
-    <Layout settings={settings}>
-      <Suspense>{page}</Suspense>
-    </Layout>
-  );
+  return <Layout settings={settings}>{page}</Layout>;
 }
 
 export const inter = Inter({

@@ -1,5 +1,5 @@
 import { getProviders, signIn, useSession } from 'next-auth/react';
-import { Suspense, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -113,42 +113,40 @@ export default function Signin({
   }
 
   return (
-    <Suspense>
-      <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
-        <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
-          <div className="my-5 flex justify-center">
-            {!!logoImgSrc && (
-              <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
-            )}
-          </div>
-          <div className="flex flex-col gap-4">
-            {Object.values(providers).map((provider: Provider) => (
-              <button
-                key={provider.id + provider.name}
-                className="button button-secondary flex h-16 content-center justify-center gap-4 px-4 py-3"
-                onClick={() => {
-                  handleSignIn(provider);
-                }}
-                data-qa={provider.id}
-              >
-                <span className="flex shrink-0 flex-wrap content-center justify-center">
-                  <Image
-                    className="h-6"
-                    src={`https://authjs.dev/img/providers/${provider.id}.svg`}
-                    alt="Provider icon"
-                    width={24}
-                    height={24}
-                  />
-                </span>
-                <div className="flex flex-wrap content-center">
-                  <span className="text-lg">Sign in with {provider.name}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+    <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
+      <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
+        <div className="my-5 flex justify-center">
+          {!!logoImgSrc && (
+            <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
+          )}
+        </div>
+        <div className="flex flex-col gap-4">
+          {Object.values(providers).map((provider: Provider) => (
+            <button
+              key={provider.id + provider.name}
+              className="button button-secondary flex h-16 content-center justify-center gap-4 px-4 py-3"
+              onClick={() => {
+                handleSignIn(provider);
+              }}
+              data-qa={provider.id}
+            >
+              <span className="flex shrink-0 flex-wrap content-center justify-center">
+                <Image
+                  className="h-6"
+                  src={`https://authjs.dev/img/providers/${provider.id}.svg`}
+                  alt="Provider icon"
+                  width={24}
+                  height={24}
+                />
+              </span>
+              <div className="flex flex-wrap content-center">
+                <span className="text-lg">Sign in with {provider.name}</span>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
-    </Suspense>
+    </div>
   );
 }
 
@@ -158,7 +156,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : ''} ${getContentSecurityPolicyDirectives()}`;
+  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
   res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
   res.setHeader('Cache-Control', 'no-store');

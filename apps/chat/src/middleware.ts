@@ -1,10 +1,8 @@
-import { NextRequest, NextResponse, connection } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { cleanHeaderDirectives } from './utils/server/headers-helpers';
 
-export async function middleware(request: NextRequest) {
-  await connection();
-
+export function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
   const isDev = process.env.NODE_ENV === 'development';
@@ -17,10 +15,10 @@ export async function middleware(request: NextRequest) {
     : 'frame-src none';
 
   const cspHeader = `
-    default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' ${isDev ? 'unsafe-eval' : ''};
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' https://authjs.dev/img/providers/;
+    object-src 'none';
+    base-uri 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
+    img-src 'self' https://authjs.dev/img/providers/ blob: data:;
     upgrade-insecure-requests;
     ${ancestorsDirective};
     ${frameSrcDirective};
