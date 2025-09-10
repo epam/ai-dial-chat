@@ -163,6 +163,7 @@ const ReviewQuickApp2SectionView = ({
           <span className="flex gap-2 text-primary">
             {agents.map((agent) => (
               <AgentAndToolsetChip
+                id={agent.deployment.name}
                 key={agent.deployment.name}
                 item={
                   modelsMap[agent.deployment.name] ?? {
@@ -189,6 +190,7 @@ const ReviewQuickApp2SectionView = ({
           <span className="flex gap-2 text-primary">
             {toolsets.map((toolset) => (
               <AgentAndToolsetChip
+                id={toolset.name}
                 key={toolset.name}
                 item={
                   toolsetsMap[toolset.name] ?? {
