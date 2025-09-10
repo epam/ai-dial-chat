@@ -9,7 +9,7 @@ export enum FileType {
   JSON = 'json',
   PLAIN = 'plain',
   JPG = 'jpg',
-  SVG = 'svg'
+  SVG = 'svg',
 }
 type FileReader = (path: string) => string | Buffer | object | undefined;
 
