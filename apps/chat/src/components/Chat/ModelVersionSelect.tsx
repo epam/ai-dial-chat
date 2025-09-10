@@ -25,20 +25,20 @@ const VersionPrefix = () => {
   );
 };
 
-const getDisplayValue = (entity: MarketplaceEntity) =>
+const getDisplayValue = <T extends MarketplaceEntity>(entity: T) =>
   entity.version || entity.id;
 
-interface EntityVersionSelectProps {
-  entities: MarketplaceEntity[];
-  currentEntity: MarketplaceEntity;
+interface EntityVersionSelectProps<T extends MarketplaceEntity> {
+  entities: T[];
+  currentEntity: T;
   className?: string;
   showVersionPrefix?: boolean;
   readonly?: boolean;
-  onSelect: (entity: MarketplaceEntity) => void;
+  onSelect: (entity: T) => void;
   triggerClassName?: string;
 }
 
-export const ModelVersionSelect = ({
+export const ModelVersionSelect = <T extends MarketplaceEntity>({
   entities,
   currentEntity,
   className,
@@ -46,10 +46,10 @@ export const ModelVersionSelect = ({
   readonly = false,
   onSelect,
   triggerClassName,
-}: EntityVersionSelectProps) => {
+}: EntityVersionSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleChange = (entity: MarketplaceEntity) => {
+  const handleChange = (entity: T) => {
     onSelect(entity);
     setIsOpen(false);
   };
