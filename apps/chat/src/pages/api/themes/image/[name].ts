@@ -45,7 +45,7 @@ const getImage = async (
   return res
     .status(200)
     .setHeader('Content-Type', contentType || 'image/png')
-    .setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400')
+    .setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400')
     .send(Buffer.from(await response.arrayBuffer()));
 };
 
