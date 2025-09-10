@@ -42,7 +42,7 @@ const ChipView: React.FC<ChipViewProps> = ({
         isInvalid
           ? 'bg-error text-error'
           : 'bg-accent-primary-alpha text-primary',
-        readonly ? 'cursor-default' : 'cursor-pointer'
+        readonly ? 'cursor-default' : 'cursor-pointer',
       )}
     >
       <ModelIcon entityId={id} entity={item} size={18} />
