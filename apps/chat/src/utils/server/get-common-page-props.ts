@@ -29,6 +29,7 @@ import {
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { safeParseJSON } from '../json';
+import { cleanHeaderDirectives } from './headers-helpers';
 
 import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
@@ -56,7 +57,7 @@ export const getContentSecurityPolicyDirectives = () => {
     ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
     : 'frame-src none';
 
-  return `${ancestorsDirective} ; ${frameSrcDirective}`;
+  return `${ancestorsDirective} ; ${frameSrcDirective};`;
 };
 
 export const getCommonPageProps: GetServerSideProps = async ({
@@ -65,10 +66,11 @@ export const getCommonPageProps: GetServerSideProps = async ({
   res,
   resolvedUrl,
 }) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    getContentSecurityPolicyDirectives(),
-  );
+  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
+
+  const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
+
+  res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
 
   let params: URLSearchParams | undefined;
   if (req.url) {

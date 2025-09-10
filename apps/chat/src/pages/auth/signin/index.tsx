@@ -1,12 +1,6 @@
-import { getProviders, signIn, useSession } from 'next-auth/react';
-import { useCallback, useEffect, useMemo } from 'react';
-
-import { GetServerSideProps } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { Provider } from 'next-auth/providers';
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-
+import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+import { SettingsActions } from '@/src/store/actions';
+import { useAppDispatch } from '@/src/store/hooks';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import {
@@ -18,11 +12,14 @@ import {
   isServerSessionValid,
 } from '@/src/utils/auth/session';
 import { getContentSecurityPolicyDirectives } from '@/src/utils/server/get-common-page-props';
-
-import { SettingsActions } from '@/src/store/actions';
-import { useAppDispatch } from '@/src/store/hooks';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+import { cleanHeaderDirectives } from '@/src/utils/server/headers-helpers';
+import { GetServerSideProps } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { Provider } from 'next-auth/providers';
+import { getProviders, signIn, useSession } from 'next-auth/react';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { Suspense, useCallback, useEffect, useMemo } from 'react';
 
 interface PageProps {
   providers: Provider[];
@@ -112,40 +109,42 @@ export default function Signin({
   }
 
   return (
-    <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
-      <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
-        <div className="my-5 flex justify-center">
-          {!!logoImgSrc && (
-            <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
-          )}
-        </div>
-        <div className="flex flex-col gap-4">
-          {Object.values(providers).map((provider: Provider) => (
-            <button
-              key={provider.id + provider.name}
-              className="button button-secondary flex h-16 content-center justify-center gap-4 px-4 py-3"
-              onClick={() => {
-                handleSignIn(provider);
-              }}
-              data-qa={provider.id}
-            >
-              <span className="flex shrink-0 flex-wrap content-center justify-center">
-                <Image
-                  className="h-6"
-                  src={`https://authjs.dev/img/providers/${provider.id}.svg`}
-                  alt="Provider icon"
-                  width={24}
-                  height={24}
-                />
-              </span>
-              <div className="flex flex-wrap content-center">
-                <span className="text-lg">Sign in with {provider.name}</span>
-              </div>
-            </button>
-          ))}
+    <Suspense>
+      <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
+        <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
+          <div className="my-5 flex justify-center">
+            {!!logoImgSrc && (
+              <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
+            )}
+          </div>
+          <div className="flex flex-col gap-4">
+            {Object.values(providers).map((provider: Provider) => (
+              <button
+                key={provider.id + provider.name}
+                className="button button-secondary flex h-16 content-center justify-center gap-4 px-4 py-3"
+                onClick={() => {
+                  handleSignIn(provider);
+                }}
+                data-qa={provider.id}
+              >
+                <span className="flex shrink-0 flex-wrap content-center justify-center">
+                  <Image
+                    className="h-6"
+                    src={`https://authjs.dev/img/providers/${provider.id}.svg`}
+                    alt="Provider icon"
+                    width={24}
+                    height={24}
+                  />
+                </span>
+                <div className="flex flex-wrap content-center">
+                  <span className="text-lg">Sign in with {provider.name}</span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </Suspense>
   );
 }
 
@@ -155,11 +154,9 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-
-  res.setHeader(
-    'Content-Security-Policy',
-    getContentSecurityPolicyDirectives(),
-  );
+  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : ''} ${getContentSecurityPolicyDirectives()}`;
+  const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
+  res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 

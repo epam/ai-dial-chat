@@ -1,4 +1,5 @@
 import { FloatingOverlay } from '@floating-ui/react';
+import { Suspense } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
@@ -108,7 +109,9 @@ function Home() {
                 />
               )}
               <AnnouncementsBanner />
-              <Chat />
+              <Suspense>
+                <Chat />
+              </Suspense>
               <ImportExportLoader />
             </div>
           </div>

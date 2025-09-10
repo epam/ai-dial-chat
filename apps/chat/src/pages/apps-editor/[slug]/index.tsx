@@ -1,5 +1,5 @@
 import { getSession } from 'next-auth/react';
-import { useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
@@ -62,37 +62,39 @@ export default function AppsEditor() {
   );
 
   return (
-    <div className="flex size-full flex-col">
-      {isLoading ? (
-        <div className="flex h-full items-center justify-center">
-          <Spinner size={45} className="mx-auto" />
-        </div>
-      ) : (
-        <>
-          <AppsEditorHeader
-            applicationTypeDisplayName={
-              isSchemaApplicationType
-                ? (schema?.[
-                    ApplicationTypeSchemaProperties.applicationTypeDisplayName
-                  ] ?? '')
-                : decodeURIComponent(slug.toString())
-            }
-            isEditApplication={!!id}
-            hasCustomEditor={
-              !!schema?.[
-                ApplicationTypeSchemaProperties.applicationTypeEditorUrl
-              ]
-            }
-          />
-          <div className="flex size-full">
-            <GeneralInfoView
-              applicationData={id ? applicationData : undefined}
-              schema={isSchemaApplicationType ? schema : null}
-            />
+    <Suspense>
+      <div className="flex size-full flex-col">
+        {isLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <Spinner size={45} className="mx-auto" />
           </div>
-        </>
-      )}
-    </div>
+        ) : (
+          <>
+            <AppsEditorHeader
+              applicationTypeDisplayName={
+                isSchemaApplicationType
+                  ? (schema?.[
+                      ApplicationTypeSchemaProperties.applicationTypeDisplayName
+                    ] ?? '')
+                  : decodeURIComponent(slug.toString())
+              }
+              isEditApplication={!!id}
+              hasCustomEditor={
+                !!schema?.[
+                  ApplicationTypeSchemaProperties.applicationTypeEditorUrl
+                ]
+              }
+            />
+            <div className="flex size-full">
+              <GeneralInfoView
+                applicationData={id ? applicationData : undefined}
+                schema={isSchemaApplicationType ? schema : null}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </Suspense>
   );
 }
 
