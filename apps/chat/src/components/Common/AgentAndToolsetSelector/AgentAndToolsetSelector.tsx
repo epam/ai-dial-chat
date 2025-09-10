@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -46,14 +46,6 @@ export const AgentAndToolsetSelector: React.FC<
 
   const [isSelectModalOpen, setSelectModalOpen] = useState(false);
 
-  const selectedItems = useMemo(
-    () =>
-      value
-        .map((id) => allItemsMap[id])
-        .filter((item): item is MarketplaceEntity => !!item),
-    [value, allItemsMap],
-  );
-
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setSelectModalOpen(true);
@@ -95,10 +87,11 @@ export const AgentAndToolsetSelector: React.FC<
             <NoAgentsAndToolsets />
           ) : (
             <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
-              {selectedItems.map((item) => (
+              {value.map((id) => (
                 <AgentAndToolsetChip
-                  key={item.id}
-                  item={item}
+                  key={id}
+                  id={id}
+                  item={allItemsMap[id]}
                   onRemove={readonly ? undefined : handleRemoveItem}
                   readonly={readonly}
                 />
@@ -109,7 +102,8 @@ export const AgentAndToolsetSelector: React.FC<
 
         {isSelectModalOpen && !readonly && (
           <AgentAndToolsetModal
-            defaultSelectedItems={selectedItems}
+            initialSelectedIds={value}
+            allItemsMap={allItemsMap}
             onClose={handleCloseModal}
             onConfirm={handleConfirmSelection}
           />
