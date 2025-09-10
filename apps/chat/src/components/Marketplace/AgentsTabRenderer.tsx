@@ -11,6 +11,7 @@ import { MarketplaceSelectors, ModelsSelectors } from '@/src/store/selectors';
 import {
   DeleteType,
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
@@ -37,11 +38,11 @@ export function AgentsTabRenderer() {
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
   const selectedViewType = useAppSelector(
     MarketplaceSelectors.selectSelectedViewType,
   );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const areAllFiltersEmpty =
     !searchTerm.length &&
@@ -53,10 +54,11 @@ export function AgentsTabRenderer() {
     useMarketplaceDisplayedEntities(allModels, installedModelIds);
 
   const handleSetDetailsModel = useCallback(
-    (model: { reference: string }) => {
+    (model: DialAIEntityModel) => {
       dispatch(
-        MarketplaceActions.setDetailsModel({
+        MarketplaceActions.setDetailsEntity({
           reference: model.reference,
+          type: MarketplaceEntitiesTabs.AGENTS,
           isSuggested: suggestedResults
             .map((item) => item.reference)
             .includes(model.reference),
@@ -70,7 +72,7 @@ export function AgentsTabRenderer() {
     (model: DialAIEntityModel) => {
       if (detailsModel) {
         dispatch(
-          MarketplaceActions.setDetailsModel({
+          MarketplaceActions.setDetailsEntity({
             ...detailsModel,
             reference: model.reference,
           }),
@@ -81,7 +83,7 @@ export function AgentsTabRenderer() {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => dispatch(MarketplaceActions.setDetailsModel()),
+    () => dispatch(MarketplaceActions.setDetailsEntity()),
     [dispatch],
   );
 
@@ -106,7 +108,9 @@ export function AgentsTabRenderer() {
     [dispatch, installedModelIds],
   );
 
-  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
+  const currentDetailsModel = detailsModel
+    ? modelsMap[detailsModel.reference]
+    : undefined;
 
   return (
     <>
@@ -130,7 +134,7 @@ export function AgentsTabRenderer() {
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
-          isSuggested={detailsModel.isSuggested}
+          isSuggested={detailsModel?.isSuggested}
         />
       )}
 

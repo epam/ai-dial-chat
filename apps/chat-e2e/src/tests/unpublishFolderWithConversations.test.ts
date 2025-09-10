@@ -59,6 +59,7 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminOrganizationFolderConversationAssertions,
     adminPublishingApprovalModalAssertion,
+    adminPublishingRulesAssertion,
     adminFolderConversationsToApproveAssertion,
     organizationFolderConversationAssertions,
     setTestIds,
@@ -290,9 +291,9 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           firstUnpublishApiModels.response,
         );
-        await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
-          'visible',
-        );
+        await adminPublishingRulesAssertion.assertLabels({
+          availabilityLabel: 'visible',
+        });
         await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
           { name: publishedFolderName },
           { name: firstConversation.name },
@@ -467,6 +468,7 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminOrganizationFolderConversationAssertions,
     adminPublishingApprovalModalAssertion,
+    adminPublishingRulesAssertion,
     adminFolderConversationsToApproveAssertion,
     organizationFolderConversationAssertions,
     setTestIds,
@@ -655,9 +657,9 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           firstUnpublishApiModels.response,
         );
-        await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
-          'visible',
-        );
+        await adminPublishingRulesAssertion.assertLabels({
+          availabilityLabel: 'visible',
+        });
         for (const conversation of folderConversations) {
           await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
             { name: publishedFolderName },
@@ -805,6 +807,7 @@ dialAdminTest(
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
     adminPublishingApprovalModalAssertion,
+    adminPublishingRulesAssertion,
     adminFolderConversationsToApproveAssertion,
     organizationFolderConversationAssertions,
     setTestIds,
@@ -1015,9 +1018,9 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           unpublishApiModels.response,
         );
-        await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
-          'visible',
-        );
+        await adminPublishingRulesAssertion.assertLabels({
+          availabilityLabel: 'visible',
+        });
         await adminFolderConversationsToApproveAssertion.assertFolderState(
           { name: innerFolderName },
           'visible',

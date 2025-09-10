@@ -31,6 +31,10 @@ enum TabKeys {
   SETTINGS = 'settings',
 }
 
+const chatHref = {
+  pathname: Routes.Chat,
+};
+
 const myWorkspaceHref = {
   pathname: Routes.Marketplace,
   query: { tab: MarketplaceTabs.MY_WORKSPACE },
@@ -128,12 +132,17 @@ export const AppsEditorHeader = ({
       dispatch(ApplicationActions.setShouldSaveApplication(true));
       dispatch(ApplicationActions.setExitAfterSave(true));
     } else {
-      void push(myWorkspaceHref);
+      if (publicationUrl) {
+        void push(chatHref);
+      } else {
+        void push(myWorkspaceHref);
+      }
     }
   }, [
     agent?.id,
     dispatch,
     hasCustomEditor,
+    publicationUrl,
     isEditApplication,
     push,
     shouldSaveApplication,

@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -46,14 +46,6 @@ export const AgentAndToolsetSelector: React.FC<
 
   const [isSelectModalOpen, setSelectModalOpen] = useState(false);
 
-  const selectedItems = useMemo(
-    () =>
-      value
-        .map((id) => allItemsMap[id])
-        .filter((item): item is MarketplaceEntity => !!item),
-    [value, allItemsMap],
-  );
-
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setSelectModalOpen(true);
@@ -63,12 +55,12 @@ export const AgentAndToolsetSelector: React.FC<
     setSelectModalOpen(false);
   }, []);
 
-  const handleRemoveItem = (referenceToRemove: string) => {
-    onChange(value.filter((reference) => reference !== referenceToRemove));
+  const handleRemoveItem = (idToRemove: string) => {
+    onChange(value.filter((id) => id !== idToRemove));
   };
 
   const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
-    onChange(newItems.map((item) => item.reference));
+    onChange(newItems.map((item) => item.id));
     setSelectModalOpen(false);
   };
 
@@ -95,11 +87,13 @@ export const AgentAndToolsetSelector: React.FC<
             <NoAgentsAndToolsets />
           ) : (
             <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
-              {selectedItems.map((item) => (
+              {value.map((id) => (
                 <AgentAndToolsetChip
-                  key={item.id}
-                  item={item}
+                  key={id}
+                  id={id}
+                  item={allItemsMap[id]}
                   onRemove={handleRemoveItem}
+                  readonly={readonly}
                 />
               ))}
             </div>
@@ -108,7 +102,8 @@ export const AgentAndToolsetSelector: React.FC<
 
         {isSelectModalOpen && !readonly && (
           <AgentAndToolsetModal
-            defaultSelectedItems={selectedItems}
+            initialSelectedIds={value}
+            allItemsMap={allItemsMap}
             onClose={handleCloseModal}
             onConfirm={handleConfirmSelection}
           />

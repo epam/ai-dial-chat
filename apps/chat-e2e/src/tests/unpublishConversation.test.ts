@@ -33,6 +33,7 @@ dialAdminTest(
       iconApiHelper,
       conversationToPublishAssertion,
       baseAssertion,
+      publishingRulesAssertion,
       organizationConversationAssertion,
       publishingRequestModalAssertion,
       tooltipAssertion,
@@ -116,14 +117,10 @@ dialAdminTest(
           publishingRequestModal.unpublishFrom,
           PublishPath.Organization,
         );
-        await baseAssertion.assertElementText(
-          publishingRequestModal.allowAccessLabel,
-          ExpectedConstants.allowAccessLabel,
-        );
-        await baseAssertion.assertElementState(
-          publishingRequestModal.availabilityLabel,
-          'visible',
-        );
+        await publishingRulesAssertion.assertLabels({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+        });
         await conversationToPublishAssertion.assertEntityState(
           { name: publishedConversation.name },
           'visible',

@@ -1,17 +1,9 @@
-import { useCallback } from 'react';
-
 import classNames from 'classnames';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import { Translation } from '@/src/types/translation';
-
-import { MarketplaceActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors, SettingsSelectors } from '@/src/store/selectors';
-
-import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
-
+import { EntitiesTabsHeader } from './EntitiesTabsHeader';
 import { MarketplaceBanner } from './MarketplaceBanner';
 import { SearchHeader } from './SearchHeader';
 
@@ -23,25 +15,8 @@ interface HeaderProps {
 }
 
 export function TabHeader({ isBannerVisible, className }: HeaderProps) {
-  const { t } = useTranslation(Translation.Marketplace);
-
-  const dispatch = useAppDispatch();
-
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
-  );
-
-  const selectedEntitiesTab = useAppSelector(
-    MarketplaceSelectors.selectSelectedEntitiesTab,
-  );
-
-  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
-
-  const handleSelectTab = useCallback(
-    (tabId: MarketplaceEntitiesTabs) => {
-      dispatch(MarketplaceActions.setSelectedEntitiesTab(tabId));
-    },
-    [dispatch],
   );
 
   return (
@@ -64,39 +39,14 @@ export function TabHeader({ isBannerVisible, className }: HeaderProps) {
       </div>
       <div
         className={classNames(
-          'flex items-center gap-2 transition-all duration-1000 md:gap-4',
+          'flex flex-col items-center gap-2 transition-all duration-1000 md:flex-row md:gap-4',
           isBannerVisible ? 'md:mt-4 xl:mt-6' : 'm-0',
           enabledFeatures.has(Feature.Toolsets)
             ? 'justify-between'
             : 'justify-end',
         )}
       >
-        {enabledFeatures.has(Feature.Toolsets) && (
-          <div className="flex gap-3">
-            <span
-              onClick={() => {
-                handleSelectTab(MarketplaceEntitiesTabs.AGENTS);
-              }}
-              className={classNames(
-                'cursor-pointer rounded border border-transparent bg-accent-primary-alpha px-3 py-2.5 hover:bg-layer-4',
-                isAgentsTab ? 'border-b-accent-primary' : 'bg-layer-4',
-              )}
-            >
-              {t('Agents')}
-            </span>
-            <span
-              onClick={() => {
-                handleSelectTab(MarketplaceEntitiesTabs.TOOLSETS);
-              }}
-              className={classNames(
-                'cursor-pointer rounded border border-transparent bg-accent-primary-alpha px-3 py-2.5 hover:bg-layer-4',
-                !isAgentsTab ? 'border-b-accent-primary' : 'bg-layer-4',
-              )}
-            >
-              {t('Toolsets')}
-            </span>
-          </div>
-        )}
+        {enabledFeatures.has(Feature.Toolsets) && <EntitiesTabsHeader />}
         <SearchHeader />
       </div>
     </header>

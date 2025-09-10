@@ -193,6 +193,7 @@ export class Folders extends BaseElement {
 
   public async getFolderDropdownMenu(name: string, index?: number) {
     const folderToEdit = this.getFolderByName(name, index);
+    await folderToEdit.scrollIntoViewIfNeeded();
     await folderToEdit.hover();
     return this.folderDotsMenu(name, index);
   }

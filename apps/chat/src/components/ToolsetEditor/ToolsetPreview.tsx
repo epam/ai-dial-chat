@@ -10,6 +10,8 @@ import { EntityType } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
+
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
@@ -30,21 +32,30 @@ export const ToolsetPreview = ({
   const { control } = useFormContext<ToolsetEditorForm>();
   const [isDetailed, setIsDetailed] = useState(false);
 
-  const [name, description, iconUrl, topics, version, allowedTools, transport] =
-    useWatch({
-      control,
-      name: [
-        'name',
-        'description',
-        'iconUrl',
-        'topics',
-        'version',
-        'allowedTools',
-        'protocol',
-      ],
-    });
+  const [
+    name,
+    description,
+    iconUrl,
+    topics,
+    version,
+    allowedTools,
+    transport,
+    authenticationType,
+  ] = useWatch({
+    control,
+    name: [
+      'name',
+      'description',
+      'iconUrl',
+      'topics',
+      'version',
+      'allowedTools',
+      'protocol',
+      'authenticationType',
+    ],
+  });
 
-  const cardEntity: ToolsetModel = useMemo(
+  const cardEntity = useMemo(
     () => ({
       type: EntityType.Toolset,
       isDefault: false,
@@ -62,10 +73,16 @@ export const ToolsetPreview = ({
       owner: currentToolset?.author,
       folderId: currentToolset?.folderId ?? 'folder-id-placeholder',
       reference: currentToolset?.reference ?? 'reference-placeholder',
-      id: currentToolset?.id ?? 'id-placeholder',
+      id: currentToolset?.id ?? DRAFT_TOOLSET_ID,
+      authSettings: {
+        ...(currentToolset?.authSettings && currentToolset.authSettings),
+        authenticationType,
+      },
     }),
     [
       allowedTools,
+      authenticationType,
+      currentToolset?.authSettings,
       currentToolset?.author,
       currentToolset?.createdAt,
       currentToolset?.folderId,

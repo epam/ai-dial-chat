@@ -26,7 +26,9 @@ export function AddMarketplaceEntityButton({
   label,
 }: AddMarketplaceEntityButtonProps) {
   const { t } = useTranslation(Translation.Marketplace);
+
   const [isOpen, setIsOpen] = useState(false);
+
   const screenState = useScreenState();
   const isScreenSmall = screenState === ScreenState.SM;
 

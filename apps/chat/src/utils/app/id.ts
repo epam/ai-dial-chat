@@ -1,4 +1,5 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { pathKeySeparator } from '@/src/utils/server/api';
 
 import { ApiKeys, FeatureType } from '@/src/types/common';
 
@@ -120,4 +121,17 @@ export const areEntitiesBucketsTheSame = (
   secondId: string,
 ) => {
   return getEntityBucket({ id: firstId }) === getEntityBucket({ id: secondId });
+};
+
+export const getEntityNameFromId = (
+  id: string,
+  options?: { removeVersion?: boolean },
+): string => {
+  const name = id.split('/').at(-1) ?? id;
+
+  if (options?.removeVersion) {
+    return name.split(pathKeySeparator).at(0) ?? name;
+  }
+
+  return name;
 };

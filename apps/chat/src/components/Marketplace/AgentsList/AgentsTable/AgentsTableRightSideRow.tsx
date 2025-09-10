@@ -12,16 +12,12 @@ import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/selectors';
-
-import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
-
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
+import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface Props<T> {
@@ -43,12 +39,6 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
     onBookmarkClick,
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
-
-    const selectedEntitiesTab = useAppSelector(
-      MarketplaceSelectors.selectSelectedEntitiesTab,
-    );
-
-    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
     const screenState = useScreenState();
 
@@ -130,8 +120,13 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
               entity={entity}
               allocatePlace
             />
-            {isAgentsTab && isDialAiEntityModel(entity) && (
+            {isDialAiEntityModel(entity) ? (
               <AgentContextMenu
+                className={isHovered ? 'xl:visible' : 'xl:invisible'}
+                entity={entity}
+              />
+            ) : (
+              <ToolsetContextMenu
                 className={isHovered ? 'xl:visible' : 'xl:invisible'}
                 entity={entity}
               />
