@@ -1,9 +1,6 @@
 import { getEntitySearchOptions } from '@/src/utils/app/search';
 
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
-export const MODELS_SEARCH_OPTIONS =
-  getEntitySearchOptions<DialAIEntityModel>();
-
-export const TOOLSETS_SEARCH_OPTIONS = getEntitySearchOptions<ToolsetModel>();
+export const MARKETPLACE_ENTITIES_SEARCH_OPTIONS =
+  getEntitySearchOptions<MarketplaceEntity>();

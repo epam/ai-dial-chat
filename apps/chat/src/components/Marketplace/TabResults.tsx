@@ -6,7 +6,14 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceTabs, ViewTypes } from '@/src/constants/marketplace';
+import { useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/selectors';
+
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+  ViewTypes,
+} from '@/src/constants/marketplace';
 
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
@@ -19,7 +26,7 @@ interface NoAgentsFoundProps {
   header?: string;
 }
 
-const NoAgentsFound = ({
+const NoMarketplaceEntitiesFound = ({
   children,
   description,
   header,
@@ -62,6 +69,11 @@ export const ResultsView = memo(
     suggestedResults,
     ...props
   }: ResultsViewProps<MarketplaceEntity>) => {
+    const selectedEntitiesTab = useAppSelector(
+      MarketplaceSelectors.selectSelectedEntitiesTab,
+    );
+    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
     if (entities.length || suggestedResults.length) {
       const AgentsListComponent =
         selectedViewType === ViewTypes.TABLE ? AgentsTable : AgentsTiles;
@@ -78,22 +90,22 @@ export const ResultsView = memo(
 
     if (areAllFiltersEmpty) {
       return (
-        <NoAgentsFound
-          header="No agents"
-          description="You don't have any agents."
+        <NoMarketplaceEntitiesFound
+          header={isAgentsTab ? 'No agents' : 'No toolsets'}
+          description={`You don't have any ${isAgentsTab ? 'agents' : 'toolsets'}.`}
         >
           <IconMessage2 size={100} className="stroke-[0.2]" />
-        </NoAgentsFound>
+        </NoMarketplaceEntitiesFound>
       );
     }
 
     return (
-      <NoAgentsFound description="Sorry, we couldn't find any results for your search.">
+      <NoMarketplaceEntitiesFound description="Sorry, we couldn't find any results for your search.">
         <NoResultsFound
           iconSize={100}
           className="gap-5 text-lg font-semibold"
         />
-      </NoAgentsFound>
+      </NoMarketplaceEntitiesFound>
     );
   },
 );

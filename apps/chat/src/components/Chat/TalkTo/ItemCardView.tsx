@@ -14,7 +14,7 @@ import {
   isPlaybackConversation,
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -46,6 +46,7 @@ interface ItemCardViewProps {
   disabled?: boolean;
   isUnavailableModel?: boolean;
   onSelectVersion?: (entity: DialAIEntityModel) => void;
+  hasContextMenu?: boolean;
   className?: string;
 }
 
@@ -62,6 +63,7 @@ export const ItemCardView = ({
   disabled,
   isUnavailableModel,
   onSelectVersion,
+  hasContextMenu = true,
   className,
 }: ItemCardViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -77,7 +79,8 @@ export const ItemCardView = ({
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
       (model) =>
-        getGroupModelKey(entity) === getGroupModelKey(model) && entity.version,
+        getGroupMarketplaceEntityKey(entity) ===
+          getGroupMarketplaceEntityKey(model) && entity.version,
     );
   }, [allModels, entity]);
 
@@ -112,13 +115,15 @@ export const ItemCardView = ({
       aria-selected={isSelected}
       data-qa="agent"
     >
-      <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
-        <AgentContextMenu
-          entity={entity}
-          disabledActions={disabledActions}
-          className="xl:invisible group-hover:xl:visible"
-        />
-      </div>
+      {hasContextMenu && (
+        <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
+          <AgentContextMenu
+            entity={entity}
+            disabledActions={disabledActions}
+            className="xl:invisible group-hover:xl:visible"
+          />
+        </div>
+      )}
       <div className="flex items-center gap-4 overflow-hidden">
         <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
           {entity.reference === PseudoModel.Playback && (

@@ -12,7 +12,7 @@ export enum ToolsetAuthTypes {
 export enum ToolsetAuthStatus {
   SIGNED_IN = 'SIGNED_IN',
   SIGNED_OUT = 'SIGNED_OUT',
-  ERROR = 'ERROR',
+  FAILED = 'FAILED',
 }
 
 export interface Toolset {
@@ -32,6 +32,7 @@ export interface Toolset {
   user_roles?: string[];
   description_keywords?: string[];
   max_retry_attempts?: number;
+  owner?: string;
   author?: string;
   created_at?: number;
   updated_at?: number;

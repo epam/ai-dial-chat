@@ -163,7 +163,7 @@ dialTest(
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
+        await dialHomePage.copyTextToClipboard(nameWithRestrictedChars);
 
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDevice();
@@ -557,7 +557,8 @@ dialTest(
 
 dialTest(
   '[Select folder] Error message appears if to add a dot to the end of folder name.\n' +
-    '[Select folder] Error message appears if to rename chat folder to already existed name in the root',
+    '[Select folder] Error message appears if to rename chat folder to already existed name in the root.\n' +
+    '[Select folder] Error message appears if to add a dot to the beginning of folder name',
   async ({
     dialHomePage,
     setTestIds,
@@ -570,7 +571,7 @@ dialTest(
     selectFoldersAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3017', 'EPMRTC-3246');
+    setTestIds('EPMRTC-3017', 'EPMRTC-3246', 'EPMRTC-6718');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',

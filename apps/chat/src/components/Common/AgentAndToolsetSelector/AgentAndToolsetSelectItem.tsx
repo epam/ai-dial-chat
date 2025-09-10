@@ -6,28 +6,22 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
 
 export interface AgentAndToolsetSelectItemProps {
-  selectedItems: MarketplaceEntity[];
-  onToggleSelectItem: (item: MarketplaceEntity) => void;
-  onSelectModel: (entity: DialAIEntityModel) => void;
   groupItem: MarketplaceEntity;
+  selectedIdsSet: Set<string>;
+  onToggleSelectItem: (item: MarketplaceEntity) => void;
 }
 
-export const AgentAndToolsetSelectItem = ({
-  groupItem,
-  selectedItems,
-  onToggleSelectItem,
-  onSelectModel,
-}: AgentAndToolsetSelectItemProps) => {
-  const isSelected = selectedItems.some(
-    (selected) => selected.id === groupItem.id,
-  );
+export const AgentAndToolsetSelectItem: React.FC<
+  AgentAndToolsetSelectItemProps
+> = ({ groupItem, selectedIdsSet, onToggleSelectItem }) => {
+  const isSelected = selectedIdsSet.has(groupItem.id);
 
   return (
     <ItemCardView
       entity={groupItem as DialAIEntityModel}
       isSelected={isSelected}
       onClick={onToggleSelectItem}
-      onSelectVersion={onSelectModel}
+      hasContextMenu={false}
       className="bg-layer-3 hover:border-hover active:border-accent-primary"
     />
   );

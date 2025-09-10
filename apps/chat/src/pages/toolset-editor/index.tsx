@@ -6,7 +6,8 @@ import { useToolsetEditorValidation } from '@/src/hooks/useToolsetEditorValidati
 
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ToolsetActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
@@ -21,6 +22,8 @@ import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 function ToolsetEditorPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+
   useToolsetEditorValidation();
 
   const toolsetDetailsStatus = useAppSelector(
@@ -48,6 +51,10 @@ function ToolsetEditorPage() {
       void router.push(Routes.Chat);
     }
   }, [areToolsetsEnabled, router]);
+
+  useEffect(() => {
+    dispatch(ToolsetActions.initQueryParams());
+  }, [dispatch]);
 
   if (isLoading)
     return (

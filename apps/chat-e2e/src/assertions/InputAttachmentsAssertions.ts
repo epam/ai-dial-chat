@@ -13,9 +13,19 @@ export class InputAttachmentsAssertions extends BaseAssertion {
     name: string,
     expectedState: ElementState,
   ) {
-    return this.assertElementState(
+    await this.assertElementState(
       this.inputAttachments.inputAttachment(name),
       expectedState,
     );
+  }
+
+  public async assertFileIsAttached(name: string, expectedState: ElementState) {
+    await this.assertAttachedFileState(name, expectedState);
+    if (expectedState === 'visible') {
+      await this.assertElementState(
+        this.inputAttachments.inputAttachmentLoadingIndicator(name),
+        'hidden',
+      );
+    }
   }
 }
