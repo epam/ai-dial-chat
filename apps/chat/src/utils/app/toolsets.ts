@@ -65,6 +65,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
       apiKeyHeader: data.auth_settings.api_key_header,
       codeChallenge: data.auth_settings.code_challenge,
       codeChallengeMethod: data.auth_settings.code_challenge_method,
+      scopesSupported: data.auth_settings.scopes_supported,
     },
   };
 };
@@ -83,6 +84,9 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         ...(data.authSettings.clientId && {
           client_id: data.authSettings.clientId,
           client_secret: data.authSettings.clientSecret,
+        }),
+        ...(data.authSettings.scopesSupported && {
+          scopes_supported: data.authSettings.scopesSupported,
         }),
       };
     default:
