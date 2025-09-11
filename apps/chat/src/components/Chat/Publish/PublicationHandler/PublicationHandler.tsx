@@ -50,7 +50,7 @@ import { FilePublicationResources } from './PublicationReviewResources/FilePubli
 import { PromptPublicationResources } from './PublicationReviewResources/PromptPublicationResources';
 import { ToolsetPublicationResources } from './PublicationReviewResources/ToolsetPublicationResources';
 import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
-import { ReviewToolsetDialog } from './ReviewToolset/ReviewToolsetDialog';
+import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
