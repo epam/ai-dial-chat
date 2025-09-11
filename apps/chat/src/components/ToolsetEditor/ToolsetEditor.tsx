@@ -28,13 +28,13 @@ import {
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-const getMarketplaceRoute = () => ({
+const marketplaceRoute = {
   pathname: Routes.Marketplace,
   query: {
     [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
     [MarketplaceQueryParams.entitiesTab]: MarketplaceEntitiesTabs.TOOLSETS,
   },
-});
+};
 
 export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
@@ -133,7 +133,7 @@ export const ToolsetEditor = () => {
     // todo: handle redirect
     if ((!isDirty && toolsetDetails) || !toolsetDetails) {
       void router.push(
-        router.query.publicationUrl ? Routes.Chat : Routes.Marketplace,
+        router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
       );
       return;
     }
