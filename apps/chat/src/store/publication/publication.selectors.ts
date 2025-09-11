@@ -246,6 +246,9 @@ const selectIsFolderContainsResourcesToReview = createSelector(
 const selectIsApplicationReview = (state: RootState) =>
   rootSelector(state).isApplicationReview;
 
+const selectIsToolsetReview = (state: RootState) =>
+  rootSelector(state).isToolsetReview;
+
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectPublicVersionGroups = (state: RootState) =>
@@ -344,6 +347,7 @@ export const PublicationSelectors = {
   selectPublicationsToReviewCount,
   selectIsFolderContainsResourcesToReview,
   selectIsApplicationReview,
+  selectIsToolsetReview,
   selectInitialized,
   selectPublicVersionGroups,
   selectPublicVersionGroupById,

@@ -51,7 +51,9 @@ export const marketplaceSlice = createSlice({
     init: (state) => state,
     initSuccess: (
       state,
-      { payload }: PayloadAction<{ saveFilters: boolean }>,
+      {
+        payload,
+      }: PayloadAction<{ saveFilters: boolean; selectedTab?: MarketplaceTabs }>,
     ) => {
       if (!payload.saveFilters) {
         return initialState;
@@ -64,7 +66,7 @@ export const marketplaceSlice = createSlice({
         selectedView: state.selectedView,
         tableSort: state.tableSort,
         selectedEntitiesTab: state.selectedEntitiesTab,
-        selectedTab: state.selectedTab,
+        selectedTab: payload.selectedTab ?? state.selectedTab,
       };
     },
     initQueryParams: (state) => state,

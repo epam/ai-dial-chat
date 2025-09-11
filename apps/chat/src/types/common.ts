@@ -20,6 +20,7 @@ export enum BackendResourceType {
   PROMPT = 'PROMPT',
   CONVERSATION = 'CONVERSATION',
   APPLICATION = 'APPLICATION',
+  TOOLSET = 'TOOL_SET',
 }
 
 export enum BackendResourceTypeName {
@@ -27,6 +28,7 @@ export enum BackendResourceTypeName {
   PROMPT = 'Prompt',
   CONVERSATION = 'Conversation',
   APPLICATION = 'Application',
+  TOOLSET = 'Toolset',
 }
 
 export interface BackendDataEntity {
