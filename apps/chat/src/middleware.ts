@@ -20,7 +20,6 @@ export async function middleware(request: NextRequest) {
     base-uri 'self';
     script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
     upgrade-insecure-requests;
-    connect-src 'self';
     ${ancestorsDirective};
     ${frameSrcDirective};
 `;
@@ -59,7 +58,11 @@ export const config = {
      * - favicon.ico (favicon file)
      */
     {
-      source: '/((?!api|_next/static|_next/image|_next/data|favicon.ico).*)',
+      source: '/((?!api|_next|favicon.ico).*)',
+      missing: [
+        { type: 'header', key: 'next-router-prefetch' },
+        { type: 'header', key: 'purpose', value: 'prefetch' },
+      ],
     },
   ],
 };
