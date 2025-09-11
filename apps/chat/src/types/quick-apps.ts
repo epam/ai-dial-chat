@@ -14,27 +14,15 @@ export interface FileContext {
   type: 'file';
 }
 
-export interface DialDeploymentTool {
-  deployment: {
-    name: string;
-  };
-  open_ai_tool: {
-    function: {
-      parameters: {
-        type: 'object';
-        properties: object;
-        required: ['query'];
-      };
-      name: string;
-      description?: string;
-    };
-  };
+export interface DialDeploymentSimpleTool {
+  type: 'dial-deployment-simple';
+  deployment_id: string;
 }
 
-export interface DialDeploymentToolset {
+export interface DialDeploymentSimpleToolset {
   name: 'dial-deployment-tool-set';
   type: ToolsetTypes.DialDeployment;
-  tools: DialDeploymentTool[];
+  tools: DialDeploymentSimpleTool[];
 }
 
 export interface MCPToolset {
@@ -50,7 +38,7 @@ export interface CodeInterpreterToolset {
 }
 
 export type AnyToolset =
-  | DialDeploymentToolset
+  | DialDeploymentSimpleToolset
   | MCPToolset
   | CodeInterpreterToolset;
 
@@ -74,7 +62,7 @@ export interface QuickApp2Config {
 
 export function isDialDeploymentToolset(
   toolset: AnyToolset,
-): toolset is DialDeploymentToolset {
+): toolset is DialDeploymentSimpleToolset {
   return toolset.type === ToolsetTypes.DialDeployment;
 }
 
