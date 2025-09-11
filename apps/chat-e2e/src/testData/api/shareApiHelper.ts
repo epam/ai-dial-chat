@@ -144,6 +144,10 @@ export class ShareApiHelper extends BaseApiHelper {
     return this.listSharedWithMeEntities(BackendResourceType.PROMPT);
   }
 
+  public async listSharedWithMeApps() {
+    return this.listSharedWithMeEntities(BackendResourceType.APPLICATION);
+  }
+
   public async listSharedWithMeEntities(
     ...resourceType: BackendResourceType[]
   ) {

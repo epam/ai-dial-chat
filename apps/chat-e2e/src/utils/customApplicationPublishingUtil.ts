@@ -1,3 +1,5 @@
+import { BackendEntity, EntityType } from '@/chat/types/common';
+import { DialAIEntityModel } from '@/chat/types/models';
 import {
   Attachment,
   CustomApplicationBuilder,
@@ -11,9 +13,8 @@ import {
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-export interface CustomAppAttributes {
-  name: string;
-  version: string;
+export interface CustomAppAttributes extends DialAIEntityModel {
+  backendEntity: BackendEntity;
 }
 
 export class CustomApplicationPublishingUtil {
@@ -50,10 +51,7 @@ export class CustomApplicationPublishingUtil {
     const appPublication =
       await this.publicationApiHelper!.createPublishRequest(publishRequest);
     await this.publicationApiHelper!.approveRequest(appPublication);
-    return {
-      name: appData.name,
-      version: appData.version,
-    };
+    return appData;
   }
 
   public async uploadApplicationIcon() {
@@ -71,9 +69,9 @@ export class CustomApplicationPublishingUtil {
   public async createCustomApp(options?: {
     appName?: string;
     inputAttachmentTypes?: string[];
-    iconUrl?: string;
+    hasIcon?: boolean;
     namesToExclude?: string[];
-  }) {
+  }): Promise<CustomAppAttributes> {
     const appName = options?.appName ?? GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomApplicationVersion(
       options?.namesToExclude,
@@ -82,18 +80,25 @@ export class CustomApplicationPublishingUtil {
       .withDisplayName(appName)
       .withDisplayVersion(appVersion)
       .withInputAttachmentTypes(...(options?.inputAttachmentTypes ?? []));
-    if (options?.iconUrl) {
-      builder.withIconUrl(options?.iconUrl);
+
+    let iconUrl;
+    if (options?.hasIcon) {
+      iconUrl = await this.uploadApplicationIcon();
+      builder.withIconUrl(iconUrl);
     }
+
     const applicationModel = builder.build();
     const backendEntity =
       await this.applicationApiHelper.createApplication(applicationModel);
     return {
-      backendEntity: backendEntity,
+      id: backendEntity.url,
       name: appName,
       version: appVersion,
       reference: applicationModel.reference!,
-      iconUrl: options?.iconUrl,
+      type: EntityType.Application,
+      isDefault: false,
+      iconUrl: iconUrl,
+      backendEntity: backendEntity,
     };
   }
 }

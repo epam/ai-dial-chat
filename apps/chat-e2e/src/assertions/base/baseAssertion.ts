@@ -38,6 +38,10 @@ export class BaseAssertion {
     expectedIconSource?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(icon);
+    //assert icon is loaded and displayed
+    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
+    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
+
     const actualIconSource = await elementLocator
       .getAttribute(Attributes.src)
       .then((s) => IconApiHelper.getNonCachedIconSource(s));
@@ -47,9 +51,6 @@ export class BaseAssertion {
         .soft(actualIconSource, ExpectedMessages.entityIconIsValid)
         .toBe(expectedIconSource);
     }
-    //assert icon is loaded and displayed
-    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
-    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
   }
 
   public assertArrayIncludesAll(
