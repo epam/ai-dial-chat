@@ -29,6 +29,7 @@ export interface PublicationState {
   allPublishedWithMeItemsUploaded: Record<FeatureType, boolean>;
   selectedItemsToPublish: string[];
   isApplicationReview: boolean;
+  isToolsetReview: boolean;
   publicVersionGroups: PublicVersionGroups;
   publishModel:
     | { entity: ShareEntity & { iconUrl?: string }; action: PublishActions }
