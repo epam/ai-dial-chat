@@ -19,6 +19,7 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
   isMarketplaceEntityPublic,
+  isQuickApp2,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -105,7 +106,9 @@ export const useAgentMenuItems = ({
       schema.id === entity.applicationTypeSchemaId && schema.editorUrl,
   );
   const canEditOrView =
-    isMyApp || canWrite || (isPublicAndAdmin && !hasCustomEditor);
+    isMyApp ||
+    canWrite ||
+    (isPublicAndAdmin && (!hasCustomEditor || isQuickApp2(entity)));
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [

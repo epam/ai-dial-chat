@@ -58,6 +58,8 @@ export class EnumMapper {
         return BackendResourceType.PROMPT;
       case FeatureType.Application:
         return BackendResourceType.APPLICATION;
+      case FeatureType.Toolset:
+        return BackendResourceType.TOOLSET;
       case FeatureType.File:
       default:
         return BackendResourceType.FILE;

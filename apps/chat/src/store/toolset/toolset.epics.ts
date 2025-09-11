@@ -34,7 +34,11 @@ import {
   ToolsetEditorSteps,
 } from '@/src/types/toolsets';
 
-import { MarketplaceActions, UIActions } from '@/src/store/actions';
+import {
+  MarketplaceActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -181,7 +185,7 @@ const getToolsetDetailsEpic: AppEpic = (action$) =>
     }),
   );
 
-const updateToolsetEpic: AppEpic = (action$) =>
+const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     ofType(ToolsetActions.updateToolset.type),
     switchMap(({ payload }) => {
@@ -242,12 +246,27 @@ const updateToolsetEpic: AppEpic = (action$) =>
                 getIdWithoutFeatureType(updatedToolset.id),
               ).pipe(
                 switchMap((updatedToolset) => {
+                  if (payload.isSaveAndExit) {
+                    void router.push(
+                      router.query.publicationUrl
+                        ? Routes.Chat
+                        : Routes.Marketplace,
+                    );
+                  }
+
                   return concat(
                     of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
                         newToolset: updatedToolset,
                       }),
+                    ),
+                    iif(
+                      () =>
+                        !!payload.isSaveAndExit &&
+                        !!router.query.publicationUrl,
+                      of(PublicationActions.setIsToolsetReview(true)),
+                      EMPTY,
                     ),
                     iif(
                       () => !!payload.tabToOpen,
