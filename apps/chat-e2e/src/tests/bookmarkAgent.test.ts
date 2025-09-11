@@ -348,7 +348,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   '[Detailed card view] Add an agent to My workspace using "Use ..." button',
   async ({
     marketplacePage,

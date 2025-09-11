@@ -71,7 +71,7 @@ const initEpic: AppEpic = (action$, state$) =>
           }),
         ),
         iif(
-          () => !!isPreviousRouteEditor,
+          () => !isPreviousRouteEditor,
           of(
             MarketplaceActions.setSelectedTab(
               workSpaceTab
