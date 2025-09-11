@@ -17,6 +17,7 @@ import {
   getIdWithoutRootPathSegments,
   isApplicationId,
 } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
   getApplicationPublishResources,
@@ -297,12 +298,7 @@ export function PublishModal<
                   action: publishAction,
                   sourceUrl: item.id,
                   targetUrl: createTargetUrl(
-                    type === SharingType.ConversationFolder ||
-                      type === SharingType.Conversation
-                      ? FeatureType.Chat
-                      : type === SharingType.Application
-                        ? FeatureType.Application
-                        : FeatureType.Prompt,
+                    EnumMapper.getFeatureTypeBySharingType(type),
                     trimmedPath,
                     type === SharingType.ConversationFolder ||
                       type === SharingType.PromptFolder

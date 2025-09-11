@@ -14,7 +14,6 @@ import {
 } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
-import { constructPath } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -44,7 +43,6 @@ import {
 } from '@/src/constants/applications';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
-  DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
   ToolsetTypes,
 } from '@/src/constants/quick-apps';
@@ -438,12 +436,6 @@ export const getQuickAppData = (
       model: modelsMap[formData.model]?.id ?? formData.model,
       document_relative_url: formData.documentRelativeUrl,
     },
-    completionUrl: constructPath(
-      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
-      'openai/deployments',
-      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
-      'chat/completions',
-    ),
     isDefault: false,
     folderId: '',
   };
@@ -542,12 +534,7 @@ export const getQuickAppData2 = (
           : []),
       ],
     },
-    completionUrl: constructPath(
-      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
-      'openai/deployments',
-      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
-      'chat/completions',
-    ),
+
     isDefault: false,
     folderId: '',
   };
