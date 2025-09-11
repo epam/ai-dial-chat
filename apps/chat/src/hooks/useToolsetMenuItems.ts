@@ -5,12 +5,13 @@ import {
   IconLogout,
   IconPencilMinus,
   IconTrashX,
+  IconWorldShare,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useToolsetMenuActions } from '@/src/hooks/useToolsetMenuActions';
+import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
 
 import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
@@ -25,6 +26,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
 
+import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface Props {
@@ -62,8 +64,8 @@ export const useToolsetMenuItems = ({
     handleLogin,
     // handleOpenSharing,
     // handleOpenUnshare,
-    // handlePublish,
-    // handleUnpublish,
+    handlePublish,
+    handleUnpublish,
   } = useToolsetMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -121,20 +123,20 @@ export const useToolsetMenuItems = ({
       //   Icon: IconUserUnshare,
       //   onClick: handleOpenUnshare,
       // },
-      // {
-      //   name: t('Publish'),
-      //   dataQa: 'publish',
-      //   display: isMyAppOrPreview && disabledActions.publish !== true,
-      //   Icon: IconWorldShare,
-      //   onClick: handlePublish,
-      // },
-      // {
-      //   name: t('Unpublish'),
-      //   dataQa: 'unpublish',
-      //   display: isAppIdPublic && disabledActions.unpublish !== true,
-      //   Icon: UnpublishIcon,
-      //   onClick: handleUnpublish,
-      // },
+      {
+        name: t('Publish'),
+        dataQa: 'publish',
+        display: isMyAppOrPreview && disabledActions.publish !== true,
+        Icon: IconWorldShare,
+        onClick: handlePublish,
+      },
+      {
+        name: t('Unpublish'),
+        dataQa: 'unpublish',
+        display: isAppIdPublic && disabledActions.unpublish !== true,
+        Icon: UnpublishIcon,
+        onClick: handleUnpublish,
+      },
       {
         name: t('Delete'),
         dataQa: 'delete',
@@ -150,6 +152,8 @@ export const useToolsetMenuItems = ({
       disabledActions.copyLink,
       disabledActions.edit,
       disabledActions.login,
+      disabledActions.publish,
+      disabledActions.unpublish,
       disabledActions.delete,
       handleCopy,
       isAppIdPublic,
@@ -159,6 +163,8 @@ export const useToolsetMenuItems = ({
       isWithAuth,
       handleLogin,
       isMyAppOrPreview,
+      handlePublish,
+      handleUnpublish,
       handleDelete,
     ],
   );

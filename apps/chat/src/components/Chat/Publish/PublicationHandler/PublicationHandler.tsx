@@ -44,13 +44,13 @@ import { PublishToSection } from '../PublishToSection';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
+import { ApplicationPublicationResources } from './PublicationReviewResources/ApplicationPublicationResources';
+import { ConversationPublicationResources } from './PublicationReviewResources/ConversationPublicationResources';
+import { FilePublicationResources } from './PublicationReviewResources/FilePublicationResources';
+import { PromptPublicationResources } from './PublicationReviewResources/PromptPublicationResources';
+import { ToolsetPublicationResources } from './PublicationReviewResources/ToolsetPublicationResources';
 import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
-import {
-  ApplicationPublicationResources,
-  ConversationPublicationResources,
-  FilePublicationResources,
-  PromptPublicationResources,
-} from './ReviewResources';
+import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
@@ -86,6 +86,12 @@ const sections = [
     dataQa: 'files-to-approve',
     Component: FilePublicationResources,
   },
+  {
+    featureType: FeatureType.Toolset,
+    sectionName: translate('Toolsets'),
+    dataQa: 'toolsets-to-approve',
+    Component: ToolsetPublicationResources,
+  },
 ];
 
 export function PublicationHandler({ publication }: Props) {
@@ -101,6 +107,9 @@ export function PublicationHandler({ publication }: Props) {
   );
   const isApplicationReview = useAppSelector(
     PublicationSelectors.selectIsApplicationReview,
+  );
+  const isToolsetReview = useAppSelector(
+    PublicationSelectors.selectIsToolsetReview,
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
@@ -289,6 +298,10 @@ export function PublicationHandler({ publication }: Props) {
     },
     [dispatch, displayAuthorEditState.length],
   );
+
+  const handleCloseCompareModal = useCallback(() => {
+    setIsCompareModalOpened(false);
+  }, []);
 
   const publishToUrl = editedPublishToUrl
     ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
@@ -517,11 +530,12 @@ export function PublicationHandler({ publication }: Props) {
           allRuleEntries={filteredRuleEntries}
           newRulesToCompare={newRules}
           oldRulesToCompare={rules[publication.targetFolder]}
-          onClose={() => setIsCompareModalOpened(false)}
+          onClose={handleCloseCompareModal}
           newRulesPath={publication.targetFolder}
         />
       )}
       {isApplicationReview && <ReviewApplicationDialog />}
+      {isToolsetReview && <ReviewToolsetDialog />}
     </div>
   );
 }
