@@ -68,6 +68,9 @@ const initEpic: AppEpic = (action$, state$) =>
         of(
           MarketplaceActions.initSuccess({
             saveFilters: isPreviousRouteEditor,
+            selectedTab: workSpaceTab
+              ? MarketplaceTabs.MY_WORKSPACE
+              : undefined,
           }),
         ),
         iif(
