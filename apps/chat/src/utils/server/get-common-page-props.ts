@@ -49,6 +49,8 @@ const hiddenFeaturesForIsolatedView = [
 ];
 
 export const getContentSecurityPolicyDirectives = () => {
+  const isDev = process.env.NODE_ENV === 'development';
+
   const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
     ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
     : 'frame-ancestors none';
@@ -57,7 +59,16 @@ export const getContentSecurityPolicyDirectives = () => {
     ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
     : 'frame-src none';
 
-  return `${ancestorsDirective} ; ${frameSrcDirective};`;
+  const cspHeader = `
+    object-src 'none';
+    base-uri 'self';
+    script-src 'self' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval' 'unsafe-inline'" : ''};
+    upgrade-insecure-requests;
+    ${ancestorsDirective};
+    ${frameSrcDirective};
+`;
+
+  return cleanHeaderDirectives(cspHeader);
 };
 
 export const getCommonPageProps: GetServerSideProps = async ({
@@ -66,7 +77,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
   res,
   resolvedUrl,
 }) => {
-  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
+  const cspHeaders = getContentSecurityPolicyDirectives();
+  // const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
 
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 

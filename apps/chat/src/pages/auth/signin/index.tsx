@@ -156,7 +156,8 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
+  // const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
+  const cspHeaders = getContentSecurityPolicyDirectives();
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
   res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
   res.setHeader('Cache-Control', 'no-store');
