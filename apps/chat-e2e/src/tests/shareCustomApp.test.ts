@@ -94,6 +94,7 @@ dialSharedWithMeTest(
           hasIcon: true,
         });
         iconName = getIconName(appData.iconUrl!);
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -162,7 +163,6 @@ dialSharedWithMeTest(
         await shareAppModal.copyLinkButton.click();
         await shareAppModal.closeButton.click();
         const shareLink = await marketplacePage.readTextFromClipboard();
-        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserMarketplacePage.navigateToUrl(shareLink);
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         await additionalShareUserAgentDetailsModalAssertion.assertElementState(
@@ -470,6 +470,10 @@ dialSharedWithMeTest(
           hasIcon: true,
         });
         iconName = getIconName(appData.iconUrl!);
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
+          appData,
+        );
       },
     );
 
@@ -495,11 +499,6 @@ dialSharedWithMeTest(
         await shareAppModal.checkAllowEditingByOtherUsers();
         await shareAppModal.copyLinkButton.click();
         const shareLink = await marketplacePage.readTextFromClipboard();
-
-        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-        await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
-          appData,
-        );
         await additionalShareUserMarketplacePage.navigateToUrl(shareLink);
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         await additionalShareUserAgentDetailsModalAssertion.assertElementState(
