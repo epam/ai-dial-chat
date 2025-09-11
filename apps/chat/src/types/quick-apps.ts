@@ -19,7 +19,7 @@ export interface DialDeploymentSimpleTool {
   deployment_id: string;
 }
 
-export interface DialDeploymentSimpleToolset {
+export interface DialDeploymentToolset {
   name: 'dial-deployment-tool-set';
   type: ToolsetTypes.DialDeployment;
   tools: DialDeploymentSimpleTool[];
@@ -38,7 +38,7 @@ export interface CodeInterpreterToolset {
 }
 
 export type AnyToolset =
-  | DialDeploymentSimpleToolset
+  | DialDeploymentToolset
   | MCPToolset
   | CodeInterpreterToolset;
 
@@ -62,7 +62,7 @@ export interface QuickApp2Config {
 
 export function isDialDeploymentToolset(
   toolset: AnyToolset,
-): toolset is DialDeploymentSimpleToolset {
+): toolset is DialDeploymentToolset {
   return toolset.type === ToolsetTypes.DialDeployment;
 }
 
