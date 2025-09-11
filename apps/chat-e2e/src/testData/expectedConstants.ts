@@ -34,6 +34,7 @@ export const ExpectedConstants = {
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel: 'Try again',
+  conversationSettings: 'Conversation settings',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',

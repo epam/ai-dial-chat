@@ -2,10 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  ExpectedConstants,
-  MenuOptions,
-} from '@/src/testData';
+import { ExpectedConstants, MenuOptions } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -75,7 +72,8 @@ dialAdminTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
         await publishingRequestModal.requestName.fillInInput(requestName);
-        publishApiModels = await publishingRequestModal.sendPublicationRequest();
+        publishApiModels =
+          await publishingRequestModal.sendPublicationRequest();
       },
     );
 
@@ -142,7 +140,7 @@ dialAdminTest(
         await tooltipAssertion.assertTooltipContent(
           `${defaultAgent.name}\nv. ${ExpectedConstants.defaultAppVersion}`,
         );
-        await adminChatHeader.chatTitle.click();
+        await adminChatHeader.chatAgent.click();
         await adminChatHeaderAssertion.assertHeaderTitle(
           publishedConversation.name,
         );
