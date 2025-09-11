@@ -173,7 +173,7 @@ export const convertApplicationToApi = (
 
   return {
     ...commonData,
-    endpoint: applicationData.completionUrl,
+    endpoint: applicationData.completionUrl ?? '',
   };
 };
 

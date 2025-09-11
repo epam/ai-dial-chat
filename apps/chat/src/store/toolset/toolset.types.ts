@@ -1,3 +1,4 @@
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import {
   ToolsetEditorSteps,
   ToolsetModel,
@@ -18,4 +19,6 @@ export interface ToolsetState {
   isInstalledToolsetsInitialized: boolean;
 
   editorStep: ToolsetEditorSteps;
+
+  publishRequestToolsets: PublishRequestDialAIEntityModel[];
 }
