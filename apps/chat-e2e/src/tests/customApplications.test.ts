@@ -2032,7 +2032,7 @@ dialAdminTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
     'Create two custom apps consecutively', // EPMRTC-6263
   async ({
