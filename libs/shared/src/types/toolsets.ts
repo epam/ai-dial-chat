@@ -41,6 +41,7 @@ export interface Toolset {
     authentication_type: ToolsetAuthTypes;
     redirect_uri?: string;
     api_key_header?: string;
+    token_endpoint?: string;
     // get
     client_id?: string;
     client_secret?: string;

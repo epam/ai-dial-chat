@@ -40,6 +40,7 @@ export interface ToolsetModel extends ShareEntity {
     authorizationEndpoint?: string;
     redirectUri?: string;
     scopesSupported?: string[];
+    tokenEndpoint?: string;
     // Authentication status map
     authStatus?: Record<ToolsetCredentialsLevel, ToolsetAuthStatus>;
   };

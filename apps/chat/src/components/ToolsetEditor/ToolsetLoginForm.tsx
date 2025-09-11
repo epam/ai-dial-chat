@@ -52,6 +52,7 @@ interface ToolsetLoginFormProps {
   disabled?: boolean;
   className?: string;
   buttonClassName?: string;
+  showOAuthClientForm?: boolean;
 }
 
 export const ToolsetLoginForm = ({
@@ -63,6 +64,7 @@ export const ToolsetLoginForm = ({
   disabled = false,
   className,
   buttonClassName,
+  showOAuthClientForm = false,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -118,6 +120,41 @@ export const ToolsetLoginForm = ({
           />
         </>
       )}
+
+      {type === ToolsetAuthTypes.OAUTH &&
+        !isSignedIn &&
+        showOAuthClientForm && (
+          <>
+            <Field
+              {...register('clientId')}
+              label={t('Client id')}
+              placeholder={t('Type client id')}
+              id="clientId"
+              disabled={disabled}
+            />
+            <Field
+              {...register('clientSecret')}
+              label={t('Client secret')}
+              placeholder={t('Type client secret')}
+              id="clientSecret"
+              disabled={disabled}
+            />
+            <Field
+              {...register('authorizationEndpoint')}
+              label={t('Authorization endpoint')}
+              placeholder={t('Type authorization endpoint')}
+              id="authorizationEndpoint"
+              disabled={disabled}
+            />
+            <Field
+              {...register('tokenEndpoint')}
+              label={t('Token endpoint')}
+              placeholder={t('Type token endpoint')}
+              id="tokenEndpoint"
+              disabled={disabled}
+            />
+          </>
+        )}
 
       <button
         className={classNames(

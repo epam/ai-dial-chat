@@ -88,6 +88,12 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         ...(data.authSettings.scopesSupported && {
           scopes_supported: data.authSettings.scopesSupported,
         }),
+        ...(data.authSettings.tokenEndpoint && {
+          token_endpoint: data.authSettings.tokenEndpoint,
+        }),
+        ...(data.authSettings.authorizationEndpoint && {
+          authorization_endpoint: data.authSettings.authorizationEndpoint,
+        }),
       };
     default:
     case ToolsetAuthTypes.NONE:

@@ -150,6 +150,7 @@ const AuthTypeSection = ({
                 toolset={toolsetDetails}
                 disabled={!isWithLogin}
                 onLogout={onLogout}
+                showOAuthClientForm
               />
             </div>
             <div className="p-4">
@@ -226,6 +227,17 @@ export const AuthField = () => {
                     data.type === ToolsetAuthTypes.OAUTH
                       ? getToolsetRedirectUri()
                       : undefined,
+                  ...(data.clientId &&
+                    data.clientSecret && {
+                      clientId: data.clientId,
+                      clientSecret: data.clientSecret,
+                    }),
+                  ...(data.authorizationEndpoint && {
+                    authorizationEndpoint: data.authorizationEndpoint,
+                  }),
+                  ...(data.tokenEndpoint && {
+                    tokenEndpoint: data.tokenEndpoint,
+                  }),
                 },
               },
               auth: {

@@ -86,8 +86,14 @@ export const getDefaultFormData = (
 export const ToolsetLoginFormSchema = zodValidation
   .object({
     type: zodValidation.enum(ToolsetAuthTypes),
+    // API_KEY
     keyHeader: zodValidation.string().optional(),
     apiKey: zodValidation.string().optional(),
+    // OAuth
+    clientId: zodValidation.string().optional(),
+    clientSecret: zodValidation.string().optional(),
+    authorizationEndpoint: zodValidation.string().optional(),
+    tokenEndpoint: zodValidation.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === ToolsetAuthTypes.API_KEY) {
