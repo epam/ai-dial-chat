@@ -6,6 +6,7 @@ import {
   ChatBar,
   ChatHeader,
   ChatMessages,
+  ConversationSettingsModal,
   DropdownMenu,
   InformationModal,
   Marketplace,
@@ -18,12 +19,14 @@ import {
   PublishingRequestModal,
   PublishingRules,
   SelectFolderModal,
+  TalkToAgentDialog,
   Toast,
   VariableModalDialog,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
 import {
+  AgentSettingAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
   ConversationAssertion,
@@ -171,6 +174,9 @@ const dialAdminTest = dialTest.extend<{
   adminPublishingRequestModalAssertion: PublishingRequestModalAssertion;
   adminAppToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
   adminPublishingRulesAssertion: PublishingRulesAssertion;
+  adminConversationSettings: ConversationSettingsModal;
+  adminTalkToAgentDialog: TalkToAgentDialog;
+  adminEntitySettingsAssertion: AgentSettingAssertion;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -705,6 +711,20 @@ const dialAdminTest = dialTest.extend<{
       adminPublishingRules,
     );
     await use(adminPublishingRulesAssertion);
+  },
+  adminConversationSettings: async ({ adminPage }, use) => {
+    const adminConversationSettings = new ConversationSettingsModal(adminPage);
+    await use(adminConversationSettings);
+  },
+  adminTalkToAgentDialog: async ({ adminPage }, use) => {
+    const adminTalkToAgentDialog = new TalkToAgentDialog(adminPage);
+    await use(adminTalkToAgentDialog);
+  },
+  adminEntitySettingsAssertion: async ({ adminConversationSettings }, use) => {
+    const adminEntitySettingsAssertion = new AgentSettingAssertion(
+      adminConversationSettings.getAgentSettings(),
+    );
+    await use(adminEntitySettingsAssertion);
   },
 });
 

@@ -2,7 +2,11 @@ import { Conversation } from '@/chat/types/chat';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, MenuOptions } from '@/src/testData';
+import {
+  ExpectedConstants,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -190,6 +194,105 @@ dialAdminTest(
           [MenuOptions.rename],
           'Menu options',
         );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'Update settings of agent for chat from publication request.\n' +
+    'Update agent for chat from publication request',
+  async ({
+    dialHomePage,
+    conversationData,
+    publishRequestBuilder,
+    publicationApiHelper,
+    dataInjector,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    adminChatHeader,
+    setTestIds,
+    adminLocalStorageManager,
+    localStorageManager,
+    adminChatHeaderAssertion,
+    adminConversationSettings,
+    adminTalkToAgentDialog,
+    adminChat,
+    adminChatMessages,
+    iconApiHelper,
+    adminEntitySettingsAssertion,
+  }) => {
+    setTestIds('EPMRTC-6736', 'EPMRTC-6737');
+    let conversation: Conversation;
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const newSystemPrompt = 'new system prompt';
+    const newTemp = '0.5';
+    const gpt4 = ModelsUtil.getModel('gpt-4')!;
+    const gpt4Icon = iconApiHelper.getEntityIcon(gpt4);
+
+    await dialTest.step('Prepare conversation and publication request', async () => {
+      conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+      await localStorageManager.setShowSideBarPanels();
+
+      const publishRequest = publishRequestBuilder
+        .withName(requestName)
+        .withConversationInFolderResource(conversation, PublishActions.ADD)
+        .build();
+      await publicationApiHelper.createPublishRequest(publishRequest);
+    });
+
+    await dialAdminTest.step(
+      'Login as admin, open publication request and click on "Go to a review" link',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on settings icon, update settings and save changes',
+      async () => {
+        await adminChatHeader.openConversationSettingsPopup();
+        const agentSettings = adminConversationSettings.getAgentSettings();
+        await agentSettings.setSystemPrompt(newSystemPrompt);
+        const temperatureSlider = agentSettings.getTemperatureSlider();
+        await temperatureSlider.setTemperature(newTemp);
+        await adminConversationSettings.applyChangesButton.click();
+        await adminChatHeader.openConversationSettingsPopup();
+        await adminEntitySettingsAssertion.assertSystemPromptValue(
+          newSystemPrompt,
+        );
+        await adminEntitySettingsAssertion.assertTemperature(newTemp);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on agent icon, select another agent and verify it is updated',
+      async () => {
+        await adminChatHeader.chatAgent.click();
+        await adminTalkToAgentDialog.selectAgent(gpt4.name);
+        await adminChatHeaderAssertion.assertHeaderIcon(gpt4Icon);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Send a message and verify response is received',
+      async () => {
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await adminChat.sendRequestWithButton('test');
+        await adminChatMessages.waitForResponseReceived();
       },
     );
   },
