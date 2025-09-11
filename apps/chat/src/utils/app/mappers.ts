@@ -42,6 +42,8 @@ export class EnumMapper {
         return FeatureType.Chat;
       case SharingType.Application:
         return FeatureType.Application;
+      case SharingType.Toolset:
+        return FeatureType.Toolset;
       case SharingType.File:
       default:
         return FeatureType.File;
