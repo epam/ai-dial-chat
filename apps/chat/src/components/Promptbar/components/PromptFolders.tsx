@@ -61,7 +61,11 @@ interface promptFolderProps {
   allowHighlight?: boolean;
 }
 
-const publicationFeatureTypes = [FeatureType.Prompt, FeatureType.Application];
+const publicationFeatureTypes = [
+  FeatureType.Prompt,
+  FeatureType.Application,
+  FeatureType.Toolset,
+];
 
 const PromptFolderTemplate = ({
   folder,

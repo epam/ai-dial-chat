@@ -9,6 +9,7 @@ export enum SharingType {
   PromptFolder = 'prompts_folder',
   File = 'file',
   Application = 'application',
+  Toolset = 'toolset',
 }
 
 export interface UserGroup {

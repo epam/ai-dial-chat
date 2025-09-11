@@ -38,10 +38,11 @@ const ChipView: React.FC<ChipViewProps> = ({
   return (
     <div
       className={classNames(
-        'flex h-[34px] cursor-pointer items-center gap-2 rounded px-2 py-1.5',
+        'flex h-[34px] items-center gap-2 rounded px-2 py-1.5',
         isInvalid
           ? 'bg-error text-error'
           : 'bg-accent-primary-alpha text-primary',
+        readonly ? 'cursor-default' : 'cursor-pointer',
       )}
     >
       <ModelIcon entityId={id} entity={item} size={18} />

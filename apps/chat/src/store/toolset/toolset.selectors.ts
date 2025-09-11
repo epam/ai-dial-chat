@@ -55,6 +55,9 @@ const selectInstalledToolsetsSet = createSelector(
 
 const selectEditorStep = (state: RootState) => rootSelector(state).editorStep;
 
+const selectPublishRequestToolsets = (state: RootState) =>
+  rootSelector(state).publishRequestToolsets;
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -68,4 +71,5 @@ export const ToolsetSelectors = {
   selectInstalledToolsets,
   selectInstalledToolsetsSet,
   selectEditorStep,
+  selectPublishRequestToolsets,
 };
