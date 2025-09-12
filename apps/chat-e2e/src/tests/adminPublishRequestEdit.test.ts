@@ -20,9 +20,6 @@ dialAdminTest(
     publicationApiHelper,
     adminPublicationApiHelper,
     dataInjector,
-    organizationConversations,
-    conversationDropdownMenu,
-    publishingRequestModal,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
@@ -31,7 +28,6 @@ dialAdminTest(
     adminChatHeader,
     setTestIds,
     adminLocalStorageManager,
-    localStorageManager,
     baseAssertion,
     adminChatHeaderAssertion,
     tooltipAssertion,
@@ -41,13 +37,10 @@ dialAdminTest(
     setTestIds('EPMRTC-6472');
     let publishedConversation: Conversation;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
-    let publishApiModels: {
-      request: PublicationRequestModel;
-      response: Publication;
-    };
+    let publication: Publication;
 
     await dialTest.step(
-      'Create and approve single conversation publishing',
+      'Create and approve single conversation publishing and unpublish request via API',
       async () => {
         publishedConversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([publishedConversation]);
@@ -59,25 +52,12 @@ dialAdminTest(
             PublishActions.ADD,
           )
           .build();
-        const publication =
+        publication =
           await publicationApiHelper.createPublishRequest(publishRequest);
         await adminPublicationApiHelper.approveRequest(publication);
-        await localStorageManager.setShowSideBarPanels();
-      },
-    );
 
-    await dialTest.step(
-      'Select "Unpublish" menu option for published conversation and send unpublish request',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await organizationConversations.openEntityDropdownMenu(
-          publishedConversation.name,
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+        publication.name = requestName;
+        await publicationApiHelper.createUnpublishRequest(publication);
       },
     );
 
@@ -128,9 +108,7 @@ dialAdminTest(
       'Verify there is no Edit icon in bottom near "Back to publication request" button',
       async () => {
         await baseAssertion.assertElementState(
-          adminPublicationReviewControl.getChildElementBySelector(
-            '[data-qa="edit"]',
-          ),
+          adminPublicationReviewControl.editButton,
           'hidden',
         );
       },
@@ -142,7 +120,7 @@ dialAdminTest(
         const defaultAgent = ModelsUtil.getDefaultAgent()!;
         await adminChatHeader.hoverOverChatModel();
         await tooltipAssertion.assertTooltipContent(
-          `${defaultAgent.name}\nv. ${ExpectedConstants.defaultAppVersion}`,
+          ExpectedConstants.modelTooltip(defaultAgent.name, defaultAgent.version),
         );
         await adminChatHeader.chatAgent.click();
         await adminChatHeaderAssertion.assertHeaderTitle(
@@ -204,7 +182,6 @@ dialAdminTest(
     'Update agent for chat from publication request.\n' +
     'Edit existing message for chat from publication request Approve required',
   async ({
-    dialHomePage,
     conversationData,
     publishRequestBuilder,
     publicationApiHelper,
@@ -230,20 +207,23 @@ dialAdminTest(
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const newSystemPrompt = 'new system prompt';
     const newTemp = '0.5';
-    const gpt4 = ModelsUtil.getModel('gpt-4')!;
-    const gpt4Icon = iconApiHelper.getEntityIcon(gpt4);
+    const model = ModelsUtil.getDefaultAgent()!;
+    const modelIcon = iconApiHelper.getEntityIcon(model);
 
-    await dialTest.step('Prepare conversation and publication request', async () => {
-      conversation = conversationData.prepareDefaultConversation();
-      await dataInjector.createConversations([conversation]);
-      await localStorageManager.setShowSideBarPanels();
+    await dialTest.step(
+      'Prepare conversation and publication request',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
 
-      const publishRequest = publishRequestBuilder
-        .withName(requestName)
-        .withConversationInFolderResource(conversation, PublishActions.ADD)
-        .build();
-      await publicationApiHelper.createPublishRequest(publishRequest);
-    });
+        const publishRequest = publishRequestBuilder
+          .withName(requestName)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest);
+      },
+    );
 
     await dialAdminTest.step(
       'Login as admin, open publication request and click on "Go to a review" link',
@@ -300,8 +280,8 @@ dialAdminTest(
       'Click on agent icon, select another agent and verify it is updated',
       async () => {
         await adminChatHeader.chatAgent.click();
-        await adminTalkToAgentDialog.selectAgent(gpt4.name);
-        await adminChatHeaderAssertion.assertHeaderIcon(gpt4Icon);
+        await adminTalkToAgentDialog.selectAgent(model.name);
+        await adminChatHeaderAssertion.assertHeaderIcon(modelIcon);
       },
     );
 
