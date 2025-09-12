@@ -201,7 +201,8 @@ dialAdminTest(
 
 dialAdminTest(
   'Update settings of agent for chat from publication request.\n' +
-    'Update agent for chat from publication request',
+    'Update agent for chat from publication request.\n' +
+    'Edit existing message for chat from publication request Approve required',
   async ({
     dialHomePage,
     conversationData,
@@ -222,8 +223,9 @@ dialAdminTest(
     adminChatMessages,
     iconApiHelper,
     adminEntitySettingsAssertion,
+    adminChatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-6736', 'EPMRTC-6737');
+    setTestIds('EPMRTC-6736', 'EPMRTC-6737', 'EPMRTC-6475');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const newSystemPrompt = 'new system prompt';
@@ -282,6 +284,24 @@ dialAdminTest(
         await adminChatHeader.chatAgent.click();
         await adminTalkToAgentDialog.selectAgent(gpt4.name);
         await adminChatHeaderAssertion.assertHeaderIcon(gpt4Icon);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Edit 1st message, save and verify it is updated and response is regenerated',
+      async () => {
+        const updatedMessage = 'updated message';
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        const firstMessage = conversation.messages[0].content;
+        await adminChatMessages.openEditMessageMode(firstMessage);
+        await adminChatMessages.editMessage(firstMessage, updatedMessage);
+        await adminChatMessagesAssertion.assertMessageContent(
+          1,
+          updatedMessage,
+        );
+        await adminChatMessagesAssertion.assertMessagesCount(2);
       },
     );
 
