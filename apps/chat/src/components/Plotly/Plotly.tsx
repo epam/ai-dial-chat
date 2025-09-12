@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
 import dynamic from 'next/dynamic';

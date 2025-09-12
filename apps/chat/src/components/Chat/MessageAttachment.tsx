@@ -218,9 +218,11 @@ const AttachmentUrlRendererComponent = ({
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const [isOpened, setIsOpened] = useState(false);
   const [wasOpened, setWasOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const selectIsCustomAttachmentTypeSelector = useMemo(
