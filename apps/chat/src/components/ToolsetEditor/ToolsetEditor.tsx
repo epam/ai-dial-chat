@@ -10,6 +10,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { ToolsetEditorHeader } from '@/src/components/ToolsetEditor/ToolsetEditorHeader';
@@ -22,6 +27,14 @@ import {
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+
+const marketplaceRoute = {
+  pathname: Routes.Marketplace,
+  query: {
+    [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
+    [MarketplaceQueryParams.entitiesTab]: MarketplaceEntitiesTabs.TOOLSETS,
+  },
+};
 
 export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
@@ -117,9 +130,10 @@ export const ToolsetEditor = () => {
   );
 
   const handleSaveAndExit = useCallback(() => {
+    // todo: handle redirect
     if ((!isDirty && toolsetDetails) || !toolsetDetails) {
       void router.push(
-        router.query.publicationUrl ? Routes.Chat : Routes.Marketplace,
+        router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
       );
       return;
     }
