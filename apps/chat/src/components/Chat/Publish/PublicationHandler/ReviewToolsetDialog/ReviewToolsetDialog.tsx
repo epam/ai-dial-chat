@@ -4,29 +4,29 @@ import { ModalState } from '@/src/types/modal';
 
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { ReviewApplicationDialogView } from './ReviewApplicationDialogView';
+import { ReviewToolsetDialogView } from './ReviewToolsetDialogView';
 
-export function ReviewApplicationDialog() {
+export function ReviewToolsetDialog() {
   const dispatch = useAppDispatch();
 
   const isLoading = useAppSelector(
-    ApplicationSelectors.selectIsApplicationLoading,
+    ToolsetSelectors.selectIsToolsetDetailsLoading,
   );
 
   const handleClose = useCallback(() => {
-    dispatch(PublicationActions.setIsApplicationReview(false));
+    dispatch(PublicationActions.setIsToolsetReview(false));
   }, [dispatch]);
 
   return (
     <Modal
-      dataQa="review-application-dialog"
+      dataQa="review-toolset-dialog"
       portalId="chat"
       onClose={handleClose}
       overlayClassName="fixed inset-0 top-[48px]"
@@ -39,7 +39,7 @@ export function ReviewApplicationDialog() {
           <Spinner className="mx-auto" size={30} />
         </div>
       ) : (
-        <ReviewApplicationDialogView />
+        <ReviewToolsetDialogView />
       )}
     </Modal>
   );

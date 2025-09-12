@@ -1,6 +1,7 @@
 import { EntityType } from './common';
 
 import {
+  EntityPublicationInfo,
   ShareEntity,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
@@ -78,3 +79,8 @@ export interface ToolsetRedirectState {
 }
 
 export type ToolsetsMap = Partial<Record<string, ToolsetModel>>;
+
+export interface PublishRequestDialAIEntityModel extends ToolsetModel {
+  folderId: string;
+  publicationInfo: EntityPublicationInfo;
+}

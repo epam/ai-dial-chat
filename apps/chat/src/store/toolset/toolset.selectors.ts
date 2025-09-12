@@ -1,5 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { sortItemsVersions } from '@/src/utils/app/common';
+import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
+
 import { RootState } from '@/src/types/store';
 import { ToolsetModel } from '@/src/types/toolsets';
 
@@ -15,8 +18,19 @@ const selectToolsetsMap = (state: RootState) => rootSelector(state).toolsetsMap;
 
 const selectToolsets = createSelector([selectToolsetsMap], (toolsetsMap) => {
   const toolsets = uniq(Object.values(toolsetsMap)) as ToolsetModel[];
+  const sortedToolsets = sortBy(toolsets, (toolset) =>
+    toolset.name.toLowerCase(),
+  );
 
-  return sortBy(toolsets, (toolset) => toolset.name.toLowerCase());
+  return groupMarketplaceEntityAndSaveOrder(sortedToolsets).flatMap(
+    ({ entities }) => {
+      if (entities.length > 0 && entities[0].id !== entities[0].reference) {
+        sortItemsVersions(entities);
+      }
+
+      return entities;
+    },
+  );
 });
 
 const selectToolsetsStatus = (state: RootState) =>
@@ -55,6 +69,9 @@ const selectInstalledToolsetsSet = createSelector(
 
 const selectEditorStep = (state: RootState) => rootSelector(state).editorStep;
 
+const selectPublishRequestToolsets = (state: RootState) =>
+  rootSelector(state).publishRequestToolsets;
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -68,4 +85,5 @@ export const ToolsetSelectors = {
   selectInstalledToolsets,
   selectInstalledToolsetsSet,
   selectEditorStep,
+  selectPublishRequestToolsets,
 };

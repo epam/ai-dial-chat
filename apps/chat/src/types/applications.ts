@@ -118,7 +118,7 @@ export type ApplicationPropertiesType =
 export interface CustomApplicationModel
   extends DialAIEntityModel,
     ApplicationInfo {
-  completionUrl: string;
+  completionUrl?: string;
   applicationTypeSchemaId?: string;
   function?: {
     status?: ApplicationStatus;

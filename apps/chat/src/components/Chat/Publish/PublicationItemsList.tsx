@@ -15,6 +15,7 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
@@ -25,7 +26,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { ApplicationPublishItems } from '@/src/components/Chat/Publish/ApplicationPublishItems';
+import { MarketplaceEntityPublishItem } from '@/src/components/Chat/Publish/MarketplaceEntityPublishItem';
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import {
   ConversationRow,
@@ -369,10 +370,10 @@ export const PublicationItemsList = memo(
             )}
           </CollapsibleSection>
         )}
-        {type === SharingType.Application && (
-          <ApplicationPublishItems
+        {(type === SharingType.Application || type === SharingType.Toolset) && (
+          <MarketplaceEntityPublishItem
             path={path}
-            entity={entity as PublishRequestDialAIEntityModel}
+            entity={entity as PublishRequestDialAIEntityModel | ToolsetModel}
             handleSelectItems={handleSelectItems}
             publishAction={publishAction}
             chosenItemsIds={chosenItemsIds}

@@ -10,6 +10,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { ToolsetEditorHeader } from '@/src/components/ToolsetEditor/ToolsetEditorHeader';
@@ -23,6 +28,14 @@ import {
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+const marketplaceRoute = {
+  pathname: Routes.Marketplace,
+  query: {
+    [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
+    [MarketplaceQueryParams.entitiesTab]: MarketplaceEntitiesTabs.TOOLSETS,
+  },
+};
+
 export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
 
@@ -33,6 +46,7 @@ export const ToolsetEditor = () => {
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
 
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
+  const saveAndExitRef = useRef<boolean>(false);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -75,6 +89,7 @@ export const ToolsetEditor = () => {
             oldToolset: toolsetDetails,
             newToolset: payloadToolset,
             tabToOpen: changeEditorTabRef.current ?? undefined,
+            isSaveAndExit: saveAndExitRef.current,
           }),
         );
       } else {
@@ -86,6 +101,7 @@ export const ToolsetEditor = () => {
       }
 
       changeEditorTabRef.current = null;
+      saveAndExitRef.current = false;
       formMethods.reset(getDefaultFormData(payloadToolset));
     },
     [dispatch, formMethods, toolsetDetails],
@@ -105,6 +121,7 @@ export const ToolsetEditor = () => {
             .then(() => cb?.());
         } else {
           changeEditorTabRef.current = null;
+          saveAndExitRef.current = false;
           cb?.();
         }
       });
@@ -113,12 +130,17 @@ export const ToolsetEditor = () => {
   );
 
   const handleSaveAndExit = useCallback(() => {
-    if (!toolsetDetails) {
-      void router.push(Routes.Marketplace);
+    // todo: handle redirect
+    if ((!isDirty && toolsetDetails) || !toolsetDetails) {
+      void router.push(
+        router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
+      );
       return;
     }
-    handleSubmit(() => router.push(Routes.Marketplace));
-  }, [handleSubmit, router, toolsetDetails]);
+
+    saveAndExitRef.current = true;
+    handleSubmit();
+  }, [handleSubmit, isDirty, router, toolsetDetails]);
 
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
