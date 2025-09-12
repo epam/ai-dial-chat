@@ -1,5 +1,14 @@
+import { useMemo } from 'react';
+
+import { sortItemsVersions } from '@/src/utils/app/common';
+import { isMyToolset } from '@/src/utils/app/id';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+
 import { ModalState } from '@/src/types/modal';
 import { ToolsetModel } from '@/src/types/toolsets';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -11,7 +20,6 @@ interface Props {
   entity: ToolsetModel;
   allEntities: ToolsetModel[];
   isMyWorkspaceTab: boolean;
-  isSuggested?: boolean;
   onClose: () => void;
   onChangeVersion: (entity: ToolsetModel) => void;
   onBookmarkClick: (entity: ToolsetModel) => void;
@@ -19,16 +27,25 @@ interface Props {
 
 export function ToolsetDetails({
   entity,
-  // allEntities,
-  // isMyWorkspaceTab,
-  // isSuggested,
+  allEntities,
+  isMyWorkspaceTab,
   onClose,
   onChangeVersion,
   onBookmarkClick,
 }: Props) {
-  // const installedToolsetsIds = useAppSelector(
-  //   ToolsetSelectors.selectInstalledToolsetsReferences,
-  // );
+  const installedToolsetsIds = useAppSelector(
+    ToolsetSelectors.selectInstalledToolsetsSet,
+  );
+  const filteredEntities = useMemo(() => {
+    const filtered = allEntities.filter(
+      (e) =>
+        getGroupMarketplaceEntityKey(entity) ===
+          getGroupMarketplaceEntityKey(e) &&
+        (!isMyWorkspaceTab || installedToolsetsIds.has(e.reference)),
+    );
+
+    return isMyToolset(entity) ? sortItemsVersions(filtered) : filtered;
+  }, [allEntities, entity, installedToolsetsIds, isMyWorkspaceTab]);
 
   return (
     <Modal
@@ -44,7 +61,7 @@ export function ToolsetDetails({
       <ToolsetDetailsFooter
         onChangeVersion={onChangeVersion}
         entity={entity}
-        allVersions={[]}
+        allVersions={filteredEntities}
         onBookmarkClick={onBookmarkClick}
       />
     </Modal>
