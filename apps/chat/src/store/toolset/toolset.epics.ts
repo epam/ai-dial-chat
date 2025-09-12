@@ -179,8 +179,29 @@ const getToolsetDetailsEpic: AppEpic = (action$) =>
         switchMap((toolset) => {
           return toolset
             ? of(ToolsetActions.getToolsetDetailsSuccess(toolset))
-            : of(ToolsetActions.getToolsetDetailsFailed());
+            : of(ToolsetActions.getToolsetDetailsFailed({ id: payload.id }));
         }),
+        catchError(() =>
+          of(ToolsetActions.getToolsetDetailsFailed({ id: payload.id })),
+        ),
+      );
+    }),
+  );
+
+const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
+  action$.pipe(
+    ofType(ToolsetActions.getToolsetDetailsFailed.type),
+    switchMap(({ payload }) => {
+      if (router.route === Routes.ToolsetEditor) {
+        void router.push(Routes.NotFound);
+      }
+
+      return of(
+        UIActions.showErrorToast(
+          translate(errorsMessages.toolsetGetFailed, {
+            name: payload?.id ?? '...',
+          }),
+        ),
       );
     }),
   );
@@ -290,15 +311,34 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
             ),
             catchError((err) => {
               console.error('Failed to update toolset', err.message);
-              return of(
-                ToolsetActions.updateToolsetFailed({
-                  oldToolset: payload.oldToolset,
-                }),
-                UIActions.showErrorToast(
-                  translate(
-                    err.status === 400
-                      ? errorsMessages.toolsetOAuthNotSupported
-                      : errorsMessages.toolsetUpdateFailed,
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      err.status === 400
+                        ? errorsMessages.toolsetOAuthNotSupported
+                        : errorsMessages.toolsetUpdateFailed,
+                    ),
+                  ),
+                ),
+                iif(
+                  () => err.status === 400,
+                  of(
+                    // Reset toolset auth type to NONE and save other values if OAuth is not supported
+                    ToolsetActions.updateToolset({
+                      oldToolset: payload.oldToolset,
+                      newToolset: {
+                        ...payload.newToolset,
+                        authSettings: {
+                          authenticationType: ToolsetAuthTypes.NONE,
+                        },
+                      },
+                    }),
+                  ),
+                  of(
+                    ToolsetActions.updateToolsetFailed({
+                      oldToolset: payload.oldToolset,
+                    }),
                   ),
                 ),
               );
@@ -734,6 +774,7 @@ export const ToolsetEpics = combineEpics(
   createToolsetEpic,
   createToolsetFailedEpic,
   getToolsetDetailsEpic,
+  getToolsetDetailsFailedEpic,
   updateToolsetEpic,
   setQueryParamsEpic,
   initQueryParamsEpic,
