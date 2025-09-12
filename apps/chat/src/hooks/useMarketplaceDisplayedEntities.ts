@@ -7,7 +7,6 @@ import {
 } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
 import {
@@ -112,11 +111,9 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
       (entity) => entity.reference,
     );
 
-    if (isSelectedAgentsTab) {
-      entitiesToDisplay = groupMarketplaceEntityAndSaveOrder(
-        entitiesToDisplay as DialAIEntityModel[],
-      ).map(({ entities }) => entities[0]) as T[];
-    }
+    entitiesToDisplay = groupMarketplaceEntityAndSaveOrder(
+      entitiesToDisplay,
+    ).map(({ entities }) => entities[0]);
 
     if (shouldSuggest) {
       const suggestedListWithoutInstalled = entitiesToDisplay.filter(
