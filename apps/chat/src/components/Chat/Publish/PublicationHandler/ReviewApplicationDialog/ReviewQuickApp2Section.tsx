@@ -11,7 +11,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import {
-  DialDeploymentTool,
+  DialDeploymentSimpleTool,
   MCPToolset,
   QuickApp2Config,
   isCodeInterpreterToolset,
@@ -83,7 +83,7 @@ const ReviewQuickApp2SectionView = ({
   const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
       config.tool_sets?.reduce<{
-        agents: DialDeploymentTool[];
+        agents: DialDeploymentSimpleTool[];
         toolsets: MCPToolset[];
         isCodeInterpreter: boolean;
       }>(
@@ -163,18 +163,10 @@ const ReviewQuickApp2SectionView = ({
           <span className="flex gap-2 text-primary">
             {agents.map((agent) => (
               <AgentAndToolsetChip
-                id={agent.deployment.name}
-                key={agent.deployment.name}
-                item={
-                  modelsMap[agent.deployment.name] ?? {
-                    id: agent.deployment.name,
-                    description: agent.open_ai_tool.function.description,
-                    name: agent.deployment.name,
-                    type: EntityType.Model,
-                    reference: agent.deployment.name,
-                    isDefault: false,
-                  }
-                }
+                key={agent.deployment_id}
+                // TODO: handle case when model is not found (+ try search model in a review bucket when will be supported on core side)
+                item={modelsMap[agent.deployment_id]!}
+                id={agent.deployment_id}
                 readonly
               />
             ))}
