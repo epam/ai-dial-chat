@@ -1,6 +1,7 @@
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { connection } from 'next/server';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 import { pages } from '@/src/utils/auth/auth-pages';
@@ -66,142 +67,150 @@ export const getCommonPageProps: GetServerSideProps = async ({
   res,
   resolvedUrl,
 }) => {
-  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
+  try {
+    await connection();
+    const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
 
-  const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
+    const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 
-  res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
+    res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
 
-  let params: URLSearchParams | undefined;
-  if (req.url) {
-    params = new URL(req.url, `http://${req.headers.host}`).searchParams;
-  }
-
-  let session = null;
-  if (
-    !Object.values(pages).some((page) => page && resolvedUrl?.includes(page))
-  ) {
-    session = await getServerSession(req, res, authOptions);
-    if (!isServerSessionValid(session)) {
-      let callbackUrl: string | undefined;
-      if (req.url) {
-        const url = new URL(
-          req.url,
-          `${req.headers['x-forwarded-proto']}://${req.headers.host}`,
-        );
-        url.searchParams.delete('callbackUrl');
-        callbackUrl = url.toString();
-      }
-      return {
-        redirect: {
-          permanent: false,
-          destination: `/api/auth/signin${req.url ? `?callbackUrl=${encodeURIComponent(callbackUrl ?? '/')}` : ''}`,
-        },
-      };
+    let params: URLSearchParams | undefined;
+    if (req.url) {
+      params = new URL(req.url, `http://${req.headers.host}`).searchParams;
     }
-  }
 
-  const customRenderers =
-    process.env.CUSTOM_VISUALIZERS &&
-    JSON.parse(process.env.CUSTOM_VISUALIZERS);
+    let session = null;
+    if (
+      !Object.values(pages).some((page) => page && resolvedUrl?.includes(page))
+    ) {
+      session = await getServerSession(req, res, authOptions);
+      if (!isServerSessionValid(session)) {
+        let callbackUrl: string | undefined;
+        if (req.url) {
+          const url = new URL(
+            req.url,
+            `${req.headers['x-forwarded-proto']}://${req.headers.host}`,
+          );
+          url.searchParams.delete('callbackUrl');
+          callbackUrl = url.toString();
+        }
+        return {
+          redirect: {
+            permanent: false,
+            destination: `/api/auth/signin${req.url ? `?callbackUrl=${encodeURIComponent(callbackUrl ?? '/')}` : ''}`,
+          },
+        };
+      }
+    }
 
-  const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
-  const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
-  const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
-  const enabledFeaturesData = process.env.ENABLED_FEATURES_DATA
-    ? safeParseJSON(
-        process.env.ENABLED_FEATURES_DATA?.replaceAll('\\"', '"'),
-        'Error when parsing ENABLED_FEATURES_DATA',
-        console,
+    const customRenderers =
+      process.env.CUSTOM_VISUALIZERS &&
+      JSON.parse(process.env.CUSTOM_VISUALIZERS);
+
+    const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
+    const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
+    const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
+    const enabledFeaturesData = process.env.ENABLED_FEATURES_DATA
+      ? safeParseJSON(
+          process.env.ENABLED_FEATURES_DATA?.replaceAll('\\"', '"'),
+          'Error when parsing ENABLED_FEATURES_DATA',
+          console,
+        )
+      : [];
+
+    const settings: SettingsState = {
+      appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
+      codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
+      defaultRecentModelsIds: parseCommaSeparatedList(
+        process.env.RECENT_MODELS_IDS,
+      ),
+      defaultRecentAddonsIds: parseCommaSeparatedList(
+        process.env.RECENT_ADDONS_IDS,
+      ),
+      defaultModelReference: DEFAULT_MODEL_ID,
+      defaultAssistantSubmodelId:
+        process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
+      codeEditorPythonVersions: parseCommaSeparatedList(
+        process.env.CODE_EDITOR_PYTHON_VERSIONS,
+        ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
+      ),
+      enabledFeatures: (
+        parseCommaSeparatedList(process.env.ENABLED_FEATURES) as Feature[]
       )
-    : [];
-
-  const settings: SettingsState = {
-    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
-    codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
-    defaultRecentModelsIds: parseCommaSeparatedList(
-      process.env.RECENT_MODELS_IDS,
-    ),
-    defaultRecentAddonsIds: parseCommaSeparatedList(
-      process.env.RECENT_ADDONS_IDS,
-    ),
-    defaultModelReference: DEFAULT_MODEL_ID,
-    defaultAssistantSubmodelId:
-      process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
-      FALLBACK_ASSISTANT_SUBMODEL_ID,
-    codeEditorPythonVersions: parseCommaSeparatedList(
-      process.env.CODE_EDITOR_PYTHON_VERSIONS,
-      ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
-    ),
-    enabledFeatures: (
-      parseCommaSeparatedList(process.env.ENABLED_FEATURES) as Feature[]
-    )
-      .filter((feature) =>
-        isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
+        .filter((feature) =>
+          isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
+        )
+        .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
+      enabledFeaturesData,
+      widgetsSchemaIds: parseCommaSeparatedList(
+        process.env.WIDGETS_SCHEMA_IDS,
+        [],
+      ),
+      publicationFilters: parseCommaSeparatedList(
+        process.env.PUBLICATION_FILTERS,
+        ['title', 'role', 'dial_roles'],
+      ),
+      isOverlay: process.env.IS_IFRAME === 'true' || false,
+      footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
+        '%%VERSION%%',
+        packageJSON.version,
+      ),
+      isAuthDisabled,
+      storageType: Object.values(StorageType).includes(
+        process.env.STORAGE_TYPE as StorageType,
       )
-      .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
-    enabledFeaturesData,
-    widgetsSchemaIds: parseCommaSeparatedList(
-      process.env.WIDGETS_SCHEMA_IDS,
-      [],
-    ),
-    publicationFilters: parseCommaSeparatedList(
-      process.env.PUBLICATION_FILTERS,
-      ['title', 'role', 'dial_roles'],
-    ),
-    isOverlay: process.env.IS_IFRAME === 'true' || false,
-    footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
-      '%%VERSION%%',
-      packageJSON.version,
-    ),
-    isAuthDisabled,
-    storageType: Object.values(StorageType).includes(
-      process.env.STORAGE_TYPE as StorageType,
-    )
-      ? (process.env.STORAGE_TYPE as StorageType)
-      : StorageType.API,
-    announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
-    themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
-    customRenderers: customRenderers || [],
-    allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
-    topics: parseCommaSeparatedList(
-      process.env.TOPICS ??
-        'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
-    ),
-    quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
-    quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
-    quickAppsSchemaId:
-      process.env.QUICK_APPS_SCHEMA_ID || DEFAULT_QUICK_APPS_SCHEMA_ID,
-    externalAppsSchemaId:
-      process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
-    dialApiHost: process.env.DIAL_API_HOST || '',
-    defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
-    providerId: session?.providerId ?? null,
-  };
+        ? (process.env.STORAGE_TYPE as StorageType)
+        : StorageType.API,
+      announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
+      themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
+      customRenderers: customRenderers || [],
+      allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
+      topics: parseCommaSeparatedList(
+        process.env.TOPICS ??
+          'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
+      ),
+      quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
+      quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
+      quickAppsSchemaId:
+        process.env.QUICK_APPS_SCHEMA_ID || DEFAULT_QUICK_APPS_SCHEMA_ID,
+      externalAppsSchemaId:
+        process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+      dialApiHost: process.env.DIAL_API_HOST || '',
+      defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
+      providerId: session?.providerId ?? null,
+    };
 
-  if (isIsolatedView) {
-    settings.isolatedModelId = params?.get(ISOLATED_MODEL_QUERY_PARAM) || '';
-  }
+    if (isIsolatedView) {
+      settings.isolatedModelId = params?.get(ISOLATED_MODEL_QUERY_PARAM) || '';
+    }
 
-  if (isPreselectedConversation) {
-    settings.preselectedConversationId =
-      params?.get(CONVERSATION_QUERY_PARAM) || '';
-  }
+    if (isPreselectedConversation) {
+      settings.preselectedConversationId =
+        params?.get(CONVERSATION_QUERY_PARAM) || '';
+    }
 
-  if (isPreselectedAction) {
-    settings.preselectedAction = params?.get(ACTION_QUERY_PARAM) || '';
-  }
+    if (isPreselectedAction) {
+      settings.preselectedAction = params?.get(ACTION_QUERY_PARAM) || '';
+    }
 
-  return {
-    props: {
-      appName: settings.appName,
-      initialState: {
-        settings,
+    return {
+      props: {
+        appName: settings.appName,
+        initialState: {
+          settings,
+        },
+        ...(await serverSideTranslations(
+          locale ?? 'en',
+          Object.values(Translation),
+        )),
       },
-      ...(await serverSideTranslations(
-        locale ?? 'en',
-        Object.values(Translation),
-      )),
-    },
-  };
+    };
+  } catch (error) {
+    console.error('SSR Error:', error);
+
+    // Option 1: Return empty props with error flag
+    return { props: { data: null, error: true } };
+  }
 };
