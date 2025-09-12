@@ -90,9 +90,8 @@ const AttachmentDataRenderer = ({
     );
   }
   if (attachment.type === PLOTLY_CONTENT_TYPE) {
-    return (
-      <PlotlyComponent plotlyData={attachment.data as unknown as PlotParams} />
-    );
+    const plotlyData = JSON.parse(attachment.data) as PlotParams;
+    return <PlotlyComponent plotlyData={plotlyData} />;
   }
 
   return null;
