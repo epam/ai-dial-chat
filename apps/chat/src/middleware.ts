@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { cleanHeaderDirectives } from './utils/server/headers-helpers';
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith('/_next/data')) {
+    return NextResponse.next();
+  }
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
   const isDev = process.env.NODE_ENV === 'development';
@@ -57,7 +60,7 @@ export const config = {
      * - favicon.ico (favicon file)
      */
     {
-      source: '/((?!api|_next|favicon.ico).*)',
+      source: '/((?!api|_next/static|_next/image|_next/data|favicon.ico).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

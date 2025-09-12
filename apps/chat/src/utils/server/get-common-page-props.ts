@@ -48,7 +48,7 @@ const hiddenFeaturesForIsolatedView = [
   Feature.HideTopContextMenu,
 ];
 
-export const getContentSecurityPolicyDirectives = () => {
+export const getFrameCSPDirectives = () => {
   const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
     ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
     : 'frame-ancestors none';
@@ -66,7 +66,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
   res,
   resolvedUrl,
 }) => {
-  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
+  const requestCSPHeaders = req.headers['content-security-policy'];
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameCSPDirectives()}`;
 
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 

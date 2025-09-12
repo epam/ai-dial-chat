@@ -17,7 +17,7 @@ import {
   isClientSessionValid,
   isServerSessionValid,
 } from '@/src/utils/auth/session';
-import { getContentSecurityPolicyDirectives } from '@/src/utils/server/get-common-page-props';
+import { getFrameCSPDirectives } from '@/src/utils/server/get-common-page-props';
 import { cleanHeaderDirectives } from '@/src/utils/server/headers-helpers';
 
 import { SettingsActions } from '@/src/store/actions';
@@ -156,9 +156,12 @@ export const getServerSideProps: GetServerSideProps = async ({
   res,
 }) => {
   const session = await getServerSession(req, res, authOptions);
-  const cspHeaders = `${req.headers['content-security-policy'] ? req.headers['content-security-policy'] : getContentSecurityPolicyDirectives()}`;
+
+  const requestCSPHeaders = req.headers['content-security-policy'];
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameCSPDirectives()}`;
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
   res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
+
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
