@@ -262,6 +262,24 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Edit 1st message, save and verify it is updated and response is regenerated',
+      async () => {
+        const updatedMessage = 'updated message';
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        const firstMessage = conversation.messages[0].content;
+        await adminChatMessages.openEditMessageMode(firstMessage);
+        await adminChatMessages.editMessage(firstMessage, updatedMessage);
+        await adminChatMessagesAssertion.assertMessageContent(
+          1,
+          updatedMessage,
+        );
+        await adminChatMessagesAssertion.assertMessagesCount(2);
+      },
+    );
+
+    await dialAdminTest.step(
       'Click on settings icon, update settings and save changes',
       async () => {
         await adminChatHeader.openConversationSettingsPopup();
@@ -284,24 +302,6 @@ dialAdminTest(
         await adminChatHeader.chatAgent.click();
         await adminTalkToAgentDialog.selectAgent(gpt4.name);
         await adminChatHeaderAssertion.assertHeaderIcon(gpt4Icon);
-      },
-    );
-
-    await dialAdminTest.step(
-      'Edit 1st message, save and verify it is updated and response is regenerated',
-      async () => {
-        const updatedMessage = 'updated message';
-        await adminDialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
-        );
-        const firstMessage = conversation.messages[0].content;
-        await adminChatMessages.openEditMessageMode(firstMessage);
-        await adminChatMessages.editMessage(firstMessage, updatedMessage);
-        await adminChatMessagesAssertion.assertMessageContent(
-          1,
-          updatedMessage,
-        );
-        await adminChatMessagesAssertion.assertMessagesCount(2);
       },
     );
 
