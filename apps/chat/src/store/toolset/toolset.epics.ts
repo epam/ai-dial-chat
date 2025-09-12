@@ -179,8 +179,29 @@ const getToolsetDetailsEpic: AppEpic = (action$) =>
         switchMap((toolset) => {
           return toolset
             ? of(ToolsetActions.getToolsetDetailsSuccess(toolset))
-            : of(ToolsetActions.getToolsetDetailsFailed());
+            : of(ToolsetActions.getToolsetDetailsFailed({ id: payload.id }));
         }),
+        catchError(() =>
+          of(ToolsetActions.getToolsetDetailsFailed({ id: payload.id })),
+        ),
+      );
+    }),
+  );
+
+const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
+  action$.pipe(
+    ofType(ToolsetActions.getToolsetDetailsFailed.type),
+    switchMap(({ payload }) => {
+      if (router.route === Routes.ToolsetEditor) {
+        void router.push(Routes.NotFound);
+      }
+
+      return of(
+        UIActions.showErrorToast(
+          translate(errorsMessages.toolsetGetFailed, {
+            name: payload?.id ?? '...',
+          }),
+        ),
       );
     }),
   );
@@ -734,6 +755,7 @@ export const ToolsetEpics = combineEpics(
   createToolsetEpic,
   createToolsetFailedEpic,
   getToolsetDetailsEpic,
+  getToolsetDetailsFailedEpic,
   updateToolsetEpic,
   setQueryParamsEpic,
   initQueryParamsEpic,
