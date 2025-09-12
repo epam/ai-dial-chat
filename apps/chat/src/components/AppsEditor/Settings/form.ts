@@ -44,6 +44,7 @@ import {
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_MODEL,
+  DialDeploymentToolsetToolTypes,
   ToolsetTypes,
 } from '@/src/constants/quick-apps';
 
@@ -457,7 +458,7 @@ export const getQuickAppData2 = (
       if (!entity || entity.type === EntityType.Toolset) return [];
 
       return {
-        type: 'dial-deployment-simple',
+        type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
         deployment_id: entity.id,
       };
     });

@@ -1,4 +1,7 @@
-import { ToolsetTypes } from '@/src/constants/quick-apps';
+import {
+  DialDeploymentToolsetToolTypes,
+  ToolsetTypes,
+} from '@/src/constants/quick-apps';
 
 export interface QuickAppConfig {
   instructions: string;
@@ -15,7 +18,7 @@ export interface FileContext {
 }
 
 export interface DialDeploymentSimpleTool {
-  type: 'dial-deployment-simple';
+  type: DialDeploymentToolsetToolTypes.DialDeploymentSimple;
   deployment_id: string;
 }
 
