@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse, connection } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { cleanHeaderDirectives } from './utils/server/headers-helpers';
 
 export async function middleware(request: NextRequest) {
-  await connection();
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
   const isDev = process.env.NODE_ENV === 'development';

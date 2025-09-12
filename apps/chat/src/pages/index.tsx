@@ -33,6 +33,7 @@ export interface HomeProps {
   };
 }
 
+export const dynamic = 'force-dynamic';
 function Home() {
   useCustomizations();
 
