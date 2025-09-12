@@ -7,6 +7,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
@@ -17,21 +18,21 @@ import { PublicationItem } from './PublicationItem';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
-interface ApplicationPublishItemsProps {
-  entity: PublishRequestDialAIEntityModel;
+interface Props {
+  entity: PublishRequestDialAIEntityModel | ToolsetModel;
   publishAction: PublishActions;
   chosenItemsIds: string[];
   path: string;
   handleSelectItems: (ids: string[]) => void;
 }
 
-export const ApplicationPublishItems = ({
+export const MarketplaceEntityPublishItem = ({
   entity,
   publishAction,
   chosenItemsIds,
   path,
   handleSelectItems,
-}: ApplicationPublishItemsProps) => {
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (

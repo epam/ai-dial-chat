@@ -1,9 +1,11 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { pathKeySeparator } from '@/src/utils/server/api';
 
 import { ApiKeys, FeatureType } from '@/src/types/common';
 
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
 import { LOCAL_BUCKET } from '@/src/constants/chat';
+import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
@@ -91,6 +93,9 @@ export const isMyEntity = (entity: { id: string }) =>
 export const isMyApplication = (entity: { id: string }) =>
   entity.id === DRAFT_APPLICATION_ID || isMyEntity(entity);
 
+export const isMyToolset = (entity: { id: string }) =>
+  entity.id === DRAFT_TOOLSET_ID || isMyEntity(entity);
+
 export const filterIdsByFeatureType = (
   ids: string[],
   featureType: FeatureType,
@@ -120,4 +125,17 @@ export const areEntitiesBucketsTheSame = (
   secondId: string,
 ) => {
   return getEntityBucket({ id: firstId }) === getEntityBucket({ id: secondId });
+};
+
+export const getEntityNameFromId = (
+  id: string,
+  options?: { removeVersion?: boolean },
+): string => {
+  const name = id.split('/').at(-1) ?? id;
+
+  if (options?.removeVersion) {
+    return name.split(pathKeySeparator).at(0) ?? name;
+  }
+
+  return name;
 };

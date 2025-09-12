@@ -2,13 +2,12 @@ import { SharingType } from '@/src/types/share';
 
 import { PublishDialog } from '@/src/components/Chat/Publish/PublishDialog';
 import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
-import { ApplicationLogs } from './ApplicationLogs';
-
-export const AgentDialogs = () => (
+export const ToolsetDialogs = () => (
   <>
     <DeleteMarketplaceEntityDialog />
-    <PublishDialog type={SharingType.Application} />
-    <ApplicationLogs />
+    <PublishDialog type={SharingType.Toolset} />
+    <ToolsetLoginDialog />
   </>
 );

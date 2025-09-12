@@ -166,6 +166,7 @@ const ReviewQuickApp2SectionView = ({
                 key={agent.deployment_id}
                 // TODO: handle case when model is not found (+ try search model in a review bucket when will be supported on core side)
                 item={modelsMap[agent.deployment_id]!}
+                id={agent.deployment_id}
                 readonly
               />
             ))}
@@ -181,6 +182,7 @@ const ReviewQuickApp2SectionView = ({
           <span className="flex gap-2 text-primary">
             {toolsets.map((toolset) => (
               <AgentAndToolsetChip
+                id={toolset.name}
                 key={toolset.name}
                 item={
                   toolsetsMap[toolset.name] ?? {
