@@ -38,6 +38,7 @@ interface EntityVersionSelectProps<T extends ToolsetModel | DialAIEntityModel> {
   readonly?: boolean;
   onSelect: (entity: T) => void;
   triggerClassName?: string;
+  selectedBaseIdsSet?: Set<string>;
 }
 
 export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
@@ -48,6 +49,7 @@ export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
   readonly = false,
   onSelect,
   triggerClassName,
+  selectedBaseIdsSet,
 }: EntityVersionSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -117,7 +119,9 @@ export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
           key={entity.id}
           className={classNames(
             'max-w-[350px] text-nowrap hover:bg-accent-primary-alpha',
-            currentEntity.id === entity.id && 'bg-accent-primary-alpha',
+            (currentEntity.id === entity.id ||
+              selectedBaseIdsSet?.has(entity.id)) &&
+              'bg-accent-primary-alpha',
           )}
           item={
             <div className="flex items-center gap-2">

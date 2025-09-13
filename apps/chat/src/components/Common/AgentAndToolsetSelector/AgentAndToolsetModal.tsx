@@ -12,7 +12,7 @@ import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isExternalApp } from '@/src/utils/app/application';
-import { sortItemsVersions } from '@/src/utils/app/common';
+import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
 import { isInstalledEntity } from '@/src/utils/marketplace';
@@ -148,6 +148,13 @@ const AgentAndToolsetModalView = ({
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
 
+  const installedAgentsSet = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+  const installedToolsetsSet = useAppSelector(
+    ToolsetSelectors.selectInstalledToolsetsSet,
+  );
+
   useLayoutEffect(() => {
     if (footerRef.current) {
       setFooterHeight(footerRef.current.offsetHeight);
@@ -159,13 +166,6 @@ const AgentAndToolsetModalView = ({
       setHeaderHeight(headerRef.current.offsetHeight);
     }
   }, [selectedIds]);
-
-  const installedAgentsSet = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
-  const installedToolsetsSet = useAppSelector(
-    ToolsetSelectors.selectInstalledToolsetsSet,
-  );
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
@@ -204,24 +204,58 @@ const AgentAndToolsetModalView = ({
     MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
+  const selectedBaseIdsSet = useMemo(
+    () => new Set(selectedIds.map((id) => getEntityBaseId(id))),
+    [selectedIds],
+  );
+
+  const sliderItemProps = useMemo(
+    () => ({
+      selectedBaseIdsSet,
+      onToggleSelectItem: handleToggleSelectItem,
+    }),
+    [selectedBaseIdsSet, handleToggleSelectItem],
+  );
+
   const displayedItems = useMemo(() => {
     const isMyWorkspaceView =
       scopeTab === MarketplaceTabs.MY_WORKSPACE ||
       scopeTab === MarketplaceEntitiesTabs.AGENTS;
 
-    const groupedAndOrderedAgents = groupMarketplaceEntityAndSaveOrder(
-      searchedAgents.filter(
+    const isAgentsTab = entityType === MarketplaceEntitiesTabs.AGENTS;
+
+    const getSelectedItemFromGroup = (
+      entities: MarketplaceEntity[],
+    ): MarketplaceEntity => {
+      const reversedSelectedIds = [...selectedIds].reverse();
+
+      const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
+        entities.some((entity) => entity.id === id),
+      );
+
+      if (lastSelectedIdInGroup) {
+        const selectedEntity = entities.find(
+          (entity) => entity.id === lastSelectedIdInGroup,
+        );
+        if (selectedEntity) {
+          return selectedEntity;
+        }
+      }
+
+      return sortItemsVersions(entities)[0];
+    };
+
+    if (isAgentsTab) {
+      const filteredAgents = searchedAgents.filter(
         (entity) =>
           !isExternalApp(entity) &&
           !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string),
-      ),
-    ).map(({ entities }) => sortItemsVersions(entities)[0]);
+      );
 
-    const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
-      searchedToolsets,
-    ).map(({ entities }) => sortItemsVersions(entities)[0]);
+      const groupedAndOrderedAgents = groupMarketplaceEntityAndSaveOrder(
+        filteredAgents,
+      ).map(({ entities }) => getSelectedItemFromGroup(entities));
 
-    if (entityType === MarketplaceEntitiesTabs.AGENTS) {
       if (isMyWorkspaceView) {
         return groupedAndOrderedAgents.filter((item) =>
           isInstalledEntity(item, installedAgentsSet),
@@ -229,6 +263,10 @@ const AgentAndToolsetModalView = ({
       }
       return groupedAndOrderedAgents;
     } else {
+      const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
+        searchedToolsets,
+      ).map(({ entities }) => getSelectedItemFromGroup(entities));
+
       if (isMyWorkspaceView) {
         return groupedAndOrderedToolsets.filter((item) =>
           isInstalledEntity(item, installedToolsetsSet),
@@ -244,17 +282,8 @@ const AgentAndToolsetModalView = ({
     installedAgentsSet,
     searchedToolsets,
     installedToolsetsSet,
+    selectedIds,
   ]);
-
-  const selectedIdsSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-
-  const sliderItemProps = useMemo(
-    () => ({
-      selectedIdsSet,
-      onToggleSelectItem: handleToggleSelectItem,
-    }),
-    [selectedIdsSet, handleToggleSelectItem],
-  );
 
   const sliderResetDependencies = useMemo(
     () => [isMyWorkspace, searchTerm, entityType],

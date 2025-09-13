@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getEntityNameFromId } from '@/src/utils/app/id';
+import { getEntityNameFromId } from '@/src/utils/app/common';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -45,9 +45,17 @@ const ChipView: React.FC<ChipViewProps> = ({
       )}
     >
       <ModelIcon entityId={id} entity={item} size={18} />
-      <span className="max-w-[220px] truncate">
-        {name} {version}
-      </span>
+      <div className="flex max-w-[220px] gap-1 truncate">
+        <span>{name}</span>
+        <span
+          className={classNames(
+            'truncate',
+            isInvalid ? 'text-error brightness-75' : 'text-secondary',
+          )}
+        >
+          {version}
+        </span>
+      </div>
       {!readonly && (
         <button
           className={classNames(
@@ -138,7 +146,9 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
 }) => {
   const isInvalid = !item;
 
-  const name = isInvalid ? getEntityNameFromId(id) : item.name;
+  const name = isInvalid
+    ? getEntityNameFromId(id, { removeVersion: true })
+    : item.name;
   const version = isInvalid ? getVersionFromId(id) : item.version;
 
   return (

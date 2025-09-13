@@ -357,5 +357,36 @@ export const replaceStringRange = (
 
 export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
 
+export const getEntityNameFromId = (
+  id: string,
+  options?: { removeVersion?: boolean },
+): string => {
+  const nameSegment = getLastPathSegment(id);
+
+  if (options?.removeVersion) {
+    return nameSegment.split(pathKeySeparator).at(0) ?? '';
+  }
+
+  return nameSegment;
+};
+
 export const addTrailingSlashIfAbsent = (id: string) =>
   id.endsWith('/') ? id : `${id}/`;
+
+export const getEntityBaseId = (id: string): string => {
+  const lastColonIndex = id.lastIndexOf(':');
+
+  if (lastColonIndex === -1) {
+    return id;
+  }
+
+  const protocolSeparatorIndex = id.indexOf('://');
+  if (
+    protocolSeparatorIndex !== -1 &&
+    lastColonIndex < protocolSeparatorIndex
+  ) {
+    return id;
+  }
+
+  return id.substring(0, lastColonIndex);
+};

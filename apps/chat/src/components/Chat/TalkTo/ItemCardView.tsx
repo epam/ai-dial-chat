@@ -45,9 +45,9 @@ interface ItemCardViewProps {
   conversation?: Conversation;
   disabled?: boolean;
   isUnavailableModel?: boolean;
-  onSelectVersion?: (entity: DialAIEntityModel) => void;
   hasContextMenu?: boolean;
   className?: string;
+  selectedBaseIdsSet?: Set<string>;
 }
 
 const disabledActions = {
@@ -62,9 +62,9 @@ export const ItemCardView = ({
   conversation,
   disabled,
   isUnavailableModel,
-  onSelectVersion,
   hasContextMenu = true,
   className,
+  selectedBaseIdsSet,
 }: ItemCardViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -86,9 +86,9 @@ export const ItemCardView = ({
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
-      onSelectVersion?.(model);
+      onClick(model);
     },
-    [onSelectVersion],
+    [onClick],
   );
 
   const isOldReplay =
@@ -167,6 +167,7 @@ export const ItemCardView = ({
                 readonly={conversation && isPlaybackConversation(conversation)}
                 className="h-max truncate text-xs"
                 triggerClassName="text-xs"
+                selectedBaseIdsSet={selectedBaseIdsSet}
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
                 currentEntity={entity}
