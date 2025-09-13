@@ -4,8 +4,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
@@ -26,11 +25,10 @@ const VersionPrefix = () => {
   );
 };
 
-const getDisplayValue = <T extends ToolsetModel | DialAIEntityModel>(
-  entity: T,
-) => entity.version || entity.id;
+const getDisplayValue = <T extends MarketplaceEntity>(entity: T) =>
+  entity.version || entity.id;
 
-interface EntityVersionSelectProps<T extends ToolsetModel | DialAIEntityModel> {
+interface EntityVersionSelectProps<T extends MarketplaceEntity> {
   entities: T[];
   currentEntity: T;
   className?: string;
@@ -41,7 +39,7 @@ interface EntityVersionSelectProps<T extends ToolsetModel | DialAIEntityModel> {
   selectedBaseIdsSet?: Set<string>;
 }
 
-export const ModelVersionSelect = <T extends ToolsetModel | DialAIEntityModel>({
+export const ModelVersionSelect = <T extends MarketplaceEntity>({
   entities,
   currentEntity,
   className,

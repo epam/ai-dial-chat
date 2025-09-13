@@ -1,9 +1,9 @@
 import React from 'react';
 
 import { getEntityBaseId } from '@/src/utils/app/common';
+import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { DialAIEntityModel } from '@/src/types/models';
 
 import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
 
@@ -21,10 +21,10 @@ export const AgentAndToolsetSelectItem: React.FC<
 
   return (
     <ItemCardView
-      entity={groupItem as DialAIEntityModel}
+      entity={groupItem}
       isSelected={isSelected}
       onClick={onToggleSelectItem}
-      hasContextMenu={false}
+      hasContextMenu={isToolsetEntityModel(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}
       className="bg-layer-3 hover:border-hover active:border-accent-primary"
     />

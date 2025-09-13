@@ -1,10 +1,12 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { combineEntities } from '@/src/utils/app/common';
 import {
   addToMarketplaceEntitiesMap,
   deleteFromMarketplaceEntitiesMap,
 } from '@/src/utils/app/marketplace';
 
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import {
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
@@ -28,6 +30,8 @@ const initialState: ToolsetState = {
   isInstalledToolsetsInitialized: false,
 
   editorStep: ToolsetEditorSteps.General,
+
+  publishRequestToolsets: [],
 };
 
 export const toolsetSlice = createSlice({
@@ -84,7 +88,10 @@ export const toolsetSlice = createSlice({
         payload,
       );
     },
-    getToolsetDetailsFailed: (state) => {
+    getToolsetDetailsFailed: (
+      state,
+      _action: PayloadAction<{ id?: string } | undefined>,
+    ) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
       state.toolsetDetails = undefined;
     },
@@ -101,6 +108,7 @@ export const toolsetSlice = createSlice({
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
         tabToOpen?: ToolsetEditorSteps;
+        isSaveAndExit?: boolean;
         auth?: {
           apiKey?: string;
         };
@@ -230,6 +238,19 @@ export const toolsetSlice = createSlice({
       state.editorStep = payload;
     },
     initQueryParams: (state) => state,
+    addPublishRequestToolsets: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        toolsets: PublishRequestDialAIEntityModel[];
+      }>,
+    ) => {
+      state.publishRequestToolsets = combineEntities(
+        state.publishRequestToolsets,
+        payload.toolsets,
+      );
+    },
   },
 });
 

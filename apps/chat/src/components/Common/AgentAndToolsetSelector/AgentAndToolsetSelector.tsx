@@ -92,7 +92,7 @@ export const AgentAndToolsetSelector: React.FC<
                   key={id}
                   id={id}
                   item={allItemsMap[id]}
-                  onRemove={handleRemoveItem}
+                  onRemove={readonly ? undefined : handleRemoveItem}
                   readonly={readonly}
                 />
               ))}

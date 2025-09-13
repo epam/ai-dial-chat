@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getModelShortDescription,
+  isDialAiEntityModel,
   isExternalApp,
 } from '@/src/utils/app/application';
 import {
@@ -19,7 +20,7 @@ import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -35,13 +36,14 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
-import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
+import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
+import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
-interface ItemCardViewProps {
-  entity: DialAIEntityModel;
+interface ItemCardViewProps<T extends MarketplaceEntity> {
+  entity: T;
   isSelected: boolean;
-  onClick: (entity: DialAIEntityModel) => void;
+  onClick: (entity: T) => void;
   conversation?: Conversation;
   disabled?: boolean;
   isUnavailableModel?: boolean;
@@ -50,12 +52,20 @@ interface ItemCardViewProps {
   selectedBaseIdsSet?: Set<string>;
 }
 
-const disabledActions = {
+const agentDisabledActions = {
   copyLink: true,
   unpublish: true,
 };
 
-export const ItemCardView = ({
+const toolsetDisabledActions = {
+  copyLink: true,
+  publish: true,
+  unpublish: true,
+  share: true,
+  unshare: true,
+};
+
+export const ItemCardView = <T extends MarketplaceEntity>({
   entity,
   isSelected,
   onClick,
@@ -65,7 +75,7 @@ export const ItemCardView = ({
   hasContextMenu = true,
   className,
   selectedBaseIdsSet,
-}: ItemCardViewProps) => {
+}: ItemCardViewProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const allModels = useAppSelector(ModelsSelectors.selectModels);
@@ -85,8 +95,8 @@ export const ItemCardView = ({
   }, [allModels, entity]);
 
   const handleSelectVersion = useCallback(
-    (model: DialAIEntityModel) => {
-      onClick(model);
+    (model: MarketplaceEntity) => {
+      onClick?.(model as T);
     },
     [onClick],
   );
@@ -117,11 +127,19 @@ export const ItemCardView = ({
     >
       {hasContextMenu && (
         <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
-          <AgentContextMenu
-            entity={entity}
-            disabledActions={disabledActions}
-            className="xl:invisible group-hover:xl:visible"
-          />
+          {isDialAiEntityModel(entity) ? (
+            <AgentContextMenu
+              className="xl:invisible group-hover:xl:visible"
+              entity={entity}
+              disabledActions={agentDisabledActions}
+            />
+          ) : (
+            <ToolsetContextMenu
+              className="xl:invisible group-hover:xl:visible"
+              entity={entity}
+              disabledActions={toolsetDisabledActions}
+            />
+          )}
         </div>
       )}
       <div className="flex items-center gap-4 overflow-hidden">
@@ -149,7 +167,9 @@ export const ItemCardView = ({
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-3 group-hover:bg-transparent"
                 isMyEntity={isMyEntity}
-                isExternal={isExternalApp(entity)}
+                isExternal={
+                  isDialAiEntityModel(entity) && isExternalApp(entity)
+                }
               >
                 <ModelIcon
                   entityId={entity.id}
@@ -185,7 +205,7 @@ export const ItemCardView = ({
             >
               {entity.name}
             </div>
-            <FunctionStatusIndicator entity={entity} />
+            <MarketplaceEntityIndicator entity={entity} />
           </div>
           <EntityMarkdownDescription
             className={classNames(
