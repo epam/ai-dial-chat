@@ -42,6 +42,7 @@ import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSele
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { NoResultsFound } from '../NoResultsFound';
 import {
@@ -363,6 +364,7 @@ const AgentAndToolsetModalView = ({
         />
       </div>
 
+      <ToolsetLoginDialog />
       <AgentDialogs />
 
       <div
