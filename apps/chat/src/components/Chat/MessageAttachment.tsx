@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PlotParams } from 'react-plotly.js';
 
 import classNames from 'classnames';
 
@@ -29,6 +28,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
+import { PlotlyStringDataRenderer } from '@/src/components/Plotly/PlotlyStringDataRenderer';
 import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/VisualizerRenderer';
 
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
@@ -90,9 +90,7 @@ const AttachmentDataRenderer = ({
     );
   }
   if (attachment.type === PLOTLY_CONTENT_TYPE) {
-    return (
-      <PlotlyComponent plotlyData={attachment.data as unknown as PlotParams} />
-    );
+    return <PlotlyStringDataRenderer plotlyStringData={attachment.data} />;
   }
 
   return null;
@@ -220,9 +218,11 @@ const AttachmentUrlRendererComponent = ({
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const [isOpened, setIsOpened] = useState(false);
   const [wasOpened, setWasOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const selectIsCustomAttachmentTypeSelector = useMemo(

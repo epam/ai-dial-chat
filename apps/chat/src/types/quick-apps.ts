@@ -1,4 +1,7 @@
-import { ToolsetTypes } from '@/src/constants/quick-apps';
+import {
+  DialDeploymentToolsetToolTypes,
+  ToolsetTypes,
+} from '@/src/constants/quick-apps';
 
 export interface QuickAppConfig {
   instructions: string;
@@ -14,27 +17,15 @@ export interface FileContext {
   type: 'file';
 }
 
-export interface DialDeploymentTool {
-  deployment: {
-    name: string;
-  };
-  open_ai_tool: {
-    function: {
-      parameters: {
-        type: 'object';
-        properties: object;
-        required: ['query'];
-      };
-      name: string;
-      description?: string;
-    };
-  };
+export interface DialDeploymentSimpleTool {
+  type: DialDeploymentToolsetToolTypes.DialDeploymentSimple;
+  deployment_id: string;
 }
 
 export interface DialDeploymentToolset {
   name: 'dial-deployment-tool-set';
   type: ToolsetTypes.DialDeployment;
-  tools: DialDeploymentTool[];
+  tools: DialDeploymentSimpleTool[];
 }
 
 export interface MCPToolset {
