@@ -43,13 +43,19 @@ export class CustomApplicationPublishingUtil {
     namesToExclude?: string[];
   }): Promise<CustomAppAttributes> {
     const appData = await this.createCustomApp(options);
-    const publishRequest = this.publishRequestBuilder!.withName(
+    const publishRequestBuilder = this.publishRequestBuilder!.withName(
       GeneratorUtil.randomPublicationRequestName(),
-    )
-      .withApplicationResource(appData.backendEntity, PublishActions.ADD)
-      .build();
+    ).withApplicationResource(appData.backendEntity, PublishActions.ADD);
+    if (appData.iconUrl) {
+      publishRequestBuilder.withFileResource(
+        appData.iconUrl,
+        PublishActions.ADD_IF_ABSENT,
+      );
+    }
     const appPublication =
-      await this.publicationApiHelper!.createPublishRequest(publishRequest);
+      await this.publicationApiHelper!.createPublishRequest(
+        publishRequestBuilder.build(),
+      );
     await this.publicationApiHelper!.approveRequest(appPublication);
     return appData;
   }

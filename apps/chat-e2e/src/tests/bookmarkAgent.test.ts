@@ -80,7 +80,7 @@ dialTest(
               appName: appName,
               namesToExclude: recentNames
                 .concat(recentVersions)
-                .concat(appFirstVersion.version),
+                .concat(appFirstVersion.version!),
             },
           );
       },
@@ -140,8 +140,8 @@ dialTest(
         workspaceAgentElement =
           await marketplaceAgentsSection.findAgentElement(appName);
         twoSortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
         ]);
         await marketplaceAgentsAssertion.assertElementText(
           marketplaceAgents.getAgentVersion(workspaceAgentElement),
@@ -201,8 +201,8 @@ dialTest(
               appName: appName,
               namesToExclude: recentNames
                 .concat(recentVersions)
-                .concat(appFirstVersion.version)
-                .concat(appSecondVersion.version),
+                .concat(appFirstVersion.version!)
+                .concat(appSecondVersion.version!),
             },
           );
       },
@@ -212,9 +212,9 @@ dialTest(
       'Open the agent and verify three versions are available in the dropdown menu, bookmark icon is shown on version switching',
       async () => {
         threeSortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
-          appThirdVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
+          appThirdVersion.version!,
         ]);
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
@@ -394,12 +394,12 @@ dialTest(
               appName: appName,
               namesToExclude: recentNames
                 .concat(recentVersions)
-                .concat(appFirstVersion.version),
+                .concat(appFirstVersion.version!),
             },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
         ]);
       },
     );
@@ -521,12 +521,12 @@ dialTest(
               appName: appName,
               namesToExclude: recentNames
                 .concat(recentVersions)
-                .concat(appFirstVersion.version),
+                .concat(appFirstVersion.version!),
             },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
         ]);
       },
     );

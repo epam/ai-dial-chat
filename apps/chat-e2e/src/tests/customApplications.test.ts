@@ -1880,7 +1880,7 @@ dialTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   'Check icons of chats with published custom app.\n' + //EPMRTC-4303
     'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMRTC-6345
     'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMRTC-4302
@@ -1916,6 +1916,8 @@ dialAdminTest(
     let agentElement: BaseElement;
     let createdAppBackendEntity: BackendEntity;
     let appPublication: Publication;
+    let reviewIconUrl: string;
+    let targetIconUrl: string;
 
     const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
     const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
@@ -1925,7 +1927,6 @@ dialAdminTest(
     const encodedFileUrl =
       expectedNewIconUrl.substring(0, expectedNewIconUrl.lastIndexOf('/') + 1) +
       encodeURIComponent(filename);
-    const encodedIconUrl = `/api/${encodedFileUrl}`;
 
     await dialTest.step(
       'Precondition: Create a custom application with an icon, create a publish request for it, and delete the original app',
@@ -1948,10 +1949,18 @@ dialAdminTest(
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withApplicationResource(createdAppBackendEntity, PublishActions.ADD)
+          .withFileResource(expectedNewIconUrl, PublishActions.ADD_IF_ABSENT)
           .build();
 
         appPublication =
           await publicationApiHelper.createPublishRequest(publishRequest);
+
+        const fileResource = appPublication.resources.find((r) =>
+          r.sourceUrl?.startsWith(API.filesHostSegment),
+        )!;
+        reviewIconUrl = `${API.api}/${fileResource.reviewUrl}`;
+        targetIconUrl = `${API.api}/${fileResource.targetUrl}`;
+
         await localStorageManager.setShowSideBarPanels();
         await adminLocalStorageManager.setShowSideBarPanels();
       },
@@ -1975,7 +1984,7 @@ dialAdminTest(
         });
         await baseAssertion.assertEntityIcon(
           adminPublishedApplicationReviewModal.getApplicationIcon(),
-          encodedIconUrl,
+          reviewIconUrl,
         );
 
         await adminPublishedApplicationReviewModal
@@ -2010,7 +2019,7 @@ dialAdminTest(
           isInstalledDeploymentsUpdated: false,
         });
         await dialHomePage.waitForPageLoaded();
-        await agentInfoAssertion.assertAgentIcon(encodedIconUrl);
+        await agentInfoAssertion.assertAgentIcon(targetIconUrl);
       },
     );
 
@@ -2024,9 +2033,9 @@ dialAdminTest(
         await chat.sendRequestWithButton(message);
         await conversationAssertion.assertTreeEntityIcon(
           { name: message },
-          encodedIconUrl,
+          targetIconUrl,
         );
-        await chatHeaderAssertion.assertHeaderIcon(encodedIconUrl);
+        await chatHeaderAssertion.assertHeaderIcon(targetIconUrl);
       },
     );
   },

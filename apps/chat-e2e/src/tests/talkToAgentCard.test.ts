@@ -1027,8 +1027,8 @@ dialTest(
             { appName: secondAppName },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
-          secondAppFirstVersion.version,
-          secondAppSecondVersion.version,
+          secondAppFirstVersion.version!,
+          secondAppSecondVersion.version!,
         ]);
 
         const configAgents = await modelApiHelper.getModels();

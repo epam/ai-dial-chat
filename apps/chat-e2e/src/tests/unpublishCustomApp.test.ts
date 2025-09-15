@@ -695,9 +695,9 @@ dialAdminTest(
               { appName: appName },
             );
           if (i === 1) {
-            appFirstVersion = appAttributes.version;
+            appFirstVersion = appAttributes.version!;
           } else {
-            appSecondVersion = appAttributes.version;
+            appSecondVersion = appAttributes.version!;
           }
         }
         sortedAppVersions = SortingUtil.sortVersionsArray([
