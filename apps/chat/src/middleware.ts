@@ -1,26 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { cleanHeaderDirectives } from './utils/server/headers-helpers';
+import {
+  cleanHeaderDirectives,
+  getFrameContentSecurityPolicyDirectives,
+} from './utils/server/headers-helpers';
+
+import { HeadersNames } from './constants/server';
 
 export function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
   const isDev = process.env.NODE_ENV === 'development';
-  const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
-    ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-    : 'frame-ancestors none';
+  const shouldIgnoreFrameOptions =
+    path === '/auth/signin' || path === '/api/auth/signin';
 
-  const frameSrcDirective = process.env.ALLOWED_IFRAME_SOURCES
-    ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
-    : 'frame-src none';
+  const frameDirectives = getFrameContentSecurityPolicyDirectives(
+    process.env.ALLOWED_IFRAME_ORIGINS,
+    process.env.ALLOWED_IFRAME_SOURCES,
+    shouldIgnoreFrameOptions,
+  );
+
+  // const frameSrcDirectives = !shouldIgnoreFrameOptions && FRAME_SRC_DIRECTIVE;
 
   const cspHeader = `
     object-src 'none';
     base-uri 'self';
     script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
     upgrade-insecure-requests;
-    ${ancestorsDirective};
-    ${frameSrcDirective};
+    ${frameDirectives}
 `;
   // Replace newline characters and spaces
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeader);
@@ -29,9 +38,16 @@ export function middleware(request: NextRequest) {
   requestHeaders.set('x-nonce', nonce);
 
   requestHeaders.set(
-    'Content-Security-Policy',
+    HeadersNames.CONTENT_SECURITY_POLICY,
     contentSecurityPolicyHeaderValue,
   );
+
+  if (
+    !process.env.ALLOWED_IFRAME_ORIGINS &&
+    !process.env.ALLOWED_IFRAME_SOURCES
+  ) {
+    requestHeaders.set('X-Frame-Options', 'SAMEORIGIN');
+  }
 
   const response = NextResponse.next({
     request: {
@@ -39,29 +55,15 @@ export function middleware(request: NextRequest) {
     },
   });
   response.headers.set(
-    'Content-Security-Policy',
+    HeadersNames.CONTENT_SECURITY_POLICY,
     contentSecurityPolicyHeaderValue,
   );
+  if (
+    !process.env.ALLOWED_IFRAME_ORIGINS &&
+    !process.env.ALLOWED_IFRAME_SOURCES
+  ) {
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  }
 
   return response;
 }
-
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - _next/data (translation files)
-     * - favicon.ico (favicon file)
-     */
-    {
-      source: '/((?!api|_next/static|_next/image|_next/data|favicon.ico).*)',
-      missing: [
-        { type: 'header', key: 'next-router-prefetch' },
-        { type: 'header', key: 'purpose', value: 'prefetch' },
-      ],
-    },
-  ],
-};
