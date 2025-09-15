@@ -7,14 +7,12 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialAdminTest(
+dialAdminTest.only(
   'Admin can not update chat from unpublish request',
   async ({
-    dialHomePage,
     conversationData,
     publishRequestBuilder,
     publicationApiHelper,
@@ -30,7 +28,7 @@ dialAdminTest(
     adminLocalStorageManager,
     baseAssertion,
     adminChatHeaderAssertion,
-    tooltipAssertion,
+    adminTooltipAssertion,
     adminChatHeaderDropdownMenu,
     adminApproveRequiredConversationDropdownMenu,
   }) => {
@@ -119,8 +117,11 @@ dialAdminTest(
       async () => {
         const defaultAgent = ModelsUtil.getDefaultAgent()!;
         await adminChatHeader.hoverOverChatModel();
-        await tooltipAssertion.assertTooltipContent(
-          ExpectedConstants.modelTooltip(defaultAgent.name, defaultAgent.version),
+        await adminTooltipAssertion.assertTooltipContent(
+          ExpectedConstants.modelTooltip(
+            defaultAgent.name,
+            defaultAgent.version,
+          ),
         );
         await adminChatHeader.chatAgent.click();
         await adminChatHeaderAssertion.assertHeaderTitle(
@@ -132,9 +133,10 @@ dialAdminTest(
     await dialAdminTest.step(
       `Verify settings icon in chat's header is not clickable, conversation settings is displayed on hover`,
       async () => {
+        const defaultAgent = ModelsUtil.getDefaultAgent()!;
         await adminChatHeader.hoverOverChatSettings();
-        await tooltipAssertion.assertTooltipContent(
-          ExpectedConstants.conversationSettings,
+        await adminTooltipAssertion.assertTooltipContent(
+          ExpectedConstants.settingsTooltip(defaultAgent.type),
         );
         await adminChatHeader.conversationSettings.click();
         await adminChatHeaderAssertion.assertHeaderTitle(

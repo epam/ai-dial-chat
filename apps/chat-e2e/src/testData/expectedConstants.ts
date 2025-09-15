@@ -34,7 +34,10 @@ export const ExpectedConstants = {
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel: 'Try again',
-  conversationSettings: 'Conversation settings',
+  conversationSettings: 'Conversation settings:',
+  noConversationSettings:
+    'There are no conversation settings for this agent',
+  changeConversationSettings: 'Change conversation settings:',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
@@ -263,7 +266,7 @@ export const ExpectedConstants = {
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
   modelTooltip: (modelName: string, modelVersion?: string) =>
-    `${modelName}\n${modelVersion ? `v. ${modelVersion}` : '0.0.1'}`,
+    `Current agent:\nAgent: ${modelName}${modelVersion ? `\nVersion: ${modelVersion}` : ''}`,
   pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',

@@ -446,14 +446,11 @@ dialTest(
       'Hover over the Setting icon and check the wording on the tooltip',
       async () => {
         await chatHeader.conversationSettings.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toMatch(
-            new RegExp(
-              `^${ExpectedConstants.settingsTooltip(nonWorkspaceModel.type)}`,
-            ),
-          );
+        await tooltipAssertion.assertTooltipContentMatches(
+          new RegExp(
+            `^${ExpectedConstants.settingsTooltip(nonWorkspaceModel.type)}`,
+          ),
+        );
       },
     );
 
