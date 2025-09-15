@@ -3,9 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cleanHeaderDirectives } from './utils/server/headers-helpers';
 
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/_next/data')) {
-    return NextResponse.next();
-  }
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
   const isDev = process.env.NODE_ENV === 'development';
