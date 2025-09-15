@@ -7,10 +7,13 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-import { withRenderWhen } from './RenderWhen';
+interface Props {
+  type: SharingType;
+}
 
-const PublishAgentDialogView = () => {
+const PublishDialogView = ({ type }: Props) => {
   const dispatch = useAppDispatch();
 
   const publishModel = useAppSelector(PublicationSelectors.selectPublishModel)!;
@@ -22,7 +25,7 @@ const PublishAgentDialogView = () => {
   return (
     <PublishModal
       entity={publishModel.entity}
-      type={SharingType.Application}
+      type={type}
       isOpen
       onClose={handlePublishClose}
       publishAction={publishModel.action}
@@ -30,6 +33,6 @@ const PublishAgentDialogView = () => {
   );
 };
 
-export const PublishAgentDialog = withRenderWhen(
+export const PublishDialog = withRenderWhen(
   PublicationSelectors.selectPublishModel,
-)(PublishAgentDialogView);
+)(PublishDialogView);

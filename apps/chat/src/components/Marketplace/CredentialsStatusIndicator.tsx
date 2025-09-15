@@ -1,7 +1,5 @@
 import classNames from 'classnames';
 
-import { useToolsetCredentialsLevel } from '@/src/hooks/useToolsetCredentialsLevel';
-
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
@@ -18,11 +16,9 @@ interface CredentialsStatusIndicatorProps {
 
 export const CredentialsStatusIndicator = ({
   entity,
-  level,
+  level = ToolsetCredentialsLevel.GLOBAL,
 }: CredentialsStatusIndicatorProps) => {
-  const credentialsLevel = useToolsetCredentialsLevel();
-
-  const isSignedIn = isToolsetSignedIn(entity, level ?? credentialsLevel);
+  const isSignedIn = isToolsetSignedIn(entity, level);
 
   if (entity.authSettings.authenticationType === ToolsetAuthTypes.NONE) {
     return null;
