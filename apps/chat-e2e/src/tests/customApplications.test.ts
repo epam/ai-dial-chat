@@ -1880,7 +1880,7 @@ dialTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'Check icons of chats with published custom app.\n' + //EPMRTC-4303
     'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMRTC-6345
     'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMRTC-4302
