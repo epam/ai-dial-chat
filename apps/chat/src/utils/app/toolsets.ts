@@ -150,13 +150,29 @@ export const regenerateToolsetId = (
 export const encodeToolsetRedirectState = (
   state: ToolsetRedirectState,
 ): string => {
-  return encodeURIComponent(JSON.stringify(state));
+  const json = JSON.stringify(state);
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  for (const b of bytes) {
+    bin += String.fromCharCode(b);
+  }
+  const b64 = btoa(bin);
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
 export const decodeToolsetRedirectState = (
   state: string,
 ): ToolsetRedirectState => {
-  return JSON.parse(decodeURIComponent(state)) as ToolsetRedirectState;
+  const b64 = state
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(state.length / 4) * 4, '=');
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    bytes[i] = bin.charCodeAt(i);
+  }
+  return JSON.parse(new TextDecoder().decode(bytes)) as ToolsetRedirectState;
 };
 
 export const getToolsetRedirectUri = () =>
