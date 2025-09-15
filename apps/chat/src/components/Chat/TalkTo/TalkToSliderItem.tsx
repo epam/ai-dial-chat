@@ -25,7 +25,6 @@ import { ItemCardView } from './ItemCardView';
 
 export interface TalkToSliderItemProps {
   groupItem: CardType;
-
   isMyWorkspace: boolean;
   conversation: Conversation;
   onSelectModel: (entity: DialAIEntityModel) => void;
@@ -81,7 +80,6 @@ export const TalkToSliderItem = ({
       key={groupItem.id}
       entity={groupItem as DialAIEntityModel}
       onClick={onSelectModel}
-      onSelectVersion={onSelectModel}
     />
   );
 };
