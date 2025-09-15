@@ -67,6 +67,7 @@ export const ToolsetLoginDialogView = () => {
       state={ModalState.OPENED}
       dataQa="marketplace-toolset-signin"
       containerClassName="flex flex-col gap-4 w-full xl:max-w-[450px] p-6"
+      overlayClassName="!z-[100]"
       onClose={handleClose}
     >
       <div className="flex flex-col gap-2">

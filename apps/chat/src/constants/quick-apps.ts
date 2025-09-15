@@ -14,3 +14,7 @@ export enum ToolsetTypes {
   DialDeployment = 'dial-deployment',
   CodeInterpreter = 'predefined',
 }
+
+export enum DialDeploymentToolsetToolTypes {
+  DialDeploymentSimple = 'dial-deployment-simple',
+}
