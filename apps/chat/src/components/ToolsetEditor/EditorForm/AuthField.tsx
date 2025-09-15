@@ -65,6 +65,7 @@ const authTypeOptions: Record<
 enum WithLogin {
   WithLogin = 'With login',
   WithoutLogin = 'Without login',
+  WithConfig = 'With login & config',
 }
 
 interface AuthTypeSectionProps {
@@ -87,7 +88,6 @@ const AuthTypeSection = ({
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
   const [withLogin, setWithLogin] = useState(WithLogin.WithLogin);
-  const isWithLogin = withLogin === WithLogin.WithLogin;
   const isSignedIn = toolsetDetails && isToolsetSignedIn(toolsetDetails);
 
   const handleWithLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -133,37 +133,48 @@ const AuthTypeSection = ({
         </div>
 
         {isSelected && type !== ToolsetAuthTypes.NONE && (
-          <div className="grid grid-cols-2 border-t border-tertiary">
-            <div className="flex flex-col gap-4 p-4">
+          <div className="flex flex-col gap-4 border-t border-tertiary p-4">
+            <div className="flex items-center gap-4">
               <RadioButton
                 id={WithLogin.WithLogin}
                 name="with-auth"
                 caption={t(WithLogin.WithLogin)}
                 onChange={handleWithLoginChange}
                 value={WithLogin.WithLogin}
-                checked={isWithLogin}
+                checked={withLogin === WithLogin.WithLogin}
               />
 
-              <ToolsetLoginForm
-                onLogin={onLogin}
-                type={type}
-                toolset={toolsetDetails}
-                disabled={!isWithLogin}
-                onLogout={onLogout}
-                showOAuthClientForm
-              />
-            </div>
-            <div className="p-4">
+              {type === ToolsetAuthTypes.OAUTH && (
+                <RadioButton
+                  id={WithLogin.WithConfig}
+                  name="with-auth"
+                  caption={t(WithLogin.WithConfig)}
+                  onChange={handleWithLoginChange}
+                  value={WithLogin.WithConfig}
+                  checked={withLogin === WithLogin.WithConfig}
+                  disabled={isSignedIn}
+                />
+              )}
+
               <RadioButton
                 id={WithLogin.WithoutLogin}
                 name="with-auth"
                 caption={t(WithLogin.WithoutLogin)}
                 onChange={handleWithLoginChange}
                 value={WithLogin.WithoutLogin}
-                checked={!isWithLogin}
+                checked={withLogin === WithLogin.WithoutLogin}
                 disabled={isSignedIn}
               />
             </div>
+
+            <ToolsetLoginForm
+              onLogin={onLogin}
+              type={type}
+              toolset={toolsetDetails}
+              disabled={withLogin === WithLogin.WithoutLogin}
+              onLogout={onLogout}
+              includeOAuthFields={withLogin === WithLogin.WithConfig}
+            />
           </div>
         )}
       </div>

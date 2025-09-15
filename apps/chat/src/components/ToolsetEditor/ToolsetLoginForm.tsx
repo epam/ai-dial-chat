@@ -30,11 +30,20 @@ const getDefaultFormData = ({
   switch (type) {
     case ToolsetAuthTypes.API_KEY:
       return {
-        type: ToolsetAuthTypes.API_KEY,
+        type,
         keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
         apiKey: prevData?.apiKey ?? '',
       };
     case ToolsetAuthTypes.OAUTH:
+      return {
+        type,
+        clientId: toolset?.authSettings?.clientId ?? '',
+        clientSecret: toolset?.authSettings?.clientSecret ?? '',
+        authorizationEndpoint:
+          toolset?.authSettings?.authorizationEndpoint ?? '',
+        tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
+        includeOAuthFields: prevData?.includeOAuthFields ?? false,
+      };
     case ToolsetAuthTypes.NONE:
     default:
       return {
@@ -52,7 +61,7 @@ interface ToolsetLoginFormProps {
   disabled?: boolean;
   className?: string;
   buttonClassName?: string;
-  showOAuthClientForm?: boolean;
+  includeOAuthFields?: boolean;
 }
 
 export const ToolsetLoginForm = ({
@@ -64,7 +73,7 @@ export const ToolsetLoginForm = ({
   disabled = false,
   className,
   buttonClassName,
-  showOAuthClientForm = false,
+  includeOAuthFields = false,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -72,7 +81,11 @@ export const ToolsetLoginForm = ({
 
   const { reset, register, formState, getValues, trigger } =
     useForm<ToolsetLoginFormType>({
-      defaultValues: getDefaultFormData({ type, toolset }),
+      defaultValues: getDefaultFormData({
+        type,
+        toolset,
+        prevData: { includeOAuthFields, type },
+      }),
       mode: 'onChange',
       reValidateMode: 'onChange',
       resolver: zodResolver(ToolsetLoginFormSchema),
@@ -93,8 +106,14 @@ export const ToolsetLoginForm = ({
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
 
   useEffect(() => {
-    reset(getDefaultFormData({ type, toolset, prevData: getValues() }));
-  }, [getValues, reset, toolset, type]);
+    reset(
+      getDefaultFormData({
+        type,
+        toolset,
+        prevData: { ...getValues(), includeOAuthFields },
+      }),
+    );
+  }, [getValues, reset, toolset, type, includeOAuthFields]);
 
   return (
     <div className={classNames('flex flex-col gap-4', className)}>
@@ -104,7 +123,7 @@ export const ToolsetLoginForm = ({
             {...register('keyHeader')}
             label={t('API Key parameter name')}
             mandatory
-            placeholder={t('Type key name')}
+            placeholder={t('Enter key name')}
             id="keyHeader"
             error={errors.keyHeader?.message}
             disabled={disabled}
@@ -113,7 +132,7 @@ export const ToolsetLoginForm = ({
             {...register('apiKey')}
             label={t('API Key')}
             mandatory
-            placeholder={t('Type API Key')}
+            placeholder={t('Enter API Key')}
             id="apiKey"
             error={errors.apiKey?.message}
             disabled={disabled}
@@ -121,40 +140,40 @@ export const ToolsetLoginForm = ({
         </>
       )}
 
-      {type === ToolsetAuthTypes.OAUTH &&
-        !isSignedIn &&
-        showOAuthClientForm && (
-          <>
-            <Field
-              {...register('clientId')}
-              label={t('Client id')}
-              placeholder={t('Type client id')}
-              id="clientId"
-              disabled={disabled}
-            />
-            <Field
-              {...register('clientSecret')}
-              label={t('Client secret')}
-              placeholder={t('Type client secret')}
-              id="clientSecret"
-              disabled={disabled}
-            />
-            <Field
-              {...register('authorizationEndpoint')}
-              label={t('Authorization endpoint')}
-              placeholder={t('Type authorization endpoint')}
-              id="authorizationEndpoint"
-              disabled={disabled}
-            />
-            <Field
-              {...register('tokenEndpoint')}
-              label={t('Token endpoint')}
-              placeholder={t('Type token endpoint')}
-              id="tokenEndpoint"
-              disabled={disabled}
-            />
-          </>
-        )}
+      {type === ToolsetAuthTypes.OAUTH && !isSignedIn && includeOAuthFields && (
+        <>
+          <Field
+            {...register('clientId')}
+            label={t('Client ID')}
+            placeholder={t('Enter client ID')}
+            id="clientId"
+            disabled={disabled}
+            mandatory
+          />
+          <Field
+            {...register('clientSecret')}
+            label={t('Client Secret')}
+            placeholder={t('Enter client secret')}
+            id="clientSecret"
+            disabled={disabled}
+            mandatory
+          />
+          <Field
+            {...register('authorizationEndpoint')}
+            label={t('Authorization endpoint')}
+            placeholder={t('Enter authorization endpoint')}
+            id="authorizationEndpoint"
+            disabled={disabled}
+          />
+          <Field
+            {...register('tokenEndpoint')}
+            label={t('Token endpoint')}
+            placeholder={t('Enter token endpoint')}
+            id="tokenEndpoint"
+            disabled={disabled}
+          />
+        </>
+      )}
 
       <button
         className={classNames(
