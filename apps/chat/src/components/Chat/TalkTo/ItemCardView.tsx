@@ -47,9 +47,9 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
   conversation?: Conversation;
   disabled?: boolean;
   isUnavailableModel?: boolean;
-  onSelectVersion?: (entity: T) => void;
   hasContextMenu?: boolean;
   className?: string;
+  selectedBaseIdsSet?: Set<string>;
 }
 
 const agentDisabledActions = {
@@ -72,9 +72,9 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   conversation,
   disabled,
   isUnavailableModel,
-  onSelectVersion,
   hasContextMenu = true,
   className,
+  selectedBaseIdsSet,
 }: ItemCardViewProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -96,9 +96,9 @@ export const ItemCardView = <T extends MarketplaceEntity>({
 
   const handleSelectVersion = useCallback(
     (model: MarketplaceEntity) => {
-      onSelectVersion?.(model as T);
+      onClick?.(model as T);
     },
-    [onSelectVersion],
+    [onClick],
   );
 
   const isOldReplay =
@@ -187,6 +187,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
                 readonly={conversation && isPlaybackConversation(conversation)}
                 className="h-max truncate text-xs"
                 triggerClassName="text-xs"
+                selectedBaseIdsSet={selectedBaseIdsSet}
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
                 currentEntity={entity}
