@@ -179,9 +179,9 @@ export const SliderGrid = <T extends { id: string }, P>({
     <div ref={containerRef} className="flex min-h-0 flex-1 flex-col">
       <div
         ref={sliderRef}
-        className="w-full flex-1 overflow-hidden"
+        className="flex w-full flex-1 items-center overflow-hidden"
         style={{
-          height: `${
+          minHeight: `${
             sliderRowsCount * (maxChunksCountConfig.cardHeight + gridGap) -
             gridGap
           }px`,
