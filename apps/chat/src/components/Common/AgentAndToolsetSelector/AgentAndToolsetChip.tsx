@@ -46,7 +46,7 @@ const ChipView: React.FC<ChipViewProps> = ({
       )}
     >
       <ModelIcon entityId={id} entity={item} size={18} />
-      <div className="flex max-w-[220px] gap-1 truncate">
+      <div className="flex max-w-[220px] gap-2 truncate">
         <span>{name}</span>
         <span
           className={classNames(
