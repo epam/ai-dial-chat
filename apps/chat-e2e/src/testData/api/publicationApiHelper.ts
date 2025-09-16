@@ -35,7 +35,7 @@ export class PublicationApiHelper extends BaseApiHelper {
   }
 
   public async listPublishedResources(resourceType: BackendResourceType) {
-    let host: string;
+    let host = '';
     switch (resourceType) {
       case BackendResourceType.CONVERSATION:
         host = API.publishedConversations;

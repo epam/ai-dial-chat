@@ -5,6 +5,7 @@ import { Attributes, Tags } from '@/src/ui/domData';
 import {
   IconSelectors,
   MarketplaceAgentSelectors,
+  MenuSelectors,
   TalkToAgentDialogSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -63,10 +64,7 @@ export class TalkToAgentDialog extends BaseElement {
   }
 
   public getVersionMenuTrigger(agentElement: Locator | BaseElement) {
-    const agentLocator =
-      agentElement instanceof BaseElement
-        ? agentElement.getElementLocator()
-        : (agentElement as Locator);
+    const agentLocator = BaseElement.getElementLocator(agentElement);
     return agentLocator.locator(
       MarketplaceAgentSelectors.agentVersionMenuTrigger,
     );
@@ -183,6 +181,13 @@ export class TalkToAgentDialog extends BaseElement {
 
   public async selectReplayAsIs() {
     await this.getTalkToAgent(ExpectedConstants.replayAsIsLabel).click();
+  }
+
+  public async openAgentDotsMenu(agentElement: Locator | BaseElement) {
+    const agentLocator = BaseElement.getElementLocator(agentElement);
+    await agentLocator.hover();
+    await agentLocator.locator(MenuSelectors.menuTrigger).click();
+    return new DropdownButtonMenu(this.page);
   }
 
   public async getSelectedAgent() {
