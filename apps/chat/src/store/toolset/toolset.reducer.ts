@@ -88,7 +88,10 @@ export const toolsetSlice = createSlice({
         payload,
       );
     },
-    getToolsetDetailsFailed: (state) => {
+    getToolsetDetailsFailed: (
+      state,
+      _action: PayloadAction<{ id?: string } | undefined>,
+    ) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
       state.toolsetDetails = undefined;
     },

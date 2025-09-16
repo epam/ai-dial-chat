@@ -359,3 +359,18 @@ export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
 
 export const addTrailingSlashIfAbsent = (id: string) =>
   id.endsWith('/') ? id : `${id}/`;
+
+export const getEntityBaseId = (id: string): string => {
+  const lastColonIndex = id.lastIndexOf(':');
+  if (lastColonIndex === -1) {
+    return id;
+  }
+  const protocolSeparatorIndex = id.indexOf('://');
+  if (
+    protocolSeparatorIndex !== -1 &&
+    lastColonIndex < protocolSeparatorIndex
+  ) {
+    return id;
+  }
+  return id.substring(0, lastColonIndex);
+};
