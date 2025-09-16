@@ -16,6 +16,7 @@ interface ToolsetContextMenuProps {
     publish: boolean;
     unpublish: boolean;
     delete: boolean;
+    login: boolean;
   }>;
   className?: string;
   isPreview?: boolean;
