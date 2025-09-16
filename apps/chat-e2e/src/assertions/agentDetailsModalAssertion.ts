@@ -73,10 +73,12 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
     );
   }
 
-  public async assertApplicationReleaseDate(publicationRequest: Publication) {
+  public async assertApplicationReleaseDate(actualDate: Publication | number) {
+    const date =
+      typeof actualDate === 'number' ? actualDate : actualDate.createdAt;
     await this.assertElementText(
       this.agentDetailsModal.agentReleaseDate,
-      DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
+      DateUtil.convertUnixTimestampToLocalDate(date),
       ExpectedMessages.releaseDateIsValid,
     );
   }

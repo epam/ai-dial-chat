@@ -113,6 +113,9 @@ export const ShareModalSelectors = {
   shareText: '[data-qa="share-message"]',
   removeAccessBtn: '[data-qa="remove-access-button"]',
   notSharedEntityLabel: '[data-qa="not-shared-entity-label"]',
+  shareOption: '[data-qa="share-option"]',
+  qrCode: '[data-qa="share-qr-code"]',
+  entityVersion: '[data-qa="entity-version"]',
 };
 
 export const UploadFromDeviceModalSelectors = {
