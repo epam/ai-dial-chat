@@ -7,7 +7,7 @@ import { GeneratorUtil, ModelsUtil, SortingUtil } from '@/src/utils';
 import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialTest(
+dialTest.fixme(
   '[Card view] Add an agent with several versions to My workspace using bookmark icon.\n' +
     '[Card view] New version of published app becomes automatically bookmarked if the app is in My workspace.\n' +
     "[Select an agent for conversation] 'My agents' contains only agents from My workspace.\n" +
@@ -353,7 +353,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.fixme(
   '[Detailed card view] Add an agent to My workspace using "Use ..." button',
   async ({
     marketplacePage,

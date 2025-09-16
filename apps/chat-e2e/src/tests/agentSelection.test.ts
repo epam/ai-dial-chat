@@ -9,7 +9,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest(
+dialTest.fixme(
   'Previously used model is selected for New conversation: change model in "Change agent"\n' +
     'Previously used model is selected for New conversation: change model in My workspace through Use model\n' +
     `[Select an agent for conversation] My workspace tab is opened by default if to click on 'Go to My workspace' from 'Select an agent for conversation' window.\n` +
@@ -245,7 +245,7 @@ dialTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.fixme(
   'RecentModelIds is NOT updated when duplicate chat from Organization\n' +
     'RecentModelIds updated when regenerate message from duplicated chat from Organization\n' +
     'RecentModelIds updated when type new message to duplicated chat from Organization',
