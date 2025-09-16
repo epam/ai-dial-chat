@@ -55,9 +55,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectShareMenuOption();
-        await shareModalAssertion.assertMessageContent(
+        await shareModalAssertion.assertMessageContent([
+          ExpectedConstants.shareLinkText,
           ExpectedConstants.sharePromptText,
-        );
+        ]);
         await shareModalAssertion.assertElementText(
           shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedPromptText,
