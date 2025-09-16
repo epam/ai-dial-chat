@@ -59,10 +59,12 @@ const agentDisabledActions = {
 
 const toolsetDisabledActions = {
   copyLink: true,
-  publish: true,
-  unpublish: true,
+  edit: true,
   share: true,
   unshare: true,
+  publish: true,
+  unpublish: true,
+  delete: true,
 };
 
 export const ItemCardView = <T extends MarketplaceEntity>({
