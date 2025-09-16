@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -163,6 +163,12 @@ export const ToolsetEditor = () => {
     },
     [dispatch, handleSubmit, isDirty, toolsetDetails],
   );
+
+  useEffect(() => {
+    if (toolsetDetails) {
+      formMethods.reset(getDefaultFormData(toolsetDetails));
+    }
+  }, [formMethods, toolsetDetails]);
 
   return (
     <FormProvider {...formMethods}>
