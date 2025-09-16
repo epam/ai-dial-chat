@@ -18,10 +18,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getToolsetRedirectUri,
-  isToolsetSignedIn,
-} from '@/src/utils/app/toolsets';
+import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetCredentialsLevel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
@@ -219,38 +216,30 @@ export const AuthField = () => {
     (data: ToolsetLoginFormType) => {
       trigger(['endpoint']).then((isValid) => {
         if (toolsetDetails && isValid) {
+          const newToolset = getToolsetPayload(
+            {
+              ...toolsetDetails,
+              endpoint,
+              transport,
+              allowedTools,
+              authSettings: {
+                authenticationType: data.type,
+                apiKeyHeader: data.keyHeader,
+                ...(data.includeOAuthFields && {
+                  clientId: data.clientId,
+                  clientSecret: data.clientSecret,
+                  authorizationEndpoint: data.authorizationEndpoint,
+                  tokenEndpoint: data.tokenEndpoint,
+                }),
+              },
+            },
+            toolsetDetails,
+          );
+
           dispatch(
             ToolsetActions.updateToolset({
               oldToolset: toolsetDetails,
-              newToolset: {
-                ...toolsetDetails,
-                endpoint,
-                transport,
-                allowedTools,
-                authSettings: {
-                  ...toolsetDetails.authSettings,
-                  authenticationType: data.type,
-                  apiKeyHeader:
-                    data.type === ToolsetAuthTypes.API_KEY
-                      ? data.keyHeader
-                      : undefined,
-                  redirectUri:
-                    data.type === ToolsetAuthTypes.OAUTH
-                      ? getToolsetRedirectUri()
-                      : undefined,
-                  ...(data.clientId &&
-                    data.clientSecret && {
-                      clientId: data.clientId,
-                      clientSecret: data.clientSecret,
-                    }),
-                  ...(data.authorizationEndpoint && {
-                    authorizationEndpoint: data.authorizationEndpoint,
-                  }),
-                  ...(data.tokenEndpoint && {
-                    tokenEndpoint: data.tokenEndpoint,
-                  }),
-                },
-              },
+              newToolset,
               auth: {
                 apiKey: data.apiKey,
               },

@@ -12,6 +12,7 @@ import {
 } from '@/src/types/toolsets';
 
 import { Routes } from '@/src/constants/routes';
+import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import {
   Toolset,
@@ -190,3 +191,40 @@ export const isToolsetSignedIn = (
 export const isToolsetEntityModel = (
   entity: MarketplaceEntity,
 ): entity is ToolsetModel => entity?.type === EntityType.Toolset;
+
+export const getToolsetPayload = (
+  newToolset: Omit<ToolsetModel, 'id' | 'folderId' | 'reference' | 'type'>,
+  oldToolset?: ToolsetModel,
+): ToolsetModel => {
+  const isEndpointChanged = newToolset.endpoint !== oldToolset?.endpoint;
+  const authType = newToolset.authSettings.authenticationType;
+  const authSettings = {
+    ...(oldToolset?.authSettings &&
+      !isEndpointChanged &&
+      oldToolset.authSettings),
+    ...newToolset.authSettings,
+    ...(authType === ToolsetAuthTypes.API_KEY && {
+      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? 'api_key',
+    }),
+    ...(authType === ToolsetAuthTypes.OAUTH && {
+      redirectUri: getToolsetRedirectUri(),
+    }),
+  };
+
+  return {
+    id: DRAFT_TOOLSET_ID,
+    folderId: '',
+    reference: '',
+    ...(oldToolset && oldToolset),
+    type: EntityType.Toolset,
+    name: newToolset.name,
+    endpoint: newToolset.endpoint,
+    iconUrl: newToolset.iconUrl,
+    transport: newToolset.transport,
+    description: newToolset.description,
+    topics: newToolset.topics,
+    allowedTools: newToolset.allowedTools,
+    version: newToolset.version,
+    authSettings,
+  };
+};
