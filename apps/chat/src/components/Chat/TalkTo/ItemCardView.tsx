@@ -16,6 +16,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -24,7 +25,7 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/selectors';
+import { ModelsSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { CardIconSizes } from '@/src/constants/marketplace';
@@ -81,6 +82,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   const { t } = useTranslation(Translation.Marketplace);
 
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
 
   const isMyEntity = isMyApplication(entity);
 
@@ -89,12 +91,22 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
   const versionsToSelect = useMemo(() => {
-    return allModels.filter(
-      (model) =>
+    const sourceList = isDialAiEntityModel(entity)
+      ? allModels
+      : isToolsetEntityModel(entity)
+        ? allToolsets
+        : [];
+
+    if (!entity.version) {
+      return [];
+    }
+
+    return sourceList.filter(
+      (item) =>
         getGroupMarketplaceEntityKey(entity) ===
-          getGroupMarketplaceEntityKey(model) && entity.version,
+        getGroupMarketplaceEntityKey(item),
     );
-  }, [allModels, entity]);
+  }, [allModels, allToolsets, entity]);
 
   const handleSelectVersion = useCallback(
     (model: MarketplaceEntity) => {

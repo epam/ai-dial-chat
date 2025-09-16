@@ -26,6 +26,7 @@ dialTest(
     'File extension is changed to lower case.\n' +
     'The postfix to the file name is added automatically if to paste the file with the name already exists in the uploads folder.\n' +
     'Ctrl-V or drag&drop a file without extension.\n' +
+    'Toast Error appears if to attach txt file when image is available only.\n' +
     'Ctrl-V pastes 10 files into input' +
     'Ctrl-V pastes a file into user-message in edit mode. Successful message',
   async ({
@@ -58,6 +59,7 @@ dialTest(
       'EPMRTC-6363',
       'EPMRTC-6232',
       'EPMRTC-6239',
+      'EPMRTC-6230',
       'EPMRTC-6231',
       'EPMRTC-6225',
     );
@@ -67,10 +69,9 @@ dialTest(
     await dialTest.step(
       'Create a custom app with set of allowed attachment types via API',
       async () => {
-        const appData = await customApplicationPublishingUtil.createCustomApp(
-          undefined,
-          [Attachment.imageTypesExtension],
-        );
+        const appData = await customApplicationPublishingUtil.createCustomApp({
+          inputAttachmentTypes: [Attachment.imageTypesExtension],
+        });
         appEntity = {
           name: appData.name,
           version: appData.version,
@@ -215,16 +216,16 @@ dialTest(
     await dialTest.step(
       'Paste the file with not allowed extension and verify error toast is shown',
       async () => {
-        await dialHomePage.triggerPasteFilesEvent([Attachment.pdfName], {
+        await dialHomePage.triggerPasteFilesEvent([Attachment.textName], {
           pasteToElement: sendMessage.messageInput,
           isHttpMethodTriggered: false,
         });
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
-          Attachment.pdfName,
+          Attachment.textName,
           'hidden',
         );
         await toastAssertion.assertToastMessage(
-          ExpectedConstants.attachedFileError(Attachment.pdfName),
+          ExpectedConstants.attachedFileError(Attachment.textName),
         );
         await toast.closeToast();
         await toast.waitForState({ state: 'hidden' });
