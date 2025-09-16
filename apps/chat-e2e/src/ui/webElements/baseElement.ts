@@ -234,4 +234,10 @@ export class BaseElement {
       .first();
     return iconLocator.locator(`${Tags.img}:visible`);
   }
+
+  public static getElementLocator(element: BaseElement | Locator): Locator {
+    return element instanceof BaseElement
+      ? element.getElementLocator()
+      : (element as Locator);
+  }
 }

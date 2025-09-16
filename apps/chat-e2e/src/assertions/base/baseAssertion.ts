@@ -37,7 +37,11 @@ export class BaseAssertion {
     icon: Locator | BaseElement,
     expectedIconSource?: string,
   ) {
-    const elementLocator = this.getElementLocator(icon);
+    const elementLocator = BaseElement.getElementLocator(icon);
+    //assert icon is loaded and displayed
+    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
+    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
+
     const actualIconSource = await elementLocator
       .getAttribute(Attributes.src)
       .then((s) => IconApiHelper.getNonCachedIconSource(s));
@@ -47,9 +51,6 @@ export class BaseAssertion {
         .soft(actualIconSource, ExpectedMessages.entityIconIsValid)
         .toBe(expectedIconSource);
     }
-    //assert icon is loaded and displayed
-    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
-    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
   }
 
   public assertArrayIncludesAll(
@@ -89,7 +90,7 @@ export class BaseAssertion {
     expectedState: ElementActionabilityState,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     expectedState == 'enabled'
       ? await expect
           .soft(
@@ -110,7 +111,7 @@ export class BaseAssertion {
     expectedState: ElementState = 'visible',
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     expectedState == 'visible'
       ? await expect
           .soft(
@@ -131,7 +132,7 @@ export class BaseAssertion {
     expectedText: string | RegExp | number | (string | RegExp)[],
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     expectedText =
       typeof expectedText === 'number' ? expectedText.toString() : expectedText;
     await expect
@@ -147,7 +148,7 @@ export class BaseAssertion {
     expectedText: string | RegExp | (string | RegExp)[],
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect
       .soft(
         elementLocator,
@@ -161,7 +162,7 @@ export class BaseAssertion {
     expectedText: string | RegExp | (string | RegExp)[],
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect
       .soft(
         elementLocator,
@@ -175,7 +176,7 @@ export class BaseAssertion {
     expectedHtml: string | RegExp,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     expect
       .soft(
         await elementLocator.innerHTML(),
@@ -189,7 +190,7 @@ export class BaseAssertion {
     expectedValue: string | RegExp,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     // Use Playwright's recommended matcher for input values
     await expect(
       elementLocator,
@@ -203,7 +204,7 @@ export class BaseAssertion {
     expectedValue: string,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect
       .soft(
         elementLocator,
@@ -216,7 +217,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedState: CheckboxState,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     expectedState === CheckboxState.checked
       ? await expect
           .soft(elementLocator, ExpectedMessages.entityIsChecked)
@@ -230,7 +231,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedValue: string | RegExp,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect
       .soft(
         elementLocator,
@@ -243,7 +244,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedColor: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     for (const border of [
       Styles.borderBottomColor,
       Styles.borderLeftColor,
@@ -261,7 +262,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedColor?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     if (expectedColor !== undefined) {
       await expect(
         elementLocator,
@@ -279,7 +280,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedColor: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect(
       elementLocator,
       ExpectedMessages.entityBackgroundColorIsValid,
@@ -287,7 +288,7 @@ export class BaseAssertion {
   }
 
   public async assertElementTextIsSelected(element: BaseElement | Locator) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect(
       elementLocator,
       ExpectedMessages.elementTextIsSelected,
@@ -298,7 +299,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     isFocused: boolean,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     isFocused
       ? await expect(
           elementLocator,
@@ -314,7 +315,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     ratio?: number,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect(
       elementLocator,
       ExpectedMessages.elementIsInFocus,
@@ -325,7 +326,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     cursor: Cursors,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect(
       elementLocator,
       ExpectedMessages.elementCursorIsValid,
@@ -383,7 +384,7 @@ export class BaseAssertion {
   ) {
     await expect
       .soft(
-        this.getElementLocator(element),
+        BaseElement.getElementLocator(element),
         expectedMessage ?? ExpectedMessages.elementsCountIsValid,
       )
       .toHaveCount(expectedCount);
@@ -446,7 +447,7 @@ export class BaseAssertion {
     expectedInnerText: string[],
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     this.assertValuesAreEqual(
       await elementLocator.allInnerTexts(),
       expectedInnerText,
@@ -458,7 +459,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedWrap: Overflow | StyleValues,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect(
       elementLocator,
       ExpectedMessages.elementTextWrapIsValid,
@@ -469,7 +470,7 @@ export class BaseAssertion {
     element: BaseElement | Locator,
     expectedMessage?: string,
   ) {
-    const elementLocator = this.getElementLocator(element);
+    const elementLocator = BaseElement.getElementLocator(element);
     await expect(
       elementLocator,
       expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
@@ -503,15 +504,9 @@ export class BaseAssertion {
   ) {
     await expect
       .soft(
-        this.getElementLocator(element),
+        BaseElement.getElementLocator(element),
         ExpectedMessages.scrollPositionIsCorrect,
       )
       .toHaveJSProperty(scrollProperty, expectedValue);
-  }
-
-  private getElementLocator(element: BaseElement | Locator) {
-    return element instanceof BaseElement
-      ? element.getElementLocator()
-      : (element as Locator);
   }
 }

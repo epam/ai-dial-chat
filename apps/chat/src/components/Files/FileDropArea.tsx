@@ -97,27 +97,47 @@ export const FileDropArea = ({
             onFocus={handleResetDragOver}
             onMouseLeave={handleResetDragOver}
           />
-          <div className="flex flex-col items-center">
+          <div
+            className="flex flex-col items-center"
+            data-qa="drag-file-container"
+          >
             {droppable ? (
               <>
                 <IconFileTextFilled
                   size="100px"
                   className="mb-5 text-accent-primary"
+                  id="drag-file-icon"
                 />
-                <h5 className="mb-4 text-lg font-semibold text-primary">
+                <h5
+                  className="mb-4 text-lg font-semibold text-primary"
+                  data-qa="drag-file-title"
+                >
                   {t('Attach files')}
                 </h5>
-                <p className="text-sm text-primary">
+                <p
+                  className="text-sm text-primary"
+                  data-qa="drag-file-description"
+                >
                   {t('Drop files here to attach them to the message')}
                 </p>
               </>
             ) : (
               <>
-                <IconFileXFilled size="100px" className="mb-5 text-error" />
-                <h5 className="mb-4 text-lg font-semibold text-primary">
+                <IconFileXFilled
+                  size="100px"
+                  className="mb-5 text-error"
+                  id="drag-file-not-allowed-icon"
+                />
+                <h5
+                  className="mb-4 text-lg font-semibold text-primary"
+                  data-qa="drag-file-title"
+                >
                   {t('No attachments allowed')}
                 </h5>
-                <p className="text-sm text-primary">
+                <p
+                  className="text-sm text-primary"
+                  data-qa="drag-file-description"
+                >
                   {t("Attachments can't be added to the message")}
                 </p>
               </>
