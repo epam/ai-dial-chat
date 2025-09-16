@@ -20,6 +20,9 @@ export class ShareModal extends BaseElement {
   public entityName = this.getChildElementBySelector(
     ShareModalSelectors.entityName,
   );
+  public shareQrCode = this.getChildElementBySelector(
+    ShareModalSelectors.qrCode,
+  );
 
   public linkInputLoader = this.getChildElementBySelector(
     ChatSelectors.entitySpinner,
@@ -36,9 +39,4 @@ export class ShareModal extends BaseElement {
   public notSharedEntityLabel = this.getChildElementBySelector(
     ShareModalSelectors.notSharedEntityLabel,
   );
-
-  public async getShareTextContent() {
-    const allContent = await this.shareText.getElementsInnerContent();
-    return allContent.join(' ').replaceAll(/\u00a0/g, ' ');
-  }
 }

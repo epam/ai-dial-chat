@@ -119,6 +119,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
         <button
           className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
           onClick={shareAction.onShare}
+          data-qa="share"
         >
           <IconUserShare size={18} />
           <span>{t('Share')}</span>

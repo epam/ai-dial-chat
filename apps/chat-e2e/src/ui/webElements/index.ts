@@ -1,4 +1,6 @@
 export * from './baseElement';
+export * from './fileDropArea';
+export * from './dragFile';
 export * from './chat';
 export * from './chatBar';
 export * from './chatMessages';
@@ -66,3 +68,4 @@ export * from './notFound';
 export * from './informationModal';
 export * from './listboxMenu';
 export * from './publishingFilter';
+export * from './marketplace/shareAppModal';
