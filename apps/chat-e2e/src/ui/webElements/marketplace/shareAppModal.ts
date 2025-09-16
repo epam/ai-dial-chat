@@ -10,9 +10,6 @@ export class ShareAppModal extends ShareModal {
   public shareOptionCheckbox = this.shareOption.getChildElementBySelector(
     Tags.input,
   );
-  public shareQrCode = this.getChildElementBySelector(
-    ShareModalSelectors.qrCode,
-  );
   public appVersion = this.getChildElementBySelector(
     ShareModalSelectors.entityVersion,
   );

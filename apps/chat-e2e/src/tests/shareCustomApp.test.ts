@@ -44,7 +44,7 @@ dialSharedWithMeTest(
       confirmationDialogAssertion,
       tooltip,
       tooltipAssertion,
-      shareModalAssertion,
+      shareAppModalAssertion,
       marketplaceUrlBuilder,
       setTestIds,
       customApplicationPublishingUtil,
@@ -117,43 +117,23 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify Share modal with valid attributes is opened',
       async () => {
-        await shareModalAssertion.assertModalState('visible');
-        await shareModalAssertion.assertElementText(
-          shareAppModal.entityName,
-          ExpectedConstants.sharedEntityName(appData.name),
-        );
-        await shareModalAssertion.assertElementText(
-          shareAppModal.appVersion,
-          ExpectedConstants.versionPrefix + appData.version!,
-        );
-        await shareModalAssertion.assertMessageContent([
-          ExpectedConstants.shareLinkText,
-          ExpectedConstants.shareAppText,
-        ]);
-        await shareModalAssertion.assertCheckboxState(
-          shareAppModal.shareOptionCheckbox,
-          CheckboxState.unchecked,
-        );
-        await shareModalAssertion.assertElementText(
-          shareAppModal.shareOption,
-          ExpectedConstants.allowEditingSharedEntityText,
-        );
-        await shareModalAssertion.assertElementState(
-          shareAppModal.shareQrCode,
-          'visible',
-        );
-        await shareModalAssertion.assertElementState(
-          shareAppModal.shareLinkInput,
-          'visible',
-        );
-        await shareModalAssertion.assertElementState(
-          shareAppModal.copyLinkButton,
-          'visible',
-        );
-        await shareModalAssertion.assertElementText(
-          shareAppModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedAppText,
-        );
+        await shareAppModalAssertion.assertModalState('visible');
+        await shareAppModalAssertion.assertGeneralInfo({
+          entityName: appData.name,
+          expectedMessages: [
+            ExpectedConstants.shareLinkText,
+            ExpectedConstants.shareAppText,
+          ],
+          qrCodeState: 'visible',
+          shareLinkInput: 'visible',
+          copyLinkButton: 'visible',
+          notSharedEntityLabel: ExpectedConstants.notSharedAppText,
+        });
+        await shareAppModalAssertion.assertShareAppInfo({
+          appVersion: appData.version!,
+          shareOptionCheckboxState: CheckboxState.unchecked,
+          shareOptionLabelState: 'visible',
+        });
       },
     );
 
@@ -331,7 +311,7 @@ dialSharedWithMeTest(
       'Open Share modal again, click on "Remove access for all users" btn and verify confirmation popup is displayed',
       async () => {
         await agentDetailsModal.clickShareButton();
-        await shareModalAssertion.assertModalState('visible');
+        await shareAppModalAssertion.assertModalState('visible');
         await shareAppModal.removeAccessBtn.click();
         await confirmationDialogAssertion.assertElementState(
           confirmationDialog,
@@ -361,11 +341,10 @@ dialSharedWithMeTest(
       'Open Share modal again and verify bottom label',
       async () => {
         await agentDetailsModal.clickShareButton();
-        await shareModalAssertion.assertModalState('visible');
-        await shareModalAssertion.assertElementText(
-          shareAppModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedAppText,
-        );
+        await shareAppModalAssertion.assertModalState('visible');
+        await shareAppModalAssertion.assertGeneralInfo({
+          notSharedEntityLabel: ExpectedConstants.notSharedAppText,
+        });
       },
     );
 

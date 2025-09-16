@@ -216,16 +216,16 @@ dialTest(
     await dialTest.step(
       'Paste the file with not allowed extension and verify error toast is shown',
       async () => {
-        await dialHomePage.triggerPasteFilesEvent([Attachment.pdfName], {
+        await dialHomePage.triggerPasteFilesEvent([Attachment.textName], {
           pasteToElement: sendMessage.messageInput,
           isHttpMethodTriggered: false,
         });
         await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
-          Attachment.pdfName,
+          Attachment.textName,
           'hidden',
         );
         await toastAssertion.assertToastMessage(
-          ExpectedConstants.attachedFileError(Attachment.pdfName),
+          ExpectedConstants.attachedFileError(Attachment.textName),
         );
         await toast.closeToast();
         await toast.waitForState({ state: 'hidden' });

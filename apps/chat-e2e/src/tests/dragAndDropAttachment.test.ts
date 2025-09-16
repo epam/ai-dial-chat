@@ -2,8 +2,9 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { Attachment, ExpectedConstants } from '@/src/testData';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree';
 import { DateUtil, GeneratorUtil } from '@/src/utils';
-import { Conversation, Prompt, PublishActions } from '@epam/ai-dial-shared';
+import { Conversation, PublishActions } from '@epam/ai-dial-shared';
 
 let appEntity: DialAIEntityModel;
 
@@ -133,6 +134,7 @@ dialTest(
     chatMessages,
     editMessageInputAttachmentsAssertions,
     fileDropArea,
+    toast,
     customApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-6247', 'EPMRTC-6360');
@@ -189,6 +191,7 @@ dialTest(
           Attachment.sunImageName,
           'visible',
         );
+        await toast.closeToast();
       },
     );
 
@@ -222,20 +225,17 @@ dialTest(
 );
 
 dialTest(
-  `No attachments allowed' if to drag a file over the chat based on agent which doesn't work with attachments`,
+  `'No attachments allowed' if to drag a file over the chat based on agent which doesn't work with attachments`,
   async ({
     dialHomePage,
     setTestIds,
     dragFile,
-    promptData,
-    dataInjector,
     localStorageManager,
     baseAssertion,
     fileDropArea,
     customApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-6252');
-    let prompt: Prompt;
 
     await dialTest.step(
       'Create a custom app with not allowed attachments via API',
@@ -251,10 +251,6 @@ dialTest(
         await localStorageManager.setShowSideBarPanels();
       },
     );
-    await dialTest.step('Create a simple prompt via API', async () => {
-      prompt = promptData.prepareDefaultPrompt();
-      await dataInjector.createPrompts([prompt]);
-    });
 
     await dialTest.step(
       'Drag the file on the central part of the page and verify error attachment messages is displayed',
@@ -444,25 +440,14 @@ dialAdminTest(
     await dialTest.step(
       `Select a conversation, drag the file over the central part and verify no attachments allowed is displayed`,
       async () => {
-        for (const conversation of [
-          replayConversation,
-          playbackConversation,
-          sharedConversation,
-          publishedConversation,
-        ]) {
-          let sidebarEntityTree;
-          switch (conversation) {
-            case replayConversation:
-            case playbackConversation:
-              sidebarEntityTree = conversations;
-              break;
-            case sharedConversation:
-              sidebarEntityTree = sharedWithMeConversations;
-              break;
-            case publishedConversation:
-              sidebarEntityTree = organizationConversations;
-              break;
-          }
+        const conversationPairs: [Conversation, SideBarEntitiesTree][] = [
+          [replayConversation, conversations],
+          [playbackConversation, conversations],
+          [sharedConversation, sharedWithMeConversations],
+          [publishedConversation, organizationConversations],
+        ];
+
+        for (const [conversation, sidebarEntityTree] of conversationPairs) {
           await sidebarEntityTree!.selectEntity(conversation.name);
           await dialHomePage.executeReactOnDragOver(fileDropArea);
           await baseAssertion.assertElementState(

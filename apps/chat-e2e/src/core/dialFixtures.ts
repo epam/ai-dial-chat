@@ -59,6 +59,7 @@ import {
   PublishingRequestModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
+  ShareAppModalAssertion,
   ShareModalAssertion,
   SideBarAssertion,
   TalkToAgentDialogAssertion,
@@ -342,7 +343,8 @@ const dialTest = test.extend<{
   agentSettingAssertion: AgentSettingAssertion;
   playbackAssertion: PlaybackAssertion;
   shareApiAssertion: ShareApiAssertion;
-  shareModalAssertion: ShareModalAssertion;
+  shareModalAssertion: ShareModalAssertion<ShareModal>;
+  shareAppModalAssertion: ShareAppModalAssertion;
   publishingRequestModalAssertion: PublishingRequestModalAssertion;
   selectFoldersAssertion: FolderAssertion<Folders>;
   selectFolderModalAssertion: SelectFolderModalAssertion;
@@ -1270,6 +1272,10 @@ const dialTest = test.extend<{
   shareModalAssertion: async ({ shareModal }, use) => {
     const shareModalAssertion = new ShareModalAssertion(shareModal);
     await use(shareModalAssertion);
+  },
+  shareAppModalAssertion: async ({ shareAppModal }, use) => {
+    const shareAppModalAssertion = new ShareAppModalAssertion(shareAppModal);
+    await use(shareAppModalAssertion);
   },
   publishingRequestModalAssertion: async ({ publishingRequestModal }, use) => {
     const publishingRequestModalAssertion = new PublishingRequestModalAssertion(
