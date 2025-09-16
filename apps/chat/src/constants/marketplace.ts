@@ -13,7 +13,9 @@ import LoaderIcon from '@/public/images/icons/loader.svg';
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
+  toolset = 'toolset',
   tab = 'tab',
+  entitiesTab = 'entitiesTab',
   types = 'types',
   topics = 'topics',
   search = 'search',
@@ -35,14 +37,24 @@ export enum MarketplaceTabs {
   MY_WORKSPACE = 'workspace',
 }
 
+export enum MarketplaceEntitiesTabs {
+  AGENTS = 'agents',
+  TOOLSETS = 'toolsets',
+}
+
 export const ChangeAgentTabs = {
   [MarketplaceTabs.MY_WORKSPACE]: 'My agents',
   [MarketplaceTabs.HOME]: 'All agents',
 };
 
+export const ChangeToolsetTabs = {
+  [MarketplaceEntitiesTabs.AGENTS]: 'My toolsets',
+  [MarketplaceEntitiesTabs.TOOLSETS]: 'All toolsets',
+};
+
 export enum DeleteType {
-  DELETE,
-  REMOVE,
+  DELETE = 'Delete',
+  REMOVE = 'Remove',
 }
 
 export const ENTITY_TYPES = [

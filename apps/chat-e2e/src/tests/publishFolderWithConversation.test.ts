@@ -42,7 +42,7 @@ dialAdminTest(
     adminTooltip,
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
-    adminFolderToApproveAssertion,
+    adminFolderConversationsToApproveAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
     adminOrganizationFolderConversations,
@@ -196,7 +196,7 @@ dialAdminTest(
       'Verify folders hierarchy with non empty conversations is displayed on "Publication approval" modal, "Approve" button is disabled',
       async () => {
         for (const conversation of allConversations) {
-          await adminFolderToApproveAssertion.assertFolderEntityState(
+          await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
             { name: nestedFolders[0].name },
             { name: conversation.name },
             conversation.name === emptyConversation.name ||
@@ -388,7 +388,7 @@ dialAdminTest(
     'Publish chat: Change path: context menu for existing folders.\n' +
     'Publish folder into nested folder structure with depth 4.\n' +
     'Publish folder: update path in publish request.\n' +
-    'Publish request toooltips.\n' +
+    'Publish request tooltips.\n' +
     'admin view: create publication request when open request from Approve required',
   async ({
     dialHomePage,
@@ -419,7 +419,7 @@ dialAdminTest(
     adminConversationDropdownMenu,
     adminConversationToPublishAssertion,
     adminPublishingApprovalModalAssertion,
-    adminFolderToApproveAssertion,
+    adminFolderConversationsToApproveAssertion,
     adminPublishingApprovalModal,
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
@@ -517,9 +517,8 @@ dialAdminTest(
         await selectFolders.openFolderDropdownMenu(
           publishedFolderConversation.folders.name,
         );
-        const actualOptions = await folderDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayIncludesAll(
-          actualOptions,
+        await baseAssertion.assertElementText(
+          folderDropdownMenu.menuOptions(),
           [MenuOptions.addNewFolder],
           ExpectedMessages.contextMenuOptionsValid,
         );
@@ -658,7 +657,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify folders hierarchy is displayed on "Publication approval" modal and "Publish to" path',
       async () => {
-        await adminFolderToApproveAssertion.assertFolderEntityState(
+        await adminFolderConversationsToApproveAssertion.assertFolderEntityState(
           { name: folderConversationToPublish.folders.name },
           { name: folderConversationToPublish.conversations[0].name },
           'visible',

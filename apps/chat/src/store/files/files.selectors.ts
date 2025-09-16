@@ -3,8 +3,11 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   getFilteredFolders,
   getParentAndChildFolders,
+  getPartialAndFullyChosenFolders,
+  isFolderEmpty,
   sortByName,
 } from '@/src/utils/app/folders';
+import { getEntityBucket } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
@@ -22,6 +25,13 @@ const _selectFiles = (state: RootState) => rootSelector(state).files;
 const selectFiles = createSelector([_selectFiles], (files) => {
   return sortByName([...files]);
 });
+
+const selectReviewBucketFiles = createSelector(
+  [selectFiles, (_state, bucket: string) => bucket],
+  (files, bucket) => {
+    return files.filter((file) => getEntityBucket(file) === bucket);
+  },
+);
 
 const selectFilteredFiles = createSelector(
   [
@@ -66,8 +76,9 @@ const selectFilteredFolders = createSelector(
     selectFiles,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm: string) => searchTerm,
+    (_state, _filters, _searchTerm, showHidden?: boolean) => showHidden,
   ],
-  (allFolders, allFiles, filters, searchTerm) => {
+  (allFolders, allFiles, filters, searchTerm, showHidden) => {
     const filteredFiles = allFiles.filter((file) =>
       doesEntityContainSearchTerm(file, searchTerm),
     );
@@ -78,6 +89,7 @@ const selectFilteredFolders = createSelector(
       filters,
       entities: filteredFiles,
       searchTerm,
+      includeHiddenFolders: showHidden,
     });
   },
 );
@@ -125,11 +137,11 @@ const selectNewAddedFolderId = (state: RootState) =>
 const selectFoldersWithSearchTerm = createSelector(
   [selectFolders, (_state, searchTerm: string) => searchTerm],
   (folders, searchTerm) => {
-    const filtered = folders.filter((folder) =>
-      folder.name.includes(searchTerm.toLowerCase()),
+    const filteredFolders = folders.filter((folder) =>
+      doesEntityContainSearchTerm(folder, searchTerm),
     );
 
-    return getParentAndChildFolders(folders, filtered);
+    return getParentAndChildFolders(folders, filteredFolders);
   },
 );
 
@@ -137,13 +149,63 @@ const selectPublicFolders = createSelector([_selectFolders], (folders) => {
   return folders.filter((f) => isEntityIdPublic(f));
 });
 
+const selectReviewBucketFolders = createSelector(
+  [
+    selectFolders,
+    (_state, searchTerm: string) => searchTerm,
+    (_state, _searchTerm, bucket: string) => bucket,
+  ],
+  (folders, searchTerm, bucket) => {
+    return folders.filter(
+      (folder) =>
+        doesEntityContainSearchTerm(folder, searchTerm) &&
+        getEntityBucket(folder) === bucket,
+    );
+  },
+);
+
 const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 
 const selectLastRenamedParentFolder = (state: RootState) =>
   rootSelector(state).lastRenamedParentFolder;
 
+const selectChosenItems = (state: RootState) =>
+  rootSelector(state).chosenFileIds;
+
+const selectEmptyFolderIds = createSelector(
+  [selectFolders, selectFiles],
+  (folders, files) => {
+    return folders
+      .filter(({ id }) => isFolderEmpty({ id, folders, entities: files }))
+      .map(({ id }) => id);
+  },
+);
+
+const selectChosenEmptyFolderIds = (state: RootState) =>
+  rootSelector(state).chosenEmptyFoldersIds;
+
+const selectChosenFolderIds = createSelector(
+  [
+    selectFiles,
+    selectChosenItems,
+    selectFolders,
+    selectEmptyFolderIds,
+    selectChosenEmptyFolderIds,
+  ],
+  (files, chosenItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
+    return getPartialAndFullyChosenFolders(
+      folders,
+      files,
+      chosenItems,
+      emptyFolderIds,
+      chosenEmptyFolderIds,
+    );
+  },
+);
+
 export const FilesSelectors = {
   selectFiles,
+  selectReviewBucketFiles,
   selectFilteredFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
@@ -161,4 +223,9 @@ export const FilesSelectors = {
   selectInitialized,
   selectAreFilesLoading,
   selectLastRenamedParentFolder,
+  selectReviewBucketFolders,
+  selectChosenItems,
+  selectEmptyFolderIds,
+  selectChosenEmptyFolderIds,
+  selectChosenFolderIds,
 };

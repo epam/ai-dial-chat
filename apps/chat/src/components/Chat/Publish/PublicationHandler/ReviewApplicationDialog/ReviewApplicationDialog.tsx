@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { ModalState } from '@/src/types/modal';
 
 import { PublicationActions } from '@/src/store/actions';
@@ -12,14 +14,15 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { ReviewApplicationDialogView } from './ReviewApplicationDialogView';
 
 export function ReviewApplicationDialog() {
+  const dispatch = useAppDispatch();
+
   const isLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
   );
-  const dispatch = useAppDispatch();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     dispatch(PublicationActions.setIsApplicationReview(false));
-  };
+  }, [dispatch]);
 
   return (
     <Modal

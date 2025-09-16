@@ -3,8 +3,10 @@ import { BackendChatEntity } from '@/chat/types/common';
 import { API } from '@/src/testData';
 import { EventSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
+import { ItemUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 import * as process from 'node:process';
+import { Response } from 'playwright-core';
 
 export class Actions extends BaseElement {
   constructor(page: Page) {
@@ -50,16 +52,32 @@ export class Actions extends BaseElement {
       this.createConversationButton.click(),
     );
   }
-  public async clickCreateConversationInInnerFolder() {
-    return this.clickCreateConversationButton(() =>
-      this.createConversationInFolderButton.click(),
+
+  public async clickCreateConversationInInnerFolder(folderPath: string) {
+    return this.clickCreateConversationButton(
+      () => this.createConversationInFolderButton.click(),
+      folderPath,
     );
   }
 
-  private async clickCreateConversationButton(method: () => Promise<void>) {
-    const respPromise = this.page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' && response.status() === 200,
+  private async clickCreateConversationButton(
+    method: () => Promise<void>,
+    url?: string,
+  ) {
+    const predicate = (response: Response) => {
+      const isPostRequestWithOkStatus =
+        response.request().method() === 'POST' && response.status() === 200;
+      if (!url) {
+        return isPostRequestWithOkStatus;
+      }
+      return (
+        isPostRequestWithOkStatus &&
+        response.url().includes(ItemUtil.getEncodedItemId(url))
+      );
+    };
+
+    const respPromise = this.page.waitForResponse((response) =>
+      predicate(response),
     );
     await method();
     const response = await respPromise;

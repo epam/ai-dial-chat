@@ -1,5 +1,8 @@
 import { API } from '@/src/testData';
-import { PublishingApprovalModalSelectors } from '@/src/ui/selectors';
+import {
+  IconSelectors,
+  PublishingApprovalModalSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import {
   ApplicationsToApproveTree,
@@ -10,6 +13,7 @@ import {
   FolderPromptsToApprove,
   PromptsToApproveTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Page } from '@playwright/test';
 
 export class PublishingApprovalModal extends BaseElement {
@@ -28,6 +32,7 @@ export class PublishingApprovalModal extends BaseElement {
   private folderPromptsToApprove!: FolderPromptsToApprove;
   //applications to approve tree
   private applicationsToPublishTree!: ApplicationsToApproveTree;
+  private publishingRules!: PublishingRules;
 
   getConversationsToApproveTree(): ConversationsToApproveTree {
     if (!this.conversationsToApproveTree) {
@@ -99,6 +104,13 @@ export class PublishingApprovalModal extends BaseElement {
     return this.applicationsToPublishTree;
   }
 
+  getPublishingRules(): PublishingRules {
+    if (!this.publishingRules) {
+      this.publishingRules = new PublishingRules(this.page, this.rootLocator);
+    }
+    return this.publishingRules;
+  }
+
   public publishName = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publishName,
   );
@@ -114,15 +126,20 @@ export class PublishingApprovalModal extends BaseElement {
   public creationDate = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.creationDate,
   );
-  public allowAccessLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.allowAccessLabel,
+  public authorLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.authorLabel,
   );
-  public noChangesLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.noChangesLabel,
+  public author = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.author,
   );
-  public availabilityLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.availabilityLabel,
+  public publicAuthor = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publicAuthor,
   );
+  public publicAuthorLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publicAuthorLabel,
+  );
+  public publicAuthorHelpIcon =
+    this.publicAuthorLabel.getChildElementBySelector(IconSelectors.helpIcon);
   public goToReviewButton = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.goToReviewButton,
   );
@@ -156,5 +173,13 @@ export class PublishingApprovalModal extends BaseElement {
     } else {
       await this.goToReviewButton.click();
     }
+  }
+
+  public async rejectRequest() {
+    const responsePromise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.publicationRequestRejection),
+    );
+    await this.rejectButton.click();
+    await responsePromise;
   }
 }

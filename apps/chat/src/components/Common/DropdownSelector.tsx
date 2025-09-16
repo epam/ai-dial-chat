@@ -12,9 +12,14 @@ import { Tooltip } from './Tooltip';
 
 type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;
+  closeMenuOnSelect?: boolean;
 };
 
-export function DropdownSelector({ tooltip, ...selectProps }: Props) {
+export function DropdownSelector({
+  tooltip,
+  closeMenuOnSelect = false,
+  ...selectProps
+}: Props) {
   const { t } = useTranslation(Translation.Common);
   return (
     <Tooltip
@@ -26,7 +31,7 @@ export function DropdownSelector({ tooltip, ...selectProps }: Props) {
     >
       <Select
         {...selectProps}
-        closeMenuOnSelect={false}
+        closeMenuOnSelect={closeMenuOnSelect}
         name="colors"
         menuPortalTarget={document.body}
         components={{
@@ -89,8 +94,14 @@ export function DropdownSelector({ tooltip, ...selectProps }: Props) {
             backgroundColor: '',
             cursor: 'pointer',
             ':hover': {
-              backgroundColor: state.data.backgroundColor,
+              backgroundColor:
+                state.data.backgroundColor ?? 'var(--bg-accent-primary-alpha)',
             },
+            ':active': {
+              backgroundColor:
+                state.data.backgroundColor ?? 'var(--bg-accent-primary-alpha)',
+            },
+            color: 'var(--text-primary)',
           }),
           dropdownIndicator: (styles, state) => ({
             ...styles,
@@ -150,6 +161,10 @@ export function DropdownSelector({ tooltip, ...selectProps }: Props) {
             ':hover': {
               border: '1px solid var(--stroke-accent-primary)',
             },
+          }),
+          singleValue: (styles) => ({
+            ...styles,
+            color: 'var(--text-primary)',
           }),
         }}
         noOptionsMessage={() => t('No options')}

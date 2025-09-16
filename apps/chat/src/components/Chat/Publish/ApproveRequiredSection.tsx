@@ -54,11 +54,18 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
     ),
   );
 
+  const isMessageStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+
   const [isOpen, setIsOpen] = useState(
     selectedPublicationUrl === publication.url,
   );
 
   const handlePublicationSelect = useCallback(() => {
+    if (isMessageStreaming) {
+      return;
+    }
     setIsOpen((value) => !value);
 
     if (publication.uploadStatus !== UploadStatus.LOADED) {
@@ -72,7 +79,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         conversationIds: [],
       }),
     );
-  }, [dispatch, publication]);
+  }, [dispatch, publication, isMessageStreaming]);
 
   const showCaretIcon = featureTypesWithCaretIcon.some((type) =>
     publication.resourceTypes.includes(
@@ -104,7 +111,15 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         )}
         data-qa="folder"
       >
-        <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
+        <div
+          className={classNames(
+            'group/button flex size-full items-center gap-1 py-2 pr-3',
+            {
+              'cursor-pointer': !isMessageStreaming,
+              'cursor-not-allowed': isMessageStreaming,
+            },
+          )}
+        >
           <CaretIconComponent hidden={!showCaretIcon} isOpen={isOpen} />
           <div className="relative">
             <IconClipboard

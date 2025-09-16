@@ -16,6 +16,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
+  getEntityBucket,
   isEntityIdLocal,
   isRootConversationsId,
 } from '@/src/utils/app/id';
@@ -29,7 +30,10 @@ import { ApiKeys } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { RootState } from '@/src/types/store';
 
-import { ConversationsSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
@@ -75,9 +79,16 @@ export const getOrUploadConversation = <T extends { id: string }>(
     state,
     payload.id,
   );
+  const entityBucket = getEntityBucket(payload);
+  const resourcesToReview = PublicationSelectors.selectResourcesToReview(state);
+  const isResourceOnReview = resourcesToReview?.some(
+    (r) => getEntityBucket({ id: r.reviewUrl }) === entityBucket,
+  );
 
   if (!conversation) {
-    conversation = getConversationInfoFromId(payload.id);
+    conversation = getConversationInfoFromId(payload.id, {
+      parseVersion: isResourceOnReview,
+    });
   }
 
   if (

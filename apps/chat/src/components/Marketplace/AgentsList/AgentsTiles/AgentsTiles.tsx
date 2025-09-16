@@ -1,20 +1,29 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+
+
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
+
+
 import { ScreenState } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { MarketplaceEntity } from '@/src/types/marketplace';
+
+
 
 import { AgentsListWrapper } from '../AgentsListWrapper';
 import { SuggestedMessage } from '../SuggestedMessage';
 import { AgentsListProps } from '../view-props';
 import { ApplicationCard } from './ApplicationCard';
 
+
+
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
+
 
 const MIN_CARD_WIDTH = 341;
 const MIN_CARD_WIDTH_XL5 = 450;
@@ -36,7 +45,7 @@ const ROWS_INFO: Record<ScreenState, RowInfo> = {
   [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL5 },
 };
 
-export const AgentsTiles: React.FC<AgentsListProps> = ({
+export const AgentsTiles: React.FC<AgentsListProps<MarketplaceEntity>> = ({
   entities,
   suggestedResults,
   separator,
@@ -76,7 +85,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
 
   useResizeObserver(dataRef.current, handleResize);
 
-  const allEntities: (DialAIEntityModel | string)[] = useMemo(() => {
+  const allEntities: (MarketplaceEntity | string)[] = useMemo(() => {
     if (!suggestedResults.length) return entities;
     if (!entities.length && suggestedResults.length) return suggestedResults;
 
@@ -112,7 +121,7 @@ export const AgentsTiles: React.FC<AgentsListProps> = ({
 
   return (
     <>
-      <SuggestedMessage entities={entities} />
+      <SuggestedMessage shouldRender={!entities.length} />
       <AgentsListWrapper
         separatorRowId={separatorRowId}
         rowsHeight={rowsHeight}

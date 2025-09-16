@@ -23,6 +23,11 @@ enum OverlayCases {
   enabledHideUserSettingsSandboxOverlay = '/cases/overlay/enabled-hide-user-settings-sandbox',
   loaderHideEventSetSandbox = '/cases/overlay/loader-hide-event-set-sandbox',
   skipFocusSetSandbox = '/cases/overlay/skip-focus-set-sandbox',
+  customMessageButtons = '/cases/overlay/custom-message-buttons',
+  editLastAssistantMessage = '/cases/overlay/edit-last-assistant-message',
+  disabledDefaultButtons = '/cases/overlay/disabled-default-buttons',
+  featuresData = '/cases/overlay/features-data',
+  signInEmail = '/cases/overlay/sign-in-email',
 }
 
 export default async function Index() {

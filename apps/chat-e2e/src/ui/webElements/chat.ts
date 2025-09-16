@@ -203,11 +203,32 @@ export class Chat extends BaseElement {
   public async proceedReplaying(waitForAnswer = false) {
     const proceedGeneratingButton = this.getSendMessage().proceedGenerating;
     await proceedGeneratingButton.waitForState();
+    const apiPromises = [];
     const requestPromise = this.page.waitForRequest(API.chatHost);
+    apiPromises.push(requestPromise);
+    if (waitForAnswer) {
+      const updateRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'PUT' &&
+          resp.url().includes(API.conversationHost),
+      );
+      const moveRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'POST' &&
+          resp.url().includes(API.moveHost),
+      );
+      apiPromises.push(updateRespPromise, moveRespPromise);
+    }
     await proceedGeneratingButton.click();
-    const request = await requestPromise;
+    let request;
+    for (let i = 0; i < apiPromises.length; i++) {
+      const resolvedPromise = await apiPromises[i];
+      if (i === 0) {
+        request = resolvedPromise as Request;
+      }
+    }
     await this.waitForResponse(waitForAnswer);
-    return request.postDataJSON();
+    return request?.postDataJSON();
   }
 
   public async waitForResponse(waitForAnswer = false) {
@@ -342,7 +363,7 @@ export class Chat extends BaseElement {
   }
 
   public async goToContentPosition(state: ScrollState) {
-    const chatBounding = await this.getElementBoundingBox();
+    const chatBounding = await this.scrollableArea.getElementBoundingBox();
     await this.click({
       position: {
         x: chatBounding!.x + chatBounding!.width / 2,
@@ -359,6 +380,5 @@ export class Chat extends BaseElement {
         break;
     }
     await this.page.keyboard.press(keyToPress!);
-    await this.waitForScrollPosition(state);
   }
 }

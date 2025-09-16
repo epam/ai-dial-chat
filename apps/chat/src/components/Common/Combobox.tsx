@@ -154,7 +154,7 @@ export const Combobox = <T,>({
             inputClassName,
           )}
         >
-          <div className="relative w-full">
+          <div className="relative w-full" data-qa="selected-agent">
             <Tooltip
               tooltip={
                 itemRow &&
@@ -166,12 +166,12 @@ export const Combobox = <T,>({
               }
               hideTooltip={!!isOpen}
               triggerClassName="w-full"
-              contentClassName="max-w-[300px] break-words"
               isTriggerClickable
             >
               <input
                 readOnly={isMobile()}
                 disabled={disabled}
+                data-qa="search-input"
                 placeholder={!selectedItem ? placeholder || '' : ''}
                 className="w-full bg-transparent px-3 outline-none placeholder:text-secondary"
                 style={{
@@ -246,7 +246,6 @@ export const Combobox = <T,>({
                       : getItemLabel(item)
                   }
                   triggerClassName="w-full"
-                  contentClassName="max-w-[300px] break-words"
                 >
                   {itemRow
                     ? createElement(itemRow, { item })
@@ -255,7 +254,7 @@ export const Combobox = <T,>({
               </li>
             ))
           ) : (
-            <li className="px-3 py-2">
+            <li className="px-3 py-2" data-qa="no-available-items">
               {notFoundPlaceholder || t('No available items')}
             </li>
           ))}

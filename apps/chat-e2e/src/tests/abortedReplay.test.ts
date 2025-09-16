@@ -8,6 +8,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
+import { loadingTimeout } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -34,9 +35,9 @@ dialTest(
     chatMessages,
     conversations,
     chatHeader,
-    marketplacePage,
     iconApiHelper,
     conversationAssertion,
+    appContainer,
     chatMessagesAssertion,
     chatHeaderAssertion,
     conversationDropdownMenuAssertion,
@@ -118,7 +119,10 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
-        await conversations.getEntityByName(replayConversation.name).waitFor();
+        await conversationAssertion.assertSelectedEntity(
+          replayConversation.name,
+        );
+        await appContainer.waitForAppLoaded(loadingTimeout);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,
@@ -152,7 +156,7 @@ dialTest(
       'Open conversation settings, select new model and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(newRandomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(newRandomModel);
         await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
@@ -515,6 +519,9 @@ dialTest(
       'Proceed replaying and verify response received',
       async () => {
         await context.setOffline(false);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.proceedReplaying(true);
         const generatedContent = await chatMessages.getGeneratedChatContent(
           conversation.messages.length,

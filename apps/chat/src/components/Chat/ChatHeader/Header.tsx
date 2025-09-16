@@ -62,7 +62,7 @@ interface Props {
   isShowChatInfo: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
-  onClearConversation: () => void;
+  onClearConversation: (conversation: Conversation) => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
   onModelClick: (conversationId: string) => void;
@@ -111,6 +111,9 @@ export const ChatHeader = Inversify.register(
         state,
         conversation.id,
       ),
+    );
+    const publicationUrl = useAppSelector(
+      PublicationSelectors.selectSelectedPublicationUrl,
     );
 
     const isTopChatModelSettingsEnabled = enabledFeatures.has(
@@ -178,11 +181,16 @@ export const ChatHeader = Inversify.register(
 
     const disallowChangeAgent =
       isChangeAgentDisallowed ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
     const disallowChangeSettings =
       isReplayAsIsConversation(conversation) ||
       isPlayback ||
+      conversation.publicationInfo?.action === PublishActions.DELETE ||
       (isExternal && !isApproveRequiredEntitySelected);
+    const isUnpublishing =
+      conversation.publicationInfo?.action === PublishActions.DELETE &&
+      isApproveRequiredEntitySelected;
 
     return (
       <>
@@ -201,8 +209,7 @@ export const ChatHeader = Inversify.register(
                   'truncate text-center',
                   isChatFullWidth &&
                     'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
-                  conversation.publicationInfo?.action ===
-                    PublishActions.DELETE && 'text-error',
+                  isUnpublishing && 'text-error',
                 )}
               >
                 <span
@@ -227,10 +234,7 @@ export const ChatHeader = Inversify.register(
                     />
                   ) : (
                     <p
-                      className={classNames(
-                        conversation.publicationInfo?.action ===
-                          PublishActions.DELETE && 'text-error',
-                      )}
+                      className={classNames(isUnpublishing && 'text-error')}
                       data-qa="version"
                     >
                       {t('v.')} {conversation.publicationInfo?.version}
@@ -419,6 +423,7 @@ export const ChatHeader = Inversify.register(
                   TriggerIcon={IconDotsVertical}
                   isHeaderMenu
                   disabledState={isMessageStreaming}
+                  publicationUrl={publicationUrl ?? undefined}
                 />
               )}
 
@@ -461,7 +466,7 @@ export const ChatHeader = Inversify.register(
           onClose={(result) => {
             setIsClearConversationModalOpen(false);
             if (result) {
-              onClearConversation();
+              onClearConversation(conversation);
             }
           }}
         />

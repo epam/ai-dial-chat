@@ -5,6 +5,7 @@ import { BackToButton } from './backToSelectOverlayMode';
 import {
   ChatOverlayManager,
   ChatOverlayManagerOptions,
+  Feature,
   OverlayConversation,
   OverlayEvents,
 } from '@epam/ai-dial-overlay';
@@ -26,6 +27,9 @@ export const ChatOverlayManagerWrapper: React.FC<
   const [conversations, setConversations] = useState<OverlayConversation[]>([]);
   const [conversationNewName, setConversationNewName] = useState('');
 
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [inputContent, setInputContent] = useState('');
+
   const handleDisplayInformation = useCallback((textToShow: string) => {
     dialogRef.current?.showModal();
 
@@ -45,6 +49,41 @@ export const ChatOverlayManagerWrapper: React.FC<
       conversationIdInputValue,
     );
   }, [conversationIdInputValue, overlayManagerOptions.id]);
+
+  const handleDeleteMessage = useCallback(async () => {
+    const result = await overlayManager.current?.deleteMessage(
+      overlayManagerOptions.id,
+      messageIndex,
+    );
+    handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
+  }, [messageIndex, handleDisplayInformation, overlayManagerOptions.id]);
+
+  const handleUpdateMessage = useCallback(async () => {
+    const messages = (
+      await overlayManager.current?.getMessages(overlayManagerOptions.id)
+    )?.messages;
+
+    if (!messages) {
+      return;
+    }
+
+    const result = await overlayManager.current?.updateMessage(
+      overlayManagerOptions.id,
+      messageIndex,
+      {
+        ...messages[messageIndex],
+        content: messages[messageIndex].content + '\n\nHello overlay!',
+      },
+    );
+    handleDisplayInformation(JSON.stringify(result?.messages, null, 2));
+  }, [overlayManagerOptions.id, messageIndex, handleDisplayInformation]);
+
+  const handleSetInputContent = useCallback(async () => {
+    await overlayManager.current?.setInputContent(
+      overlayManagerOptions.id,
+      inputContent,
+    );
+  }, [inputContent, overlayManagerOptions.id]);
 
   const handleCreatePlaybackConversation = useCallback(async () => {
     const replayResult =
@@ -132,19 +171,19 @@ export const ChatOverlayManagerWrapper: React.FC<
   }, [created, overlayManagerOptions.id]);
 
   useEffect(() => {
-    overlayManager.current?.subscribe(
+    const subEndGenerating = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       '@DIAL_OVERLAY/GPT_END_GENERATING',
       () => console.info('END GENERATING'),
     );
 
-    overlayManager.current?.subscribe(
+    const subStartGenerating = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       '@DIAL_OVERLAY/GPT_START_GENERATING',
       () => console.info('START GENERATING'),
     );
 
-    overlayManager.current?.subscribe(
+    const subSelectedConversationLoaded = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
       async (info) => {
@@ -157,11 +196,69 @@ export const ChatOverlayManagerWrapper: React.FC<
         console.info(JSON.stringify(info, null, 2));
       },
     );
-    overlayManager.current?.subscribe(
+    const subConversationUpdated = overlayManager.current?.subscribe(
       overlayManagerOptions.id,
       `@DIAL_OVERLAY/${OverlayEvents.conversationsUpdated}`,
       async () => {
         console.info('Conversations updated');
+      },
+    );
+    const editMessageEvent = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+
+      `@DIAL_OVERLAY/${OverlayEvents.editMessage}`,
+      async (payload) => {
+        console.info('Message edited', { payload });
+      },
+    );
+    const regenerateLastMessageEvent = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+
+      `@DIAL_OVERLAY/${OverlayEvents.regenerateMessage}`,
+      async () => {
+        console.info('Message regenerated');
+      },
+    );
+    const deleteMessageEvent = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+
+      `@DIAL_OVERLAY/${OverlayEvents.deleteMessage}`,
+      async (payload) => {
+        console.info('Message deleted', { payload });
+      },
+    );
+    const subMessageCustomButton = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.messageCustomButton}`,
+      async (info) => {
+        console.info(
+          'Custom message button event',
+          JSON.stringify(info, null, 2),
+        );
+      },
+    );
+    const subPrevPlaybackMessage = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.prevPlaybackMessage}`,
+      async (info) => {
+        console.info(
+          'Previous playback message',
+          JSON.stringify(info, null, 2),
+        );
+      },
+    );
+    const subNextPlaybackMessage = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.nextPlaybackMessage}`,
+      async (info) => {
+        console.info('Next playback message', JSON.stringify(info, null, 2));
+      },
+    );
+    const subStopGenerating = overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      `@DIAL_OVERLAY/${OverlayEvents.stopGenerating}`,
+      async () => {
+        console.info('Stop generating by user');
       },
     );
 
@@ -170,6 +267,25 @@ export const ChatOverlayManagerWrapper: React.FC<
       .then((messages) => {
         console.info(messages);
       });
+
+    const subs = [
+      subEndGenerating,
+      subStartGenerating,
+      subSelectedConversationLoaded,
+      subConversationUpdated,
+      subMessageCustomButton,
+      editMessageEvent,
+      regenerateLastMessageEvent,
+      deleteMessageEvent,
+      subPrevPlaybackMessage,
+      subNextPlaybackMessage,
+      subStopGenerating,
+    ];
+    return () => {
+      subs.forEach((sub) => {
+        sub?.();
+      });
+    };
   }, [overlayManagerOptions]);
 
   return (
@@ -205,6 +321,49 @@ export const ChatOverlayManagerWrapper: React.FC<
               >
                 Send &apos;Hello&apos; to Chat
               </button>
+
+              <div className="flex flex-col gap-1 border p-1">
+                <button
+                  className="button"
+                  onClick={handleDeleteMessage}
+                  data-qa="delete-message"
+                >
+                  Delete message by index
+                </button>
+                <button
+                  className="button"
+                  onClick={handleUpdateMessage}
+                  data-qa="update-message"
+                >
+                  Add `Hello overlay!` to the end of message by index
+                </button>
+
+                <input
+                  className="border"
+                  placeholder="Imported conversation object"
+                  value={messageIndex}
+                  onChange={(e) => setMessageIndex(JSON.parse(e.target.value))}
+                  data-qa="delete-message-index"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1 border p-1">
+                <button
+                  className="button"
+                  onClick={handleSetInputContent}
+                  data-qa="set-input-content"
+                >
+                  Set input content
+                </button>
+
+                <input
+                  className="border"
+                  placeholder="Input content"
+                  value={inputContent}
+                  onChange={(e) => setInputContent(e.target.value)}
+                  data-qa="set-input-content-input"
+                />
+              </div>
 
               <button
                 className="button"
@@ -317,6 +476,22 @@ export const ChatOverlayManagerWrapper: React.FC<
                 Create conversation in inner folder
               </button>
 
+              <button
+                className="button"
+                onClick={async () => {
+                  const conversation =
+                    await overlayManager.current?.stopSelectedPlaybackConversation(
+                      overlayManagerOptions.id,
+                    );
+
+                  handleDisplayInformation(
+                    JSON.stringify(conversation, null, 2),
+                  );
+                }}
+              >
+                Stop selected playback conversation
+              </button>
+
               <div className="flex flex-col gap-1 border p-1">
                 <button
                   className="button"
@@ -425,7 +600,7 @@ export const ChatOverlayManagerWrapper: React.FC<
         <details>
           <summary>Overlay configuration</summary>
 
-          <div>
+          <div className="flex flex-col gap-1">
             <button
               className="button w-full"
               onClick={() => {
@@ -444,6 +619,50 @@ export const ChatOverlayManagerWrapper: React.FC<
               }}
             >
               Set dark theme and new model
+            </button>
+            <button
+              className="button w-full"
+              onClick={() => {
+                const newOptions = {
+                  ...overlayManagerOptions,
+                  hostDomain: window.location.origin,
+                };
+
+                newOptions.enabledFeatures = [
+                  ...(overlayManagerOptions.enabledFeatures as Feature[]),
+                  Feature.DisabledSend,
+                ];
+
+                overlayManager.current?.setOverlayOptions(
+                  overlayManagerOptions.id,
+                  newOptions,
+                );
+              }}
+              data-qa="set-configuration-disable-send"
+            >
+              Disable send
+            </button>
+            <button
+              className="button w-full"
+              onClick={() => {
+                const newOptions = {
+                  ...overlayManagerOptions,
+                  hostDomain: window.location.origin,
+                };
+
+                newOptions.enabledFeatures = [
+                  ...(overlayManagerOptions.enabledFeatures as Feature[]),
+                  Feature.DisabledPlaybackControls,
+                ];
+
+                overlayManager.current?.setOverlayOptions(
+                  overlayManagerOptions.id,
+                  newOptions,
+                );
+              }}
+              data-qa="set-configuration-disable-playback-controls"
+            >
+              Disable playback controls
             </button>
           </div>
         </details>

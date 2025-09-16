@@ -23,8 +23,27 @@ export enum Feature {
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
 
+  // Edit assistant message
+  EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
+  EditAllAssistantContent = 'edit-all-assistant-message', // allow edit all assistant messages
+
+  // Edit user message
+  HideEditUserMessage = 'hide-edit-user-message', // Hide editing button of user message
+
+  // Regenerate assistant message
+  HideRegenerateAssistantMessage = 'hide-regenerate-assistant-message', // Hide regenerate button of assistant message
+
+  // Delete user message
+  HideDeleteUserMessage = 'hide-delete-user-message', // Hide delete button of user message
+
   // Chat input
   SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
+
+  // Send button
+  DisabledSend = 'disabled-send', // Disable input
+
+  // Playback change
+  DisabledPlaybackControls = 'disabled-playback-controls', // Disable changing playback current message
 
   // Conversation First Screen
   EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
@@ -34,6 +53,7 @@ export enum Feature {
   ConversationsSharing = 'conversations-sharing', // Display conversation sharing
   PromptsSharing = 'prompts-sharing', // Display prompts sharing
   ApplicationsSharing = 'applications-sharing', // Display applications sharing
+  ToolsetsSharing = 'toolsets-sharing', // Display toolsets sharing
 
   // Publishing
   ConversationsPublishing = 'conversations-publishing',
@@ -54,4 +74,13 @@ export enum Feature {
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace
   MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
+
+  //Toolsets
+  Toolsets = 'toolsets', //Enable toolsets
+}
+
+export interface FeatureData {
+  // Field for adding some description for feature
+  // Can be used in tooltips or other places
+  description?: string;
 }

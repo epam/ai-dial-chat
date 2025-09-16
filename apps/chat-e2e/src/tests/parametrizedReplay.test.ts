@@ -219,7 +219,6 @@ dialTest(
     variableModalAssertion,
     variableModalDialog,
     talkToAgentDialog,
-    marketplacePage,
     conversations,
     conversationDropdownMenu,
     chatBar,
@@ -261,7 +260,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalDialog.closeButton.click();
@@ -375,6 +374,9 @@ dialSharedWithMeTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(replayConversation.name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.proceedReplaying();
         await variableModalAssertion.assertVariableModalState('hidden');
       },
@@ -430,6 +432,7 @@ dialTest(
     setTestIds,
     variableModalAssertion,
     variableModalDialog,
+    chatMessages,
     apiAssertion,
     localStorageManager,
   }) => {
@@ -569,6 +572,10 @@ dialTest(
       async () => {
         const thirdRequest = await variableModalDialog.submitReplayVariables();
         apiAssertion.assertRequestModelId(thirdRequest, randomModel);
+        await chatMessages.waitForResponseReceived();
+        await chatMessages.chatMessages
+          .getNthElement(historyConversation.messages.length)
+          .waitFor();
       },
     );
   },

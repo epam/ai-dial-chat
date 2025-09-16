@@ -5,7 +5,11 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isConversationId, isPromptId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isConversationId,
+  isPromptId,
+} from '@/src/utils/app/id';
 
 import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -17,7 +21,10 @@ import {
   PublicationActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { TEntity } from './view-props';
 
@@ -40,6 +47,10 @@ function PublicationControlsView({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const isMessageStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
 
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
@@ -80,6 +91,10 @@ function PublicationControlsView({
     dispatch(PublicationActions.setIsApplicationReview(false));
   }, [dispatch]);
 
+  const unselectToolset = useCallback(() => {
+    dispatch(PublicationActions.setIsToolsetReview(false));
+  }, [dispatch]);
+
   const toggleResource = useCallback(
     (offset: number) => {
       const reviewUrl = resourcesToReview[publicationIdx + offset].reviewUrl;
@@ -87,6 +102,7 @@ function PublicationControlsView({
       if (isConversationId(reviewUrl)) {
         unselectPrompt();
         unselectApplication();
+        unselectToolset();
         dispatch(
           ConversationsActions.selectConversations({
             conversationIds: [reviewUrl],
@@ -95,6 +111,7 @@ function PublicationControlsView({
       } else if (isPromptId(reviewUrl)) {
         unselectConversation();
         unselectApplication();
+        unselectToolset();
         dispatch(
           PromptsActions.selectPrompt({
             promptId: reviewUrl,
@@ -102,24 +119,31 @@ function PublicationControlsView({
           }),
         );
         dispatch(PromptsActions.setIsPromptModalOpen({ isOpen: true }));
-      } else {
+      } else if (isApplicationId(reviewUrl)) {
         unselectConversation();
         unselectPrompt();
+        unselectToolset();
         dispatch(
           ApplicationActions.get({
             applicationId: reviewUrl,
           }),
         );
         dispatch(PublicationActions.setIsApplicationReview(true));
+      } else {
+        unselectConversation();
+        unselectPrompt();
+        unselectApplication();
+        dispatch(PublicationActions.setIsToolsetReview(true));
       }
     },
     [
-      dispatch,
-      publicationIdx,
       resourcesToReview,
-      unselectConversation,
+      publicationIdx,
       unselectPrompt,
       unselectApplication,
+      unselectToolset,
+      dispatch,
+      unselectConversation,
     ],
   );
 
@@ -128,14 +152,17 @@ function PublicationControlsView({
       unselectConversation();
     } else if (isPromptId(resourceToReview.reviewUrl)) {
       unselectPrompt();
-    } else {
+    } else if (isApplicationId(resourceToReview.reviewUrl)) {
       unselectApplication();
+    } else {
+      unselectToolset();
     }
   }, [
+    resourceToReview.reviewUrl,
     unselectConversation,
     unselectPrompt,
     unselectApplication,
-    resourceToReview.reviewUrl,
+    unselectToolset,
   ]);
 
   useEffect(() => {
@@ -186,7 +213,13 @@ function PublicationControlsView({
       <button
         onClick={handleBackToPublication}
         data-qa="back-to-publication"
-        className="button button-primary flex max-h-[38px] items-center"
+        disabled={isMessageStreaming}
+        className={classNames(
+          'button button-primary flex max-h-[38px] items-center',
+          {
+            'cursor-not-allowed': isMessageStreaming,
+          },
+        )}
       >
         {t('Back to publication request')}
       </button>

@@ -24,7 +24,7 @@ export class PromptData extends FolderData {
   }
 
   public prepareDefaultPrompt(name?: string) {
-    const promptName = name ?? GeneratorUtil.randomString(10);
+    const promptName = name ?? GeneratorUtil.randomPromptName();
     return this.promptBuilder
       .withName(promptName)
       .withId(promptName)
@@ -84,7 +84,7 @@ export class PromptData extends FolderData {
   }
 
   public preparePrompt(content: string, description?: string, name?: string) {
-    const promptName = name ?? GeneratorUtil.randomString(10);
+    const promptName = name ?? GeneratorUtil.randomPromptName();
     return this.promptBuilder
       .withId(promptName)
       .withName(promptName)

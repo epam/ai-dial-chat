@@ -1,7 +1,10 @@
 // SHARED UTILS (do not import other utils)
 import { Conversation } from '@/src/types/chat';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { ROOT_SECTION_NAME } from '@/src/constants/sections';
+
+import { BucketService } from './data/bucket-service';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
@@ -56,3 +59,12 @@ export const splitEntityId = (
     isRoot,
   };
 };
+
+export const getEntityBucket = (entity: { id: string }) =>
+  entity.id.split('/')[1];
+export const isMyBucket = (bucket: string) => {
+  return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
+};
+
+export const isMyEntity = (entity: { id: string }) =>
+  isMyBucket(getEntityBucket(entity));

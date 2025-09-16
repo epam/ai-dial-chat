@@ -4,6 +4,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getLastPathSegment } from '@/src/utils/app/common';
+
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -27,10 +29,16 @@ export function RuleListItem({
 
   return (
     <>
-      <div className="mb-1 text-xs text-secondary">{path.split('/').pop()}</div>
-      <div className="mb-3 flex flex-wrap gap-1 text-xs">
+      <div className="mb-1 text-xs text-secondary" data-qa="published-path">
+        {getLastPathSegment(path)}
+      </div>
+      <div className="mb-3 flex flex-wrap gap-1 text-xs" data-qa="rules-list">
         {rules.map((rule, idx) => (
-          <div key={rule.source} className="flex max-w-full items-center">
+          <div
+            key={rule.source}
+            className="flex max-w-full items-center"
+            data-qa="rule"
+          >
             <div
               className={classNames(
                 'flex flex-wrap gap-x-1 rounded px-3 py-2',
@@ -41,21 +49,35 @@ export function RuleListItem({
                   : 'bg-layer-4',
               )}
             >
-              <span className="font-semibold">
-                {startCase(toLower(rule.source))}{' '}
+              <span className="font-semibold" data-qa="rule-target">
+                {startCase(toLower(rule.source))}
               </span>
-              <span className="font-normal italic">
-                {toLower(rule.function)}{' '}
+              <span className="font-normal italic" data-qa="rule-function">
+                {toLower(rule.function)}
               </span>
               {rule.targets.map((target, index) => (
                 <Fragment key={index}>
-                  {index > 0 && <span className="italic">{t('or')}</span>}
-                  <span className="break-all font-semibold">{target}</span>
+                  {index > 0 && (
+                    <span className="italic" data-qa="inner-operator">
+                      {t('or')}
+                    </span>
+                  )}
+                  <span
+                    className="break-all font-semibold"
+                    data-qa="rule-value"
+                  >
+                    {target}
+                  </span>
                 </Fragment>
               ))}
             </div>
             {idx !== rules.length - 1 && (
-              <span className="mx-1 italic text-secondary">{t('or')}</span>
+              <span
+                className="mx-1 italic text-secondary"
+                data-qa="rule-operator"
+              >
+                {t('or')}
+              </span>
             )}
           </div>
         ))}

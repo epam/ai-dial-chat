@@ -20,7 +20,7 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { arePromptsFieldsTheSame } from '@/src/utils/app/prompts';
+import { areSomePromptsFieldsChanged } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
@@ -162,7 +162,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   );
 
   const handleEditClose = useCallback(() => {
-    if (arePromptsFieldsTheSame(prompt, { name, description, content })) {
+    if (areSomePromptsFieldsChanged(prompt, { name, description, content })) {
       setConfirmClose(true);
     } else {
       onClose();

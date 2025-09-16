@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { BackendEntity, BackendResourceType } from '@/chat/types/common';
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { Attachment } from '@/src/testData';
 import {
@@ -7,6 +8,7 @@ import {
   ItemUtil,
   applicationNamePrefix,
   conversationNamePrefix,
+  promptNamePrefix,
   publicationRequestPrefix,
   unpublishRequestPrefix,
 } from '@/src/utils';
@@ -20,13 +22,14 @@ dialTest(
     //list pending requests
     const publicationRequests =
       await adminPublicationApiHelper.listPublicationRequests();
-    for (const publicationRequest of publicationRequests.publications) {
-      if (
-        publicationRequest.name?.startsWith(unpublishRequestPrefix) ||
-        publicationRequest.name?.startsWith(publicationRequestPrefix)
-      ) {
-        await adminPublicationApiHelper.rejectRequest(publicationRequest);
-      }
+    const e2ePublicationRequests = publicationRequests.publications.filter(
+      (p) =>
+        p.name?.trim().startsWith(unpublishRequestPrefix) ||
+        p.name?.trim().startsWith(publicationRequestPrefix),
+    );
+
+    for (const publicationRequest of e2ePublicationRequests) {
+      await adminPublicationApiHelper.rejectRequest(publicationRequest);
     }
   },
 );
@@ -80,14 +83,46 @@ dialTest(
         relativePath,
         publishRequestBuilder,
         (request) => {
+          const nameIndex = conversation.url.lastIndexOf(
+            ItemUtil.entityIdSeparator,
+          );
           return request.withConversationWithoutFolderResource(
             {
-              id: conversation.url.substring(
-                0,
-                conversation.url.lastIndexOf('__'),
-              ),
+              id: conversation.url.substring(0, nameIndex),
             } as Conversation,
             PublishActions.DELETE,
+            conversation.url.substring(
+              nameIndex + ItemUtil.entityIdSeparator.length,
+            ),
+          );
+        },
+      );
+    }
+
+    //Cleanup published E2E prompts
+    const publishedPrompts =
+      await adminPublicationApiHelper.listPublishedResources(
+        BackendResourceType.PROMPT,
+      );
+    const publishedE2EPrompts = publishedPrompts.items?.filter((prompt) =>
+      prompt.name.includes(promptNamePrefix),
+    );
+
+    for (const prompt of publishedE2EPrompts || []) {
+      const relativePath = ItemUtil.extractRelativePath(prompt.url);
+
+      await adminPublicationApiHelper.unpublishEntity(
+        prompt.name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          const nameIndex = prompt.url.lastIndexOf(ItemUtil.entityIdSeparator);
+          return request.withPromptWithoutFolderResource(
+            {
+              id: prompt.url.substring(0, nameIndex),
+            } as Prompt,
+            PublishActions.DELETE,
+            prompt.url.substring(nameIndex + ItemUtil.entityIdSeparator.length),
           );
         },
       );

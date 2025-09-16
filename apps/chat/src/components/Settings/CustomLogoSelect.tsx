@@ -130,6 +130,7 @@ export const CustomLogoSelect = ({
               onClick={onClickAddHandler}
               className="text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
               disabled={disabled}
+              data-qa={localLogo ? 'change-icon' : 'add-icon'}
             >
               {localLogo ? t('Change') : t('Add')}
             </button>

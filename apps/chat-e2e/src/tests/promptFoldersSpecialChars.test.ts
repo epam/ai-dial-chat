@@ -4,6 +4,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
+import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
@@ -13,7 +14,8 @@ dialTest(
     'Prompt folder: spaces in the middle of folder name stay.\n' +
     'Prompt folder: name can not be blank or with spaces only.\n' +
     'Prompt folder: spaces at the beginning or end of folder name are removed.\n' +
-    'Prompt folder: smiles, hieroglyph, specific letters in name',
+    'Prompt folder: smiles, hieroglyph, specific letters in name.\n' +
+    'Prompt folder: Error message appears if there is a dot is at the beginning of folder name',
   async ({
     dialHomePage,
     promptBar,
@@ -34,6 +36,7 @@ dialTest(
       'EPMRTC-2980',
       'EPMRTC-2981',
       'EPMRTC-2982',
+      'EPMRTC-6716',
     );
     const folderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const newNameWithEndDot = `${folderName}.`;
@@ -44,6 +47,7 @@ dialTest(
     const expectedName = 'Folder with spaces';
     const nameWithSpacesBeforeAndAfter = `   ${expectedName}   `;
     const newNameWithEmojis = '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
+    const leadingDotFolderName = `.${GeneratorUtil.randomString(5)}`;
 
     await dialTest.step('Create prompt folder', async () => {
       await localStorageManager.setShowSideBarPanels();
@@ -68,16 +72,13 @@ dialTest(
 
     await dialTest.step('Click on confirmation button', async () => {
       await folderPrompts.getEditFolderInputActions().clickTickButton();
-
       await toastAssertion.assertToastIsVisible();
       await toastAssertion.assertToastMessage(
         ExpectedConstants.nameWithDotErrorMessage,
         ExpectedMessages.notAllowedNameErrorShown,
       );
-
       // Verify folder name stays in edit mode
       await promptBarFolderAssertion.assertFolderEditInputState('visible');
-
       // Closing the toast to move forward
       await toast.closeToast();
     });
@@ -105,7 +106,7 @@ dialTest(
     await dialTest.step(
       'Copy and paste restricted special characters',
       async () => {
-        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
+        await dialHomePage.copyTextToClipboard(nameWithRestrictedChars);
         await folderPrompts.getEditFolderInput().editInput.click();
         await dialHomePage.pasteFromClipboard();
         await folderPrompts.getEditFolderInputActions().clickTickButton();
@@ -180,6 +181,24 @@ dialTest(
         await promptBarFolderAssertion.assertFolderState(
           { name: newNameWithEmojis },
           'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Rename folder to name with leading dot and verify the error toast is displayed, folder remains in the edit mode',
+      async () => {
+        await folderPrompts.openFolderDropdownMenu(newNameWithEmojis);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await folderPrompts.renameEmptyFolderWithTick(leadingDotFolderName);
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.leadingDotErrorToast,
+        );
+        await toast.closeToast();
+        await promptBarFolderAssertion.assertFolderEditInputState('visible');
+        await promptBarFolderAssertion.assertFolderEditInputValue(
+          leadingDotFolderName,
         );
       },
     );

@@ -3,18 +3,8 @@ import { PlotParams } from 'react-plotly.js';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
-import {
-  addGeneratedFolderId,
-  getFolderIdFromEntityId,
-  isFolderEmpty,
-  renameFolderAndMoveEntity,
-} from '@/src/utils/app/folders';
-import {
-  getConversationRootId,
-  isEntityIdExternal,
-  isEntityIdLocal,
-} from '@/src/utils/app/id';
+import { addGeneratedFolderId, isFolderEmpty } from '@/src/utils/app/folders';
+import { isEntityIdExternal, isEntityIdLocal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
@@ -26,7 +16,11 @@ import { RootState } from '@/src/types/store';
 
 import { ConversationsSelectors } from '@/src/store/selectors';
 
-import { ConversationsState } from './conversations.types';
+import {
+  ConversationsState,
+  SendMessagePayload,
+  SendMessagesPayload,
+} from './conversations.types';
 
 import {
   ConversationInfo,
@@ -43,7 +37,6 @@ const initialState: ConversationsState = {
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
-  temporaryFolders: [],
   searchTerm: '',
   searchFilters: SearchFilters.None,
   conversationSignal: new AbortController(),
@@ -90,6 +83,10 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversation: Conversation;
         requestMetadataAfter?: boolean;
+        selectSavedOptions?: {
+          selectSaved?: boolean;
+          compareConversationId?: string;
+        };
       }>,
     ) => state,
     saveConversationSuccess: (state) => {
@@ -147,12 +144,22 @@ export const conversationsSlice = createSlice({
     },
     updateConversation: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         id: string;
         values: Partial<Conversation>;
         publicationUrl?: string | null;
+        selectUpdatedOptions?: {
+          selectUpdated?: boolean;
+          compareConversationId?: string;
+        };
       }>,
-    ) => state,
+    ) => {
+      if (payload.selectUpdatedOptions?.selectUpdated) {
+        state.areSelectedConversationsLoaded = false;
+      }
+    },
     updateConversationSuccess: (
       state,
       {
@@ -252,7 +259,10 @@ export const conversationsSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ conversationIds: string[]; showLoader?: boolean }>,
+      }: PayloadAction<{
+        conversationIds: string[];
+        showLoader?: boolean;
+      }>,
     ) => {
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = false;
@@ -375,6 +385,7 @@ export const conversationsSlice = createSlice({
       state.folders = state.folders.filter((folder) =>
         isEntityIdExternal(folder),
       );
+      state.areSelectedConversationsLoaded = true;
     },
     createFolder: (
       state,
@@ -396,50 +407,8 @@ export const conversationsSlice = createSlice({
 
       state.folders = state.folders.concat(newFolder);
     },
-    createTemporaryFolder: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        name: string;
-        id: string;
-        folderId?: string;
-      }>,
-    ) => {
-      state.temporaryFolders.push({
-        id: payload.id,
-        name: payload.name,
-        type: FeatureType.Chat,
-        folderId: payload.folderId || getConversationRootId(),
-        temporary: true,
-      });
-      state.newAddedFolderId = payload.id;
-    },
     deleteFolder: (state, _action: PayloadAction<{ folderId: string }>) =>
       state,
-    deleteTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string }>,
-    ) => {
-      state.temporaryFolders = state.temporaryFolders.filter(
-        ({ id }) => id !== payload.folderId,
-      );
-    },
-    clearTemporaryFolders: (state) => {
-      state.temporaryFolders = [];
-    },
-    renameTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const parentId = getFolderIdFromEntityId(payload.folderId);
-      const newId = constructPath(parentId, payload.name);
-
-      state.temporaryFolders = state.temporaryFolders.map((f) =>
-        renameFolderAndMoveEntity(f, payload.folderId, newId),
-      );
-      state.newAddedFolderId = undefined;
-    },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
     },
@@ -503,6 +472,21 @@ export const conversationsSlice = createSlice({
       state.searchTerm = '';
       state.searchFilters = SearchFilters.None;
     },
+    regenerateLastMessage: (
+      state,
+      _action: PayloadAction<{
+        skipRecentModelsUpdate: boolean;
+      }>,
+    ) => state,
+    editMessage: (
+      state,
+      _action: PayloadAction<{
+        editedMessage: Message;
+        index: number;
+        convId: string;
+        skipRecentModelsUpdate: boolean;
+      }>,
+    ) => state,
     updateMessage: (
       state,
       _action: PayloadAction<{
@@ -532,26 +516,8 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{ error: Response | string }>,
     ) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
-    sendMessages: (
-      state,
-      _action: PayloadAction<{
-        conversations: Conversation[];
-        message: Message;
-        deleteCount: number;
-        activeReplayIndex: number;
-        skipRecentModelsUpdate?: boolean;
-      }>,
-    ) => state,
-    sendMessage: (
-      state,
-      _action: PayloadAction<{
-        conversation: Conversation;
-        message: Message;
-        deleteCount: number;
-        activeReplayIndex: number;
-        skipRecentModelsUpdate?: boolean;
-      }>,
-    ) => state,
+    sendMessages: (state, _action: PayloadAction<SendMessagesPayload>) => state,
+    sendMessage: (state, _action: PayloadAction<SendMessagePayload>) => state,
     streamMessage: (
       state,
       _action: PayloadAction<{

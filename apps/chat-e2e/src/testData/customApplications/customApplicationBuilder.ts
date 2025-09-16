@@ -18,7 +18,7 @@ export class CustomApplicationBuilder {
     this.customApplication = {
       display_name: GeneratorUtil.randomString(7),
       display_version: ExpectedConstants.defaultAppVersion,
-      endpoint: 'http://test.example.com',
+      endpoint: ExpectedConstants.appDefaultCompletionUrl,
       icon_url: '',
       description: '',
       input_attachment_types: [],
@@ -32,10 +32,12 @@ export class CustomApplicationBuilder {
     this.customApplication.display_name = displayName;
     return this;
   }
+
   withDisplayVersion(displayVersion: string): CustomApplicationBuilder {
     this.customApplication.display_version = displayVersion;
     return this;
   }
+
   withDescriptionKeywords(...keywords: string[]): CustomApplicationBuilder {
     this.customApplication.description_keywords = keywords;
     return this;
@@ -43,6 +45,23 @@ export class CustomApplicationBuilder {
 
   withDescription(description: string): CustomApplicationBuilder {
     this.customApplication.description = description;
+    return this;
+  }
+
+  withFeaturesData(features: Record<string, string>): CustomApplicationBuilder {
+    this.customApplication.features = JSON.parse(JSON.stringify(features));
+    return this;
+  }
+
+  withInputAttachmentTypes(
+    ...attachmentTypes: string[]
+  ): CustomApplicationBuilder {
+    this.customApplication.input_attachment_types = attachmentTypes;
+    return this;
+  }
+
+  withMaxInputAttachments(maxAttachments: number): CustomApplicationBuilder {
+    this.customApplication.max_input_attachments = maxAttachments;
     return this;
   }
 

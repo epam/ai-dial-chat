@@ -1,5 +1,5 @@
 import { EntitySelectors, PublishingModalSelectors } from '@/src/ui/selectors';
-import { PublishFilesTree } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publishFilesTree';
 import { Locator, Page } from '@playwright/test';
 
 export class FilesToPublishTree extends PublishFilesTree {

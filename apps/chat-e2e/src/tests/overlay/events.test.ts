@@ -59,7 +59,7 @@ dialOverlayTest(
     const secondRequestContent = 'test';
     const systemPrompt = `End each word with string "!?!?!"`;
     let secondRequest: Conversation;
-    const configuredModelId = 'dall-e-3';
+    const configuredModelId = 'imagegeneration@005';
 
     await overlayHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
@@ -158,7 +158,7 @@ dialOverlayTest(
     await dialOverlayTest.step(
       `Click on "Set light theme and new model" button and verify theme is changed to light, model is added to the recent models`,
       async () => {
-        await overlayConfiguration.setConfiguration();
+        await overlayConfiguration.clickSetConfigurationButton();
         await overlayAssertion.assertOverlayTheme(
           overlayHomePage,
           ThemeId.light,
@@ -167,6 +167,10 @@ dialOverlayTest(
           overlayAgentInfo.agentName,
           ModelsUtil.getDefaultAgent()!.name,
         );
+        const settings = await localStorageManager.getSettings(
+          process.env.NEXT_PUBLIC_OVERLAY_HOST,
+        );
+        overlayBaseAssertion.assertValue(settings.theme, ThemeId.light);
         const recentModels = await localStorageManager.getRecentModelsIds(
           process.env.NEXT_PUBLIC_OVERLAY_HOST,
         );
@@ -184,6 +188,14 @@ dialOverlayTest(
             ? API.themeUrl.concat(`/${expectedModelIcon}`)
             : undefined,
         });
+        const selectedConversationIds =
+          await localStorageManager.getSelectedConversationIds(
+            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          );
+        overlayBaseAssertion.assertValue(
+          selectedConversationIds[0],
+          `conversations/local/${expectedModel.reference}__${ExpectedConstants.newConversationWithIndexTitle(3)}`,
+        );
         await overlayAgentInfoAssertion.assertElementText(
           overlayAgentInfo.agentName,
           expectedModel.name,
@@ -342,6 +354,7 @@ dialOverlayTest(
           const permissions = actualConversation.permissions;
           const isPlayback = conversation.playback?.isPlayback;
           const isReplay = conversation.replay?.isReplay;
+          const bucket = actualConversation.bucket;
           const shortConversation: ConversationInfo = {
             model: isPlayback
               ? { id: PseudoModel.playback }
@@ -361,6 +374,7 @@ dialOverlayTest(
             const expectedSelectedOverlayConversation = {
               ...shortConversation,
               ...(permissions && { permissions }),
+              ...(bucket && { bucket }),
             };
             expectedSelectedConversation = {
               conversation:
@@ -391,8 +405,7 @@ dialOverlayTest(
             //save expectedSelectedConversation for the next test step if it is the last listed one
             if (expectedConversation.id === todayConversation.id) {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { bucket, parentPath, ...conversationInfo } =
-                expectedConversation;
+              const { parentPath, ...conversationInfo } = expectedConversation;
               expectedSelectedConversation = {
                 conversation: conversationInfo as OverlayConversation,
               };
@@ -538,7 +551,9 @@ dialOverlayTest(
         );
         await overlayHomePage.waitForPageLoaded();
         const newConversationData =
-          await overlayActions.clickCreateConversationInInnerFolder();
+          await overlayActions.clickCreateConversationInInnerFolder(
+            expectedFoldersPath,
+          );
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
         const actualMessages =
           await overlayDialog.content.getElementInnerContent();

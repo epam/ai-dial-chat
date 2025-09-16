@@ -81,7 +81,6 @@ export const TemperatureSlider: FC<Props> = ({
           <div className="flex items-center gap-2">
             <label className="text-left">{label}</label>
             <Tooltip
-              contentClassName="max-w-[220px]"
               triggerClassName="text-secondary"
               tooltip={
                 <EntityMarkdownDescription>

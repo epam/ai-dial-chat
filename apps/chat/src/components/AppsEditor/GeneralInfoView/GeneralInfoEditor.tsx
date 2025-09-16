@@ -8,15 +8,18 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
+import { getLastPathSegment } from '@/src/utils/app/common';
 import { isMobile } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getRouteForSlug } from '@/src/utils/app/route';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
+  ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, UIActions } from '@/src/store/actions';
@@ -69,6 +72,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
   const dispatch = useAppDispatch();
 
   const router = useRouter();
+  const { slug, publicationUrl } = router.query;
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
@@ -108,6 +112,33 @@ export const GeneralInfoEditor: React.FC<Props> = ({
       )
     : '';
 
+  const isDeploying =
+    oldApplication?.functionStatus === ApplicationStatus.DEPLOYING ||
+    oldApplication?.functionStatus === ApplicationStatus.REDEPLOYING;
+
+  const isFieldDisabled =
+    isAppDeployed || isSharedWithMe || isAppPublic || isDeploying;
+
+  const nameTooltip = useMemo(() => {
+    if (isAppPublic) return PUBLIC_APP_TOOLTIP;
+    if (isSharedWithMe) return getSharedTooltip('name');
+    if (isAppDeployed) return t('Undeploy application to edit name');
+    return '';
+  }, [isAppPublic, isSharedWithMe, isAppDeployed, t]);
+
+  const versionTooltip = useMemo(() => {
+    if (isAppPublic) return PUBLIC_APP_TOOLTIP;
+    if (isSharedWithMe) return getSharedTooltip('version');
+    if (isAppDeployed) return t('Undeploy application to edit version');
+    return '';
+  }, [isAppPublic, isSharedWithMe, isAppDeployed, t]);
+
+  const iconTooltip = useMemo(() => {
+    if (isAppPublic) return PUBLIC_APP_TOOLTIP;
+    if (isSharedWithMe) return getSharedTooltip('icon');
+    return '';
+  }, [isAppPublic, isSharedWithMe]);
+
   useEffect(() => {
     if (isFormChanged && isValid) {
       dispatch(ApplicationActions.setHasUnsavedChanges(isFormChanged));
@@ -127,7 +158,6 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         return;
       }
 
-      const { slug } = router.query;
       if (!slug) return;
 
       const slugStr = slug.toString();
@@ -154,6 +184,9 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 ? getRouteForSlug(Routes.AppsEditorSettings, slugStr)
                 : undefined,
               schema: schema ?? undefined,
+              publicationUrl: publicationUrl
+                ? decodeURIComponent(publicationUrl.toString())
+                : undefined,
             }),
           );
         }
@@ -175,18 +208,24 @@ export const GeneralInfoEditor: React.FC<Props> = ({
         );
       }
 
+      if (exitAfterSave) {
+        dispatch(ApplicationActions.exitEditor({}));
+      }
       reset(data);
     },
     [
+      dispatch,
+      exitAfterSave,
+      isAppDeployed,
       isAppPublic,
+      isFormChanged,
+      isSharedWithMe,
+      oldApplication,
+      publicationUrl,
+      reset,
       router,
       schema,
-      oldApplication,
-      reset,
-      isFormChanged,
-      isAppDeployed,
-      dispatch,
-      isSharedWithMe,
+      slug,
       t,
     ],
   );
@@ -216,12 +255,19 @@ export const GeneralInfoEditor: React.FC<Props> = ({
     t,
     submitWrapper,
     handleSubmit,
-    router,
     isValid,
     hasBeenTouched,
   ]);
 
   const isMobileView = isMobile();
+
+  const sourceFilters = useMemo(
+    () =>
+      publicationUrl
+        ? new Set([FileSourceType.MY_FILES, FileSourceType.REVIEW_FILES])
+        : undefined,
+    [publicationUrl],
+  );
 
   return (
     <div className="size-full overflow-hidden bg-layer-2">
@@ -244,13 +290,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             placeholder={t('Type name')}
             id="name"
             error={errors.name?.message}
-            disabled={isAppDeployed || isSharedWithMe || isAppPublic}
-            tooltip={
-              (isAppPublic && PUBLIC_APP_TOOLTIP) ||
-              (isSharedWithMe && getSharedTooltip('name')) ||
-              (isAppDeployed && t('Undeploy application to edit name')) ||
-              ''
-            }
+            disabled={isFieldDisabled}
+            tooltip={nameTooltip}
           />
 
           <ControlledField
@@ -262,13 +303,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({
             control={control}
             name="version"
             rules={validators['version']}
-            disabled={isAppDeployed || isSharedWithMe || isAppPublic}
-            tooltip={
-              (isAppPublic && PUBLIC_APP_TOOLTIP) ||
-              (isSharedWithMe && getSharedTooltip('version')) ||
-              (isAppDeployed && t('Undeploy application to edit version')) ||
-              ''
-            }
+            disabled={isFieldDisabled}
+            tooltip={versionTooltip}
           />
 
           <Controller
@@ -278,7 +314,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({
               <LogoSelector
                 id="icon"
                 label={t('Icon')}
-                localLogo={field.value?.split('/')?.pop()}
+                localLogo={getLastPathSegment(field.value)}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
                 onDeleteLocalLogoHandler={() => field.onChange('')}
                 customPlaceholder={t('No icon')}
@@ -287,13 +323,10 @@ export const GeneralInfoEditor: React.FC<Props> = ({
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
                 disabled={isSharedWithMe || isAppPublic}
-                tooltip={
-                  (isAppPublic && PUBLIC_APP_TOOLTIP) ||
-                  (isSharedWithMe && getSharedTooltip('icon')) ||
-                  ''
-                }
+                tooltip={iconTooltip}
                 confirmDialogValues={confirmIconValues}
                 warningMessage={iconWarning}
+                sourceFilters={sourceFilters}
               />
             )}
           />

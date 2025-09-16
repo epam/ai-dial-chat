@@ -6,8 +6,11 @@ import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors } from '@/src/store/selectors';
+import { replaceStringRange } from '@/src/utils/app/common';
+
+import { ChatActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ChatSelectors, ConversationsSelectors } from '@/src/store/selectors';
 
 import { ChatInputMessage } from './ChatInputMessage';
 
@@ -45,6 +48,9 @@ export const ChatInput = Inversify.register(
     onStopConversation,
     onResize,
   }: Props) => {
+    const dispatch = useAppDispatch();
+
+    const chatInputContent = useAppSelector(ChatSelectors.selectInputContent);
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     );
@@ -57,10 +63,28 @@ export const ChatInput = Inversify.register(
     const handleUploadFiles = useChatUploadFiles();
 
     const handlePaste = useCallback(
-      (files: File[]) => {
+      (
+        files: File[],
+        textContent?: string,
+        selection?: { start: number; end: number },
+      ) => {
         if (canAttachFiles) handleUploadFiles(files);
+        if (textContent) {
+          dispatch(
+            ChatActions.setInputContent(
+              selection
+                ? replaceStringRange(
+                    chatInputContent,
+                    textContent,
+                    selection.start,
+                    selection.end,
+                  )
+                : textContent,
+            ),
+          );
+        }
       },
-      [canAttachFiles, handleUploadFiles],
+      [canAttachFiles, chatInputContent, dispatch, handleUploadFiles],
     );
 
     useFilePaste(textareaRef, handlePaste);

@@ -5,5 +5,8 @@ export const IconSelectors = {
   playbackIcon: '[data-qa="playback-icon"]',
   copyIcon: '.tabler-icon-copy',
   replayIcon: '[data-qa="replay-icon"]',
+  promptIcon: '.tabler-icon-bulb',
   listDetailsIcon: '.tabler-icon-list-details',
+  helpIcon: '.tabler-icon-help',
+  fileIcon: '.tabler-icon-file',
 };

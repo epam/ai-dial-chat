@@ -335,7 +335,6 @@ dialTest.skip(
     chat,
     setTestIds,
     chatMessages,
-    marketplacePage,
     agentSettings,
     localStorageManager,
     conversationSettingsModal,
@@ -353,10 +352,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(
-          simpleRequestModel!,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(simpleRequestModel!);
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt(promptContent);
         await conversationSettingsModal.applyChangesButton.click();
@@ -390,7 +386,6 @@ dialTest(
     tooltip,
     localStorageManager,
     iconApiHelper,
-    marketplacePage,
     talkToAgentDialog,
     chatMessagesAssertion,
   }) => {
@@ -413,10 +408,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(
-          simpleRequestModel!,
-          marketplacePage,
-        );
+        await talkToAgentDialog.selectAgent(simpleRequestModel!);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
         await sendMessage.stopGenerating.click();
@@ -558,7 +550,7 @@ dialTest(
     chatHeader,
     systemPromptListAssertion,
     localStorageManager,
-    baseAssertion,
+    agentSettingAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -593,11 +585,7 @@ dialTest(
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'GET',
         });
-        await baseAssertion.assertElementText(
-          agentSettings.systemPrompt,
-          prompt.content!,
-          ExpectedMessages.systemPromptValid,
-        );
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
         await conversationSettingsModal.applyChangesButton.click();
       },
     );
@@ -617,11 +605,7 @@ dialTest(
       'Open chat settings and verify system prompt is preserved',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await baseAssertion.assertElementText(
-          agentSettings.systemPrompt,
-          prompt.content!,
-          ExpectedMessages.systemPromptValid,
-        );
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
       },
     );
   },

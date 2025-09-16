@@ -21,7 +21,10 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { dispatchMouseLeaveEvent } from '@/src/utils/app/common';
+import {
+  dispatchMouseLeaveEvent,
+  getLastPathSegment,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -693,7 +696,7 @@ export const CodeEditor = ({
           description={t(
             'Are you sure that you want to delete "{{name}}" permanently?',
             {
-              name: deletingFileId?.split('/').pop(),
+              name: getLastPathSegment(deletingFileId ?? ''),
             },
           )}
           confirmLabel={t('Confirm')}

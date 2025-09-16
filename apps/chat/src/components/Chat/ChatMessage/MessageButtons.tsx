@@ -21,13 +21,16 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
+  OverlaySelectors,
   SettingsSelectors,
 } from '@/src/store/selectors';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { LikeState, Message, Role } from '@epam/ai-dial-shared';
+import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
+
+import { Feature, LikeState, Message, Role } from '@epam/ai-dial-shared';
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
@@ -50,15 +53,17 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 };
 
 interface MessageUserButtonsProps {
+  realMessageIndex: number;
   isEditAvailable: boolean;
   isMessageStreaming: boolean;
   isEditTemplatesAvailable: boolean;
   onToggleEditing: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onToggleTemplatesEditing: () => void;
 }
 
 export const MessageUserButtons = ({
+  realMessageIndex,
   isEditAvailable,
   isMessageStreaming,
   isEditTemplatesAvailable,
@@ -72,6 +77,12 @@ export const MessageUserButtons = ({
   const isConversationsWithSchema = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationsWithSchema,
   );
+  const customMessageButtons = useAppSelector((state) =>
+    OverlaySelectors.selectPrependedDefaultButtonsForMessage(
+      state,
+      realMessageIndex,
+    ),
+  );
 
   return (
     <div
@@ -82,6 +93,14 @@ export const MessageUserButtons = ({
     >
       {!isMessageStreaming && (
         <>
+          {customMessageButtons?.map((item) => (
+            <OverlayMessageCustomButton
+              key={item.buttonKey}
+              button={item}
+              defaultClassName="text-secondary hover:text-accent-primary"
+              realMessageIndex={realMessageIndex}
+            />
+          ))}
           {isEditTemplatesAvailable && !isConversationsWithSchema && (
             <Tooltip
               placement="top"
@@ -106,14 +125,16 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-            <button
-              className="text-secondary hover:text-accent-primary"
-              onClick={onDelete}
-            >
-              <IconTrashX size={18} />
-            </button>
-          </Tooltip>
+          {onDelete && (
+            <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
+              <button
+                className="text-secondary hover:text-accent-primary"
+                onClick={onDelete}
+              >
+                <IconTrashX size={18} />
+              </button>
+            </Tooltip>
+          )}
         </>
       )}
     </div>
@@ -121,25 +142,35 @@ export const MessageUserButtons = ({
 };
 
 interface MessageAssistantButtonsProps {
+  realMessageIndex: number;
   messageCopied?: boolean;
   isLikesEnabled: boolean;
   message: Message;
   copyOnClick: () => void;
   onLike: (likeStatus: LikeState) => void;
   onRegenerate?: () => void;
+  onToggleEditing?: () => void;
 }
 
 export const MessageAssistantButtons = ({
   messageCopied,
   message,
+  realMessageIndex,
   isLikesEnabled,
   copyOnClick,
   onLike,
   onRegenerate,
+  onToggleEditing,
 }: MessageAssistantButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const customMessageButtons = useAppSelector((state) =>
+    OverlaySelectors.selectPrependedDefaultButtonsForMessage(
+      state,
+      realMessageIndex,
+    ),
+  );
 
   return (
     <div
@@ -148,6 +179,14 @@ export const MessageAssistantButtons = ({
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
+      {customMessageButtons?.map((item) => (
+        <OverlayMessageCustomButton
+          key={item.buttonKey}
+          button={item}
+          defaultClassName="text-secondary hover:text-accent-primary"
+          realMessageIndex={realMessageIndex}
+        />
+      ))}
       {onRegenerate && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
           <Button
@@ -176,73 +215,81 @@ export const MessageAssistantButtons = ({
             </Button>
           </Tooltip>
         ))}
-      <div className="flex flex-row gap-2">
-        {isLikesEnabled &&
-          (message.content.trim() || !!getMessageCustomContent(message)) && (
-            <>
-              {message.like !== LikeState.Disliked && (
-                <Tooltip
-                  placement="top"
-                  isTriggerClickable={message.like !== LikeState.Liked}
-                  tooltip={
-                    message.like !== LikeState.Liked ? t('Like') : t('Liked')
-                  }
-                >
-                  <Button
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Liked);
-                      }
-                    }}
-                    className={
-                      message.like !== LikeState.Liked
-                        ? 'text-secondary'
-                        : 'text-accent-primary'
+      {onToggleEditing && (
+        <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+          <Button
+            onClick={onToggleEditing}
+            data-qa="edit"
+            className="text-secondary"
+          >
+            <IconEdit size={18} />
+          </Button>
+        </Tooltip>
+      )}
+      {isLikesEnabled &&
+        (message.content.trim() || !!getMessageCustomContent(message)) && (
+          <div className="flex flex-row gap-2">
+            {message.like !== LikeState.Disliked && (
+              <Tooltip
+                placement="top"
+                isTriggerClickable={message.like !== LikeState.Liked}
+                tooltip={
+                  message.like !== LikeState.Liked ? t('Like') : t('Liked')
+                }
+              >
+                <Button
+                  onClick={() => {
+                    if (message.like !== LikeState.NoState) {
+                      onLike(LikeState.Liked);
                     }
-                    disabled={message.like === LikeState.Liked}
-                    data-qa="like"
-                  >
-                    <IconThumbUp size={18} />
-                  </Button>
-                </Tooltip>
-              )}
-              {message.like !== LikeState.Liked && (
-                <Tooltip
-                  placement="top"
-                  isTriggerClickable={message.like !== LikeState.Disliked}
-                  tooltip={
+                  }}
+                  className={
+                    message.like !== LikeState.Liked
+                      ? 'text-secondary'
+                      : 'text-accent-primary'
+                  }
+                  disabled={message.like === LikeState.Liked}
+                  data-qa="like"
+                >
+                  <IconThumbUp size={18} />
+                </Button>
+              </Tooltip>
+            )}
+            {message.like !== LikeState.Liked && (
+              <Tooltip
+                placement="top"
+                isTriggerClickable={message.like !== LikeState.Disliked}
+                tooltip={t(
+                  message.like !== LikeState.Disliked ? 'Dislike' : 'Disliked',
+                )}
+              >
+                <Button
+                  onClick={() => {
+                    if (message.like !== LikeState.NoState) {
+                      onLike(LikeState.Disliked);
+                    }
+                  }}
+                  className={
                     message.like !== LikeState.Disliked
-                      ? t('Dislike')
-                      : t('Disliked')
+                      ? 'text-secondary'
+                      : 'text-accent-primary'
                   }
+                  disabled={message.like === LikeState.Disliked}
+                  data-qa="dislike"
                 >
-                  <Button
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Disliked);
-                      }
-                    }}
-                    className={
-                      message.like !== LikeState.Disliked
-                        ? 'text-secondary'
-                        : 'text-accent-primary'
-                    }
-                    disabled={message.like === LikeState.Disliked}
-                    data-qa="dislike"
-                  >
-                    <IconThumbDown size={18} />
-                  </Button>
-                </Tooltip>
-              )}
-            </>
-          )}
-      </div>
+                  <IconThumbDown size={18} />
+                </Button>
+              </Tooltip>
+            )}
+          </div>
+        )}
     </div>
   );
 };
 
 interface MessageMobileButtonsProps {
   message: Message;
+  realMessageIndex: number;
   messageCopied: boolean;
   editDisabled: boolean;
   isEditing: boolean;
@@ -252,7 +299,7 @@ interface MessageMobileButtonsProps {
   isMessageStreaming: boolean;
   isConversationInvalid: boolean;
   onLike: (likeStatus: LikeState) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onToggleEditing: (value: boolean) => void;
   onToggleTemplatesEditing: () => void;
   onCopy: () => void;
@@ -263,6 +310,7 @@ export const MessageMobileButtons = ({
   messageCopied,
   editDisabled,
   message,
+  realMessageIndex,
   isLikesEnabled,
   isEditing,
   isEditTemplatesAvailable,
@@ -281,14 +329,38 @@ export const MessageMobileButtons = ({
   const isConversationsWithSchema = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationsWithSchema,
   );
+  const isEditLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditLastAssistantContent),
+  );
+  const isAllLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
+  );
 
   const isAssistant = message.role === Role.Assistant;
+  const customMessageButtons = useAppSelector((state) =>
+    OverlaySelectors.selectPrependedDefaultButtonsForMessage(
+      state,
+      realMessageIndex,
+    ),
+  );
 
   if (isAssistant) {
     return (
       !(isMessageStreaming && isLastMessage) &&
       !isConversationInvalid && (
         <>
+          {customMessageButtons?.map((item) => (
+            <MenuItem
+              key={item.buttonKey}
+              isChildrenButton
+              item={
+                <OverlayMessageCustomButton
+                  button={item}
+                  realMessageIndex={realMessageIndex}
+                />
+              }
+            />
+          ))}
           {message.content.trim() &&
             (messageCopied ? (
               <MenuItem
@@ -311,6 +383,19 @@ export const MessageMobileButtons = ({
                 onClick={onCopy}
               />
             ))}
+          {(isAllLastMessageEnabled ||
+            (isLastMessage && isEditLastMessageEnabled)) && (
+            <MenuItem
+              item={
+                <div className="flex items-center gap-3">
+                  <IconEdit className="text-secondary" size={18} />
+                  {t('Edit')}
+                </div>
+              }
+              data-qa="edit"
+              onClick={() => onToggleEditing(true)}
+            />
+          )}
           {onRegenerate && (
             <MenuItem
               item={
@@ -397,6 +482,20 @@ export const MessageMobileButtons = ({
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>
+        {customMessageButtons?.map((item) => (
+          <MenuItem
+            key={item.buttonKey}
+            isChildrenButton
+            item={
+              <OverlayMessageCustomButton
+                button={item}
+                defaultClassName="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+                defaultIconClassName="text-secondary"
+                realMessageIndex={realMessageIndex}
+              />
+            }
+          />
+        ))}
         {isEditTemplatesAvailable && !isConversationsWithSchema && (
           <MenuItem
             className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
@@ -426,16 +525,18 @@ export const MessageMobileButtons = ({
             }
           />
         )}
-        <MenuItem
-          className="hover:bg-accent-primary-alpha focus:visible group-hover:visible"
-          onClick={onDelete}
-          item={
-            <div className="flex items-center gap-3">
-              <IconTrashX className="text-secondary" size={18} />
-              <p>{t('Delete')}</p>
-            </div>
-          }
-        />
+        {onDelete && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible group-hover:visible"
+            onClick={onDelete}
+            item={
+              <div className="flex items-center gap-3">
+                <IconTrashX className="text-secondary" size={18} />
+                <p>{t('Delete')}</p>
+              </div>
+            }
+          />
+        )}
       </>
     )
   );

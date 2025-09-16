@@ -7,11 +7,20 @@ import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
-import { isVersionValid, prepareEntityName } from '@/src/utils/app/common';
+import {
+  isVersionExists,
+  replaceSpacesFromString,
+} from '@/src/utils/app/common';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import {
+  getStringValidationErrors,
+  getVersionValidationErrors,
+} from '@/src/utils/app/forms';
 import { isApplicationId, isFileId } from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { BackendResourceTypeName } from '@/src/types/common';
 import { PublicationReviewItem } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -29,12 +38,10 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
   item: PublicationReviewItem;
-  isEditDisabled?: boolean;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   item,
-  isEditDisabled,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -44,18 +51,51 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const editState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
+  );
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
   const [inputVersion, setInputVersion] = useState(defaultVersion);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  const isApplication = useMemo(() => isApplicationId(item.id), [item.id]);
 
   useEffect(() => {
     setInputVersion(defaultVersion);
   }, [defaultVersion, isEditMode]);
 
+  useEffect(() => {
+    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
+      const isExistVersion = isVersionExists(
+        inputVersion,
+        item.id,
+        publicVersionGroups,
+        item.name,
+      );
+
+      const validationErrors = getVersionValidationErrors(
+        inputVersion,
+        isExistVersion,
+        isApplication,
+      );
+      setErrors(validationErrors);
+    }
+  }, [
+    inputVersion,
+    isApplication,
+    isEditMode,
+    item.id,
+    item.name,
+    item.publicationInfo?.action,
+    publicVersionGroups,
+  ]);
+
   const handleChangeVersion = useCallback(
     (version: string) => {
       setInputVersion(version);
+
       dispatch(
         PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
@@ -64,7 +104,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         }),
       );
     },
-    [dispatch, item.id, item.name, editState?.name],
+    [dispatch, editState?.name, item.id, item.name],
   );
 
   const publicVersionGroupId = usePublicVersionGroupId(item);
@@ -84,7 +124,6 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     );
   }
 
-  const isApplication = isApplicationId(item.id);
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
   return (
@@ -100,20 +139,23 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       )}
       <span
         className={classNames(
-          'shrink-0 text-xs',
+          'relative shrink-0 text-xs',
           isDeleteAction && 'text-error',
         )}
         data-qa="version"
       >
         <EditableField
           value={inputVersion}
-          isEditMode={isDeleteAction || isEditDisabled ? false : isEditMode}
+          isEditMode={isDeleteAction ? false : isEditMode}
           onChange={handleChangeVersion}
           inputClassName={classNames(
-            'w-[34px] text-xs',
-            (!isVersionValid(inputVersion) || inputVersion === NA_VERSION) &&
-              '!border-b-error',
+            'w-[70px] text-right text-xs',
+            (errors.length || inputVersion === NA_VERSION) && '!border-b-error',
+            errors.length && 'pl-5',
           )}
+          placeholder="0.0.1"
+          errors={errors}
+          tooltipIconClassName="ml-1"
         />
       </span>
     </div>
@@ -125,7 +167,7 @@ interface PublicationRowProps {
   Icon: ReactNode;
   item: PublicationReviewItem;
   dataQa: string;
-  isEditDisabled?: boolean;
+  itemTypeName: BackendResourceTypeName;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -133,16 +175,22 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   Icon,
   item,
   dataQa,
-  isEditDisabled,
+  itemTypeName,
 }) => {
   const dispatch = useAppDispatch();
 
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
   const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
   const selectedPublicationResources = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+    PublicationSelectors.selectSelectedItemsToApprove,
+  );
+  const editState = useAppSelector(
+    PublicationSelectors.selectEntitiesEditState,
   );
 
   const isSelected = useMemo(
@@ -152,14 +200,37 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
 
   const [inputName, setInputName] = useState(item.name);
   const [isFocused, setIsFocused] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    setInputName(item.name);
+    const cleanName = replaceSpacesFromString(item.name);
+    setInputName(cleanName);
   }, [item.name, isEditMode]);
+
+  useEffect(() => {
+    const isNotUniqName = Object.entries(editState).some(
+      ([key, { name: editStateName }]) => {
+        const keyFolderId = getFolderIdFromEntityId(key);
+        return (
+          item.id !== key &&
+          item.folderId === keyFolderId &&
+          inputName.trim() === editStateName.trim()
+        );
+      },
+    );
+    const nameErrors = getStringValidationErrors({
+      value: inputName,
+      label: `${itemTypeName} name`,
+      checkDotsInTheEnd: true,
+      isNotUniqName,
+    });
+    setErrors(nameErrors);
+  }, [editState, inputName, item.folderId, item.id, itemTypeName]);
 
   const handleChangeName = useCallback(
     (name: string) => {
       setInputName(name);
+
       dispatch(
         PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
@@ -173,19 +244,20 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     },
     [
       dispatch,
-      item.id,
       entityEditState?.version,
+      item.id,
       item.publicationInfo?.version,
     ],
   );
 
   const handleSelect = useCallback(() => {
     dispatch(
-      PublicationActions.selectItemsToPublish({
+      PublicationActions.selectItemsToApprove({
+        publicationUrl: selectedPublication?.url ?? '',
         ids: [item.id],
       }),
     );
-  }, [dispatch, item.id]);
+  }, [dispatch, item.id, selectedPublication?.url]);
 
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 
@@ -213,20 +285,19 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <span className="flex">{Icon}</span>
         <EditableField
           value={inputName}
-          isEditMode={isEditDisabled || isDeleteAction ? false : isEditMode}
+          isEditMode={isDeleteAction ? false : isEditMode}
           onChange={handleChangeName}
-          inputClassName={classNames(
-            'w-full',
-            !prepareEntityName(inputName).trim() && '!border-b-error',
-          )}
+          inputClassName={classNames('w-full', errors.length && 'pr-5')}
           className={classNames(
             item.publicationInfo?.isNotExist && 'text-secondary',
             item.publicationInfo?.action === PublishActions.DELETE &&
               'text-error',
           )}
+          tooltipIconClassName="right-5"
+          errors={errors}
         />
       </span>
-      <PublicationVersionInfo item={item} isEditDisabled={isEditDisabled} />
+      <PublicationVersionInfo item={item} />
     </div>
   );
 };

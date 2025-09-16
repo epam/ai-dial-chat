@@ -6,6 +6,7 @@ import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   AddAppMenuOptions,
   ApplicationTypes,
+  Attachment,
   CheckboxState,
   ExpectedMessages,
   MarketplaceExpectedMessages,
@@ -13,15 +14,18 @@ import {
   MenuOptions,
   SourcesFilterOptions,
 } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { Locator, expect } from '@playwright/test';
+import { Locator } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
   'Sources: check My Custom apps.\n' +
-    'Sources: combination inside sources filter works as OR; combination sources + type/topic works as AND',
+    'Sources: combination inside sources filter works as OR; combination sources + type/topic works as AND.\n' +
+    '[App Editor]: Filters and search results are saved when edit field icon for custom app',
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -30,13 +34,24 @@ dialTest(
     marketplaceFilter,
     marketplaceHeader,
     marketplaceAgentsSection,
+    marketplaceAgents,
     modelApiHelper,
     setTestIds,
     baseAssertion,
+    fileApiHelper,
+    appEditorGeneralForm,
+    attachFilesModal,
+    appEditorHeader,
   }) => {
-    setTestIds('EPMRTC-5234', 'EPMRTC-5239');
+    setTestIds('EPMRTC-5234', 'EPMRTC-5239', 'EPMRTC-6045');
     const appName = GeneratorUtil.randomApplicationName();
     const appTopic = GeneratorUtil.randomString(7);
+    let initIconUrl: string;
+
+    await dialTest.step('Upload images to the root path', async () => {
+      initIconUrl = await fileApiHelper.putFile(Attachment.appIconSvg);
+      await fileApiHelper.putFile(Attachment.cloudImageName);
+    });
 
     await dialTest.step(
       'Prepare a custom application with some topic in the "My Workspace"',
@@ -44,6 +59,7 @@ dialTest(
         const applicationModel = customApplicationBuilder
           .withDisplayName(appName)
           .withDescriptionKeywords(appTopic)
+          .withIconUrl(initIconUrl)
           .build();
         await applicationApiHelper.createApplication(applicationModel);
       },
@@ -131,6 +147,58 @@ dialTest(
         await baseAssertion.assertElementState(
           marketplace.noResultsFound,
           'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Set app name in the search field and open it for edit',
+      async () => {
+        await marketplaceHeader.searchInput.fillInInput(appName);
+        const agentElement = await marketplaceAgentsSection.findAgentElement(
+          appName,
+          {
+            isWorkspaceAgent: true,
+            isEditable: true,
+          },
+        );
+        await marketplaceAgents.hoverOver();
+        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
+        await marketplaceAgents
+          .getAgentDropdownMenu()
+          .selectMenuOption(MenuOptions.edit);
+      },
+    );
+
+    await dialTest.step('Update app icon', async () => {
+      await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+        isHttpMethodTriggered: false,
+      });
+      await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+      await appEditorGeneralForm.changeIcon.click();
+      await attachFilesModal.checkAttachedFile(
+        Attachment.cloudImageName,
+        FileModalSection.AllFiles,
+      );
+      await attachFilesModal.attachFiles();
+      await appEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Verify search string and Source filter are preserved',
+      async () => {
+        await baseAssertion.assertElementAttribute(
+          marketplaceHeader.searchInput,
+          Attributes.value,
+          appName,
+        );
+        await baseAssertion.assertCheckboxState(
+          marketplaceFilter.filterByPropertyOptionInput(
+            MarketplaceFilterTypes.sources,
+            SourcesFilterOptions.myCustomApps,
+          ),
+          CheckboxState.checked,
         );
       },
     );
@@ -433,8 +501,6 @@ dialSharedWithMeTest(
           } else {
             await additionalShareUserNavigationPanel.goToMyWorkspace();
             await additionalShareUserMarketplacePage.waitForPageLoaded();
-            //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
-            await additionalShareUserMarketplaceAgentsSection.goTop();
             actualAgents =
               await additionalShareUserMarketplaceAgentsSection.getAllAgents();
             baseAssertion.assertValue(
@@ -468,14 +534,11 @@ dialSharedWithMeTest(
           const expectedAgentNames = Array.from(
             groupedConfigAgents.keys(),
           ).filter((k) => k !== sharedAppName && k !== additionalUserAppName);
-          for (const expectedAgentName of expectedAgentNames) {
-            expect
-              .soft(
-                actualAgents.find((agent) => agent.name === expectedAgentName),
-                MarketplaceExpectedMessages.filteredAgentsAreValid,
-              )
-              .toBeDefined();
-          }
+          baseAssertion.assertArrayIncludesAll(
+            actualAgents.map((agent) => agent.name),
+            expectedAgentNames,
+            MarketplaceExpectedMessages.filteredAgentsAreValid,
+          );
         },
       );
     }

@@ -12,7 +12,7 @@ export const MarketplaceSelectors = {
 
 export const MarketplaceAgentSelectors = {
   agent: '[data-qa="agent"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',
@@ -35,8 +35,10 @@ export const MarketplaceDetailsModal = {
   applicationContentContainer: '[data-qa="application-content"]',
   applicationDescription: '[data-qa="application-description"]',
   applicationInformation: '[data-qa="application-information"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
   agentVersion: '[data-qa="version"]',
+  agentAuthor: '[data-qa="author"]',
+  agentReleaseDate: '[data-qa="created-at"]',
   versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   useButton: '[data-qa="use-button"]',
   icon: '[data-qa="entity-icon"]',
@@ -45,6 +47,7 @@ export const MarketplaceDetailsModal = {
   editButton: '[data-qa="edit"]',
   deleteButton: '[data-qa="delete"]',
   publishButton: '[data-qa="publish"]',
+  unpublishButton: '[data-qa="unpublish"]',
 };
 
 export const MarketplaceSideBarSelectors = {

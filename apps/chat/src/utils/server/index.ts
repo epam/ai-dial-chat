@@ -21,6 +21,7 @@ import {
   createParser,
 } from 'eventsource-parser';
 import fetch, { Response } from 'node-fetch';
+import { Readable } from 'stream';
 
 interface DialAIErrorResponse extends Response {
   error?: {
@@ -95,6 +96,7 @@ export const OpenAIStream = async ({
   let retries = 0;
   let body;
   let res: Response;
+  const abortController = new AbortController();
   do {
     body = JSON.stringify({
       messages: messagesToSend,
@@ -112,6 +114,7 @@ export const OpenAIStream = async ({
       headers: requestHeaders,
       method: HTTPMethod.POST,
       body,
+      signal: abortController.signal,
     });
 
     if (res.status !== 200) {
@@ -150,9 +153,8 @@ export const OpenAIStream = async ({
         model.limits?.isMaxRequestTokensCustom
       ) {
         retries += 1;
-        const json = await res.json();
         logger.info(
-          json,
+          result,
           `Getting error with status ${res.status} and code '${dial_error.code}'. Retrying chat request to ${model.id} model`,
         );
         messagesToSend = hardLimitMessages(messagesToSend);
@@ -191,7 +193,7 @@ export const OpenAIStream = async ({
                 displayMessage: json.error.display_message,
               });
             }
-            if (!idSend) {
+            if (!idSend && json.id) {
               appendChunk(controller, { responseId: json.id });
               idSend = true;
             }
@@ -221,6 +223,29 @@ export const OpenAIStream = async ({
           }
           parser.feed(decoder.decode(chunk as Buffer));
         }
+      }
+    },
+    cancel() {
+      if (isFinished) return;
+      isFinished = true;
+
+      try {
+        abortController.abort();
+      } catch (error) {
+        logger.debug(
+          { error },
+          'AbortController: abort was called but the request was already aborted',
+        );
+      }
+
+      try {
+        const nodeBody = res.body as Readable | null;
+        nodeBody?.destroy?.();
+      } catch (error) {
+        logger.debug(
+          { error },
+          'Stream body: destroy was called but the stream was already closed',
+        );
       }
     },
   });

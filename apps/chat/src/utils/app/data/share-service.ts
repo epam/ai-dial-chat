@@ -193,7 +193,7 @@ export class ShareService {
                 name: file.name,
                 id,
                 folderId: absolutePath,
-                absolutePath: absolutePath,
+                absolutePath,
                 contentType: mimeType ? mimeType : 'application/octet-stream',
               });
             }

@@ -7,6 +7,8 @@ export class Tooltip extends BaseElement {
     super(page, TooltipSelector.tooltip);
   }
 
+  public tooltipIcon = this.getElementIcon(this.getElementLocator());
+
   public async getContent() {
     return this.getElementInnerContent();
   }

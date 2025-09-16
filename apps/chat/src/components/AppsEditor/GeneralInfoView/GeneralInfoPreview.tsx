@@ -1,5 +1,7 @@
 import { IconArrowsMinimize } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
+import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -7,6 +9,9 @@ import { fakeCallback } from '@/src/utils/app/common';
 
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/selectors';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -23,13 +28,35 @@ export const GeneralInfoPreview = ({
   entity,
   onClosePreview,
 }: GeneralInfoPreviewProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const router = useRouter();
+  const { publicationUrl } = router.query;
+
+  const publication = useAppSelector((state) =>
+    PublicationSelectors.selectPublicationByUrl(
+      state,
+      (publicationUrl ?? '') as string,
+    ),
+  );
+
   const [isDetailed, setIsDetailed] = useState(true);
 
   const handleSwitch = useCallback(() => {
     setIsDetailed((p) => !p);
   }, []);
 
-  const { t } = useTranslation(Translation.Chat);
+  const cardEntity = useMemo(() => {
+    if (publication) {
+      return {
+        ...entity,
+        owner: publication.displayAuthor ?? publication.author,
+        createdAt: publication.createdAt,
+      };
+    }
+
+    return entity;
+  }, [entity, publication]);
 
   return (
     <div
@@ -66,12 +93,12 @@ export const GeneralInfoPreview = ({
         >
           {isDetailed ? (
             <div className="flex w-full flex-col divide-y divide-tertiary rounded bg-layer-3">
-              <ApplicationDetailsHeader entity={entity} isPreview />
-              <ApplicationDetailsContent entity={entity} />
+              <ApplicationDetailsHeader entity={cardEntity} isPreview />
+              <ApplicationDetailsContent entity={cardEntity} />
             </div>
           ) : (
             <ApplicationCard
-              entity={entity}
+              entity={cardEntity}
               onClick={fakeCallback}
               isPreview
               onDelete={fakeCallback}

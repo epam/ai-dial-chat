@@ -197,7 +197,7 @@ export const TooltipContent = forwardRef<
         }}
         {...context.getFloatingProps(props)}
         className={classNames(
-          'z-50 whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+          'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
           context.getFloatingProps(props).className as string,
         )}
         data-qa="tooltip"
@@ -215,13 +215,14 @@ export const TooltipContent = forwardRef<
   );
 });
 
-interface TooltipOptions extends TooltipContainerOptions {
+export interface TooltipOptions extends TooltipContainerOptions {
   hideTooltip?: boolean;
   tooltip: ReactNode;
   children: ReactNode;
   triggerClassName?: string;
   contentClassName?: string;
   dataQa?: string;
+  asChild?: boolean;
 }
 
 export function Tooltip({
@@ -231,6 +232,7 @@ export function Tooltip({
   triggerClassName,
   contentClassName,
   dataQa,
+  asChild,
   ...tooltipProps
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
@@ -241,10 +243,21 @@ export function Tooltip({
     );
   return (
     <TooltipContainer {...tooltipProps}>
-      <TooltipTrigger className={triggerClassName} data-qa={dataQa}>
+      <TooltipTrigger
+        className={triggerClassName}
+        data-qa={dataQa}
+        asChild={asChild}
+      >
         {children}
       </TooltipTrigger>
-      <TooltipContent className={contentClassName}>{tooltip}</TooltipContent>
+      <TooltipContent
+        className={classNames(
+          'max-w-[250px] break-words sm:max-w-[400px]',
+          contentClassName,
+        )}
+      >
+        {tooltip}
+      </TooltipContent>
     </TooltipContainer>
   );
 }

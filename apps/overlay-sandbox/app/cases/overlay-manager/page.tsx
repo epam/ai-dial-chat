@@ -8,7 +8,6 @@ const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
   ...commonOverlayProps,
   domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
   theme: 'light',
-  modelId: 'gpt-4',
   enabledFeatures: [
     Feature.ConversationsSection,
     Feature.PromptsSection,

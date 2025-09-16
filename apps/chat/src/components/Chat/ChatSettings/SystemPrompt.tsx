@@ -147,7 +147,7 @@ export const SystemPrompt: FC<Props> = ({
   }, [setShowPromptList]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-qa="system-prompt-container">
       <label className="mb-4 text-left">{t('System prompt')}</label>
       <div className="relative flex flex-col">
         {disabled && <DisableOverlay />}

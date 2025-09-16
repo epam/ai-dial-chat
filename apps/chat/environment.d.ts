@@ -10,6 +10,8 @@ declare global {
       QUICK_APPS_MODEL?: string;
       QUICK_APPS_SCHEMA_ID?: string;
 
+      EXTERNAL_APPS_SCHEMA_ID?: string;
+
       DIAL_API_VERSION?: string;
       APP_BASE_PATH?: string;
       APP_BASE_ORIGIN?: string;
@@ -36,6 +38,7 @@ declare global {
       TMS_URL?: string;
       ISSUE_URL?: string;
       THEMES_CONFIG_HOST?: string;
+      THEME_DEFAULT_ID?: string;
       FOOTER_HTML_MESSAGE?: string;
       ANNOUNCEMENT_HTML_MESSAGE?: string;
       AZURE_FUNCTIONS_API_HOST?: string;

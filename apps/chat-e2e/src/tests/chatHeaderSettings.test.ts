@@ -16,11 +16,10 @@ dialTest(
   async ({
     dialHomePage,
     chatHeader,
-    agentSettings,
+    agentSettingAssertion,
     temperatureSlider,
     addons,
     talkToAgentDialog,
-    marketplacePage,
     setTestIds,
     conversationData,
     localStorageManager,
@@ -53,7 +52,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
       },
     );
 
@@ -62,10 +61,9 @@ dialTest(
       async () => {
         await chatHeader.openConversationSettingsPopup();
         if (ModelsUtil.doesModelAllowSystemPrompt(randomModel)) {
-          const systemPrompt = await agentSettings.getSystemPrompt();
-          expect
-            .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
-            .toBe(conversation.prompt);
+          await agentSettingAssertion.assertSystemPromptValue(
+            conversation.prompt,
+          );
         }
         if (ModelsUtil.doesModelAllowTemperature(randomModel)) {
           const temperature = await temperatureSlider.getTemperature();

@@ -13,7 +13,10 @@ import {
   PublicationActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
@@ -85,6 +88,9 @@ export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const handleCreate = useCallback(() => {
     if (!areConversationsLoaded) return;
@@ -96,8 +102,10 @@ export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
     );
     dispatch(ConversationsActions.resetSearch());
     dispatch(ConversationsActions.setIsStartedCustomViewerConversation(false));
-    dispatch(PublicationActions.selectPublication(null));
-  }, [areConversationsLoaded, dispatch]);
+    if (selectedPublicationUrl) {
+      dispatch(PublicationActions.selectPublication(null));
+    }
+  }, [areConversationsLoaded, dispatch, selectedPublicationUrl]);
 
   return (
     <CreateNewEntityButton

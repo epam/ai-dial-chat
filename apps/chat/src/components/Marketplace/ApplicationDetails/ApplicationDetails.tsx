@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { isMyApplication } from '@/src/utils/app/id';
-import { getGroupModelKey } from '@/src/utils/app/models';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -33,7 +33,7 @@ interface Props {
   onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
 
-export const ApplicationDetails = ({
+export function ApplicationDetails({
   entity,
   allEntities,
   isMyAppsTab,
@@ -41,7 +41,7 @@ export const ApplicationDetails = ({
   onClose,
   onChangeVersion,
   onBookmarkClick,
-}: Props) => {
+}: Props) {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
@@ -58,7 +58,8 @@ export const ApplicationDetails = ({
   const filteredEntities = useMemo(() => {
     const filtered = allEntities.filter(
       (e) =>
-        getGroupModelKey(entity) === getGroupModelKey(e) &&
+        getGroupMarketplaceEntityKey(entity) ===
+          getGroupMarketplaceEntityKey(e) &&
         (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
 
@@ -119,4 +120,4 @@ export const ApplicationDetails = ({
       />
     </Modal>
   );
-};
+}

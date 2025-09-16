@@ -107,6 +107,7 @@ export const applicationSlice = createSlice({
         applicationData: CustomApplicationModel;
         redirectUrl?: string;
         schema?: ApiDetailedApplicationTypeSchema;
+        publicationUrl?: string;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -201,6 +202,7 @@ export const applicationSlice = createSlice({
         entity: { id: string; reference: string };
         applicationType: string;
         detailedApplicationTypeSchemaId?: string;
+        publicationUrl?: string;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;

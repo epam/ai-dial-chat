@@ -10,13 +10,14 @@ import { RootState } from '@/src/types/store';
 
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, FeatureData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const rootSelector = (state: RootState) => state.settings;
@@ -28,17 +29,35 @@ const selectIsOverlay = (state: RootState) => rootSelector(state).isOverlay;
 const selectFooterHtmlMessage = (state: RootState) =>
   rootSelector(state).footerHtmlMessage;
 
-const _selectEnabledFeatures = (state: RootState) =>
-  rootSelector(state).enabledFeatures;
+const _selectEnabledFeaturesData = (state: RootState) =>
+  rootSelector(state).enabledFeaturesData;
+
+const _selectFeatures = createSelector(
+  [rootSelector, AuthSelectors.selectSessionData, _selectEnabledFeaturesData],
+  (state, session, featuresData) =>
+    state.enabledFeatures
+      .filter((featureName) => canUserUseFeature(session, featureName))
+      .reduce(
+        (acc, curr) => {
+          const featureData = featuresData[curr];
+          acc[curr] = { ...featureData };
+
+          return acc;
+        },
+        {} as Record<Feature, FeatureData | undefined>,
+      ),
+);
 
 const selectEnabledFeatures = createSelector(
-  [_selectEnabledFeatures, AuthSelectors.selectSessionData],
-  (enabledFeatures, session) => {
-    return new Set(
-      enabledFeatures.filter((feature: Feature) =>
-        canUserUseFeature(session, feature),
-      ),
+  [_selectFeatures],
+  (enabledFeaturesData) => {
+    const enabledFeatures = new Map<Feature, FeatureData | undefined>();
+
+    Object.entries(enabledFeaturesData).forEach(([featureName, featureData]) =>
+      enabledFeatures.set(featureName as Feature, featureData),
     );
+
+    return enabledFeatures;
   },
 );
 
@@ -56,6 +75,8 @@ const selectPreselectedAction = (state: RootState) =>
 
 const isFeatureEnabled = (state: RootState, featureName: Feature) =>
   selectEnabledFeatures(state).has(featureName);
+const selectFeatureData = (state: RootState, featureName: Feature) =>
+  selectEnabledFeatures(state).get(featureName);
 
 const selectIsPublishingEnabled = (
   state: RootState,
@@ -179,6 +200,9 @@ const selectQuickAppsModel = (state: RootState) =>
 const selectQuickAppsSchemaId = (state: RootState) =>
   rootSelector(state).quickAppsSchemaId ?? DEFAULT_QUICK_APPS_SCHEMA_ID;
 
+const selectExternalAppsSchemaId = (state: RootState) =>
+  rootSelector(state).externalAppsSchemaId ?? DEFAULT_EXTERNAL_APPS_SCHEMA_ID;
+
 const FALLBACK_STRING_VALUE = '';
 
 const selectDialApiHost = (state: RootState) =>
@@ -193,6 +217,7 @@ const selectDefaults = createSelector(
     selectQuickAppsHost,
     selectQuickAppsModel,
     selectQuickAppsSchemaId,
+    selectExternalAppsSchemaId,
     selectDialApiHost,
     selectDefaultSystemPrompt,
   ],
@@ -201,6 +226,7 @@ const selectDefaults = createSelector(
     quickAppsHost,
     quickAppsModel,
     quickAppsSchemaId,
+    externalAppsSchemaId,
     dialApiHost,
     defaultSystemPrompt,
   ) =>
@@ -209,6 +235,7 @@ const selectDefaults = createSelector(
       quickAppsHost,
       quickAppsModel,
       quickAppsSchemaId,
+      externalAppsSchemaId,
       dialApiHost,
       defaultSystemPrompt,
     }) as Defaults,
@@ -230,6 +257,7 @@ export const SettingsSelectors = {
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,
+  selectFeatureData,
   selectIsPublishingEnabled,
   isSharingEnabled,
   selectCodeWarning,

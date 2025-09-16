@@ -1,10 +1,8 @@
-import { DialAIEntityModel } from '@/src/types/models';
-
-export interface AgentsListProps {
-  entities: DialAIEntityModel[];
-  suggestedResults: DialAIEntityModel[];
+export interface AgentsListProps<T> {
+  entities: T[];
+  suggestedResults: T[];
   separator: string;
-  onCardClick: (entity: DialAIEntityModel) => void;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
-  onSelectVersion?: (entity: DialAIEntityModel) => void;
+  onCardClick: (entity: T) => void;
+  onBookmarkClick?: (entity: T) => void;
+  onSelectVersion?: (entity: T) => void;
 }

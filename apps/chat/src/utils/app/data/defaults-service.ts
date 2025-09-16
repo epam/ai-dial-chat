@@ -3,6 +3,8 @@ export interface Defaults {
   quickAppsHost: string;
   quickAppsModel: string;
   quickAppsSchemaId: string;
+  quickAppsSchemaId2: string;
+  externalAppsSchemaId: string;
   dialApiHost: string;
   defaultSystemPrompt: string;
 }

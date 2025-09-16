@@ -1,5 +1,5 @@
 import { DialAIEntityFeatures, DialAIEntityModel } from './models';
-import { QuickAppConfig } from './quick-apps';
+import { QuickApp2Config, QuickAppConfig } from './quick-apps';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
 
@@ -43,7 +43,10 @@ export interface ApiApplicationResponseBase {
   endpoint: string;
   function?: ApiApplicationFunctionType;
   application_type_schema_id?: string;
-  application_properties?: QuickAppConfig | Record<string, unknown>;
+  application_properties?:
+    | QuickAppConfig
+    | QuickApp2Config
+    | Record<string, unknown>;
 }
 
 export interface ApiApplicationResponsePublication
@@ -105,10 +108,17 @@ export type ApiApplicationModel =
 export interface ApplicationInfo extends ShareEntity {
   version: string;
 }
+
+export type ApplicationPropertiesType =
+  | QuickAppConfig
+  | QuickApp2Config
+  | (Record<string, unknown> & ExternalAppConfig)
+  | null;
+
 export interface CustomApplicationModel
   extends DialAIEntityModel,
     ApplicationInfo {
-  completionUrl: string;
+  completionUrl?: string;
   applicationTypeSchemaId?: string;
   function?: {
     status?: ApplicationStatus;
@@ -118,7 +128,17 @@ export interface CustomApplicationModel
     env?: Record<string, string>;
   };
   version: string;
-  applicationProperties?: QuickAppConfig | Record<string, unknown>;
+  applicationProperties?: ApplicationPropertiesType;
+}
+
+export interface ExternalAppConfig {
+  external_url?: string;
+}
+
+export interface ExternalAppModel extends DialAIEntityModel, ApplicationInfo {
+  applicationTypeSchemaId?: string;
+  version: string;
+  applicationProperties?: ApplicationPropertiesType;
 }
 
 export interface ApplicationLogsType {
@@ -133,4 +153,9 @@ export enum ApplicationActionType {
 export enum ApplicationType {
   CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
+}
+
+export enum Toolsets {
+  WebApiToolset = 'webApiToolset',
+  McpToolset = 'mcpToolset',
 }

@@ -1,4 +1,5 @@
 import {
+  getLastPathSegment,
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
@@ -10,6 +11,7 @@ import {
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
+  ApiUtils,
   getConversationApiKey,
   parseConversationApiKey,
 } from '@/src/utils/server/api';
@@ -246,37 +248,37 @@ export const addPausedError = (
   ) {
     return messages;
   }
-  let assistentMessageIndex = -1;
+  let assistantMessageIndex = -1;
   messages.forEach((message, index) => {
     if (message.role === Role.Assistant) {
-      assistentMessageIndex = index;
+      assistantMessageIndex = index;
     }
   });
   if (
-    assistentMessageIndex === -1 ||
-    assistentMessageIndex !== messages.length - 1
+    assistantMessageIndex === -1 ||
+    assistantMessageIndex !== messages.length - 1
   ) {
     return messages;
   }
 
-  const assistentMessage = messages[assistentMessageIndex];
+  const assistantMessage = messages[assistantMessageIndex];
   const updatedMessage: Message = {
-    ...assistentMessage,
-    ...(assistentMessage.custom_content?.stages?.length && {
+    ...assistantMessage,
+    ...(assistantMessage.custom_content?.stages?.length && {
       custom_content: {
-        ...assistentMessage.custom_content,
-        stages: assistentMessage.custom_content.stages.filter(
+        ...assistantMessage.custom_content,
+        stages: assistantMessage.custom_content.stages.filter(
           (stage) => stage.status != null,
         ),
       },
     }),
     errorMessage:
-      assistentMessage.errorMessage ??
+      assistantMessage.errorMessage ??
       'Response generation was stopped. Please regenerate to continue working with conversation',
   };
 
   return messages.map((message, index) => {
-    if (index === assistentMessageIndex) {
+    if (index === assistantMessageIndex) {
       return updatedMessage;
     }
 
@@ -381,4 +383,28 @@ export const getQuickAttachmentsSavingPath = () => {
   const date = new Date();
 
   return `${getFileRootId()}/uploads/${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+};
+
+export const updateMessagesAttachmentsTitles = (
+  messages: Message[],
+  titlesToUpdate: string[],
+) => {
+  return messages.map((message) => ({
+    ...message,
+    custom_content: {
+      ...message.custom_content,
+      attachments: message.custom_content?.attachments?.map((attachment) => {
+        const title = ApiUtils.decodeApiUrl(
+          getLastPathSegment(attachment.url ?? ''),
+        );
+
+        return titlesToUpdate.includes(title)
+          ? {
+              ...attachment,
+              title: title ?? 'Attachment',
+            }
+          : attachment;
+      }),
+    },
+  }));
 };

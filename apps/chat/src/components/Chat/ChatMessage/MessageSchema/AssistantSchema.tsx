@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -6,12 +6,17 @@ import {
   getMessageSchema,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ChatSelectors } from '@/src/store/selectors';
+import {
+  ChatSelectors,
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
@@ -21,6 +26,7 @@ import {
   Message,
   MessageFormSchema,
   MessageFormValueType,
+  PublishActions,
 } from '@epam/ai-dial-shared';
 
 interface AssistantSchemaViewProps {
@@ -30,7 +36,28 @@ interface AssistantSchemaViewProps {
 const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
   const dispatch = useAppDispatch();
 
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
   const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
+
+  const isReadOnlyConversation = selectedConversations.some(isEntityReadOnly);
+
+  const resourcesToReview = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
+
+  const isPublishingConversation = useMemo(
+    () =>
+      selectedConversations.some((conv) =>
+        resourcesToReview.find((r) => r.reviewUrl === conv.id),
+      ),
+    [selectedConversations, resourcesToReview],
+  );
+
+  const isUnpublishingConversation = selectedConversations.some(
+    (conv) => conv.publicationInfo?.action === PublishActions.DELETE,
+  );
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
@@ -56,6 +83,10 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
         schema={schema}
         onChange={handleChange}
         formValue={formValue}
+        disabled={
+          (isReadOnlyConversation && !isPublishingConversation) ||
+          isUnpublishingConversation
+        }
         showSelected
       />
     </div>

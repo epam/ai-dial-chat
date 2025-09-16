@@ -67,7 +67,6 @@ dialAdminTest(
     adminFilesToApprove,
     adminChatMessages,
     informationModal,
-    organizationConversationAssertion,
     downloadAssertion,
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
@@ -102,7 +101,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
-    const updatedConversationName = GeneratorUtil.randomString(5);
+    const updatedConversationName = GeneratorUtil.randomConversationName();
     const author = GeneratorUtil.randomString(10);
 
     await dialSharedWithMeTest.step(
@@ -140,24 +139,13 @@ dialAdminTest(
           { name: conversation.name },
           'visible',
         );
-        await publishFileAssertion.assertEntityState(
+        await publishFileAssertion.assertFileToPublish(
           { name: Attachment.cloudImageName },
-          'visible',
-        );
-        await publishFileAssertion.assertEntityCheckboxState(
-          { name: Attachment.cloudImageName },
-          CheckboxState.checked,
-        );
-        await publishFileAssertion.assertElementState(
-          filesToPublishTree.getFileDownloadIcon(Attachment.cloudImageName),
-          'visible',
-        );
-        publishFileAssertion.assertValue(
-          await filesToPublishTree.getFileDownloadIUrl(
-            Attachment.cloudImageName,
-          ),
-          ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
-          ExpectedMessages.attachmentUrlIsValid,
+          {
+            expectedState: 'visible',
+            expectedCheckboxState: CheckboxState.checked,
+            expectedDownloadUrl: ItemUtil.getEncodedItemId(`/api/${imageUrl}`),
+          },
         );
       },
     );
@@ -315,20 +303,10 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Admin approves the request and verify verifies publication disappears from "Approve required" and displayed under "Organization" section',
+      'Select published conversation and verify it contains attachment',
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await organizationConversationAssertion.assertEntityState(
-          { name: conversation.name },
-          'visible',
-        );
-      },
-    );
-
-    await dialAdminTest.step(
-      'Select published conversation and verify it contains attachment',
-      async () => {
         await organizationConversations.selectEntity(conversation.name);
         await chatMessagesAssertion.assertMessageDownloadUrl(
           1,
@@ -375,8 +353,9 @@ dialAdminTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await renameConversationModal.editInputValue(updatedConversationName);
-        await renameConversationModal.saveButton.click();
+        await renameConversationModal.editConversationNameWithSaveButton(
+          updatedConversationName,
+        );
 
         await conversations.openEntityDropdownMenu(updatedConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
@@ -389,7 +368,7 @@ dialAdminTest(
           publishApiModels.response.resources.filter(
             (r) =>
               r.sourceUrl ===
-              conversation.id.replace(
+              ItemUtil.getEncodedItemId(conversation.id).replace(
                 conversation.name,
                 updatedConversationName,
               ),
@@ -398,7 +377,7 @@ dialAdminTest(
         );
         baseAssertion.assertValue(
           publishApiModels.response.resources.filter(
-            (r) => r.sourceUrl === imageUrl,
+            (r) => r.sourceUrl === ItemUtil.getEncodedItemId(imageUrl),
           ).length,
           1,
         );

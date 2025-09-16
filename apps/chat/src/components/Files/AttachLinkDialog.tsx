@@ -28,12 +28,12 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
 
   const {
     register,
-    handleSubmit,
+    handleSubmit: submitWrapper,
     setFocus,
     formState: { errors, isValid, dirtyFields, touchedFields },
   } = useForm<Inputs>({ mode: 'all' });
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const handleSubmit: SubmitHandler<Inputs> = (data) => {
     if (isValid) {
       const link: DialLink = {
         title: data.title,
@@ -62,7 +62,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       heading={t('Attach link')}
       dismissProps={OUTSIDE_PRESS}
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={submitWrapper(handleSubmit)}>
         <div className="mb-4">
           <label
             className="mb-1 flex text-xs text-secondary"

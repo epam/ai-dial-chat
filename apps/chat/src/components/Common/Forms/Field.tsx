@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -6,9 +6,9 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean | string;
-  tooltip?: string;
+  tooltip?: ReactNode;
   dataQa?: string;
 }
 

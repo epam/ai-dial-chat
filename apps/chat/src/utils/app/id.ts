@@ -1,9 +1,11 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { pathKeySeparator } from '@/src/utils/server/api';
 
 import { ApiKeys, FeatureType } from '@/src/types/common';
 
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
 import { LOCAL_BUCKET } from '@/src/constants/chat';
+import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
@@ -61,8 +63,14 @@ export const getIdWithoutRootPathSegments = (id: string) =>
 export const isApplicationId = (id?: string) =>
   id?.startsWith(`${ApiKeys.Applications}/`) ?? false;
 
+export const isToolsetId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Toolsets}/`) ?? false;
+
 export const getApplicationRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Application, bucket });
+
+export const getToolsetRootId = (bucket?: string) =>
+  getRootId({ featureType: FeatureType.Toolset, bucket });
 
 export const getEntityBucket = (entity: { id: string }) =>
   entity.id.split('/')[1];
@@ -75,16 +83,18 @@ export const isEntityIdExternal = (entity: { id: string }) => {
   return bucket !== LOCAL_BUCKET && bucket !== BucketService.getBucket();
 };
 
-export const isMyEntity = (entity: { id: string }, featureType: FeatureType) =>
-  entity.id.startsWith(getRootId({ featureType }));
-
-export const isMyApplication = (entity: { id: string }) =>
-  entity.id === DRAFT_APPLICATION_ID ||
-  isMyEntity(entity, FeatureType.Application);
-
 export const isMyBucket = (bucket: string) => {
   return bucket === LOCAL_BUCKET || bucket === BucketService.getBucket();
 };
+
+export const isMyEntity = (entity: { id: string }) =>
+  isMyBucket(getEntityBucket(entity));
+
+export const isMyApplication = (entity: { id: string }) =>
+  entity.id === DRAFT_APPLICATION_ID || isMyEntity(entity);
+
+export const isMyToolset = (entity: { id: string }) =>
+  entity.id === DRAFT_TOOLSET_ID || isMyEntity(entity);
 
 export const filterIdsByFeatureType = (
   ids: string[],
@@ -101,4 +111,31 @@ export const filterIdsByFeatureType = (
   }
 
   return [];
+};
+
+export const isRootEntity = (id: string) => {
+  return id.split('/').length === 3;
+};
+
+export const getIdWithoutFeatureType = (id: string) =>
+  id.split('/').slice(1).join('/');
+
+export const areEntitiesBucketsTheSame = (
+  firstId: string,
+  secondId: string,
+) => {
+  return getEntityBucket({ id: firstId }) === getEntityBucket({ id: secondId });
+};
+
+export const getEntityNameFromId = (
+  id: string,
+  options?: { removeVersion?: boolean },
+): string => {
+  const name = id.split('/').at(-1) ?? id;
+
+  if (options?.removeVersion) {
+    return name.split(pathKeySeparator).at(0) ?? name;
+  }
+
+  return name;
 };

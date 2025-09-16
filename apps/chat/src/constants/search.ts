@@ -1,15 +1,6 @@
-import { DialAIEntityModel } from '@/src/types/models';
+import { getEntitySearchOptions } from '@/src/utils/app/search';
 
-import { IFuseOptions } from 'fuse.js';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
-export const MODELS_SEARCH_OPTIONS: IFuseOptions<DialAIEntityModel> = {
-  keys: ['name', 'version'],
-  threshold: 0.2,
-  distance: 100,
-  minMatchCharLength: 1,
-  ignoreLocation: true,
-  useExtendedSearch: false,
-  findAllMatches: false,
-  isCaseSensitive: false,
-  includeScore: false,
-};
+export const MARKETPLACE_ENTITIES_SEARCH_OPTIONS =
+  getEntitySearchOptions<MarketplaceEntity>();

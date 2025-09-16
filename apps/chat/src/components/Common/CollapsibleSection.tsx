@@ -18,6 +18,7 @@ interface CollapsibleSectionProps {
   className?: string;
   showOnHoverOnly?: boolean;
   togglerClassName?: string;
+  togglerWrapperClassName?: string;
   sectionTooltip?: ReactNode;
   additionalNode?: ReactNode;
   isExpanded?: boolean;
@@ -35,6 +36,7 @@ export function CollapsibleSection({
   className,
   showOnHoverOnly,
   togglerClassName,
+  togglerWrapperClassName,
   sectionTooltip,
   additionalNode,
   isExpanded,
@@ -54,7 +56,12 @@ export function CollapsibleSection({
       className={classNames('flex w-full flex-col py-1 pl-2 pr-0.5', className)}
       data-qa={dataQa?.concat('-container')}
     >
-      <div className="flex items-center gap-1 py-1">
+      <div
+        className={classNames(
+          'flex items-center gap-1 py-1',
+          togglerWrapperClassName,
+        )}
+      >
         <div
           onClick={handleClick}
           className={classNames(
@@ -79,7 +86,6 @@ export function CollapsibleSection({
           <Tooltip
             tooltip={sectionTooltip}
             triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-            contentClassName="max-w-[220px]"
             placement="top"
           >
             <IconHelp size={18} />

@@ -35,7 +35,11 @@ import {
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { PromptsActions, PublicationActions } from '@/src/store/actions';
+import {
+  PromptsActions,
+  PublicationActions,
+  ShareActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -47,6 +51,7 @@ import {
 import { stopBubbling } from '@/src/constants/chat';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -92,9 +97,6 @@ export const PromptComponent = ({
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
 
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -111,6 +113,7 @@ export const PromptComponent = ({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isUnshared, setIsUnshared] = useState(false);
 
   const promptRef = useRef<HTMLButtonElement>(null);
 
@@ -129,6 +132,8 @@ export const PromptComponent = ({
   useContextMenuTrigger(handleContextMenuOpen, promptRef);
 
   const screenState = useScreenState();
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const {
     handleExport,
@@ -184,7 +189,7 @@ export const PromptComponent = ({
       if (additionalItemData?.publicationUrl) {
         dispatch(
           PublicationActions.selectPublication(
-            additionalItemData?.publicationUrl,
+            additionalItemData?.publicationUrl ?? null,
           ),
         );
       }
@@ -204,6 +209,24 @@ export const PromptComponent = ({
     [handleOpenViewModal],
   );
 
+  const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
+    useCallback((e) => {
+      e.stopPropagation();
+      setIsUnshared(true);
+    }, []);
+
+  const handleUnsharing = useCallback(() => {
+    if (prompt.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: [prompt.id],
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    }
+    setIsUnshared(false);
+  }, [dispatch, prompt.id, prompt.sharedWithMe]);
+
   const isHighlighted = !isSelectMode
     ? !!deletingPrompt || isSelected || isContextMenu
     : isChosen;
@@ -218,7 +241,9 @@ export const PromptComponent = ({
   );
 
   const disableUsePrompt =
-    isConversationBlocksInput || !areModelsInstalled || !!selectedPublication;
+    isConversationBlocksInput ||
+    !areModelsInstalled ||
+    !selectedConversations.length;
 
   useEffect(() => {
     if (isSelectMode) {
@@ -245,21 +270,16 @@ export const PromptComponent = ({
         className={classNames(
           'group relative flex size-full shrink-0 select-none items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
-          isContextMenu && 'pr-9',
+          isContextMenu && !isMobileOrTablet && 'pr-9',
           !isSelectMode && isHighlighted
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
           isHighlighted && 'bg-accent-primary-alpha',
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
-        onClick={() => {
+        onClick={(e) => {
           if (!isSelectMode) {
-            dispatch(
-              PromptsActions.selectPrompt({
-                promptId: prompt.id,
-                isApproveRequiredResource,
-              }),
-            );
+            handleOpenViewModal(e, false);
           }
 
           if (isSelectMode && !isExternal) {
@@ -267,7 +287,6 @@ export const PromptComponent = ({
             dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
-        name={isSelected ? 'selected-entity' : undefined}
         style={{
           paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}
@@ -281,6 +300,7 @@ export const PromptComponent = ({
           })}
           draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
+          data-qa={isSelected ? 'selected-entity' : undefined}
         >
           <div
             className={classNames(
@@ -335,10 +355,7 @@ export const PromptComponent = ({
             />
           </ShareIcon>
 
-          <div
-            className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left"
-            data-qa="entity-name"
-          >
+          <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
             <Tooltip
               tooltip={t(
                 getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -352,6 +369,7 @@ export const PromptComponent = ({
                   prompt.publicationInfo?.action === PublishActions.DELETE &&
                   'text-error',
               )}
+              dataQa="entity-name"
             >
               {prompt.name}
             </Tooltip>
@@ -375,6 +393,7 @@ export const PromptComponent = ({
               onExport={handleExport}
               onOpenMoveToModal={handleMoveToFolder}
               onShare={handleShare}
+              onUnshare={handleOpenUnshareModal}
               onPublish={handlePublish}
               onUnpublish={
                 additionalItemData?.publicationUrl ? undefined : handleUnpublish
@@ -388,10 +407,25 @@ export const PromptComponent = ({
               onUse={handleUse}
               onShowInfo={handleInfo}
               className="p-2"
+              hideTriggerIcon={isMobileOrTablet}
             />
           </div>
         )}
       </button>
+
+      {isUnshared && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm unshare prompt')}
+          description={t('Are you sure that you want to unshare a prompt?')}
+          confirmLabel={t('Unshare')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshared(false);
+            if (result) handleUnsharing();
+          }}
+        />
+      )}
     </>
   );
 };

@@ -209,10 +209,7 @@ export function ShareModalView() {
     >
       <div className="px-3 py-4 md:p-6">
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
-          <Tooltip
-            contentClassName="max-w-[400px] break-words"
-            tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}
-          >
+          <Tooltip tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}>
             <div
               className="line-clamp-2 w-full break-words pr-6"
               data-qa="modal-entity-name"
@@ -245,7 +242,7 @@ export function ShareModalView() {
             </div>
           </div>
           <div className="relative mt-2">
-            <Tooltip tooltip={url} contentClassName="max-w-[400px] break-words">
+            <Tooltip tooltip={url}>
               <input
                 type="text"
                 readOnly

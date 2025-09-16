@@ -19,6 +19,7 @@ import {
 } from '@/src/constants/chat';
 import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
@@ -26,6 +27,8 @@ import {
 } from '@/src/constants/quick-apps';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+
+import { safeParseJSON } from '../json';
 
 import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
@@ -44,12 +47,7 @@ const hiddenFeaturesForIsolatedView = [
   Feature.HideTopContextMenu,
 ];
 
-export const getCommonPageProps: GetServerSideProps = async ({
-  locale,
-  req,
-  res,
-  resolvedUrl,
-}) => {
+export const getContentSecurityPolicyDirectives = () => {
   const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
     ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
     : 'frame-ancestors none';
@@ -58,9 +56,18 @@ export const getCommonPageProps: GetServerSideProps = async ({
     ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
     : 'frame-src none';
 
+  return `${ancestorsDirective} ; ${frameSrcDirective}`;
+};
+
+export const getCommonPageProps: GetServerSideProps = async ({
+  locale,
+  req,
+  res,
+  resolvedUrl,
+}) => {
   res.setHeader(
     'Content-Security-Policy',
-    ancestorsDirective + '; ' + frameSrcDirective,
+    getContentSecurityPolicyDirectives(),
   );
 
   let params: URLSearchParams | undefined;
@@ -99,6 +106,13 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
   const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
   const isPreselectedAction = params?.has(ACTION_QUERY_PARAM);
+  const enabledFeaturesData = process.env.ENABLED_FEATURES_DATA
+    ? safeParseJSON(
+        process.env.ENABLED_FEATURES_DATA?.replaceAll('\\"', '"'),
+        'Error when parsing ENABLED_FEATURES_DATA',
+        console,
+      )
+    : [];
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL',
@@ -124,6 +138,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
         isIsolatedView ? !disabledFeaturesForIsolatedView.has(feature) : true,
       )
       .concat(isIsolatedView ? hiddenFeaturesForIsolatedView : []),
+    enabledFeaturesData,
     widgetsSchemaIds: parseCommaSeparatedList(
       process.env.WIDGETS_SCHEMA_IDS,
       [],
@@ -155,6 +170,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
     quickAppsSchemaId:
       process.env.QUICK_APPS_SCHEMA_ID || DEFAULT_QUICK_APPS_SCHEMA_ID,
+    externalAppsSchemaId:
+      process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     providerId: session?.providerId ?? null,

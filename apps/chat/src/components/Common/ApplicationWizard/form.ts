@@ -18,8 +18,10 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   ApplicationType,
   CustomApplicationModel,
+  Toolsets,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures } from '@/src/types/models';
 
 import {
@@ -63,9 +65,10 @@ export interface FormData extends CodeData {
   // QUICK APP
   instructions: string;
   temperature: number;
-  toolset: string;
+  [Toolsets.WebApiToolset]: string;
   model: string;
   documentRelativeUrl: string[];
+  agentsAndToolsets: MarketplaceEntity[];
 }
 
 type Options<T extends Path<FormData>> = Omit<
@@ -192,7 +195,7 @@ export const validators: Validators = {
       }
     },
   },
-  toolset: {
+  [Toolsets.WebApiToolset]: {
     required: 'Toolset config is required',
     validate: (v) => {
       try {
@@ -352,11 +355,14 @@ export const getDefaultValues = ({
     // QUICK APP
     instructions: quickAppConfig?.instructions ?? '',
     temperature: quickAppConfig?.temperature ?? DEFAULT_TEMPERATURE,
-    toolset: quickAppConfig ? getWebAPIToolsetStr(quickAppConfig) : '',
+    [Toolsets.WebApiToolset]: quickAppConfig
+      ? getWebAPIToolsetStr(quickAppConfig)
+      : '',
     model:
       quickAppConfig?.model ??
       DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     documentRelativeUrl: getQuickAppDocumentUrl(app) ?? [],
+    agentsAndToolsets: [],
   };
 };
 

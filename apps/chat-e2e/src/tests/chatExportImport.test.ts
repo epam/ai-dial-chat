@@ -517,7 +517,7 @@ dialTest(
     dialTest.skip(
       [
         ImportedModelIds.GPT_3_5_TURBO,
-        ImportedModelIds.GPT_4,
+        ImportedModelIds.GPT_4_O,
         ImportedModelIds.CHAT_BISON,
       ].some(
         (modelId) =>
@@ -528,7 +528,7 @@ dialTest(
       noImportModelsSkipReason,
     );
     setTestIds('EPMRTC-906', 'EPMRTC-779');
-    const gpt4Model = ModelsUtil.getModel(ImportedModelIds.GPT_4)!;
+    const gpt4Model = ModelsUtil.getModel(ImportedModelIds.GPT_4_O)!;
     await dialTest.step(
       'Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible',
       async () => {

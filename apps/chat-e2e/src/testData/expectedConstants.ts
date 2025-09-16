@@ -76,6 +76,8 @@ export const ExpectedConstants = {
   noResults: 'No results found',
   notAllowedModelError:
     'Not available agent selected. Please, change the agent to proceed',
+  notAllowedAgentError: (agent: string) =>
+    `Agent is not available. Please, change the agent "${agent}" to proceed.`,
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
@@ -180,15 +182,19 @@ export const ExpectedConstants = {
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
   publishToLabel: 'Publish to',
-  requestCreationDateLabel: 'Request created:',
+  authorLabel: 'Author',
+  publicAuthorLabel: `Author's public name`,
+  requestCreationDateLabel: 'Request created',
   allowAccessLabel: 'Allow access if all match',
   noChangesLabel: 'No changes',
   availabilityLabel:
     'This publication will be available to all users in the organization',
-  unpublishFrom: 'Unpublish from',
+  seeChangesLabel: 'See changes',
+  unpublishFromLabel: 'Unpublish from',
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
   defaultAppVersion: '0.0.1',
+  defaultAppName: 'Untitled app',
   rootPublicationFolder: 'public/',
   duplicatedPublicationErrorMessage: (targetUrl: string) =>
     `Target resource already exists: ${targetUrl}`,
@@ -221,7 +227,9 @@ export const ExpectedConstants = {
   attachmentPublishErrorMessage:
     'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
   marketplacePath: '/marketplace',
-  workspacePath: () => `${ExpectedConstants.marketplacePath}?tab=workspace`,
+  workspaceTab: 'tab=workspace',
+  workspacePath: () =>
+    `${ExpectedConstants.marketplacePath}?${ExpectedConstants.workspaceTab}`,
   createCustomAppPath: '/apps-editor/custom%20app',
   noWorkspaceAgentsFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
@@ -245,6 +253,7 @@ export const ExpectedConstants = {
     "Input the MIME type and press 'Enter' to add",
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
+  agentNotFoundToastError: 'Not found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
   informationModalTitle: 'Information',
   informationModalLastUpdatedLabel: 'Last updated:',
@@ -252,6 +261,37 @@ export const ExpectedConstants = {
   informationModalAuthorLabel: 'Author:',
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
+  pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
+  goToMyWorkspaceButtonLabel: 'Go to My workspace',
+  goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
+  publishRequestNameMaxLengthErrorMessage:
+    'Request name should be at most 160 characters long',
+  publishRequestNameMinLengthErrorMessage:
+    'Request name should be at least 2 characters long',
+  defaultAgentLabel: 'Default agent',
+  lastUsedAgentLabel: 'Last used agent',
+  publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
+  noAvailableItemsLabel: 'No available items',
+  appDefaultCompletionUrl: 'http://test.example.com',
+  appRateEndpointDefaultFeature: 'http://application1/rate',
+  leadingDotErrorToast: 'Using a dot at the start of a name is not permitted.',
+  promptEditConfirmationDialogTitle: 'Unsaved changes',
+  promptEditConfirmationDialogMessage:
+    'There are unsaved changes. Do you want to save them before closing?',
+  publishingFilterDefaultValue: 'Select',
+  publishingFilterValuePlaceholder: 'Enter one or more options...',
+  dialRolesField: 'dial_roles',
+  fileUploadFolder: 'uploads',
+  fileUploadedToastMessage: (fileFolder: string) =>
+    `The file has been uploaded successfully to "${ExpectedConstants.fileUploadFolder}/${fileFolder}"`,
+  replacedRestrictedCharsName: (restrictedCharsName: string) =>
+    restrictedCharsName.replace(
+      new RegExp(
+        `[${ExpectedConstants.restrictedNameChars.replaceAll('//', '////')}]`,
+        'g',
+      ),
+      '_',
+    ),
 };
 
 export enum Types {
@@ -400,9 +440,13 @@ export const API = {
   publishedApplications: '/api/publication/applications/public',
   publishedFiles: () => `/api/publication/${API.filesHostSegment}/public`,
   applicationCreateHost: '/api/applications',
-  publishedApplicationsHost:
-    'api/publication/applications/public?recursive=true',
+  publishedConversationsHost: () =>
+    `${API.publishedConversations}?recursive=true`,
+  publishedPromptsHost: () => `${API.publishedPrompts}?recursive=true`,
+  publishedApplicationsHost: () =>
+    `${API.publishedApplications}?recursive=true`,
   pagePropsHost: '/en.json',
+  appSchemasHost: 'api/application-type-schemas/schemas',
 };
 
 export const Import = {
@@ -428,6 +472,7 @@ export const Attachment = {
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
   flowerImageName: 'flower.jpg',
+  fileToCopyName: 'image.png',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
   specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
   textName: 'text.txt',
@@ -440,6 +485,7 @@ export const Attachment = {
   dotExtensionImageName: 'testdot..JPg',
   restrictedSemicolonCharFilename: 'restricted;char.jpg',
   restrictedEqualCharFilename: 'restricted=char.jpg',
+  restrictedCharsFilename: 'restricted=,;{}%&.JPG',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
@@ -453,7 +499,7 @@ export enum Side {
 
 export enum ImportedModelIds {
   GPT_3_5_TURBO = 'gpt-35-turbo',
-  GPT_4 = 'gpt-4',
+  GPT_4_O = 'gpt-4o',
   CHAT_BISON = 'chat-bison',
 }
 
@@ -504,11 +550,11 @@ export enum ToggleState {
 
 export enum AuthProvider {
   auth0 = 'auth0',
-  azureAD = 'azureAD',
+  azureAD = 'azure-ad',
   gitlab = 'gitlab',
   google = 'google',
   keycloak = 'keycloak',
-  pingID = 'pingID',
+  pingID = 'pingid',
   cognito = 'cognito',
   okta = 'okta',
 }
@@ -540,4 +586,21 @@ export const ExpectedPromptModalConst = {
 export enum DefaultModelReference {
   defaultAgent = '"default-agent"',
   lastUsedModel = '"last-used-agent"',
+}
+
+export enum PublishingRulesFilterTarget {
+  title = 'Title',
+  jobTitle = 'Job Title',
+  role = 'Role',
+  dialRoles = 'Dial Roles',
+}
+
+export enum BooleanOperator {
+  or = 'or',
+}
+
+export enum E2EUserRole {
+  qa = 'QA',
+  developer = 'Developer',
+  manager = 'Manager',
 }

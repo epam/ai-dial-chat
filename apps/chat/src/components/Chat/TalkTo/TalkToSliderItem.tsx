@@ -1,0 +1,85 @@
+import React from 'react';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import {
+  isPlaybackConversation,
+  isReplayAsIsConversation,
+} from '@/src/utils/app/conversation';
+import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
+
+import { Conversation } from '@/src/types/chat';
+import { DialAIEntityModel } from '@/src/types/models';
+import { CardType } from '@/src/types/talkTo';
+import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/selectors';
+
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { SuggestedCard } from '@/src/constants/talkTo';
+
+import { SuggestionButton } from '@/src/components/Common/SuggestionButton';
+
+import { ItemCardView } from './ItemCardView';
+
+export interface TalkToSliderItemProps {
+  groupItem: CardType;
+  isMyWorkspace: boolean;
+  conversation: Conversation;
+  onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenMarketplaceTab: () => void;
+}
+
+export const TalkToSliderItem = ({
+  groupItem,
+  onSelectModel,
+  onOpenMarketplaceTab,
+  conversation,
+}: TalkToSliderItemProps) => {
+  const { t } = useTranslation(Translation.Chat);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
+  const isNotPseudoModelSelected =
+    groupItem.reference === conversation.model.id &&
+    !isPlaybackConversation(conversation) &&
+    !isReplayAsIsConversation(conversation);
+  const isPseudoModelSelected =
+    groupItem.reference === PseudoModel.Playback ||
+    (groupItem.reference === REPLAY_AS_IS_MODEL &&
+      isReplayAsIsConversation(conversation));
+
+  const isSelected = isNotPseudoModelSelected || isPseudoModelSelected;
+
+  if (groupItem === SuggestedCard) {
+    return (
+      <div
+        className="flex size-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-primary hover:bg-layer-3"
+        onClick={onOpenMarketplaceTab}
+        key={SuggestedCard.id}
+      >
+        <h3 className="text-base">{t("Couldn't find what you need?")}</h3>
+        <SuggestionButton />
+      </div>
+    );
+  }
+
+  return (
+    <ItemCardView
+      isSelected={isSelected}
+      conversation={conversation}
+      isUnavailableModel={
+        !modelsMap[groupItem.reference] &&
+        !isPseudoModel(groupItem.id) &&
+        groupItem.reference !== REPLAY_AS_IS_MODEL
+      }
+      disabled={
+        isPlaybackConversation(conversation) &&
+        groupItem.reference !== PseudoModel.Playback
+      }
+      key={groupItem.id}
+      entity={groupItem as DialAIEntityModel}
+      onClick={onSelectModel}
+    />
+  );
+};

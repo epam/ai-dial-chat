@@ -7,13 +7,15 @@ export const DEFAULT_CONVERSATION_NAME = 'New conversation';
 export const DEFAULT_PROMPT_NAME = 'Prompt';
 export const DEFAULT_FOLDER_NAME = 'New folder';
 export const DEFAULT_APPLICATION_NAME = 'Untitled app';
+export const DEFAULT_TOOLSET_NAME = 'Untitled toolset';
 export const EMPTY_MODEL_ID = 'empty';
 
 export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 
-export const FALLBACK_ASSISTANT_SUBMODEL_ID = 'gpt-4';
+export const FALLBACK_ASSISTANT_SUBMODEL_ID = 'gpt-4o';
 
 export const MAX_ENTITY_LENGTH = 160;
+export const MIN_ENTITY_LENGTH = 2;
 
 export const FALLBACK_TEMPERATURE = 1;
 

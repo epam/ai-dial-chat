@@ -6,10 +6,11 @@ import {
   EditPromptFormFields,
   ExpectedConstants,
   ExpectedMessages,
+  ExpectedPromptModalConst,
   MenuOptions,
 } from '@/src/testData';
-import { Cursors, Overflow, ThemeColorAttributes } from '@/src/ui/domData';
-import { DateUtil } from '@/src/utils';
+import { Cursors, StyleValues, ThemeColorAttributes } from '@/src/ui/domData';
+import { DateUtil, GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
@@ -85,8 +86,10 @@ dialTest(
       'Click "New prompt" button and verify Name and Prompt fields have asterisk',
       async () => {
         await promptBar.createNewEntity();
-        //TODO: enable next line when fixed https://github.com/epam/ai-dial-chat/issues/3650
-        // await baseAssertion.assertElementText(promptModalDialog.title, ExpectedPromptPreviewConst.createPromptModalTitle)
+        await baseAssertion.assertElementText(
+          promptModalDialog.title,
+          ExpectedPromptModalConst.createPromptModalTitle,
+        );
         await baseAssertion.assertElementState(
           promptModalDialog.getFieldAsterisk(EditPromptFormFields.name),
           'visible',
@@ -231,7 +234,7 @@ dialTest(
         );
         await promptPreviewModalAssertion.assertElementTextWrap(
           promptPreviewModal.promptName,
-          Overflow.breakWord,
+          StyleValues.breakWord,
         );
       },
     );
@@ -329,7 +332,7 @@ dialTest(
 );
 
 dialTest(
-  'Edit prompt. Cancel',
+  'Edit prompt. Cancel.\n' + 'Edit prompt. Click on X and Save',
   async ({
     dialHomePage,
     promptData,
@@ -337,36 +340,75 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     promptModalDialog,
+    promptModalAssertion,
     setTestIds,
     localStorageManager,
     confirmationDialog,
+    promptAssertion,
+    confirmationDialogAssertion,
+    promptPreviewModalAssertion,
   }) => {
-    setTestIds('EPMRTC-953');
+    setTestIds('EPMRTC-953', 'EPMRTC-1272');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await prompts.openEntityDropdownMenu(prompt.name);
-    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
+    await dialTest.step(
+      'Update prompt details, click on Close button and verify changes are not saves',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
 
-    await promptModalDialog.closeButton.click();
-    await confirmationDialog.cancelButton.click();
-    await expect
-      .soft(
-        promptModalDialog.getElementLocator(),
-        ExpectedMessages.promptModalClosed,
-      )
-      .toBeHidden();
+        await promptModalDialog.closeButton.click();
+        await confirmationDialog.cancelButton.click();
+        await promptModalAssertion.assertElementState(
+          promptModalDialog,
+          'hidden',
+        );
+        await promptAssertion.assertEntityState(
+          { name: prompt.name },
+          'visible',
+        );
+      },
+    );
 
-    await expect
-      .soft(
-        prompts.getEntityByName(prompt.name),
-        ExpectedMessages.promptNotUpdated,
-      )
-      .toBeVisible();
+    await dialTest.step(
+      'Update prompt details, click on X button and verify confirmation popup is displayed',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
+        await promptModalDialog.closeButton.click();
+        await confirmationDialogAssertion.assertElementState(
+          confirmationDialog,
+          'visible',
+        );
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.promptEditConfirmationDialogTitle,
+        );
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.promptEditConfirmationDialogMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Save button and verify changes are applied',
+      async () => {
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await promptModalAssertion.assertElementState(
+          promptModalDialog,
+          'hidden',
+        );
+        await promptPreviewModalAssertion.assertPromptName(newName);
+        await promptPreviewModalAssertion.assertPromptDescription(newDescr);
+        await promptPreviewModalAssertion.assertPromptContent(newValue);
+        await promptAssertion.assertEntityState({ name: newName }, 'visible');
+      },
+    );
   },
 );
 
@@ -901,8 +943,9 @@ dialTest(
     dataInjector,
     prompts,
     promptData,
-    promptBar,
     promptBarSearch,
+    promptBar,
+    promptBarAssertion,
     setTestIds,
     localStorageManager,
   }) => {
@@ -913,7 +956,7 @@ dialTest(
     let fourthPrompt: Prompt;
     let fifthPrompt: Prompt;
     const promptContent = 'Prompt search test';
-    const notMatchingSearchTerm = 'abc';
+    const notMatchingSearchTerm = GeneratorUtil.randomString(10);
     const searchTerm = 'test';
     const specialSymbolSearchTerm = '@';
 
@@ -946,11 +989,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await promptBarSearch.setSearchValue(notMatchingSearchTerm);
-        const noResult =
-          await promptBar.noResultFoundIcon.getElementInnerContent();
-        expect
-          .soft(noResult, ExpectedMessages.noResultsFound)
-          .toBe(ExpectedConstants.noResults);
+        await promptBarAssertion.assertElementText(
+          promptBar.noResultFoundIcon,
+          ExpectedConstants.noResults,
+          ExpectedMessages.noResultsFound,
+        );
       },
     );
 

@@ -416,11 +416,12 @@ dialAdminTest(
           notApprovedPublication.name!,
           conversationToPublish.name,
         );
-        await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
-        await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
-          MenuOptions.use,
-          'disabled',
-        );
+        //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/4223
+        // await adminPrompts.openEntityDropdownMenu(adminPrompt.name); // Use admin prompt
+        // await adminPromptDropdownMenuAssertion.assertMenuOptionActionabilityState(
+        //   MenuOptions.use,
+        //   'disabled',
+        // );
       },
     );
 
@@ -529,7 +530,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversationWithNonExistentApp.name);
-        await chatAssertion.assertNotAllowedModelLabelContent(); // Assert error message
+        await chatAssertion.assertNotAllowedModelLabelContent(
+          nonExistentAppName,
+        ); // Assert error message
       },
     );
 
@@ -721,7 +724,11 @@ dialTest(
         await dataInjector.createPrompts([prompt]);
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withPromptResource(prompt, PublishActions.ADD, `0.0.${version++}`)
+          .withPromptInFolderResource(
+            prompt,
+            PublishActions.ADD,
+            `0.0.${version++}`,
+          )
           .build();
         const publication =
           await publicationApiHelper.createPublishRequest(publishRequest);

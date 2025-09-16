@@ -55,7 +55,7 @@ import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
-import { Message, Role } from '@epam/ai-dial-shared';
+import { Feature, Message, Role } from '@epam/ai-dial-shared';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -144,11 +144,18 @@ export const ChatInputMessage = Inversify.register(
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
+
     const configurationSchema = useAppSelector(
       ChatSelectors.selectConfigurationSchema,
     );
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
+    );
+    const isDisabledInputFeature = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
+    );
+    const disabledInputFeatureData = useAppSelector((state) =>
+      SettingsSelectors.selectFeatureData(state, Feature.DisabledSend),
     );
 
     const shouldRegenerate =
@@ -162,6 +169,20 @@ export const ChatInputMessage = Inversify.register(
         dispatch(ChatActions.setShouldFocusAndScroll(false));
       }
     }, [dispatch, shouldFocusAndScroll, textareaRef]);
+
+    useEffect(() => {
+      if (!canAttachLinks) {
+        setSelectedDialLinks([]);
+      }
+      if (!canAttachFiles || !canAttachFolders) {
+        dispatch(
+          FilesActions.resetSelectedFiles({
+            keepFiles: canAttachFiles,
+            keepFolders: canAttachFolders,
+          }),
+        );
+      }
+    }, [canAttachFiles, canAttachFolders, canAttachLinks, dispatch]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
@@ -219,6 +240,7 @@ export const ChatInputMessage = Inversify.register(
       selectedFolders.length,
     ]);
     const isSendDisabled =
+      isDisabledInputFeature ||
       isReplay ||
       isMessageError ||
       isInputEmpty ||
@@ -403,16 +425,13 @@ export const ChatInputMessage = Inversify.register(
     );
 
     const handleSelectAlreadyUploaded = useCallback(
-      (result: unknown) => {
-        if (typeof result === 'object') {
-          const selectedFilesIds = result as string[];
-          dispatch(FilesActions.resetSelectedFiles());
-          dispatch(
-            FilesActions.selectFiles({
-              ids: selectedFilesIds,
-            }),
-          );
-        }
+      (result: string[]) => {
+        dispatch(FilesActions.resetSelectedFiles());
+        dispatch(
+          FilesActions.selectFiles({
+            ids: result,
+          }),
+        );
       },
       [dispatch],
     );
@@ -453,6 +472,9 @@ export const ChatInputMessage = Inversify.register(
     }, []);
 
     const tooltipContent = (): string => {
+      if (isDisabledInputFeature && disabledInputFeatureData?.description) {
+        return disabledInputFeatureData.description;
+      }
       if (messageIsStreaming) {
         return t('Stop generating');
       }
@@ -489,6 +511,11 @@ export const ChatInputMessage = Inversify.register(
       return t('Talk to your agent');
     }, [isChatInputDisabled, t]);
 
+    const isDisabled = useMemo(
+      () => isLoading || isChatInputDisabled,
+      [isLoading, isChatInputDisabled],
+    );
+
     const paddingLeftClass = canAttach
       ? isOverlay
         ? 'pl-11'
@@ -517,7 +544,7 @@ export const ChatInputMessage = Inversify.register(
             )}
             maxHeight={MAX_HEIGHT}
             placeholder={chatInputPlaceholder}
-            disabled={isLoading || isChatInputDisabled}
+            disabled={isDisabled}
             value={content}
             rows={1}
             onCompositionStart={() => setIsTyping(true)}

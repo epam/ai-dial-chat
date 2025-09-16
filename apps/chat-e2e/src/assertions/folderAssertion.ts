@@ -278,19 +278,16 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
   }
 
   public async assertFolderEditInputState(expectedState: ElementState) {
-    const editInputLocator = this.folder
-      .getEditFolderInput()
-      .getElementLocator();
+    const editInputLocator = this.folder.getEditFolderInput();
     await this.assertElementState(editInputLocator, expectedState);
   }
 
-  public async assertFolderEditInputValue(expectedValue: string) {
-    const inputValue = await this.folder
-      .getEditFolderInput()
-      .getEditInputValue();
-    expect
-      .soft(inputValue, ExpectedMessages.charactersAreNotDisplayed)
-      .toBe(expectedValue);
+  public async assertFolderEditInputValue(
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    const editInput = this.folder.getEditFolderInput().editInput;
+    await this.assertInputValue(editInput, expectedValue, expectedMessage);
   }
 
   public async assertRootFolderState(
@@ -422,5 +419,21 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
         ExpectedMessages.searchResultsAreCorrect,
       )
       .toBeTruthy();
+  }
+
+  public async assertFolderEntitiesCount(
+    folder: TreeEntity,
+    expectedCount: number,
+    expectedMessage?: string,
+  ) {
+    const folderEntitiesLocator = this.folder.getFolderEntities(
+      folder.name,
+      folder.index,
+    );
+    await this.assertElementsCount(
+      folderEntitiesLocator,
+      expectedCount,
+      expectedMessage,
+    );
   }
 }

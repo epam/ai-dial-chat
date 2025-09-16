@@ -10,6 +10,14 @@ export interface GetMessagesResponse {
   messages: Message[];
 }
 
+export interface DeleteMessageResponse {
+  messages: Message[];
+}
+
+export interface UpdateMessageResponse {
+  messages: Message[];
+}
+
 export interface GetConversationsResponse {
   conversations: OverlayConversation[];
 }
@@ -35,6 +43,10 @@ export interface RenameConversationResponse {
 }
 
 export interface CreatePlaybackConversationResponse {
+  conversation: OverlayConversation;
+}
+
+export interface StopSelectedPlaybackConversationResponse {
   conversation: OverlayConversation;
 }
 

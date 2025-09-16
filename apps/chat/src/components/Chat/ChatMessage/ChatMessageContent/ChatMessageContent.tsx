@@ -23,6 +23,7 @@ import { LikeState, Message, Role } from '@epam/ai-dial-shared';
 interface Props {
   message: Message;
   messageIndex: number;
+  realMessageIndex: number;
   conversation: Conversation;
   allMessages: Message[];
   isLikesEnabled: boolean;
@@ -35,7 +36,11 @@ interface Props {
   onToggleEditing: (value: boolean) => void;
   onToggleEditingTemplates: (value: boolean) => void;
   onRegenerate?: () => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onEdit?: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onCopy?: () => void;
   onLike?: (likeStatus: LikeState) => void;
   onDelete?: () => void;
@@ -51,6 +56,7 @@ const DEFAULT_ICON_SIZE = 28;
 
 export function ChatMessageContent({
   messageIndex,
+  realMessageIndex,
   isLastMessage,
   message,
   allMessages,
@@ -140,9 +146,10 @@ export function ChatMessageContent({
           {isUser ? (
             <UserMessage
               message={message}
+              messageIndex={messageIndex}
+              realMessageIndex={realMessageIndex}
               allMessages={allMessages}
               conversation={conversation}
-              messageIndex={messageIndex}
               isEditing={isEditing}
               isEditingTemplates={isEditingTemplates}
               withButtons={withButtons}
@@ -154,14 +161,20 @@ export function ChatMessageContent({
             />
           ) : (
             <AssistantMessage
+              messageIndex={messageIndex}
+              realMessageIndex={realMessageIndex}
               message={message}
+              allMessages={allMessages}
               conversation={conversation}
+              isEditing={isEditing}
               isLastMessage={isLastMessage}
               isLikesEnabled={isLikesEnabled}
               withButtons={withButtons}
               messageCopied={messageCopied}
               onCopy={onCopy}
               onLike={onLike}
+              onToggleEditing={onToggleEditing}
+              onEdit={onEdit}
               onRegenerate={onRegenerate}
             />
           )}

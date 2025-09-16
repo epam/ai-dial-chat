@@ -5,7 +5,13 @@ import {
   IconLayoutSidebarRightCollapse,
   IconRefresh,
 } from '@tabler/icons-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  FocusEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -19,6 +25,7 @@ import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
 } from '@/src/utils/app/application';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
@@ -38,7 +45,6 @@ import {
   ApplicationActions,
   CodeEditorActions,
   ConversationsActions,
-  ModelsActions,
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -51,24 +57,34 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_QUICK_APPS_SCHEMA_ID } from '@/src/constants/quick-apps';
+import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
+import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
+import {
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
+} from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
+import { GeneralInfoPreview } from '@/src/components/AppsEditor/GeneralInfoView/GeneralInfoPreview';
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';
+import { ExternalAppView } from './ExternalAppView';
 import { ApplicationPreviewChat } from './Previews/ApplicationPreviewChat';
 import { QuickAppView } from './QuickAppView';
+import { QuickAppView2 } from './QuickAppView2';
 import {
   CodeAppFormData,
   CustomApplicationFormData,
   QuickAppFormData,
   getCodeAppDefaultValues,
   getCustomApplicationDefaultValues,
+  getExternalAppDefaultValues,
   getQuickAppDefaultValues,
+  getQuickAppDefaultValues2,
 } from './form';
 
 interface Props {
@@ -164,10 +180,43 @@ export const ApplicationSettings: React.FC<Props> = ({
     [modelFromState],
   );
 
+  const quickAppSchemaId = useMemo(() => {
+    return DefaultsService.get(
+      'quickAppsSchemaId',
+      DEFAULT_QUICK_APPS_SCHEMA_ID,
+    );
+  }, []);
+
+  const quickAppSchemaId2 = useMemo(() => {
+    return DefaultsService.get(
+      'quickAppsSchemaId2',
+      DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+    );
+  }, []);
+
+  const externalAppsSchemaId = useMemo(() => {
+    return DefaultsService.get(
+      'externalAppsSchemaId',
+      DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+    );
+  }, []);
+
   const getDefaultValues = useCallback(
     (type: string) => {
-      if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+      if (quickAppSchemaId.endsWith(type)) {
         return getQuickAppDefaultValues({
+          app: applicationData,
+        });
+      }
+
+      if (quickAppSchemaId2.endsWith(type)) {
+        return getQuickAppDefaultValues2({
+          app: applicationData,
+        });
+      }
+
+      if (externalAppsSchemaId.endsWith(type)) {
+        return getExternalAppDefaultValues({
           app: applicationData,
         });
       }
@@ -186,24 +235,62 @@ export const ApplicationSettings: React.FC<Props> = ({
       };
       return defaultValues[type] ?? null;
     },
-    [applicationData, pythonVersions],
+    [
+      applicationData,
+      externalAppsSchemaId,
+      pythonVersions,
+      quickAppSchemaId,
+      quickAppSchemaId2,
+    ],
   );
 
   const getFormView = (type: string) => {
-    if (DEFAULT_QUICK_APPS_SCHEMA_ID.endsWith(type)) {
+    const publicationUrl = router.query.publicationUrl
+      ? decodeURIComponent(router.query.publicationUrl.toString())
+      : undefined;
+
+    if (quickAppSchemaId.endsWith(type)) {
       return (
         <QuickAppView
           schema={schema}
           isSharedWithMe={modelFromState?.sharedWithMe ?? false}
           oldApplication={applicationData}
           isShared={modelFromState?.isShared ?? false}
+          publicationUrl={publicationUrl}
+        />
+      );
+    }
+
+    if (quickAppSchemaId2.endsWith(type)) {
+      return (
+        <QuickAppView2
+          schema={schema}
+          isSharedWithMe={modelFromState?.sharedWithMe ?? false}
+          oldApplication={applicationData}
+          isShared={modelFromState?.isShared ?? false}
+          publicationUrl={publicationUrl}
+        />
+      );
+    }
+
+    if (externalAppsSchemaId.endsWith(type)) {
+      return (
+        <ExternalAppView
+          schema={schema}
+          oldApplication={applicationData}
+          publicationUrl={publicationUrl}
         />
       );
     }
 
     switch (type) {
       case ApplicationType.CUSTOM_APP:
-        return <ApplicationView oldApplication={applicationData} />;
+        return (
+          <ApplicationView
+            oldApplication={applicationData}
+            publicationUrl={publicationUrl}
+          />
+        );
       case ApplicationType.CODE_APP:
         return (
           <CodeAppView
@@ -211,6 +298,7 @@ export const ApplicationSettings: React.FC<Props> = ({
             oldApplication={applicationData}
             isShared={modelFromState?.isShared ?? false}
             applicationStatus={modelFromState?.functionStatus}
+            publicationUrl={publicationUrl}
           />
         );
       default:
@@ -305,13 +393,6 @@ export const ApplicationSettings: React.FC<Props> = ({
       !areSelectedConversationsLoaded
     )
       return;
-    if (!isAdminPreviewMode) {
-      dispatch(
-        ModelsActions.updateRecentModels({
-          modelId: applicationData.reference,
-        }),
-      );
-    }
     if (previewConversationId) {
       dispatch(
         ConversationsActions.selectConversations({
@@ -339,19 +420,34 @@ export const ApplicationSettings: React.FC<Props> = ({
   const showRedeployButton =
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
 
+  const handleSaveOnLeave = useCallback(() => {
+    if (!isAppPublic) saveForm();
+  }, [isAppPublic, saveForm]);
+
+  const handleSaveOnChatFocus = useCallback(
+    (e: FocusEvent<HTMLDivElement>) => {
+      if (e.target.id === CHAT_TEXT_FIELD_ID && !isAppPublic) {
+        saveForm();
+      }
+    },
+    [saveForm, isAppPublic],
+  );
+
   return (
     <div className="flex size-full flex-col">
       <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
         <TabButton
+          tabKey={PreviewMode.closed}
           selected={!isPreviewFull}
-          onClick={() => handlePreviewModeChange(PreviewMode.closed)}
+          onClick={handlePreviewModeChange}
           className="w-full"
         >
           {t('Settings')}
         </TabButton>
         <TabButton
+          tabKey={PreviewMode.full}
           selected={isPreviewFull}
-          onClick={() => handlePreviewModeChange(PreviewMode.full)}
+          onClick={handlePreviewModeChange}
           className="w-full"
         >
           {t('Preview')}
@@ -360,11 +456,7 @@ export const ApplicationSettings: React.FC<Props> = ({
 
       <div className="flex w-full grow overflow-hidden">
         <div
-          onMouseLeave={() => {
-            if (!isAppPublic) {
-              saveForm();
-            }
-          }}
+          onMouseLeave={handleSaveOnLeave}
           className={classNames('transition-all duration-300 ease-in-out', {
             'w-[calc(100%-40px)] opacity-100 max-md:w-full': isPreviewClosed,
             'w-1/2 opacity-100': isPreviewHalf,
@@ -440,14 +532,26 @@ export const ApplicationSettings: React.FC<Props> = ({
             </div>
           </div>
           {!isPreviewClosed && (
-            <div className="flex-1 overflow-auto">
-              <ApplicationPreviewChat
-                isAppDeploymentInProgress={isAppDeploymentInProgress}
-                isApplicationValid={methods.formState.isValid}
-                applicationId={applicationData.id}
-                type={type}
-                isAppDeployed={isAppDeployed}
-              />
+            <div
+              className="flex-1 overflow-auto"
+              onFocus={handleSaveOnChatFocus}
+            >
+              {!externalAppsSchemaId.endsWith(type) ? (
+                <ApplicationPreviewChat
+                  isAppDeploymentInProgress={isAppDeploymentInProgress}
+                  isApplicationValid={methods.formState.isValid}
+                  applicationId={applicationData.id}
+                  type={type}
+                  isAppDeployed={isAppDeployed}
+                />
+              ) : (
+                <GeneralInfoPreview
+                  entity={applicationData}
+                  onClosePreview={() =>
+                    handlePreviewModeChange(PreviewMode.closed)
+                  }
+                />
+              )}
             </div>
           )}
         </div>

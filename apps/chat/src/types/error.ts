@@ -37,3 +37,7 @@ export class DialAIError extends Error {
     this.displayMessage = options?.displayMessage;
   }
 }
+
+export interface HttpErrorStatus extends Error {
+  status?: number;
+}

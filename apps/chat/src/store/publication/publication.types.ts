@@ -29,16 +29,19 @@ export interface PublicationState {
   allPublishedWithMeItemsUploaded: Record<FeatureType, boolean>;
   selectedItemsToPublish: string[];
   isApplicationReview: boolean;
+  isToolsetReview: boolean;
   publicVersionGroups: PublicVersionGroups;
   publishModel:
     | { entity: ShareEntity & { iconUrl?: string }; action: PublishActions }
     | undefined;
 
   // Review edit mode
+  selectedItemsToApprove: Record<string, string[]>;
   isEditMode: boolean;
   entitiesEditState: Record<string, { name: string; version: string }>;
   foldersEditState: FolderEditTree;
   rulesOnEdit: PublicationRule[];
   isPublicationUpdating: boolean;
   displayAuthorEditState: string;
+  publishToUrl: string;
 }

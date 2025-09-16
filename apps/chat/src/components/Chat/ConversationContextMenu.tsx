@@ -108,11 +108,14 @@ export const ConversationContextMenu = ({
 
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUnshared, setIsUnshared] = useState(false);
   const [isShowExportModal, setIsShowExportModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   const screenState = useScreenState();
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const { refs, context } = useFloating({
     open: isOpen,
@@ -300,6 +303,24 @@ export const ConversationContextMenu = ({
       setIsOpen(false);
     }, [conversation, dispatch, setIsOpen]);
 
+  const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
+    useCallback((e) => {
+      e.stopPropagation();
+      setIsUnshared(true);
+    }, []);
+
+  const handleUnsharing = useCallback(() => {
+    if (conversation.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: [conversation.id],
+          featureType: FeatureType.Chat,
+        }),
+      );
+    }
+    setIsUnshared(false);
+  }, [conversation.id, conversation.sharedWithMe, dispatch]);
+
   const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
@@ -314,33 +335,42 @@ export const ConversationContextMenu = ({
   );
 
   const handleDelete = useCallback(() => {
-    if (conversation.sharedWithMe) {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [conversation.id],
-          featureType: FeatureType.Chat,
-        }),
-      );
-    } else {
-      dispatch(
-        ConversationsActions.deleteConversations({
-          conversationIds: [conversation.id],
-        }),
-      );
-    }
+    dispatch(
+      ConversationsActions.deleteConversations({
+        conversationIds: [conversation.id],
+      }),
+    );
     setIsDeleting(false);
-  }, [conversation.id, conversation.sharedWithMe, dispatch]);
+  }, [conversation.id, dispatch]);
 
   const handleOpenRenameModal = useCallback(() => {
     dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
 
-  const isCustomViewerApplication = useMemo(() => {
-    return !!applicationTypeSchemas.find(
-      (schema) =>
-        schema.id === modelsMap[conversation.model.id]?.applicationTypeSchemaId,
-    )?.viewerUrl;
-  }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
+  const { isCustomViewerApplication, applicationTypePlaybackSupport } =
+    useMemo(() => {
+      const applicationTypeSchema = applicationTypeSchemas.find(
+        (schema) =>
+          schema.id ===
+          modelsMap[conversation.model.id]?.applicationTypeSchemaId,
+      );
+      return {
+        isCustomViewerApplication: !!applicationTypeSchema?.viewerUrl,
+        applicationTypePlaybackSupport:
+          !!applicationTypeSchema?.applicationTypePlaybackSupport,
+      };
+    }, [conversation.model.id, modelsMap, applicationTypeSchemas]);
+
+  const isPlaybackActionAvailable = useMemo(() => {
+    return isCustomViewerApplication
+      ? !isReplay && !isPlayback && applicationTypePlaybackSupport
+      : !isReplay && !isPlayback;
+  }, [
+    isReplay,
+    isPlayback,
+    isCustomViewerApplication,
+    applicationTypePlaybackSupport,
+  ]);
 
   const handleOpenInfoModal = useCallback(() => {
     const { id, updatedAt, createdAt, author } = conversation;
@@ -389,11 +419,10 @@ export const ConversationContextMenu = ({
               : undefined
           }
           onPlayback={
-            !isReplay && !isPlayback && !isCustomViewerApplication
-              ? handleCreatePlayback
-              : undefined
+            isPlaybackActionAvailable ? handleCreatePlayback : undefined
           }
           onShare={!isReplay ? handleOpenSharing : undefined}
+          onUnshare={!isReplay ? handleOpenUnshareModal : undefined}
           onPublish={!isReplay ? handleOpenPublishing : undefined}
           onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
           onOpenChange={setIsOpen}
@@ -402,6 +431,7 @@ export const ConversationContextMenu = ({
           onSelect={isHeaderMenu ? undefined : handleSelect}
           useStandardColor={isHeaderMenu}
           onShowInfo={handleOpenInfoModal}
+          hideTriggerIcon={!isHeaderMenu && isMobileOrTablet}
         />
       </button>
 
@@ -449,6 +479,22 @@ export const ConversationContextMenu = ({
           onClose={(result) => {
             setIsDeleting(false);
             if (result) handleDelete();
+          }}
+        />
+      )}
+
+      {isUnshared && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm unshare conversation')}
+          description={t(
+            'Are you sure that you want to unshare a conversation?',
+          )}
+          confirmLabel={t('Unshare')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshared(false);
+            if (result) handleUnsharing();
           }}
         />
       )}

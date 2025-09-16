@@ -127,9 +127,13 @@ const getItemLabel = (item: unknown): string => item as string;
 
 interface Props {
   oldApplication: CustomApplicationModel;
+  publicationUrl?: string;
 }
 
-export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
+export const ApplicationView: React.FC<Props> = ({
+  oldApplication,
+  publicationUrl,
+}) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const {
@@ -167,6 +171,7 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
         dispatch(
           ApplicationActions.update({
             oldApplication,
+            publicationUrl,
             applicationData: {
               ...oldApplication,
               ...applicationData,
@@ -182,14 +187,14 @@ export const ApplicationView: React.FC<Props> = ({ oldApplication }) => {
       dispatch(ApplicationActions.setShouldSaveApplication(false));
       dispatch(ApplicationActions.setExitAfterSave(false));
     },
-    [exitAfterSave, dispatch, oldApplication],
+    [exitAfterSave, dispatch, oldApplication, publicationUrl],
   );
+
+  const isAppPublic = isEntityIdPublic(oldApplication);
 
   const autoSaveHandler = useCallback(() => {
     submitWrapper(handleSubmit)();
   }, [submitWrapper, handleSubmit]);
-
-  const isAppPublic = isEntityIdPublic(oldApplication);
 
   const savePartialForm = useCallback(() => {
     if (isAppPublic) return;

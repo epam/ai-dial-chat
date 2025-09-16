@@ -11,14 +11,15 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useApplicationMenuActions } from '@/src/hooks/useApplicationActions';
+import { useAgentMenuActions } from '@/src/hooks/useAgentActions';
 
 import {
   getApplicationSimpleStatus,
   getPlayerCaption,
-  isApplicationPublic,
   isApplicationStatusUpdating,
   isExecutableApp,
+  isMarketplaceEntityPublic,
+  isQuickApp2,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -43,6 +44,7 @@ import {
 } from '@/src/constants/marketplace';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
@@ -69,9 +71,6 @@ export const useAgentMenuItems = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const isCodeAppsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
-  );
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
@@ -90,10 +89,10 @@ export const useAgentMenuItems = ({
     handlePublish,
     handleUnpublish,
     handleUpdateFunctionStatus,
-  } = useApplicationMenuActions(entity);
+  } = useAgentMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
-  const isPublicApp = isApplicationPublic(entity);
+  const isPublicApp = isMarketplaceEntityPublic(entity);
   const isAppIdPublic = isEntityIdPublic(entity);
   const canWrite = canWriteSharedWithMe(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
@@ -107,7 +106,9 @@ export const useAgentMenuItems = ({
       schema.id === entity.applicationTypeSchemaId && schema.editorUrl,
   );
   const canEditOrView =
-    isMyApp || canWrite || (isPublicAndAdmin && !hasCustomEditor);
+    isMyApp ||
+    canWrite ||
+    (isPublicAndAdmin && (!hasCustomEditor || isQuickApp2(entity)));
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -122,8 +123,7 @@ export const useAgentMenuItems = ({
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
-        display:
-          isExecutable && isCodeAppsEnabled && disabledActions.deploy !== true,
+        display: isExecutable && disabledActions.deploy !== true,
         Icon: PlayerContextIcons[playerStatus],
         className: PlayerContextButtonClasses[playerStatus],
         iconClassName: PlayerContextIconClasses[playerStatus],
@@ -153,7 +153,7 @@ export const useAgentMenuItems = ({
           !!entity.sharedWithMe &&
           isApplicationsSharingEnabled &&
           disabledActions.unshare !== true,
-        Icon: IconUserShare,
+        Icon: IconUserUnshare,
         onClick: handleOpenUnshare,
       },
       {
@@ -206,7 +206,6 @@ export const useAgentMenuItems = ({
       entity,
       playerStatus,
       isExecutable,
-      isCodeAppsEnabled,
       handleUpdateFunctionStatus,
       isAppIdPublic,
       canEditOrView,

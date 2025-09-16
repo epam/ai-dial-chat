@@ -28,11 +28,33 @@ const selectIsShouldLogin = createSelector(
     );
   },
 );
+
+const selectIsShouldLogout = createSelector(
+  [
+    selectSession,
+    selectStatus,
+    (state: RootState) => state.settings.isAuthDisabled,
+    (state: RootState) => state.auth.session?.data?.user.email,
+    (state: RootState, userEmail?: string | null) => userEmail,
+  ],
+  (session, sessionStatus, isAuthDisabled, stateUserEmail, userEmail) => {
+    return (
+      !isAuthDisabled &&
+      sessionStatus === 'authenticated' &&
+      isClientSessionValid(session) &&
+      userEmail &&
+      userEmail !== stateUserEmail
+    );
+  },
+);
 const selectIsAdmin = (state: RootState) =>
   isUserAdmin(selectSessionData(state));
 
 const selectUserName = (state: RootState) =>
   selectSessionData(state)?.user?.name ?? '';
+
+const selectUserEmail = (state: RootState) =>
+  selectSessionData(state)?.user?.email ?? '';
 
 export const AuthSelectors = {
   selectIsShouldLogin,
@@ -40,4 +62,6 @@ export const AuthSelectors = {
   selectUserName,
   selectStatus,
   selectIsAdmin,
+  selectUserEmail,
+  selectIsShouldLogout,
 };

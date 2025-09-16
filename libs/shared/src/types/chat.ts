@@ -121,6 +121,7 @@ export enum FeatureType {
   Prompt = 'prompt',
   File = 'file',
   Application = 'application',
+  Toolset = 'toolset',
 }
 
 export interface ShareInterface {
@@ -139,6 +140,12 @@ export interface FolderInterface extends ShareEntity {
   temporary?: boolean;
   serverSynced?: boolean;
   isPublicationFolder?: boolean;
+}
+
+export interface TemporaryFolderInterface
+  extends Omit<FolderInterface, 'type'> {
+  temporary: true;
+  type?: FeatureType;
 }
 
 export interface ConversationInfo extends ShareEntity {
@@ -161,6 +168,7 @@ export interface Playback {
   isPlayback?: boolean;
   messagesStack: Message[];
   activePlaybackIndex: number;
+  customViewState?: Record<string, unknown>;
 }
 
 export interface Conversation extends ShareEntity, ConversationInfo {
@@ -176,4 +184,5 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   assistantModelId?: string;
 
   isMessageStreaming?: boolean;
+  customViewState?: Record<string, unknown>;
 }

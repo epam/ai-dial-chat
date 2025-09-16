@@ -11,7 +11,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import { Colors, Overflow, StyleValues, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -136,7 +136,7 @@ dialTest(
           );
         expect
           .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.breakWord);
+          .toBe(StyleValues.breakWord);
 
         await shareModal.entityName.hoverOver();
         const tooltipChatName = await tooltip.getContent();
@@ -321,7 +321,6 @@ dialSharedWithMeTest(
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
-    marketplacePage,
     temperatureSlider,
     agentSettings,
     addons,
@@ -438,7 +437,7 @@ dialSharedWithMeTest(
       async () => {
         await conversations.selectEntity(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel);
         const expectedRandomModelIcon =
           iconApiHelper.getEntityIcon(randomModel);
         await conversationAssertion.assertTreeEntityIcon(
@@ -915,7 +914,7 @@ dialTest(
           );
         expect
           .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.breakWord);
+          .toBe(StyleValues.breakWord);
       },
     );
 

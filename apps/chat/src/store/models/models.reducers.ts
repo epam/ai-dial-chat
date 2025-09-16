@@ -2,10 +2,10 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
 import {
-  addToModelsMap,
-  deleteFromModelsMap,
-  getGroupModelKey,
-} from '@/src/utils/app/models';
+  addToMarketplaceEntitiesMap,
+  deleteFromMarketplaceEntitiesMap,
+  getGroupMarketplaceEntityKey,
+} from '@/src/utils/app/marketplace';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -82,6 +82,16 @@ export const modelsSlice = createSlice({
       state.installedModels = payload.installedModels;
     },
     updateInstalledModelFail: (state) => state,
+    setModels: (
+      state,
+      { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
+    ) => {
+      state.models = payload.models;
+      state.modelsMap = addToMarketplaceEntitiesMap(
+        state.modelsMap ?? {},
+        ...payload.models,
+      );
+    },
     getModelsSuccess: (
       state,
       { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
@@ -89,7 +99,7 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADED;
       state.error = undefined;
       state.models = payload.models;
-      state.modelsMap = addToModelsMap(
+      state.modelsMap = addToMarketplaceEntitiesMap(
         state.modelsMap ?? {},
         ...payload.models,
       );
@@ -158,7 +168,9 @@ export const modelsSlice = createSlice({
         .map((id) => state.modelsMap[id])
         .filter(Boolean);
       const oldIndex = recentModels.findIndex(
-        (m) => getGroupModelKey(m!) === getGroupModelKey(newModel),
+        (m) =>
+          getGroupMarketplaceEntityKey(m!) ===
+          getGroupMarketplaceEntityKey(newModel),
       );
       if (oldIndex >= 0) {
         if (recentModels[oldIndex]?.reference !== payload.modelId) {
@@ -185,13 +197,16 @@ export const modelsSlice = createSlice({
     ) => {
       state.models = [...state.models, ...payload.models];
 
-      state.modelsMap = addToModelsMap(state.modelsMap, ...payload.models);
+      state.modelsMap = addToMarketplaceEntitiesMap(
+        state.modelsMap,
+        ...payload.models,
+      );
     },
     addModelToMap: (
       state,
       { payload: model }: PayloadAction<DialAIEntityModel>,
     ) => {
-      state.modelsMap = addToModelsMap(state.modelsMap, model);
+      state.modelsMap = addToMarketplaceEntitiesMap(state.modelsMap, model);
     },
     updateModel: (
       state,
@@ -214,8 +229,11 @@ export const modelsSlice = createSlice({
       state.models = state.models.map((model) =>
         model.reference === newModel.reference ? newModel : model,
       );
-      deleteFromModelsMap(state.modelsMap, payload.oldApplicationId);
-      state.modelsMap = addToModelsMap(state.modelsMap, newModel);
+      deleteFromMarketplaceEntitiesMap(
+        state.modelsMap,
+        payload.oldApplicationId,
+      );
+      state.modelsMap = addToMarketplaceEntitiesMap(state.modelsMap, newModel);
     },
     deleteModels: (
       state,
@@ -227,7 +245,7 @@ export const modelsSlice = createSlice({
       state.recentModelsIds = state.recentModelsIds.filter(
         (id) => !payload.references.includes(id),
       );
-      state.modelsMap = deleteFromModelsMap(
+      state.modelsMap = deleteFromMarketplaceEntitiesMap(
         state.modelsMap,
         ...payload.references,
       );
@@ -291,7 +309,10 @@ export const modelsSlice = createSlice({
         state.models = state.models.map((model) =>
           model.reference === targetModel.reference ? updatedModel : model,
         );
-        state.modelsMap = addToModelsMap(state.modelsMap, updatedModel);
+        state.modelsMap = addToMarketplaceEntitiesMap(
+          state.modelsMap,
+          updatedModel,
+        );
       }
     },
     updateLocalModels: (
@@ -310,7 +331,10 @@ export const modelsSlice = createSlice({
             ...model,
             ...modelToUpdate.updatedValues,
           };
-          state.modelsMap = addToModelsMap(state.modelsMap, updatedModel);
+          state.modelsMap = addToMarketplaceEntitiesMap(
+            state.modelsMap,
+            updatedModel,
+          );
 
           state.models = state.models.map((modelFromState) => {
             if (modelFromState.reference === modelToUpdate.reference) {

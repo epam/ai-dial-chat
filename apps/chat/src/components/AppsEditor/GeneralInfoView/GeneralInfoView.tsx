@@ -1,5 +1,5 @@
 import { IconArrowsMaximize } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
@@ -18,6 +18,7 @@ import {
 import { ScreenState } from '@/src/types/common';
 import { PreviewMode } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
+import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -39,20 +40,27 @@ export const GeneralInfoView: React.FC<Props> = ({
   applicationData,
   schema,
 }) => {
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelFromState = applicationData
-    ? modelsMap[applicationData.reference]
-    : null;
+  const { t } = useTranslation(Translation.Chat);
 
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const [pythonVersion] = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
-
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const modelsWithFolderId = models.map((model) => ({
-    ...model,
-    folderId: '',
-  }));
+
+  const screenState = useScreenState();
+
+  const modelFromState = applicationData
+    ? modelsMap[applicationData.reference]
+    : null;
+  const modelsWithFolderId = useMemo(
+    () =>
+      models.map((model) => ({
+        ...model,
+        folderId: '',
+      })),
+    [models],
+  );
 
   const isAppDeployed =
     applicationData?.functionStatus === ApplicationStatus.DEPLOYED;
@@ -67,12 +75,41 @@ export const GeneralInfoView: React.FC<Props> = ({
       modelsWithFolderId,
     ),
   });
-
-  const { t } = useTranslation(Translation.Chat);
-
   const formData = methods.watch();
 
-  const screenState = useScreenState();
+  useEffect(() => {
+    // sourceFolder and document_relative_url fields could be updated by core in case of publication update, if we change application id
+    // core updates sourceFolder bucket along with application id, targetUrl and reviewUrl
+    const qaProperties =
+      applicationData?.applicationProperties as QuickAppConfig;
+    const qa2Properties =
+      applicationData?.applicationProperties as QuickApp2Config;
+
+    if (applicationData?.function?.sourceFolder) {
+      methods.setValue('sources', applicationData.function.sourceFolder);
+    } else if (applicationData && qa2Properties?.contexts) {
+      methods.setValue('applicationProperties', {
+        ...applicationData.applicationProperties,
+        contexts: qa2Properties.contexts,
+      });
+    } else if (applicationData && qaProperties?.document_relative_url) {
+      methods.setValue('applicationProperties', {
+        ...applicationData.applicationProperties,
+        document_relative_url: qaProperties.document_relative_url,
+      });
+    }
+
+    // iconUrl may be updated by chat in case of replace url with reviewUrl if iconUrl was changed on application review stage (publication flow)
+    if (applicationData?.iconUrl) {
+      methods.setValue('iconUrl', applicationData.iconUrl);
+    }
+  }, [
+    applicationData?.function?.sourceFolder,
+    applicationData?.applicationProperties,
+    methods,
+    applicationData?.iconUrl,
+    applicationData,
+  ]);
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
@@ -103,15 +140,17 @@ export const GeneralInfoView: React.FC<Props> = ({
     <div className="flex w-full flex-col overflow-hidden">
       <div className="flex w-full justify-center gap-2 border-b border-primary px-3 py-2 text-primary md:hidden">
         <TabButton
+          tabKey={PreviewMode.closed}
           selected={isPreviewClosed}
-          onClick={() => handlePreviewModeChange(PreviewMode.closed)}
+          onClick={handlePreviewModeChange}
           className="w-full"
         >
           {t('Info')}
         </TabButton>
         <TabButton
+          tabKey={PreviewMode.full}
           selected={isPreviewFull}
-          onClick={() => handlePreviewModeChange(PreviewMode.full)}
+          onClick={handlePreviewModeChange}
           className="w-full"
         >
           {t('Preview')}

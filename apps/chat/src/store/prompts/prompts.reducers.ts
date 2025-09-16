@@ -1,14 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
-import {
-  addGeneratedFolderId,
-  getFolderIdFromEntityId,
-  isFolderEmpty,
-  renameFolderAndMoveEntity,
-} from '@/src/utils/app/folders';
-import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { addGeneratedFolderId, isFolderEmpty } from '@/src/utils/app/folders';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
@@ -110,7 +104,10 @@ export const promptsSlice = createSlice({
         (prompt) => prompt.id !== payload.prompt.id,
       );
     },
-    savePrompt: (state, _action: PayloadAction<Prompt>) => state,
+    savePrompt: (
+      state,
+      _action: PayloadAction<{ prompt: Prompt; selectSaved?: boolean }>,
+    ) => state,
     movePrompt: (
       state,
       _action: PayloadAction<{
@@ -137,25 +134,25 @@ export const promptsSlice = createSlice({
     },
     updatePrompt: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         id: string;
         values: Partial<Prompt>;
         publicationUrl?: string | null;
+        selectUpdated?: boolean;
       }>,
-    ) => state,
+    ) => {
+      if (payload.selectUpdated) {
+        state.isPromptLoading = true;
+      }
+    },
     updatePromptSuccess: (
       state,
       { payload }: PayloadAction<{ prompt: Partial<Prompt>; id: string }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
-          if (state.isPromptModalOpen) {
-            const isPromptSelected = payload.id === state.selectedPromptId;
-            state.selectedPromptId = isPromptSelected
-              ? payload.prompt.id
-              : payload.id;
-          }
-
           return {
             ...prompt,
             ...payload.prompt,
@@ -164,6 +161,13 @@ export const promptsSlice = createSlice({
 
         return prompt;
       });
+      if (state.isPromptModalOpen) {
+        const isPromptSelected = payload.id === state.selectedPromptId;
+        state.selectedPromptId =
+          isPromptSelected && payload.prompt.id
+            ? payload.prompt.id
+            : payload.id;
+      }
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     applyPrompt: (state, _action: PayloadAction<PromptInfo>) => state,
@@ -219,50 +223,8 @@ export const promptsSlice = createSlice({
 
       state.folders = state.folders.concat(newFolder);
     },
-    createTemporaryFolder: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        name: string;
-        id: string;
-        folderId?: string;
-      }>,
-    ) => {
-      state.temporaryFolders.push({
-        id: payload.id,
-        name: payload.name,
-        type: FeatureType.Prompt,
-        folderId: payload.folderId || getPromptRootId(),
-        temporary: true,
-      });
-      state.newAddedFolderId = payload.id;
-    },
     deleteFolder: (state, { payload }: PayloadAction<{ folderId: string }>) => {
       state.folders = state.folders.filter(({ id }) => id !== payload.folderId);
-    },
-    deleteTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string }>,
-    ) => {
-      state.temporaryFolders = state.temporaryFolders.filter(
-        ({ id }) => id !== payload.folderId,
-      );
-    },
-    clearTemporaryFolders: (state) => {
-      state.temporaryFolders = [];
-    },
-    renameTemporaryFolder: (
-      state,
-      { payload }: PayloadAction<{ folderId: string; name: string }>,
-    ) => {
-      const parentId = getFolderIdFromEntityId(payload.folderId);
-      const newId = constructPath(parentId, payload.name);
-
-      state.temporaryFolders = state.temporaryFolders.map((f) =>
-        renameFolderAndMoveEntity(f, payload.folderId, newId),
-      );
-      state.newAddedFolderId = undefined;
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;

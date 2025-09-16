@@ -12,22 +12,31 @@ import {
   CreateConversationRequest,
   CreatePlaybackConversationRequest,
   DeleteConversationRequest,
+  DeleteMessageRequest,
   ExportConversationRequest,
   ImportConversationRequest,
+  MessageButtons,
+  MessageCustomButtonEventResponse,
+  NextMessagePlaybackEventResponse,
   OverlayEvents,
   OverlayRequests,
+  PrevMessagePlaybackEventResponse,
   RenameConversationRequest,
   SelectConversationRequest,
   SendMessageRequest,
   SetSystemPromptRequest,
+  UpdateMessageRequest,
 } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
 
 const initialState: OverlayState = {
+  _savedOverlayOptions: undefined,
   hostDomain: '*',
+  customMessageButtons: [],
 
   systemPrompt: null,
+  validationUserEmail: null,
   newConversationsFolder: null,
   readyToInteractSent: false,
 };
@@ -74,6 +83,14 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<CreatePlaybackConversationRequest>>,
     ) => state,
+    stopSelectedPlaybackConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
+    stopSelectedPlaybackConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
     exportConversation: (
       state,
       _action: PayloadAction<WithRequestId<ExportConversationRequest>>,
@@ -111,8 +128,9 @@ export const overlaySlice = createSlice({
     },
     setOverlayOptionsSuccess: (
       state,
-      _action: PayloadAction<WithRequestId<{ hostDomain: string }>>,
+      _action: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
+      state._savedOverlayOptions = _action.payload;
       state.optionsReceived = true;
     },
     signInOptionsSet: (
@@ -125,6 +143,30 @@ export const overlaySlice = createSlice({
     sendMessage: (
       state,
       _action: PayloadAction<WithRequestId<SendMessageRequest>>,
+    ) => state,
+    sendPrevPlaybackEvent: (
+      state,
+      _action: PayloadAction<PrevMessagePlaybackEventResponse>,
+    ) => state,
+    sendNextPlaybackEvent: (
+      state,
+      _action: PayloadAction<NextMessagePlaybackEventResponse>,
+    ) => state,
+    deleteMessage: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
+    ) => state,
+    deleteMessageEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
+    ) => state,
+    updateMessage: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
+    ) => state,
+    updateMessageEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
     ) => state,
     sendPMEvent: (
       state,
@@ -144,6 +186,22 @@ export const overlaySlice = createSlice({
     sendReadyToInteract: (state) => {
       state.readyToInteractSent = true;
     },
+    setCustomMessages: (
+      state,
+      { payload }: PayloadAction<MessageButtons[]>,
+    ) => {
+      state.customMessageButtons = payload;
+    },
+    setValidationUserEmail: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.validationUserEmail = payload;
+    },
+    sendCustomMessageEvent: (
+      state,
+      _action: PayloadAction<MessageCustomButtonEventResponse>,
+    ) => state,
   },
 });
 

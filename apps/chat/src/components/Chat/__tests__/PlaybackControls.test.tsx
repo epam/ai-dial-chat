@@ -44,6 +44,10 @@ vi.mock('@/src/store/selectors', () => ({
   UISelectors: {
     selectIsChatFullWidth: vi.fn(),
   },
+  SettingsSelectors: {
+    isFeatureEnabled: vi.fn(),
+    selectFeatureData: vi.fn(),
+  },
 }));
 
 window.ResizeObserver =
@@ -99,7 +103,7 @@ describe('PlaybackControls', () => {
           activePlaybackIndex: 1,
         },
         model: {
-          id: 'gpt-4-0613',
+          id: 'gpt-4o',
         },
         messages: [],
         prompt: '',

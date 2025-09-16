@@ -11,7 +11,7 @@ import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-const expectedModelId = 'gpt-35-turbo';
+const expectedModelId = 'gpt-4o';
 
 dialOverlayTest(
   `[Overlay] Defaults set in the code: modelID is used for new conversation.\n` +
@@ -33,7 +33,6 @@ dialOverlayTest(
     overlayTalkToAgentDialog,
     overlayHeader,
     overlayConversations,
-    overlayMarketplacePage,
     overlayIconApiHelper,
     overlayBaseAssertion,
     overlayApiAssertion,
@@ -89,10 +88,7 @@ dialOverlayTest(
       'Change conversation model and send the request',
       async () => {
         await overlayChat.changeAgentButton.click();
-        await overlayTalkToAgentDialog.selectAgent(
-          randomModel,
-          overlayMarketplacePage,
-        );
+        await overlayTalkToAgentDialog.selectAgent(randomModel);
         const request =
           await overlayChat.sendRequestWithButton(randomAgentRequest);
         overlayApiAssertion.assertRequestModelId(request, randomModel);

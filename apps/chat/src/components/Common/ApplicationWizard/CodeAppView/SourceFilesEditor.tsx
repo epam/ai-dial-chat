@@ -108,7 +108,7 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
         <div className="flex w-full justify-between truncate whitespace-pre break-all">
           <Tooltip
             tooltip={getIdWithoutRootPathSegments(value ?? '')}
-            contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+            contentClassName="break-all"
             triggerClassName={classNames(
               'truncate whitespace-pre',
               !value && 'text-secondary',

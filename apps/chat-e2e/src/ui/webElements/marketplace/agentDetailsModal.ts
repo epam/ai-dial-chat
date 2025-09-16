@@ -30,6 +30,9 @@ export class AgentDetailsModal extends BaseElement {
   public agentTopics = this.getChildElementBySelector(
     MarketplaceAgentSelectors.topicsContainer,
   );
+  public agentTopic = this.agentTopics.getChildElementBySelector(
+    MarketplaceAgentSelectors.topic,
+  );
   public useButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.useButton,
   );
@@ -41,6 +44,9 @@ export class AgentDetailsModal extends BaseElement {
   );
   public publishButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.publishButton,
+  );
+  public unpublishButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.unpublishButton,
   );
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
@@ -77,6 +83,13 @@ export class AgentDetailsModal extends BaseElement {
   public applicationInformation =
     this.applicationContent.getChildElementBySelector(
       MarketplaceDetailsModal.applicationInformation,
+    );
+  public agentAuthor = this.applicationInformation.getChildElementBySelector(
+    MarketplaceDetailsModal.agentAuthor,
+  );
+  public agentReleaseDate =
+    this.applicationInformation.getChildElementBySelector(
+      MarketplaceDetailsModal.agentReleaseDate,
     );
   public icon = this.getElementIcon(this.rootLocator);
 
@@ -120,5 +133,43 @@ export class AgentDetailsModal extends BaseElement {
     } else {
       await this.editButton.click();
     }
+  }
+
+  public async clickPublishButton(
+    options: {
+      expectedHttpStatus?: number;
+    } = { expectedHttpStatus: 200 },
+  ) {
+    await this.openPublishRequestModal(
+      () => this.publishButton.click(),
+      options,
+    );
+  }
+
+  public async clickUnpublishButton(
+    options: {
+      expectedHttpStatus?: number;
+    } = { expectedHttpStatus: 200 },
+  ) {
+    await this.openPublishRequestModal(
+      () => this.unpublishButton.click(),
+      options,
+    );
+  }
+
+  private async openPublishRequestModal(
+    method: () => Promise<void>,
+    options: {
+      expectedHttpStatus?: number;
+    },
+  ) {
+    const respPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().method() === 'GET' &&
+        resp.url().includes(API.applicationCreateHost) &&
+        resp.status() === options.expectedHttpStatus,
+    );
+    await method();
+    await respPromise;
   }
 }

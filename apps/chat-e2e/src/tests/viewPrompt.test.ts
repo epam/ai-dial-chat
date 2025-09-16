@@ -6,6 +6,7 @@ import {
   ExpectedPromptModalConst,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { DateUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
@@ -39,6 +40,7 @@ dialTest(
     publishingRequestModal,
     publishingRequestModalAssertion,
     informationModal,
+    informationModalAssertion,
     baseAssertion,
     confirmationDialog,
     confirmationDialogAssertion,
@@ -65,6 +67,7 @@ dialTest(
       `{{${bVar}|${bVarDefaultValue}}}`,
     );
     const newFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialTest.step(
       'Prepare a prompt with parametrized content',
@@ -150,10 +153,13 @@ dialTest(
       },
     );
 
-    //TODO: the step is blocked by https://github.com/epam/ai-dial-chat/issues/3947
-    await dialTest.step.skip('Verify prompt info can be viewed', async () => {
-      await promptPreviewModal.openPromptInfo();
+    await dialTest.step('Verify prompt info can be viewed', async () => {
+      await promptPreviewModal.openPromptInfo({ isHttpMethodTriggered: true });
       await baseAssertion.assertElementState(informationModal, 'visible');
+      await informationModalAssertion.assertFields({
+        createdDate: currentDate,
+        lastUpdatedDate: currentDate,
+      });
       await informationModal.cancelButton.click();
       await promptPreviewModalAssertion.assertPromptPreviewModalState(
         'visible',

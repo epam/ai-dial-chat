@@ -1,6 +1,18 @@
+import { Message } from '../chat';
 import { LatestExportConversationsFormat } from '../import-export';
 
 export interface SendMessageRequest {
+  content: string;
+}
+
+export interface DeleteMessageRequest {
+  index: number;
+}
+export interface UpdateMessageRequest {
+  index: number;
+  updatedMessageFields: Partial<Message>;
+}
+export interface SetInputContentRequest {
   content: string;
 }
 export interface SetSystemPromptRequest {

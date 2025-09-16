@@ -18,6 +18,7 @@ import {
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -50,10 +51,17 @@ import {
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
 import { getPublishFolderResources } from '@/src/utils/app/publications';
-import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import {
+  doesEntityContainSearchItem,
+  isHiddenEntity,
+} from '@/src/utils/app/search';
 
 import { Conversation } from '@/src/types/chat';
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DraggedInterface, FolderInterface } from '@/src/types/folder';
 import { PublicationFolderPayload } from '@/src/types/modal';
@@ -142,6 +150,7 @@ export interface FolderProps<T, P = unknown> {
     type,
     action,
   }: PublicationFolderPayload) => void;
+  showTechnicalFolders?: boolean;
 }
 
 export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -184,10 +193,15 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   canManageOnlyTemporaryFolders = false,
   onShowError,
   onPublication,
+  showTechnicalFolders = false,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const screenState = useScreenState();
+  const isMobileOrTablet =
+    screenState === ScreenState.SM || screenState === ScreenState.MD;
 
   const checkboxRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -411,9 +425,13 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, [openedFoldersIds, currentFolder.id]);
   const filteredChildFolders = useMemo(() => {
     return sortByName(
-      allFolders.filter((folder) => folder.folderId === currentFolder.id),
+      allFolders.filter(
+        (folder) =>
+          folder.folderId === currentFolder.id &&
+          (showTechnicalFolders || !isHiddenEntity(folder)),
+      ),
     );
-  }, [currentFolder, allFolders]);
+  }, [allFolders, currentFolder.id, showTechnicalFolders]);
   const filteredChildItems = useMemo(() => {
     return sortByName(
       allItems?.filter(
@@ -494,6 +512,15 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         dispatch(
           UIActions.showErrorToast(
             t('Using a dot at the end of a name is not permitted.'),
+          ),
+        );
+        return;
+      }
+
+      if (newName.startsWith('.')) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the start of a name is not permitted.'),
           ),
         );
         return;
@@ -903,6 +930,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const isMobileCheckboxVisible =
     canSelectFolders && isContextMenu && isTabletScreen();
+  const isTemporaryFolder =
+    'temporary' in currentFolder && currentFolder.temporary;
 
   return (
     <div
@@ -910,7 +939,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       className={classNames(
         'select-none',
         isDraggingOver && 'bg-accent-primary-alpha',
-        currentFolder.temporary && 'text-primary',
+        isTemporaryFolder && 'text-primary',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -1157,7 +1186,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 'relative max-h-5 flex-1 select-none truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
-                isContextMenu && 'pr-5',
+                isContextMenu && !isMobileOrTablet && 'pr-5',
               )}
               data-qa="folder-name"
             >
@@ -1174,14 +1203,12 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         ),
                       )
                 }
-                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                 isTriggerClickable
+                contentClassName="break-all"
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
-                    (currentFolder.temporary
-                      ? 'text-primary'
-                      : 'text-secondary'),
+                    (isTemporaryFolder ? 'text-primary' : 'text-secondary'),
                   isNameOrPathInvalid
                     ? 'text-secondary'
                     : highlightedFolders?.includes(currentFolder.id) &&
@@ -1217,16 +1244,14 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onRename={
                       (onRenameFolder &&
                         !currentFolder.serverSynced &&
-                        ((canManageOnlyTemporaryFolders &&
-                          currentFolder.temporary) ||
+                        ((canManageOnlyTemporaryFolders && isTemporaryFolder) ||
                           !canManageOnlyTemporaryFolders) &&
                         onRename) ||
                       undefined
                     }
                     onDelete={
                       (onDeleteFolder &&
-                        ((canManageOnlyTemporaryFolders &&
-                          currentFolder.temporary) ||
+                        ((canManageOnlyTemporaryFolders && isTemporaryFolder) ||
                           !canManageOnlyTemporaryFolders) &&
                         onDelete) ||
                       undefined
@@ -1251,6 +1276,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onSelect={onSelectFolder && onSelect}
                     canSelectFolders={canSelectFolders}
                     additionalItemData={additionalItemData}
+                    hideTriggerIcon={isMobileOrTablet}
                   />
                 </div>
               )}

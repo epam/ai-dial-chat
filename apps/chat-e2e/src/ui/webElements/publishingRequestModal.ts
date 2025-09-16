@@ -1,10 +1,7 @@
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
-import {
-  IconSelectors,
-  PublishingApprovalModalSelectors,
-  PublishingModalSelectors,
-} from '@/src/ui/selectors';
+import { Tags } from '@/src/ui/domData';
+import { IconSelectors, PublishingModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import {
@@ -23,12 +20,6 @@ export class PublishingRequestModal extends BaseElement {
     super(page, PublishingModalSelectors.modalContainer, parentLocator);
   }
 
-  public allowAccessLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.allowAccessLabel,
-  );
-  public availabilityLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.availabilityLabel,
-  );
   public cancelButton = this.getChildElementBySelector(
     IconSelectors.cancelIcon,
   );
@@ -123,6 +114,9 @@ export class PublishingRequestModal extends BaseElement {
 
   public requestName = this.getChildElementBySelector(
     PublishingModalSelectors.requestName,
+  ).getChildElementBySelector(Tags.input);
+  public requestNameErrorMessage = this.getChildElementBySelector(
+    PublishingModalSelectors.requestNameErrorMessage(),
   );
   public author = this.getChildElementBySelector(
     PublishingModalSelectors.author,
@@ -135,6 +129,12 @@ export class PublishingRequestModal extends BaseElement {
   );
   public unpublishFrom = this.getChildElementBySelector(
     PublishingModalSelectors.unpublishFromPath,
+  );
+  public publishToLabel = this.getChildElementBySelector(
+    PublishingModalSelectors.publishToLabel,
+  );
+  public authorLabel = this.getChildElementBySelector(
+    PublishingModalSelectors.authorLabel,
   );
 
   public async sendPublicationRequest() {

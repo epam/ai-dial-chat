@@ -1,8 +1,12 @@
-import { Fragment } from 'react';
+import { IconPencilMinus } from '@tabler/icons-react';
+import { Fragment, useCallback } from 'react';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getApplicationType,
   getModelDescription,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -11,15 +15,23 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationActions, PublicationActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { IconButton } from '@/src/components/Common/IconButton';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
+import { ReviewExternalAppSection } from './ReviewExternalAppSection';
+import { ReviewQuickApp2Section } from './ReviewQuickApp2Section';
 import { ReviewQuickAppSection } from './ReviewQuickAppSection';
 
 import isEmpty from 'lodash-es/isEmpty';
@@ -27,9 +39,25 @@ import isEmpty from 'lodash-es/isEmpty';
 function ReviewApplicationDialogContent() {
   const { t } = useTranslation(Translation.Chat);
 
+  const dispatch = useAppDispatch();
+
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const detailedApplicationTypeSchema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
+  const isResourceUnpublishing = useAppSelector((state) =>
+    PublicationSelectors.selectIsResourceUnpublishing(
+      state,
+      selectedPublicationUrl ?? '',
+      application?.id ?? '',
+    ),
+  );
+
   const isCodeApp = application && isExecutableApp(application);
 
   const controlsEntity = application
@@ -40,6 +68,26 @@ function ReviewApplicationDialogContent() {
       }
     : null;
 
+  const handleEditApplication = useCallback(() => {
+    if (!application) return;
+
+    const applicationType = getApplicationType(application);
+    dispatch(
+      ApplicationActions.enterEditMode({
+        entity: application,
+        applicationType,
+        detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
+        publicationUrl: selectedPublicationUrl as string,
+      }),
+    );
+    dispatch(PublicationActions.setIsApplicationReview(false));
+  }, [
+    application,
+    detailedApplicationTypeSchema?.$id,
+    dispatch,
+    selectedPublicationUrl,
+  ]);
+
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
@@ -48,13 +96,13 @@ function ReviewApplicationDialogContent() {
         </div>
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Name: ')}</span>
-          <span className="max-w-[414px] text-primary">
+          <span className="max-w-[414px] text-primary" data-qa="app-name">
             {application?.name}
           </span>
         </div>
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Version: ')}</span>
-          <span className="max-w-[414px] text-primary">
+          <span className="max-w-[414px] text-primary" data-qa="app-version">
             {application?.version}
           </span>
         </div>
@@ -73,7 +121,7 @@ function ReviewApplicationDialogContent() {
             <span className="w-[122px] shrink-0 text-secondary">
               {t('Description: ')}
             </span>
-            <span className="grow text-primary">
+            <span className="grow text-primary" data-qa="app-description">
               {getModelDescription(application)}
             </span>
           </div>
@@ -96,8 +144,10 @@ function ReviewApplicationDialogContent() {
                 {t('Features data:')}
               </span>
               <div className="flex flex-col justify-start break-all">
-                {'{'}
-                <div className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary">
+                <div
+                  className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary"
+                  data-qa="app-feature"
+                >
                   {Object.entries(application?.features || {}).map(
                     ([key, value], index, array) => (
                       <Fragment key={key}>
@@ -106,7 +156,6 @@ function ReviewApplicationDialogContent() {
                     ),
                   )}
                 </div>
-                {'}'}
               </div>
             </div>
           )}
@@ -121,6 +170,7 @@ function ReviewApplicationDialogContent() {
                   <span
                     key={item}
                     className="m-1 h-[31] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
+                    data-qa="app-attach-type"
                   >
                     {item}
                   </span>
@@ -133,7 +183,10 @@ function ReviewApplicationDialogContent() {
             <span className="w-[122px] text-secondary">
               {t(' Max. attachments number:')}
             </span>
-            <span className="max-w-[414px] text-primary">
+            <span
+              className="max-w-[414px] text-primary"
+              data-qa="app-max-attach"
+            >
               {application?.maxInputAttachments}
             </span>
           </div>
@@ -144,7 +197,10 @@ function ReviewApplicationDialogContent() {
               <span className="w-[122px] text-secondary">
                 {t('Completion URL:')}
               </span>
-              <span className="max-w-[414px] break-all text-primary">
+              <span
+                className="max-w-[414px] break-all text-primary"
+                data-qa="app-completion-url"
+              >
                 {application.completionUrl}
               </span>
             </div>
@@ -153,8 +209,26 @@ function ReviewApplicationDialogContent() {
         <ReviewCodeAppSection application={application} />
 
         <ReviewQuickAppSection application={application} />
+
+        <ReviewQuickApp2Section application={application} />
+
+        <ReviewExternalAppSection application={application} />
       </div>
-      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
+      <div
+        className={classNames(
+          'flex w-full items-center border-t border-tertiary px-3 py-4 md:px-5',
+          isResourceUnpublishing ? 'justify-end' : 'justify-between',
+        )}
+      >
+        {!isResourceUnpublishing && (
+          <IconButton
+            name={t('Edit application')}
+            dataQa="admin-edit-application"
+            Icon={IconPencilMinus}
+            onClick={handleEditApplication}
+          />
+        )}
+
         {controlsEntity && (
           <PublicationControls
             entity={controlsEntity}

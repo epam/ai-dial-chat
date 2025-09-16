@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.33.0-rc",
+  "version": "0.38.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -31,8 +31,9 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.26.7",
+    "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "^4.6.0",
-    "@nx/next": "21.0.3",
+    "@nx/next": "21.4.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.50.0",
     "@opentelemetry/exporter-jaeger": "^1.26.0",
@@ -64,7 +65,7 @@
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
     "nanoid": "^5.1.5",
-    "next": "15.3.3",
+    "next": "15.5.2",
     "next-auth": "4.24.10",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
@@ -96,19 +97,20 @@
     "rxjs": "^7.8.1",
     "stringz": "^2.1.0",
     "tiktoken": "^1.0.17",
-    "tslib": "^2.6.0"
+    "tslib": "^2.6.0",
+    "zod": "^4.0.15"
   },
   "devDependencies": {
     "@mozilla/readability": "^0.6.0",
-    "@nx/devkit": "21.0.3",
-    "@nx/eslint": "21.0.3",
-    "@nx/eslint-plugin": "21.0.3",
-    "@nx/jest": "21.0.3",
-    "@nx/js": "21.0.3",
-    "@nx/react": "21.0.3",
-    "@nx/rollup": "21.0.3",
-    "@nx/vite": "21.0.3",
-    "@nx/workspace": "21.0.3",
+    "@nx/devkit": "21.4.0",
+    "@nx/eslint": "21.4.0",
+    "@nx/eslint-plugin": "21.4.0",
+    "@nx/jest": "21.4.0",
+    "@nx/js": "21.4.0",
+    "@nx/react": "21.4.0",
+    "@nx/rollup": "21.4.0",
+    "@nx/vite": "21.4.0",
+    "@nx/workspace": "21.4.0",
     "@svgr/webpack": "^8.0.1",
     "@swc-node/register": "^1.8.0",
     "@swc/core": "^1.4.13",
@@ -147,7 +149,7 @@
     "gpt-3-encoder": "^1.1.4",
     "jsdom": "^21.1.1",
     "minimist": "^1.2.8",
-    "nx": "21.0.3",
+    "nx": "21.4.0",
     "patch-package": "^8.0.0",
     "postcss": "^8.4.21",
     "postinstall-postinstall": "^2.1.0",
@@ -156,22 +158,21 @@
     "tailwindcss": "^3.3.5",
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
-    "vite": "^6.3.4",
+    "vite": "^6.3.6",
     "vitest": "^3.0.9"
   },
-  "overrides": {
-    "js-yaml": "4.1.0",
-    "argparse": "2.0.1",
-    "esbuild": "0.25.1",
-    "koa": "2.16.1"
-  },
   "optionalDependencies": {
-    "@nx/playwright": "21.0.3",
-    "@playwright/test": "^1.53.1",
+    "@nx/playwright": "21.4.0",
+    "@playwright/test": "^1.55.0",
     "@types/tinycolor2": "^1.4.6",
-    "allure-playwright": "^3.2.2",
+    "allure-playwright": "^3.3.2",
     "eslint-plugin-playwright": "^2.2.0",
-    "playwright-chromium": "^1.53.1"
+    "file-type": "^21.0.0",
+    "playwright-chromium": "^1.55.0"
+  },
+  "overrides": {
+    "esbuild": "0.25.8",
+    "tmp": "0.2.5"
   },
   "engines": {
     "node": ">=22.2.0",

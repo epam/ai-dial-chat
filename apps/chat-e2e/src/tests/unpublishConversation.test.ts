@@ -33,6 +33,7 @@ dialAdminTest(
       iconApiHelper,
       conversationToPublishAssertion,
       baseAssertion,
+      publishingRulesAssertion,
       organizationConversationAssertion,
       publishingRequestModalAssertion,
       tooltipAssertion,
@@ -63,6 +64,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const secondRequestName = GeneratorUtil.randomUnpublishRequestName();
     let secondUnpublishResponse: PublicationProps;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
       ModelsUtil.getDefaultAgent()!,
@@ -109,20 +111,16 @@ dialAdminTest(
         );
         await baseAssertion.assertElementText(
           publishingRequestModal.unpublishFromLabel,
-          ExpectedConstants.unpublishFrom,
+          ExpectedConstants.unpublishFromLabel,
         );
         await baseAssertion.assertElementText(
           publishingRequestModal.unpublishFrom,
           PublishPath.Organization,
         );
-        await baseAssertion.assertElementText(
-          publishingRequestModal.allowAccessLabel,
-          ExpectedConstants.allowAccessLabel,
-        );
-        await baseAssertion.assertElementState(
-          publishingRequestModal.availabilityLabel,
-          'visible',
-        );
+        await publishingRulesAssertion.assertLabels({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+        });
         await conversationToPublishAssertion.assertEntityState(
           { name: publishedConversation.name },
           'visible',
@@ -177,6 +175,7 @@ dialAdminTest(
     await dialTest.step(
       'Create duplicated unpublish request for the same conversation',
       async () => {
+        publishApiModels.response.name = secondRequestName;
         secondUnpublishResponse =
           await publicationApiHelper.createUnpublishRequest(
             publishApiModels.response,

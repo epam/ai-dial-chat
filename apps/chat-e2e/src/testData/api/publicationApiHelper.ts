@@ -65,7 +65,7 @@ export class PublicationApiHelper extends BaseApiHelper {
 
   public async listPublishedApps() {
     const response = await this.request.get(
-      this.getHost(API.publishedApplicationsHost),
+      this.getHost(API.publishedApplicationsHost()),
     );
     const statusCode = response.status();
     expect(
@@ -166,7 +166,8 @@ export class PublicationApiHelper extends BaseApiHelper {
     }
     const data: PublicationRequestModel = {
       displayAuthor: publicationRequest.displayAuthor ?? '',
-      name: GeneratorUtil.randomUnpublishRequestName(),
+      name:
+        publicationRequest.name || GeneratorUtil.randomUnpublishRequestName(),
       targetFolder: publicationRequest.targetFolder,
       resources: unpublishResources,
       rules: publicationRequest.rules,

@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import { FC, memo, useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -18,7 +18,13 @@ import { Menu } from '@/src/components/Common/DropdownMenu';
 
 import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
 
-import { Feature, LikeState, Message } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  LikeState,
+  Message,
+  PublishActions,
+  Role,
+} from '@epam/ai-dial-shared';
 
 export interface Props {
   message: Message;
@@ -28,9 +34,17 @@ export interface Props {
   isLikesEnabled: boolean;
   editDisabled: boolean;
   messagesLength: number;
-  onLike: (likeStatus: LikeState) => void;
-  onDelete: () => void;
-  onEdit?: (editedMessage: Message, index: number) => void;
+  onLike: (
+    index: number,
+    conversation: Conversation,
+    likeStatus: LikeState,
+  ) => void;
+  onDelete?: (messageIndex: number, conversation: Conversation) => void;
+  onEdit: (
+    editedMessage: Message,
+    index: number,
+    conversationId: string,
+  ) => void;
   onRegenerate?: () => void;
 }
 
@@ -54,7 +68,7 @@ export const ChatMessage: FC<Props> = memo(
     const { t } = useTranslation(Translation.Chat);
 
     const [messageCopied, setMessageCopied] = useState(false);
-    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [clientY, setClientY] = useState(0);
     const [clientX, setClientX] = useState(0);
     const [isDeleteConfirmationOpened, setIsDeleteConfirmationOpened] =
@@ -69,14 +83,20 @@ export const ChatMessage: FC<Props> = memo(
     const isMessageTemplatesEnabled = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
     );
+    const isFirstMessageSystem = useMemo(() => {
+      return conversation.messages[0]?.role === Role.System;
+    }, [conversation.messages]);
+    const realMessageIndex = useMemo(() => {
+      return isFirstMessageSystem ? messageIndex + 1 : messageIndex;
+    }, [isFirstMessageSystem, messageIndex]);
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
         if (conversation && onLike) {
-          onLike(likeStatus);
+          onLike(messageIndex, conversation, likeStatus);
         }
       },
-      [conversation, onLike],
+      [conversation, onLike, messageIndex],
     );
 
     const handleToggleEditing = useCallback((value: boolean) => {
@@ -102,14 +122,14 @@ export const ChatMessage: FC<Props> = memo(
     }, [message.content]);
 
     const handleDeleteMessage = useCallback(() => {
-      onDelete();
-    }, [onDelete]);
+      onDelete?.(messageIndex, conversation);
+    }, [onDelete, messageIndex, conversation]);
 
-    useEffect(() => {
-      if (!onEdit) {
-        setIsEditing(false);
-      }
-    }, [onEdit]);
+    const handleDelete = useCallback(() => {
+      if (!onDelete) return;
+
+      setIsDeleteConfirmationOpened(true);
+    }, [onDelete]);
 
     return (
       <>
@@ -117,10 +137,9 @@ export const ChatMessage: FC<Props> = memo(
           <ChatMessageContent
             isLastMessage={isLastMessage}
             messageIndex={messageIndex}
+            realMessageIndex={realMessageIndex}
             onEdit={onEdit}
-            onDelete={() => {
-              setIsDeleteConfirmationOpened(true);
-            }}
+            onDelete={onDelete && handleDelete}
             onToggleEditing={handleToggleEditing}
             isEditing={isEditing}
             editDisabled={editDisabled}
@@ -133,12 +152,17 @@ export const ChatMessage: FC<Props> = memo(
             onCopy={handleCopy}
             message={message}
             onRegenerate={onRegenerate}
-            withButtons
+            withButtons={
+              conversation.publicationInfo?.action !== PublishActions.DELETE
+            }
             isLikesEnabled={isLikesEnabled}
           />
         ) : (
           <Menu
-            isTriggerEnabled={!isEditing}
+            isTriggerEnabled={
+              !isEditing &&
+              conversation.publicationInfo?.action !== PublishActions.DELETE
+            }
             placement="top-start"
             listClassName="context-menu-chat bg-layer-3"
             shouldFlip={false}
@@ -155,6 +179,7 @@ export const ChatMessage: FC<Props> = memo(
               <ChatMessageContent
                 isLastMessage={isLastMessage}
                 messageIndex={messageIndex}
+                realMessageIndex={realMessageIndex}
                 conversation={conversation}
                 allMessages={filteredMessages}
                 editDisabled={editDisabled}
@@ -184,13 +209,14 @@ export const ChatMessage: FC<Props> = memo(
             <MessageMobileButtons
               isMessageStreaming={!!conversation.isMessageStreaming}
               isLastMessage={isLastMessage}
+              realMessageIndex={realMessageIndex}
               message={message}
               isLikesEnabled={isLikesEnabled}
               onCopy={handleCopy}
               messageCopied={messageCopied}
               editDisabled={editDisabled}
-              onLike={onLike}
-              onDelete={() => setIsDeleteConfirmationOpened(true)}
+              onLike={handleLike}
+              onDelete={onDelete && handleDelete}
               isEditing={isEditing}
               onToggleEditing={handleToggleEditing}
               onRegenerate={onRegenerate}
