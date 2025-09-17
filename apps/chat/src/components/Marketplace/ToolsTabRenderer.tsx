@@ -74,8 +74,8 @@ export function ToolsTabRenderer() {
     (toolset: ToolsetModel) => {
       if (installedToolsetsSet.has(toolset.reference)) {
         dispatch(
-          ToolsetActions.removeInstalledToolsets({
-            references: [toolset.reference],
+          MarketplaceActions.setDeleteEntity({
+            entity: toolset,
             action: DeleteType.REMOVE,
           }),
         );
