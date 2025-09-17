@@ -85,9 +85,16 @@ export const getDefaultFormData = (
 
 export const ToolsetLoginFormSchema = zodValidation
   .object({
+    includeOAuthFields: zodValidation.boolean().optional(),
     type: zodValidation.enum(ToolsetAuthTypes),
+    // API_KEY
     keyHeader: zodValidation.string().optional(),
     apiKey: zodValidation.string().optional(),
+    // OAuth
+    clientId: zodValidation.string().optional(),
+    clientSecret: zodValidation.string().optional(),
+    authorizationEndpoint: zodValidation.string().optional(),
+    tokenEndpoint: zodValidation.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === ToolsetAuthTypes.API_KEY) {
@@ -103,6 +110,22 @@ export const ToolsetLoginFormSchema = zodValidation
           code: 'custom',
           path: ['apiKey'],
           message: 'API key is required',
+        });
+      }
+    }
+    if (data.type === ToolsetAuthTypes.OAUTH) {
+      if (!data.clientId && data.includeOAuthFields) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['clientId'],
+          message: 'Client ID is required',
+        });
+      }
+      if (!data.clientSecret && data.includeOAuthFields) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['clientSecret'],
+          message: 'Client secret is required',
         });
       }
     }
