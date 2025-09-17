@@ -115,6 +115,7 @@ export const ImportExportSelectors = {
 };
 
 export const ChatSelectors = {
+  fileDropArea: '#file-drop-area',
   chat: '[data-qa="chat"]',
   spinner: '[data-qa="spinner"]',
   chatMessages: '[data-qa="chat-messages"]',
@@ -146,6 +147,14 @@ export const ChatSelectors = {
   showLess: '[data-qa="show-less"]',
   iconSelector: '[data-qa="entity-icon"]',
   addModelToWorkspace: '[data-qa="add-model-to-workspace"]',
+};
+
+export const DragFileSelectors = {
+  dragFileContainer: '[data-qa="drag-file-container"]',
+  dragFileIcon: '#drag-file-icon',
+  dragFileTitle: '[data-qa="drag-file-title"]',
+  dragFileDescription: '[data-qa="drag-file-description"]',
+  dragFileNotAllowedIcon: '#drag-file-not-allowed-icon',
 };
 
 export const TableSelectors = {

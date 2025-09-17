@@ -41,6 +41,7 @@ export interface Toolset {
     authentication_type: ToolsetAuthTypes;
     redirect_uri?: string;
     api_key_header?: string;
+    token_endpoint?: string;
     // get
     client_id?: string;
     client_secret?: string;
@@ -49,5 +50,6 @@ export interface Toolset {
     code_challenge_method?: string;
     global_auth_status?: ToolsetAuthStatus;
     user_level_auth_status?: ToolsetAuthStatus;
+    scopes_supported?: string[];
   };
 }
