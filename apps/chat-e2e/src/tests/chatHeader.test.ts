@@ -6,19 +6,14 @@ import { responseThrottlingTimeout } from '@/src/ui/pages';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let allAddons: DialAIEntityModel[];
-let addonIds: string[];
 let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  allAddons = ModelsUtil.getAddons();
-  addonIds = allAddons.map((a) => a.id);
   defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
-  'Check chat header for Model with three addons, temp = 0.\n' +
-    'Message is send on Enter',
+  'Message is send on Enter',
   async ({
     dialHomePage,
     chat,
@@ -29,25 +24,23 @@ dialTest(
     modelInfoTooltip,
     chatSettingsTooltip,
     errorPopup,
-    iconApiHelper,
-    chatHeaderAssertion,
+    tooltipAssertion,
     conversationInfoTooltipAssertion,
     conversations,
     localStorageManager,
+    baseAssertion,
   }) => {
-    setTestIds('EPMRTC-1115', 'EPMRTC-473');
+    setTestIds('EPMRTC-473');
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
-    const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
 
     await dialTest.step(
-      'Prepare model conversation with all available addons and temperature',
+      'Prepare model conversation with non-default temperature',
       async () => {
         conversation = conversationData.prepareModelConversation(
           temp,
           '',
-          addonIds,
           defaultModel,
         );
         await dataInjector.createConversations([conversation]);
@@ -66,52 +59,21 @@ dialTest(
           responseThrottlingTimeout * 2,
         );
         const requestsData = await chat.sendRequestWithKeyboard(request, false);
-
-        expect
-          .soft(requestsData.model.id, ExpectedMessages.requestModeIdIsValid)
-          .toBe(conversation.model.id);
-        expect
-          .soft(requestsData.prompt, ExpectedMessages.requestPromptIsValid)
-          .toBe(conversation.prompt);
-        expect
-          .soft(requestsData.temperature, ExpectedMessages.requestTempIsValid)
-          .toBe(conversation.temperature);
-        expect
-          .soft(
-            requestsData.selectedAddons,
-            ExpectedMessages.requestSelectedAddonsAreValid,
-          )
-          .toEqual(conversation.selectedAddons);
-      },
-    );
-
-    await dialTest.step(
-      'Verify chat icons are updated with model, temperature and addons in the header',
-      async () => {
-        await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
-
-        if (addonIds.length > 0) {
-          const headerAddonIcons = await chatHeader.getHeaderAddonsIcons();
-          expect
-            .soft(
-              headerAddonIcons.length,
-              ExpectedMessages.headerIconsCountIsValid,
-            )
-            .toBe(addonIds.length);
-
-          for (const addonId of addonIds) {
-            const expectedAddon = ModelsUtil.getAddon(addonId)!;
-            const actualAddon = headerAddonIcons.find(
-              (a) => a.entityId === expectedAddon.id,
-            )!;
-            const expectedAddonIcon =
-              iconApiHelper.getEntityIcon(expectedAddon);
-            await chatHeaderAssertion.assertEntityIcon(
-              actualAddon.iconLocator,
-              expectedAddonIcon,
-            );
-          }
-        }
+        baseAssertion.assertValue(
+          requestsData.model.id,
+          conversation.model.id,
+          ExpectedMessages.requestModeIdIsValid,
+        );
+        baseAssertion.assertValue(
+          requestsData.prompt,
+          conversation.prompt,
+          ExpectedMessages.requestPromptIsValid,
+        );
+        baseAssertion.assertValue(
+          requestsData.temperature,
+          conversation.temperature,
+          ExpectedMessages.requestTempIsValid,
+        );
       },
     );
 
@@ -120,44 +82,27 @@ dialTest(
       async () => {
         await errorPopup.cancelPopup();
         await chatHeader.hoverOverChatModel();
-        const modelInfo = await modelInfoTooltip.getModelInfo();
-        expect
-          .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(defaultModel.name);
-
-        const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
-        expect
-          .soft(modelVersionInfo, ExpectedMessages.agentVersionIsValid)
-          .toBe(defaultModel.version);
+        await conversationInfoTooltipAssertion.assertElementText(
+          modelInfoTooltip.modelInfo,
+          defaultModel.name,
+          ExpectedMessages.chatInfoModelIsValid,
+        );
+        await conversationInfoTooltipAssertion.assertElementText(
+          modelInfoTooltip.versionInfo,
+          defaultModel.version!,
+          ExpectedMessages.agentVersionIsValid,
+        );
 
         await chatHeader.hoverOverChatSettings();
-        const promptInfo = await chatSettingsTooltip.getPromptInfo(false);
-        expect
-          .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
-          .toBe('');
-
-        const tempInfo = await chatSettingsTooltip.getTemperatureInfo();
-        expect
-          .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-          .toBe(conversation.temperature.toString());
-
-        const addonsInfo = await chatSettingsTooltip.getAddonsInfo();
-        const actualAddonsInfoIcons = await chatSettingsTooltip.getAddonIcons();
-        expect
-          .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-          .toBe(allAddons.length);
-
-        for (const addonId of addonIds) {
-          const expectedAddon = ModelsUtil.getAddon(addonId)!;
-          const actualAddonInfoIcon = actualAddonsInfoIcons.find(
-            (a) => a.entityId === expectedAddon.id,
-          )!;
-          const expectedAddonIcon = iconApiHelper.getEntityIcon(expectedAddon);
-          await conversationInfoTooltipAssertion.assertEntityIcon(
-            actualAddonInfoIcon.iconLocator,
-            expectedAddonIcon,
-          );
-        }
+        await tooltipAssertion.assertElementText(
+          chatSettingsTooltip.promptInfo,
+          '',
+        );
+        await tooltipAssertion.assertElementText(
+          chatSettingsTooltip.temperatureInfo,
+          conversation.temperature,
+          ExpectedMessages.chatInfoTemperatureIsValid,
+        );
       },
     );
   },

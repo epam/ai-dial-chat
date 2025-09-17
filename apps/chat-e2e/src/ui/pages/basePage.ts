@@ -89,7 +89,6 @@ export class BasePage {
     if (options?.setEntitiesEnvVars) {
       expectedApiResponses = [
         { apiMethod: 'GET', urlPattern: API.modelsHost },
-        { apiMethod: 'GET', urlPattern: API.addonsHost },
         { apiMethod: 'GET', urlPattern: API.bucketHost },
         { apiMethod: 'GET', urlPattern: API.themesListingHost },
       ];

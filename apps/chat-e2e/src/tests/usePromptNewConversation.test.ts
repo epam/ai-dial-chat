@@ -460,8 +460,7 @@ dialAdminTest(
 
 dialTest(
   'Use prompt is not available for chat with not available agent\n' +
-    'Use prompt is not available for chat with agent which not added to My workspace\n' +
-    'Use prompt is not available for chat with not available addon',
+    'Use prompt is not available for chat with agent which not added to My workspace',
   async ({
     dialHomePage,
     conversations,
@@ -480,22 +479,13 @@ dialTest(
     chatHeader,
     marketplaceAgentsSection,
   }) => {
-    setTestIds('EPMRTC-5506', 'EPMRTC-5507', 'EPMRTC-5508');
+    setTestIds('EPMRTC-5506', 'EPMRTC-5507');
     const prompt = promptData.prepareDefaultPrompt();
     const nonExistentAppName = GeneratorUtil.randomApplicationName();
 
     const initialModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
     );
-    const modelWithAddons = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModels().filter(
-        (m) =>
-          ModelsUtil.doesModelAllowAddons(m) &&
-          m.iconUrl !== undefined &&
-          m.id !== initialModel.id,
-      ),
-    );
-    const nonExistentAddon = GeneratorUtil.randomString(10);
 
     // Conversations setup
     const conversationWithNonExistentApp =
@@ -503,24 +493,14 @@ dialTest(
     conversationData.resetData();
     const conversationWithAModelToDelete =
       conversationData.prepareDefaultConversation(initialModel);
-    conversationData.resetData();
-    const conversationWithNonExistentAddon =
-      conversationData.prepareModelConversation(
-        1,
-        'test',
-        [nonExistentAddon],
-        modelWithAddons,
-      );
 
     await dataInjector.createPrompts([prompt]);
     await dataInjector.createConversations([
       conversationWithNonExistentApp,
       conversationWithAModelToDelete,
-      conversationWithNonExistentAddon,
     ]);
     await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
       initialModel,
-      modelWithAddons,
     );
     await localStorageManager.setShowSideBarPanels();
 
@@ -565,18 +545,6 @@ dialTest(
     await dialTest.step(
       'Hover over a prompt and check context menu options',
       async () => {
-        await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
-          MenuOptions.use,
-          'disabled',
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Select conversation with non-existent addon and verify "Use" prompt option is disabled',
-      async () => {
-        await conversations.selectEntity(conversationWithNonExistentAddon.name);
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenuAssertion.assertMenuOptionActionabilityState(
           MenuOptions.use,

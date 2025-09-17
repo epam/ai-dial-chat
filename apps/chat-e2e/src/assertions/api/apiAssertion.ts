@@ -86,12 +86,6 @@ export class ApiAssertion {
     }
   }
 
-  public assertRequestAddons(request: ChatBody, expectedAddons: string[]) {
-    expect
-      .soft(request.selectedAddons, ExpectedMessages.chatRequestAddonsAreValid)
-      .toEqual(expectedAddons);
-  }
-
   public verifyRequestAttachments(
     request: ChatBody,
     ...expectedAttachmentUrls: string[]
