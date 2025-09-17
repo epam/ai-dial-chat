@@ -1,5 +1,6 @@
 import { APIRequestContext } from '@playwright/test';
 import { API } from '@/src/testData';
+import he from 'he';
 
 export interface AuthTokens {
   sessionToken: string;
@@ -128,23 +129,28 @@ export class DebugAuth {
     password: string,
     dynamicParams: URLSearchParams,
   ): Promise<any> {
-    const authHost = process.env.AUTH_AUTH0_HOST!;
-    // Correctly reference the full env var name as loaded from .env files
-    const clientId = process.env.AUTH_AUTH0_CLIENT_ID!;
-    const tenant = process.env.AUTH_TENANT!;
-    const connection = process.env.AUTH_CONNECTION!;
-    const audience = process.env.AUTH_AUTH0_AUDIENCE!;
-    const intstate = process.env.AUTH0_INTSTATE!;
+    // Get auth configuration from environment variables, with fallbacks
+    // This mirrors the Java implementation's AuthConfig and SecretsConfig classes
+    const authHost = process.env.AUTH_AUTH0_HOST || process.env.AUTH_HOST;
+    const clientId = process.env.AUTH_AUTH0_CLIENT_ID || process.env.AUTH_CLIENT_ID;
+    const tenant = process.env.AUTH_TENANT || process.env.AUTH0_TENANT;
+    const connection = process.env.AUTH_CONNECTION || process.env.AUTH0_CONNECTION;
+    const audience = process.env.AUTH_AUTH0_AUDIENCE || process.env.AUTH0_AUDIENCE;
+    const intstate = process.env.AUTH0_INTSTATE;
 
     console.log('Auth0 Host for submission:', authHost);
 
-    if (!authHost || !clientId) {
-      throw new Error('Missing critical Auth0 configuration: AUTH0_HOST and AUTH_AUTH0_CLIENT_ID must be defined in your environment.');
+    if (!authHost || !clientId || !tenant || !connection) {
+      throw new Error(
+        'Missing critical Auth0 configuration. Required environment variables:' +
+        ' AUTH_AUTH0_HOST/AUTH_HOST, AUTH_AUTH0_CLIENT_ID/AUTH_CLIENT_ID,' +
+        ' AUTH_TENANT/AUTH0_TENANT, AUTH_CONNECTION/AUTH0_CONNECTION'
+      );
     }
 
     const formData = new URLSearchParams();
 
-    // Static params from config
+    // Static params from config - mirrors Java implementation in Authenticate.java
     formData.append('client_id', clientId);
     formData.append('tenant', tenant);
     formData.append('connection', connection);
@@ -157,6 +163,7 @@ export class DebugAuth {
     formData.append('sso', 'true');
 
     // Dynamic params from previous request (mirroring AuthUtil.java)
+    // These are extracted from the dynamicParams which come from the URL
     formData.append('redirect_uri', dynamicParams.get('redirect_uri') ?? '');
     formData.append('response_type', dynamicParams.get('response_type') ?? '');
     formData.append('scope', dynamicParams.get('scope') ?? '');
@@ -164,10 +171,14 @@ export class DebugAuth {
     formData.append('code_challenge_method', dynamicParams.get('code_challenge_method') ?? '');
     formData.append('code_challenge', dynamicParams.get('code_challenge') ?? '');
     formData.append('protocol', dynamicParams.get('protocol') ?? '');
+    // Also add client parameter from Java implementation if present
+    const client = dynamicParams.get('client');
+    if (client) formData.append('client', client);
 
     const submissionUrl = `${authHost}/usernamepassword/login`;
     console.log('Submitting credentials to:', submissionUrl);
-    // console.log('Form data:', formData.toString()); // Uncomment for extreme debugging
+    // For debugging only, don't leave this enabled in production:
+    // console.log('Form data:', formData.toString());
 
     const response = await this.request.post(submissionUrl, {
       data: formData.toString(),
@@ -177,36 +188,44 @@ export class DebugAuth {
     });
 
     if (response.status() !== 200) {
-      throw new Error(`Failed to submit credentials: ${response.status()}`);
+      throw new Error(`Failed to submit credentials: ${response.status()} - ${await response.text()}`);
     }
 
     const responseText = await response.text();
 
-    // Use a robust regex that handles newlines and complex characters inside the value attribute,
-    // compatible with older JS targets by using [\s\S] instead of the /s flag.
-    const waMatch = responseText.match(/name="wa"\s+value="([^"]*?)"/);
+    // Extract SAML parameters from the response using CSS-selector like approach
+    // This mirrors the Java implementation in Authenticate.java which uses CSS selectors
+    // Use robust regex patterns that handle various HTML formats including line breaks and whitespace
+    // Auth params we need to extract: wa, wresult, wctx
+    const waMatch = responseText.match(/name="wa"[\s\S]*?value="([^"]*?)"/);
     const wresultMatch = responseText.match(/name="wresult"[\s\S]*?value="([^"]*?)"/);
-    const wctxMatch = responseText.match(/name="wctx"\s+value="([^"]*?)"/);
+    const wctxMatch = responseText.match(/name="wctx"[\s\S]*?value="([^"]*?)"/);
 
     if (!waMatch || !wresultMatch || !wctxMatch) {
+      console.error('Debug - Auth0 response:', responseText);
       throw new Error('Failed to extract SAML parameters from Auth0 response');
     }
 
     return {
       wa: waMatch[1],
       wresult: wresultMatch[1],
-      wctx: wctxMatch[1],
+      wctx: he.decode(wctxMatch[1]),
     };
   }
 
   private async finalizeAuthAndGetSessionToken(authParams: any): Promise<string> {
-    const authHost = process.env.AUTH_AUTH0_HOST;
+    // Get auth host from environment variables with fallback
+    const authHost = process.env.AUTH_AUTH0_HOST || process.env.AUTH_HOST;
+    if (!authHost) {
+      throw new Error('Missing AUTH_AUTH0_HOST or AUTH_HOST environment variable');
+    }
 
     const formData = new URLSearchParams();
     formData.append('wa', authParams.wa);
     formData.append('wresult', authParams.wresult);
     formData.append('wctx', authParams.wctx);
 
+    // This matches the Java implementation in Authenticate.java finalizeAuthAndGetSessionToken method
     const response = await this.request.post(`${authHost}/login/callback`, {
       data: formData.toString(),
       headers: {
@@ -214,13 +233,14 @@ export class DebugAuth {
       },
     });
 
-    if (response.status() !== 302) {
-      throw new Error(`Failed to finalize authentication: ${response.status()}`);
+    if (response.status() !== 200) {
+      throw new Error(`Failed to finalize authentication: ${response.status()} - Expected 200 OK`);
     }
 
-    // Reflect performance auth: read the session token from the cookie jar.
+    // Read the session token from the cookie jar - mirror Java implementation
     const storage = await this.request.storageState();
-    const sessionCookie = storage.cookies.find((c) => c.name === 'next-auth.session-token');
+    // In Java: CookieKey(AuthParams.SESSION_TOKEN.getKey()).withSecure(true).saveAs(AuthKeys.SESSION_TOKEN.getKey())
+    const sessionCookie = storage.cookies.find((c) => c.name === 'next-auth.session-token' || c.name === '__Secure-next-auth.session-token');
     if (!sessionCookie) {
       throw new Error('Session token cookie (next-auth.session-token) not available after POST /login/callback');
     }
