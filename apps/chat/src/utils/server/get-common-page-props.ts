@@ -25,10 +25,15 @@ import {
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
+import { HeadersNames } from '@/src/constants/server';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { safeParseJSON } from '../json';
+import {
+  cleanHeaderDirectives,
+  getFrameContentSecurityPolicyDirectives,
+} from './headers-helpers';
 
 import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
@@ -47,27 +52,21 @@ const hiddenFeaturesForIsolatedView = [
   Feature.HideTopContextMenu,
 ];
 
-export const getContentSecurityPolicyDirectives = () => {
-  const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
-    ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-    : 'frame-ancestors none';
-
-  const frameSrcDirective = process.env.ALLOWED_IFRAME_SOURCES
-    ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
-    : 'frame-src none';
-
-  return `${ancestorsDirective} ; ${frameSrcDirective}`;
-};
-
 export const getCommonPageProps: GetServerSideProps = async ({
   locale,
   req,
   res,
   resolvedUrl,
 }) => {
+  const requestCSPHeaders = req.headers[HeadersNames.CONTENT_SECURITY_POLICY];
+
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameContentSecurityPolicyDirectives(process.env.ALLOWED_IFRAME_ORIGINS, process.env.ALLOWED_IFRAME_SOURCES)}`;
+
+  const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
+
   res.setHeader(
-    'Content-Security-Policy',
-    getContentSecurityPolicyDirectives(),
+    HeadersNames.CONTENT_SECURITY_POLICY,
+    contentSecurityPolicyHeaderValue,
   );
 
   let params: URLSearchParams | undefined;
