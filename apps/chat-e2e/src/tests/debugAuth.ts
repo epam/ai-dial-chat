@@ -15,10 +15,6 @@ if (process.env.E2E_ADMIN) {
   usernames.push(process.env.E2E_ADMIN);
 }
 
-// Main User: stateFilePath(testInfo.parallelIndex)
-// Additional User: stateFilePath(testInfo.parallelIndex + numWorkers)
-// Second Additional User: stateFilePath(testInfo.parallelIndex + 2 * numWorkers)
-// Admin User: stateFilePath(3 * numWorkers) (assuming admin is always the last user)
 for (let i = 0; i < usernames.length; i++) {
   test(`Debug authenticate user: ${usernames[i]}`, async ({
     request,
@@ -42,10 +38,9 @@ for (let i = 0; i < usernames.length; i++) {
         process.env.RECENT_ADDONS = recentAddons ?? '[]';
         process.env.RECENT_MODELS = recentModels ?? '[]';
       }
-
-      console.log(`Debug authentication successful for user ${usernames[i]} (index ${i})`);
-      console.log(`Storage state saved to: ${stateFilePath(i)}`);
-      console.log(`Bucket: ${bucket}`);
+      // console.log(`Debug authentication successful for user ${usernames[i]} (index ${i})`);
+      // console.log(`Storage state saved to: ${stateFilePath(i)}`);
+      // console.log(`Bucket: ${bucket}`);
     } catch (error) {
       console.error(`Debug authentication failed for user ${usernames[i]}:`, error);
       throw error;
