@@ -25,46 +25,27 @@ for (let i = 0; i < usernames.length; i++) {
   }, testInfo) => {
     const baseUrl = config.use?.baseURL || 'http://localhost:3000';
     const debugAuth = new DebugAuth(request, baseUrl);
-    
     try {
-      // Perform API-based authentication
-      const authTokens = await debugAuth.authenticate(
-        usernames[i],
-        process.env.E2E_PASSWORD!,
-      );
+      const { bucket, bucketJson, models, addons, themes, recentAddons, recentModels } =
+        await debugAuth.authenticateAndSaveState(
+          usernames[i],
+          process.env.E2E_PASSWORD!,
+          stateFilePath(i),
+        );
 
-      // Set environment variables for bucket and other data (store raw JSON to match BucketUtil expectations)
-      process.env['BUCKET' + i] = authTokens.bucketJson ?? JSON.stringify({ bucket: authTokens.bucket });
-      
+      // Set environment variables for bucket and other data
+      process.env[`BUCKET${i}`] = bucketJson ?? JSON.stringify({ bucket });
       if (i < +config.workers!) {
-        // Set additional environment variables for the first worker batch
-        process.env.MODELS = authTokens.models ?? '[]';
-        process.env.ADDONS = authTokens.addons ?? '[]';
-        process.env.THEMES = authTokens.themes ?? '[]';
-        process.env.RECENT_ADDONS = authTokens.recentAddons ?? '[]';
-        process.env.RECENT_MODELS = authTokens.recentModels ?? '[]';
+        process.env.MODELS = models ?? '[]';
+        process.env.ADDONS = addons ?? '[]';
+        process.env.THEMES = themes ?? '[]';
+        process.env.RECENT_ADDONS = recentAddons ?? '[]';
+        process.env.RECENT_MODELS = recentModels ?? '[]';
       }
 
-      // Create storage state for Playwright
-      const storageState = DebugAuth.createStorageState(authTokens, baseUrl);
-      
-      // Save storage state to file
-      const fs = require('fs');
-      const path = require('path');
-      const stateFile = stateFilePath(i);
-      
-      // Ensure directory exists
-      const dir = path.dirname(stateFile);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      
-      fs.writeFileSync(stateFile, JSON.stringify(storageState, null, 2));
-      
       console.log(`Debug authentication successful for user ${usernames[i]} (index ${i})`);
-      console.log(`Storage state saved to: ${stateFile}`);
-      console.log(`Bucket: ${authTokens.bucket}`);
-      
+      console.log(`Storage state saved to: ${stateFilePath(i)}`);
+      console.log(`Bucket: ${bucket}`);
     } catch (error) {
       console.error(`Debug authentication failed for user ${usernames[i]}:`, error);
       throw error;

@@ -326,7 +326,7 @@ export class DebugAuth {
   /**
    * Creates a storage state object that can be used with Playwright's storageState
    */
-  static createStorageState(authTokens: AuthTokens, baseUrl: string): any {
+  private createStorageState(authTokens: AuthTokens, baseUrl: string): any {
     return {
       cookies: [
         {
@@ -334,7 +334,7 @@ export class DebugAuth {
           value: authTokens.sessionToken,
           domain: new URL(baseUrl).hostname,
           path: '/',
-          expires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+          expires: Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000), // 24 hours in seconds
           httpOnly: true,
           secure: baseUrl.startsWith('https'),
           sameSite: 'Lax',
@@ -344,7 +344,7 @@ export class DebugAuth {
           value: authTokens.csrfToken,
           domain: new URL(baseUrl).hostname,
           path: '/',
-          expires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+          expires: Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000), // 24 hours in seconds
           httpOnly: true,
           secure: baseUrl.startsWith('https'),
           sameSite: 'Lax',
@@ -367,5 +367,21 @@ export class DebugAuth {
         },
       ],
     };
+  }
+
+  async authenticateAndSaveState(username: string, password: string, statePath: string): Promise<AuthTokens> {
+    const authTokens = await this.authenticate(username, password);
+    const storageState = this.createStorageState(authTokens, this.baseUrl);
+
+    const fs = require('fs');
+    const path = require('path');
+
+    const dir = path.dirname(statePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFileSync(statePath, JSON.stringify(storageState, null, 2));
+    return authTokens;
   }
 }
