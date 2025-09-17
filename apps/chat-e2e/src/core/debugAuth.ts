@@ -92,7 +92,9 @@ export class DebugAuth {
     // Step 1: Post to our app's auth0 endpoint to get the redirect to Auth0
     const formData = new URLSearchParams();
     formData.append('csrfToken', urlCsrfToken);
-    formData.append('callbackUrl', this.baseUrl);
+    // Hardcode the callback to the staging URL, which is allowed in Auth0 config.
+    // This will generate the correct `redirect_uri` for the subsequent steps.
+    formData.append('callbackUrl', 'https://dev-dial-chat.staging.deltixhub.io');
 
     const redirectResponse = await this.request.post(`${this.baseUrl}/api/auth/signin/auth0`, {
       data: formData.toString(),
@@ -164,7 +166,11 @@ export class DebugAuth {
 
     // Dynamic params from previous request (mirroring AuthUtil.java)
     // These are extracted from the dynamicParams which come from the URL
-    formData.append('redirect_uri', dynamicParams.get('redirect_uri') ?? '');
+    const redirectUri = dynamicParams.get('redirect_uri') ?? '';
+    const correctedRedirectUri = redirectUri.replace('http://localhost:3000', 'https://dev-dial-chat.staging.deltixhub.io');
+    console.log(`[AUTH_DEBUG] Original redirect_uri: ${redirectUri}`);
+    console.log(`[AUTH_DEBUG] Corrected redirect_uri: ${correctedRedirectUri}`);
+    formData.append('redirect_uri', correctedRedirectUri);
     formData.append('response_type', dynamicParams.get('response_type') ?? '');
     formData.append('scope', dynamicParams.get('scope') ?? '');
     formData.append('state', dynamicParams.get('state') ?? '');
@@ -214,7 +220,6 @@ export class DebugAuth {
   }
 
   private async finalizeAuthAndGetSessionToken(authParams: any): Promise<string> {
-    // Get auth host from environment variables with fallback
     const authHost = process.env.AUTH_AUTH0_HOST || process.env.AUTH_HOST;
     if (!authHost) {
       throw new Error('Missing AUTH_AUTH0_HOST or AUTH_HOST environment variable');
@@ -225,26 +230,65 @@ export class DebugAuth {
     formData.append('wresult', authParams.wresult);
     formData.append('wctx', authParams.wctx);
 
-    // This matches the Java implementation in Authenticate.java finalizeAuthAndGetSessionToken method
-    const response = await this.request.post(`${authHost}/login/callback`, {
+    // Step 1: POST to /login/callback, get redirect to /authorize/resume
+    console.log(`\n[AUTH_DEBUG] Step 1: POSTing to ${authHost}/login/callback`);
+    const callbackResponse = await this.request.post(`${authHost}/login/callback`, {
       data: formData.toString(),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      maxRedirects: 0,
     });
+    console.log(`[AUTH_DEBUG] Step 1 Response Status: ${callbackResponse.status()}`);
+    console.log(`[AUTH_DEBUG] Step 1 Response Headers: ${JSON.stringify(callbackResponse.headers(), null, 2)}`);
 
-    if (response.status() !== 200) {
-      throw new Error(`Failed to finalize authentication: ${response.status()} - Expected 200 OK`);
+    if (callbackResponse.status() !== 302) {
+      throw new Error(`Expected a 302 from /login/callback, got ${callbackResponse.status()}`);
+    }
+    const resumeLocation = callbackResponse.headers()['location'];
+    if (!resumeLocation) {
+      throw new Error('No Location header from /login/callback');
+    }
+    const resumeUrl = new URL(resumeLocation, authHost).toString();
+    console.log(`[AUTH_DEBUG] Step 1 Redirect Location: ${resumeUrl}`);
+
+    // Step 2: GET /authorize/resume, get redirect to /api/auth/callback/auth0
+    console.log(`\n[AUTH_DEBUG] Step 2: GETting ${resumeUrl}`);
+    const resumeResponse = await this.request.get(resumeUrl, { maxRedirects: 0 });
+    console.log(`[AUTH_DEBUG] Step 2 Response Status: ${resumeResponse.status()}`);
+    console.log(`[AUTH_DEBUG] Step 2 Response Headers: ${JSON.stringify(resumeResponse.headers(), null, 2)}`);
+
+    if (resumeResponse.status() !== 302) {
+      throw new Error(`Expected a 302 from /authorize/resume, got ${resumeResponse.status()}`);
+    }
+    const appCallbackLocation = resumeResponse.headers()['location'];
+    if (!appCallbackLocation) {
+      throw new Error('No Location header from /authorize/resume');
+    }
+    console.log(`[AUTH_DEBUG] Step 2 Redirect Location: ${appCallbackLocation}`);
+
+    // Step 3: GET /api/auth/callback/auth0. This request sets the session cookie and redirects to the home page.
+    console.log(`\n[AUTH_DEBUG] Step 3: GETting ${appCallbackLocation}`);
+    const appCallbackResponse = await this.request.get(appCallbackLocation, { maxRedirects: 0 });
+    console.log(`[AUTH_DEBUG] Step 3 Response Status: ${appCallbackResponse.status()}`);
+    console.log(`[AUTH_DEBUG] Step 3 Response Headers: ${JSON.stringify(appCallbackResponse.headers(), null, 2)}`);
+
+    if (appCallbackResponse.status() !== 302) {
+      console.error('[AUTH_DEBUG] Final auth callback response status:', appCallbackResponse.status());
+      console.error('[AUTH_DEBUG] Final auth callback response headers:', appCallbackResponse.headers());
+      throw new Error(`Expected a 302 from /api/auth/callback/auth0, got ${appCallbackResponse.status()}`);
     }
 
-    // Read the session token from the cookie jar - mirror Java implementation
+    // The session token is set by the previous request. Now we can retrieve it from the context.
     const storage = await this.request.storageState();
-    // In Java: CookieKey(AuthParams.SESSION_TOKEN.getKey()).withSecure(true).saveAs(AuthKeys.SESSION_TOKEN.getKey())
-    const sessionCookie = storage.cookies.find((c) => c.name === 'next-auth.session-token' || c.name === '__Secure-next-auth.session-token');
+    const sessionCookie = storage.cookies.find(
+      (c) => c.name === 'next-auth.session-token' || c.name === '__Secure-next-auth.session-token'
+    );
+
     if (!sessionCookie) {
-      throw new Error('Session token cookie (next-auth.session-token) not available after POST /login/callback');
+      console.error('[AUTH_DEBUG] Cookies after final auth callback:', JSON.stringify(storage.cookies, null, 2));
+      throw new Error('Session token cookie not found after final auth callback step.');
     }
 
+    console.log('[AUTH_DEBUG] Successfully retrieved session token.');
     return sessionCookie.value;
   }
 
