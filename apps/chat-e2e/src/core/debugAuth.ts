@@ -35,15 +35,14 @@ export class DebugAuth {
       // Step 1: Get the sign-in page and CSRF token
       const { csrfToken, urlCsrfToken } = await this.getSignInPageAndCsrfToken();
 
-      // Step 2: Navigate to the Auth0 login page to get the dynamic params and set the context (cookies/referer)
-      const loginPageDetails = await this.navigateToAuth0LoginPage(urlCsrfToken);
+      // Step 2: Get Auth0 dynamic parameters by making the /signin/auth0 request
+      const dynamicParams = await this.getAuth0DynamicParams(urlCsrfToken);
 
       // Step 3: Submit user credentials to Auth0
       const authParams = await this.submitUserCredentials(
         username,
         password,
-        loginPageDetails.url,
-        loginPageDetails.params,
+        dynamicParams,
       );
 
       // Step 4: Finalize authentication and get session token
@@ -88,8 +87,8 @@ export class DebugAuth {
     return { csrfToken, urlCsrfToken };
   }
 
-  private async navigateToAuth0LoginPage(urlCsrfToken: string): Promise<{ url: string; params: URLSearchParams }> {
-    // Step 1: Post to our app's auth0 endpoint to get the redirect to Auth0.
+  private async getAuth0DynamicParams(urlCsrfToken: string): Promise<URLSearchParams> {
+    // Step 1: Post to our app's auth0 endpoint to get the redirect to Auth0
     const formData = new URLSearchParams();
     formData.append('csrfToken', urlCsrfToken);
     formData.append('callbackUrl', this.baseUrl);
@@ -97,36 +96,36 @@ export class DebugAuth {
     const redirectResponse = await this.request.post(`${this.baseUrl}/api/auth/signin/auth0`, {
       data: formData.toString(),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      maxRedirects: 0, // Do not follow redirects automatically.
+      maxRedirects: 0, // Do not follow redirects automatically
     });
 
     if (redirectResponse.status() !== 302) {
       throw new Error(`Expected a 302 redirect from /api/auth/signin/auth0, but got ${redirectResponse.status()}`);
     }
+
     const location = redirectResponse.headers()['location'];
     if (!location) {
-      throw new Error('No Location header found in redirect from /api/auth/signin/auth0');
+      throw new Error('No Location header found in the redirect response from /api/auth/signin/auth0');
     }
 
-    // Step 2: Follow the redirect. This GET request sets the necessary cookies and referer context.
+    // Step 2: Follow the redirect by making a GET request to the Auth0 /login URL
     const loginPageResponse = await this.request.get(location);
     if (loginPageResponse.status() !== 200) {
-      throw new Error(`Failed to GET the Auth0 login page at ${location}. Status: ${loginPageResponse.status()}`);
+        throw new Error(`Failed to GET the Auth0 login page. Status: ${loginPageResponse.status()}`);
     }
 
+    // The final URL of this request contains the dynamic parameters we need
     const finalUrl = loginPageResponse.url();
     try {
-      const url = new URL(finalUrl);
-      return { url: finalUrl, params: url.searchParams };
+      return new URL(finalUrl).searchParams;
     } catch {
-      throw new Error(`Invalid final URL after redirect: ${finalUrl}`);
+      throw new Error(`Invalid final URL after following redirect: ${finalUrl}`);
     }
   }
 
   private async submitUserCredentials(
     username: string,
     password: string,
-    loginPageUrl: string,
     dynamicParams: URLSearchParams,
   ): Promise<any> {
     const authHost = process.env.AUTH_AUTH0_HOST!;
@@ -174,7 +173,6 @@ export class DebugAuth {
       data: formData.toString(),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Referer': loginPageUrl, // Explicitly set the Referer header
       },
     });
 
@@ -184,10 +182,11 @@ export class DebugAuth {
 
     const responseText = await response.text();
 
-    // Extract SAML parameters from the response HTML
-    const waMatch = responseText.match(/name="wa" value="([^"]+)"/);
-    const wresultMatch = responseText.match(/name="wresult" value="([^"]+)"/);
-    const wctxMatch = responseText.match(/name="wctx" value="([^"]+)"/);
+    // Use a robust regex that handles newlines and complex characters inside the value attribute,
+    // compatible with older JS targets by using [\s\S] instead of the /s flag.
+    const waMatch = responseText.match(/name="wa"\s+value="([^"]*?)"/);
+    const wresultMatch = responseText.match(/name="wresult"[\s\S]*?value="([^"]*?)"/);
+    const wctxMatch = responseText.match(/name="wctx"\s+value="([^"]*?)"/);
 
     if (!waMatch || !wresultMatch || !wctxMatch) {
       throw new Error('Failed to extract SAML parameters from Auth0 response');
@@ -201,7 +200,7 @@ export class DebugAuth {
   }
 
   private async finalizeAuthAndGetSessionToken(authParams: any): Promise<string> {
-    const authHost = process.env.AUTH0_HOST || process.env.AUTH_HOST;
+    const authHost = process.env.AUTH_AUTH0_HOST;
 
     const formData = new URLSearchParams();
     formData.append('wa', authParams.wa);
