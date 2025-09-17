@@ -69,16 +69,19 @@ dialTest(
 
         appFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
+            {
+              appName: appName,
+              namesToExclude: recentNames.concat(recentVersions),
+            },
           );
         appSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version!),
+            },
           );
       },
     );
@@ -137,8 +140,8 @@ dialTest(
         workspaceAgentElement =
           await marketplaceAgentsSection.findAgentElement(appName);
         twoSortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
         ]);
         await marketplaceAgentsAssertion.assertElementText(
           marketplaceAgents.getAgentVersion(workspaceAgentElement),
@@ -194,11 +197,13 @@ dialTest(
       async () => {
         appThirdVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
-            ...appSecondVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version!)
+                .concat(appSecondVersion.version!),
+            },
           );
       },
     );
@@ -207,9 +212,9 @@ dialTest(
       'Open the agent and verify three versions are available in the dropdown menu, bookmark icon is shown on version switching',
       async () => {
         threeSortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
-          appThirdVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
+          appThirdVersion.version!,
         ]);
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
@@ -378,20 +383,23 @@ dialTest(
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
         const appFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
+            {
+              appName: appName,
+              namesToExclude: recentNames.concat(recentVersions),
+            },
           );
         const appSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version!),
+            },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
         ]);
       },
     );
@@ -502,20 +510,23 @@ dialTest(
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
         const appFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
+            {
+              appName: appName,
+              namesToExclude: recentNames.concat(recentVersions),
+            },
           );
         const appSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            appName,
-            ...recentNames,
-            ...recentVersions,
-            ...appFirstVersion.version,
+            {
+              appName: appName,
+              namesToExclude: recentNames
+                .concat(recentVersions)
+                .concat(appFirstVersion.version!),
+            },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
-          appFirstVersion.version,
-          appSecondVersion.version,
+          appFirstVersion.version!,
+          appSecondVersion.version!,
         ]);
       },
     );
