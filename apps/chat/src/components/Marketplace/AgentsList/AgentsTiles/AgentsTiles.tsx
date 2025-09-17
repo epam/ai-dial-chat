@@ -1,29 +1,20 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-
-
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
-
-
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
-
-
 
 import { AgentsListWrapper } from '../AgentsListWrapper';
 import { SuggestedMessage } from '../SuggestedMessage';
 import { AgentsListProps } from '../view-props';
 import { ApplicationCard } from './ApplicationCard';
 
-
-
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
-
 
 const MIN_CARD_WIDTH = 341;
 const MIN_CARD_WIDTH_XL5 = 450;

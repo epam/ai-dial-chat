@@ -7,8 +7,9 @@ import React, {
 
 import classNames from 'classnames';
 
-import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
+
+import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
 
 type Props = React.DetailedHTMLProps<
   React.TextareaHTMLAttributes<HTMLTextAreaElement>,
