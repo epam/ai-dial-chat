@@ -25,10 +25,7 @@ export function middleware(request: NextRequest) {
   // const frameSrcDirectives = !shouldIgnoreFrameOptions && FRAME_SRC_DIRECTIVE;
 
   const cspHeader = `
-    object-src 'none';
-    base-uri 'self';
     script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
-    upgrade-insecure-requests;
     ${frameDirectives}
 `;
   // Replace newline characters and spaces
