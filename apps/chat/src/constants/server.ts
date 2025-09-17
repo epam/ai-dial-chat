@@ -38,3 +38,7 @@ export const mappingServerUrls: Record<string, { response: boolean }> = {
     response: true,
   },
 };
+
+export enum HeadersNames {
+  CONTENT_SECURITY_POLICY = 'content-security-policy',
+}
