@@ -3,7 +3,7 @@ import dialTest from '@/src/core/dialFixtures';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import { OverlaySandboxUrls } from '@/src/testData';
 
-dialOverlayTest.fixme(
+dialOverlayTest(
   '[Overlay] Navigation panel. There is no text-names for buttons. The hight of the panel is 36px.\n' +
     '[Overlay] DIAL Marketplace feature is enabled - Feature.Marketplace.\n' +
     '[Overlay] Add app button is not available in Overlay (Mobile view).\n' +
