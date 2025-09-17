@@ -39,7 +39,7 @@ dialTest.beforeAll(async () => {
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
-dialTest.fixme(
+dialTest(
   'Export and import one chat in a folder.\n' +
     `Export and import one chat in a folder when folder doesn't exist`,
   async ({
@@ -155,7 +155,7 @@ dialTest.fixme(
   },
 );
 
-dialTest.fixme(
+dialTest(
   'Export and import chat structure with all conversations',
   async ({
     dialHomePage,
@@ -246,7 +246,7 @@ dialTest.fixme(
   },
 );
 
-dialTest.fixme(
+dialTest(
   'Existed chats stay after import',
   async ({
     dialHomePage,

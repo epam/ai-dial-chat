@@ -259,7 +259,7 @@ dialTest(
   },
 );
 
-dialTest.fixme(
+dialTest(
   'Rename chat after starting the conversation.\n' +
     'Chat name: spaces in the middle of chat name stay.\n' +
     'Long Chat name is cut in chat header. Named manually.\n' +
