@@ -63,7 +63,10 @@ export const getCommonPageProps: GetServerSideProps = async ({
 
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 
-  res.setHeader('Content-Security-Policy', contentSecurityPolicyHeaderValue);
+  res.setHeader(
+    HeadersNames.CONTENT_SECURITY_POLICY,
+    contentSecurityPolicyHeaderValue,
+  );
 
   let params: URLSearchParams | undefined;
   if (req.url) {
