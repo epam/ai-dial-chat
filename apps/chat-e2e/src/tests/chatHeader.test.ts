@@ -1,29 +1,21 @@
 import { Conversation } from '@/chat/types/chat';
-import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { API, ExpectedMessages } from '@/src/testData';
-import { responseThrottlingTimeout } from '@/src/ui/pages';
-import { ModelsUtil } from '@/src/utils';
+import { ExpectedMessages, MockedChatApiResponseBodies } from '@/src/testData';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-
-let defaultModel: DialAIEntityModel;
-
-dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultAgent()!;
-});
 
 dialTest(
   'Message is send on Enter',
   async ({
     dialHomePage,
     chat,
+    toast,
     setTestIds,
     conversationData,
     dataInjector,
     chatHeader,
     modelInfoTooltip,
     chatSettingsTooltip,
-    errorPopup,
     tooltipAssertion,
     conversationInfoTooltipAssertion,
     conversations,
@@ -34,6 +26,7 @@ dialTest(
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
+    const model = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
 
     await dialTest.step(
       'Prepare model conversation with non-default temperature',
@@ -41,7 +34,7 @@ dialTest(
         conversation = conversationData.prepareModelConversation(
           temp,
           '',
-          defaultModel,
+          model,
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
@@ -54,11 +47,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
-        await dialHomePage.throttleAPIResponse(
-          API.chatHost,
-          responseThrottlingTimeout * 2,
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
         );
         const requestsData = await chat.sendRequestWithKeyboard(request, false);
+        await toast.closeToast();
         baseAssertion.assertValue(
           requestsData.model.id,
           conversation.model.id,
@@ -80,23 +73,27 @@ dialTest(
     await dialTest.step(
       'Hover over chat header and verify chat model is correct on tooltip',
       async () => {
-        await errorPopup.cancelPopup();
         await chatHeader.hoverOverChatModel();
         await conversationInfoTooltipAssertion.assertElementText(
           modelInfoTooltip.modelInfo,
-          defaultModel.name,
+          model.name,
           ExpectedMessages.chatInfoModelIsValid,
         );
-        await conversationInfoTooltipAssertion.assertElementText(
-          modelInfoTooltip.versionInfo,
-          defaultModel.version!,
-          ExpectedMessages.agentVersionIsValid,
-        );
+        model.version
+          ? await conversationInfoTooltipAssertion.assertElementText(
+              modelInfoTooltip.versionInfo,
+              model.version!,
+              ExpectedMessages.agentVersionIsValid,
+            )
+          : await conversationInfoTooltipAssertion.assertElementState(
+              modelInfoTooltip.versionInfo,
+              'hidden',
+            );
 
         await chatHeader.hoverOverChatSettings();
-        await tooltipAssertion.assertElementText(
+        await tooltipAssertion.assertElementState(
           chatSettingsTooltip.promptInfo,
-          '',
+          'hidden',
         );
         await tooltipAssertion.assertElementText(
           chatSettingsTooltip.temperatureInfo,
