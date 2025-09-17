@@ -22,8 +22,6 @@ export function middleware(request: NextRequest) {
     shouldIgnoreFrameOptions,
   );
 
-  // const frameSrcDirectives = !shouldIgnoreFrameOptions && FRAME_SRC_DIRECTIVE;
-
   const cspHeader = `
     object-src 'none';
     base-uri 'self';
