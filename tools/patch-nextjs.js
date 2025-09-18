@@ -85,8 +85,8 @@ replaceContentInNodeModule(
 replaceContentInNodeModule(
   'next',
   'dist/server/lib/router-utils/resolve-routes.js',
-  `normalized = normalized === '/' ? config.basePath : _nodepath.default.posix.join(config.basePath, normalized);`,
-  `normalized = normalized === '/' ? config.basePath : _nodepath.default.posix.join(config.basePath.toString(), normalized);`,
+  '_nodepath.default.posix.join(config.basePath, normalized);',
+  '_nodepath.default.posix.join(config.basePath.toString(), normalized);',
 );
 
 replaceContentInNodeModule(
