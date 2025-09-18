@@ -477,7 +477,6 @@ dialTest(
     let simpleFirstConversation: Conversation;
     let simpleSecondConversation: Conversation;
     let historyConversation: Conversation;
-    const simpleModel = defaultModel;
     const simpleTemp = 0.5;
     const simplePrompt = 'simple prompt';
 
@@ -487,7 +486,7 @@ dialTest(
         simpleFirstConversation = conversationData.prepareModelConversation(
           simpleTemp,
           simplePrompt,
-          simpleModel,
+          bModel,
         );
         conversationData.resetData();
         simpleSecondConversation =
@@ -521,7 +520,7 @@ dialTest(
         );
         const replayRequests = await chat.startReplayForDifferentModels();
 
-        apiAssertion.assertRequestModelId(replayRequests[0], simpleModel);
+        apiAssertion.assertRequestModelId(replayRequests[0], bModel);
         apiAssertion.assertRequestTemperature(replayRequests[0], simpleTemp);
         apiAssertion.assertRequestPrompt(replayRequests[0], simplePrompt);
 
@@ -535,8 +534,7 @@ dialTest(
           simpleSecondConversation.prompt,
         );
 
-        const expectedSimpleModelIcon =
-          iconApiHelper.getEntityIcon(simpleModel);
+        const expectedSimpleModelIcon = iconApiHelper.getEntityIcon(bModel);
         await chatMessagesAssertion.assertMessageIcon(
           2,
           expectedSimpleModelIcon,

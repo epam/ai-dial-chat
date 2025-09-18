@@ -20,7 +20,7 @@ dialTest(
     conversationInfoTooltipAssertion,
     conversations,
     localStorageManager,
-    baseAssertion,
+    apiAssertion,
   }) => {
     setTestIds('EPMRTC-473');
     let conversation: Conversation;
@@ -52,20 +52,16 @@ dialTest(
         );
         const requestsData = await chat.sendRequestWithKeyboard(request, false);
         await toast.closeToast();
-        baseAssertion.assertValue(
-          requestsData.model.id,
-          conversation.model.id,
-          ExpectedMessages.requestModeIdIsValid,
+        apiAssertion.assertRequestModelId(requestsData, model);
+        apiAssertion.assertRequestPrompt(
+          requestsData,
+          model.features?.systemPrompt === true
+            ? conversation.prompt
+            : undefined,
         );
-        baseAssertion.assertValue(
-          requestsData.prompt,
-          conversation.prompt,
-          ExpectedMessages.requestPromptIsValid,
-        );
-        baseAssertion.assertValue(
-          requestsData.temperature,
+        apiAssertion.assertRequestTemperature(
+          requestsData,
           conversation.temperature,
-          ExpectedMessages.requestTempIsValid,
         );
       },
     );
