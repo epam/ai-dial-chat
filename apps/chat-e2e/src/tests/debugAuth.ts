@@ -1,49 +1,46 @@
 import config from '../../config/chat.playwright.config';
-import { stateFilePath } from '../core/dialFixtures';
 import { DebugAuth } from '../core/debugAuth';
+import { stateFilePath } from '../core/dialFixtures';
 
 import test from '@/src/core/baseFixtures';
-import { API } from '@/src/testData';
 
-// Number of users needed: numWorkers * 3 (main + additional + second additional) + 1 (admin)
-const usernames = process.env
-  .E2E_USERNAME!.split(',')
-  .slice(0, +config.workers! * 3);
+// Calculate required users: workers * 3 (main + additional + second additional) + admin
+const numWorkers = +config.workers!;
+const usernames = process.env.E2E_USERNAME!.split(',').slice(0, numWorkers * 3);
 
-//admin user to test publishing feature is required
+// Add admin user if configured
 if (process.env.E2E_ADMIN) {
   usernames.push(process.env.E2E_ADMIN);
 }
 
-for (let i = 0; i < usernames.length; i++) {
-  test(`Debug authenticate user: ${usernames[i]}`, async ({
-    request,
-  }, testInfo) => {
+// Generate authentication tests for each user
+usernames.forEach((username, index) => {
+  test(`Debug authenticate user: ${username}`, async ({ request }) => {
     const baseUrl = config.use?.baseURL || 'http://localhost:3000';
     const debugAuth = new DebugAuth(request, baseUrl);
-    try {
-      const { bucket, bucketJson, models, addons, themes, recentAddons, recentModels } =
-        await debugAuth.authenticateAndSaveState(
-          usernames[i],
-          process.env.E2E_PASSWORD!,
-          stateFilePath(i),
-        );
 
-      // Set environment variables for bucket and other data
-      process.env[`BUCKET${i}`] = bucketJson ?? JSON.stringify({ bucket });
-      if (i < +config.workers!) {
-        process.env.MODELS = models ?? '[]';
-        process.env.ADDONS = addons ?? '[]';
-        process.env.THEMES = themes ?? '[]';
-        process.env.RECENT_ADDONS = recentAddons ?? '[]';
-        process.env.RECENT_MODELS = recentModels ?? '[]';
+    try {
+      const authData = await debugAuth.authenticateAndSaveState(
+        username,
+        process.env.E2E_PASSWORD!,
+        stateFilePath(index),
+      );
+
+      // Store bucket and related data in environment variables
+      process.env[`BUCKET${index}`] =
+        authData.bucketJson ?? JSON.stringify({ bucket: authData.bucket });
+
+      // Store additional data for first worker only
+      if (index < numWorkers) {
+        process.env.MODELS = authData.models ?? '[]';
+        process.env.ADDONS = authData.addons ?? '[]';
+        process.env.THEMES = authData.themes ?? '[]';
+        process.env.RECENT_ADDONS = authData.recentAddons ?? '[]';
+        process.env.RECENT_MODELS = authData.recentModels ?? '[]';
       }
-      // console.log(`Debug authentication successful for user ${usernames[i]} (index ${i})`);
-      // console.log(`Storage state saved to: ${stateFilePath(i)}`);
-      // console.log(`Bucket: ${bucket}`);
     } catch (error) {
-      console.error(`Debug authentication failed for user ${usernames[i]}:`, error);
+      console.error(`Debug authentication failed for user ${username}:`, error);
       throw error;
     }
   });
-}
+});
