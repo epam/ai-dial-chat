@@ -97,6 +97,7 @@ export class DebugAuth {
   /**
    * Creates a Playwright-compatible storage state object
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static createStorageState(authTokens: AuthTokens, baseUrl: string): any {
     const url = new URL(baseUrl);
     const isSecure = url.protocol === 'https:';
@@ -328,6 +329,7 @@ export class DebugAuth {
       wctx: /name="wctx"[\s\S]*?value="([^"]*?)"/,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const params: any = {};
     for (const [key, pattern] of Object.entries(patterns)) {
       const match = html.match(pattern);
@@ -403,6 +405,7 @@ export class DebugAuth {
   }
 
   private getRedirectLocation(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     response: any,
     endpoint: string,
     expectedStatus: number,
