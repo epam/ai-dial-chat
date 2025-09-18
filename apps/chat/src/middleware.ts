@@ -22,12 +22,12 @@ export function middleware(request: NextRequest) {
     shouldIgnoreFrameOptions,
   );
 
-  // const frameSrcDirectives = !shouldIgnoreFrameOptions && FRAME_SRC_DIRECTIVE;
-
   const cspHeader = `
     object-src 'none';
     base-uri 'self';
-    script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
+    script-src ${process.env.ALLOWED_IFRAME_ORIGINS ?? "'self'"} ${process.env.ALLOWED_IFRAME_SOURCES ? process.env.ALLOWED_IFRAME_SOURCES.replace("'self'", '') : ''}
+     https://cdn.jsdelivr.net/npm/monaco-editor@0.43.0/
+     'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
     ${frameDirectives}
 `;
   // Replace newline characters and spaces

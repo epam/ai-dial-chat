@@ -12,7 +12,6 @@ import {
 } from '@/src/types/toolsets';
 
 import { Routes } from '@/src/constants/routes';
-import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import {
   Toolset,
@@ -212,7 +211,7 @@ export const getToolsetPayload = (
   };
 
   return {
-    id: DRAFT_TOOLSET_ID,
+    id: '',
     folderId: '',
     reference: '',
     ...(oldToolset && oldToolset),
