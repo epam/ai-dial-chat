@@ -83,6 +83,13 @@ replaceContentInNodeModule(
 );
 
 replaceContentInNodeModule(
+  'next',
+  'dist/server/lib/router-utils/resolve-routes.js',
+  `normalized = normalized === '/' ? config.basePath : _nodepath.default.posix.join(config.basePath, normalized);`,
+  `normalized = normalized === '/' ? config.basePath.toString() : _nodepath.default.posix.join(config.basePath.toString(), normalized);`,
+);
+
+replaceContentInNodeModule(
   'next-auth',
   'core/lib/callback-url.js',
   'baseUrl: url.origin',
