@@ -3,6 +3,8 @@ import {
   ToolsetTypes,
 } from '@/src/constants/quick-apps';
 
+import { ToolsetTransportType } from '@epam/ai-dial-shared';
+
 export interface QuickAppConfig {
   instructions: string;
   model: string;
@@ -32,6 +34,7 @@ export interface MCPToolset {
   name: string;
   type: ToolsetTypes.DialMcp;
   dial_id: string;
+  transport: ToolsetTransportType;
   description?: string;
 }
 
