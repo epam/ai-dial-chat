@@ -15,7 +15,7 @@ dotenv.config({ path: './.env.local' });
 /**
  * Config used for a local run
  */
-config.retries = 1;
+config.retries = 0;
 config.timeout = 3000000;
 config.use!.headless = false;
 config.use!.video = 'on';
@@ -37,11 +37,6 @@ if (!process.env.E2E_HOST) {
 }
 
 config.projects = [
-  // {
-  //   name: 'auth',
-  //   fullyParallel: true,
-  //   testMatch: /desktopAuth\.ts/,
-  // },
   {
     name: 'debug_auth',
     fullyParallel: true,
@@ -52,21 +47,9 @@ config.projects = [
     testMatch: /cleanup\.ts/,
     dependencies: ['debug_auth'],
   },
-  // {
-  //   name: 'api listing',
-  //   testMatch: /listing\.test\.ts/,
-  //   dependencies: ['cleanup'],
-  //   fullyParallel: true,
-  // },
-  // {
-  //   name: 'chat api',
-  //   testMatch: /\/chatApi\/.*\.test\.ts/,
-  //   dependencies: ['cleanup'],
-  //   fullyParallel: true,
-  // },
   {
     name: 'chat e2e',
-    testIgnore: /\/chatApi|listingApi|monitoring|\/overlay\/.*\.test\.ts/,
+    testIgnore: /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
     use: {
       ...devices['Desktop Chrome'],
       viewport: { width: 1536, height: 864 },

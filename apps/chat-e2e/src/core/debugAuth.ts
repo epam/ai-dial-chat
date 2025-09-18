@@ -184,7 +184,7 @@ export class DebugAuth {
     // Hardcode callback to staging URL (allowed in Auth0 config)
     const formData = new URLSearchParams({
       csrfToken: urlCsrfToken,
-      callbackUrl: 'https://dev-dial-chat.staging.deltixhub.io',
+      callbackUrl: process.env.AUTH_CALLBACK_URL_OVERRIDE!,
     });
 
     const response = await this.request.post(
@@ -272,7 +272,7 @@ export class DebugAuth {
     const redirectUri = dynamicParams.get('redirect_uri') ?? '';
     const correctedRedirectUri = redirectUri.replace(
       'http://localhost:3000',
-      'https://dev-dial-chat.staging.deltixhub.io',
+      process.env.AUTH_CALLBACK_URL_OVERRIDE!
     );
 
     const dynamicFields = {
