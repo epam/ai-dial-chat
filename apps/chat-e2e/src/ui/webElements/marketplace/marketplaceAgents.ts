@@ -185,6 +185,12 @@ export class MarketplaceAgents extends BaseElement {
       .getChildElementBySelector(Tags.svg);
   }
 
+  public getAgentArrowIcon(agentElement: BaseElement) {
+    return agentElement
+      .getChildElementBySelector(MarketplaceAgentSelectors.arrowIcon)
+      .getChildElementBySelector(Tags.svg);
+  }
+
   public getNotAvailableAgentElement = (reference: string) => {
     const agent = this.rootLocator.filter({ has: this.agentName(reference) });
     return this.createElementFromLocator(agent);

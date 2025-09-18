@@ -103,9 +103,10 @@ dialTest(
           shareModal.linkInputLoader,
           'hidden',
         );
-        await shareModalAssertion.assertMessageContent(
+        await shareModalAssertion.assertMessageContent([
+          ExpectedConstants.shareLinkText,
           ExpectedConstants.sharePromptFolderText,
-        );
+        ]);
         await shareModalAssertion.assertElementText(
           shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedFolderText,
@@ -438,7 +439,7 @@ dialTest(
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModal.removeAccessBtn.click();
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeFolderAccessMessage(
+          ExpectedConstants.removeAccessForAllMessage(
             folderPrompt.folders.name,
           ),
         );
@@ -449,7 +450,7 @@ dialTest(
       'Close confirmation modal and verify arrow icon is still displayed',
       async () => {
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeFolderAccessMessage(
+          ExpectedConstants.removeAccessForAllMessage(
             folderPrompt.folders.name,
           ),
         );

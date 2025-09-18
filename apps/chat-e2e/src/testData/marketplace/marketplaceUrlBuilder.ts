@@ -10,6 +10,7 @@ export class MarketplaceUrlBuilder {
   private topics: string[] = [];
   private tab: string | null = null;
   private search: string | null = null;
+  private model: string | null = null;
 
   withTypes(...types: string[]): MarketplaceUrlBuilder {
     this.types = types;
@@ -36,6 +37,11 @@ export class MarketplaceUrlBuilder {
     return this;
   }
 
+  withModel(model: string): MarketplaceUrlBuilder {
+    this.model = model;
+    return this;
+  }
+
   build(): string {
     const queryParams = [];
 
@@ -57,6 +63,10 @@ export class MarketplaceUrlBuilder {
 
     if (this.search) {
       queryParams.push(`search=${this.search}`);
+    }
+
+    if (this.model) {
+      queryParams.push(`model=${this.model}`);
     }
 
     const url = `${this.baseUrl}?${queryParams.join('&')}`;
