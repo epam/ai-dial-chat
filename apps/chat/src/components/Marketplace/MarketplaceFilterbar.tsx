@@ -1,5 +1,5 @@
-import { IconCheck, IconChevronUp } from '@tabler/icons-react';
-import { memo, useCallback, useState } from 'react';
+import { IconCheck, IconChevronUp, IconClipboardX } from '@tabler/icons-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -14,6 +14,7 @@ import {
   MarketplaceSelectors,
   ModelsSelectors,
   SettingsSelectors,
+  ToolsetSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
@@ -133,6 +134,9 @@ export const MarketplaceFilterbar = memo(() => {
 
   const dispatch = useAppDispatch();
 
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
@@ -179,6 +183,10 @@ export const MarketplaceFilterbar = memo(() => {
 
   const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
+  const noEntities = useMemo(() => {
+    return !Object.values(isAgentsTab ? modelsMap : toolsetsMap).length;
+  }, [isAgentsTab, modelsMap, toolsetsMap]);
+
   return (
     <nav
       className={classNames(
@@ -190,7 +198,7 @@ export const MarketplaceFilterbar = memo(() => {
     >
       <CloseSidebarButton isLeftSide onClose={handleClose} />
       {showFilterbar && (
-        <div className="h-full divide-y divide-tertiary overflow-y-auto">
+        <div className="flex h-full flex-col divide-y divide-tertiary overflow-y-auto">
           <div
             className={classNames(
               'flex items-center justify-between px-5',
@@ -199,37 +207,54 @@ export const MarketplaceFilterbar = memo(() => {
           >
             <p className="text-base font-semibold">{t('Filters')}</p>
           </div>
-          {isAgentsTab && (
-            <FilterSection
-              sectionName={t('Type')}
-              filterValues={ENTITY_TYPES}
-              openedSections={openedSections}
-              selectedFilters={selectedFilters}
-              filterType={FilterTypes.ENTITY_TYPE}
-              onToggleFilterSection={handleToggleFilterSection}
-              onApplyFilter={handleApplyFilter}
-              getDisplayLabel={getTypeLabel}
-            />
-          )}
-          <FilterSection
-            sectionName={t('Topics')}
-            filterValues={topics} // topics
-            openedSections={openedSections}
-            selectedFilters={selectedFilters}
-            filterType={FilterTypes.TOPICS}
-            onToggleFilterSection={handleToggleFilterSection}
-            onApplyFilter={handleApplyFilter}
-          />
-          {isAgentsTab && sourceTypes.length > 1 && (
-            <FilterSection
-              sectionName={t('Sources')}
-              filterValues={sourceTypes}
-              openedSections={openedSections}
-              selectedFilters={selectedFilters}
-              filterType={FilterTypes.SOURCES}
-              onToggleFilterSection={handleToggleFilterSection}
-              onApplyFilter={handleApplyFilter}
-            />
+          {noEntities ? (
+            <div className="flex grow flex-col items-center justify-center gap-3">
+              <IconClipboardX
+                size={60}
+                strokeWidth={1}
+                className="text-secondary"
+              />
+              <p className="text-center text-sm leading-[24px] text-primary">
+                {t(
+                  `No filters as you currently have no ${isAgentsTab ? 'agents' : 'toolsets'}`,
+                )}
+              </p>
+            </div>
+          ) : (
+            <>
+              {isAgentsTab && (
+                <FilterSection
+                  sectionName={t('Type')}
+                  filterValues={ENTITY_TYPES}
+                  openedSections={openedSections}
+                  selectedFilters={selectedFilters}
+                  filterType={FilterTypes.ENTITY_TYPE}
+                  onToggleFilterSection={handleToggleFilterSection}
+                  onApplyFilter={handleApplyFilter}
+                  getDisplayLabel={getTypeLabel}
+                />
+              )}
+              <FilterSection
+                sectionName={t('Topics')}
+                filterValues={topics}
+                openedSections={openedSections}
+                selectedFilters={selectedFilters}
+                filterType={FilterTypes.TOPICS}
+                onToggleFilterSection={handleToggleFilterSection}
+                onApplyFilter={handleApplyFilter}
+              />
+              {isAgentsTab && sourceTypes.length > 1 && (
+                <FilterSection
+                  sectionName={t('Sources')}
+                  filterValues={sourceTypes}
+                  openedSections={openedSections}
+                  selectedFilters={selectedFilters}
+                  filterType={FilterTypes.SOURCES}
+                  onToggleFilterSection={handleToggleFilterSection}
+                  onApplyFilter={handleApplyFilter}
+                />
+              )}
+            </>
           )}
         </div>
       )}
