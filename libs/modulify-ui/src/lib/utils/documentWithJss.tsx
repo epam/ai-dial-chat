@@ -7,6 +7,9 @@ import { ComponentType } from 'react';
 import { JssProvider, SheetsRegistry, createGenerateId } from 'react-jss';
 
 const SERVER_SIDE_JSS_STYLES_ID = 'server-side-jss-styles';
+interface ExtendedDocumentProps extends DocumentInitialProps {
+  nonce?: string;
+}
 
 type DocumentWithInitialProps = ComponentType<DocumentProps> & {
   getInitialProps?: (ctx: DocumentContext) => Promise<DocumentInitialProps>;
@@ -15,7 +18,7 @@ type DocumentWithInitialProps = ComponentType<DocumentProps> & {
 export function documentWithJss(DocumentComponent: DocumentWithInitialProps) {
   DocumentComponent.getInitialProps = async (
     ctx: DocumentContext,
-  ): Promise<DocumentInitialProps> => {
+  ): Promise<ExtendedDocumentProps> => {
     const registry = new SheetsRegistry();
     const generateId = createGenerateId();
     const originalRenderPage = ctx.renderPage;
@@ -31,9 +34,10 @@ export function documentWithJss(DocumentComponent: DocumentWithInitialProps) {
 
     const initialProps = await Document.getInitialProps(ctx);
     const styles = registry.toString();
-
+    const nonce = ctx.req?.headers?.['x-nonce'] as string | undefined;
     return {
       ...initialProps,
+      nonce,
       styles: (
         <>
           {initialProps.styles}

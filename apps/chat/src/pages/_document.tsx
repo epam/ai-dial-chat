@@ -14,7 +14,7 @@ function Document(props: Props) {
 
   return (
     <Html lang={currentLocale}>
-      <Head>
+      <Head nonce={props.nonce}>
         {!!process.env.APP_BASE_ORIGIN && !!process.env.APP_BASE_PATH && (
           <base
             href={`${process.env.APP_BASE_ORIGIN}${process.env.APP_BASE_PATH}/`}
@@ -32,14 +32,18 @@ function Document(props: Props) {
         <link rel="manifest" href="/api/manifest" />
       </Head>
       <body>
-        <Script id="theme-script" strategy="beforeInteractive">
+        <Script
+          nonce={props.nonce}
+          id="theme-script"
+          strategy="beforeInteractive"
+        >
           {`{try {
             (document.documentElement.className =
               JSON.parse(localStorage.getItem('settings') || '{}').theme || '');
             } catch(e) { console.error(e); }}`}
         </Script>
         <Main />
-        <NextScript />
+        <NextScript nonce={props.nonce} />
       </body>
     </Html>
   );
