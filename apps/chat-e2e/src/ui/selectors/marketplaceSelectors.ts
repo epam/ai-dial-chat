@@ -30,6 +30,7 @@ export const MarketplaceAgentSelectors = {
   copiedLink: '[data-qa="copied-link"]',
   copiedIcon: '[data-qa="copied-icon"]',
   pencilIcon: '[data-qa="pencil-icon"]',
+  arrowIcon: '[data-qa="arrow-icon"]',
 };
 
 export const MarketplaceDetailsModal = {
@@ -50,6 +51,8 @@ export const MarketplaceDetailsModal = {
   deleteButton: '[data-qa="delete"]',
   publishButton: '[data-qa="publish"]',
   unpublishButton: '[data-qa="unpublish"]',
+  shareButton: '[data-qa="share"]',
+  unshareButton: '[data-qa="unshare"]',
 };
 
 export const MarketplaceSideBarSelectors = {

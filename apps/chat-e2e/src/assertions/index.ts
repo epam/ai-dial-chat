@@ -24,6 +24,7 @@ export * from './talkToAgentDialogAssertion';
 export * from './sendMessageAssertion';
 export * from './sharedWithMePromptsAssertion';
 export * from './shareModalAssertion';
+export * from './shareAppModalAssertion';
 export * from './sideBarAssertion';
 export * from './tooltipAssertion';
 export * from './variableModalAssertion';

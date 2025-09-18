@@ -18,10 +18,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getToolsetRedirectUri,
-  isToolsetSignedIn,
-} from '@/src/utils/app/toolsets';
+import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetCredentialsLevel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
@@ -65,6 +62,7 @@ const authTypeOptions: Record<
 enum WithLogin {
   WithLogin = 'With login',
   WithoutLogin = 'Without login',
+  WithConfig = 'With login & config',
 }
 
 interface AuthTypeSectionProps {
@@ -87,7 +85,6 @@ const AuthTypeSection = ({
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
   const [withLogin, setWithLogin] = useState(WithLogin.WithLogin);
-  const isWithLogin = withLogin === WithLogin.WithLogin;
   const isSignedIn = toolsetDetails && isToolsetSignedIn(toolsetDetails);
 
   const handleWithLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -133,36 +130,48 @@ const AuthTypeSection = ({
         </div>
 
         {isSelected && type !== ToolsetAuthTypes.NONE && (
-          <div className="grid grid-cols-2 border-t border-tertiary">
-            <div className="flex flex-col gap-4 p-4">
+          <div className="flex flex-col gap-4 border-t border-tertiary p-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center">
               <RadioButton
                 id={WithLogin.WithLogin}
                 name="with-auth"
                 caption={t(WithLogin.WithLogin)}
                 onChange={handleWithLoginChange}
                 value={WithLogin.WithLogin}
-                checked={isWithLogin}
+                checked={withLogin === WithLogin.WithLogin}
               />
 
-              <ToolsetLoginForm
-                onLogin={onLogin}
-                type={type}
-                toolset={toolsetDetails}
-                disabled={!isWithLogin}
-                onLogout={onLogout}
-              />
-            </div>
-            <div className="p-4">
+              {type === ToolsetAuthTypes.OAUTH && (
+                <RadioButton
+                  id={WithLogin.WithConfig}
+                  name="with-auth"
+                  caption={t(WithLogin.WithConfig)}
+                  onChange={handleWithLoginChange}
+                  value={WithLogin.WithConfig}
+                  checked={withLogin === WithLogin.WithConfig}
+                  disabled={isSignedIn}
+                />
+              )}
+
               <RadioButton
                 id={WithLogin.WithoutLogin}
                 name="with-auth"
                 caption={t(WithLogin.WithoutLogin)}
                 onChange={handleWithLoginChange}
                 value={WithLogin.WithoutLogin}
-                checked={!isWithLogin}
+                checked={withLogin === WithLogin.WithoutLogin}
                 disabled={isSignedIn}
               />
             </div>
+
+            <ToolsetLoginForm
+              onLogin={onLogin}
+              type={type}
+              toolset={toolsetDetails}
+              disabled={withLogin === WithLogin.WithoutLogin}
+              onLogout={onLogout}
+              includeOAuthFields={withLogin === WithLogin.WithConfig}
+            />
           </div>
         )}
       </div>
@@ -207,27 +216,30 @@ export const AuthField = () => {
     (data: ToolsetLoginFormType) => {
       trigger(['endpoint']).then((isValid) => {
         if (toolsetDetails && isValid) {
+          const newToolset = getToolsetPayload(
+            {
+              ...toolsetDetails,
+              endpoint,
+              transport,
+              allowedTools,
+              authSettings: {
+                authenticationType: data.type,
+                apiKeyHeader: data.keyHeader,
+                ...(data.includeOAuthFields && {
+                  clientId: data.clientId,
+                  clientSecret: data.clientSecret,
+                  authorizationEndpoint: data.authorizationEndpoint,
+                  tokenEndpoint: data.tokenEndpoint,
+                }),
+              },
+            },
+            toolsetDetails,
+          );
+
           dispatch(
             ToolsetActions.updateToolset({
               oldToolset: toolsetDetails,
-              newToolset: {
-                ...toolsetDetails,
-                endpoint,
-                transport,
-                allowedTools,
-                authSettings: {
-                  ...toolsetDetails.authSettings,
-                  authenticationType: data.type,
-                  apiKeyHeader:
-                    data.type === ToolsetAuthTypes.API_KEY
-                      ? data.keyHeader
-                      : undefined,
-                  redirectUri:
-                    data.type === ToolsetAuthTypes.OAUTH
-                      ? getToolsetRedirectUri()
-                      : undefined,
-                },
-              },
+              newToolset,
               auth: {
                 apiKey: data.apiKey,
               },

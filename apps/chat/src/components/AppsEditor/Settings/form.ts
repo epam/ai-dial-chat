@@ -27,7 +27,7 @@ import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModelsMap } from '@/src/types/models';
 import {
-  DialDeploymentTool,
+  DialDeploymentSimpleTool,
   FileContext,
   MCPToolset,
   QuickApp2Config,
@@ -44,6 +44,7 @@ import {
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_MODEL,
+  DialDeploymentToolsetToolTypes,
   ToolsetTypes,
 } from '@/src/constants/quick-apps';
 
@@ -82,7 +83,8 @@ export interface QuickAppFormData extends ApplicationGeneralInfo {
   model: string;
 }
 
-export interface QuickAppFormData2 extends ApplicationGeneralInfo {
+export interface QuickAppFormData2
+  extends Omit<ApplicationGeneralInfo, 'completionUrl'> {
   instructions: string;
   temperature: number;
   documentRelativeUrl?: string[];
@@ -301,7 +303,6 @@ export const getQuickAppDefaultValues2 = ({
 
   return {
     ...getApplicationGeneralDefaultValues(app),
-    completionUrl: app.completionUrl ?? '',
     documentRelativeUrl: getQuick2AppDocumentUrl(app) ?? [],
     model:
       appProperties.orchestrator.deployment.name ??
@@ -311,7 +312,7 @@ export const getQuickAppDefaultValues2 = ({
       appProperties.orchestrator.deployment.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
     agentsAndToolsets: [
-      ...agentToolsets.map((agentToolset) => agentToolset.deployment.name),
+      ...agentToolsets.map((agentToolset) => agentToolset.deployment_id),
       ...mcpToolsets.map((mcpToolset) => mcpToolset.dial_id),
     ],
     codeInterpreter: appProperties.tool_sets.some(
@@ -423,7 +424,7 @@ export const getExternalAppData = (
 export const getQuickAppData = (
   formData: QuickAppFormData,
   modelsMap: ModelsMap,
-): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+): Omit<CustomApplicationModel, 'id' | 'reference' | 'completionUrl'> => {
   return {
     ...getGeneralApplicationData(formData),
     applicationProperties: {
@@ -445,43 +446,20 @@ export const getQuickAppData2 = (
   formData: QuickAppFormData2,
   modelsMap: ModelsMap,
   allEntitiesMap: Record<string, MarketplaceEntity | undefined>,
-): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+): Omit<CustomApplicationModel, 'id' | 'reference' | 'completionUrl'> => {
   const documentRelativeUrls: FileContext[] =
     formData.documentRelativeUrl?.map((url) => ({
       url,
       type: 'file',
     })) ?? [];
-  const dialDeploymentsToolsets: DialDeploymentTool[] =
+  const dialDeploymentsToolsets: DialDeploymentSimpleTool[] =
     formData.agentsAndToolsets.flatMap((agentsAndToolset) => {
       const entity = allEntitiesMap[agentsAndToolset];
       if (!entity || entity.type === EntityType.Toolset) return [];
 
       return {
-        deployment: {
-          name: entity.id,
-        },
-        open_ai_tool: {
-          function: {
-            parameters: {
-              type: 'object',
-              properties: {
-                query: {
-                  type: 'string',
-                  description: '',
-                  display: {
-                    stage: {
-                      show_value_in_stage_title: true,
-                      name: '**Prompt:** ',
-                    },
-                  },
-                },
-              },
-              required: ['query'],
-            },
-            description: entity.description,
-            name: entity.name,
-          },
-        },
+        type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
+        deployment_id: entity.id,
       };
     });
   const dialMCPToolsets: MCPToolset[] = formData.agentsAndToolsets.flatMap(
@@ -534,7 +512,6 @@ export const getQuickAppData2 = (
           : []),
       ],
     },
-
     isDefault: false,
     folderId: '',
   };

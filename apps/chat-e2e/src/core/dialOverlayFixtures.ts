@@ -15,6 +15,7 @@ import {
   MarketplaceFilter,
   MarketplaceHeader,
   MarketplaceSidebar,
+  FileDropArea,
   ModelInfoTooltip,
   PromptBar,
   PublishingRequestModal,
@@ -84,6 +85,7 @@ const dialOverlayTest = test.extend<{
   beforeTestCleanup: string;
   overlayHomePage: OverlayHomePage;
   overlayMarketplacePage: OverlayMarketplacePage;
+  overlayFileDropArea: FileDropArea;
   overlayMarketplace: Marketplace;
   overlayMarketplaceHeader: MarketplaceHeader;
   overlayChat: Chat;
@@ -185,8 +187,14 @@ const dialOverlayTest = test.extend<{
     const overlayMarketplaceHeader = overlayMarketplace.getMarketplaceHeader();
     await use(overlayMarketplaceHeader);
   },
-  overlayChat: async ({ overlayHomePage }, use) => {
-    const overlayChat = overlayHomePage.getOverlayContainer().getChat();
+  overlayFileDropArea: async ({ overlayHomePage }, use) => {
+    const overlayFileDropArea = overlayHomePage
+      .getOverlayContainer()
+      .getFileDropArea();
+    await use(overlayFileDropArea);
+  },
+  overlayChat: async ({ overlayFileDropArea }, use) => {
+    const overlayChat = overlayFileDropArea.getChat();
     await use(overlayChat);
   },
   overlayAgentInfo: async ({ overlayChat }, use) => {
