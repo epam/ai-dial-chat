@@ -730,8 +730,8 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
       ToolsetActions.getToolsetDetailsSuccess.type,
       ToolsetActions.updateToolsetSuccess.type,
     ),
-    filter(() => router.route === Routes.ToolsetEditor),
     switchMap(() => {
+      if (window.location.pathname !== Routes.ToolsetEditor) return EMPTY;
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
