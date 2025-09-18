@@ -619,6 +619,12 @@ const startSignInProcessEpic: AppEpic = (action$) =>
               authSettings.codeChallengeMethod as string,
             );
             url.searchParams.set('state', encodeToolsetRedirectState(state));
+            if (authSettings.scopesSupported) {
+              url.searchParams.set(
+                'scope',
+                authSettings.scopesSupported?.join(' '),
+              );
+            }
 
             window.location.assign(url.toString());
           }

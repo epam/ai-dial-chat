@@ -1,9 +1,10 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
-import { EntityType } from '@/src/types/common';
+import { getToolsetPayload } from '@/src/utils/app/toolsets';
+
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -25,7 +26,6 @@ import {
   getDefaultFormData,
 } from '@/src/components/ToolsetEditor/form';
 
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const marketplaceRoute = {
@@ -59,29 +59,23 @@ export const ToolsetEditor = () => {
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
-      const payloadToolset = {
-        id: '',
-        folderId: '',
-        reference: '',
-        ...(toolsetDetails && toolsetDetails),
-        type: EntityType.Toolset,
-        name: data.name,
-        endpoint: data.endpoint,
-        iconUrl: data.iconUrl,
-        transport: data.protocol,
-        description: data.description,
-        topics: data.topics,
-        allowedTools: data.allowedTools,
-        version: data.version,
-        authSettings: {
-          ...(toolsetDetails?.authSettings && toolsetDetails?.authSettings),
-          ...(data.authenticationType === ToolsetAuthTypes.API_KEY && {
-            apiKeyHeader:
-              toolsetDetails?.authSettings?.apiKeyHeader ?? 'api_key',
-          }),
-          authenticationType: data.authenticationType,
+      const payloadToolset = getToolsetPayload(
+        {
+          name: data.name,
+          endpoint: data.endpoint,
+          iconUrl: data.iconUrl,
+          transport: data.protocol,
+          description: data.description,
+          topics: data.topics,
+          allowedTools: data.allowedTools,
+          version: data.version,
+          authSettings: {
+            authenticationType: data.authenticationType,
+            apiKeyHeader: toolsetDetails?.authSettings?.apiKeyHeader,
+          },
         },
-      };
+        toolsetDetails,
+      );
 
       if (toolsetDetails) {
         dispatch(
@@ -169,6 +163,12 @@ export const ToolsetEditor = () => {
     },
     [dispatch, handleSubmit, isDirty, toolsetDetails],
   );
+
+  useEffect(() => {
+    if (toolsetDetails) {
+      formMethods.reset(getDefaultFormData(toolsetDetails));
+    }
+  }, [formMethods, toolsetDetails]);
 
   return (
     <FormProvider {...formMethods}>

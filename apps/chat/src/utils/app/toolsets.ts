@@ -65,6 +65,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
       apiKeyHeader: data.auth_settings.api_key_header,
       codeChallenge: data.auth_settings.code_challenge,
       codeChallengeMethod: data.auth_settings.code_challenge_method,
+      scopesSupported: data.auth_settings.scopes_supported,
     },
   };
 };
@@ -83,6 +84,15 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         ...(data.authSettings.clientId && {
           client_id: data.authSettings.clientId,
           client_secret: data.authSettings.clientSecret,
+        }),
+        ...(data.authSettings.scopesSupported && {
+          scopes_supported: data.authSettings.scopesSupported,
+        }),
+        ...(data.authSettings.tokenEndpoint && {
+          token_endpoint: data.authSettings.tokenEndpoint,
+        }),
+        ...(data.authSettings.authorizationEndpoint && {
+          authorization_endpoint: data.authSettings.authorizationEndpoint,
         }),
       };
     default:
@@ -140,13 +150,29 @@ export const regenerateToolsetId = (
 export const encodeToolsetRedirectState = (
   state: ToolsetRedirectState,
 ): string => {
-  return encodeURIComponent(JSON.stringify(state));
+  const json = JSON.stringify(state);
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  for (const b of bytes) {
+    bin += String.fromCharCode(b);
+  }
+  const b64 = btoa(bin);
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
 export const decodeToolsetRedirectState = (
   state: string,
 ): ToolsetRedirectState => {
-  return JSON.parse(decodeURIComponent(state)) as ToolsetRedirectState;
+  const b64 = state
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(state.length / 4) * 4, '=');
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    bytes[i] = bin.charCodeAt(i);
+  }
+  return JSON.parse(new TextDecoder().decode(bytes)) as ToolsetRedirectState;
 };
 
 export const getToolsetRedirectUri = () =>
@@ -164,3 +190,40 @@ export const isToolsetSignedIn = (
 export const isToolsetEntityModel = (
   entity: MarketplaceEntity,
 ): entity is ToolsetModel => entity?.type === EntityType.Toolset;
+
+export const getToolsetPayload = (
+  newToolset: Omit<ToolsetModel, 'id' | 'folderId' | 'reference' | 'type'>,
+  oldToolset?: ToolsetModel,
+): ToolsetModel => {
+  const isEndpointChanged = newToolset.endpoint !== oldToolset?.endpoint;
+  const authType = newToolset.authSettings.authenticationType;
+  const authSettings = {
+    ...(oldToolset?.authSettings &&
+      !isEndpointChanged &&
+      oldToolset.authSettings),
+    ...newToolset.authSettings,
+    ...(authType === ToolsetAuthTypes.API_KEY && {
+      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? 'api_key',
+    }),
+    ...(authType === ToolsetAuthTypes.OAUTH && {
+      redirectUri: getToolsetRedirectUri(),
+    }),
+  };
+
+  return {
+    id: '',
+    folderId: '',
+    reference: '',
+    ...(oldToolset && oldToolset),
+    type: EntityType.Toolset,
+    name: newToolset.name,
+    endpoint: newToolset.endpoint,
+    iconUrl: newToolset.iconUrl,
+    transport: newToolset.transport,
+    description: newToolset.description,
+    topics: newToolset.topics,
+    allowedTools: newToolset.allowedTools,
+    version: newToolset.version,
+    authSettings,
+  };
+};
