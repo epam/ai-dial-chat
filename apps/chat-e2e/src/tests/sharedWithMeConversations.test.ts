@@ -88,7 +88,7 @@ dialSharedWithMeTest(
       'Change share link, open it by another user and verify error message is shown',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink + 'abc',
           ),
         );
@@ -102,7 +102,7 @@ dialSharedWithMeTest(
       'Open share link by another user and verify chat stays under Shared with me and is selected automatically',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -225,7 +225,7 @@ dialSharedWithMeTest(
         for (let i = 1; i <= 2; i++) {
           await additionalShareUserDialHomePage.openHomePage(
             { iconsToBeLoaded: [defaultModel!.iconUrl] },
-            ExpectedConstants.sharedConversationUrl(
+            ExpectedConstants.sharedSideBarEntityUrl(
               shareByLinkResponse.invitationLink,
             ),
           );
@@ -306,7 +306,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -473,7 +473,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -1016,7 +1016,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkConversationResponse.invitationLink,
           ),
         );
@@ -1254,7 +1254,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -1316,7 +1316,7 @@ dialTest(
           username,
           process.env.E2E_PASSWORD!,
           false,
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );

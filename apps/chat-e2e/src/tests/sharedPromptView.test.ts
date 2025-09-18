@@ -188,7 +188,7 @@ dialSharedWithMeTest(
       'Click on "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
