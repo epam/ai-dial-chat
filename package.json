@@ -169,7 +169,8 @@
   },
   "overrides": {
     "koa": "3.0.1",
-    "esbuild": "0.25.8"
+    "esbuild": "0.25.10",
+    "tmp": "0.2.5"
   },
   "engines": {
     "node": ">=22.2.0",
