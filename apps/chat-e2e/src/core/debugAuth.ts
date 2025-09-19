@@ -1,10 +1,11 @@
+import { AuthApiHelper } from '../testData/api/authApiHelper';
+import { AuthUtils } from '../utils/authUtils';
+
+import { BucketAPI } from '@/src/core/bucketAPI';
+import { DataAPI } from '@/src/core/dataAPI';
 import { APIRequestContext } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { AuthUtils } from '../utils/authUtils';
-import { BucketAPI } from '@/src/core/bucketAPI';
-import { DataAPI } from '@/src/core/dataAPI';
-import { AuthApiHelper } from '../testData/api/authApiHelper';
 
 export interface AuthTokens {
   sessionToken: string;
@@ -38,10 +39,15 @@ export class DebugAuth {
   async authenticate(username: string, password: string): Promise<AuthTokens> {
     try {
       // Step 1: Get CSRF token
-      const { csrfToken, urlCsrfToken } = await this.authApiHelper.getCsrfToken(this.baseUrl);
+      const { csrfToken, urlCsrfToken } = await this.authApiHelper.getCsrfToken(
+        this.baseUrl,
+      );
 
       // Step 2: Get Auth0 dynamic parameters
-      const dynamicParams = await this.authApiHelper.getAuth0DynamicParams(this.baseUrl, urlCsrfToken);
+      const dynamicParams = await this.authApiHelper.getAuth0DynamicParams(
+        this.baseUrl,
+        urlCsrfToken,
+      );
 
       // Step 3: Submit credentials to Auth0
       const authParams = await this.authApiHelper.submitCredentials(
@@ -51,7 +57,8 @@ export class DebugAuth {
       );
 
       // Step 4: Complete authentication flow
-      const sessionToken = await this.authApiHelper.completeAuthFlow(authParams);
+      const sessionToken =
+        await this.authApiHelper.completeAuthFlow(authParams);
 
       // Step 5: Fetch user data
       const { bucket, bucketJson } = await this.bucketAPI.getBucket();

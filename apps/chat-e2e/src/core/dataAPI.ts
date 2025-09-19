@@ -1,6 +1,7 @@
-import { APIRequestContext } from '@playwright/test';
-import { API } from '@/src/testData';
 import { AuthTokens } from './debugAuth';
+
+import { API } from '@/src/testData';
+import { APIRequestContext } from '@playwright/test';
 
 export class DataAPI {
   constructor(

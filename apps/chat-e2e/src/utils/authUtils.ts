@@ -1,4 +1,4 @@
-import { AuthTokens } from "@/src/core/debugAuth";
+import { AuthTokens } from '@/src/core/debugAuth';
 
 export class AuthUtils {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

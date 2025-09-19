@@ -1,5 +1,5 @@
-import { APIRequestContext } from '@playwright/test';
 import { API } from '@/src/testData';
+import { APIRequestContext } from '@playwright/test';
 
 export class BucketAPI {
   constructor(

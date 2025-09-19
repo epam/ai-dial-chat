@@ -49,7 +49,8 @@ config.projects = [
   },
   {
     name: 'chat e2e',
-    testIgnore: /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
+    testIgnore:
+      /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
     use: {
       ...devices['Desktop Chrome'],
       viewport: { width: 1536, height: 864 },
