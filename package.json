@@ -171,7 +171,7 @@
     "playwright-chromium": "^1.55.0"
   },
   "overrides": {
-    "esbuild": "0.25.8",
+    "esbuild": "0.25.10",
     "tmp": "0.2.5"
   },
   "engines": {
