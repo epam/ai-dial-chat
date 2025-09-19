@@ -89,8 +89,9 @@ export class VisualizerConnector {
     iframe.sandbox.add('allow-forms');
     iframe.sandbox.add('allow-downloads');
     iframe.sandbox.add('allow-popups');
+    iframe.sandbox.add('allow-presentation');
 
-    iframe.allow = 'clipboard-write';
+    iframe.setAttribute('allow', 'clipboard-write *; fullscreen *; accelerometer *; gyroscope *; autoplay *; web-share *');
 
     iframe.style.height = '100%';
     iframe.style.width = '100%';
