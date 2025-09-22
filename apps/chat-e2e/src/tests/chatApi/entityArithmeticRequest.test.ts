@@ -26,7 +26,6 @@ for (const entity of arithmeticRequestModels) {
       const conversation = conversationData.prepareModelConversation(
         0,
         systemPrompt,
-        [],
         entity.entityId,
       );
       conversation.messages[0].content = request;

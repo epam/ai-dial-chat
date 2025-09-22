@@ -68,7 +68,6 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
-import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
@@ -101,8 +100,6 @@ import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageIn
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { DialErrorPage } from '@/src/ui/pages/DialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
-import { Addons } from '@/src/ui/webElements/addons';
-import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
@@ -222,8 +219,6 @@ const dialTest = test.extend<{
   talkToAgents: MarketplaceAgents;
   agentSettings: AgentSettings;
   temperatureSlider: TemperatureSlider;
-  addons: Addons;
-  addonsDialog: AddonsDialog;
   agentInfo: AgentInfo;
   conversationDropdownMenu: DropdownMenu;
   folderDropdownMenu: DropdownMenu;
@@ -350,7 +345,6 @@ const dialTest = test.extend<{
   selectFolderModalAssertion: SelectFolderModalAssertion;
   conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
   agentInfoAssertion: AgentInfoAssertion;
-  addonsDialogAssertion: AddonsDialogAssertion;
   marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
@@ -687,14 +681,6 @@ const dialTest = test.extend<{
   temperatureSlider: async ({ agentSettings }, use) => {
     const temperatureSlider = agentSettings.getTemperatureSlider();
     await use(temperatureSlider);
-  },
-  addons: async ({ agentSettings }, use) => {
-    const addons = agentSettings.getAddons();
-    await use(addons);
-  },
-  addonsDialog: async ({ addons }, use) => {
-    const addonsDialog = addons.getAddonsDialog();
-    await use(addonsDialog);
   },
   agentInfo: async ({ chat }, use) => {
     const agentInfo = chat.getAgentInfo();
@@ -1301,10 +1287,6 @@ const dialTest = test.extend<{
   agentInfoAssertion: async ({ agentInfo }, use) => {
     const agentInfoAssertion = new AgentInfoAssertion(agentInfo);
     await use(agentInfoAssertion);
-  },
-  addonsDialogAssertion: async ({ addonsDialog }, use) => {
-    const addonsDialogAssertion = new AddonsDialogAssertion(addonsDialog);
-    await use(addonsDialogAssertion);
   },
   marketplaceAgentsAssertion: async ({ marketplaceAgents }, use) => {
     const marketplaceAgentsAssertion = new MarketplaceAgentsAssertion(
