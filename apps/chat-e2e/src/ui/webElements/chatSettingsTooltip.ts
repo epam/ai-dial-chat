@@ -22,9 +22,6 @@ export class ChatSettingsTooltip extends BaseElement {
   public temperatureInfo = this.getChildElementBySelector(
     SettingsTooltip.tempInfo,
   );
-  public addonsInfo = this.getChildElementBySelector(
-    SettingsTooltip.addonsInfo,
-  );
 
   public async getApplicationInfo() {
     return this.applicationInfo.getElementInnerContent();
@@ -48,13 +45,5 @@ export class ChatSettingsTooltip extends BaseElement {
 
   public async getTemperatureInfo() {
     return this.temperatureInfo.getElementInnerContent();
-  }
-
-  public async getAddonsInfo() {
-    return this.addonsInfo.getElementsInnerContent();
-  }
-
-  public async getAddonIcons() {
-    return this.getElementIcons(this.addonsInfo);
   }
 }
