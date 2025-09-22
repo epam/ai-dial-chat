@@ -516,14 +516,12 @@ dialTest(
       firstConversation = conversationData.prepareModelConversation(
         firstTemp,
         firstPrompt,
-        [],
         defaultModel,
       );
       conversationData.resetData();
       secondConversation = conversationData.prepareModelConversation(
         secondTemp,
         secondPrompt,
-        [],
         aModel,
       );
       await dataInjector.createConversations([
@@ -787,7 +785,6 @@ dialTest(
         firstConversation = conversationData.prepareModelConversation(
           1,
           'prompt',
-          [],
           initRandomModel,
         );
         conversationData.resetData();
@@ -864,7 +861,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify chat icons are updated with new model and addons in the header and chat bar',
+      'Verify chat icons are updated with new model in the header and chat bar',
       async () => {
         await rightChatHeaderAssertion.assertHeaderIcon(
           expectedSecondUpdatedRandomModelIcon,

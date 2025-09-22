@@ -408,12 +408,10 @@ export const Chronology = {
 export const API = {
   api: '/api',
   modelsHost: '/api/models',
-  addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: '/api/themes/image',
   defaultModelIconHost: () => `${API.themeUrl}/default-model`,
-  defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
