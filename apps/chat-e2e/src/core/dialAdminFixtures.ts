@@ -20,6 +20,7 @@ import {
   PublishingRequestModal,
   PublishingRules,
   SelectFolderModal,
+  SendMessage,
   TalkToAgentDialog,
   Toast,
   VariableModalDialog,
@@ -179,6 +180,7 @@ const dialAdminTest = dialTest.extend<{
   adminConversationSettings: ConversationSettingsModal;
   adminTalkToAgentDialog: TalkToAgentDialog;
   adminEntitySettingsAssertion: AgentSettingAssertion;
+  adminSendMessage: SendMessage;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -731,6 +733,10 @@ const dialAdminTest = dialTest.extend<{
       adminConversationSettings.getAgentSettings(),
     );
     await use(adminEntitySettingsAssertion);
+  },
+  adminSendMessage: async ({ adminChat }, use) => {
+    const adminSendMessage = adminChat.getSendMessage();
+    await use(adminSendMessage);
   },
 });
 

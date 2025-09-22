@@ -10,7 +10,7 @@ import {
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialAdminTest.only(
+dialAdminTest(
   'Admin can not update chat from unpublish request',
   async ({
     conversationData,
@@ -182,7 +182,8 @@ dialAdminTest.only(
 dialAdminTest(
   'Update settings of agent for chat from publication request.\n' +
     'Update agent for chat from publication request.\n' +
-    'Edit existing message for chat from publication request Approve required',
+    'Edit existing message for chat from publication request Approve required.\n' +
+    'Add new message to chat from publication request',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -203,8 +204,9 @@ dialAdminTest(
     iconApiHelper,
     adminEntitySettingsAssertion,
     adminChatMessagesAssertion,
+    adminSendMessage,
   }) => {
-    setTestIds('EPMRTC-6736', 'EPMRTC-6737', 'EPMRTC-6475');
+    setTestIds('EPMRTC-6736', 'EPMRTC-6737', 'EPMRTC-6475', 'EPMRTC-6485');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const newSystemPrompt = 'new system prompt';
@@ -258,6 +260,19 @@ dialAdminTest(
           updatedMessage,
         );
         await adminChatMessagesAssertion.assertMessagesCount(2);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Add new message and verify it is added and response is received',
+      async () => {
+        const newMessage = 'new message';
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await adminSendMessage.send(newMessage);
+        await adminChatMessagesAssertion.assertLastMessageContent('Response');
+        await adminChatMessagesAssertion.assertMessagesCount(4);
       },
     );
 
