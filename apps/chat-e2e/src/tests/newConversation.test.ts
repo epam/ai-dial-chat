@@ -21,7 +21,6 @@ dialTest(
     chat,
     agentSettings,
     temperatureSlider,
-    addons,
     talkToAgentDialog,
     agentInfoAssertion,
     agentSettingAssertion,
@@ -38,16 +37,13 @@ dialTest(
         (m) =>
           ModelsUtil.doesModelAllowSystemPrompt(m) &&
           ModelsUtil.doesModelAllowTemperature(m) &&
-          ModelsUtil.doesModelAllowAddons(m) &&
           m.iconUrl !== undefined,
       ),
       2,
     );
-    const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
     await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
       ...models,
     );
-    await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
     await localStorageManager.setShowSideBarPanels();
 
@@ -72,7 +68,6 @@ dialTest(
       await chat.configureSettingsButton.click();
       await agentSettings.setSystemPrompt(PROMPTS.DOG);
       await temperatureSlider.setTemperature(TEMPERATURE.HIGH);
-      await addons.selectAddon(addon.name);
       await conversationSettingsModal.applyChangesButton.click();
     });
 
@@ -95,11 +90,6 @@ dialTest(
           ExpectedConstants.emptyString,
         );
         await agentSettingAssertion.assertTemperature(TEMPERATURE.HIGH);
-        await agentInfoAssertion.assertElementsCount(
-          addons.selectedAddons,
-          0,
-          ExpectedMessages.noAddonsSelected,
-        );
         await conversationSettingsModal.cancelButton.click();
       },
     );
@@ -121,7 +111,6 @@ dialTest(
       await chat.configureSettingsButton.click();
       await agentSettings.setSystemPrompt(PROMPTS.CAT);
       await temperatureSlider.setTemperature(TEMPERATURE.LOW);
-      await addons.selectAddon(addon.name);
       await conversationSettingsModal.applyChangesButton.click();
     });
 
@@ -135,11 +124,6 @@ dialTest(
           ExpectedConstants.emptyString,
         );
         await agentSettingAssertion.assertTemperature(TEMPERATURE.HIGH);
-        await agentInfoAssertion.assertElementsCount(
-          addons.selectedAddons,
-          0,
-          ExpectedMessages.noAddonsSelected,
-        );
         await conversationSettingsModal.cancelButton.click();
       },
     );
@@ -433,7 +417,6 @@ dialTest(
         (m) =>
           ModelsUtil.doesModelAllowSystemPrompt(m) &&
           ModelsUtil.doesModelAllowTemperature(m) &&
-          ModelsUtil.doesModelAllowAddons(m) &&
           m.iconUrl !== undefined,
       ),
       1,
@@ -493,7 +476,6 @@ dialTest(
     chat,
     agentSettings,
     temperatureSlider,
-    addons,
     talkToAgentDialog,
     chatBar,
     agentInfoAssertion,
@@ -509,15 +491,12 @@ dialTest(
         (m) =>
           ModelsUtil.doesModelAllowSystemPrompt(m) &&
           ModelsUtil.doesModelAllowTemperature(m) &&
-          ModelsUtil.doesModelAllowAddons(m) &&
           m.iconUrl !== undefined,
       ),
     );
-    const addon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
     await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
       model,
     );
-    await localStorageManager.setRecentAddonsIds(addon);
     await localStorageManager.setLastConversationSettings('');
     await localStorageManager.setShowSideBarPanels();
     let initialConversationIds: string | undefined;
@@ -571,7 +550,6 @@ dialTest(
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt('Act like a cat');
         await temperatureSlider.setTemperature(0.2);
-        await addons.selectAddon(addon.name);
         await conversationSettingsModal.applyChangesButton.click();
         await header.logo.click();
         await chat.configureSettingsButton.click();
@@ -582,11 +560,6 @@ dialTest(
           await temperatureSlider.getTemperature(),
           ExpectedConstants.defaultTemperature,
           ExpectedMessages.temperatureIsValid,
-        );
-        await agentInfoAssertion.assertElementsCount(
-          addons.selectedAddons,
-          0,
-          ExpectedMessages.noAddonsSelected,
         );
         await conversationSettingsModal.cancelButton.click();
       },

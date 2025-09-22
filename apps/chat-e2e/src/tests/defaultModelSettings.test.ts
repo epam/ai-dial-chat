@@ -16,7 +16,6 @@ import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 let nonDefaultModel: DialAIEntityModel;
-let recentAddonIds: string[];
 let recentModelIds: string[];
 let allEntities: DialAIEntityModel[];
 
@@ -25,7 +24,6 @@ dialTest.beforeAll(async () => {
   nonDefaultModel = GeneratorUtil.randomArrayElement(
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );
-  recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
 });
@@ -33,14 +31,12 @@ dialTest.beforeAll(async () => {
 dialTest(
   'Create new conversation.\n' +
     'Default settings in new chat with cleared site data.\n' +
-    'Addon icon is set in recent and selected list on default screen for new chat.\n' +
-    'Addon icon is set in recent and selected list on default screen for new chat',
+    'Clip icon in message box does not exist if chat is based on model which does not work with attachments',
   async ({
     dialHomePage,
     conversations,
     conversationSettingsModal,
     temperatureSlider,
-    addons,
     iconApiHelper,
     sendMessage,
     agentSettingAssertion,
@@ -52,8 +48,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1030', 'EPMRTC-1890');
-    const expectedAddons = ModelsUtil.getAddons();
+    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
 
     await dialTest.step(
       'Verify default model is selected by default',
@@ -120,47 +115,6 @@ dialTest(
         expect
           .soft(defaultTemperature, ExpectedMessages.defaultTemperatureIsOne)
           .toBe(ExpectedConstants.defaultTemperature);
-
-        const selectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-          .toEqual(defaultModel.selectedAddons ?? []);
-
-        const expectedDefaultRecentAddons = [];
-        for (const addonId of recentAddonIds) {
-          expectedDefaultRecentAddons.push(
-            expectedAddons.find((a) => a.id === addonId)?.name || addonId,
-          );
-        }
-        const recentAddons = await addons.getRecentAddons();
-        expect
-          .soft(recentAddons, ExpectedMessages.recentAddonsVisible)
-          .toEqual(expectedDefaultRecentAddons);
-      },
-    );
-
-    await dialTest.step(
-      'Verify recent addon icons are displayed and valid',
-      async () => {
-        const recentAddonsIcons = await addons.getRecentAddonsIcons();
-        expect
-          .soft(
-            recentAddonsIcons.length,
-            ExpectedMessages.addonsIconsCountIsValid,
-          )
-          .toBe(recentAddonIds.length);
-
-        for (const addon of recentAddonIds) {
-          const addonEntity = ModelsUtil.getAddon(addon)!;
-          const actualRecentAddon = recentAddonsIcons.find(
-            (a) => a.entityId === addonEntity.id,
-          )!;
-          const expectedAddonIcon = iconApiHelper.getEntityIcon(addonEntity);
-          await agentSettingAssertion.assertEntityIcon(
-            actualRecentAddon.iconLocator,
-            expectedAddonIcon,
-          );
-        }
       },
     );
 
@@ -335,7 +289,6 @@ dialTest(
     agentSettingAssertion,
     temperatureSlider,
     setTestIds,
-    addons,
     chat,
     conversationSettingsModal,
     talkToAgentDialog,
@@ -379,9 +332,6 @@ dialTest(
         .soft(temperature, ExpectedMessages.temperatureIsValid)
         .toBe(ExpectedConstants.defaultTemperature);
     }
-
-    const selectedAddons = await addons.getSelectedAddons();
-    expect.soft(selectedAddons, ExpectedMessages.noAddonsSelected).toEqual([]);
     await conversationSettingsModal.cancelButton.click();
 
     await chat.changeAgentButton.click();
