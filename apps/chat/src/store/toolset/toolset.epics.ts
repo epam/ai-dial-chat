@@ -44,7 +44,6 @@ import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
-import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
@@ -446,17 +445,6 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(
         switchMap(() => {
           const actions: Observable<AppAction>[] = [];
-          if (payload.action === DeleteType.DELETE) {
-            actions.push(
-              ...payload.references.map((reference) =>
-                of(
-                  ToolsetActions.deleteToolset({
-                    reference,
-                  }),
-                ),
-              ),
-            );
-          }
 
           return concat(
             ...actions,
@@ -567,7 +555,16 @@ const deleteToolsetEpic: AppEpic = (action$, state$) =>
       return ToolsetService.deleteToolset(
         getIdWithoutFeatureType(targetToolset.id),
       ).pipe(
-        switchMap(() => of(ToolsetActions.deleteToolsetSuccess(payload))),
+        switchMap(() => {
+          return concat(
+            of(
+              ToolsetActions.removeInstalledToolsets({
+                references: [targetToolset.reference],
+              }),
+            ),
+            of(ToolsetActions.deleteToolsetSuccess(payload)),
+          );
+        }),
         catchError((err) => {
           console.error('Failed to delete toolset', err);
           return of(ToolsetActions.deleteToolsetFail());

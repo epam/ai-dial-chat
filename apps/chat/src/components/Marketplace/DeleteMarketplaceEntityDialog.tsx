@@ -68,9 +68,8 @@ const DeleteMarketplaceEntityDialogView = () => {
         dispatch(ApplicationActions.delete(entity));
       } else {
         dispatch(
-          ToolsetActions.removeInstalledToolsets({
-            references: [entity.reference],
-            action: DeleteType.DELETE,
+          ToolsetActions.deleteToolset({
+            reference: entity.reference,
           }),
         );
       }
@@ -91,7 +90,6 @@ const DeleteMarketplaceEntityDialogView = () => {
         dispatch(
           ToolsetActions.removeInstalledToolsets({
             references: [entity.reference],
-            action: DeleteType.REMOVE,
           }),
         );
       }
