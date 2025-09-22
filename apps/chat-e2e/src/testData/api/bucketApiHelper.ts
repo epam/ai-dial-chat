@@ -1,7 +1,7 @@
 import { API } from '@/src/testData';
 import { APIRequestContext } from '@playwright/test';
 
-export class BucketAPI {
+export class BucketApiHelper {
   constructor(
     private readonly request: APIRequestContext,
     private readonly baseUrl: string,

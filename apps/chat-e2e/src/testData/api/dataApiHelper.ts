@@ -3,7 +3,7 @@ import { AuthTokens } from '../../core/debugAuth';
 import { API } from '@/src/testData';
 import { APIRequestContext } from '@playwright/test';
 
-export class DataAPI {
+export class DataApiHelper {
   constructor(
     private readonly request: APIRequestContext,
     private readonly baseUrl: string,
