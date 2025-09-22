@@ -22,7 +22,6 @@ dialTest(
     agentSettings,
     conversationSettingsModal,
     temperatureSlider,
-    addons,
     setTestIds,
     talkToAgentDialog,
     chat,
@@ -68,10 +67,6 @@ dialTest(
         .soft(temperature, ExpectedMessages.temperatureIsValid)
         .toBe(temp.toString());
     }
-    const selectedAddons = await addons.getSelectedAddons();
-    expect
-      .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
-      .toEqual([]);
   },
 );
 

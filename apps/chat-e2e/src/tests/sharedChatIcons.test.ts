@@ -83,9 +83,10 @@ dialTest(
           await conversationDropdownMenu.selectShareMenuOption();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        await shareModalAssertion.assertMessageContent(
+        await shareModalAssertion.assertMessageContent([
+          ExpectedConstants.shareLinkText,
           ExpectedConstants.shareConversationText,
-        );
+        ]);
         await shareModalAssertion.assertElementState(
           shareModal.notSharedEntityLabel,
           'visible',
@@ -142,7 +143,7 @@ dialTest(
         const tooltipChatName = await tooltip.getContent();
         expect
           .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationName(conversation.name));
+          .toBe(ExpectedConstants.sharedEntityName(conversation.name));
 
         const isTooltipChatNameTruncated =
           await tooltip.isElementWidthTruncated();
@@ -323,7 +324,6 @@ dialSharedWithMeTest(
     talkToAgentDialog,
     temperatureSlider,
     agentSettings,
-    addons,
     conversations,
     conversationDropdownMenu,
     conversationSettingsModal,
@@ -346,7 +346,6 @@ dialSharedWithMeTest(
     let firstConversationToShare: Conversation;
     let secondConversationToShare: Conversation;
     let thirdConversationToShare: Conversation;
-    let randomAddon: DialAIEntityModel;
     let randomModel: DialAIEntityModel;
     let defaultModelId: string;
     let newName: string;
@@ -376,13 +375,11 @@ dialSharedWithMeTest(
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
         defaultModelId = ModelsUtil.getDefaultAgent()!.id;
-        randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
         randomModel = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModels().filter(
             (model) => model.id !== defaultModelId,
           ),
         );
-        await localStorageManager.setRecentAddonsIds(randomAddon);
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
           randomModel,
         );
@@ -399,7 +396,6 @@ dialSharedWithMeTest(
         await chatHeader.openConversationSettingsPopup();
         await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
-        await addons.selectAddon(randomAddon.name);
         await conversationSettingsModal.applyChangesButton.click();
         await toast.closeToast();
         await dialHomePage.mockChatTextResponse(
@@ -648,7 +644,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
 
@@ -661,7 +657,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
   },
@@ -869,10 +865,10 @@ dialTest(
         shareLinkResponse = (await folderConversations.selectShareMenuOption())
           .response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        shareModalAssertion.assertValue(
-          await shareModal.getShareTextContent(),
+        shareModalAssertion.assertMessageContent([
+          ExpectedConstants.shareLinkText,
           ExpectedConstants.shareConversationFolderText,
-        );
+        ]);
         await shareModalAssertion.assertElementText(
           shareModal.notSharedEntityLabel,
           ExpectedConstants.notSharedFolderText,

@@ -16,6 +16,8 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  DragFile,
+  FileDropArea,
   FileModalSection,
   InformationModal,
   ListboxMenu,
@@ -25,6 +27,7 @@ import {
   PublishingRules,
   SelectFolderModal,
   SendMessage,
+  ShareAppModal,
   TopicsTooltip,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
@@ -56,6 +59,7 @@ import {
   PublishingRequestModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
+  ShareAppModalAssertion,
   ShareModalAssertion,
   SideBarAssertion,
   TalkToAgentDialogAssertion,
@@ -64,7 +68,6 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
-import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import { AppEditorHeaderAssertion } from '@/src/assertions/appEditorHeaderAssertion';
@@ -97,8 +100,6 @@ import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageIn
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { DialErrorPage } from '@/src/ui/pages/DialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
-import { Addons } from '@/src/ui/webElements/addons';
-import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
@@ -194,6 +195,8 @@ const dialTest = test.extend<{
   accountDropdownMenu: DropdownMenu;
   banner: Banner;
   promptBar: PromptBar;
+  fileDropArea: FileDropArea;
+  dragFile: DragFile;
   chat: Chat;
   footer: Footer;
   chatMessages: ChatMessages;
@@ -216,8 +219,6 @@ const dialTest = test.extend<{
   talkToAgents: MarketplaceAgents;
   agentSettings: AgentSettings;
   temperatureSlider: TemperatureSlider;
-  addons: Addons;
-  addonsDialog: AddonsDialog;
   agentInfo: AgentInfo;
   conversationDropdownMenu: DropdownMenu;
   folderDropdownMenu: DropdownMenu;
@@ -241,6 +242,7 @@ const dialTest = test.extend<{
   errorPopup: ErrorPopup;
   playbackControl: PlaybackControl;
   shareModal: ShareModal;
+  shareAppModal: ShareAppModal;
   chatBarSearch: Search;
   promptBarSearch: Search;
   chatFilter: Filter;
@@ -336,13 +338,13 @@ const dialTest = test.extend<{
   agentSettingAssertion: AgentSettingAssertion;
   playbackAssertion: PlaybackAssertion;
   shareApiAssertion: ShareApiAssertion;
-  shareModalAssertion: ShareModalAssertion;
+  shareModalAssertion: ShareModalAssertion<ShareModal>;
+  shareAppModalAssertion: ShareAppModalAssertion;
   publishingRequestModalAssertion: PublishingRequestModalAssertion;
   selectFoldersAssertion: FolderAssertion<Folders>;
   selectFolderModalAssertion: SelectFolderModalAssertion;
   conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
   agentInfoAssertion: AgentInfoAssertion;
-  addonsDialogAssertion: AddonsDialogAssertion;
   marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
@@ -570,8 +572,16 @@ const dialTest = test.extend<{
     const promptBarSearch = promptBar.getSearch();
     await use(promptBarSearch);
   },
-  chat: async ({ appContainer }, use) => {
-    const chat = appContainer.getChat();
+  fileDropArea: async ({ appContainer }, use) => {
+    const fileDropArea = appContainer.getFileDropArea();
+    await use(fileDropArea);
+  },
+  dragFile: async ({ fileDropArea }, use) => {
+    const dragFile = fileDropArea.getDragFile();
+    await use(dragFile);
+  },
+  chat: async ({ fileDropArea }, use) => {
+    const chat = fileDropArea.getChat();
     await use(chat);
   },
   footer: async ({ appContainer }, use) => {
@@ -672,14 +682,6 @@ const dialTest = test.extend<{
     const temperatureSlider = agentSettings.getTemperatureSlider();
     await use(temperatureSlider);
   },
-  addons: async ({ agentSettings }, use) => {
-    const addons = agentSettings.getAddons();
-    await use(addons);
-  },
-  addonsDialog: async ({ addons }, use) => {
-    const addonsDialog = addons.getAddonsDialog();
-    await use(addonsDialog);
-  },
   agentInfo: async ({ chat }, use) => {
     const agentInfo = chat.getAgentInfo();
     await use(agentInfo);
@@ -775,6 +777,10 @@ const dialTest = test.extend<{
   shareModal: async ({ page }, use) => {
     const shareModal = new ShareModal(page);
     await use(shareModal);
+  },
+  shareAppModal: async ({ page }, use) => {
+    const shareAppModal = new ShareAppModal(page);
+    await use(shareAppModal);
   },
   modelApiHelper: async ({ request }, use) => {
     const modelApiHelper = new ModelApiHelper(request);
@@ -1253,6 +1259,10 @@ const dialTest = test.extend<{
     const shareModalAssertion = new ShareModalAssertion(shareModal);
     await use(shareModalAssertion);
   },
+  shareAppModalAssertion: async ({ shareAppModal }, use) => {
+    const shareAppModalAssertion = new ShareAppModalAssertion(shareAppModal);
+    await use(shareAppModalAssertion);
+  },
   publishingRequestModalAssertion: async ({ publishingRequestModal }, use) => {
     const publishingRequestModalAssertion = new PublishingRequestModalAssertion(
       publishingRequestModal,
@@ -1277,10 +1287,6 @@ const dialTest = test.extend<{
   agentInfoAssertion: async ({ agentInfo }, use) => {
     const agentInfoAssertion = new AgentInfoAssertion(agentInfo);
     await use(agentInfoAssertion);
-  },
-  addonsDialogAssertion: async ({ addonsDialog }, use) => {
-    const addonsDialogAssertion = new AddonsDialogAssertion(addonsDialog);
-    await use(addonsDialogAssertion);
   },
   marketplaceAgentsAssertion: async ({ marketplaceAgents }, use) => {
     const marketplaceAgentsAssertion = new MarketplaceAgentsAssertion(
@@ -1409,19 +1415,20 @@ const dialTest = test.extend<{
       new CustomApplicationPublishingUtil(
         customApplicationBuilder,
         adminApplicationApiHelper,
+        fileApiHelper,
         publishRequestBuilder,
         adminPublicationApiHelper,
-        fileApiHelper,
       );
     await use(adminCustomApplicationPublishingUtil);
   },
   customApplicationPublishingUtil: async (
-    { customApplicationBuilder, applicationApiHelper },
+    { customApplicationBuilder, applicationApiHelper, fileApiHelper },
     use,
   ) => {
     const customApplicationPublishingUtil = new CustomApplicationPublishingUtil(
       customApplicationBuilder,
       applicationApiHelper,
+      fileApiHelper,
     );
     await use(customApplicationPublishingUtil);
   },

@@ -76,14 +76,6 @@ export const ReviewApplicationDialog = {
   completionUrl: '[data-qa="app-completion-url"]',
 };
 
-export const AddonDialog = {
-  addonsDialog: '[data-qa="addons-dialog"]',
-  addonSearchResults: '[data-qa="addon-search-results"]',
-  addonName: '[data-qa="addon-name"]',
-  closeDialog: '[data-qa="close-addons-dialog"]',
-  applyAddons: '[data-qa="apply-addons"]',
-};
-
 export const ModelTooltip = {
   modelTooltip: '[data-qa="chat-model-tooltip"]',
   modelInfo: '[data-qa="agent-info"]',
@@ -98,7 +90,6 @@ export const SettingsTooltip = {
   assistantModelInfo: '[data-qa="assistant agent-info"]',
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
-  addonsInfo: '[data-qa="addons-info"]',
 };
 
 export const TooltipSelector = {
@@ -113,6 +104,9 @@ export const ShareModalSelectors = {
   shareText: '[data-qa="share-message"]',
   removeAccessBtn: '[data-qa="remove-access-button"]',
   notSharedEntityLabel: '[data-qa="not-shared-entity-label"]',
+  shareOption: '[data-qa="share-option"]',
+  qrCode: '[data-qa="share-qr-code"]',
+  entityVersion: '[data-qa="entity-version"]',
 };
 
 export const UploadFromDeviceModalSelectors = {
@@ -214,10 +208,6 @@ export const ChatSettingsModalSelectors = {
   systemPrompt: '[data-qa="system-prompt"]',
   temperatureSlider: '[data-qa="temp-slider"]',
   slider: '.temperature-slider',
-  addons: '[data-qa="addons"]',
-  selectedAddons: '[data-qa="selected-addons"]',
-  recentAddons: '[data-qa="recent-addons"]',
-  seeAllSelectors: '[data-qa="see-all-addons"]',
 };
 
 export const TalkToAgentDialogSelectors = {

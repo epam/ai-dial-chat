@@ -8,6 +8,7 @@ import {
   ChatMessages,
   ConversationSettingsModal,
   DropdownMenu,
+  FileDropArea,
   InformationModal,
   Marketplace,
   MarketplaceAgents,
@@ -92,6 +93,7 @@ const dialAdminTest = dialTest.extend<{
   adminMarketplacePage: MarketplacePage;
   adminChatBar: ChatBar;
   adminPromptBar: PromptBar;
+  adminFileDropArea: FileDropArea;
   adminChat: Chat;
   adminMarketplaceContainer: MarketplaceContainer;
   adminNavigationPanel: NavigationPanel;
@@ -254,8 +256,12 @@ const dialAdminTest = dialTest.extend<{
     const adminUserPromptBar = adminAppContainer.getPromptBar();
     await use(adminUserPromptBar);
   },
-  adminChat: async ({ adminAppContainer }, use) => {
-    const additionalShareUserChat = adminAppContainer.getChat();
+  adminFileDropArea: async ({ adminAppContainer }, use) => {
+    const adminFileDropArea = adminAppContainer.getFileDropArea();
+    await use(adminFileDropArea);
+  },
+  adminChat: async ({ adminFileDropArea }, use) => {
+    const additionalShareUserChat = adminFileDropArea.getChat();
     await use(additionalShareUserChat);
   },
   adminMarketplaceContainer: async ({ adminMarketplacePage }, use) => {

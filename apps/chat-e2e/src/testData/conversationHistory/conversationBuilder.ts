@@ -21,7 +21,7 @@ export class ConversationBuilder {
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
-      selectedAddons: model.selectedAddons ?? [],
+      selectedAddons: [],
       updatedAt: Date.now(),
       folderId: '',
     };
@@ -73,11 +73,6 @@ export class ConversationBuilder {
 
   withReplay(replay: Replay): ConversationBuilder {
     this.conversation.replay = replay;
-    return this;
-  }
-
-  withAddons(addons: string[]): ConversationBuilder {
-    this.conversation.selectedAddons = addons;
     return this;
   }
 
