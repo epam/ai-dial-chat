@@ -4,6 +4,7 @@ import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
+  ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
@@ -430,7 +431,78 @@ dialAdminTest.only(
         );
         await adminPublishingApprovalModal.approveButton.hoverOver();
         await adminTooltipAssertion.assertTooltipContent(
-          "Request can't be approved as some of conversations have no messages",
+          ExpectedMessages.requestCannotBeApproved,
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  '[Admin view][Edit request]: Edit button is not displayed for the chat in Playback mode in publish request',
+  async ({
+    conversationData,
+    publishRequestBuilder,
+    publicationApiHelper,
+    dataInjector,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    setTestIds,
+    adminLocalStorageManager,
+    localStorageManager,
+    baseAssertion,
+    adminPublicationReviewControl,
+  }) => {
+    setTestIds('EPMRTC-6498');
+    let conversation: Conversation;
+    let playbackConversation: Conversation;
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+
+    await dialTest.step(
+      'Prepare playback conversation and publication request',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation();
+        playbackConversation =
+          conversationData.prepareDefaultPlaybackConversation(conversation);
+        await dataInjector.createConversations([
+          conversation,
+          playbackConversation,
+        ]);
+        await localStorageManager.setShowSideBarPanels();
+
+        const publishRequest = publishRequestBuilder
+          .withName(requestName)
+          .withConversationInFolderResource(
+            playbackConversation,
+            PublishActions.ADD,
+          )
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Login as admin, open publication request and click on "Go to a review" link',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify there is no Edit icon in bottom near "Back to publication request" button',
+      async () => {
+        await baseAssertion.assertElementState(
+          adminPublicationReviewControl.editButton,
+          'hidden',
         );
       },
     );
