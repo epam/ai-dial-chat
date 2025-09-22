@@ -30,6 +30,7 @@ export const PromptPreviewModal = {
   promptPreviewContent:
     '[data-qa="prompt-content-label"] ~ [data-qa="prompt-content"]',
   promptExportButton: '[data-qa="export-prompt"]',
+  promptUnshareButton: '[data-qa="unshare-prompt"]',
   promptDeleteButton: '[data-qa="delete-prompt"]',
   promptDuplicateButton: '[data-qa="duplicate-prompt"]',
   editPromptButton: '[data-qa="edit-prompt"]',
