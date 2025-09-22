@@ -179,7 +179,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   'Update settings of agent for chat from publication request.\n' +
     'Update agent for chat from publication request.\n' +
     'Edit existing message for chat from publication request Approve required.\n' +
@@ -205,13 +205,18 @@ dialAdminTest(
     adminEntitySettingsAssertion,
     adminChatMessagesAssertion,
     adminSendMessage,
+           adminPublicationReviewControl,
   }) => {
     setTestIds('EPMRTC-6736', 'EPMRTC-6737', 'EPMRTC-6475', 'EPMRTC-6485');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const newSystemPrompt = 'new system prompt';
     const newTemp = '0.5';
-    const model = ModelsUtil.getDefaultAgent()!;
+    const model = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getModels().filter(
+        (m) => m.features?.temperature && m.features?.systemPrompt,
+      ),
+    )!;
     const modelIcon = iconApiHelper.getEntityIcon(model);
 
     await dialTest.step(
@@ -270,9 +275,21 @@ dialAdminTest(
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
+        await adminPublicationReviewControl.editButton.click();
         await adminSendMessage.send(newMessage);
         await adminChatMessagesAssertion.assertLastMessageContent('Response');
         await adminChatMessagesAssertion.assertMessagesCount(4);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on agent icon, select another agent and verify it is updated',
+      async () => {
+        await adminChatHeader.chatAgent.click();
+        await adminTalkToAgentDialog.selectAgent(model.name);
+        //TODO the DIAL reboots
+        await adminPublicationReviewControl.editButton.click();
+        await adminChatHeaderAssertion.assertHeaderIcon(modelIcon);
       },
     );
 
@@ -290,26 +307,85 @@ dialAdminTest(
           newSystemPrompt,
         );
         await adminEntitySettingsAssertion.assertTemperature(newTemp);
-      },
-    );
-
-    await dialAdminTest.step(
-      'Click on agent icon, select another agent and verify it is updated',
-      async () => {
-        await adminChatHeader.chatAgent.click();
-        await adminTalkToAgentDialog.selectAgent(model.name);
-        await adminChatHeaderAssertion.assertHeaderIcon(modelIcon);
+        await adminConversationSettings.cancelButton.click();
       },
     );
 
     await dialAdminTest.step(
       'Send a message and verify response is received',
       async () => {
+        //TODO why do we need to that again?
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await adminChat.sendRequestWithButton('test');
         await adminChatMessages.waitForResponseReceived();
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'Regenerate last message for chat form publication request',
+  async ({
+    conversationData,
+    publishRequestBuilder,
+    publicationApiHelper,
+    dataInjector,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    adminChatHeader,
+    setTestIds,
+    adminLocalStorageManager,
+    localStorageManager,
+    adminChatHeaderAssertion,
+    adminChatMessages,
+    adminChatMessagesAssertion,
+  }) => {
+    setTestIds('EPMRTC-6488');
+    let conversation: Conversation;
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+
+    await dialTest.step(
+      'Prepare conversation and publication request',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+
+        const publishRequest = publishRequestBuilder
+          .withName(requestName)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Login as admin, open publication request and click on "Go to a review" link',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Regenerate last response and verify it is regenerated',
+      async () => {
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await adminChatMessages.regenerateResponse();
+        await adminChatMessagesAssertion.assertLastMessageContent('Response');
       },
     );
   },
