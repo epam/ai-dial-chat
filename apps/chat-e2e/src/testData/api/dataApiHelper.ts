@@ -1,18 +1,17 @@
 import { AuthTokens } from '../../core/debugAuth';
+import { BaseApiHelper } from './baseApiHelper';
 
 import { API } from '@/src/testData';
 import { APIRequestContext } from '@playwright/test';
 
-export class DataApiHelper {
-  constructor(
-    private readonly request: APIRequestContext,
-    private readonly baseUrl: string,
-  ) {}
+export class DataApiHelper extends BaseApiHelper {
+  constructor(request: APIRequestContext) {
+    super(request);
+  }
 
   public async fetchAdditionalData(): Promise<Partial<AuthTokens>> {
     const endpoints = [
       { key: 'models', url: API.modelsHost },
-      { key: 'addons', url: API.addonsHost },
       { key: 'themes', url: API.themesListingHost },
     ];
 
@@ -20,7 +19,7 @@ export class DataApiHelper {
 
     for (const { key, url } of endpoints) {
       try {
-        const response = await this.request.get(`${this.baseUrl}${url}`);
+        const response = await this.request.get(this.getHost(url));
         if (response.status() === 200) {
           data[key as keyof AuthTokens] = await response.text();
         }

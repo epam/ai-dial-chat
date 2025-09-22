@@ -1,14 +1,15 @@
+import { BaseApiHelper } from './baseApiHelper';
+
 import { API } from '@/src/testData';
 import { APIRequestContext } from '@playwright/test';
 
-export class BucketApiHelper {
-  constructor(
-    private readonly request: APIRequestContext,
-    private readonly baseUrl: string,
-  ) {}
+export class BucketApiHelper extends BaseApiHelper {
+  constructor(request: APIRequestContext) {
+    super(request);
+  }
 
   public async getBucket(): Promise<{ bucket: string; bucketJson: string }> {
-    const response = await this.request.get(`${this.baseUrl}${API.bucketHost}`);
+    const response = await this.request.get(this.getHost(API.bucketHost));
     if (response.status() !== 200) {
       throw new Error(`Failed to get bucket: ${response.status()}`);
     }
