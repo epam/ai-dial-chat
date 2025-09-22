@@ -75,7 +75,7 @@ export class ApiAssertion {
     request: ChatBody,
     expectedPrompt: string | undefined,
   ) {
-    if (request.prompt === undefined) {
+    if (expectedPrompt === undefined) {
       expect
         .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
         .toBeUndefined();
@@ -84,12 +84,6 @@ export class ApiAssertion {
         .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
         .toBe(expectedPrompt);
     }
-  }
-
-  public assertRequestAddons(request: ChatBody, expectedAddons: string[]) {
-    expect
-      .soft(request.selectedAddons, ExpectedMessages.chatRequestAddonsAreValid)
-      .toEqual(expectedAddons);
   }
 
   public verifyRequestAttachments(
