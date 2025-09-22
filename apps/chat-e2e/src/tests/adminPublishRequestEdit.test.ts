@@ -179,7 +179,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'Update settings of agent for chat from publication request.\n' +
     'Update agent for chat from publication request.\n' +
     'Edit existing message for chat from publication request Approve required.\n' +
@@ -325,8 +325,9 @@ dialAdminTest.only(
   },
 );
 
-dialAdminTest(
-  'Regenerate last message for chat form publication request',
+dialAdminTest.only(
+  'Regenerate last message for chat form publication request.\n' +
+    'Edit chat: remove all messages',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -342,8 +343,12 @@ dialAdminTest(
     adminChatHeaderAssertion,
     adminChatMessages,
     adminChatMessagesAssertion,
+    adminPublicationReviewControl,
+    adminTooltipAssertion,
+    baseAssertion,
+    adminConfirmationDialog,
   }) => {
-    setTestIds('EPMRTC-6488');
+    setTestIds('EPMRTC-6488', 'EPMRTC-6483');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
 
@@ -386,6 +391,30 @@ dialAdminTest(
         );
         await adminChatMessages.regenerateResponse();
         await adminChatMessagesAssertion.assertLastMessageContent('Response');
+      },
+    );
+
+    await dialAdminTest.step(
+      'Remove all messages, go back to publication request and verify Approve button is disabled',
+      async () => {
+        const messagesCount =
+          await adminChatMessages.chatMessages.getElementsCount();
+        for (let i = messagesCount; i > 0; i = i - 2) {
+          const message = adminChatMessages.getChatMessage(i - 1);
+          await message.hover();
+          await adminChatMessages.messageDeleteIcon(i - 1).click();
+          await adminConfirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+          await adminChatMessages.getChatMessage(i - 2).waitFor({state: "detached"});
+        }
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await baseAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.approveButton,
+          'disabled',
+        );
+        await adminPublishingApprovalModal.approveButton.hoverOver();
+        await adminTooltipAssertion.assertTooltipContent(
+          "Request can't be approved as some of conversations have no messages",
+        );
       },
     );
   },

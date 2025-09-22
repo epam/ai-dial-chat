@@ -6,6 +6,7 @@ import {
   ChatBar,
   ChatHeader,
   ChatMessages,
+  ConfirmationDialog,
   ConversationSettingsModal,
   DropdownMenu,
   FileDropArea,
@@ -181,6 +182,7 @@ const dialAdminTest = dialTest.extend<{
   adminTalkToAgentDialog: TalkToAgentDialog;
   adminEntitySettingsAssertion: AgentSettingAssertion;
   adminSendMessage: SendMessage;
+  adminConfirmationDialog: ConfirmationDialog;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -737,6 +739,10 @@ const dialAdminTest = dialTest.extend<{
   adminSendMessage: async ({ adminChat }, use) => {
     const adminSendMessage = adminChat.getSendMessage();
     await use(adminSendMessage);
+  },
+  adminConfirmationDialog: async ({ adminPage }, use) => {
+    const adminConfirmationDialog = new ConfirmationDialog(adminPage);
+    await use(adminConfirmationDialog);
   },
 });
 
