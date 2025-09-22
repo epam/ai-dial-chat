@@ -26,9 +26,6 @@ export class ChatHeader extends BaseElement {
   public chatModelArrowIcon = this.getChildElementBySelector(
     `${ChatHeaderSelectors.chatAgent} >> ${SideBarSelectors.arrowAdditionalIcon}`,
   );
-  public chatAddonIcons = this.getChildElementBySelector(
-    `${ChatHeaderSelectors.chatAddons} > ${Tags.span}`,
-  );
   public deleteConversationFromComparison = this.getChildElementBySelector(
     ChatHeaderSelectors.deleteFromCompareIcon,
   );
@@ -54,10 +51,6 @@ export class ChatHeader extends BaseElement {
 
   async getHeaderModelIcon() {
     return this.getElementIcon(this.rootLocator);
-  }
-
-  async getHeaderAddonsIcons() {
-    return this.getElementIcons(this.chatAddonIcons);
   }
 
   async openConversationSettingsPopup() {

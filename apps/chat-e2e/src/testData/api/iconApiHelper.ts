@@ -15,8 +15,6 @@ export class IconApiHelper extends BaseApiHelper {
         case EntityType.Model:
         case EntityType.Application:
           return API.defaultModelIconHost();
-        case EntityType.Addon:
-          return API.defaultAddonIconHost();
         default:
           return '';
       }
@@ -32,8 +30,6 @@ export class IconApiHelper extends BaseApiHelper {
         case EntityType.Model:
         case EntityType.Application:
           return API.defaultModelIconHost();
-        case EntityType.Addon:
-          return API.defaultAddonIconHost();
         default:
           return '';
       }
