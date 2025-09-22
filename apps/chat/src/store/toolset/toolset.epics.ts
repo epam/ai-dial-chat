@@ -18,6 +18,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import { getIdWithoutFeatureType, isMyEntity } from '@/src/utils/app/id';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import {
   convertToolsetModelToApi,
   encodeToolsetRedirectState,
@@ -425,10 +426,19 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       const stateValue = state$.value;
       const installedToolsets =
         ToolsetSelectors.selectInstalledToolsets(stateValue);
+      const toolsets = ToolsetSelectors.selectToolsets(stateValue);
+      const toolsetsGroupKeys = ToolsetSelectors.selectAllGroupToolsetsKeySet(
+        stateValue,
+        payload.references,
+      );
 
-      //TODO change to check by 'public group keys' when toolsets publication will be ready
-
-      const deletedToolsetsSet = new Set(payload.references);
+      const deletedToolsetsSet = new Set(
+        toolsets
+          .filter((toolset) =>
+            toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset)),
+          )
+          .map((toolset) => toolset.reference),
+      );
       const newInstalledToolsets = installedToolsets.filter(
         (toolset) => !deletedToolsetsSet.has(toolset),
       );
@@ -437,14 +447,15 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
         switchMap(() => {
           const actions: Observable<AppAction>[] = [];
           if (payload.action === DeleteType.DELETE) {
-            //TODO uncomment when ToolsetActions.deleteToolsets will be implemented
-            //   actions.push(
-            //     of(
-            //       ToolsetActions.deleteToolsets({
-            //         references: payload.references,
-            //       }),
-            //     ),
-            //   );
+            actions.push(
+              ...payload.references.map((reference) =>
+                of(
+                  ToolsetActions.deleteToolset({
+                    reference,
+                  }),
+                ),
+              ),
+            );
           }
 
           return concat(
@@ -483,9 +494,19 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       const installedToolsets =
         ToolsetSelectors.selectInstalledToolsets(stateValue);
 
+      const toolsets = ToolsetSelectors.selectToolsets(stateValue);
+      const toolsetsGroupKeys = ToolsetSelectors.selectAllGroupToolsetsKeySet(
+        stateValue,
+        payload.references,
+      );
+
       const newInstalledToolsets = uniq([
         ...installedToolsets,
-        ...payload.references,
+        ...toolsets
+          .filter((toolset) =>
+            toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset)),
+          )
+          .map((toolset) => toolset.reference),
       ]);
 
       return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(

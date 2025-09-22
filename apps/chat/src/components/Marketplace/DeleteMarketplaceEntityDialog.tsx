@@ -67,7 +67,12 @@ const DeleteMarketplaceEntityDialogView = () => {
       if (isDialAiEntityModel(entity)) {
         dispatch(ApplicationActions.delete(entity));
       } else {
-        dispatch(ToolsetActions.deleteToolset({ reference: entity.reference }));
+        dispatch(
+          ToolsetActions.removeInstalledToolsets({
+            references: [entity.reference],
+            action: DeleteType.DELETE,
+          }),
+        );
       }
     },
     [dispatch],
