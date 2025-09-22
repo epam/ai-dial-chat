@@ -421,6 +421,8 @@ export const ExpectedMessages = {
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
+  requestCannotBeApproved:
+    "Request can't be approved as some of conversations have no messages",
 };
 
 export const PublishingExpectedMessages = {

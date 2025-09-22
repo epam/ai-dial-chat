@@ -403,7 +403,7 @@ dialAdminTest.only(
           const message = adminChatMessages.getChatMessage(i - 1);
           await message.hover();
           await adminChatMessages.messageDeleteIcon(i - 1).click();
-          await adminConfirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+          await adminConfirmationDialog.confirm();
           await adminChatMessages.getChatMessage(i - 2).waitFor({state: "detached"});
         }
         await adminPublicationReviewControl.backToPublicationRequest();
