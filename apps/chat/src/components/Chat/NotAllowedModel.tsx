@@ -14,8 +14,7 @@ import { UISelectors } from '@/src/store/selectors';
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 const ICON_SIZE = 24;
-const BUTTON_CLASS_NAME =
-  'underline underline-offset-2 hover:text-accent-primary transition-colors';
+const BUTTON_CLASS_NAME = 'underline underline-offset-2 transition-colors';
 const INTERNAL_CLICK_MARKER = '__INTERNAL_CLICK_ACTION_MARKER__';
 
 interface NotAllowedModelProps {
