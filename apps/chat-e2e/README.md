@@ -70,32 +70,27 @@ In order to run tests for publishing rules, corresponding Dial roles should be a
 DIAL API tests are divided into several groups based on their functionality:
 
 - arithmetic API tests: this test group is intended to verify simple arithmetic requests to entities
-- entity with addons API tests
-- assistant with addons API tests
 - simple text request API tests: these tests are designed to test the functionality of entities with simple text requests, an attachment can be expected as a response
 - entity with attachment API tests: this test group is used to validate the functionality of APIs that handle requests with attachments
 
 The input and expected data for the tests are configured in environment variables that must be a valid JSON, and they are parsed into different interface types. The table below illustrates the correlation between tests, environment variables, and interfaces:
 
-| Test                          | Env variable                              | Interface                     | Example                                                                                                                                                                                   |
-| ----------------------------- | ----------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entityArithmeticRequest`     | `ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS` | `ArithmeticRequestEntity`     | `'[{ "entityId": "gpt-35-turbo", "isSysPromptAllowed": "true" }]'`                                                                                                                        |
-| `entityPlusAddons`            | `ENTITY_PLUS_ADDONS_FOR_API_TESTS`        | `EntityPlusAddonsRequest`     | `'[{ "entityId": "gpt-4o", "addonIds": ["addon-wolfram"], "request": "plot y = x + 1", "response": "https://www6b3.wolframalpha.com/Calculate/MSP" }]'`                                   |
-| `assistantPlusAddons`         | `ASSISTANT_PLUS_ADDONS_FOR_API_TESTS`     | `AssistantPlusAddonsRequest`  | `'[{ "assistantId": "test-assistant", "addonIds": ["addonId1", "addonId2"], "assistantModelId": "gpt-4o", "request": "assistant request?", "response": "expected assistant response" }]'` |
-| `entitySimpleRequest`         | `ENTITY_SIMPLE_REQUEST_FOR_API_TESTS`     | `EntitySimpleRequest`         | `'[{ "entityId": "stability.stable-diffusion-xl", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}]'`                                                                  |
-| `entityPlusAttachmentRequest` | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | `EntityPlusAttachmentRequest` | `'[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" }]'`                                                                                              |
+| Test                          | Env variable                              | Interface                     | Example                                                                                                                  |
+| ----------------------------- | ----------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `entityArithmeticRequest`     | `ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS` | `ArithmeticRequestEntity`     | `'[{ "entityId": "gpt-35-turbo", "isSysPromptAllowed": "true" }]'`                                                       |
+| `entitySimpleRequest`         | `ENTITY_SIMPLE_REQUEST_FOR_API_TESTS`     | `EntitySimpleRequest`         | `'[{ "entityId": "stability.stable-diffusion-xl", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}]'` |
+| `entityPlusAttachmentRequest` | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | `EntityPlusAttachmentRequest` | `'[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" }]'`                             |
 
 If environment variable is not set, the corresponding test will not be executed.
 
 ## Listing tests configuration
 
-The purpose of running listing tests is to guarantee that all necessary entities are correctly configured and accessible through `/api/models` and `/api/addons` API.
+The purpose of running listing tests is to guarantee that all necessary entities are correctly configured and accessible through `/api/models` API.
 To execute these listing tests, the following environment variables need to be set:
 
-| Env variable            | Interface | Example                                                           |
-| ----------------------- | --------- | ----------------------------------------------------------------- |
-| `MODELS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"gpt-35-turbo"}, {"entityId":"gpt-4o"}]'`          |
-| `ADDONS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"addon-wolfram"}, {"entityId":"addon-xweather"}]'` |
+| Env variable            | Interface | Example                                                  |
+| ----------------------- | --------- | -------------------------------------------------------- |
+| `MODELS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"gpt-35-turbo"}, {"entityId":"gpt-4o"}]'` |
 
 ## Run tests locally
 
@@ -166,10 +161,7 @@ The following variables should be placed inside `chat-e2e/.env.local` file in or
 | `NEXT_PUBLIC_OVERLAY_HOST`                | No       | Overlay domain host                                                                                                                                                            | Any string                                                 | <http://localhost:3000> |
 | `AUTH_PROVIDER`                           | No       | Name of authentication provider                                                                                                                                                | `AuthProvider` enum values                                 | auth0                   |
 | `ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS` | No       | DIAL entities used for simple arithmetic API test                                                                                                                              | json corresponding `ArithmeticRequestEntity` interface     |                         |
-| `ENTITY_PLUS_ADDONS_FOR_API_TESTS`        | No       | DIAL entities used for entity+addons API test                                                                                                                                  | json corresponding `EntityPlusAddonsRequest` interface     |                         |
 | `ENTITY_SIMPLE_REQUEST_FOR_API_TESTS`     | No       | DIAL entities used for text request API test, attachment can be expected as a response                                                                                         | json corresponding `EntitySimpleRequest` interface         |                         |
 | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | No       | DIAL entities used for attachment request API test                                                                                                                             | json corresponding `EntityPlusAttachmentRequest` interface |                         |
-| `ASSISTANT_PLUS_ADDONS_FOR_API_TESTS`     | No       | DIAL entities used for assistant+addons API test                                                                                                                               | json corresponding `AssistantPlusAddonsRequest` interface  |                         |
 | `MODELS_LIST_FOR_TESTS`                   | No       | DIAL entities used for listing test                                                                                                                                            | json corresponding `Entity` interface                      |                         |
-| `ADDONS_LIST_FOR_TESTS`                   | No       | DIAL entities used for listing test                                                                                                                                            | json corresponding `Entity` interface                      |                         |
 | `SIMPLE_REQUEST_MODEL`                    | No       | Model used for simple requests, with or without system prompts, e.g. arithmetic operations, markdown tables generation etc                                                     | Any string                                                 |                         |

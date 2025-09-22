@@ -271,33 +271,19 @@ dialTest(
     setTestIds('EPMRTC-1132');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
-    let thirdConversation: Conversation;
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     const firstRandomModel = GeneratorUtil.randomArrayElement(models);
     const secondRandomModel = GeneratorUtil.randomArrayElement(
       models.filter((m) => m.id !== firstRandomModel.id),
     );
-    const thirdRandomModel = GeneratorUtil.randomArrayElement(
+    const newRandomModel = GeneratorUtil.randomArrayElement(
       models.filter(
         (m) => m.id !== firstRandomModel.id && m.id !== secondRandomModel.id,
       ),
     );
-    const randomAddon = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getAddons(),
-    );
-    const newRandomModel = GeneratorUtil.randomArrayElement(
-      models.filter(
-        (m) =>
-          m.id !== firstRandomModel.id &&
-          m.id !== secondRandomModel.id &&
-          m.id !== thirdRandomModel.id,
-      ),
-    );
     const expectedSecondModelIcon =
       iconApiHelper.getEntityIcon(secondRandomModel);
-    const expectedThirdModelIcon =
-      iconApiHelper.getEntityIcon(thirdRandomModel);
 
     await dialTest.step(
       'Prepare conversation with different models to replay',
@@ -308,15 +294,9 @@ dialTest(
         secondConversation =
           conversationData.prepareDefaultConversation(secondRandomModel);
         conversationData.resetData();
-        thirdConversation = conversationData.prepareAddonsConversation(
-          thirdRandomModel,
-          [randomAddon.id],
-        );
-        conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
           firstConversation,
           secondConversation,
-          thirdConversation,
         );
         replayConversation =
           conversationData.preparePartiallyReplayedConversation(
@@ -331,7 +311,6 @@ dialTest(
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
           firstRandomModel,
           secondRandomModel,
-          thirdRandomModel,
           newRandomModel,
         );
         await localStorageManager.setChatCollapsedSection(
@@ -364,10 +343,6 @@ dialTest(
         await chatMessagesAssertion.assertMessageIcon(
           4,
           expectedSecondModelIcon,
-        );
-        await chatMessagesAssertion.assertMessageIcon(
-          6,
-          expectedThirdModelIcon,
         );
       },
     );

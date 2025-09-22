@@ -76,7 +76,6 @@ export const ChatHeaderSelectors = {
   chatHeader: '[data-qa="chat-header"]',
   chatTitle: '[data-qa="chat-title"]',
   chatAgent: '[data-qa="chat-model"]',
-  chatAddons: '[data-qa="chat-addons"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
   leavePlayback: '[data-qa="cancel-playback-mode"]',
