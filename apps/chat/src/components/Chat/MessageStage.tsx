@@ -113,7 +113,7 @@ export const MessageStage = ({ stage }: Props) => {
             isOpened ? 'border-t border-secondary p-2' : 'h-0',
           )}
         >
-          {stage.content && (
+          {isOpened && stage.content && (
             <span className="inline-block overflow-auto">
               <ChatMDComponent
                 isShowResponseLoader={false}
