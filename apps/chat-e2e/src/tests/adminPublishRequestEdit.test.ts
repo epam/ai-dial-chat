@@ -327,7 +327,8 @@ dialAdminTest(
 
 dialAdminTest.only(
   'Regenerate last message for chat form publication request.\n' +
-    'Edit chat: remove all messages',
+    'Edit chat: remove all messages.\n' +
+    '[Admin view][Edit request]: Edit chat icon disappear after it was clicked and message input is displayed',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -347,8 +348,9 @@ dialAdminTest.only(
     adminTooltipAssertion,
     baseAssertion,
     adminConfirmationDialog,
+    adminSendMessage,
   }) => {
-    setTestIds('EPMRTC-6488', 'EPMRTC-6483');
+    setTestIds('EPMRTC-6488', 'EPMRTC-6483', 'EPMRTC-6489');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
 
@@ -380,6 +382,21 @@ dialAdminTest.only(
           isHttpMethodTriggered: false,
         });
         await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on Edit icon and verify it is hidden and message input is displayed',
+      async () => {
+        await adminPublicationReviewControl.editButton.click();
+        await baseAssertion.assertElementState(
+          adminPublicationReviewControl.editButton,
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          adminSendMessage.messageInput,
+          'visible',
+        );
       },
     );
 
