@@ -1,4 +1,4 @@
-import { AuthTokens } from './debugAuth';
+import { AuthTokens } from '../../core/debugAuth';
 
 import { API } from '@/src/testData';
 import { APIRequestContext } from '@playwright/test';

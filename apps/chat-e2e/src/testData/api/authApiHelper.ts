@@ -1,3 +1,5 @@
+import { BaseApiHelper } from './baseApiHelper';
+
 import { APIRequestContext } from '@playwright/test';
 import he from 'he';
 
@@ -16,8 +18,10 @@ interface Auth0Params {
   wctx: string;
 }
 
-export class AuthApiHelper {
-  constructor(private readonly request: APIRequestContext) {}
+export class AuthApiHelper extends BaseApiHelper {
+  constructor(request: APIRequestContext) {
+    super(request);
+  }
 
   public async getCsrfToken(baseUrl: string): Promise<{
     csrfToken: string;

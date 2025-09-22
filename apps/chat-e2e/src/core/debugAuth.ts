@@ -1,8 +1,8 @@
 import { AuthApiHelper } from '../testData/api/authApiHelper';
 import { AuthUtils } from '../utils/authUtils';
 
-import { BucketAPI } from '@/src/core/bucketAPI';
-import { DataAPI } from '@/src/core/dataAPI';
+import { BucketAPI } from '@/src/testData/api/bucketAPI';
+import { DataAPI } from '@/src/testData/api/dataAPI';
 import { APIRequestContext } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
