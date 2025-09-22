@@ -32,6 +32,7 @@ export function middleware(request: NextRequest) {
     script-src 'self' ${allowedScriptsSrc}
      https://cdn.jsdelivr.net/npm/monaco-editor@0.43.0/
      'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
+     worker-src 'self' blob:;
     ${frameDirectives}
 `;
   // Replace newline characters and spaces
