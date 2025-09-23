@@ -1211,9 +1211,13 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      if (signInInSameWindow && isOptionChanged('signInInSameWindow')) {
+      const shouldSignInInSameWindow =
+        process.env.OVERLAY_SIGNIN_IN_SAME_WINDOW === 'true' ||
+        (signInInSameWindow && isOptionChanged('signInInSameWindow'));
+
+      if (shouldSignInInSameWindow) {
         actions.push(
-          of(SettingsActions.setIsSignInInSameWindow(signInInSameWindow)),
+          of(SettingsActions.setIsSignInInSameWindow(shouldSignInInSameWindow)),
         );
       }
 
