@@ -120,4 +120,17 @@ export class PromptModalDialog extends BaseElement {
   public getFieldAsterisk(fieldName: string) {
     return this.fieldLabelHelper.getFieldRequiredIndicator(fieldName);
   }
+
+  public async savePrompt(options: {
+    triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
+  }) {
+    if (options.triggeredHttpMethod) {
+      const respPromise = this.page.waitForResponse(
+        (r) => r.request().method() === options.triggeredHttpMethod,
+      );
+      await this.saveButton.click();
+      return respPromise;
+    }
+    return this.saveButton.click();
+  }
 }
