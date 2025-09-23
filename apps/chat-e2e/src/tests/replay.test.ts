@@ -33,7 +33,7 @@ dialTest.beforeAll(async () => {
       (m) =>
         m.id !== defaultModel.id &&
         m.id !== aModel.id &&
-        m.features?.temperature === true,
+        m.features?.temperature === true && m.features?.systemPrompt,
     ),
   );
 });
