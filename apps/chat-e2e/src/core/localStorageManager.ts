@@ -45,10 +45,6 @@ export class LocalStorageManager {
     window.localStorage.setItem('recentModelsIds', modelIds);
   };
 
-  setRecentAddonsIdsKey = () => (addonIds: string) => {
-    window.localStorage.setItem('recentAddonsIds', addonIds);
-  };
-
   setChatbarWidthKey = () => (width: string) => {
     window.localStorage.setItem('chatbarWidth', width);
   };
@@ -122,12 +118,6 @@ export class LocalStorageManager {
     await this.page.evaluate(this.setPromptsKey(), JSON.stringify(prompt));
   }
 
-  async getRecentAddons() {
-    return this.page.evaluate(
-      () => window.localStorage.getItem('recentAddonsIds') ?? undefined,
-    );
-  }
-
   async removeFromLocalStorage(key: string) {
     await this.page.evaluate((storageKey) => {
       window.localStorage.removeItem(storageKey);
@@ -196,13 +186,6 @@ export class LocalStorageManager {
         storageKey: 'lastConversationSettings',
         storageValue: storageValue,
       },
-    );
-  }
-
-  async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
-    await this.page.addInitScript(
-      this.setRecentAddonsIdsKey(),
-      JSON.stringify(addons.map((a) => a.id)),
     );
   }
 

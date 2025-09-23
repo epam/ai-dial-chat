@@ -53,7 +53,6 @@ for (let i = 0; i < overlayUsernames.length; i++) {
       );
     if (options?.setEntitiesEnvVars) {
       process.env.MODELS = retrievedResponses.get(API.modelsHost);
-      process.env.ADDONS = retrievedResponses.get(API.addonsHost);
       process.env.THEMES = retrievedResponses.get(API.themesListingHost);
     }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
@@ -64,9 +63,6 @@ for (let i = 0; i < overlayUsernames.length; i++) {
     const frameOriginLocalStorage = storage.origins[0].localStorage;
     process.env.RECENT_MODELS = frameOriginLocalStorage.find(
       (s) => s.name === 'recentModelsIds',
-    )?.value;
-    process.env.RECENT_ADDONS = frameOriginLocalStorage.find(
-      (s) => s.name === 'recentAddonsIds',
     )?.value;
   });
 }

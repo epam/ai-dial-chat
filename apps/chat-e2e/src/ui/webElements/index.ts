@@ -9,8 +9,6 @@ export * from './sendMessage';
 export * from './promptBar';
 export * from './dropdownMenu';
 export * from './editInput';
-export * from './addonsDialog';
-export * from './addons';
 export * from './confirmationDialog';
 export * from './agentSettings';
 export * from './promptModalDialog';

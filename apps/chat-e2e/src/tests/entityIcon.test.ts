@@ -12,22 +12,18 @@ dialTest.beforeAll(async () => {
 });
 
 dialTest(
-  '[Select an agent for conversation] Agent ICONs are shown correctly. Set in config.\n' +
-    'Addon icons on See full addons screen',
+  '[Select an agent for conversation] Agent ICONs are shown correctly. Set in config',
   async ({
     dialHomePage,
     talkToAgentDialog,
-    addons,
-    addonsDialog,
     iconApiHelper,
-    addonsDialogAssertion,
     marketplaceAgentsAssertion,
     chat,
     setTestIds,
     localStorageManager,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-1036', 'EPMRTC-1038');
+    setTestIds('EPMRTC-1036');
 
     await dialTest.step(
       'Open "Select an agent for conversation" modal for new conversation',
@@ -53,25 +49,6 @@ dialTest(
       }
       await talkToAgentDialog.cancelButton.click();
     });
-
-    await dialTest.step(
-      'Click "See all addons" and verify all addons have valid icons',
-      async () => {
-        await chat.configureSettingsButton.click();
-        await addons.seeAllAddons();
-        const actualAddonsIcons = await addonsDialog.getAddonsIcons();
-        for (const actualIcon of actualAddonsIcons) {
-          const expectedAddonIcon = iconApiHelper.getEntityIcon(
-            ModelsUtil.getAddon(actualIcon.entityId)!,
-          );
-          await addonsDialogAssertion.assertEntityIcon(
-            actualIcon.iconLocator,
-            expectedAddonIcon,
-          );
-        }
-        await addonsDialog.closeDialog();
-      },
-    );
   },
 );
 
