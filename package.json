@@ -168,7 +168,8 @@
     "allure-playwright": "^3.3.2",
     "eslint-plugin-playwright": "^2.2.0",
     "file-type": "^21.0.0",
-    "playwright-chromium": "^1.55.0"
+    "playwright-chromium": "^1.55.0",
+    "@types/he": "^1.2.3"
   },
   "overrides": {
     "esbuild": "0.25.10",
