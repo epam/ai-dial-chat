@@ -158,8 +158,8 @@ export const getServerSideProps: GetServerSideProps = async ({
   res.setHeader('Cache-Control', 'no-store');
 
   if (
-    !process.env.OVERLAY_SIGNIN_IN_SAME_WINDOW ||
-    process.env.OVERLAY_SIGNIN_IN_SAME_WINDOW === 'false'
+    !process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME ||
+    process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME === 'false'
   ) {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   }

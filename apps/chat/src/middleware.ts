@@ -14,8 +14,8 @@ export function middleware(request: NextRequest) {
 
   const isDev = process.env.NODE_ENV === 'development';
   const shouldIgnoreFrameOptions =
-    (!process.env.OVERLAY_SIGNIN_IN_SAME_WINDOW ||
-      process.env.OVERLAY_SIGNIN_IN_SAME_WINDOW === 'false') &&
+    (!process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME ||
+      process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME === 'false') &&
     (path === '/auth/signin' || path === '/api/auth/signin');
 
   const frameDirectives = getFrameContentSecurityPolicyDirectives(
