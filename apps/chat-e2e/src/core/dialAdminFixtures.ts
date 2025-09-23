@@ -61,6 +61,8 @@ import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
+import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import {
   ApplicationsToApproveTree,
   ApplicationsToPublishTree,
@@ -185,6 +187,11 @@ const dialAdminTest = dialTest.extend<{
   adminSendMessage: SendMessage;
   adminConfirmationDialog: ConfirmationDialog;
   adminChatAssertion: ChatAssertion;
+  adminAttachmentDropdownMenu: DropdownMenu;
+  adminSendMessageInputAttachments: InputAttachments;
+  adminSendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
+  adminPublishFileAssertion: PublishFileAssertion<FilesToPublishTree>;
+
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -749,6 +756,26 @@ const dialAdminTest = dialTest.extend<{
   adminChatAssertion: async ({ adminChat }, use) => {
     const adminChatAssertion = new ChatAssertion(adminChat);
     await use(adminChatAssertion);
+  },
+  adminAttachmentDropdownMenu: async ({ adminSendMessage }, use) => {
+    const adminAttachmentDropdownMenu = adminSendMessage.getDropdownMenu();
+    await use(adminAttachmentDropdownMenu);
+  },
+  adminSendMessageInputAttachments: async ({ adminSendMessage }, use) => {
+    const adminSendMessageInputAttachments = adminSendMessage.getInputAttachments();
+    await use(adminSendMessageInputAttachments);
+  },
+  adminSendMessageInputAttachmentsAssertions: async (
+    {
+      adminSendMessageInputAttachments,
+    }: { adminSendMessageInputAttachments: InputAttachments },
+    use: (
+      value: InputAttachmentsAssertions,
+    ) => Promise<void>,
+  ) => {
+    const adminSendMessageInputAttachmentsAssertions =
+      new InputAttachmentsAssertions(adminSendMessageInputAttachments);
+    await use(adminSendMessageInputAttachmentsAssertions);
   },
 });
 

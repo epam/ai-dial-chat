@@ -3,10 +3,12 @@ import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  Attachment,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -525,6 +527,99 @@ dialAdminTest(
         await baseAssertion.assertElementState(
           adminPublicationReviewControl.editButton,
           'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  '[Admin view][Edit chat] Added file appears in review. User sends new prompt.',
+  async ({
+    conversationData,
+    publishRequestBuilder,
+    publicationApiHelper,
+    dataInjector,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    setTestIds,
+    adminLocalStorageManager,
+    localStorageManager,
+    adminChatMessagesAssertion,
+    adminSendMessage,
+    adminPublicationReviewControl,
+    adminFileApiHelper,
+    adminAttachmentDropdownMenu,
+    adminAttachFilesModal,
+    adminChatHeaderAssertion,
+           adminFilesToApproveAssertion,
+  }) => {
+    setTestIds('EPMRTC-6599');
+    let conversation: Conversation;
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const model = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModelsWithAttachment(),
+    );
+    const newPrompt = 'what is on the picture?';
+
+    await dialTest.step(
+      'Prepare conversation with attachment-supported model and publication request',
+      async () => {
+        await adminFileApiHelper.putFile(Attachment.sunImageName);
+        conversation = conversationData.prepareDefaultConversation(model);
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+
+        const publishRequest = publishRequestBuilder
+          .withName(requestName)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Login as admin, open publication request and click on "Go to a review" link',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on Edit button, attach file, send new message and verify response is received',
+      async () => {
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await adminPublicationReviewControl.editButton.click();
+        await adminSendMessage.attachmentMenuTrigger.click();
+        await adminAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await adminAttachFilesModal.checkAttachedFile(Attachment.sunImageName);
+        await adminAttachFilesModal.attachFiles();
+        await adminSendMessage.send(newPrompt);
+        await adminChatMessagesAssertion.assertLastMessageContent('test response');
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on "Back to publication request" and verify file is displayed in request',
+      async () => {
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminFilesToApproveAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          'visible',
         );
       },
     );
