@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,10 +14,33 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 const PromptDeleteDialogComponent = () => {
   const { t } = useTranslation(Translation.PromptBar);
-
   const dispatch = useAppDispatch();
 
   const deletingPrompt = useAppSelector(PromptsSelectors.selectDeletingPrompt);
+
+  const dialogProps = useMemo(() => {
+    if (!deletingPrompt) {
+      return null;
+    }
+
+    if (deletingPrompt.sharedWithMe) {
+      return {
+        heading: t('Confirm unshare prompt'),
+        description: t('Are you sure that you want to unshare a prompt?'),
+        confirmLabel: t('Unshare'),
+      };
+    }
+
+    return {
+      heading: t('Confirm deleting prompt'),
+      description: `${t('Are you sure that you want to delete a prompt?')}${t(
+        deletingPrompt.isShared
+          ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
+          : '',
+      )}`,
+      confirmLabel: t('Delete'),
+    };
+  }, [deletingPrompt, t]);
 
   const handleConfirmDelete = useCallback(
     (isConfirmed: boolean) => {
@@ -41,16 +64,16 @@ const PromptDeleteDialogComponent = () => {
     [deletingPrompt, dispatch],
   );
 
+  if (!dialogProps) {
+    return null;
+  }
+
   return (
     <ConfirmDialog
       isOpen
-      heading={t('Confirm deleting prompt')}
-      description={`${t('Are you sure that you want to delete a prompt?')}${t(
-        deletingPrompt?.isShared
-          ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
-          : '',
-      )}`}
-      confirmLabel={t('Delete')}
+      heading={dialogProps.heading}
+      description={dialogProps.description}
+      confirmLabel={dialogProps.confirmLabel}
       cancelLabel={t('Cancel')}
       onClose={handleConfirmDelete}
     />
