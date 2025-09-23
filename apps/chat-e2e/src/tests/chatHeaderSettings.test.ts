@@ -1,9 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 
@@ -17,8 +15,6 @@ dialTest(
     dialHomePage,
     chatHeader,
     agentSettingAssertion,
-    temperatureSlider,
-    addons,
     talkToAgentDialog,
     setTestIds,
     conversationData,
@@ -52,7 +48,11 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel);
+        await talkToAgentDialog.selectAgent(randomModel, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'PUT',
+        });
+        await talkToAgentDialog.waitForState({ state: 'hidden' });
       },
     );
 
@@ -66,17 +66,9 @@ dialTest(
           );
         }
         if (ModelsUtil.doesModelAllowTemperature(randomModel)) {
-          const temperature = await temperatureSlider.getTemperature();
-          expect
-            .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
-            .toBe(conversation.temperature.toString());
-        }
-        if (ModelsUtil.doesModelAllowAddons(randomModel)) {
-          const modelAddons = defaultModel.selectedAddons ?? [];
-          const selectedAddons = await addons.getSelectedAddons();
-          expect
-            .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-            .toEqual(modelAddons);
+          await agentSettingAssertion.assertTemperature(
+            conversation.temperature.toString(),
+          );
         }
       },
     );
