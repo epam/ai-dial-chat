@@ -29,7 +29,12 @@ dialTest.beforeAll(async () => {
     allModels.filter((m) => m.id !== defaultModel.id),
   );
   bModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
+    allModels.filter(
+      (m) =>
+        m.id !== defaultModel.id &&
+        m.id !== aModel.id &&
+        m.features?.temperature === true,
+    ),
   );
 });
 
