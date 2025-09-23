@@ -66,6 +66,9 @@ export const ExpectedConstants = {
     'Deleting will stop sharing and other users will no longer see this prompt.',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
+  unsharePromptConfirmationModalTitle: 'Confirm unshare prompt',
+  unsharePromptConfirmationModalMessage:
+    'Are you sure that you want to unshare a prompt?',
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
