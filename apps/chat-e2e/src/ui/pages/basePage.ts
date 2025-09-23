@@ -619,8 +619,28 @@ export class BasePage {
       );
       responsePromises.push(promise);
     }
+
     await action();
-    return await Promise.all(responsePromises);
+
+    const responses = [];
+    for (let i = 0; i < responsePromises.length; i++) {
+      try {
+        const response = await responsePromises[i];
+        responses.push(response);
+      } catch (error) {
+        const expectedResponse = expectedApiResponses[i];
+        console.error("[API Request Failed]", {
+          method: expectedResponse.apiMethod || 'ANY',
+          urlPattern: expectedResponse.urlPattern?.toString() || 'ANY',
+          expectedStatus: expectedResponse.status ?? defaultStatus,
+          timeout: timeout,
+          error: (error as Error).message,
+        });
+        throw error;
+      }
+    }
+
+    return responses;
   }
 
   public async getAttachmentFileMetadataAndContent(
