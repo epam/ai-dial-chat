@@ -15,8 +15,6 @@ import {
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
 
-import { DeleteType } from '@/src/constants/marketplace';
-
 import { ToolsetAuthTypes, UploadStatus } from '@epam/ai-dial-shared';
 
 const initialState: ToolsetState = {
@@ -175,7 +173,7 @@ export const toolsetSlice = createSlice({
     ) => state,
     removeInstalledToolsets: (
       state,
-      _action: PayloadAction<{ references: string[]; action: DeleteType }>,
+      _action: PayloadAction<{ references: string[] }>,
     ) => state,
     updateInstalledToolsetsSuccess: (
       state,
