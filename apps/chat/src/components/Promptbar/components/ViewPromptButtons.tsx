@@ -27,6 +27,7 @@ import { ContextMenu } from '@/src/components/Common/ContextMenu';
 import { IconButton } from '@/src/components/Common/IconButton';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
@@ -130,9 +131,16 @@ export const ViewPromptButtons: React.FC<Props> = ({ prompt, onEditMode }) => {
       },
       {
         name: 'Delete',
-        display: isMyPrompt || !!prompt.sharedWithMe,
+        display: isMyPrompt,
         dataQa: 'delete-prompt',
         Icon: IconTrashX,
+        onClick: handleDelete,
+      },
+      {
+        name: 'Unshare',
+        display: !!prompt.sharedWithMe,
+        dataQa: 'unshare-prompt',
+        Icon: IconUserUnshare,
         onClick: handleDelete,
       },
     ],

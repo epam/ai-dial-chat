@@ -120,7 +120,7 @@ dialTest(
           Attachment.sunImageName,
           restrictedChar,
         );
-        await uploadFromDeviceModal.uploadButton.click();
+        await uploadFromDeviceModal.uploadFiles();
         await attachAllFilesTreeAssertion.assertEntityState(
           {
             name: Attachment.sunImageName,
@@ -147,7 +147,7 @@ dialTest(
           uploadFromDeviceModal.getUploadedFile(Attachment.heartImageName),
           'visible',
         );
-        await uploadFromDeviceModal.uploadButton.click();
+        await uploadFromDeviceModal.uploadFiles();
         await attachAllFilesTreeAssertion.assertEntityState(
           { name: Attachment.heartImageName },
           'visible',
