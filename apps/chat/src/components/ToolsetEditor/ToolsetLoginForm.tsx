@@ -157,6 +157,7 @@ export const ToolsetLoginForm = ({
             id="clientSecret"
             disabled={disabled}
             mandatory
+            type="password"
           />
           <Field
             {...register('authorizationEndpoint')}
