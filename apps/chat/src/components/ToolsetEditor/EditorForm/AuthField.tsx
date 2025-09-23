@@ -164,14 +164,15 @@ const AuthTypeSection = ({
               />
             </div>
 
-            <ToolsetLoginForm
-              onLogin={onLogin}
-              type={type}
-              toolset={toolsetDetails}
-              disabled={withLogin === WithLogin.WithoutLogin}
-              onLogout={onLogout}
-              includeOAuthFields={withLogin === WithLogin.WithConfig}
-            />
+            {withLogin !== WithLogin.WithoutLogin && (
+              <ToolsetLoginForm
+                onLogin={onLogin}
+                type={type}
+                toolset={toolsetDetails}
+                onLogout={onLogout}
+                includeOAuthFields={withLogin === WithLogin.WithConfig}
+              />
+            )}
           </div>
         )}
       </div>
