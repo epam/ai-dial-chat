@@ -1446,7 +1446,8 @@ dialTest(
 );
 
 dialTest(
-  `Verify exiting 'selection view'`,
+  `Verify exiting 'selection view'.\n` +
+    'Header context menu icon is not displayed if chat in select mode',
   async ({
     dialHomePage,
     conversationDropdownMenu,
@@ -1462,9 +1463,10 @@ dialTest(
     setTestIds,
     localStorageManager,
     chatBarFolderAssertion,
+    chatHeader,
     chatHeaderAssertion,
   }) => {
-    setTestIds('EPMRTC-3650');
+    setTestIds('EPMRTC-3650', 'EPMRTC-4733');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let singleConversation: Conversation;
@@ -1548,10 +1550,20 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select single conversation, press "Create New Conversation" button and verify bottom panel does not include "select" buttons',
+      'Select single conversation and verify dots menu is not available in the header',
       async () => {
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
+        await chatHeaderAssertion.assertElementState(
+          chatHeader.dotsMenu,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Press "Create New Conversation" button and verify bottom panel does not include "select" buttons',
+      async () => {
         await chatBar.createNewEntity();
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
       },

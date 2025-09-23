@@ -348,22 +348,23 @@ dialTest(
     'Info option in context menu in side panel.\n' +
     'Metadata for Created by me chat from Today.\n' +
     'Date format depends on local settings.\n' +
-    `Info option in context menu in chat's header`,
+    'Header context menu options available for not empty chats.\n' +
+    `Info option in context menu in chat's header.\n` +
+    'Header context menu: Context menu items are blue highlighted',
   async ({
     dialHomePage,
     conversations,
     chat,
     chatHeader,
-    chatHeaderDropdownMenu,
     conversationData,
     dataInjector,
     setTestIds,
     localStorageManager,
     conversationDropdownMenu,
     informationModal,
+    chatHeaderDropdownMenu,
     informationModalAssertion,
     conversationDropdownMenuAssertion,
-    baseAssertion,
   }) => {
     setTestIds(
       'EPMRTC-594',
@@ -371,10 +372,25 @@ dialTest(
       'EPMRTC-5548',
       'EPMRTC-5550',
       'EPMRTC-5552',
+      'EPMRTC-4734',
       'EPMRTC-5549',
+      'EPMRTC-4755',
     );
     let conversation: Conversation;
     const currentDate = DateUtil.getCurrentLocalDate();
+    const expectedDotsMenuOptions = [
+      MenuOptions.rename,
+      MenuOptions.compare,
+      MenuOptions.duplicate,
+      MenuOptions.replay,
+      MenuOptions.playback,
+      MenuOptions.export,
+      MenuOptions.moveTo,
+      MenuOptions.share,
+      MenuOptions.publish,
+      MenuOptions.info,
+      MenuOptions.delete,
+    ];
 
     await dialTest.step('Prepare empty conversation', async () => {
       conversation = conversationData.prepareEmptyConversation();
@@ -419,14 +435,28 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify chat header menu contains "Info" option',
+      'Open header dots menu and verify the options',
       async () => {
         await chatHeader.dotsMenu.click();
-        const allMenuOptions = await chatHeaderDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayIncludesAll(
-          allMenuOptions,
-          [MenuOptions.info],
-          ExpectedMessages.contextMenuOptionIsAvailable,
+        await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          ...expectedDotsMenuOptions,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify option is highlighted on hover over',
+      async () => {
+        const randomOption = GeneratorUtil.randomArrayElement(
+          expectedDotsMenuOptions,
+        );
+        const optionElement = chatHeaderDropdownMenu.menuOption(randomOption);
+        await optionElement.hover();
+        await conversationDropdownMenuAssertion.assertElementBackgroundColors(
+          optionElement,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentPrimaryAlpha,
+          ),
         );
       },
     );

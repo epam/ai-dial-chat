@@ -160,6 +160,7 @@ import { CustomApplicationPublishingUtil } from '@/src/utils/customApplicationPu
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
+import {DropdownButtonMenu} from "@/src/ui/webElements/dropdownButtonMenu";
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
@@ -230,7 +231,7 @@ const dialTest = test.extend<{
   variableModalDialog: VariableModalDialog;
   chatHeader: ChatHeader;
   chatHeaderVersionDropdownMenu: DropdownMenu;
-  chatHeaderDropdownMenu: DropdownMenu;
+  chatHeaderDropdownMenu: DropdownButtonMenu;
   modelInfoTooltip: ModelInfoTooltip;
   chatSettingsTooltip: ChatSettingsTooltip;
   compare: Compare;
@@ -731,7 +732,7 @@ const dialTest = test.extend<{
     await use(chatHeaderVersionDropdownMenu);
   },
   chatHeaderDropdownMenu: async ({ page }, use) => {
-    const chatHeaderDropdownMenu = new DropdownMenu(page);
+    const chatHeaderDropdownMenu = new DropdownButtonMenu(page);
     await use(chatHeaderDropdownMenu);
   },
   modelInfoTooltip: async ({ page }, use) => {

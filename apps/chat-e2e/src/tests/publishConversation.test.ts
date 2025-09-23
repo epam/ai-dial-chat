@@ -535,6 +535,7 @@ dialAdminTest(
 
 dialTest(
   'Metadata for chat from Organization section.\n' +
+    'Header context menu options for chats from Organization section.\n' +
     'Metadata for chat with several versions from Organization section.\n' +
     'Metadata for chat duplicated from chat from Organization',
   async ({
@@ -546,6 +547,7 @@ dialTest(
     organizationConversations,
     conversationDropdownMenu,
     chatHeader,
+    conversationDropdownMenuAssertion,
     chatHeaderDropdownMenu,
     chatHeaderVersionDropdownMenu,
     informationModal,
@@ -554,7 +556,7 @@ dialTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-5555', 'EPMRTC-5557', 'EPMRTC-6100');
+    setTestIds('EPMRTC-5555', 'EPMRTC-4738', 'EPMRTC-5557', 'EPMRTC-6100');
     let conversation: Conversation;
     const firstVersion = ExpectedConstants.defaultAppVersion;
     const secondVersion = '0.0.2';
@@ -608,7 +610,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select first conversation version, select "Info" option from header dropdown menu and verify modal data',
+      'Select first conversation version, open header dots menu and verify available options',
       async () => {
         await organizationConversations.selectEntity(conversation.name);
         await chatHeader.version.click();
@@ -616,6 +618,20 @@ dialTest(
           triggeredHttpMethod: 'GET',
         });
         await chatHeader.dotsMenu.click();
+        await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+          MenuOptions.unpublish,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select "Info" option from header dropdown menu and verify modal data',
+      async () => {
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });

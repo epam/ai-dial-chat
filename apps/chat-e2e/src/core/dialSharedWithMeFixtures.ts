@@ -171,6 +171,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
   additionalShareUserAgentDetailsModalAssertion: AgentDetailsModalAssertion;
   additionalShareUserMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
+  additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -903,6 +904,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserMarketplaceAgentsAssertion =
       new MarketplaceAgentsAssertion(additionalShareUserMarketplaceAgents);
     await use(additionalShareUserMarketplaceAgentsAssertion);
+  },
+  additionalShareUserConversationDropdownMenuAssertion: async (
+    { additionalShareUserConversationDropdownMenu },
+    use,
+  ) => {
+    const additionalShareUserConversationDropdownMenuAssertion =
+      new MenuAssertion(additionalShareUserConversationDropdownMenu);
+    await use(additionalShareUserConversationDropdownMenuAssertion);
   },
 });
 
