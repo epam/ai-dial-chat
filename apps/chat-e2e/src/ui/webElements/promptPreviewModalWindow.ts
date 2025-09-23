@@ -60,6 +60,11 @@ export class PromptPreviewModalWindow extends BaseElement {
   public promptDeleteButton = this.getChildElementBySelector(
     PromptPreviewModal.promptDeleteButton,
   );
+  public promptUnshareButton = this.getChildElementBySelector(
+    PromptPreviewModal.promptUnshareButton,
+  );
+  public promptUnshareButtonIcon =
+    this.promptUnshareButton.getChildElementBySelector(Tags.svg);
   public promptDeleteButtonIcon =
     this.promptDeleteButton.getChildElementBySelector(Tags.svg);
   public promptDuplicateButton = this.getChildElementBySelector(

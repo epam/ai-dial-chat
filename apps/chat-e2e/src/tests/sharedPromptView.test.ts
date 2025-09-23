@@ -114,9 +114,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Hover over "Delete" button and verify it is highlighted',
       async () => {
-        await additionalShareUserPromptPreviewModal.promptDeleteButton.hoverOver();
+        await additionalShareUserPromptPreviewModal.promptUnshareButton.hoverOver();
         await additionalShareUserPromptPreviewModalAssertion.assertElementColor(
-          additionalShareUserPromptPreviewModal.promptDeleteButtonIcon,
+          additionalShareUserPromptPreviewModal.promptUnshareButtonIcon,
           expectedColor,
         );
       },
@@ -125,12 +125,12 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on "Delete" button and verify confirmation popup is shown',
       async () => {
-        await additionalShareUserPromptPreviewModal.promptDeleteButton.click();
+        await additionalShareUserPromptPreviewModal.promptUnshareButton.click();
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationDialogTitle(
-          ExpectedConstants.deletePromptConfirmationModalTitle,
+          ExpectedConstants.unsharePromptConfirmationModalTitle,
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.deletePromptConfirmationModalMessage,
+          ExpectedConstants.unsharePromptConfirmationModalMessage,
         );
       },
     );
