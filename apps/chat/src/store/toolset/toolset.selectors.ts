@@ -1,7 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
-import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
+import {
+  getGroupMarketplaceEntityKey,
+  groupMarketplaceEntityAndSaveOrder,
+} from '@/src/utils/app/marketplace';
 
 import { RootState } from '@/src/types/store';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -72,6 +75,19 @@ const selectEditorStep = (state: RootState) => rootSelector(state).editorStep;
 const selectPublishRequestToolsets = (state: RootState) =>
   rootSelector(state).publishRequestToolsets;
 
+const selectAllGroupToolsetsKeySet = (
+  state: RootState,
+  references: string[],
+) => {
+  const toolsetsMap = selectToolsetsMap(state);
+  return new Set(
+    references
+      .map((reference) => toolsetsMap[reference])
+      .filter(Boolean)
+      .map((toolset) => getGroupMarketplaceEntityKey(toolset!)),
+  );
+};
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -86,4 +102,5 @@ export const ToolsetSelectors = {
   selectInstalledToolsetsSet,
   selectEditorStep,
   selectPublishRequestToolsets,
+  selectAllGroupToolsetsKeySet,
 };
