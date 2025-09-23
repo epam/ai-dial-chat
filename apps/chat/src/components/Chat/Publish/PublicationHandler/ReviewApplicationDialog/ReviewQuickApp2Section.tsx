@@ -205,13 +205,13 @@ const ReviewQuickApp2SectionView = ({
 };
 
 interface ReviewQuickApp2SectionProps {
-  application?: CustomApplicationModel;
+  application: CustomApplicationModel;
 }
 
 export const ReviewQuickApp2Section = ({
   application,
 }: ReviewQuickApp2SectionProps) => {
-  const isQuickApplication = application && isQuickApp2(application);
+  const isQuickApplication = isQuickApp2(application);
   const config = isQuickApplication ? getQuickApp2Config(application) : null;
 
   if (!isQuickApplication || !config) return null;
