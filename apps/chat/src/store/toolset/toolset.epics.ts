@@ -18,6 +18,7 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import { getIdWithoutFeatureType, isMyEntity } from '@/src/utils/app/id';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import {
   convertToolsetModelToApi,
   encodeToolsetRedirectState,
@@ -43,7 +44,6 @@ import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
-import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
@@ -425,10 +425,19 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       const stateValue = state$.value;
       const installedToolsets =
         ToolsetSelectors.selectInstalledToolsets(stateValue);
+      const toolsets = ToolsetSelectors.selectToolsets(stateValue);
+      const toolsetsGroupKeys = ToolsetSelectors.selectAllGroupToolsetsKeySet(
+        stateValue,
+        payload.references,
+      );
 
-      //TODO change to check by 'public group keys' when toolsets publication will be ready
-
-      const deletedToolsetsSet = new Set(payload.references);
+      const deletedToolsetsSet = new Set(
+        toolsets
+          .filter((toolset) =>
+            toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset)),
+          )
+          .map((toolset) => toolset.reference),
+      );
       const newInstalledToolsets = installedToolsets.filter(
         (toolset) => !deletedToolsetsSet.has(toolset),
       );
@@ -436,16 +445,6 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(
         switchMap(() => {
           const actions: Observable<AppAction>[] = [];
-          if (payload.action === DeleteType.DELETE) {
-            //TODO uncomment when ToolsetActions.deleteToolsets will be implemented
-            //   actions.push(
-            //     of(
-            //       ToolsetActions.deleteToolsets({
-            //         references: payload.references,
-            //       }),
-            //     ),
-            //   );
-          }
 
           return concat(
             ...actions,
@@ -483,9 +482,19 @@ const addInstalledToolsetsEpic: AppEpic = (action$, state$) =>
       const installedToolsets =
         ToolsetSelectors.selectInstalledToolsets(stateValue);
 
+      const toolsets = ToolsetSelectors.selectToolsets(stateValue);
+      const toolsetsGroupKeys = ToolsetSelectors.selectAllGroupToolsetsKeySet(
+        stateValue,
+        payload.references,
+      );
+
       const newInstalledToolsets = uniq([
         ...installedToolsets,
-        ...payload.references,
+        ...toolsets
+          .filter((toolset) =>
+            toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset)),
+          )
+          .map((toolset) => toolset.reference),
       ]);
 
       return ClientDataService.saveInstalledToolsets(newInstalledToolsets).pipe(
@@ -546,7 +555,16 @@ const deleteToolsetEpic: AppEpic = (action$, state$) =>
       return ToolsetService.deleteToolset(
         getIdWithoutFeatureType(targetToolset.id),
       ).pipe(
-        switchMap(() => of(ToolsetActions.deleteToolsetSuccess(payload))),
+        switchMap(() => {
+          return concat(
+            of(
+              ToolsetActions.removeInstalledToolsets({
+                references: [targetToolset.reference],
+              }),
+            ),
+            of(ToolsetActions.deleteToolsetSuccess(payload)),
+          );
+        }),
         catchError((err) => {
           console.error('Failed to delete toolset', err);
           return of(ToolsetActions.deleteToolsetFail());
