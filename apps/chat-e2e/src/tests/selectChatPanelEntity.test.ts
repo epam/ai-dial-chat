@@ -627,6 +627,7 @@ dialTest(
         await folderConversations.selectFolderEntity(
           nestedFolders[fourNestedLevels - 1].name,
           nestedConversations[fourNestedLevels - 1].name,
+          { isHttpMethodTriggered: true },
         );
         await folderConversations.expandFolder(rootFolder.folders.name);
         await folderConversations.openFolderDropdownMenu(nestedFolders[1].name);
