@@ -610,14 +610,18 @@ const startSignInProcessEpic: AppEpic = (action$) =>
             url.searchParams.set('response_type', 'code');
             url.searchParams.set('client_id', authSettings.clientId as string);
             url.searchParams.set('redirect_uri', getToolsetRedirectUri());
-            url.searchParams.set(
-              'code_challenge',
-              authSettings.codeChallenge as string,
-            );
-            url.searchParams.set(
-              'code_challenge_method',
-              authSettings.codeChallengeMethod as string,
-            );
+            if (authSettings.codeChallenge) {
+              url.searchParams.set(
+                'code_challenge',
+                authSettings.codeChallenge,
+              );
+            }
+            if (authSettings.codeChallengeMethod) {
+              url.searchParams.set(
+                'code_challenge_method',
+                authSettings.codeChallengeMethod,
+              );
+            }
             url.searchParams.set('state', encodeToolsetRedirectState(state));
             if (authSettings.scopesSupported) {
               url.searchParams.set(
