@@ -36,13 +36,6 @@ export interface ArithmeticRequestEntity extends Entity {
   systemPrompt?: string;
 }
 
-export interface EntityPlusAddonsRequest extends Entity {
-  addonIds: string[];
-  systemPrompt?: string;
-  request: string;
-  response: string;
-}
-
 export interface EntitySimpleRequest extends Entity {
   request: string;
   systemPrompt?: string;
@@ -54,14 +47,6 @@ export interface EntityPlusAttachmentRequest extends Entity {
   attachmentName: string;
   systemPrompt?: string;
   request?: string;
-  response: string;
-}
-
-export interface AssistantPlusAddonsRequest {
-  assistantId: string;
-  addonIds: string[];
-  assistantModelId: string;
-  request: string;
   response: string;
 }
 
