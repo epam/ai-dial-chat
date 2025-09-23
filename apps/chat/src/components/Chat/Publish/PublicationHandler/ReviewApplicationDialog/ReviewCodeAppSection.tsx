@@ -71,15 +71,15 @@ const ReviewCodeAppSectionView = ({
 };
 
 interface ReviewCodeAppSectionProps {
-  application?: CustomApplicationModel;
+  application: CustomApplicationModel;
 }
 
 export const ReviewCodeAppSection = ({
   application,
 }: ReviewCodeAppSectionProps) => {
-  const isCodeApp = application && isExecutableApp(application);
+  const isCodeApp = isExecutableApp(application);
 
-  if (!isCodeApp || !application?.function) return null;
+  if (!isCodeApp || !application.function) return null;
 
   return <ReviewCodeAppSectionView config={application.function} />;
 };
