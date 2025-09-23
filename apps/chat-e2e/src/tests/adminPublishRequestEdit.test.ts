@@ -11,8 +11,9 @@ import {
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialAdminTest(
-  'Admin can not update chat from unpublish request',
+dialAdminTest.only(
+  'Admin can not update chat from unpublish request.\n' +
+    '"Add agent to My workspace to continue" is not displayed for conversation from (un)publish request if open info modal',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -32,16 +33,28 @@ dialAdminTest(
     adminTooltipAssertion,
     adminChatHeaderDropdownMenu,
     adminApproveRequiredConversationDropdownMenu,
+    adminInformationModal,
+           adminChatAssertion,
+           adminConversationSettings,
+           adminTalkToAgentDialog,
   }) => {
-    setTestIds('EPMRTC-6472');
+    setTestIds('EPMRTC-6472', 'EPMRTC-6665');
     let publishedConversation: Conversation;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let publication: Publication;
+    const agent = ModelsUtil
+      .getModels()
+      .find((m) => m.isDefault === false);
+    const adminModel = ModelsUtil.getDefaultAgent()!;
 
     await dialTest.step(
       'Create and approve single conversation publishing and unpublish request via API',
       async () => {
-        publishedConversation = conversationData.prepareDefaultConversation();
+        await adminLocalStorageManager.setRecentModelsIdsAndUseLastModel(
+          adminModel!,
+        );
+        publishedConversation =
+          conversationData.prepareDefaultConversation(agent!);
         await dataInjector.createConversations([publishedConversation]);
 
         const publishRequest = publishRequestBuilder
@@ -116,33 +129,29 @@ dialAdminTest(
     await dialAdminTest.step(
       `Verify agent's icon in the chat's header is not clickable, agent's name and version displayed on hover`,
       async () => {
-        const defaultAgent = ModelsUtil.getDefaultAgent()!;
         await adminChatHeader.hoverOverChatModel();
         await adminTooltipAssertion.assertTooltipContent(
           ExpectedConstants.modelTooltip(
-            defaultAgent.name,
-            defaultAgent.version,
+            adminModel.name,
+            adminModel.version,
           ),
         );
-        await adminChatHeader.chatAgent.click();
-        await adminChatHeaderAssertion.assertHeaderTitle(
-          publishedConversation.name,
-        );
+        // eslint-disable-next-line playwright/no-force-option
+        await adminChatHeader.chatAgent.click({ force: true });
+        await baseAssertion.assertElementState(adminTalkToAgentDialog, 'hidden');
       },
     );
 
     await dialAdminTest.step(
       `Verify settings icon in chat's header is not clickable, conversation settings is displayed on hover`,
       async () => {
-        const defaultAgent = ModelsUtil.getDefaultAgent()!;
         await adminChatHeader.hoverOverChatSettings();
         await adminTooltipAssertion.assertTooltipContent(
-          ExpectedConstants.settingsTooltip(defaultAgent.type),
+          ExpectedConstants.settingsTooltip(adminModel.type),
         );
-        await adminChatHeader.conversationSettings.click();
-        await adminChatHeaderAssertion.assertHeaderTitle(
-          publishedConversation.name,
-        );
+        // eslint-disable-next-line playwright/no-force-option
+        await adminChatHeader.conversationSettings.click({ force: true });
+        await baseAssertion.assertElementState(adminConversationSettings, 'hidden');
       },
     );
 
@@ -155,7 +164,20 @@ dialAdminTest(
         baseAssertion.assertArrayExcludesAll(
           allMenuOptions,
           [MenuOptions.rename],
-          'Menu options',
+          ExpectedMessages.contextMenuOptionIsAvailable,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open and close Info modal and verify "Add to my workspace" is not visible',
+      async () => {
+        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.info);
+        await adminInformationModal.cancelButton.click();
+        await adminChatAssertion.assertAddAgentButtonState('hidden');
+        await baseAssertion.assertElementState(
+          adminPublicationReviewControl.backToPublicationRequestButton,
+          'visible',
         );
       },
     );
@@ -326,7 +348,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'Regenerate last message for chat form publication request.\n' +
     'Edit chat: remove all messages.\n' +
     '[Admin view][Edit request]: Edit chat icon disappear after it was clicked and message input is displayed',

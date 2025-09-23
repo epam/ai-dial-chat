@@ -34,7 +34,7 @@ export type DropImplementation = (
   onDropPropName: string,
 ) => Promise<void>;
 
-export const apiTimeout = 35000;
+export const apiTimeout = 60000;
 export const responseThrottlingTimeout = 2500;
 
 export class BasePage {

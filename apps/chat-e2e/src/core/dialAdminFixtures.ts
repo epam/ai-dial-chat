@@ -30,6 +30,7 @@ import {
 import config from '@/config/chat.playwright.config';
 import {
   AgentSettingAssertion,
+  ChatAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
   ConversationAssertion,
@@ -183,6 +184,7 @@ const dialAdminTest = dialTest.extend<{
   adminEntitySettingsAssertion: AgentSettingAssertion;
   adminSendMessage: SendMessage;
   adminConfirmationDialog: ConfirmationDialog;
+  adminChatAssertion: ChatAssertion;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -743,6 +745,10 @@ const dialAdminTest = dialTest.extend<{
   adminConfirmationDialog: async ({ adminPage }, use) => {
     const adminConfirmationDialog = new ConfirmationDialog(adminPage);
     await use(adminConfirmationDialog);
+  },
+  adminChatAssertion: async ({ adminChat }, use) => {
+    const adminChatAssertion = new ChatAssertion(adminChat);
+    await use(adminChatAssertion);
   },
 });
 
