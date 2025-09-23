@@ -17,6 +17,7 @@ declare global {
       APP_BASE_ORIGIN?: string;
       ALLOWED_IFRAME_ORIGINS?: string;
       IS_IFRAME?: string;
+      ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME?: string;
       ALLOWED_IFRAME_SOURCES?: string;
       CUSTOM_VISUALIZERS?: string;
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
