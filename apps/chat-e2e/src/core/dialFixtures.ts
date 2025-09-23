@@ -106,6 +106,7 @@ import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor
 import { Banner } from '@/src/ui/webElements/banner';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
+import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
@@ -160,7 +161,6 @@ import { CustomApplicationPublishingUtil } from '@/src/utils/customApplicationPu
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
-import {DropdownButtonMenu} from "@/src/ui/webElements/dropdownButtonMenu";
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
