@@ -26,7 +26,9 @@ dialTest(
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
-    const model = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
+    const model = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getModels().filter((m) => m.features?.temperature === true),
+    );
 
     await dialTest.step(
       'Prepare model conversation with non-default temperature',

@@ -166,7 +166,9 @@ export const ToolsetEditor = () => {
 
   useEffect(() => {
     if (toolsetDetails) {
-      formMethods.reset(getDefaultFormData(toolsetDetails));
+      formMethods.resetField('authenticationType', {
+        defaultValue: toolsetDetails.authSettings.authenticationType,
+      });
     }
   }, [formMethods, toolsetDetails]);
 
