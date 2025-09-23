@@ -91,13 +91,19 @@ export class TalkToAgentDialog extends BaseElement {
     return allAgentNames;
   }
 
-  public async selectAgent(entity: DialAIEntityModel | string) {
+  public async selectAgent(
+    entity: DialAIEntityModel | string,
+    options: {
+      isHttpMethodTriggered?: boolean;
+      triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
+    } = {},
+  ) {
     //check if agent is among recent ones
-    const isRecentAgentUsed = await this.useAgent(entity);
+    const isRecentAgentUsed = await this.useAgent(entity, options);
     //otherwise switch to "All agents" tab
     if (!isRecentAgentUsed) {
       await this.allAgentsTab.click();
-      const isMarketplaceAgentUsed = await this.useAgent(entity);
+      const isMarketplaceAgentUsed = await this.useAgent(entity, options);
       if (!isMarketplaceAgentUsed) {
         throw new Error(
           `Agent with name: ${entity} and version: ${typeof entity !== 'string' ? (entity.version ?? 'N/A') : 'N/A'} is not found!`,
@@ -134,12 +140,26 @@ export class TalkToAgentDialog extends BaseElement {
     }
   }
 
-  public async useAgent(entity: DialAIEntityModel | string): Promise<boolean> {
+  public async useAgent(
+    entity: DialAIEntityModel | string,
+    options: {
+      isHttpMethodTriggered?: boolean;
+      triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
+    } = {},
+  ): Promise<boolean> {
     let isAgentSelected = false;
     const agentElement = await this.findAgent(entity);
     //if agent's card or dropdown menu version are found, click on it
     if (agentElement !== undefined) {
-      await agentElement.click();
+      if (options.isHttpMethodTriggered && options.triggeredHttpMethod) {
+        const respPromise = this.page.waitForResponse(
+          (r) => r.request().method() === options.triggeredHttpMethod,
+        );
+        await agentElement.click();
+        await respPromise;
+      } else {
+        await agentElement.click();
+      }
       isAgentSelected = true;
     }
     return isAgentSelected;
