@@ -546,7 +546,7 @@ dialAdminTest(
         }
         await adminChatHeader.dotsMenu.click();
         await adminConversationDropdownMenuAssertion.assertMenuIncludesOptions(
-          MenuOptions.compare,
+          MenuOptions.rename,
           MenuOptions.duplicate,
           MenuOptions.export,
           MenuOptions.info,

@@ -383,7 +383,9 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(configApp);
+        await talkToAgentDialog.selectAgent(configApp, {
+          isHttpMethodTriggered: false,
+        });
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

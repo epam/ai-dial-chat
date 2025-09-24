@@ -73,7 +73,9 @@ dialTest(
         MockedChatApiResponseBodies.simpleTextBody,
       );
       await chat.changeAgentButton.click();
-      await talkToAgentDialog.selectAgent(randomModel);
+      await talkToAgentDialog.selectAgent(randomModel, {
+        isHttpMethodTriggered: false,
+      });
       await chat.sendRequestWithButton(GeneratorUtil.randomString(5));
     });
 
