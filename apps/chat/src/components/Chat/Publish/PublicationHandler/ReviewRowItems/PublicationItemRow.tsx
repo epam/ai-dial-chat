@@ -16,7 +16,7 @@ import {
   getStringValidationErrors,
   getVersionValidationErrors,
 } from '@/src/utils/app/forms';
-import { isApplicationId, isFileId } from '@/src/utils/app/id';
+import { isApplicationId, isFileId, isToolsetId } from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -146,7 +146,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
       >
         <EditableField
           value={inputVersion}
-          isEditMode={isDeleteAction ? false : isEditMode}
+          isEditMode={
+            isDeleteAction || isToolsetId(item.id) ? false : isEditMode
+          }
           onChange={handleChangeVersion}
           inputClassName={classNames(
             'w-[70px] text-right text-xs',
@@ -285,7 +287,9 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <span className="flex">{Icon}</span>
         <EditableField
           value={inputName}
-          isEditMode={isDeleteAction ? false : isEditMode}
+          isEditMode={
+            isDeleteAction || isToolsetId(item.id) ? false : isEditMode
+          }
           onChange={handleChangeName}
           inputClassName={classNames('w-full', errors.length && 'pr-5')}
           className={classNames(
