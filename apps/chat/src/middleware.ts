@@ -14,7 +14,9 @@ export function middleware(request: NextRequest) {
 
   const isDev = process.env.NODE_ENV === 'development';
   const shouldIgnoreFrameOptions =
-    path === '/auth/signin' || path === '/api/auth/signin';
+    (!process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME ||
+      process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME === 'false') &&
+    (path === '/auth/signin' || path === '/api/auth/signin');
 
   const frameDirectives = getFrameContentSecurityPolicyDirectives(
     process.env.ALLOWED_IFRAME_ORIGINS,
@@ -22,7 +24,7 @@ export function middleware(request: NextRequest) {
     shouldIgnoreFrameOptions,
   );
   const allowedScriptsSrc =
-    `${process.env.ALLOWED_IFRAME_ORIGINS} ${process.env.ALLOWED_IFRAME_SOURCES}`.replace(
+    `${process.env.ALLOWED_IFRAME_ORIGINS ?? ''} ${process.env.ALLOWED_IFRAME_SOURCES ?? ''}`.replace(
       "'self'",
       '',
     );
