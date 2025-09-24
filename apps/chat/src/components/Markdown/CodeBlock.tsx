@@ -15,6 +15,7 @@ import {
   languageFilenameMapping,
   languageNameMapping,
 } from '@/src/utils/app/codeblock';
+import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
@@ -36,10 +37,6 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   dark: oneDark,
   light: oneLight,
 };
-
-function currentDate() {
-  return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
-}
 
 export const CodeBlock: FC<Props> = memo(
   ({ language, value, isInner, isLastMessageStreaming }) => {
@@ -71,7 +68,7 @@ export const CodeBlock: FC<Props> = memo(
       // use the specific filename if it exists in languageFilenameMapping
       const suggestedFileName =
         languageFilenameMapping[displayLanguage] ??
-        `ai-chat-code-${currentDate()}${fileExtension}`;
+        `ai-chat-code-${getDownLoadCurrentDate()}${fileExtension}`;
       const fileName = window.prompt(t('Enter file name'), suggestedFileName);
 
       if (!fileName) {
