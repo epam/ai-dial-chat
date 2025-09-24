@@ -1,9 +1,4 @@
-import { IconPencilMinus } from '@tabler/icons-react';
-import { useCallback } from 'react';
-
-import { useRouter } from 'next/router';
-
-import classNames from 'classnames';
+import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -11,63 +6,32 @@ import { getModelDescription } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions, ToolsetActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, ToolsetSelectors } from '@/src/store/selectors';
-
-import { Routes } from '@/src/constants/routes';
-import { ToolsetEditorQuery } from '@/src/constants/toolsets';
+import { useAppSelector } from '@/src/store/hooks';
+import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import { IconButton } from '@/src/components/Common/IconButton';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
 function ReviewToolsetDialogContent() {
   const { t } = useTranslation(Translation.Chat);
 
-  const dispatch = useAppDispatch();
-
-  const router = useRouter();
-
   const toolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const selectedPublicationUrl = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationUrl,
+
+  const controlsEntity = useMemo(
+    () =>
+      toolset
+        ? {
+            id: ApiUtils.decodeApiUrl(toolset.id),
+            name: toolset.name,
+            folderId: getFolderIdFromEntityId(toolset.id),
+          }
+        : null,
+    [toolset],
   );
-
-  const isResourceUnpublishing = useAppSelector((state) =>
-    PublicationSelectors.selectIsResourceUnpublishing(
-      state,
-      selectedPublicationUrl ?? '',
-      toolset?.id ?? '',
-    ),
-  );
-
-  const controlsEntity = toolset
-    ? {
-        id: ApiUtils.decodeApiUrl(toolset.id),
-        name: toolset.name,
-        folderId: getFolderIdFromEntityId(toolset.id),
-      }
-    : null;
-
-  const handleEditToolset = useCallback(() => {
-    if (!toolset) return;
-
-    dispatch(ToolsetActions.setToolsetDetails());
-    void router.push({
-      pathname: Routes.ToolsetEditor,
-      query: {
-        [ToolsetEditorQuery.Id]: toolset.reference,
-        [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
-      },
-    });
-    dispatch(PublicationActions.setIsToolsetReview(false));
-  }, [dispatch, router, toolset]);
 
   return (
     <>
@@ -161,21 +125,7 @@ function ReviewToolsetDialogContent() {
           </div>
         )}
       </div>
-      <div
-        className={classNames(
-          'flex w-full items-center border-t border-tertiary px-3 py-4 md:px-5',
-          isResourceUnpublishing ? 'justify-end' : 'justify-between',
-        )}
-      >
-        {!isResourceUnpublishing && (
-          <IconButton
-            name={t('Edit toolset')}
-            dataQa="admin-edit-toolset"
-            Icon={IconPencilMinus}
-            onClick={handleEditToolset}
-          />
-        )}
-
+      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
         {controlsEntity && (
           <PublicationControls
             entity={controlsEntity}
