@@ -120,7 +120,9 @@ dialTest(
       'Verify settings are completely reset, temperature is reset to the `lastConversationSettings` value after not sending a message in a chat',
       async () => {
         await chatBar.createNewEntity();
-        await talkToAgentDialog.selectAgent(models[1]);
+        await talkToAgentDialog.selectAgent(models[1], {
+          isHttpMethodTriggered: false,
+        });
         await chat.configureSettingsButton.click();
         await agentSettingAssertion.assertSystemPromptValue(
           ExpectedConstants.emptyString,

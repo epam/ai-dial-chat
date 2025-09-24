@@ -700,7 +700,7 @@ dialTest(
       'Click on "Delete selected conversations" button at the bottom panel, confirm delete and verify only selected entities are removed',
       async () => {
         await chatBar.deleteAllEntities();
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'GET' });
 
         for (let i = 1; i < nestedFolders.length; i++) {
           await chatBarFolderAssertion.assertFolderState(
