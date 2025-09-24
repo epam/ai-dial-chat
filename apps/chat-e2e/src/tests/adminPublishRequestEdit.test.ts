@@ -656,7 +656,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Go back to review, remove attachment from the first message and verify it is unchecked in the piblication request',
+      'Go back to review, remove attachment from the first message and verify it stays in publication request',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
@@ -683,7 +683,7 @@ dialAdminTest(
           { name: Attachment.cloudImageName },
           {
             expectedState: 'visible',
-            expectedCheckboxState: CheckboxState.unchecked,
+            expectedCheckboxState: CheckboxState.checked,
           },
         );
       },
