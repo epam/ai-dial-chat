@@ -156,7 +156,13 @@ export const getServerSideProps: GetServerSideProps = async ({
   const session = await getServerSession(req, res, authOptions);
 
   res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+
+  if (
+    !process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME ||
+    process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME === 'false'
+  ) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
 
   if (isServerSessionValid(session, true)) {
     return {
