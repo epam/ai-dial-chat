@@ -107,10 +107,9 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Prepare conversation with attachment in the request',
       async () => {
-        imageUrl = await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          filePath,
-        );
+        imageUrl = await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: filePath,
+        });
         conversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithInputAttachments,
@@ -455,10 +454,9 @@ dialAdminTest(
     await dialTest.step(
       'Prepare conversation with plotly graph in the response',
       async () => {
-        plotlyImageUrl = await fileApiHelper.putFile(
-          Attachment.plotlyName,
-          API.modelFilePath(modelWithInputAttachments.id),
-        );
+        plotlyImageUrl = await fileApiHelper.putFile(Attachment.plotlyName, {
+          parentPath: API.modelFilePath(modelWithInputAttachments.id),
+        });
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             plotlyImageUrl,

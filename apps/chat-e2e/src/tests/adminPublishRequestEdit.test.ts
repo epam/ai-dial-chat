@@ -713,11 +713,11 @@ dialAdminTest.only(
       ModelsUtil.getLatestModelsWithAttachment(),
     );
     const newPrompt = 'generate a picture';
+    var publicationHash;
 
     await dialTest.step(
       'Prepare conversation with attachment-supported model and publication request',
       async () => {
-        await adminFileApiHelper.putFile(Attachment.sunImageName);
         conversation = conversationData.prepareDefaultConversation(model);
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
@@ -726,7 +726,9 @@ dialAdminTest.only(
           .withName(requestName)
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
-        await publicationApiHelper.createPublishRequest(publishRequest);
+        const publication = await publicationApiHelper.createPublishRequest(publishRequest);
+        publicationHash = publicationApiHelper.getPublicationReviewHash(publication)
+        await adminFileApiHelper.putFile(Attachment.sunImageName, {optionalBucket: publicationHash});
       },
     );
 

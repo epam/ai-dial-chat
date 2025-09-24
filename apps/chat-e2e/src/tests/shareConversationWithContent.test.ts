@@ -68,13 +68,12 @@ dialSharedWithMeTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
 
-        await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          API.modelFilePath(defaultModel.id),
-        );
+        await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: API.modelFilePath(defaultModel.id),
+        });
 
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -362,7 +361,7 @@ dialSharedWithMeTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
 
         requestImageUrl = await fileApiHelper.putFile(
@@ -604,7 +603,7 @@ dialSharedWithMeTest(
       async () => {
         firstImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          firstFilePath,
+          { parentPath: firstFilePath },
         );
         secondImageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
         imageConversation =
@@ -879,7 +878,7 @@ dialSharedWithMeTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
 
         responseImageConversation =
@@ -1065,10 +1064,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Prepare conversation with plotly graph in the response',
       async () => {
-        plotlyImageUrl = await fileApiHelper.putFile(
-          Attachment.plotlyName,
-          API.modelFilePath(defaultModel.id),
-        );
+        plotlyImageUrl = await fileApiHelper.putFile(Attachment.plotlyName, {
+          parentPath: API.modelFilePath(defaultModel.id),
+        });
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             plotlyImageUrl,
