@@ -74,10 +74,9 @@ const maxKiloBytes = 40;
 const maxBytes = maxKiloBytes * 1024; // in bytes
 
 const StageView = ({ content }: { content: string }) => {
-  const size = useMemo(() => new Blob([content]).size, [content]);
-  // eslint-disable-next-line no-console
-  console.log(size);
   // Calculate byte size of the string
+  const size = useMemo(() => new Blob([content]).size, [content]);
+
   if (size > maxBytes) {
     return (
       <div className="ps-1">
