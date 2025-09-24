@@ -296,11 +296,11 @@ export const getQuickAppDefaultValues2 = ({
   app: CustomApplicationModel;
 }): QuickAppFormData2 => {
   const appProperties = app.applicationProperties as QuickApp2Config;
-  const agentToolsets = appProperties.tool_sets
+  const agentToolsets = appProperties?.tool_sets
     .filter(isDialDeploymentToolset)
     .flatMap((toolset) => toolset.tools);
 
-  const mcpToolsets = appProperties.tool_sets.filter(isMcpToolset);
+  const mcpToolsets = appProperties?.tool_sets.filter(isMcpToolset);
 
   return {
     ...getApplicationGeneralDefaultValues(app),

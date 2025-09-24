@@ -42,14 +42,9 @@ export enum MarketplaceEntitiesTabs {
   TOOLSETS = 'toolsets',
 }
 
-export const ChangeAgentTabs = {
-  [MarketplaceTabs.MY_WORKSPACE]: 'My agents',
-  [MarketplaceTabs.HOME]: 'All agents',
-};
-
-export const ChangeToolsetTabs = {
-  [MarketplaceEntitiesTabs.AGENTS]: 'My toolsets',
-  [MarketplaceEntitiesTabs.TOOLSETS]: 'All toolsets',
+export const ChangeMarketplaceTabs = {
+  [MarketplaceTabs.MY_WORKSPACE]: 'My workspace',
+  [MarketplaceTabs.HOME]: 'Marketplace',
 };
 
 export enum DeleteType {
