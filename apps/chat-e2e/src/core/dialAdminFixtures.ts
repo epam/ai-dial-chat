@@ -48,6 +48,7 @@ import {
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
+import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
@@ -61,8 +62,6 @@ import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
-import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
-import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import {
   ApplicationsToApproveTree,
   ApplicationsToPublishTree,
@@ -82,6 +81,7 @@ import {
   PromptsToPublishTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
@@ -197,10 +197,7 @@ const dialAdminTest = dialTest.extend<{
     const adminInputAttachments = adminChatMessages.getInputAttachments();
     await use(adminInputAttachments);
   },
-  adminInputAttachmentsAssertions: async (
-    { adminInputAttachments },
-    use,
-  ) => {
+  adminInputAttachmentsAssertions: async ({ adminInputAttachments }, use) => {
     const adminInputAttachmentsAssertions = new InputAttachmentsAssertions(
       adminInputAttachments,
     );
@@ -775,16 +772,15 @@ const dialAdminTest = dialTest.extend<{
     await use(adminAttachmentDropdownMenu);
   },
   adminSendMessageInputAttachments: async ({ adminSendMessage }, use) => {
-    const adminSendMessageInputAttachments = adminSendMessage.getInputAttachments();
+    const adminSendMessageInputAttachments =
+      adminSendMessage.getInputAttachments();
     await use(adminSendMessageInputAttachments);
   },
   adminSendMessageInputAttachmentsAssertions: async (
     {
       adminSendMessageInputAttachments,
     }: { adminSendMessageInputAttachments: InputAttachments },
-    use: (
-      value: InputAttachmentsAssertions,
-    ) => Promise<void>,
+    use: (value: InputAttachmentsAssertions) => Promise<void>,
   ) => {
     const adminSendMessageInputAttachmentsAssertions =
       new InputAttachmentsAssertions(adminSendMessageInputAttachments);
