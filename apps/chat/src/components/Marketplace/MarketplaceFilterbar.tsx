@@ -136,6 +136,10 @@ export const MarketplaceFilterbar = memo(() => {
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+  const areModelsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
+  const areToolsetsLoaded = useAppSelector(
+    ToolsetSelectors.selectAreToolsetsLoaded,
+  );
 
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
@@ -184,8 +188,12 @@ export const MarketplaceFilterbar = memo(() => {
   const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
   const noEntities = useMemo(() => {
-    return !Object.values(isAgentsTab ? modelsMap : toolsetsMap).length;
-  }, [isAgentsTab, modelsMap, toolsetsMap]);
+    return (
+      !Object.values(isAgentsTab ? modelsMap : toolsetsMap).length &&
+      areModelsLoaded &&
+      areToolsetsLoaded
+    );
+  }, [areModelsLoaded, areToolsetsLoaded, isAgentsTab, modelsMap, toolsetsMap]);
 
   return (
     <nav
