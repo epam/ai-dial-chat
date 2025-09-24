@@ -529,3 +529,7 @@ export const updateMessageAttachments = ({
     custom_content: newCustomContent,
   };
 };
+
+export function downLoadCurrentDate() {
+  return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
+}

@@ -15,6 +15,7 @@ import {
   languageFilenameMapping,
   languageNameMapping,
 } from '@/src/utils/app/codeblock';
+import { downLoadCurrentDate as currentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
@@ -36,10 +37,6 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   dark: oneDark,
   light: oneLight,
 };
-
-function currentDate() {
-  return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
-}
 
 export const CodeBlock: FC<Props> = memo(
   ({ language, value, isInner, isLastMessageStreaming }) => {
