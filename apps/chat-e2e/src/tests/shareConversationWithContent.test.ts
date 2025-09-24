@@ -601,10 +601,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 1 prepares conversation with 2 images in the requests',
       async () => {
-        firstImageUrl = await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          { parentPath: firstFilePath },
-        );
+        firstImageUrl = await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: firstFilePath,
+        });
         secondImageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
         imageConversation =
           conversationData.prepareHistoryConversationWithAttachmentsInRequest({
