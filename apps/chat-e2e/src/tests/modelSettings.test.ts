@@ -62,7 +62,9 @@ dialTest(
     await conversationSettingsModal.applyChangesButton.click();
 
     await chat.changeAgentButton.click();
-    await talkToAgentDialog.selectAgent(randomModel);
+    await talkToAgentDialog.selectAgent(randomModel, {
+      isHttpMethodTriggered: false,
+    });
 
     await chat.configureSettingsButton.click();
     if (

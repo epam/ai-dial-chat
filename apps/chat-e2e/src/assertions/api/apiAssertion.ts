@@ -75,7 +75,7 @@ export class ApiAssertion {
     request: ChatBody,
     expectedPrompt: string | undefined,
   ) {
-    if (expectedPrompt === undefined) {
+    if (expectedPrompt === undefined || expectedPrompt === '') {
       expect
         .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
         .toBeUndefined();

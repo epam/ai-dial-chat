@@ -399,7 +399,9 @@ dialTest(
       'Change agent and send a request to the chat',
       async () => {
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(firstAppName);
+        await talkToAgentDialog.selectAgent(firstAppName, {
+          isHttpMethodTriggered: false,
+        });
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
