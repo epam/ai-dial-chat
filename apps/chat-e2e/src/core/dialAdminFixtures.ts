@@ -190,7 +190,22 @@ const dialAdminTest = dialTest.extend<{
   adminAttachmentDropdownMenu: DropdownMenu;
   adminSendMessageInputAttachments: InputAttachments;
   adminSendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
+  adminInputAttachments: InputAttachments;
+  adminInputAttachmentsAssertions: InputAttachmentsAssertions;
 }>({
+  adminInputAttachments: async ({ adminChatMessages }, use) => {
+    const adminInputAttachments = adminChatMessages.getInputAttachments();
+    await use(adminInputAttachments);
+  },
+  adminInputAttachmentsAssertions: async (
+    { adminInputAttachments },
+    use,
+  ) => {
+    const adminInputAttachmentsAssertions = new InputAttachmentsAssertions(
+      adminInputAttachments,
+    );
+    await use(adminInputAttachmentsAssertions);
+  },
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
     use,

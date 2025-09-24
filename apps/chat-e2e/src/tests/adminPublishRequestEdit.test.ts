@@ -536,7 +536,8 @@ dialAdminTest(
 
 dialAdminTest.only(
   '[Admin view][Edit chat] Added file appears in review. User sends new prompt.\n' +
-    '[Admin view][Edit chat] Added file appears in review. User updates old prompt',
+    '[Admin view][Edit chat] Added file appears in review. User updates old prompt.\n' +
+    '[Admin view][Edit chat] Deleted file in chat history stays in review',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -557,8 +558,9 @@ dialAdminTest.only(
     adminChatHeaderAssertion,
     adminFilesToApproveAssertion,
     adminChatMessages,
+    adminInputAttachments,
   }) => {
-    setTestIds('EPMRTC-6599', 'EPMRTC-6607');
+    setTestIds('EPMRTC-6599', 'EPMRTC-6607', 'EPMRTC-6604');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
@@ -649,6 +651,34 @@ dialAdminTest.only(
         await adminFilesToApproveAssertion.assertEntityState(
           { name: Attachment.cloudImageName },
           'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Go back to review, remove attachment from the first message and verify it is removed from request',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        const firstMessage = conversation.messages[0].content;
+        await adminChatMessages.openEditMessageMode(firstMessage);
+        await adminInputAttachments
+          .removeInputAttachmentIcon(Attachment.cloudImageName)
+          .click();
+        await adminChatMessages.saveAndSubmit.click();
+        await adminChatMessagesAssertion.assertMessageContent(
+          1,
+          firstMessage,
+        );
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminFilesToApproveAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          'visible',
+        );
+        await adminFilesToApproveAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
+          'hidden',
         );
       },
     );
