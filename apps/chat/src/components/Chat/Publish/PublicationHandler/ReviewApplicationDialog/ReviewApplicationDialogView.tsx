@@ -9,7 +9,6 @@ import {
   getApplicationType,
   getModelDescription,
   isExecutableApp,
-  isQuickApp2,
 } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -218,7 +217,7 @@ export function ReviewApplicationDialogView({
           isResourceUnpublishing ? 'justify-end' : 'justify-between',
         )}
       >
-        {!isResourceUnpublishing && !isQuickApp2(application) && (
+        {!isResourceUnpublishing && (
           <IconButton
             name={t('Edit application')}
             dataQa="admin-edit-application"
