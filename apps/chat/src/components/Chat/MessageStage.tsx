@@ -1,5 +1,5 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -70,6 +70,28 @@ interface Props {
   stage: Stage;
 }
 
+const maxKiloBytes = 40;
+const maxBytes = maxKiloBytes * 1024; // in bytes
+
+const StageView = ({ content }: { content: string }) => {
+  const size = useMemo(() => new Blob([content]).size, [content]);
+  // eslint-disable-next-line no-console
+  console.log(size);
+  // Calculate byte size of the string
+  if (size > maxBytes) {
+    return (
+      <div className="ps-1">
+        {`Content is too large to display (exceeds ${maxKiloBytes} KB).`}
+      </div>
+    );
+  }
+  return (
+    <span className="inline-block overflow-auto">
+      <ChatMDComponent isShowResponseLoader={false} content={content} isInner />
+    </span>
+  );
+};
+
 export const MessageStage = ({ stage }: Props) => {
   const [isOpened, setIsOpened] = useState(false);
   const [hasContent, setHasContent] = useState(
@@ -106,22 +128,14 @@ export const MessageStage = ({ stage }: Props) => {
         </div>
       )}
 
-      {(stage.content || stage.attachments) && (
+      {hasContent && (
         <div
           className={classNames(
             'grid max-w-full grid-flow-row overflow-auto',
             isOpened ? 'border-t border-secondary p-2' : 'h-0',
           )}
         >
-          {isOpened && stage.content && (
-            <span className="inline-block overflow-auto">
-              <ChatMDComponent
-                isShowResponseLoader={false}
-                content={stage.content}
-                isInner
-              />
-            </span>
-          )}
+          {isOpened && stage.content && <StageView content={stage.content} />}
           <MessageAttachments attachments={stage.attachments} isInner />
         </div>
       )}
