@@ -9,7 +9,7 @@ import {
   FolderPrompt,
   MenuOptions,
 } from '@/src/testData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -287,7 +287,9 @@ dialTest(
       'visible',
     );
     await selectFolderModal.clickSelectFolderButton({
-      triggeredApiHost: API.promptHost,
+      triggeredApiHost: ItemUtil.getEncodedItemId(
+        `${newFolderName}/${prompt.name}`,
+      ),
     });
     await selectFolderModalAssertion.assertElementState(
       selectFolderModal,

@@ -13,7 +13,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 interface ReviewExternalAppSectionProps {
-  application?: CustomApplicationModel;
+  application: CustomApplicationModel;
 }
 
 export const ReviewExternalAppSection = ({
@@ -21,11 +21,11 @@ export const ReviewExternalAppSection = ({
 }: ReviewExternalAppSectionProps) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const isExternalApplication = application && isExternalApp(application);
+  const isExternalApplication = isExternalApp(application);
 
   if (!isExternalApplication) return null;
 
-  const externalUrl = (application?.applicationProperties as ExternalAppConfig)
+  const externalUrl = (application.applicationProperties as ExternalAppConfig)
     ?.external_url;
 
   return (

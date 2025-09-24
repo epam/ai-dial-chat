@@ -1,5 +1,5 @@
 import { IconPencilMinus } from '@tabler/icons-react';
-import { Fragment, useCallback } from 'react';
+import { Fragment, useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -13,12 +13,12 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
@@ -26,7 +26,6 @@ import {
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { IconButton } from '@/src/components/Common/IconButton';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
@@ -36,14 +35,17 @@ import { ReviewQuickAppSection } from './ReviewQuickAppSection';
 
 import isEmpty from 'lodash-es/isEmpty';
 
-function ReviewApplicationDialogContent() {
+interface ReviewApplicationDialogViewProps {
+  application: CustomApplicationModel;
+}
+
+export function ReviewApplicationDialogView({
+  application,
+}: ReviewApplicationDialogViewProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
-  const application = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
   const detailedApplicationTypeSchema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
@@ -54,19 +56,20 @@ function ReviewApplicationDialogContent() {
     PublicationSelectors.selectIsResourceUnpublishing(
       state,
       selectedPublicationUrl ?? '',
-      application?.id ?? '',
+      application.id,
     ),
   );
 
   const isCodeApp = application && isExecutableApp(application);
 
-  const controlsEntity = application
-    ? {
-        id: ApiUtils.decodeApiUrl(application.id),
-        name: application.name,
-        folderId: getFolderIdFromEntityId(application.id),
-      }
-    : null;
+  const controlsEntity = useMemo(
+    () => ({
+      id: ApiUtils.decodeApiUrl(application.id),
+      name: application.name,
+      folderId: getFolderIdFromEntityId(application.id),
+    }),
+    [application],
+  );
 
   const handleEditApplication = useCallback(() => {
     if (!application) return;
@@ -97,26 +100,20 @@ function ReviewApplicationDialogContent() {
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Name: ')}</span>
           <span className="max-w-[414px] text-primary" data-qa="app-name">
-            {application?.name}
+            {application.name}
           </span>
         </div>
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Version: ')}</span>
           <span className="max-w-[414px] text-primary" data-qa="app-version">
-            {application?.version}
+            {application.version}
           </span>
         </div>
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">{t('Icon: ')}</span>
-          {application && (
-            <ModelIcon
-              entity={application}
-              entityId={application.id}
-              size={60}
-            />
-          )}
+          <ModelIcon entity={application} entityId={application.id} size={60} />
         </div>
-        {!!(application && getModelDescription(application)) && (
+        {!!getModelDescription(application) && (
           <div className="flex gap-4">
             <span className="w-[122px] shrink-0 text-secondary">
               {t('Description: ')}
@@ -126,7 +123,7 @@ function ReviewApplicationDialogContent() {
             </span>
           </div>
         )}
-        {!!application?.topics?.length && (
+        {!!application.topics?.length && (
           <div className="flex gap-4">
             <span className="w-[122px] text-secondary">{t('Topics: ')}</span>
             <div className="flex max-w-[414px] flex-wrap gap-1">
@@ -136,9 +133,9 @@ function ReviewApplicationDialogContent() {
             </div>
           </div>
         )}
-        {application?.features &&
+        {application.features &&
           !isCodeApp &&
-          Object.keys(application?.features).length !== 0 && (
+          Object.keys(application.features).length !== 0 && (
             <div className="flex gap-4">
               <span className="w-[122px] text-secondary">
                 {t('Features data:')}
@@ -148,7 +145,7 @@ function ReviewApplicationDialogContent() {
                   className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary"
                   data-qa="app-feature"
                 >
-                  {Object.entries(application?.features || {}).map(
+                  {Object.entries(application.features || {}).map(
                     ([key, value], index, array) => (
                       <Fragment key={key}>
                         {`"${key}" : "${value}"${index !== array.length - 1 ? ',\n' : ''}`}
@@ -159,14 +156,14 @@ function ReviewApplicationDialogContent() {
               </div>
             </div>
           )}
-        {application?.inputAttachmentTypes &&
-          application?.inputAttachmentTypes.length !== 0 && (
+        {application.inputAttachmentTypes &&
+          application.inputAttachmentTypes.length !== 0 && (
             <div className="flex gap-4">
               <span className="w-[122px] text-secondary">
                 {t('Attachment types:')}
               </span>
               <div className="flex max-w-[414px] flex-wrap text-primary">
-                {application?.inputAttachmentTypes.map((item) => (
+                {application.inputAttachmentTypes.map((item) => (
                   <span
                     key={item}
                     className="m-1 h-[31] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
@@ -178,7 +175,7 @@ function ReviewApplicationDialogContent() {
               </div>
             </div>
           )}
-        {application?.maxInputAttachments && (
+        {application.maxInputAttachments && (
           <div className="flex gap-4">
             <span className="w-[122px] text-secondary">
               {t(' Max. attachments number:')}
@@ -187,12 +184,12 @@ function ReviewApplicationDialogContent() {
               className="max-w-[414px] text-primary"
               data-qa="app-max-attach"
             >
-              {application?.maxInputAttachments}
+              {application.maxInputAttachments}
             </span>
           </div>
         )}
-        {application?.completionUrl &&
-          isEmpty(application?.function?.mapping) && (
+        {application.completionUrl &&
+          isEmpty(application.function?.mapping) && (
             <div className="flex gap-4">
               <span className="w-[122px] text-secondary">
                 {t('Completion URL:')}
@@ -239,7 +236,3 @@ function ReviewApplicationDialogContent() {
     </>
   );
 }
-
-export const ReviewApplicationDialogView = withRenderWhen(
-  ApplicationSelectors.selectApplicationDetail,
-)(ReviewApplicationDialogContent);
