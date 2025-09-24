@@ -12,8 +12,9 @@ import {
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+import {FileModalSection} from "@/src/ui/webElements";
 
-dialAdminTest.only(
+dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
     '"Add agent to My workspace to continue" is not displayed for conversation from (un)publish request if open info modal',
   async ({
@@ -533,8 +534,9 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
-  '[Admin view][Edit chat] Added file appears in review. User sends new prompt.',
+dialAdminTest.only(
+  '[Admin view][Edit chat] Added file appears in review. User sends new prompt.\n' +
+    '[Admin view][Edit chat] Added file appears in review. User updates old prompt',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -553,9 +555,10 @@ dialAdminTest(
     adminAttachmentDropdownMenu,
     adminAttachFilesModal,
     adminChatHeaderAssertion,
-           adminFilesToApproveAssertion,
+    adminFilesToApproveAssertion,
+    adminChatMessages,
   }) => {
-    setTestIds('EPMRTC-6599');
+    setTestIds('EPMRTC-6599', 'EPMRTC-6607');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
@@ -564,9 +567,10 @@ dialAdminTest(
     const newPrompt = 'what is on the picture?';
 
     await dialTest.step(
-      'Prepare conversation with attachment-supported model and publication request',
+      'Prepare conversation with attachment-supported model, two files and publication request',
       async () => {
         await adminFileApiHelper.putFile(Attachment.sunImageName);
+        await adminFileApiHelper.putFile(Attachment.cloudImageName);
         conversation = conversationData.prepareDefaultConversation(model);
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
@@ -596,11 +600,30 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Click on Edit button, attach file, send new message and verify response is received',
+      'Attach file to the first message, save and verify response is regenerated',
       async () => {
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
+        const firstMessage = conversation.messages[0].content;
+        await adminChatMessages.openEditMessageMode(firstMessage);
+        await adminChatMessages.getChatMessageClipIcon(firstMessage).click();
+        await adminAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await adminAttachFilesModal.checkAttachedFile(Attachment.cloudImageName);
+        await adminAttachFilesModal.attachFiles();
+        await adminChatMessages.saveAndSubmit.click();
+        await adminChatMessagesAssertion.assertMessagesCount(2);
+        await adminChatMessagesAssertion.assertLastMessageContent(
+          'test response',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on Edit button, attach file, send new message and verify response is received',
+      async () => {
         await adminPublicationReviewControl.editButton.click();
         await adminSendMessage.attachmentMenuTrigger.click();
         await adminAttachmentDropdownMenu.selectMenuOption(
@@ -609,16 +632,22 @@ dialAdminTest(
         await adminAttachFilesModal.checkAttachedFile(Attachment.sunImageName);
         await adminAttachFilesModal.attachFiles();
         await adminSendMessage.send(newPrompt);
-        await adminChatMessagesAssertion.assertLastMessageContent('test response');
+        await adminChatMessagesAssertion.assertLastMessageContent(
+          'Response',
+        );
       },
     );
 
     await dialAdminTest.step(
-      'Click on "Back to publication request" and verify file is displayed in request',
+      'Click on "Back to publication request" and verify both files are displayed in request',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminFilesToApproveAssertion.assertEntityState(
           { name: Attachment.sunImageName },
+          'visible',
+        );
+        await adminFilesToApproveAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
           'visible',
         );
       },

@@ -190,8 +190,6 @@ const dialAdminTest = dialTest.extend<{
   adminAttachmentDropdownMenu: DropdownMenu;
   adminSendMessageInputAttachments: InputAttachments;
   adminSendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
-  adminPublishFileAssertion: PublishFileAssertion<FilesToPublishTree>;
-
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
