@@ -470,7 +470,7 @@ export const getQuickAppData2 = (
         } else {
           acc.dialMCPToolsets.push({
             name: entity.name,
-            dial_id: entity.id,
+            dial_id: ApiUtils.encodeApiUrl(entity.id),
             description: entity.description,
             type: ToolsetTypes.DialMcp,
             transport: entity.transport,
