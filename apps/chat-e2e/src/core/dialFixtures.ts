@@ -106,7 +106,6 @@ import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor
 import { Banner } from '@/src/ui/webElements/banner';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
-import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
@@ -231,7 +230,7 @@ const dialTest = test.extend<{
   variableModalDialog: VariableModalDialog;
   chatHeader: ChatHeader;
   chatHeaderVersionDropdownMenu: DropdownMenu;
-  chatHeaderDropdownMenu: DropdownButtonMenu;
+  chatHeaderDropdownMenu: DropdownMenu;
   modelInfoTooltip: ModelInfoTooltip;
   chatSettingsTooltip: ChatSettingsTooltip;
   compare: Compare;
@@ -732,7 +731,7 @@ const dialTest = test.extend<{
     await use(chatHeaderVersionDropdownMenu);
   },
   chatHeaderDropdownMenu: async ({ page }, use) => {
-    const chatHeaderDropdownMenu = new DropdownButtonMenu(page);
+    const chatHeaderDropdownMenu = new DropdownMenu(page);
     await use(chatHeaderDropdownMenu);
   },
   modelInfoTooltip: async ({ page }, use) => {

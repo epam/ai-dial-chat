@@ -450,7 +450,7 @@ dialTest(
         const randomOption = GeneratorUtil.randomArrayElement(
           expectedDotsMenuOptions,
         );
-        const optionElement = chatHeaderDropdownMenu.menuOption(randomOption);
+        const optionElement = chatHeaderDropdownMenu.getMenuItem(randomOption);
         await optionElement.hover();
         await conversationDropdownMenuAssertion.assertElementBackgroundColors(
           optionElement,

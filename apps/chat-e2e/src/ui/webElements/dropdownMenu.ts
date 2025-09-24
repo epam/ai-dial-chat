@@ -15,8 +15,10 @@ export class DropdownMenu extends Menu {
   public menuOption = (option: string) =>
     this.menuOptions().getElementLocatorByText(option);
 
-  public getMenuOption(option: string) {
-    return this.createElementFromLocator(this.menuOption(option));
+  public getMenuItem(option: string) {
+    return this.getChildElementBySelector(Tags.button)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`${option}`) });
   }
 
   public async selectShareMenuOption() {
