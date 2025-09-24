@@ -154,7 +154,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   };
 }
 
-export function currentDate() {
+export function getCurrentDate() {
   const date = new Date();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -183,12 +183,12 @@ function downloadChatPromptData(
 
   triggerDownload(
     url,
-    `${downloadName}_chat_${exportType}_${currentDate()}.json`,
+    `${downloadName}_chat_${exportType}_${getCurrentDate()}.json`,
   );
 }
 
 export function downloadApplicationLogs(data: string, fileName?: string) {
-  const exportedFileName = [fileName, 'application_logs', currentDate()]
+  const exportedFileName = [fileName, 'application_logs', getCurrentDate()]
     .filter(Boolean)
     .join('_');
 
@@ -530,6 +530,6 @@ export const updateMessageAttachments = ({
   };
 };
 
-export function downLoadCurrentDate() {
+export function getDownLoadCurrentDate() {
   return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
 }

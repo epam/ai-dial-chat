@@ -9,7 +9,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { downLoadCurrentDate as currentDate } from '@/src/utils/app/import-export';
+import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -104,7 +104,7 @@ const DownloadStageView = ({ content }: { content: string }) => {
   }, [content]);
 
   const downloadAsFile = useCallback(() => {
-    const fileName = `ai-chat-stage-${currentDate()}.txt`;
+    const fileName = `ai-chat-stage-${getDownLoadCurrentDate()}.txt`;
 
     const blob = new Blob([content], { type: 'attachment/plain' });
     const url = URL.createObjectURL(blob);
