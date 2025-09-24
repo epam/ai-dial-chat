@@ -12,14 +12,17 @@ export class FileApiHelper extends BaseApiHelper {
   private async putFileGeneric(
     buffer: Buffer,
     filename: string,
-    parentPath?: string,
+    options?: { parentPath?: string; optionalBucket?: string },
   ) {
     const encodedFilename = encodeURIComponent(filename);
+    const parentPath = options?.parentPath;
     const encodedParentPath = parentPath
       ? ItemUtil.getEncodedItemId(parentPath)
       : undefined;
 
-    const baseUrl = `${API.fileHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
+    const bucket =
+      options?.optionalBucket ?? this.userBucket ?? BucketUtil.getBucket();
+    const baseUrl = `${API.fileHost()}/${bucket}`;
     const url = parentPath
       ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
@@ -47,27 +50,30 @@ export class FileApiHelper extends BaseApiHelper {
     return decodeURIComponent(body.url);
   }
 
-  public async putFile(filename: string, parentPath?: string) {
-    return this.putFileWithCustomName(filename, filename, parentPath);
+  public async putFile(
+    filename: string,
+    options?: { parentPath?: string; optionalBucket?: string },
+  ) {
+    return this.putFileWithCustomName(filename, filename, options);
   }
 
   public async putFileWithCustomName(
     filename: string,
     file: string,
-    parentPath?: string,
+    options?: { parentPath?: string; optionalBucket?: string },
   ) {
     const filePath = path.join(Attachment.attachmentPath, file);
     const buffer = fs.readFileSync(filePath);
-    return this.putFileGeneric(buffer, filename, parentPath);
+    return this.putFileGeneric(buffer, filename, options);
   }
 
   public async putStringAsFile(
     filename: string,
     content: string,
-    parentPath?: string,
+    options?: { parentPath?: string; optionalBucket?: string },
   ) {
     const buffer = Buffer.from(content, 'utf-8');
-    return this.putFileGeneric(buffer, filename, parentPath);
+    return this.putFileGeneric(buffer, filename, options);
   }
 
   public async updateInstalledDeployments(agents: DialAIEntityModel[]) {
@@ -78,7 +84,7 @@ export class FileApiHelper extends BaseApiHelper {
     await this.putStringAsFile(
       API.installedDeploymentsFile,
       installedDeploymentsJson,
-      API.installedDeploymentsFolder,
+      { parentPath: API.installedDeploymentsFolder },
     );
   }
 
