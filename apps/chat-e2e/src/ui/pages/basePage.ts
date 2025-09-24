@@ -546,8 +546,11 @@ export class BasePage {
   public async mockChatImageResponse(
     modelId: string,
     imageName: string,
-    options?: { isOverlay: boolean },
+    options?: { isOverlay?: boolean; customPath?: string },
   ) {
+    const path =
+      options?.customPath ??
+      API.importFilePath(BucketUtil.getBucket(), modelId);
     await this.page.route(
       options?.isOverlay
         ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
@@ -555,7 +558,7 @@ export class BasePage {
       async (route) => {
         await route.fulfill({
           status: 200,
-          body: `{"responseId":"0dea98ff-1e66-4294-8542-457890e5f8c0"}\u0000{"role":"assistant"}\u0000{"custom_content":{"attachments":[{"index":0,"type":"image/jpg","title":"Image","url":"${API.importFilePath(BucketUtil.getBucket(), modelId)}/${imageName}"}]}}\u0000{"content":" "}\u0000{}\u0000`,
+          body: `{"responseId":"0dea98ff-1e66-4294-8542-457890e5f8c0"}\u0000{"role":"assistant"}\u0000{"custom_content":{"attachments":[{"index":0,"type":"image/jpg","title":"Image","url":"${path}/${imageName}"}]}}\u0000{"content":" "}\u0000{}\u0000`,
         });
       },
     );
@@ -629,7 +632,7 @@ export class BasePage {
         responses.push(response);
       } catch (error) {
         const expectedResponse = expectedApiResponses[i];
-        console.error("[API Request Failed]", {
+        console.error('[API Request Failed]', {
           method: expectedResponse.apiMethod || 'ANY',
           urlPattern: expectedResponse.urlPattern?.toString() || 'ANY',
           expectedStatus: expectedResponse.status ?? defaultStatus,
