@@ -3,14 +3,14 @@ import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  Attachment,
+  Attachment, CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import {GeneratorUtil, ItemUtil, ModelsUtil} from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import {FileModalSection} from "@/src/ui/webElements";
 
@@ -534,7 +534,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   '[Admin view][Edit chat] Added file appears in review. User sends new prompt.\n' +
     '[Admin view][Edit chat] Added file appears in review. User updates old prompt.\n' +
     '[Admin view][Edit chat] Deleted file in chat history stays in review',
@@ -656,29 +656,35 @@ dialAdminTest.only(
     );
 
     await dialAdminTest.step(
-      'Go back to review, remove attachment from the first message and verify it is removed from request',
+      'Go back to review, remove attachment from the first message and verify it is unchecked in the piblication request',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
         });
-        const firstMessage = conversation.messages[0].content;
+        const firstMessage = conversation.messages[2].content;
         await adminChatMessages.openEditMessageMode(firstMessage);
         await adminInputAttachments
           .removeInputAttachmentIcon(Attachment.cloudImageName)
           .click();
         await adminChatMessages.saveAndSubmit.click();
         await adminChatMessagesAssertion.assertMessageContent(
-          1,
+          3,
           firstMessage,
         );
         await adminPublicationReviewControl.backToPublicationRequest();
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminFilesToApproveAssertion.assertFileToPublish(
           { name: Attachment.sunImageName },
-          'visible',
+          {
+            expectedState: 'visible',
+            expectedCheckboxState: CheckboxState.checked,
+          },
         );
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminFilesToApproveAssertion.assertFileToPublish(
           { name: Attachment.cloudImageName },
-          'hidden',
+          {
+            expectedState: 'visible',
+            expectedCheckboxState: CheckboxState.unchecked,
+          },
         );
       },
     );
