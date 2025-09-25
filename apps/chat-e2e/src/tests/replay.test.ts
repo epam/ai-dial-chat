@@ -536,7 +536,9 @@ dialTest(
         );
         apiAssertion.assertRequestPrompt(
           replayRequests[1],
-          simpleSecondConversation.prompt,
+          aModel.features?.systemPrompt === true
+            ? simpleSecondConversation.prompt
+            : undefined,
         );
 
         const expectedSimpleModelIcon = iconApiHelper.getEntityIcon(bModel);
