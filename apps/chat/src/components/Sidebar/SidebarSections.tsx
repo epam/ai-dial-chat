@@ -54,6 +54,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
 
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isSpinnerVisible, setIsSpinnerVisible] = useState(false);
 
   const dragDropElement = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -77,8 +78,11 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
                 (scrollableSidebarRef.current?.clientHeight ?? 0) +
                   SENTINEL_HEIGHT)
           ) {
+            setIsSpinnerVisible(false);
             return;
           }
+
+          setIsSpinnerVisible(true);
 
           dispatch(
             UIActions.setVisibleSidebarItems({
@@ -151,7 +155,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
           className="absolute bottom-0 w-1"
           ref={sentinelRef}
         />
-        {visibleSidebarItems < filteredItems.length && (
+        {visibleSidebarItems < filteredItems.length && isSpinnerVisible && (
           <div className="flex items-center justify-center pb-4">
             <Spinner />
           </div>
