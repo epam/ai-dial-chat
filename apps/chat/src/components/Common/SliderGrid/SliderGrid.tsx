@@ -75,6 +75,7 @@ interface SliderProps<T, P> {
   itemProps: P;
   modalHeaderHeight?: number;
   modalFooterHeight?: number;
+  sliderDotsClassName?: string;
 }
 
 export const SliderGrid = <T extends { id: string }, P>({
@@ -85,6 +86,7 @@ export const SliderGrid = <T extends { id: string }, P>({
   itemProps,
   modalHeaderHeight = 0,
   modalFooterHeight = 0,
+  sliderDotsClassName,
 }: SliderProps<T, P>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -240,6 +242,7 @@ export const SliderGrid = <T extends { id: string }, P>({
           activeSlide={activeSlide}
           slidesCount={sliderGroups.length}
           onSetActiveSlide={handleSetActiveSlide}
+          className={sliderDotsClassName}
         />
       </div>
     </div>
