@@ -93,7 +93,7 @@ export class VisualizerConnector {
 
     iframe.setAttribute(
       'allow',
-      'clipboard-write *; fullscreen *; accelerometer *; gyroscope *; autoplay *; web-share *',
+      'clipboard-write *; fullscreen *; accelerometer *; gyroscope *; autoplay *; web-share *; encrypted-media *',
     );
 
     iframe.style.height = '100%';
