@@ -66,6 +66,7 @@ const run = async () => {
     // optional, id of the conversation to be selected at the start
     overlayConversationId: 'some-conversation-id',
     // optional, if DIAL should redirect to sign in the same browser window
+    // to use this flag AI DIAL Chat 'ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME' environmental variable should be set to 'true'
     signInInSameWindow: false,
     // optional, auto-sign in options
     signInOptions: {
