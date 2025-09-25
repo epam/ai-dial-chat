@@ -17,6 +17,8 @@ import {
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+
 export const useToolsetEditorValidation = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -34,9 +36,12 @@ export const useToolsetEditorValidation = () => {
     ToolsetSelectors.selectAreToolsetsLoaded,
   );
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const isToolsetDetailsLoading = useAppSelector(
-    ToolsetSelectors.selectIsToolsetDetailsLoading,
+  const toolsetDetailsStatus = useAppSelector(
+    ToolsetSelectors.selectToolsetDetailsStatus,
   );
+  const isToolsetDetailsLoading = toolsetDetailsStatus === UploadStatus.LOADING;
+  const isToolsetLoadingFailed = toolsetDetailsStatus === UploadStatus.FAILED;
+
   const publication = useAppSelector((state) =>
     publicationUrl
       ? PublicationSelectors.selectPublicationByUrl(state, publicationUrl)
@@ -83,7 +88,10 @@ export const useToolsetEditorValidation = () => {
       return;
     }
 
-    if (!toolsetDetails || !toolsetDetails?.endpoint) {
+    if (
+      (!toolsetDetails || !toolsetDetails?.endpoint) &&
+      !isToolsetLoadingFailed
+    ) {
       dispatch(ToolsetActions.getToolsetDetails({ id: toolsetId }));
     }
 

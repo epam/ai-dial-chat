@@ -45,7 +45,7 @@ import {
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import {
-  ChangeAgentTabs,
+  ChangeMarketplaceTabs,
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
@@ -79,7 +79,7 @@ function AgentsTabButton({ tab, setTab, currentTab }: TabButtonProps) {
       onClick={setTab}
       dataQA={tab}
     >
-      {t(ChangeAgentTabs[tab])}
+      {t(ChangeMarketplaceTabs[tab])}
     </TabButton>
   );
 }
