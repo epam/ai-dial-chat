@@ -36,12 +36,10 @@ function Document(props: Props) {
           nonce={props.nonce}
           id="theme-script"
           strategy="beforeInteractive"
-        >
-          {`{try {
-            (document.documentElement.className =
-              JSON.parse(localStorage.getItem('settings') || '{}').theme || '');
-            } catch(e) { console.error(e); }}`}
-        </Script>
+          src="/scripts/theme-loader.js"
+          type="text/javascript"
+        />
+
         <Main />
         <NextScript nonce={props.nonce} />
       </body>
