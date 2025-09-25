@@ -2,7 +2,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  ChangeMarketplaceTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 interface SuggestionButtonProps {
   onClick?: () => void;
@@ -13,7 +16,7 @@ export const SuggestionButton = ({ onClick }: SuggestionButtonProps) => {
 
   return (
     <button className="text-accent-primary" onClick={onClick}>
-      {t(`See results from ${ChangeAgentTabs[MarketplaceTabs.HOME]}`)}
+      {t(`See results from ${ChangeMarketplaceTabs[MarketplaceTabs.HOME]}`)}
     </button>
   );
 };

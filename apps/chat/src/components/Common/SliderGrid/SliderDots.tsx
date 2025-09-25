@@ -57,12 +57,14 @@ interface Props {
   activeSlide: number;
   slidesCount: number;
   onSetActiveSlide: (slide: number) => void;
+  className?: string;
 }
 
 export const SliderDots: React.FC<Props> = ({
   activeSlide,
   slidesCount,
   onSetActiveSlide,
+  className,
 }) => {
   const screenState = useScreenState();
 
@@ -110,9 +112,14 @@ export const SliderDots: React.FC<Props> = ({
   }, [handleKeyDown]);
 
   return (
-    <div className="mt-4 flex w-full items-center justify-center md:justify-end">
+    <div
+      className={classNames(
+        'mt-4 flex w-full items-center justify-center md:justify-end',
+        className,
+      )}
+    >
       <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
-        <div className="relative flex items-center gap-4 md:-translate-x-1/2">
+        <div className="relative z-50 flex items-center gap-4 md:-translate-x-1/2">
           {sliderDotsArray.length <= 1 && screenState === ScreenState.SM && (
             <span className="h-[18px] bg-transparent"></span>
           )}
