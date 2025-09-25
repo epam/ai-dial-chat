@@ -2,7 +2,6 @@ import {
   DragEvent,
   ReactNode,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -46,7 +45,6 @@ import { Search } from '@/src/components/Search/Search';
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 import { SidebarSections } from './SidebarSections';
 
-import debounce, { DebouncedFunc } from 'lodash-es/debounce';
 import trimEnd from 'lodash-es/trimEnd';
 import { Resizable, ResizableProps, ResizeCallback } from 're-resizable';
 
@@ -89,7 +87,6 @@ export const Sidebar = <T,>({
   const dispatch = useAppDispatch();
 
   const [isResizing, setIsResizing] = useState(false);
-  const [currentSearchTerm, setCurrentSearchTerm] = useState(searchTerm);
 
   const sideBarElementRef = useRef<Resizable>(null);
 
@@ -110,27 +107,6 @@ export const Sidebar = <T,>({
       return window.innerWidth;
     }
   });
-
-  const debouncedSearchHandlerRef = useRef<DebouncedFunc<
-    (searchTerm: string) => void
-  > | null>(null);
-
-  useEffect(() => {
-    debouncedSearchHandlerRef.current = debounce((searchTerm: string) => {
-      onSearchTerm(searchTerm);
-    }, 300);
-
-    return () => {
-      debouncedSearchHandlerRef.current?.cancel();
-    };
-  }, [onSearchTerm]);
-
-  const handleDebouncedSearch = useCallback((searchTerm: string) => {
-    setCurrentSearchTerm(searchTerm);
-    if (debouncedSearchHandlerRef.current) {
-      debouncedSearchHandlerRef.current(searchTerm);
-    }
-  }, []);
 
   const screenState = useScreenState();
 
@@ -387,9 +363,9 @@ export const Sidebar = <T,>({
                   's',
                 ),
               })}
-              searchTerm={currentSearchTerm}
+              searchTerm={searchTerm}
               searchFilters={searchFilters}
-              onSearch={handleDebouncedSearch}
+              onSearch={onSearchTerm}
               onSearchFiltersChanged={onSearchFilters}
               featureType={featureType}
             />

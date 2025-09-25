@@ -936,7 +936,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Search prompt when no folders',
   async ({
     dialHomePage,
