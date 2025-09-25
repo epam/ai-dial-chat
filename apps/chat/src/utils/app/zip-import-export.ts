@@ -6,7 +6,7 @@ import { AttachmentToUpload } from '@/src/store/import-export/importExport.reduc
 
 import { constructPath, getNextFileName, triggerDownload } from './file';
 import {
-  currentDate,
+  getCurrentDate,
   getDownloadFileName,
   prepareConversationsForExport,
 } from './import-export';
@@ -66,7 +66,7 @@ export const downloadExportZip = (content: string, fileName?: string) => {
   const downloadName = getDownloadFileName(fileName);
   triggerDownload(
     `data:application/zip;base64,${content}`,
-    `${downloadName}_chat_with_attachments_${currentDate()}.dial`,
+    `${downloadName}_chat_with_attachments_${getCurrentDate()}.dial`,
   );
 };
 

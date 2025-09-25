@@ -17,7 +17,6 @@ import {
   isClientSessionValid,
   isServerSessionValid,
 } from '@/src/utils/auth/session';
-import { getContentSecurityPolicyDirectives } from '@/src/utils/server/get-common-page-props';
 
 import { SettingsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -156,12 +155,14 @@ export const getServerSideProps: GetServerSideProps = async ({
 }) => {
   const session = await getServerSession(req, res, authOptions);
 
-  res.setHeader(
-    'Content-Security-Policy',
-    getContentSecurityPolicyDirectives(),
-  );
   res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+
+  if (
+    !process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME ||
+    process.env.ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME === 'false'
+  ) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
 
   if (isServerSessionValid(session, true)) {
     return {

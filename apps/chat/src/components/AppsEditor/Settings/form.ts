@@ -10,6 +10,7 @@ import {
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
   getWebAPIToolsetStr,
+  isDialAiEntityModel,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
@@ -452,31 +453,34 @@ export const getQuickAppData2 = (
       url,
       type: 'file',
     })) ?? [];
-  const dialDeploymentsToolsets: DialDeploymentSimpleTool[] =
-    formData.agentsAndToolsets.flatMap((agentsAndToolset) => {
-      const entity = allEntitiesMap[agentsAndToolset];
-      if (!entity || entity.type === EntityType.Toolset) return [];
+  const { dialDeploymentsToolsets, dialMCPToolsets } =
+    formData.agentsAndToolsets.reduce<{
+      dialDeploymentsToolsets: DialDeploymentSimpleTool[];
+      dialMCPToolsets: MCPToolset[];
+    }>(
+      (acc, agentAndToolset) => {
+        const entity = allEntitiesMap[agentAndToolset];
+        if (!entity) return acc;
 
-      return {
-        type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
-        deployment_id: entity.id,
-      };
-    });
-  const dialMCPToolsets: MCPToolset[] = formData.agentsAndToolsets.flatMap(
-    (agentAndToolset) => {
-      const entity = allEntitiesMap[agentAndToolset];
-      if (!entity || entity.type !== EntityType.Toolset) return [];
+        if (isDialAiEntityModel(entity)) {
+          acc.dialDeploymentsToolsets.push({
+            type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
+            deployment_id: entity.id,
+          });
+        } else {
+          acc.dialMCPToolsets.push({
+            name: entity.name,
+            dial_id: ApiUtils.encodeApiUrl(entity.id),
+            description: entity.description,
+            type: ToolsetTypes.DialMcp,
+            transport: entity.transport,
+          });
+        }
 
-      return [
-        {
-          name: entity.name,
-          dial_id: entity.id,
-          description: entity.description,
-          type: ToolsetTypes.DialMcp,
-        },
-      ];
-    },
-  );
+        return acc;
+      },
+      { dialDeploymentsToolsets: [], dialMCPToolsets: [] },
+    );
 
   return {
     ...getGeneralApplicationData(formData),
