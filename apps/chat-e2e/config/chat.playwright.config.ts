@@ -59,18 +59,18 @@ export default defineConfig({
       testMatch: /cleanup\.ts/,
       dependencies: ['auth'],
     },
-    // {
-    //   name: 'api listing',
-    //   testMatch: /listing\.test\.ts/,
-    //   dependencies: ['cleanup'],
-    //   fullyParallel: true,
-    // },
-    // {
-    //   name: 'chat api',
-    //   testMatch: /\/chatApi\/.*\.test\.ts/,
-    //   dependencies: ['cleanup'],
-    //   fullyParallel: true,
-    // },
+    {
+      name: 'api listing',
+      testMatch: /listing\.test\.ts/,
+      dependencies: ['cleanup'],
+      fullyParallel: true,
+    },
+    {
+      name: 'chat api',
+      testMatch: /\/chatApi\/.*\.test\.ts/,
+      dependencies: ['cleanup'],
+      fullyParallel: true,
+    },
     {
       name: 'chat e2e',
       testIgnore:
