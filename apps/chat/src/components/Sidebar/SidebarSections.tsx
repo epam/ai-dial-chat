@@ -1,0 +1,227 @@
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+
+import classNames from 'classnames';
+
+import { hasDragEventEntityData } from '@/src/utils/app/move';
+
+import { FeatureType } from '@/src/types/common';
+
+import { UIActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
+import {
+  DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
+  SIDEBAR_DISPLAY_ITEM_INCREMENT,
+} from '@/src/constants/sidebars';
+
+import { NoData } from '@/src/components/Common/NoData';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import { Spinner } from '@/src/components/Common/Spinner';
+
+import { FolderInterface } from '@epam/ai-dial-shared';
+
+interface Props<T> {
+  filteredItems: T[];
+  filteredFolders: FolderInterface[];
+  featureType: FeatureType.Chat | FeatureType.Prompt;
+  searchTerm: string;
+  itemComponent: React.ReactNode;
+  folderComponent: React.ReactNode;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  allowDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+}
+
+const SENTINEL_HEIGHT = 160;
+
+const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
+  {
+    filteredItems,
+    filteredFolders,
+    featureType,
+    searchTerm,
+    itemComponent,
+    onDrop,
+    allowDrop,
+  }: Props<T>,
+  scrollableSidebarRef: React.ForwardedRef<HTMLDivElement>,
+) {
+  const dispatch = useAppDispatch();
+
+  const visibleSidebarItems = useAppSelector((state) =>
+    UISelectors.selectVisibleSidebarItems(state, featureType),
+  );
+
+  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+
+  const dragDropElement = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !filteredItems.length) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!hasScrolledOnce) {
+            setHasScrolledOnce(true);
+            return;
+          }
+
+          if (
+            visibleSidebarItems >= filteredItems.length ||
+            (scrollableSidebarRef &&
+              'current' in scrollableSidebarRef &&
+              (scrollableSidebarRef.current?.scrollHeight ?? 0) <=
+                (scrollableSidebarRef.current?.clientHeight ?? 0) +
+                  SENTINEL_HEIGHT)
+          ) {
+            return;
+          }
+
+          dispatch(
+            UIActions.setVisibleSidebarItems({
+              featureType,
+              visibleItems:
+                visibleSidebarItems + SIDEBAR_DISPLAY_ITEM_INCREMENT,
+            }),
+          );
+        }
+      },
+      { root: null, threshold: 0.1 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [
+    dispatch,
+    featureType,
+    visibleSidebarItems,
+    filteredItems.length,
+    hasScrolledOnce,
+    scrollableSidebarRef,
+  ]);
+
+  const highlightDrop = useCallback(
+    (e: React.DragEvent) => {
+      if (
+        hasDragEventEntityData(e, featureType) &&
+        (dragDropElement.current?.contains(e.target as Node) ||
+          dragDropElement.current === e.target)
+      ) {
+        setIsDraggingOver(true);
+      }
+    },
+    [featureType],
+  );
+
+  const removeHighlight = useCallback((e: React.DragEvent) => {
+    if (
+      (e.target === dragDropElement.current ||
+        dragDropElement.current?.contains(e.target as Node)) &&
+      !dragDropElement.current?.contains(e.relatedTarget as Node)
+    ) {
+      setIsDraggingOver(false);
+    }
+  }, []);
+
+  if (filteredItems.length > 0 || filteredFolders.length > 0) {
+    return (
+      <div
+        ref={dragDropElement}
+        className={classNames(
+          'relative min-h-min min-w-[42px] grow',
+          isDraggingOver && 'bg-accent-primary-alpha',
+        )}
+        onDrop={(e) => {
+          setIsDraggingOver(false);
+          onDrop(e);
+        }}
+        onDragOver={allowDrop}
+        onDragEnter={highlightDrop}
+        onDragLeave={removeHighlight}
+        data-qa="draggable-area"
+      >
+        {itemComponent}
+
+        <div
+          style={{
+            height: `${SENTINEL_HEIGHT}px`,
+          }}
+          className="absolute bottom-0 w-1"
+          ref={sentinelRef}
+        />
+        {visibleSidebarItems < filteredItems.length && (
+          <div className="flex items-center justify-center pb-4">
+            <Spinner />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex grow content-center justify-center">
+      {searchTerm.length ? <NoResultsFound /> : <NoData />}
+    </div>
+  );
+});
+
+export function SidebarSections<T>({
+  filteredItems,
+  filteredFolders,
+  featureType,
+  searchTerm,
+  itemComponent,
+  folderComponent,
+  onDrop,
+  allowDrop,
+}: Props<T>) {
+  const dispatch = useAppDispatch();
+  const scrollableSidebarRef = useRef<HTMLDivElement>(null);
+
+  const resetVisibleItems = useCallback(() => {
+    dispatch(
+      UIActions.setVisibleSidebarItems({
+        featureType,
+        visibleItems: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
+      }),
+    );
+  }, [dispatch, featureType]);
+
+  useEffect(() => {
+    resetVisibleItems();
+
+    scrollableSidebarRef.current?.scrollTo({
+      top: 0,
+      behavior: 'instant',
+    });
+  }, [resetVisibleItems, searchTerm]);
+
+  useEffect(() => {
+    return () => {
+      resetVisibleItems();
+    };
+  }, [resetVisibleItems]);
+
+  return (
+    <div
+      ref={scrollableSidebarRef}
+      className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto"
+    >
+      {folderComponent}
+
+      <SidebarFlatListView
+        ref={scrollableSidebarRef}
+        filteredItems={filteredItems}
+        filteredFolders={filteredFolders}
+        featureType={featureType}
+        searchTerm={searchTerm}
+        itemComponent={itemComponent}
+        folderComponent={folderComponent}
+        onDrop={onDrop}
+        allowDrop={allowDrop}
+      />
+    </div>
+  );
+}
