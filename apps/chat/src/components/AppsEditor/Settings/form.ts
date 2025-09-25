@@ -313,8 +313,12 @@ export const getQuickAppDefaultValues2 = ({
       appProperties.orchestrator.deployment.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
     agentsAndToolsets: [
-      ...agentToolsets.map((agentToolset) => agentToolset.deployment_id),
-      ...mcpToolsets.map((mcpToolset) => mcpToolset.dial_id),
+      ...agentToolsets.map((agentToolset) =>
+        ApiUtils.decodeApiUrl(agentToolset.deployment_id),
+      ),
+      ...mcpToolsets.map((mcpToolset) =>
+        ApiUtils.decodeApiUrl(mcpToolset.dial_id),
+      ),
     ],
     codeInterpreter: appProperties.tool_sets.some(
       (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
@@ -465,12 +469,12 @@ export const getQuickAppData2 = (
         if (isDialAiEntityModel(entity)) {
           acc.dialDeploymentsToolsets.push({
             type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
-            deployment_id: entity.id,
+            deployment_id: ApiUtils.encodeApiUrl(entity.id),
           });
         } else {
           acc.dialMCPToolsets.push({
             name: entity.name,
-            dial_id: entity.id,
+            dial_id: ApiUtils.encodeApiUrl(entity.id),
             description: entity.description,
             type: ToolsetTypes.DialMcp,
             transport: entity.transport,
