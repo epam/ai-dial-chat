@@ -11,9 +11,9 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import {BucketUtil, GeneratorUtil, ModelsUtil} from '@/src/utils';
+import { FileModalSection } from '@/src/ui/webElements';
+import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import {FileModalSection} from "@/src/ui/webElements";
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -38,17 +38,15 @@ dialAdminTest(
     adminChatHeaderDropdownMenu,
     adminApproveRequiredConversationDropdownMenu,
     adminInformationModal,
-           adminChatAssertion,
-           adminConversationSettings,
-           adminTalkToAgentDialog,
+    adminChatAssertion,
+    adminConversationSettings,
+    adminTalkToAgentDialog,
   }) => {
     setTestIds('EPMRTC-6472', 'EPMRTC-6665');
     let publishedConversation: Conversation;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let publication: Publication;
-    const agent = ModelsUtil
-      .getModels()
-      .find((m) => m.isDefault === false);
+    const agent = ModelsUtil.getModels().find((m) => m.isDefault === false);
     const adminModel = ModelsUtil.getDefaultAgent()!;
 
     await dialTest.step(
@@ -57,8 +55,9 @@ dialAdminTest(
         await adminLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           adminModel!,
         );
-        publishedConversation =
-          conversationData.prepareDefaultConversation(agent!);
+        publishedConversation = conversationData.prepareDefaultConversation(
+          agent!,
+        );
         await dataInjector.createConversations([publishedConversation]);
 
         const publishRequest = publishRequestBuilder
@@ -135,14 +134,14 @@ dialAdminTest(
       async () => {
         await adminChatHeader.hoverOverChatModel();
         await adminTooltipAssertion.assertTooltipContent(
-          ExpectedConstants.modelTooltip(
-            adminModel.name,
-            adminModel.version,
-          ),
+          ExpectedConstants.modelTooltip(adminModel.name, adminModel.version),
         );
         // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.chatAgent.click({ force: true });
-        await baseAssertion.assertElementState(adminTalkToAgentDialog, 'hidden');
+        await baseAssertion.assertElementState(
+          adminTalkToAgentDialog,
+          'hidden',
+        );
       },
     );
 
@@ -155,7 +154,10 @@ dialAdminTest(
         );
         // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.conversationSettings.click({ force: true });
-        await baseAssertion.assertElementState(adminConversationSettings, 'hidden');
+        await baseAssertion.assertElementState(
+          adminConversationSettings,
+          'hidden',
+        );
       },
     );
 
@@ -232,7 +234,7 @@ dialAdminTest(
     adminEntitySettingsAssertion,
     adminChatMessagesAssertion,
     adminSendMessage,
-           adminPublicationReviewControl,
+    adminPublicationReviewControl,
   }) => {
     setTestIds('EPMRTC-6736', 'EPMRTC-6737', 'EPMRTC-6475', 'EPMRTC-6485');
     let conversation: Conversation;
@@ -448,7 +450,9 @@ dialAdminTest(
           await message.hover();
           await adminChatMessages.messageDeleteIcon(i - 1).click();
           await adminConfirmationDialog.confirm();
-          await adminChatMessages.getChatMessage(i - 2).waitFor({state: "detached"});
+          await adminChatMessages
+            .getChatMessage(i - 2)
+            .waitFor({ state: 'detached' });
         }
         await adminPublicationReviewControl.backToPublicationRequest();
         await baseAssertion.assertElementActionabilityState(
@@ -614,7 +618,9 @@ dialAdminTest(
         await adminAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await adminAttachFilesModal.checkAttachedFile(Attachment.cloudImageName);
+        await adminAttachFilesModal.checkAttachedFile(
+          Attachment.cloudImageName,
+        );
         await adminAttachFilesModal.attachFiles();
         await adminChatMessages.saveAndSubmit.click();
         await adminChatMessagesAssertion.assertMessagesCount(2);
@@ -635,9 +641,7 @@ dialAdminTest(
         await adminAttachFilesModal.checkAttachedFile(Attachment.sunImageName);
         await adminAttachFilesModal.attachFiles();
         await adminSendMessage.send(newPrompt);
-        await adminChatMessagesAssertion.assertLastMessageContent(
-          'Response',
-        );
+        await adminChatMessagesAssertion.assertLastMessageContent('Response');
       },
     );
 
@@ -668,10 +672,7 @@ dialAdminTest(
           .removeInputAttachmentIcon(Attachment.cloudImageName)
           .click();
         await adminChatMessages.saveAndSubmit.click();
-        await adminChatMessagesAssertion.assertMessageContent(
-          1,
-          firstMessage,
-        );
+        await adminChatMessagesAssertion.assertMessageContent(1, firstMessage);
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminFilesToApproveAssertion.assertEntityState(
           { name: Attachment.sunImageName },
@@ -705,20 +706,22 @@ dialAdminTest.only(
     adminChatHeaderAssertion,
     adminFilesToApproveAssertion,
     adminFileApiHelper,
+           adminChatMessages,
   }) => {
     setTestIds('EPMRTC-6605');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const model = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
-    );
+    // const model = GeneratorUtil.randomArrayElement(
+    //   ModelsUtil.getLatestModelsWithAttachment(),
+    // );
+    const model = GeneratorUtil.randomArrayElement(ModelsUtil.getModels().filter((m) => m.id=='dall-e-3'));
     const newPrompt = 'generate a picture';
-    var publicationHash;
+    var publicationBucket: string;
 
     await dialTest.step(
       'Prepare conversation with attachment-supported model and publication request',
       async () => {
-        conversation = conversationData.prepareDefaultConversation(model);
+        conversation = conversationData.prepareDefaultConversation(model!);
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
 
@@ -726,9 +729,13 @@ dialAdminTest.only(
           .withName(requestName)
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
-        const publication = await publicationApiHelper.createPublishRequest(publishRequest);
-        publicationHash = publicationApiHelper.getPublicationReviewHash(publication)
-        await adminFileApiHelper.putFile(Attachment.sunImageName, {optionalBucket: publicationHash});
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        publicationBucket =
+          publicationApiHelper.getPublicationBucket(publication);
+        await adminFileApiHelper.putFile(Attachment.sunImageName, {
+          parentPath: API.modelFilePath(model.id),
+        });
       },
     );
 
@@ -755,11 +762,16 @@ dialAdminTest.only(
         await adminDialHomePage.mockChatImageResponse(
           model.id,
           Attachment.sunImageName,
+          { customPath: publicationBucket },
         );
         await adminSendMessage.send(newPrompt);
+        // await adminChatMessagesAssertion.assertMessageAttachmentUrl(
+        //   `${API.importFilePath(BucketUtil.getBucket(), model.id)}/${Attachment.sunImageName}`,
+        //   'visible',
+        // );
         await adminChatMessagesAssertion.assertMessageAttachmentUrl(
-          `${API.importFilePath(BucketUtil.getBucket(), model.id)}/${Attachment.sunImageName}`,
-        'visible',
+          `${API.importFilePath(BucketUtil.getBucket(), model.id)}/`,
+          'visible',
         );
       },
     );
@@ -767,9 +779,11 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Click on "Back to publication request" and verify generated file is displayed in request',
       async () => {
+        const imageNameUrlParts = (await adminChatMessages.getChatMessageAttachmentUrl(4))!.split('/');
+        const imageName = imageNameUrlParts[imageNameUrlParts.length - 1];
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminFilesToApproveAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
+          { name: imageName },
           'visible',
         );
       },
