@@ -36,26 +36,26 @@ if (!process.env.E2E_HOST) {
   };
 }
 
-// config.projects = [
-//   {
-//     name: 'debug_auth',
-//     fullyParallel: true,
-//     testMatch: /debugAuth\.ts/,
-//   },
-//   {
-//     name: 'cleanup',
-//     testMatch: /cleanup\.ts/,
-//     dependencies: ['debug_auth'],
-//   },
-//   {
-//     name: 'chat e2e',
-//     testIgnore:
-//       /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
-//     use: {
-//       ...devices['Desktop Chrome'],
-//       viewport: { width: 1536, height: 864 },
-//     },
-//     dependencies: ['cleanup'],
-//   },
-// ];
+config.projects = [
+  {
+    name: 'debug_auth',
+    fullyParallel: true,
+    testMatch: /debugAuth\.ts/,
+  },
+  {
+    name: 'cleanup',
+    testMatch: /cleanup\.ts/,
+    dependencies: ['debug_auth'],
+  },
+  {
+    name: 'chat e2e',
+    testIgnore:
+      /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
+    use: {
+      ...devices['Desktop Chrome'],
+      viewport: { width: 1536, height: 864 },
+    },
+    dependencies: ['cleanup'],
+  },
+];
 export default config;
