@@ -2,7 +2,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { ChangeAgentTabs, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  ChangeMarketplaceTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import { NoResultsFound } from './NoResultsFound';
 import { SuggestionButton } from './SuggestionButton';
@@ -23,7 +26,7 @@ export const TalkToNotFound = ({
       <NoResultsFound
         additionalText={
           isMyWorkspace
-            ? t(` in ${ChangeAgentTabs[MarketplaceTabs.MY_WORKSPACE]}`)
+            ? t(` in ${ChangeMarketplaceTabs[MarketplaceTabs.MY_WORKSPACE]}`)
             : ''
         }
       >
