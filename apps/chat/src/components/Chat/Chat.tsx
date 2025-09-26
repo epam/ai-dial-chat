@@ -1118,6 +1118,8 @@ export function Chat({ isPreview }: ChatProps) {
     PublicationSelectors.selectIsPublicationUpdating,
   );
 
+  const configurationLoadedRef = useRef(false);
+
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
   );
@@ -1127,6 +1129,12 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
+    configurationLoadedRef.current = false;
+  }, [selectedConversationsIds]);
+
+  useEffect(() => {
+    if (configurationLoadedRef.current) return;
+
     const configurationAppReference = selectedConversations.find((conv) =>
       doesModelHaveConfiguration(modelsMap[conv.model.id]),
     )?.model?.id;
@@ -1135,9 +1143,12 @@ export function Chat({ isPreview }: ChatProps) {
       : undefined;
 
     if (configurationAppId && isNoMessages) {
-      dispatch(
-        ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
-      );
+      if (!configurationLoadedRef.current) {
+        configurationLoadedRef.current = true;
+        dispatch(
+          ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
+        );
+      }
     } else {
       dispatch(ChatActions.resetConfigurationSchema());
     }
