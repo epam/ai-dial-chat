@@ -14,7 +14,8 @@ import {
   Marketplace,
   MarketplaceAgents,
   MarketplaceContainer,
-  MarketplaceHeader, ModelInfoTooltip,
+  MarketplaceHeader,
+  ModelInfoTooltip,
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
@@ -34,6 +35,7 @@ import {
   ChatHeaderAssertion,
   ChatMessagesAssertion,
   ConversationAssertion,
+  ConversationInfoTooltipAssertion,
   ManageAttachmentsAssertion,
   MarketplaceAgentsAssertion,
   MenuAssertion,
@@ -46,7 +48,7 @@ import {
   PublishingApprovalModalAssertion,
   PublishingRequestModalAssertion,
   TooltipAssertion,
-  VariableModalAssertion, ConversationInfoTooltipAssertion,
+  VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
@@ -62,6 +64,7 @@ import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
 import {
   ApplicationsToApproveTree,
   ApplicationsToPublishTree,
@@ -89,7 +92,6 @@ import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromp
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
-import {ChatSettingsTooltip} from "@/src/ui/webElements/chatSettingsTooltip";
 
 const dialAdminTest = dialTest.extend<{
   adminLocalStorageManager: LocalStorageManager;
@@ -205,7 +207,10 @@ const dialAdminTest = dialTest.extend<{
     const adminModelInfoTooltip = new ModelInfoTooltip(adminPage);
     await use(adminModelInfoTooltip);
   },
-  adminConversationInfoTooltipAssertion: async ({ adminModelInfoTooltip }, use) => {
+  adminConversationInfoTooltipAssertion: async (
+    { adminModelInfoTooltip },
+    use,
+  ) => {
     const adminConversationInfoTooltipAssertion =
       new ConversationInfoTooltipAssertion(adminModelInfoTooltip);
     await use(adminConversationInfoTooltipAssertion);

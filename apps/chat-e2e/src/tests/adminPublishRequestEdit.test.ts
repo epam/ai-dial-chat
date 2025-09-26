@@ -39,9 +39,9 @@ dialAdminTest(
     adminChatAssertion,
     adminConversationSettings,
     adminTalkToAgentDialog,
-           adminConversationInfoTooltipAssertion,
-           adminModelInfoTooltip,
-           adminChatSettingsTooltip,
+    adminConversationInfoTooltipAssertion,
+    adminModelInfoTooltip,
+    adminChatSettingsTooltip,
   }) => {
     setTestIds('EPMRTC-6472', 'EPMRTC-6665');
     let publishedConversation: Conversation;
@@ -141,14 +141,14 @@ dialAdminTest(
         );
         agent.version
           ? await adminConversationInfoTooltipAssertion.assertElementText(
-            adminModelInfoTooltip.versionInfo,
-            agent.version!,
-            ExpectedMessages.agentVersionIsValid,
-          )
+              adminModelInfoTooltip.versionInfo,
+              agent.version!,
+              ExpectedMessages.agentVersionIsValid,
+            )
           : await adminConversationInfoTooltipAssertion.assertElementState(
-            adminModelInfoTooltip.versionInfo,
-            'hidden',
-          );
+              adminModelInfoTooltip.versionInfo,
+              'hidden',
+            );
         // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.chatAgent.click({ force: true });
         await baseAssertion.assertElementState(
@@ -560,7 +560,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   '[Admin view][Edit chat] Added file appears in review. User sends new prompt.\n' +
     '[Admin view][Edit chat] Added file appears in review. User updates old prompt.\n' +
     '[Admin view][Edit chat] Deleted file in chat history stays in review',
@@ -645,9 +645,7 @@ dialAdminTest.only(
         await adminAttachFilesModal.attachFiles();
         await adminChatMessages.saveAndSubmit.click();
         await adminChatMessagesAssertion.assertMessagesCount(2);
-        await adminChatMessagesAssertion.assertLastMessageContent(
-          'response',
-        );
+        await adminChatMessagesAssertion.assertLastMessageContent('response');
       },
     );
 

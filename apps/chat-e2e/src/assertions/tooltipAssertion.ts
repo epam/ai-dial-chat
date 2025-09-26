@@ -15,14 +15,16 @@ export class TooltipAssertion extends BaseAssertion {
     await this.assertElementText(
       this.tooltip,
       expectedContent,
-      ExpectedMessages.tooltipContentIsValid)
+      ExpectedMessages.tooltipContentIsValid,
+    );
   }
 
   public async assertTooltipContains(expectedContent: string) {
     await this.assertElementContainsText(
       this.tooltip,
       expectedContent,
-      ExpectedMessages.tooltipContentIsValid)
+      ExpectedMessages.tooltipContentIsValid,
+    );
   }
 
   public async assertTooltipContentMatches(expectedContent: RegExp) {
