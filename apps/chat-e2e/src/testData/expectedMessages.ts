@@ -89,6 +89,7 @@ export const ExpectedMessages = {
   chatRequestTemperatureIsValid: 'Chat API request temperature is valid',
   chatRequestMessageIsValid: 'Chat API request message is valid',
   chatRequestAttachmentIsValid: 'Chat API request attachment is valid',
+  entityUrlIsValid: 'Entity url is valid',
   moveDestinationIsValid: 'Move API request destination is valid',
   moveSourceIsValid: 'Move API request source is valid',
   moveOverwriteIsValid: 'Move API request overwrite is valid',

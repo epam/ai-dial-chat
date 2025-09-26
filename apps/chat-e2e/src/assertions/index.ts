@@ -1,4 +1,3 @@
-export * from './api/apiAssertion';
 export * from './api/shareApiAssertion';
 export * from './accountSettingsAssertion';
 export * from './chatAssertion';
@@ -42,3 +41,4 @@ export * from './publishing/publishingApprovalModalAssertion';
 export * from './publishing/publishedPromptPreviewModalAssertion';
 export * from './publishing/publishedAppReviewModalAssertion';
 export * from './publishing/publicationReviewControlAssertion';
+export * from './api/apiAssertion';
