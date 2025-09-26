@@ -59,6 +59,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
 
   const dragDropElement = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const hideSentinelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -94,7 +95,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
           setIsSpinnerVisible(true);
           // hide sentinel for 50ms to avoid "isIntersecting = true" sticking
           setIsSentinelVisible(false);
-          setTimeout(() => {
+          hideSentinelTimeoutRef.current = setTimeout(() => {
             setIsSentinelVisible(true);
           }, 50);
         }
@@ -102,7 +103,12 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
       { root: null, threshold: 0.1 },
     );
     observer.observe(sentinel);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (hideSentinelTimeoutRef.current) {
+        clearTimeout(hideSentinelTimeoutRef.current);
+      }
+    };
   }, [
     dispatch,
     featureType,
