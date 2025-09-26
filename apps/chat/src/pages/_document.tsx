@@ -26,9 +26,7 @@ function Document(props: Props) {
           name="apple-mobile-web-app-title"
           content={process.env.NEXT_PUBLIC_APP_NAME || 'AI DIAL'}
         ></meta>
-        {!!process.env.THEMES_CONFIG_HOST && (
-          <link rel="stylesheet" href={'/api/themes/styles'} />
-        )}
+        <link rel="stylesheet" href={'/api/themes/styles'} />
         <link rel="manifest" href="/api/manifest" />
       </Head>
       <body>
@@ -36,12 +34,10 @@ function Document(props: Props) {
           nonce={props.nonce}
           id="theme-script"
           strategy="beforeInteractive"
-        >
-          {`{try {
-            (document.documentElement.className =
-              JSON.parse(localStorage.getItem('settings') || '{}').theme || '');
-            } catch(e) { console.error(e); }}`}
-        </Script>
+          src="/scripts/theme-loader.js"
+          type="text/javascript"
+        />
+
         <Main />
         <NextScript nonce={props.nonce} />
       </body>
