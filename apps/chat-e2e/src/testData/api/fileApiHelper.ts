@@ -1,9 +1,11 @@
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Publication } from '@/chat/types/publication';
 import { API, Attachment } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
@@ -74,6 +76,41 @@ export class FileApiHelper extends BaseApiHelper {
   ) {
     const buffer = Buffer.from(content, 'utf-8');
     return this.putFileGeneric(buffer, filename, options);
+  }
+
+  public async putFileToPublicationBucket(
+    publication: Publication,
+    sourceFileUrl: string,
+  ) {
+    const url = API.publicationUpdate;
+    const filename = FileApiHelper.extractFilename(sourceFileUrl);
+    const targetFileUrl = `files/public/${filename}`;
+
+    const resources = [
+      ...(publication.resources ?? []),
+      {
+        action: PublishActions.ADD_IF_ABSENT,
+        sourceUrl: sourceFileUrl,
+        targetUrl: targetFileUrl,
+      },
+    ];
+
+    const requestData = {
+      url: publication.url,
+      resources: resources,
+      targetFolder: 'public/',
+      displayAuthor: '',
+      rules: [],
+    };
+
+    const response = await this.request.post(this.getHost(url), {
+      data: requestData,
+    });
+
+    expect(
+      response.status(),
+      `File ${sourceFileUrl} was put to publication bucket for publication ${publication.url}. Status: ${response.status()}`,
+    ).toBe(200);
   }
 
   public async updateInstalledDeployments(agents: DialAIEntityModel[]) {

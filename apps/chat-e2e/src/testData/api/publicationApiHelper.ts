@@ -154,7 +154,7 @@ export class PublicationApiHelper extends BaseApiHelper {
     return JSON.parse(responseText) as Publication;
   }
 
-  public getPublicationReviewHash(publication: Publication) {
+  public getPublicationBucket(publication: Publication) {
     const reviewUrl = publication.resources[0].reviewUrl;
     return reviewUrl.split('/')[1];
   }

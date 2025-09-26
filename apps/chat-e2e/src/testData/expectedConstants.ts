@@ -448,6 +448,7 @@ export const API = {
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/ops/publication/create',
   publicationRequestCreate: '/api/ops/publication/create',
+  publicationUpdate: '/api/ops/publication/update',
   publicationRequestRejection: '/api/ops/publication/reject',
   publicationRequestApproval: '/api/ops/publication/approve',
   publicationRequestDetails: '/api/ops/publication/get',
