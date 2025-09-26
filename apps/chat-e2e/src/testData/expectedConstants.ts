@@ -9,6 +9,10 @@ export const ExpectedConstants = {
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
       : 'Change conversation settings:\nTemperature:',
+  settingsTooltipWithoutChanges: (entityType: EntityType) =>
+    entityType === EntityType.Application
+      ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+      : 'Conversation settings:Temperature:',
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,

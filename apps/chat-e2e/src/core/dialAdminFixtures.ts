@@ -14,7 +14,7 @@ import {
   Marketplace,
   MarketplaceAgents,
   MarketplaceContainer,
-  MarketplaceHeader,
+  MarketplaceHeader, ModelInfoTooltip,
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
@@ -46,7 +46,7 @@ import {
   PublishingApprovalModalAssertion,
   PublishingRequestModalAssertion,
   TooltipAssertion,
-  VariableModalAssertion,
+  VariableModalAssertion, ConversationInfoTooltipAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
@@ -89,6 +89,7 @@ import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromp
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
+import {ChatSettingsTooltip} from "@/src/ui/webElements/chatSettingsTooltip";
 
 const dialAdminTest = dialTest.extend<{
   adminLocalStorageManager: LocalStorageManager;
@@ -192,7 +193,23 @@ const dialAdminTest = dialTest.extend<{
   adminSendMessageInputAttachmentsAssertions: InputAttachmentsAssertions;
   adminInputAttachments: InputAttachments;
   adminInputAttachmentsAssertions: InputAttachmentsAssertions;
+  adminConversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
+  adminModelInfoTooltip: ModelInfoTooltip;
+  adminChatSettingsTooltip: ChatSettingsTooltip;
 }>({
+  adminChatSettingsTooltip: async ({ adminPage }, use) => {
+    const chatSettingsTooltip = new ChatSettingsTooltip(adminPage);
+    await use(chatSettingsTooltip);
+  },
+  adminModelInfoTooltip: async ({ adminPage }, use) => {
+    const adminModelInfoTooltip = new ModelInfoTooltip(adminPage);
+    await use(adminModelInfoTooltip);
+  },
+  adminConversationInfoTooltipAssertion: async ({ adminModelInfoTooltip }, use) => {
+    const adminConversationInfoTooltipAssertion =
+      new ConversationInfoTooltipAssertion(adminModelInfoTooltip);
+    await use(adminConversationInfoTooltipAssertion);
+  },
   adminInputAttachments: async ({ adminChatMessages }, use) => {
     const adminInputAttachments = adminChatMessages.getInputAttachments();
     await use(adminInputAttachments);

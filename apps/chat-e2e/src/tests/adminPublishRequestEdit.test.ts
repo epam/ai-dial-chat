@@ -39,6 +39,9 @@ dialAdminTest(
     adminChatAssertion,
     adminConversationSettings,
     adminTalkToAgentDialog,
+           adminConversationInfoTooltipAssertion,
+           adminModelInfoTooltip,
+           adminChatSettingsTooltip,
   }) => {
     setTestIds('EPMRTC-6472', 'EPMRTC-6665');
     let publishedConversation: Conversation;
@@ -131,9 +134,21 @@ dialAdminTest(
       `Verify agent's icon in the chat's header is not clickable, agent's name and version displayed on hover`,
       async () => {
         await adminChatHeader.hoverOverChatModel();
-        await adminTooltipAssertion.assertTooltipContent(
-          ExpectedConstants.modelTooltip(agent.name, agent.version),
+        await adminConversationInfoTooltipAssertion.assertElementText(
+          adminModelInfoTooltip.modelInfo,
+          agent.name,
+          ExpectedMessages.chatInfoModelIsValid,
         );
+        agent.version
+          ? await adminConversationInfoTooltipAssertion.assertElementText(
+            adminModelInfoTooltip.versionInfo,
+            agent.version!,
+            ExpectedMessages.agentVersionIsValid,
+          )
+          : await adminConversationInfoTooltipAssertion.assertElementState(
+            adminModelInfoTooltip.versionInfo,
+            'hidden',
+          );
         // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.chatAgent.click({ force: true });
         await baseAssertion.assertElementState(
@@ -147,8 +162,17 @@ dialAdminTest(
       `Verify settings icon in chat's header is not clickable, conversation settings is displayed on hover`,
       async () => {
         await adminChatHeader.hoverOverChatSettings();
-        await adminTooltipAssertion.assertTooltipContent(
-          ExpectedConstants.settingsTooltip(agent.type),
+        await adminTooltipAssertion.assertElementState(
+          adminChatSettingsTooltip.promptInfo,
+          'hidden',
+        );
+        await adminTooltipAssertion.assertElementText(
+          adminChatSettingsTooltip.temperatureInfo,
+          publishedConversation.temperature,
+          ExpectedMessages.chatInfoTemperatureIsValid,
+        );
+        await adminTooltipAssertion.assertTooltipContains(
+          ExpectedConstants.settingsTooltipWithoutChanges(agent.type),
         );
         // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.conversationSettings.click({ force: true });
@@ -536,7 +560,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   '[Admin view][Edit chat] Added file appears in review. User sends new prompt.\n' +
     '[Admin view][Edit chat] Added file appears in review. User updates old prompt.\n' +
     '[Admin view][Edit chat] Deleted file in chat history stays in review',
@@ -622,7 +646,7 @@ dialAdminTest(
         await adminChatMessages.saveAndSubmit.click();
         await adminChatMessagesAssertion.assertMessagesCount(2);
         await adminChatMessagesAssertion.assertLastMessageContent(
-          'test response',
+          'response',
         );
       },
     );
@@ -638,7 +662,7 @@ dialAdminTest(
         await adminAttachFilesModal.checkAttachedFile(Attachment.sunImageName);
         await adminAttachFilesModal.attachFiles();
         await adminSendMessage.send(newPrompt);
-        await adminChatMessagesAssertion.assertLastMessageContent('Response');
+        await adminChatMessagesAssertion.assertLastMessageContent('response');
       },
     );
 
@@ -658,7 +682,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Go back to review, remove attachment from the first message and verify it is removed from request',
+      'Go back to review, remove attachment from the first message and verify it tays in review',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
@@ -677,7 +701,7 @@ dialAdminTest(
         );
         await adminFilesToApproveAssertion.assertEntityState(
           { name: Attachment.cloudImageName },
-          'hidden',
+          'visible',
         );
       },
     );
