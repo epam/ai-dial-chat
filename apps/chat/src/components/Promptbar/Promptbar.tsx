@@ -54,6 +54,12 @@ export const Promptbar = () => {
   const filteredPrompts = useAppSelector(filteredPromptsSelector);
   const filteredFolders = useAppSelector(filteredFoldersSelector);
 
+  const rootFilteredPrompts = useMemo(
+    () =>
+      filteredPrompts.filter((prompt) => prompt.folderId === getPromptRootId()),
+    [filteredPrompts],
+  );
+
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
   const handleDrop = useCallback(
@@ -121,23 +127,21 @@ export const Promptbar = () => {
   );
 
   return (
-    <>
-      <Sidebar<PromptInfo>
-        featureType={FeatureType.Prompt}
-        side="right"
-        isOpen={showPromptbar}
-        itemComponent={<Prompts prompts={filteredPrompts} />}
-        folderComponent={<PromptFolders />}
-        filteredItems={filteredPrompts}
-        filteredFolders={filteredFolders}
-        searchTerm={searchTerm}
-        searchFilters={searchFilters}
-        onSearchTerm={handleSearchTerm}
-        onSearchFilters={handleSearchFilters}
-        onDrop={handleDrop}
-        footerComponent={<PromptbarSettings />}
-        areEntitiesUploaded={areEntitiesUploaded}
-      />
-    </>
+    <Sidebar<PromptInfo>
+      featureType={FeatureType.Prompt}
+      side="right"
+      isOpen={showPromptbar}
+      itemComponent={<Prompts prompts={rootFilteredPrompts} />}
+      folderComponent={<PromptFolders />}
+      filteredItems={rootFilteredPrompts}
+      filteredFolders={filteredFolders}
+      searchTerm={searchTerm}
+      searchFilters={searchFilters}
+      onSearchTerm={handleSearchTerm}
+      onSearchFilters={handleSearchFilters}
+      onDrop={handleDrop}
+      footerComponent={<PromptbarSettings />}
+      areEntitiesUploaded={areEntitiesUploaded}
+    />
   );
 };
