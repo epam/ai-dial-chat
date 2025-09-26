@@ -36,8 +36,6 @@ import {
 
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { Loader } from '@/src/components/Common/Loader';
-import { NoData } from '@/src/components/Common/NoData';
-import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import {
   CreateNewConversation,
   CreateNewPrompt,
@@ -45,6 +43,7 @@ import {
 import { Search } from '@/src/components/Search/Search';
 
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
+import { SidebarSections } from './SidebarSections';
 
 import trimEnd from 'lodash-es/trimEnd';
 import { Resizable, ResizableProps, ResizeCallback } from 're-resizable';
@@ -59,7 +58,7 @@ interface Props<T> {
   footerComponent?: ReactNode;
   searchTerm: string;
   searchFilters: SearchFilters;
-  featureType: FeatureType;
+  featureType: FeatureType.Chat | FeatureType.Prompt;
   onSearchTerm: (searchTerm: string) => void;
   onSearchFilters: (searchFilters: SearchFilters) => void;
   onDrop: (e: DragEvent<HTMLDivElement>) => void;
@@ -87,10 +86,8 @@ export const Sidebar = <T,>({
 
   const dispatch = useAppDispatch();
 
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
-  const dragDropElement = useRef<HTMLDivElement>(null);
   const sideBarElementRef = useRef<Resizable>(null);
 
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
@@ -175,29 +172,6 @@ export const Sidebar = <T,>({
     },
     [featureType],
   );
-
-  const highlightDrop = useCallback(
-    (e: DragEvent) => {
-      if (
-        hasDragEventEntityData(e, featureType) &&
-        (dragDropElement.current?.contains(e.target as Node) ||
-          dragDropElement.current === e.target)
-      ) {
-        setIsDraggingOver(true);
-      }
-    },
-    [featureType],
-  );
-
-  const removeHighlight = useCallback((e: DragEvent) => {
-    if (
-      (e.target === dragDropElement.current ||
-        dragDropElement.current?.contains(e.target as Node)) &&
-      !dragDropElement.current?.contains(e.relatedTarget as Node)
-    ) {
-      setIsDraggingOver(false);
-    }
-  }, []);
 
   const onResizeStart = useCallback(() => {
     setIsResizing(true);
@@ -396,37 +370,16 @@ export const Sidebar = <T,>({
               featureType={featureType}
             />
 
-            <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
-              {folderComponent}
-
-              {filteredItems.length > 0 || filteredFolders.length > 0 ? (
-                <div
-                  ref={dragDropElement}
-                  className={classNames(
-                    'min-h-min min-w-[42px] grow',
-                    isDraggingOver && 'bg-accent-primary-alpha',
-                  )}
-                  onDrop={(e) => {
-                    setIsDraggingOver(false);
-                    onDrop(e);
-                  }}
-                  onDragOver={allowDrop}
-                  onDragEnter={highlightDrop}
-                  onDragLeave={removeHighlight}
-                  data-qa="draggable-area"
-                >
-                  {itemComponent}
-                </div>
-              ) : searchTerm.length ? (
-                <div className="flex grow content-center justify-center">
-                  <NoResultsFound />
-                </div>
-              ) : (
-                <div className="flex grow content-center justify-center">
-                  <NoData />
-                </div>
-              )}
-            </div>
+            <SidebarSections
+              searchTerm={searchTerm}
+              filteredItems={filteredItems}
+              filteredFolders={filteredFolders}
+              featureType={featureType}
+              itemComponent={itemComponent}
+              folderComponent={folderComponent}
+              onDrop={onDrop}
+              allowDrop={allowDrop}
+            />
             {footerComponent}
           </>
         ) : (

@@ -22,4 +22,8 @@ export interface UIState {
   collapsedSections: Record<FeatureType, string[]>;
   previousRoute?: string;
   scrollToEntityId?: string;
+  visibleSidebarItems: {
+    [FeatureType.Chat]: number;
+    [FeatureType.Prompt]: number;
+  };
 }
