@@ -556,38 +556,9 @@ export class BasePage {
         ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
         : API.chatHost,
       async (route) => {
-        const json = {
-          content: '',
-          model: {
-            id: modelId,
-          },
-          settings: {
-            prompt: '',
-            temperature: 1,
-            selectedAddons: [],
-            assistantModelId: 'anthropic.claude-v3-sonnet',
-          },
-          role: 'assistant',
-          responseId: 'chatcmpl-5c0c5d39-6d28-4bd4-8f0f-faa143a00de7',
-          custom_content: {
-            attachments: [
-              {
-                title: 'Revised prompt',
-                data: 'A serene mountain landscape at sunrise, featuring a clear lake reflecting the morning light and surrounded by lush evergreen trees. A diverse group of people, including individuals of Caucasian, Black, South Asian, and Hispanic descent, dressed in hiking attire, are gathered by the lake. Some are enjoying coffee from thermoses, others are taking photographs of the scenery. Overhead, a few birds are flying peacefully, and the sky is painted in warm hues of orange, pink, and purple. The image captures the beauty of nature and the shared joy of outdoor adventure.',
-              },
-              {
-                title: 'Image',
-                type: 'image/png',
-                url: `${path}/${imageName}`,
-              },
-            ],
-          },
-        };
         await route.fulfill({
           status: 200,
-          body:
-            JSON.stringify(json) +
-            `\u0000{"content":" "}\u0000{}\u0000`,
+          body: `{"responseId":"0dea98ff-1e66-4294-8542-457890e5f8c0"}\u0000{"role":"assistant"}\u0000{"custom_content":{"attachments":[{"index":0,"type":"image/jpg","title":"Image","url":"${API.importFilePath(BucketUtil.getBucket(), modelId)}/${imageName}"}]}}\u0000{"content":" "}\u0000{}\u0000`,
         });
       },
     );
