@@ -69,6 +69,14 @@ export const Chatbar = () => {
   );
   const filteredFolders = useAppSelector(selectFilteredFoldersSelector);
 
+  const rootFilteredConversations = useMemo(
+    () =>
+      filteredConversations.filter(
+        (conversation) => conversation.folderId === getConversationRootId(),
+      ),
+    [filteredConversations],
+  );
+
   const handleDrop = useCallback(
     (e: DragEvent) => {
       if (e.dataTransfer) {
@@ -141,9 +149,11 @@ export const Chatbar = () => {
       featureType={FeatureType.Chat}
       side="left"
       isOpen={showChatbar}
-      itemComponent={<Conversations conversations={filteredConversations} />}
+      itemComponent={
+        <Conversations conversations={rootFilteredConversations} />
+      }
       folderComponent={<ChatFolders />}
-      filteredItems={filteredConversations}
+      filteredItems={rootFilteredConversations}
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
