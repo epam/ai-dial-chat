@@ -10,6 +10,7 @@ import {
   ForwardRefExoticComponent,
   RefAttributes,
   useCallback,
+  useEffect,
   useState,
 } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
@@ -81,6 +82,7 @@ const AuthTypeSection = ({
   onLogin,
 }: AuthTypeSectionProps) => {
   const { t } = useTranslation(Translation.Common);
+  const { setValue } = useFormContext<ToolsetEditorForm>();
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
@@ -89,6 +91,10 @@ const AuthTypeSection = ({
 
   const handleWithLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
     setWithLogin(e.currentTarget.value as WithLogin);
+    setValue(
+      'includeOAuthFields',
+      e.currentTarget.value === WithLogin.WithConfig,
+    );
   };
 
   const { Icon, name } = authTypeOptions[type];
@@ -96,6 +102,12 @@ const AuthTypeSection = ({
   const handleOnClick = useCallback(() => {
     if (!isSignedIn) onClick(type);
   }, [isSignedIn, onClick, type]);
+
+  useEffect(() => {
+    if (type !== ToolsetAuthTypes.OAUTH && isSelected) {
+      setValue('includeOAuthFields', false);
+    }
+  }, [isSelected, setValue, type]);
 
   return (
     <Tooltip
@@ -170,7 +182,6 @@ const AuthTypeSection = ({
                 type={type}
                 toolset={toolsetDetails}
                 onLogout={onLogout}
-                includeOAuthFields={withLogin === WithLogin.WithConfig}
               />
             )}
           </div>
@@ -224,7 +235,7 @@ export const AuthField = () => {
               transport,
               allowedTools,
               authSettings: {
-                authenticationType: data.type,
+                authenticationType: data.authenticationType,
                 apiKeyHeader: data.keyHeader,
                 ...(data.includeOAuthFields && {
                   clientId: data.clientId,

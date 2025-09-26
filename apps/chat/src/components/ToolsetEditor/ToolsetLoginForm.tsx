@@ -1,6 +1,6 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useCallback } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -13,44 +13,9 @@ import { Translation } from '@/src/types/translation';
 
 import { Field } from '@/src/components/Common/Forms/Field';
 
-import { ToolsetLoginFormSchema, ToolsetLoginFormType } from './form';
+import { ToolsetLoginFormType } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import { zodResolver } from '@hookform/resolvers/zod';
-
-const getDefaultFormData = ({
-  type,
-  toolset,
-  prevData,
-}: {
-  type: ToolsetAuthTypes;
-  toolset?: ToolsetModel;
-  prevData?: ToolsetLoginFormType;
-}): ToolsetLoginFormType => {
-  switch (type) {
-    case ToolsetAuthTypes.API_KEY:
-      return {
-        type,
-        keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
-        apiKey: prevData?.apiKey ?? '',
-      };
-    case ToolsetAuthTypes.OAUTH:
-      return {
-        type,
-        clientId: toolset?.authSettings?.clientId ?? '',
-        clientSecret: toolset?.authSettings?.clientSecret ?? '',
-        authorizationEndpoint:
-          toolset?.authSettings?.authorizationEndpoint ?? '',
-        tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
-        includeOAuthFields: prevData?.includeOAuthFields ?? false,
-      };
-    case ToolsetAuthTypes.NONE:
-    default:
-      return {
-        type,
-      };
-  }
-};
 
 interface ToolsetLoginFormProps {
   type: ToolsetAuthTypes;
@@ -61,7 +26,6 @@ interface ToolsetLoginFormProps {
   disabled?: boolean;
   className?: string;
   buttonClassName?: string;
-  includeOAuthFields?: boolean;
 }
 
 export const ToolsetLoginForm = ({
@@ -73,47 +37,34 @@ export const ToolsetLoginForm = ({
   disabled = false,
   className,
   buttonClassName,
-  includeOAuthFields = false,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
-  const { reset, register, formState, getValues, trigger } =
-    useForm<ToolsetLoginFormType>({
-      defaultValues: getDefaultFormData({
-        type,
-        toolset,
-        prevData: { includeOAuthFields, type },
-      }),
-      mode: 'onChange',
-      reValidateMode: 'onChange',
-      resolver: zodResolver(ToolsetLoginFormSchema),
-    });
+  const { register, formState, getValues, trigger, control } =
+    useFormContext<ToolsetLoginFormType>();
   const isValid = formState.isValid;
   const errors = formState.errors;
+
+  const includeOAuthFields = useWatch({
+    name: 'includeOAuthFields',
+    control,
+  });
 
   const handleSubmit = useCallback(() => {
     if (isSignedIn) {
       onLogout?.();
     } else {
-      trigger().then((isValid) => {
-        if (!isValid) return;
-        const data = getValues();
-        onLogin?.(data);
-      });
+      trigger(['keyHeader', 'apiKey', 'clientId', 'clientSecret']).then(
+        (isValid) => {
+          if (!isValid) return;
+          const data = getValues();
+          onLogin?.(data);
+        },
+      );
     }
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
-
-  useEffect(() => {
-    reset(
-      getDefaultFormData({
-        type,
-        toolset,
-        prevData: { ...getValues(), includeOAuthFields },
-      }),
-    );
-  }, [getValues, reset, toolset, type, includeOAuthFields]);
 
   return (
     <div className={classNames('flex flex-col gap-4', className)}>
