@@ -44,7 +44,7 @@ dialAdminTest(
     let publishedConversation: Conversation;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let publication: Publication;
-    const agent = ModelsUtil.getModels().find((m) => m.isDefault === false);
+    const agent = ModelsUtil.getModels().find((m) => m.isDefault === false)!;
     const adminModel = ModelsUtil.getDefaultAgent()!;
 
     await dialTest.step(
@@ -132,7 +132,7 @@ dialAdminTest(
       async () => {
         await adminChatHeader.hoverOverChatModel();
         await adminTooltipAssertion.assertTooltipContent(
-          ExpectedConstants.modelTooltip(adminModel.name, adminModel.version),
+          ExpectedConstants.modelTooltip(agent.name, agent.version),
         );
         // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.chatAgent.click({ force: true });
@@ -148,7 +148,7 @@ dialAdminTest(
       async () => {
         await adminChatHeader.hoverOverChatSettings();
         await adminTooltipAssertion.assertTooltipContent(
-          ExpectedConstants.settingsTooltip(adminModel.type),
+          ExpectedConstants.settingsTooltip(agent.type),
         );
         // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.conversationSettings.click({ force: true });
@@ -304,7 +304,7 @@ dialAdminTest(
         );
         await adminPublicationReviewControl.editButton.click();
         await adminSendMessage.send(newMessage);
-        await adminChatMessagesAssertion.assertLastMessageContent('Response');
+        await adminChatMessagesAssertion.assertLastMessageContent('response');
         await adminChatMessagesAssertion.assertMessagesCount(4);
       },
     );
@@ -433,7 +433,7 @@ dialAdminTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await adminChatMessages.regenerateResponse();
-        await adminChatMessagesAssertion.assertLastMessageContent('Response');
+        await adminChatMessagesAssertion.assertLastMessageContent('response');
       },
     );
 
