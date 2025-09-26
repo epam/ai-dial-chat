@@ -127,7 +127,7 @@ export const ExpectedConstants = {
   sharePromptText:
     'This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
   shareApplicationText:
-    'This application and its updates will beÂ visible toÂ users with the link. Renaming orÂ changing the version will stop sharing.',
+    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
     'This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   notSharedFolderText: 'This folder has not been shared with anyone yet.',
@@ -161,7 +161,7 @@ export const ExpectedConstants = {
     `Conversation with name "${name}" already exists at the root.`,
   // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
-  hieroglyphChars: `ã�‚ã�Šã…�ã„¹Ã±Â¿Ã¤ÃŸë§žìŠµë‹ˆë‹¤. í•œêµ­ì–´ í•™ìŠµì�˜ ì�¸ê¸°ëŠ” ê·¸ ë‚˜ë�¼ì�˜ ë¬¸í™”ì™€ ê²½ì œë¿�ë§Œ ì•„ë‹ˆë�¼ ì–¸ì–´ ìž�ì²´ì�˜ ë§¤ë ¥ì—�ì„œë�„ ë¹„ë¡¯ë�©ë‹ˆë‹¤. í•œêµ­ì–´ëŠ” í•œê¸€ì�´ë�¼ëŠ” ê³ ìœ í•œ ë¬¸ìž� ì‹œìŠ¤í…œì�„ ì‚¬ìš©í•˜ëŠ”ë�°, ì�´ëŠ” 15ì„¸ê¸°ì—� ì„¸ì¢…ëŒ€ì™•ì—� ì�˜í•´ ì°½ì•ˆë�˜ì—ˆìŠµë‹ˆë‹¤. í•œê¸€ì�€ ê·¸ ë…¼ë¦¬ì �ì�´ê³  ê³¼í•™ì �ì�¸ ì„¤ê³„ë¡œ ì�¸í•´ ë°°ìš°ê¸° ì‰¬ìš´ ê²ƒìœ¼ë¡œ ì—¬ê²¨ì§€ë©°, ì�´ ë˜�`,
+  hieroglyphChars: `あおㅁㄹñ¿äß맞습니다. 한국어 학습의 인기는 그 나라의 문화와 경제뿐만 아니라 언어 자체의 매력에서도 비롯됩니다. 한국어는 한글이라는 고유한 문자 시스템을 사용하는데, 이는 15세기에 세종대왕에 의해 창안되었습니다. 한글은 그 논리적이고 과학적인 설계로 인해 배우기 쉬운 것으로 여겨지며, 이 또`,
   attachedFileError: (filename: string) =>
     `You're trying to upload files with incorrect type: ${filename}`,
   allowedSpecialChars: "(`~!@#$^*-_+[]'|<>.?)",

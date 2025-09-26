@@ -290,7 +290,6 @@ dialTest(
     chatMessagesAssertion,
     baseAssertion,
     conversationAssertion,
-    tooltip,
     tooltipAssertion,
   }) => {
     setTestIds(
