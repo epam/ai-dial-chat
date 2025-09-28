@@ -211,7 +211,9 @@ export const AuthField = () => {
       if (value !== WithLogin.WithConfig) {
         clearErrors(['clientId', 'clientSecret']);
       }
-      setValue('includeOAuthFields', value === WithLogin.WithConfig);
+      setValue('includeOAuthFields', value === WithLogin.WithConfig, {
+        shouldDirty: false,
+      });
     },
     [clearErrors, setValue],
   );
@@ -225,7 +227,7 @@ export const AuthField = () => {
 
   const handleSelectAuthType = useCallback(
     (type: ToolsetAuthTypes) => {
-      setValue('authenticationType', type);
+      setValue('authenticationType', type, { shouldDirty: true });
       updateWithLogin(WithLogin.WithLogin);
     },
     [setValue, updateWithLogin],

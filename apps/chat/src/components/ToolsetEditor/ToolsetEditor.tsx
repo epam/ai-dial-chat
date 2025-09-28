@@ -104,22 +104,26 @@ export const ToolsetEditor = () => {
 
       changeEditorTabRef.current = null;
       saveAndExitRef.current = false;
+      formMethods.reset(formMethods.getValues(), {
+        keepIsValid: true,
+        keepErrors: true,
+      });
       lastSubmittedValuesRef.current = getDefaultFormData(payloadToolset);
     },
-    [dispatch, toolsetDetails],
+    [dispatch, formMethods, toolsetDetails],
   );
 
   const handleSubmit = useCallback(
     (cb?: () => void, forceSave = false) => {
       formMethods.trigger().then((isValid) => {
-        if (!isValid) {
+        if (!isValid && isDirty) {
           if (!forceSave) {
             changeEditorTabRef.current = null;
           } else {
             const data = formMethods.getValues();
             submitHandler({
-              ...getValidFormFields(data, formMethods.getFieldState),
               ...lastSubmittedValuesRef.current,
+              ...getValidFormFields(data, formMethods.getFieldState),
             });
           }
           return;
@@ -139,17 +143,20 @@ export const ToolsetEditor = () => {
     [formMethods, isDirty, submitHandler, toolsetDetails],
   );
 
-  const handleSaveAndExit = useCallback(() => {
-    if ((!isDirty && toolsetDetails) || !toolsetDetails) {
-      void router.push(
-        router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
-      );
-      return;
-    }
+  const handleSaveAndExit = useCallback(
+    (saveDraft = false) => {
+      if ((!isDirty && toolsetDetails) || !toolsetDetails) {
+        void router.push(
+          router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
+        );
+        return;
+      }
 
-    saveAndExitRef.current = true;
-    handleSubmit();
-  }, [handleSubmit, isDirty, router, toolsetDetails]);
+      saveAndExitRef.current = true;
+      handleSubmit(undefined, saveDraft);
+    },
+    [handleSubmit, isDirty, router, toolsetDetails],
+  );
 
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
@@ -183,6 +190,7 @@ export const ToolsetEditor = () => {
     if (toolsetDetails) {
       formMethods.resetField('authenticationType', {
         defaultValue: toolsetDetails.authSettings.authenticationType,
+        keepDirty: false,
       });
     }
   }, [formMethods, toolsetDetails]);

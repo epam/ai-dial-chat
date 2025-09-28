@@ -27,17 +27,20 @@ const getTabIcon = <T extends string>(
   activeTab: T,
   isEditing?: boolean,
   isDisabled?: boolean,
+  isNotValid?: boolean,
 ) => {
+  const iconColor =
+    isNotValid && tab !== activeTab ? 'text-error' : 'text-accent-primary';
   return tab !== activeTab && isEditing ? (
     <IconCircleCheck
-      className="text-accent-primary"
+      className={iconColor}
       data-qa="selected-step-icon"
       width={24}
       height={24}
     />
   ) : (
     <IconCircleDot
-      className={isDisabled ? 'text-secondary' : 'text-accent-primary'}
+      className={isDisabled ? 'text-secondary' : iconColor}
       data-qa="not-selected-step-icon"
       width={24}
       height={24}
@@ -55,6 +58,7 @@ interface EditorHeaderProps<T extends string> {
   dataQa?: string;
   tabs: EditorHeaderTab<T>[];
   activeTab: T;
+  errorTabsSet?: Set<T>;
   onTabClick: (e: PartialBy<EditorHeaderTab<T>, 'label'>) => void;
   title: string;
 
@@ -68,6 +72,7 @@ export const EditorHeader = <T extends string>({
   dataQa,
   tabs,
   activeTab,
+  errorTabsSet,
   onTabClick,
   title,
 
@@ -165,6 +170,7 @@ export const EditorHeader = <T extends string>({
           >
             {tabs.map((tab, index) => {
               const isDisabled = tab.disabled;
+              const isNotValid = errorTabsSet?.has(tab.key) ?? false;
               return (
                 <div key={tab.key} className="flex items-center">
                   <div
@@ -178,7 +184,13 @@ export const EditorHeader = <T extends string>({
                     )}
                     onClick={() => onTabClick(tab)}
                   >
-                    {getTabIcon(tab.key, activeTab, isEditing, isDisabled)}
+                    {getTabIcon(
+                      tab.key,
+                      activeTab,
+                      isEditing,
+                      isDisabled,
+                      isNotValid,
+                    )}
 
                     <span className="grow truncate" data-qa="single-step-title">
                       {tab.label}
