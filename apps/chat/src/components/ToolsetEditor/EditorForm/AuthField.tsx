@@ -10,7 +10,6 @@ import {
   ForwardRefExoticComponent,
   RefAttributes,
   useCallback,
-  useEffect,
   useState,
 } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
@@ -70,44 +69,32 @@ interface AuthTypeSectionProps {
   type: ToolsetAuthTypes;
   isSelected: boolean;
   onClick: (type: ToolsetAuthTypes) => void;
+  onWithLoginChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onLogout?: () => void;
   onLogin?: (data: ToolsetLoginFormType) => void;
+  withLogin?: WithLogin;
 }
 
 const AuthTypeSection = ({
   type,
   isSelected,
   onClick,
+  onWithLoginChange,
   onLogout,
   onLogin,
+  withLogin = WithLogin.WithoutLogin,
 }: AuthTypeSectionProps) => {
   const { t } = useTranslation(Translation.Common);
-  const { setValue } = useFormContext<ToolsetEditorForm>();
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
-  const [withLogin, setWithLogin] = useState(WithLogin.WithLogin);
   const isSignedIn = toolsetDetails && isToolsetSignedIn(toolsetDetails);
-
-  const handleWithLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setWithLogin(e.currentTarget.value as WithLogin);
-    setValue(
-      'includeOAuthFields',
-      e.currentTarget.value === WithLogin.WithConfig,
-    );
-  };
 
   const { Icon, name } = authTypeOptions[type];
 
   const handleOnClick = useCallback(() => {
     if (!isSignedIn) onClick(type);
   }, [isSignedIn, onClick, type]);
-
-  useEffect(() => {
-    if (type !== ToolsetAuthTypes.OAUTH && isSelected) {
-      setValue('includeOAuthFields', false);
-    }
-  }, [isSelected, setValue, type]);
 
   return (
     <Tooltip
@@ -148,7 +135,7 @@ const AuthTypeSection = ({
                 id={WithLogin.WithLogin}
                 name="with-auth"
                 caption={t(WithLogin.WithLogin)}
-                onChange={handleWithLoginChange}
+                onChange={onWithLoginChange}
                 value={WithLogin.WithLogin}
                 checked={withLogin === WithLogin.WithLogin}
               />
@@ -158,7 +145,7 @@ const AuthTypeSection = ({
                   id={WithLogin.WithConfig}
                   name="with-auth"
                   caption={t(WithLogin.WithConfig)}
-                  onChange={handleWithLoginChange}
+                  onChange={onWithLoginChange}
                   value={WithLogin.WithConfig}
                   checked={withLogin === WithLogin.WithConfig}
                   disabled={isSignedIn}
@@ -169,7 +156,7 @@ const AuthTypeSection = ({
                 id={WithLogin.WithoutLogin}
                 name="with-auth"
                 caption={t(WithLogin.WithoutLogin)}
-                onChange={handleWithLoginChange}
+                onChange={onWithLoginChange}
                 value={WithLogin.WithoutLogin}
                 checked={withLogin === WithLogin.WithoutLogin}
                 disabled={isSignedIn}
@@ -191,18 +178,58 @@ const AuthTypeSection = ({
   );
 };
 
+const getWithLoginInitialValue = (formData: ToolsetEditorForm) => {
+  if (
+    formData.authenticationType === ToolsetAuthTypes.OAUTH &&
+    formData.includeOAuthFields
+  ) {
+    return WithLogin.WithConfig;
+  }
+  return WithLogin.WithLogin;
+};
+
 export const AuthField = () => {
   const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const { control, trigger } = useFormContext<ToolsetEditorForm>();
+  const { control, trigger, clearErrors, setValue, getValues } =
+    useFormContext<ToolsetEditorForm>();
   const [endpoint, transport, allowedTools] = useWatch({
     name: ['endpoint', 'protocol', 'allowedTools'],
     control,
   });
 
   const [logoutModal, setLogoutModal] = useState(false);
+  const [withLogin, setWithLogin] = useState(
+    getWithLoginInitialValue(getValues()),
+  );
+
+  const updateWithLogin = useCallback(
+    (value: WithLogin) => {
+      setWithLogin(value);
+      if (value !== WithLogin.WithConfig) {
+        clearErrors(['clientId', 'clientSecret']);
+      }
+      setValue('includeOAuthFields', value === WithLogin.WithConfig);
+    },
+    [clearErrors, setValue],
+  );
+
+  const handleWithLoginChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      updateWithLogin(e.currentTarget.value as WithLogin);
+    },
+    [updateWithLogin],
+  );
+
+  const handleSelectAuthType = useCallback(
+    (type: ToolsetAuthTypes) => {
+      setValue('authenticationType', type);
+      updateWithLogin(WithLogin.WithLogin);
+    },
+    [setValue, updateWithLogin],
+  );
 
   const handleLogoutClick = useCallback(() => {
     setLogoutModal(true);
@@ -273,21 +300,26 @@ export const AuthField = () => {
             <AuthTypeSection
               type={ToolsetAuthTypes.OAUTH}
               isSelected={field.value === ToolsetAuthTypes.OAUTH}
-              onClick={field.onChange}
+              onClick={handleSelectAuthType}
+              onWithLoginChange={handleWithLoginChange}
               onLogout={handleLogoutClick}
               onLogin={handleLogIn}
+              withLogin={withLogin}
             />
             <AuthTypeSection
               type={ToolsetAuthTypes.API_KEY}
               isSelected={field.value === ToolsetAuthTypes.API_KEY}
-              onClick={field.onChange}
+              onClick={handleSelectAuthType}
+              onWithLoginChange={handleWithLoginChange}
               onLogout={handleLogoutClick}
               onLogin={handleLogIn}
+              withLogin={withLogin}
             />
             <AuthTypeSection
               type={ToolsetAuthTypes.NONE}
               isSelected={field.value === ToolsetAuthTypes.NONE}
-              onClick={field.onChange}
+              onClick={handleSelectAuthType}
+              onWithLoginChange={handleWithLoginChange}
             />
           </>
         )}

@@ -17,6 +17,13 @@ import { ToolsetLoginFormType } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
+const fields = [
+  'keyHeader',
+  'apiKey',
+  'clientId',
+  'clientSecret',
+] as (keyof ToolsetLoginFormType)[];
+
 interface ToolsetLoginFormProps {
   type: ToolsetAuthTypes;
   onLogout?: () => void;
@@ -44,7 +51,6 @@ export const ToolsetLoginForm = ({
 
   const { register, formState, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
-  const isValid = formState.isValid;
   const errors = formState.errors;
 
   const includeOAuthFields = useWatch({
@@ -56,13 +62,11 @@ export const ToolsetLoginForm = ({
     if (isSignedIn) {
       onLogout?.();
     } else {
-      trigger(['keyHeader', 'apiKey', 'clientId', 'clientSecret']).then(
-        (isValid) => {
-          if (!isValid) return;
-          const data = getValues();
-          onLogin?.(data);
-        },
-      );
+      trigger(fields).then((isValid) => {
+        if (!isValid) return;
+        const data = getValues();
+        onLogin?.(data);
+      });
     }
   }, [isSignedIn, onLogout, trigger, getValues, onLogin]);
 
@@ -99,6 +103,7 @@ export const ToolsetLoginForm = ({
             placeholder={t('Enter client ID')}
             id="clientId"
             disabled={disabled}
+            error={errors.clientId?.message}
             mandatory
           />
           <Field
@@ -107,6 +112,7 @@ export const ToolsetLoginForm = ({
             placeholder={t('Enter client secret')}
             id="clientSecret"
             disabled={disabled}
+            error={errors.clientSecret?.message}
             mandatory
             type="password"
           />
@@ -133,7 +139,7 @@ export const ToolsetLoginForm = ({
           buttonClassName,
           isSignedIn ? 'button-secondary' : 'button-primary',
         )}
-        disabled={disabled || (!isValid && !isSignedIn)}
+        disabled={disabled}
         onClick={handleSubmit}
       >
         {isSignedIn ? (

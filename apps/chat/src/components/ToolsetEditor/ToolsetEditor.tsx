@@ -3,6 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { getValidFormFields } from '@/src/utils/app/forms';
 import { getToolsetPayload } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
@@ -54,6 +55,9 @@ export const ToolsetEditor = () => {
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetEditorFormSchema),
   });
+  const lastSubmittedValuesRef = useRef<ToolsetEditorForm>(
+    getDefaultFormData(toolsetDetails, toolsets),
+  );
 
   const isDirty = formMethods.formState.isDirty;
 
@@ -71,7 +75,11 @@ export const ToolsetEditor = () => {
           version: data.version,
           authSettings: {
             authenticationType: data.authenticationType,
-            apiKeyHeader: toolsetDetails?.authSettings?.apiKeyHeader,
+            apiKeyHeader: data.keyHeader,
+            clientId: data.clientId,
+            clientSecret: data.clientSecret,
+            authorizationEndpoint: data.authorizationEndpoint,
+            tokenEndpoint: data.tokenEndpoint,
           },
         },
         toolsetDetails,
@@ -96,16 +104,24 @@ export const ToolsetEditor = () => {
 
       changeEditorTabRef.current = null;
       saveAndExitRef.current = false;
-      formMethods.reset(getDefaultFormData(payloadToolset));
+      lastSubmittedValuesRef.current = getDefaultFormData(payloadToolset);
     },
-    [dispatch, formMethods, toolsetDetails],
+    [dispatch, toolsetDetails],
   );
 
   const handleSubmit = useCallback(
-    (cb?: () => void) => {
+    (cb?: () => void, forceSave = false) => {
       formMethods.trigger().then((isValid) => {
         if (!isValid) {
-          changeEditorTabRef.current = null;
+          if (!forceSave) {
+            changeEditorTabRef.current = null;
+          } else {
+            const data = formMethods.getValues();
+            submitHandler({
+              ...getValidFormFields(data, formMethods.getFieldState),
+              ...lastSubmittedValuesRef.current,
+            });
+          }
           return;
         }
 
@@ -124,7 +140,6 @@ export const ToolsetEditor = () => {
   );
 
   const handleSaveAndExit = useCallback(() => {
-    // todo: handle redirect
     if ((!isDirty && toolsetDetails) || !toolsetDetails) {
       void router.push(
         router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
@@ -140,13 +155,13 @@ export const ToolsetEditor = () => {
     (tab: ToolsetEditorSteps) => {
       if (tab === editorStep) return;
       if (!isDirty && toolsetDetails) {
-        handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)));
+        handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)), true);
       } else {
         changeEditorTabRef.current = tab;
-        handleSubmit();
+        handleSubmit(undefined, true);
       }
     },
-    [editorStep, isDirty, toolsetDetails, handleSubmit, dispatch],
+    [dispatch, editorStep, handleSubmit, isDirty, toolsetDetails],
   );
 
   const handleNextClick = useCallback(
