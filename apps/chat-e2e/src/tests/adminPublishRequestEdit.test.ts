@@ -648,7 +648,6 @@ dialAdminTest(
           Attachment.cloudImageName,
         );
         await adminAttachFilesModal.attachFiles();
-        // await adminChatMessages.saveAndSubmit.click();
         await adminChat.saveAndSubmitRequest(true);
         await adminChatMessagesAssertion.assertMessagesCount(2);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
