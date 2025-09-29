@@ -6,6 +6,7 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
+import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -147,7 +148,7 @@ export const Chatbar = () => {
   return (
     <Sidebar<ConversationInfo>
       featureType={FeatureType.Chat}
-      side="left"
+      side={SidebarSide.Left}
       isOpen={showChatbar}
       itemComponent={
         <Conversations conversations={rootFilteredConversations} />
