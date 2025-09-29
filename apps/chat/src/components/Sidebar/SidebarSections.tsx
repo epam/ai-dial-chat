@@ -55,9 +55,11 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isSpinnerVisible, setIsSpinnerVisible] = useState(false);
+  const [isSentinelVisible, setIsSentinelVisible] = useState(true);
 
   const dragDropElement = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const hideSentinelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -82,8 +84,6 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
             return;
           }
 
-          setIsSpinnerVisible(true);
-
           dispatch(
             UIActions.setVisibleSidebarItems({
               featureType,
@@ -91,6 +91,10 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
                 visibleSidebarItems + SIDEBAR_DISPLAY_ITEM_INCREMENT,
             }),
           );
+
+          setIsSpinnerVisible(true);
+          // hide sentinel for 50ms to avoid "isIntersecting = true" sticking
+          setIsSentinelVisible(false);
         }
       },
       { root: null, threshold: 0.1 },
@@ -105,6 +109,20 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     hasScrolledOnce,
     scrollableSidebarRef,
   ]);
+
+  useEffect(() => {
+    if (!isSentinelVisible) {
+      hideSentinelTimeoutRef.current = setTimeout(() => {
+        setIsSentinelVisible(true);
+      }, 50);
+    }
+
+    return () => {
+      if (hideSentinelTimeoutRef.current) {
+        clearTimeout(hideSentinelTimeoutRef.current);
+      }
+    };
+  }, [isSentinelVisible]);
 
   const highlightDrop = useCallback(
     (e: React.DragEvent) => {
@@ -152,7 +170,10 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
           style={{
             height: `${SENTINEL_HEIGHT}px`,
           }}
-          className="absolute bottom-0 w-1"
+          className={classNames(
+            'absolute bottom-0 w-1',
+            !isSentinelVisible && 'hidden',
+          )}
           ref={sentinelRef}
         />
         {visibleSidebarItems < filteredItems.length && isSpinnerVisible && (
