@@ -379,7 +379,7 @@ dialAdminTest(
 dialAdminTest(
   'Regenerate last message for chat form publication request.\n' +
     'Edit chat: remove all messages.\n' +
-    '[Admin view][Edit request]: Edit chat icon disappear after it was clicked and message input is displayed',
+    '[Admin view][Edit request]: Edit chat icon stays after it was clicked and message input is displayed',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -436,12 +436,16 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Click on Edit icon and verify it is hidden and message input is displayed',
+      'Click on Edit icon and verify it is visible and message input is displayed',
       async () => {
+        await baseAssertion.assertElementState(
+          adminSendMessage.messageInput,
+          'hidden',
+        );
         await adminPublicationReviewControl.editButton.click();
         await baseAssertion.assertElementState(
           adminPublicationReviewControl.editButton,
-          'hidden',
+          'visible',
         );
         await baseAssertion.assertElementState(
           adminSendMessage.messageInput,
@@ -585,6 +589,7 @@ dialAdminTest(
     adminFilesToApproveAssertion,
     adminChatMessages,
     adminInputAttachments,
+    adminChat,
   }) => {
     setTestIds('EPMRTC-6599', 'EPMRTC-6607', 'EPMRTC-6604');
     let conversation: Conversation;
@@ -643,7 +648,9 @@ dialAdminTest(
           Attachment.cloudImageName,
         );
         await adminAttachFilesModal.attachFiles();
-        await adminChatMessages.saveAndSubmit.click();
+        // await adminChatMessages.saveAndSubmit.click();
+        await adminChat.saveAndSubmitRequest(true);
+        await adminChatMessages.loadingCursor.waitForState();
         await adminChatMessagesAssertion.assertMessagesCount(2);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
       },
