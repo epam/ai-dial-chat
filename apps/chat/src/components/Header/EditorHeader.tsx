@@ -1,7 +1,9 @@
 import {
+  IconAlertCircle,
   IconChevronDown,
   IconCircleCheck,
   IconCircleDot,
+  IconCircleDotFilled,
   IconLogout,
 } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
@@ -29,19 +31,27 @@ const getTabIcon = <T extends string>(
   isDisabled?: boolean,
   isNotValid?: boolean,
 ) => {
-  const iconColor =
-    isNotValid && tab !== activeTab ? 'text-error' : 'text-accent-primary';
-  return tab !== activeTab && isEditing ? (
-    <IconCircleCheck
-      className={iconColor}
-      data-qa="selected-step-icon"
-      width={24}
-      height={24}
-    />
-  ) : (
-    <IconCircleDot
-      className={isDisabled ? 'text-secondary' : iconColor}
-      data-qa="not-selected-step-icon"
+  const selected = tab === activeTab;
+
+  const Icon = selected
+    ? IconCircleDotFilled
+    : isNotValid
+      ? IconAlertCircle
+      : isEditing
+        ? IconCircleCheck
+        : IconCircleDot;
+  const color = isDisabled
+    ? 'text-secondary'
+    : isNotValid
+      ? 'text-error'
+      : isEditing || selected
+        ? 'text-accent-primary'
+        : 'text-secondary';
+
+  return (
+    <Icon
+      className={color}
+      data-qa={selected ? 'selected-step-icon' : 'not-selected-step-icon'}
       width={24}
       height={24}
     />
