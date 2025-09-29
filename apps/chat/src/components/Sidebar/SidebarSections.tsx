@@ -95,20 +95,12 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
           setIsSpinnerVisible(true);
           // hide sentinel for 50ms to avoid "isIntersecting = true" sticking
           setIsSentinelVisible(false);
-          hideSentinelTimeoutRef.current = setTimeout(() => {
-            setIsSentinelVisible(true);
-          }, 50);
         }
       },
       { root: null, threshold: 0.1 },
     );
     observer.observe(sentinel);
-    return () => {
-      observer.disconnect();
-      if (hideSentinelTimeoutRef.current) {
-        clearTimeout(hideSentinelTimeoutRef.current);
-      }
-    };
+    return () => observer.disconnect();
   }, [
     dispatch,
     featureType,
@@ -117,6 +109,20 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     hasScrolledOnce,
     scrollableSidebarRef,
   ]);
+
+  useEffect(() => {
+    if (!isSentinelVisible) {
+      hideSentinelTimeoutRef.current = setTimeout(() => {
+        setIsSentinelVisible(true);
+      }, 50);
+    }
+
+    return () => {
+      if (hideSentinelTimeoutRef.current) {
+        clearTimeout(hideSentinelTimeoutRef.current);
+      }
+    };
+  }, [isSentinelVisible]);
 
   const highlightDrop = useCallback(
     (e: React.DragEvent) => {
