@@ -1031,7 +1031,8 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Shared with me. Replay chat.\n' +
-    'Header context menu options for chats from folder inside Shared with me section',
+    'Header context menu options for chats from folder inside Shared with me section.\n' +
+    'Header context menu: Delete option is not available for shared chat from shared folder in Shared with me section',
   async ({
     conversationData,
     dataInjector,
@@ -1048,7 +1049,7 @@ dialSharedWithMeTest(
     additionalShareUserConversationDropdownMenuAssertion,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1846', 'EPMRTC-4777');
+    setTestIds('EPMRTC-1846', 'EPMRTC-4777', 'EPMRTC-4778');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
