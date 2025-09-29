@@ -6,6 +6,7 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
+import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
@@ -129,7 +130,7 @@ export const Promptbar = () => {
   return (
     <Sidebar<PromptInfo>
       featureType={FeatureType.Prompt}
-      side="right"
+      side={SidebarSide.Right}
       isOpen={showPromptbar}
       itemComponent={<Prompts prompts={rootFilteredPrompts} />}
       folderComponent={<PromptFolders />}
