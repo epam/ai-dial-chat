@@ -56,10 +56,12 @@ export class ItemApiHelper extends BaseApiHelper {
   public async getItem(id: string) {
     const response = await this.request.get(this.getHost(`/api/${id}`));
     const statusCode = response.status();
-    expect(
-      statusCode,
-      `Received response code: ${statusCode} with body: ${await response.text()}`,
-    ).toBe(200);
+    expect
+      .soft(
+        statusCode,
+        `Received response code: ${statusCode} with body: ${await response.text()}`,
+      )
+      .toBe(200);
     return (await response.json()) as Conversation;
   }
 
@@ -74,12 +76,12 @@ export class ItemApiHelper extends BaseApiHelper {
     }
   }
 
-  public async deleteEntity(entity: Entity) {
-    const url = `/api/${entity.id}`;
+  public async deleteEntity(entity: Entity | string) {
+    const url = `/api/${typeof entity === 'string' ? entity : entity.id}`;
     const response = await this.request.delete(this.getHost(url));
     expect(
       response.status(),
-      `Entity with id: ${entity.name} was successfully deleted`,
+      `Entity with id: ${typeof entity === 'string' ? entity : entity.name} was successfully deleted`,
     ).toBe(200);
   }
 

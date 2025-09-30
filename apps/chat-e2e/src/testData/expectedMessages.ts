@@ -422,6 +422,7 @@ export const ExpectedMessages = {
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
+  valueIsDefined: 'Values is defined',
 };
 
 export const PublishingExpectedMessages = {

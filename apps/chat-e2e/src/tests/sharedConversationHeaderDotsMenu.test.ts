@@ -4,20 +4,11 @@ import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   Attachment,
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
   PseudoModel,
 } from '@/src/testData';
-import { TestImportFormat } from '@/src/testData/conversationHistory/importConversation';
-import {
-  BucketUtil,
-  FileUtil,
-  GeneratorUtil,
-  ItemUtil,
-  ModelsUtil,
-} from '@/src/utils';
+import { BucketUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
 
 dialSharedWithMeTest(
   'Header context menu: Duplicate chat from Shared with me section.\n' +
@@ -30,6 +21,10 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
+    additionalShareUserChatBar,
+    additionalShareUserToast,
+    additionalUserItemApiHelper,
+    additionalUserFileApiHelper,
     additionalShareUserSharedWithMeConversations,
     fileApiHelper,
     additionalShareUserChatHeader,
@@ -118,6 +113,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify shared conversation can be exported with attachments using header dots menu',
       async () => {
+        await additionalUserItemApiHelper.deleteEntity(
+          expectedShareUserConversationId,
+        );
         await additionalShareUserSharedWithMeConversations.selectEntity(
           sharedConversation.name,
         );
@@ -137,36 +135,35 @@ dialSharedWithMeTest(
         );
         await downloadAssertion.assertPlainFileIsDownloaded(exportedData);
 
-        const archive = FileUtil.readArchive(exportedData.path);
-        const imageEntry = FileUtil.getArchiveEntry(
-          archive,
-          `${ExpectedConstants.exportedArchiveImageRootFolder}/${imageName}`,
+        await additionalShareUserDialHomePage.importFile(exportedData, () =>
+          additionalShareUserChatBar.importButton.click(),
         );
-        expect.soft(imageEntry, ExpectedMessages.dataIsExported).toBeDefined();
+        await additionalShareUserToast.waitForState();
+        await additionalShareUserToast.closeToast();
 
-        const conversationEntry = FileUtil.getArchiveEntry(
-          archive,
-          ExpectedConstants.exportedArchiveHistoryConversationPath,
+        const exportedConversation = await additionalUserItemApiHelper.getItem(
+          expectedShareUserConversationId,
         );
-        const conversationJson =
-          FileUtil.parseArchiveEntryJson<TestImportFormat>(conversationEntry);
+        baseAssertion.assertValueIsNotUndefined(exportedConversation);
 
-        baseAssertion.assertValue(
-          conversationJson.history[0].id,
-          sharedConversation.id,
-        );
-        const imageAttachment = conversationJson.history[0].messages.find((m) =>
-          m.custom_content?.attachments?.find((a) => a.url === imageUrl),
-        );
-        expect
-          .soft(imageAttachment, ExpectedMessages.dataIsExported)
-          .toBeDefined();
+        const exportedFile =
+          await additionalUserFileApiHelper.getFile(imageName);
+        baseAssertion.assertValueIsNotUndefined(exportedFile);
       },
     );
 
     await dialSharedWithMeTest.step(
       'Verify shared conversation can be exported without attachments using header dots menu',
       async () => {
+        await additionalUserItemApiHelper.deleteEntity(
+          expectedShareUserConversationId,
+        );
+        await additionalShareUserSharedWithMeConversations.selectEntity(
+          sharedConversation.name,
+        );
+        await additionalShareUserSharedWithMeConversations
+          .selectedEntity(sharedConversation.name)
+          .waitFor();
         await additionalShareUserChatHeader.dotsMenu.click();
         await additionalShareUserChatHeaderDropdownMenu.selectMenuOption(
           MenuOptions.export,
@@ -176,20 +173,37 @@ dialSharedWithMeTest(
             additionalShareUserChatHeaderDropdownMenu.selectMenuOption(
               MenuOptions.withoutAttachments,
             ),
-          GeneratorUtil.exportedWithAttachmentsFilename(),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
         await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
-        const conversationJson = FileUtil.readJsonFileData(exportedData.path);
-        baseAssertion.assertValue(
-          conversationJson.history[0].id,
-          sharedConversation.id,
+
+        await additionalShareUserDialHomePage.importFile(exportedData, () =>
+          additionalShareUserChatBar.importButton.click(),
         );
+        await additionalShareUserToast.waitForState();
+        await additionalShareUserToast.closeToast();
+
+        const exportedConversation = await additionalUserItemApiHelper.getItem(
+          expectedShareUserConversationId,
+        );
+        baseAssertion.assertValueIsNotUndefined(exportedConversation);
+
+        const expectedSharedImage = exportedConversation.messages
+          .find((m) => m.role === 'assistant')
+          ?.custom_content?.attachments?.find((a) => a.url === imageUrl);
+        baseAssertion.assertValueIsNotUndefined(expectedSharedImage);
       },
     );
 
     await dialSharedWithMeTest.step(
       'Verify shared conversation can be created in Replay mode using header dots menu',
       async () => {
+        await additionalShareUserSharedWithMeConversations.selectEntity(
+          sharedConversation.name,
+        );
+        await additionalShareUserSharedWithMeConversations
+          .selectedEntity(sharedConversation.name)
+          .waitFor();
         await additionalShareUserChatHeader.dotsMenu.click();
         const response =
           await additionalShareUserChatHeaderDropdownMenu.selectMenuOption(
