@@ -211,6 +211,7 @@ dialAdminTest(
         await chat.changeAgentButton.click();
         await talkToAgentDialog.selectAgent(
           ModelsUtil.getOpenAIEntity(randomAgentId)!,
+          { isHttpMethodTriggered: false },
         );
         await sendMessageAssertion.assertMessageValue(inputMessage);
       },

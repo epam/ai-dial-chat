@@ -18,6 +18,7 @@ dialAdminTest(
   'Unpublish single chat without attachments.\n' +
     'Unpublish request name can not be blank.\n' +
     'Metadata for chat inside unpublish request in Approve required section.\n' +
+    'Header context menu options for chats from unpublish request from Approve required section.\n' +
     'Unpublish request for conversation which was already unpublished',
   async (
     {
@@ -54,10 +55,17 @@ dialAdminTest(
       setTestIds,
       adminLocalStorageManager,
       localStorageManager,
+      adminApproveRequiredConversationDropdownMenuAssertion,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-3383', 'EPMRTC-3579', 'EPMRTC-5559', 'EPMRTC-3433');
+    setTestIds(
+      'EPMRTC-3383',
+      'EPMRTC-3579',
+      'EPMRTC-5559',
+      'EPMRTC-5226',
+      'EPMRTC-3433',
+    );
     let publishedConversation: Conversation;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let publishApiModels: {
@@ -321,6 +329,20 @@ dialAdminTest(
         await baseAssertion.assertElementActionabilityState(
           adminPublicationReviewControl.backToPublicationRequestButton,
           'enabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify chat header dots menu options',
+      async () => {
+        await adminChatHeader.dotsMenu.click();
+        await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
         );
       },
     );

@@ -198,6 +198,7 @@ const dialAdminTest = dialTest.extend<{
   adminConversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
   adminModelInfoTooltip: ModelInfoTooltip;
   adminChatSettingsTooltip: ChatSettingsTooltip;
+  adminConversationDropdownMenuAssertion: MenuAssertion;
 }>({
   adminChatSettingsTooltip: async ({ adminPage }, use) => {
     const chatSettingsTooltip = new ChatSettingsTooltip(adminPage);
@@ -807,6 +808,14 @@ const dialAdminTest = dialTest.extend<{
     const adminSendMessageInputAttachmentsAssertions =
       new InputAttachmentsAssertions(adminSendMessageInputAttachments);
     await use(adminSendMessageInputAttachmentsAssertions);
+  adminConversationDropdownMenuAssertion: async (
+    { adminConversationDropdownMenu },
+    use,
+  ) => {
+    const adminConversationDropdownMenuAssertion = new MenuAssertion(
+      adminConversationDropdownMenu,
+    );
+    await use(adminConversationDropdownMenuAssertion);
   },
 });
 

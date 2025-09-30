@@ -1064,7 +1064,10 @@ dialTest(
     await dialTest.step(
       'Click on the agent with unique version and verify "Select an agent for conversation" modal is closed, the agent is used for the conversation',
       async () => {
-        await talkToAgentDialog.useAgent(firstConfigApp);
+        await talkToAgentDialog.useAgent(firstConfigApp, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'PUT',
+        });
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgentDialog,
           'hidden',
@@ -1127,7 +1130,10 @@ dialTest(
     await dialTest.step(
       'Select not latest second app version and verify "Select an agent for conversation" modal is closed, the agent is used for the conversation',
       async () => {
-        await talkToAgentDialog.useAgent(secondConfigAppMinorV);
+        await talkToAgentDialog.useAgent(secondConfigAppMinorV, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'PUT',
+        });
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgentDialog,
           'hidden',
