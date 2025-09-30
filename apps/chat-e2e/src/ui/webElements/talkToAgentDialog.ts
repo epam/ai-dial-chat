@@ -96,7 +96,7 @@ export class TalkToAgentDialog extends BaseElement {
     options: {
       isHttpMethodTriggered?: boolean;
       triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
-    } = {},
+    } = { isHttpMethodTriggered: true, triggeredHttpMethod: 'PUT' },
   ) {
     //check if agent is among recent ones
     const isRecentAgentUsed = await this.useAgent(entity, options);

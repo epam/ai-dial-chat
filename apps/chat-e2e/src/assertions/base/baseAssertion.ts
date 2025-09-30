@@ -418,7 +418,7 @@ export class BaseAssertion {
 
   public assertValue(
     actualValue: string | number | undefined | null,
-    expectedValue: string | number,
+    expectedValue: string | number | undefined,
     expectedMessage?: string,
   ) {
     expect.soft(actualValue, expectedMessage ?? '').toBe(expectedValue);

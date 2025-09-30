@@ -48,10 +48,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(randomModel, {
-          isHttpMethodTriggered: true,
-          triggeredHttpMethod: 'PUT',
-        });
+        await talkToAgentDialog.selectAgent(randomModel);
         await talkToAgentDialog.waitForState({ state: 'hidden' });
       },
     );
