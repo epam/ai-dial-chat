@@ -10,7 +10,7 @@ import { UIState } from './ui.types';
 
 import uniq from 'lodash-es/uniq';
 
-export const openFoldersInitialState = {
+const openFoldersInitialState = {
   [FeatureType.Chat]: [],
   [FeatureType.Prompt]: [],
   [FeatureType.File]: [],
@@ -214,11 +214,12 @@ export const uiSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ featureType: FeatureType; visibleItems: number }>,
+      }: PayloadAction<{
+        featureType: FeatureType.Chat | FeatureType.Prompt;
+        visibleItems: number;
+      }>,
     ) => {
-      if (payload.featureType === FeatureType.Chat) {
-        state.visibleSidebarItems[payload.featureType] = payload.visibleItems;
-      }
+      state.visibleSidebarItems[payload.featureType] = payload.visibleItems;
     },
   },
 });
