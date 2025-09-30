@@ -147,9 +147,9 @@ export class PublicationApiHelper extends BaseApiHelper {
         data: requestModel,
       },
     );
-    expect(response.status(), `Successfully created publication request`).toBe(
-      200,
-    );
+    expect
+      .soft(response.status(), `Successfully created publication request`)
+      .toBe(200);
     const responseText = await response.text();
     return JSON.parse(responseText) as Publication;
   }

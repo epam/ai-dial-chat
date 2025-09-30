@@ -422,6 +422,7 @@ export const API = {
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
+  conversationsMetadataHost: `/api/metadata/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
   filesHostSegment: 'files',
