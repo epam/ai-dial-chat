@@ -1119,21 +1119,22 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
-    const modelId = selectedConversations.at(0)?.model.id;
+    const modelReference = selectedConversations.at(0)?.model.id;
 
-    if (modelId === agentConfigurationLoadedRef.current) {
+    if (modelReference === agentConfigurationLoadedRef.current) {
       return;
     }
 
-    if (!modelId || selectedConversations.length > 1) {
+    if (!modelReference || selectedConversations.length > 1) {
       dispatch(ChatActions.resetConfigurationSchema());
       agentConfigurationLoadedRef.current = null;
       return;
     }
 
-    if (doesModelHaveConfiguration(modelsMap[modelId]) && isNoMessages) {
-      agentConfigurationLoadedRef.current = modelId;
-      dispatch(ChatActions.getConfigurationSchema({ modelId }));
+    const model = modelsMap[modelReference];
+    if (model && doesModelHaveConfiguration(model) && isNoMessages) {
+      agentConfigurationLoadedRef.current = modelReference;
+      dispatch(ChatActions.getConfigurationSchema({ modelId: model.id }));
     } else {
       agentConfigurationLoadedRef.current = null;
       dispatch(ChatActions.resetConfigurationSchema());
