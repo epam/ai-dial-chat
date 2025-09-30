@@ -28,7 +28,7 @@ export class ConfirmationDialog extends BaseElement {
 
   public async confirm({
     triggeredHttpMethod = undefined,
-  }: { triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' } = {}) {
+  }: { triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' | 'GET' } = {}) {
     if (isApiStorageType && triggeredHttpMethod) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === triggeredHttpMethod,
