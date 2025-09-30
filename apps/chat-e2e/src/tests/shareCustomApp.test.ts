@@ -487,6 +487,8 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Check "Allow editing by other users" checkbox and verify QR code link is changed, click on Copy icon, navigate to the copied url by another user and verify the app card is opened',
       async () => {
+        const initShareLink =
+          await shareAppModal.shareLinkInput.getElementContent();
         const shareLinkResponse =
           await shareAppModal.checkAllowEditingByOtherUsers();
         await shareModalAssertion.assertGeneralInfo({
@@ -495,6 +497,11 @@ dialSharedWithMeTest(
             shareLinkResponse.invitationLink,
           ),
         });
+        shareModalAssertion.assertBooleanCondition(
+          initShareLink !== shareLinkResponse.invitationLink,
+          true,
+          ExpectedMessages.shareLinkIsUpdated,
+        );
       },
     );
 
