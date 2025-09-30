@@ -4,6 +4,7 @@ import { ErrorLabelSelectors, IconSelectors } from '@/src/ui/selectors';
 import { VariableModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
+import { Request } from 'playwright-core';
 
 export class VariableModalDialog extends BaseElement {
   constructor(page: Page) {
@@ -60,12 +61,31 @@ export class VariableModalDialog extends BaseElement {
     VariableModal.submitVariable,
   );
 
-  public async submitReplayVariables() {
+  public async submitReplayVariables(
+    options: { isMoveRequestTriggered: boolean } = {
+      isMoveRequestTriggered: false,
+    },
+  ) {
+    const apiPromises = [];
     const requestPromise = this.page.waitForRequest((request) =>
       request.url().includes(API.chatHost),
     );
+    apiPromises.push(requestPromise);
+    if (options.isMoveRequestTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.url().includes(API.moveHost) && resp.status() === 200,
+      );
+      apiPromises.push(respPromise);
+    }
     await this.submitButton.click();
-    const request = await requestPromise;
-    return request.postDataJSON();
+
+    let request: Request;
+    for (let i = 0; i < apiPromises.length; i++) {
+      if (i === 0) {
+        request = (await apiPromises[i]) as Request;
+      }
+      await apiPromises[i];
+    }
+    return request!.postDataJSON();
   }
 }

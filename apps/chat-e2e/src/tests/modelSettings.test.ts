@@ -1,3 +1,4 @@
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
@@ -46,22 +47,36 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
 
     await chat.configureSettingsButton.click();
-    if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {
+    if (
+      defaultModel.type === EntityType.Model &&
+      ModelsUtil.doesModelAllowSystemPrompt(defaultModel)
+    ) {
       await agentSettings.setSystemPrompt(sysPrompt);
     }
-    if (ModelsUtil.doesModelAllowTemperature(defaultModel)) {
+    if (
+      defaultModel.type === EntityType.Model &&
+      ModelsUtil.doesModelAllowTemperature(defaultModel)
+    ) {
       await temperatureSlider.setTemperature(temp);
     }
     await conversationSettingsModal.applyChangesButton.click();
 
     await chat.changeAgentButton.click();
-    await talkToAgentDialog.selectAgent(randomModel);
+    await talkToAgentDialog.selectAgent(randomModel, {
+      isHttpMethodTriggered: false,
+    });
 
     await chat.configureSettingsButton.click();
-    if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {
+    if (
+      defaultModel.type === EntityType.Model &&
+      ModelsUtil.doesModelAllowSystemPrompt(defaultModel)
+    ) {
       await agentSettingAssertion.assertSystemPromptValue(sysPrompt);
     }
-    if (ModelsUtil.doesModelAllowTemperature(defaultModel)) {
+    if (
+      defaultModel.type === EntityType.Model &&
+      ModelsUtil.doesModelAllowTemperature(defaultModel)
+    ) {
       const temperature = await temperatureSlider.getTemperature();
       expect
         .soft(temperature, ExpectedMessages.temperatureIsValid)
