@@ -53,7 +53,7 @@ dialSharedWithMeTest(
       'Open share link by another user and verify prompt stays under expanded "Shared with me" section and prompt details popup is opened',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
