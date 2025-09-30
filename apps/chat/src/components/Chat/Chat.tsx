@@ -552,9 +552,8 @@ const ChatView = memo(() => {
 
   const isConversationWithSchema = selectedConversations.some(
     (conv) =>
-      selectedConversations.some((conv) =>
-        doesModelHaveConfiguration(modelsMap[conv.model.id]),
-      ) || isConversationWithFormSchema(conv),
+      doesModelHaveConfiguration(modelsMap[conv.model.id]) ||
+      isConversationWithFormSchema(conv),
   );
 
   const isChatReadyForInput =
