@@ -1030,7 +1030,8 @@ dialSharedWithMeTest(
 );
 
 dialSharedWithMeTest(
-  'Shared with me. Replay chat',
+  'Shared with me. Replay chat.\n' +
+    'Header context menu options for chats from folder inside Shared with me section',
   async ({
     conversationData,
     dataInjector,
@@ -1043,9 +1044,11 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     setTestIds,
     additionalShareUserSharedFolderConversations,
+    additionalShareUserChatHeader,
+    additionalShareUserConversationDropdownMenuAssertion,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1846');
+    setTestIds('EPMRTC-1846', 'EPMRTC-4777');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -1070,7 +1073,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open app by another user and verify Replay conversation creation for shared chat via dropdown menu',
+      'Open app by another user, open chat header dots menu and verify available options',
       async () => {
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
@@ -1083,6 +1086,20 @@ dialSharedWithMeTest(
           conversationInFolder.folders.name,
           conversation.name,
         );
+        await additionalShareUserChatHeader.dotsMenu.click();
+        await additionalShareUserConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify Replay conversation creation for shared chat via dropdown menu',
+      async () => {
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
@@ -1124,6 +1141,7 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Metadata for chat from Shared with me section.\n' +
+    'Header context menu options for chats from root from Shared with me section.\n' +
     'Shared with me. Playback chat',
   async (
     {
@@ -1133,6 +1151,7 @@ dialSharedWithMeTest(
       additionalUserShareApiHelper,
       additionalShareUserDialHomePage,
       additionalShareUserSharedWithMeConversations,
+      additionalShareUserChatHeader,
       additionalShareUserSharedWithMeConversationDropdownMenu,
       additionalShareUserInformationModal,
       additionalShareUserInformationModalAssertion,
@@ -1140,11 +1159,12 @@ dialSharedWithMeTest(
       setTestIds,
       additionalShareUserLocalStorageManager,
       baseAssertion,
+      additionalShareUserConversationDropdownMenuAssertion,
       additionalShareUserConversationAssertion,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-5553', 'EPMRTC-1847');
+    setTestIds('EPMRTC-5553', 'EPMRTC-4739', 'EPMRTC-1847');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const currentDate = DateUtil.getCurrentLocalDate();
@@ -1161,7 +1181,7 @@ dialSharedWithMeTest(
     });
 
     await dialSharedWithMeTest.step(
-      'Open app by another user, select "Info" option from the dropdown menu and verify modal data',
+      'Open app by another user, open header dots menu and verify available options',
       async () => {
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
@@ -1170,6 +1190,22 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
+        await additionalShareUserChatHeader.dotsMenu.click();
+        await additionalShareUserConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+          MenuOptions.unshare,
+          MenuOptions.info,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Select "Info" option from the dropdown menu and verify modal data',
+      async () => {
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
