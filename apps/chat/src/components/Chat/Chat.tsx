@@ -1131,9 +1131,10 @@ export function Chat({ isPreview }: ChatProps) {
       return;
     }
 
-    if (doesModelHaveConfiguration(modelsMap[modelId]) && isNoMessages) {
+    const model = modelsMap[modelId];
+    if (model && doesModelHaveConfiguration(model) && isNoMessages) {
       agentConfigurationLoadedRef.current = modelId;
-      dispatch(ChatActions.getConfigurationSchema({ modelId }));
+      dispatch(ChatActions.getConfigurationSchema({ modelId: model.id }));
     } else {
       agentConfigurationLoadedRef.current = null;
       dispatch(ChatActions.resetConfigurationSchema());
