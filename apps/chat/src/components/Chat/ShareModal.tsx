@@ -242,6 +242,7 @@ export function ShareModalView() {
             <div
               className="flex w-fit rounded bg-[#FCFCFC] p-3"
               data-qa="share-qr-code"
+              aria-details={url}
             >
               <QRCodeSVG value={url} size={226} />
             </div>
