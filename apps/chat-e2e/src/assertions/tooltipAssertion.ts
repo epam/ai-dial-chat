@@ -12,11 +12,12 @@ export class TooltipAssertion extends BaseAssertion {
   }
 
   public async assertTooltipContent(expectedContent: string) {
-    await this.assertElementText(
-      this.tooltip,
-      expectedContent,
-      ExpectedMessages.tooltipContentIsValid,
-    );
+    expect
+      .soft(
+        await this.tooltip.getContent(),
+        ExpectedMessages.tooltipContentIsValid,
+      )
+      .toBe(expectedContent);
   }
 
   public async assertTooltipContains(expectedContent: string) {

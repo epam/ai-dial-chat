@@ -793,7 +793,7 @@ dialAdminTest(
           { customPath: `files/${publicationBucket}` },
         );
         await adminSendMessage.send(newPrompt);
-        await adminChatMessagesAssertion.assertMessageAttachmentUrl(
+        await adminChatMessagesAssertion.assertMessageDownloadUrl(
           4,
           `files/${publicationBucket}/${Attachment.sunImageName}`,
         );

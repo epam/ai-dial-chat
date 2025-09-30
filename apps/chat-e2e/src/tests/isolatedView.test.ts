@@ -469,7 +469,8 @@ dialTest(
       'Hover over the model icon and check the tooltip',
       async () => {
         await chatHeader.chatModelIcon.hoverOver();
-        await tooltipAssertion.assertTooltipContent(ExpectedConstants.modelTooltip(nonWorkspaceModel.name, nonWorkspaceModel.version));
+        const expectedTooltipText = `Current agent:\nAgent:\n${nonWorkspaceModel.name}${nonWorkspaceModel.version ? `\nVersion:\n${nonWorkspaceModel.version}` : ''}`;
+        await tooltipAssertion.assertTooltipContent(expectedTooltipText);
       },
     );
 
