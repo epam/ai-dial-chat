@@ -36,6 +36,7 @@ const SENTINEL_HEIGHT = 160;
 
 const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
   {
+    hasScrolledOnce,
     filteredItems,
     filteredFolders,
     featureType,
@@ -43,37 +44,41 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     itemComponent,
     onDrop,
     allowDrop,
-  }: Props<T>,
+  }: Props<T> & { hasScrolledOnce: boolean },
   scrollableSidebarRef: React.ForwardedRef<HTMLDivElement>,
 ) {
   const dispatch = useAppDispatch();
 
-  const visibleSidebarItems = useAppSelector((state) =>
+  const visibleSidebarItemsCount = useAppSelector((state) =>
     UISelectors.selectVisibleSidebarItems(state, featureType),
   );
 
-  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isSpinnerVisible, setIsSpinnerVisible] = useState(false);
   const [isSentinelVisible, setIsSentinelVisible] = useState(true);
 
   const dragDropElement = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const hideSentinelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (hasScrolledOnce) {
+      setIsSpinnerVisible(true);
+    }
+  }, [hasScrolledOnce]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel || !filteredItems.length) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           if (!hasScrolledOnce) {
-            setHasScrolledOnce(true);
             return;
           }
 
           if (
-            visibleSidebarItems >= filteredItems.length ||
+            visibleSidebarItemsCount >= filteredItems.length ||
             (scrollableSidebarRef &&
               'current' in scrollableSidebarRef &&
               (scrollableSidebarRef.current?.scrollHeight ?? 0) <=
@@ -88,12 +93,11 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
             UIActions.setVisibleSidebarItems({
               featureType,
               visibleItems:
-                visibleSidebarItems + SIDEBAR_DISPLAY_ITEM_INCREMENT,
+                visibleSidebarItemsCount + SIDEBAR_DISPLAY_ITEM_INCREMENT,
             }),
           );
 
           setIsSpinnerVisible(true);
-          // hide sentinel for 50ms to avoid "isIntersecting = true" sticking
           setIsSentinelVisible(false);
         }
       },
@@ -104,7 +108,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
   }, [
     dispatch,
     featureType,
-    visibleSidebarItems,
+    visibleSidebarItemsCount,
     filteredItems.length,
     hasScrolledOnce,
     scrollableSidebarRef,
@@ -112,16 +116,8 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
 
   useEffect(() => {
     if (!isSentinelVisible) {
-      hideSentinelTimeoutRef.current = setTimeout(() => {
-        setIsSentinelVisible(true);
-      }, 50);
+      setIsSentinelVisible(true);
     }
-
-    return () => {
-      if (hideSentinelTimeoutRef.current) {
-        clearTimeout(hideSentinelTimeoutRef.current);
-      }
-    };
   }, [isSentinelVisible]);
 
   const highlightDrop = useCallback(
@@ -176,11 +172,12 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
           )}
           ref={sentinelRef}
         />
-        {visibleSidebarItems < filteredItems.length && isSpinnerVisible && (
-          <div className="flex items-center justify-center pb-4">
-            <Spinner />
-          </div>
-        )}
+        {visibleSidebarItemsCount < filteredItems.length &&
+          isSpinnerVisible && (
+            <div className="flex items-center justify-center pb-4">
+              <Spinner />
+            </div>
+          )}
       </div>
     );
   }
@@ -203,7 +200,10 @@ export function SidebarSections<T>({
   allowDrop,
 }: Props<T>) {
   const dispatch = useAppDispatch();
+
   const scrollableSidebarRef = useRef<HTMLDivElement>(null);
+
+  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
 
   const resetVisibleItems = useCallback(() => {
     dispatch(
@@ -229,15 +229,23 @@ export function SidebarSections<T>({
     };
   }, [resetVisibleItems]);
 
+  const handleScroll = useCallback(() => {
+    if (!hasScrolledOnce) {
+      setHasScrolledOnce(true);
+    }
+  }, [hasScrolledOnce]);
+
   return (
     <div
       ref={scrollableSidebarRef}
+      onScroll={handleScroll}
       className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto"
     >
       {folderComponent}
 
       <SidebarFlatListView
         ref={scrollableSidebarRef}
+        hasScrolledOnce={hasScrolledOnce}
         filteredItems={filteredItems}
         filteredFolders={filteredFolders}
         featureType={featureType}
