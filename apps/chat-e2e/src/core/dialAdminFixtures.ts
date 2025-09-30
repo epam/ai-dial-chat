@@ -808,6 +808,7 @@ const dialAdminTest = dialTest.extend<{
     const adminSendMessageInputAttachmentsAssertions =
       new InputAttachmentsAssertions(adminSendMessageInputAttachments);
     await use(adminSendMessageInputAttachmentsAssertions);
+  },
   adminConversationDropdownMenuAssertion: async (
     { adminConversationDropdownMenu },
     use,
