@@ -570,7 +570,9 @@ dialTest(
     await dialTest.step(
       'Press Submit and verify request with valid model is sent',
       async () => {
-        const thirdRequest = await variableModalDialog.submitReplayVariables();
+        const thirdRequest = await variableModalDialog.submitReplayVariables({
+          isMoveRequestTriggered: true,
+        });
         apiAssertion.assertRequestModelId(thirdRequest, randomModel);
         await chatMessages.waitForResponseReceived();
         await chatMessages.chatMessages
