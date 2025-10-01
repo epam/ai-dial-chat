@@ -1,6 +1,7 @@
 export interface ParseEntityApiKeyOptions {
   parseModel?: boolean;
   parseVersion?: boolean;
+  defaultVersion?: string;
 }
 
 interface ModelInfo {

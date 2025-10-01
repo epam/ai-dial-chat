@@ -25,6 +25,8 @@ import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import { ServerSlugs } from '@/src/types/slugs-types';
 
+import { DEFAULT_VERSION } from '@/src/constants/publication';
+
 import { ApiEntityStorage } from './api-entity-storage';
 
 import { Entity, MessageFormSchema } from '@epam/ai-dial-shared';
@@ -54,7 +56,10 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     return getApplicationApiKey(info);
   }
   parseEntityKey(key: string): Omit<ApplicationInfo, 'folderId' | 'id'> {
-    return parseEntityApiKey(key, { parseVersion: true });
+    return parseEntityApiKey(key, {
+      parseVersion: true,
+      defaultVersion: DEFAULT_VERSION,
+    });
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Applications;

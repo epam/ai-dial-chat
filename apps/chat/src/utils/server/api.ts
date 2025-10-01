@@ -111,11 +111,16 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
   }
 
   if (options?.parseVersion) {
-    if (parts.length === 1) {
-      result.version = NA_VERSION;
+    if (parts.length < 2) {
+      result.version = options?.defaultVersion ?? NA_VERSION;
     } else {
-      result.version = parts.pop() ?? NA_VERSION;
+      result.version = parts.pop() ?? options?.defaultVersion ?? NA_VERSION;
     }
+  }
+
+  if (result.version?.startsWith('_')) {
+    result.version = result.version.replace(/^_/, '');
+    parts[parts.length - 1] = `${parts[parts.length - 1]}_`;
   }
 
   return {
