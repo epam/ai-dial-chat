@@ -99,8 +99,9 @@ dialOverlayTest(
 
     await dialTest.step('Select a new agent and send the request', async () => {
       await overlayTalkToAgentDialog.selectAgent(randomModel, {
-      isHttpMethodTriggered: false,
-        });const request =
+        isHttpMethodTriggered: false,
+      });
+      const request =
         await overlayChat.sendRequestWithButton(randomAgentRequest);
       overlayApiAssertion.assertRequestModelId(request, randomModel);
     });
