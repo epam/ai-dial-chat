@@ -423,6 +423,7 @@ export const ExpectedMessages = {
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
   valueIsDefined: 'Values is defined',
+  shareLinkIsUpdated: 'Share link is updated',
 };
 
 export const PublishingExpectedMessages = {

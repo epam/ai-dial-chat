@@ -11,7 +11,6 @@ import {
 import { TestImportFormat } from '@/src/testData/conversationHistory/importConversation';
 import { FileUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Header context menu: Duplicate chat created by user.\n' +
@@ -132,7 +131,10 @@ dialTest(
           archive,
           `${ExpectedConstants.exportedArchiveImageRootFolder}/${imageName}`,
         );
-        expect.soft(imageEntry, ExpectedMessages.dataIsExported).toBeDefined();
+        baseAssertion.assertValueIsNotUndefined(
+          imageEntry,
+          ExpectedMessages.dataIsExported,
+        );
 
         const conversationEntry = FileUtil.getArchiveEntry(
           archive,
@@ -148,9 +150,10 @@ dialTest(
         const imageAttachment = conversationJson.history[0].messages.find((m) =>
           m.custom_content?.attachments?.find((a) => a.url === imageUrl),
         );
-        expect
-          .soft(imageAttachment, ExpectedMessages.dataIsExported)
-          .toBeDefined();
+        baseAssertion.assertValueIsNotUndefined(
+          imageAttachment,
+          ExpectedMessages.dataIsExported,
+        );
       },
     );
 
