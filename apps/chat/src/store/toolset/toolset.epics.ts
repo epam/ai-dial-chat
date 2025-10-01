@@ -17,16 +17,14 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
-import { getIdWithoutFeatureType, isMyEntity } from '@/src/utils/app/id';
+import { isMyEntity } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import {
-  convertToolsetModelToApi,
   encodeToolsetRedirectState,
   getToolsetRedirectUri,
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { AppAction, AppEpic } from '@/src/types/store';
 import {
@@ -101,14 +99,11 @@ const createToolsetEpic: AppEpic = (action$) =>
     ofType(ToolsetActions.createToolset.type),
     switchMap(({ payload }) => {
       const data = regenerateToolsetId(payload.data);
-      const apiPayload = convertToolsetModelToApi(data);
 
-      const path = ApiUtils.encodeApiUrl(getIdWithoutFeatureType(data.id));
-
-      return ToolsetService.saveToolset(apiPayload, path).pipe(
+      return ToolsetService.saveToolset(data).pipe(
         switchMap(() =>
           forkJoin({
-            toolset: ToolsetService.getToolsetByPath(path),
+            toolset: ToolsetService.getToolsetById(data.id),
           }).pipe(
             switchMap(({ toolset }) => {
               return toolset
@@ -131,7 +126,7 @@ const createToolsetEpic: AppEpic = (action$) =>
               return of(
                 UIActions.showErrorToast(
                   translate(errorsMessages.toolsetGetFailed, {
-                    name: path,
+                    name: data.id,
                   }),
                 ),
               );
@@ -174,8 +169,7 @@ const getToolsetDetailsEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.getToolsetDetails.type),
     switchMap(({ payload }) => {
-      const path = getIdWithoutFeatureType(payload.id);
-      return ToolsetService.getToolsetByPath(path).pipe(
+      return ToolsetService.getToolsetById(payload.id).pipe(
         switchMap((toolset) => {
           return toolset
             ? of(ToolsetActions.getToolsetDetailsSuccess(toolset))
@@ -258,15 +252,19 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
           if (!moveResult.success) {
             return of(...moveResult.actions);
           }
-          return ToolsetService.updateToolset(
-            convertToolsetModelToApi(updatedToolset),
-            getIdWithoutFeatureType(updatedToolset.id),
-          ).pipe(
+          return ToolsetService.updateToolset(updatedToolset).pipe(
             switchMap(() =>
-              ToolsetService.getToolsetByPath(
-                getIdWithoutFeatureType(updatedToolset.id),
-              ).pipe(
-                switchMap((updatedToolset) => {
+              ToolsetService.getToolsetById(updatedToolset.id).pipe(
+                switchMap((savedUpdatedToolset) => {
+                  if (!savedUpdatedToolset) {
+                    return of(
+                      UIActions.showErrorToast(
+                        translate(errorsMessages.toolsetGetFailed, {
+                          name: updatedToolset.id,
+                        }),
+                      ),
+                    );
+                  }
                   if (payload.isSaveAndExit) {
                     void router.push(
                       router.query.publicationUrl
@@ -279,7 +277,7 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                     of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
-                        newToolset: updatedToolset,
+                        newToolset: savedUpdatedToolset,
                       }),
                     ),
                     iif(
@@ -300,7 +298,7 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                         ToolsetActions.startSignInProcess({
                           authLevel: ToolsetCredentialsLevel.GLOBAL,
                           apiKey: payload?.auth?.apiKey,
-                          toolset: updatedToolset,
+                          toolset: savedUpdatedToolset,
                         }),
                       ),
                       EMPTY,
@@ -552,9 +550,7 @@ const deleteToolsetEpic: AppEpic = (action$, state$) =>
         return of(ToolsetActions.deleteToolsetFail());
       }
 
-      return ToolsetService.deleteToolset(
-        getIdWithoutFeatureType(targetToolset.id),
-      ).pipe(
+      return ToolsetService.deleteToolset(targetToolset.id).pipe(
         switchMap(() => {
           return concat(
             of(
