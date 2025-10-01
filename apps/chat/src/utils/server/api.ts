@@ -118,9 +118,7 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 ): ParseEntityApiKeyResult<T> => {
   const parts = apiKey.split(pathKeySeparator);
 
-  const result: ParseEntityApiKeyResult<T> = {
-    name: apiKey,
-  } as ParseEntityApiKeyResult<T>;
+  const result: ParseEntityApiKeyResult<T> = {} as ParseEntityApiKeyResult<T>;
 
   if (options?.parseModel) {
     const modelId = decodeModelId(parts.shift() ?? EMPTY_MODEL_ID);
