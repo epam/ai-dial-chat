@@ -155,14 +155,18 @@ export const getConversationInfoFromId = (
   options?: Partial<{ parseVersion: boolean }>,
 ): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
-  const { modelInfo, version } = parseEntityApiKey(name, {
+  const {
+    modelInfo,
+    version,
+    name: parsedName,
+  } = parseEntityApiKey(name, {
     parseVersion: options?.parseVersion,
     parseModel: true,
   });
 
   const regeneratePayload: Omit<ConversationInfo, 'id'> = {
     ...modelInfo,
-    name,
+    name: parsedName,
     folderId: constructPath(apiKey, bucket, parentPath),
   };
 
