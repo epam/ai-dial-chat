@@ -33,7 +33,6 @@ export const getPromptInfoFromId = (
 
   const { name: parsedName, version } = parseEntityApiKey(name, {
     parseVersion: options?.parseVersion,
-    parseModel: true,
   });
 
   const regeneratePayload: Omit<PromptInfo, 'id'> = {
