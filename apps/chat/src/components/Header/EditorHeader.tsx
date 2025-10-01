@@ -1,7 +1,9 @@
 import {
+  IconAlertCircle,
   IconChevronDown,
   IconCircleCheck,
   IconCircleDot,
+  IconCircleDotFilled,
   IconLogout,
 } from '@tabler/icons-react';
 import { useCallback, useState } from 'react';
@@ -27,18 +29,29 @@ const getTabIcon = <T extends string>(
   activeTab: T,
   isEditing?: boolean,
   isDisabled?: boolean,
+  isNotValid?: boolean,
 ) => {
-  return tab !== activeTab && isEditing ? (
-    <IconCircleCheck
-      className="text-accent-primary"
-      data-qa="selected-step-icon"
-      width={24}
-      height={24}
-    />
-  ) : (
-    <IconCircleDot
-      className={isDisabled ? 'text-secondary' : 'text-accent-primary'}
-      data-qa="not-selected-step-icon"
+  const selected = tab === activeTab;
+
+  const Icon = selected
+    ? IconCircleDotFilled
+    : isNotValid
+      ? IconAlertCircle
+      : isEditing
+        ? IconCircleCheck
+        : IconCircleDot;
+  const color = isDisabled
+    ? 'text-secondary'
+    : isNotValid
+      ? 'text-error'
+      : isEditing || selected
+        ? 'text-accent-primary'
+        : 'text-secondary';
+
+  return (
+    <Icon
+      className={color}
+      data-qa={selected ? 'selected-step-icon' : 'not-selected-step-icon'}
       width={24}
       height={24}
     />
@@ -55,6 +68,7 @@ interface EditorHeaderProps<T extends string> {
   dataQa?: string;
   tabs: EditorHeaderTab<T>[];
   activeTab: T;
+  errorTabsSet?: Set<T>;
   onTabClick: (e: PartialBy<EditorHeaderTab<T>, 'label'>) => void;
   title: string;
 
@@ -68,6 +82,7 @@ export const EditorHeader = <T extends string>({
   dataQa,
   tabs,
   activeTab,
+  errorTabsSet,
   onTabClick,
   title,
 
@@ -165,6 +180,7 @@ export const EditorHeader = <T extends string>({
           >
             {tabs.map((tab, index) => {
               const isDisabled = tab.disabled;
+              const isNotValid = errorTabsSet?.has(tab.key) ?? false;
               return (
                 <div key={tab.key} className="flex items-center">
                   <div
@@ -178,7 +194,13 @@ export const EditorHeader = <T extends string>({
                     )}
                     onClick={() => onTabClick(tab)}
                   >
-                    {getTabIcon(tab.key, activeTab, isEditing, isDisabled)}
+                    {getTabIcon(
+                      tab.key,
+                      activeTab,
+                      isEditing,
+                      isDisabled,
+                      isNotValid,
+                    )}
 
                     <span className="grow truncate" data-qa="single-step-title">
                       {tab.label}

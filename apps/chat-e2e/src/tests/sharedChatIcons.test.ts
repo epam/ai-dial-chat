@@ -788,7 +788,13 @@ dialTest(
           ExpectedConstants.renameSharedFolderMessage,
           ExpectedMessages.confirmationMessageIsValid,
         );
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: nestedConversations[1].id.replace(
+            nestedFolders[1].name,
+            newFolderName,
+          ),
+        });
         await chatBarFolderAssertion.assertFolderArrowIconState(
           { name: newFolderName },
           'hidden',
