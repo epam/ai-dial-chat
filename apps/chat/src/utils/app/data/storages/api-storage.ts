@@ -15,7 +15,7 @@ import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   ApiUtils,
   getOpsApiUrl,
-  parseApplicationApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -303,14 +303,15 @@ export class ApiStorage implements DialStorage {
     return this._applicationApiStorage.getEntity({
       id: applicationId,
       folderId: '',
-      ...parseApplicationApiKey(applicationId),
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
   }
+
   deleteApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.deleteEntity({
       id: applicationId,
       folderId: '',
-      ...parseApplicationApiKey(applicationId),
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
   }
 

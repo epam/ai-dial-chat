@@ -13,10 +13,10 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   ApiUtils,
   getConversationApiKey,
-  parseConversationApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
-import { EntityType, ParseOptions, PartialBy } from '@/src/types/common';
+import { EntityType, PartialBy } from '@/src/types/common';
 import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
@@ -152,14 +152,27 @@ export const regenerateConversationId = <T extends ConversationInfo>(
 
 export const getConversationInfoFromId = (
   id: string,
-  options?: ParseOptions,
+  options?: { parseVersion?: boolean },
 ): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
-
-  return regenerateConversationId({
-    ...parseConversationApiKey(name, options),
-    folderId: constructPath(apiKey, bucket, parentPath),
+  const { modelInfo, version } = parseEntityApiKey(name, {
+    parseVersion: options?.parseVersion,
+    parseModel: true,
   });
+
+  const regeneratePayload: Omit<ConversationInfo, 'id'> = {
+    ...modelInfo,
+    name,
+    folderId: constructPath(apiKey, bucket, parentPath),
+  };
+
+  if (version) {
+    regeneratePayload.publicationInfo = {
+      version,
+    };
+  }
+
+  return regenerateConversationId(regeneratePayload);
 };
 
 export const sortByDateAndName = <T extends ConversationInfo>(

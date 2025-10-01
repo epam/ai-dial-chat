@@ -9,7 +9,7 @@ import {
   ApiUtils,
   getApplicationApiKey,
   getOpsApiUrl,
-  parseApplicationApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -54,7 +54,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     return getApplicationApiKey(info);
   }
   parseEntityKey(key: string): Omit<ApplicationInfo, 'folderId' | 'id'> {
-    return parseApplicationApiKey(key);
+    return parseEntityApiKey(key, { parseVersion: true });
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Applications;

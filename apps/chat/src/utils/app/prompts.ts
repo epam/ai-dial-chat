@@ -1,5 +1,5 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
+import { getPromptApiKey, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ParseOptions, PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
@@ -27,12 +27,12 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
 
 export const getPromptInfoFromId = (
   id: string,
-  options?: ParseOptions,
+  options?: { parseVersion?: boolean },
 ): PromptInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
 
   return regeneratePromptId({
-    ...parsePromptApiKey(name, options),
+    ...parseEntityApiKey(name, options),
     folderId: constructPath(apiKey, bucket, parentPath),
   });
 };
