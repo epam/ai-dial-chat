@@ -17,7 +17,7 @@ const publicationsToUnpublish: Publication[] = [];
 const conversationName = 'overlayConversationName';
 const expectedConversationId = `conversations/public/playback__${ExpectedConstants.playbackConversation}${conversationName}__${ExpectedConstants.defaultAppVersion}`;
 
-dialOverlayTest(
+dialOverlayTest.only(
   '[Overlay] Exact conversation is set in Overlay. Playback chat with Plotly graph',
   async ({
     overlayHomePage,
