@@ -20,21 +20,12 @@ export class TooltipAssertion extends BaseAssertion {
       .toBe(expectedContent);
   }
 
-  public async assertTooltipContains(expectedContent: string) {
+  public async assertTooltipContains(expectedContent: string | RegExp) {
     await this.assertElementContainsText(
       this.tooltip,
       expectedContent,
       ExpectedMessages.tooltipContentIsValid,
     );
-  }
-
-  public async assertTooltipContentMatches(expectedContent: RegExp) {
-    expect
-      .soft(
-        await this.tooltip.getContent(),
-        ExpectedMessages.tooltipContentIsValid,
-      )
-      .toMatch(expectedContent);
   }
 
   public async assertTooltipStyle(property: string, value: string) {

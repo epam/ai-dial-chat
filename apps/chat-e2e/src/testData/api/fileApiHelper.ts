@@ -2,7 +2,7 @@ import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Publication } from '@/chat/types/publication';
-import { API, Attachment } from '@/src/testData';
+import { API, Attachment, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -82,7 +82,6 @@ export class FileApiHelper extends BaseApiHelper {
     publication: Publication,
     sourceFileUrl: string,
   ) {
-    const url = API.publicationUpdate;
     const filename = FileApiHelper.extractFilename(sourceFileUrl);
     const targetFileUrl = `files/public/${filename}`;
 
@@ -98,14 +97,17 @@ export class FileApiHelper extends BaseApiHelper {
     const requestData = {
       url: publication.url,
       resources: resources,
-      targetFolder: 'public/',
+      targetFolder: ExpectedConstants.rootPublicationFolder,
       displayAuthor: '',
       rules: [],
     };
 
-    const response = await this.request.post(this.getHost(url), {
-      data: requestData,
-    });
+    const response = await this.request.post(
+      this.getHost(API.publicationUpdate),
+      {
+        data: requestData,
+      },
+    );
 
     expect(
       response.status(),

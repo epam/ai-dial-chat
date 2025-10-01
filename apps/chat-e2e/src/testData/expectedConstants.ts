@@ -5,10 +5,10 @@ import { EntityType } from '@/chat/types/common';
 import path from 'path';
 
 export const ExpectedConstants = {
-  settingsTooltip: (entityType: EntityType) =>
+  settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
-      : 'Change conversation settings:\nTemperature:',
+      : `Change conversation settings:Temperature:${temperature}`,
   settingsTooltipWithoutChanges: (entityType: EntityType) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'

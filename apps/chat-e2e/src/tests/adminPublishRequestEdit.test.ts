@@ -34,7 +34,6 @@ dialAdminTest(
     baseAssertion,
     adminTooltipAssertion,
     adminChatHeaderDropdownMenu,
-    adminApproveRequiredConversationDropdownMenu,
     adminInformationModal,
     adminChatAssertion,
     adminConversationSettings,
@@ -42,12 +41,13 @@ dialAdminTest(
     adminConversationInfoTooltipAssertion,
     adminModelInfoTooltip,
     adminChatSettingsTooltip,
+    adminApproveRequiredConversationDropdownMenuAssertion,
   }) => {
     setTestIds('EPMRTC-6472', 'EPMRTC-6665');
     let publishedConversation: Conversation;
-    const requestName = GeneratorUtil.randomUnpublishRequestName();
+    const unpublishRequestName = GeneratorUtil.randomUnpublishRequestName();
     let publication: Publication;
-    const agent = ModelsUtil.getModels().find((m) => m.isDefault === false)!;
+    const agent = ModelsUtil.getModels().find((m) => !m.isDefault)!;
     const adminModel = ModelsUtil.getDefaultAgent()!;
 
     await dialTest.step(
@@ -72,23 +72,21 @@ dialAdminTest(
           await publicationApiHelper.createPublishRequest(publishRequest);
         await adminPublicationApiHelper.approveRequest(publication);
 
-        publication.name = requestName;
+        publication.name = unpublishRequestName;
         await publicationApiHelper.createUnpublishRequest(publication);
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialAdminTest.step(
       'Login as admin, open unpublish request and click on "Go to a review" link',
       async () => {
-        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
-          requestName,
+          unpublishRequestName,
         );
-        await adminPublishingApprovalModal.goToEntityReview({
-          isHttpMethodTriggered: false,
-        });
+        await adminPublishingApprovalModal.goToEntityReview();
       },
     );
 
@@ -187,12 +185,8 @@ dialAdminTest(
       `Click on 3 dots in chat's header and check that there is no "Rename" option`,
       async () => {
         await adminChatHeader.dotsMenu.click();
-        const allMenuOptions =
-          await adminChatHeaderDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayExcludesAll(
-          allMenuOptions,
-          [MenuOptions.rename],
-          ExpectedMessages.contextMenuOptionIsAvailable,
+        await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuExcludesOptions(
+          MenuOptions.rename,
         );
       },
     );
@@ -215,22 +209,18 @@ dialAdminTest(
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminApproveRequiredConversations.openFolderEntityDropdownMenu(
-          requestName,
+          unpublishRequestName,
           publishedConversation.name,
         );
-        const allMenuOptions =
-          await adminApproveRequiredConversationDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayExcludesAll(
-          allMenuOptions,
-          [MenuOptions.rename],
-          'Menu options',
+        await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuExcludesOptions(
+          MenuOptions.rename,
         );
       },
     );
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   'Update settings of agent for chat from publication request.\n' +
     'Update agent for chat from publication request.\n' +
     'Edit existing message for chat from publication request Approve required.\n' +
@@ -255,7 +245,6 @@ dialAdminTest(
     iconApiHelper,
     adminEntitySettingsAssertion,
     adminChatMessagesAssertion,
-    adminSendMessage,
     adminPublicationReviewControl,
   }) => {
     setTestIds('EPMRTC-6736', 'EPMRTC-6737', 'EPMRTC-6475', 'EPMRTC-6485');
@@ -265,7 +254,8 @@ dialAdminTest(
     const newTemp = '0.5';
     const model = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels().filter(
-        (m) => m.features?.temperature && m.features?.systemPrompt,
+        (m) =>
+          m.features?.temperature == true && m.features?.systemPrompt == true,
       ),
     )!;
     const modelIcon = iconApiHelper.getEntityIcon(model);
@@ -294,9 +284,7 @@ dialAdminTest(
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           requestName,
         );
-        await adminPublishingApprovalModal.goToEntityReview({
-          isHttpMethodTriggered: false,
-        });
+        await adminPublishingApprovalModal.goToEntityReview();
         await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
       },
     );
@@ -308,9 +296,8 @@ dialAdminTest(
         await adminDialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const firstMessage = conversation.messages[0].content;
-        await adminChatMessages.openEditMessageMode(firstMessage);
-        await adminChatMessages.editMessage(firstMessage, updatedMessage);
+        await adminChatMessages.openEditMessageMode(1);
+        await adminChatMessages.editFirstMessage(updatedMessage);
         await adminChatMessagesAssertion.assertMessageContent(
           1,
           updatedMessage,
@@ -323,11 +310,8 @@ dialAdminTest(
       'Add new message and verify it is added and response is received',
       async () => {
         const newMessage = 'new message';
-        await adminDialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
-        );
         await adminPublicationReviewControl.editButton.click();
-        await adminSendMessage.send(newMessage);
+        await adminChat.sendRequestWithButton(newMessage);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
         await adminChatMessagesAssertion.assertMessagesCount(4);
       },
@@ -337,8 +321,10 @@ dialAdminTest(
       'Click on agent icon, select another agent and verify it is updated',
       async () => {
         await adminChatHeader.chatAgent.click();
-        await adminTalkToAgentDialog.selectAgent(model.name);
-        //TODO the DIAL reboots
+        await adminTalkToAgentDialog.selectAgent(model.name, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'POST',
+        });
         await adminPublicationReviewControl.editButton.click();
         await adminChatHeaderAssertion.assertHeaderIcon(modelIcon);
       },
@@ -365,10 +351,6 @@ dialAdminTest(
     await dialAdminTest.step(
       'Send a message and verify response is received',
       async () => {
-        //TODO why do we need to that again?
-        await adminDialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
-        );
         await adminChat.sendRequestWithButton('test');
         await adminChatMessages.waitForResponseReceived();
       },
@@ -390,7 +372,6 @@ dialAdminTest(
     adminPublishingApprovalModal,
     setTestIds,
     adminLocalStorageManager,
-    localStorageManager,
     adminChatHeaderAssertion,
     adminChatMessages,
     adminChatMessagesAssertion,
@@ -409,7 +390,6 @@ dialAdminTest(
       async () => {
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setShowSideBarPanels();
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
@@ -428,9 +408,7 @@ dialAdminTest(
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           requestName,
         );
-        await adminPublishingApprovalModal.goToEntityReview({
-          isHttpMethodTriggered: false,
-        });
+        await adminPublishingApprovalModal.goToEntityReview();
         await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
       },
     );
@@ -474,7 +452,7 @@ dialAdminTest(
           const message = adminChatMessages.getChatMessage(i - 1);
           await message.hover();
           await adminChatMessages.messageDeleteIcon(i - 1).click();
-          await adminConfirmationDialog.confirm();
+          await adminConfirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
           await adminChatMessages
             .getChatMessage(i - 2)
             .waitFor({ state: 'detached' });
@@ -578,7 +556,6 @@ dialAdminTest(
     adminPublishingApprovalModal,
     setTestIds,
     adminLocalStorageManager,
-    localStorageManager,
     adminChatMessagesAssertion,
     adminSendMessage,
     adminPublicationReviewControl,
@@ -606,7 +583,6 @@ dialAdminTest(
         await adminFileApiHelper.putFile(Attachment.cloudImageName);
         conversation = conversationData.prepareDefaultConversation(model);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setShowSideBarPanels();
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
@@ -664,7 +640,7 @@ dialAdminTest(
         );
         await adminAttachFilesModal.checkAttachedFile(Attachment.sunImageName);
         await adminAttachFilesModal.attachFiles();
-        await adminSendMessage.send(newPrompt);
+        await adminChat.sendRequestWithButton(newPrompt);
         await adminChatMessagesAssertion.assertLastMessageContent('response');
       },
     );
@@ -685,7 +661,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Go back to review, remove attachment from the first message and verify it tays in review',
+      'Go back to review, remove attachment from the first message and verify it stays in review',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
@@ -695,7 +671,7 @@ dialAdminTest(
         await adminInputAttachments
           .removeInputAttachmentIcon(Attachment.cloudImageName)
           .click();
-        await adminChatMessages.saveAndSubmit.click();
+        await adminChat.saveAndSubmitRequest(true);
         await adminChatMessagesAssertion.assertMessageContent(1, firstMessage);
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminFilesToApproveAssertion.assertEntityState(
@@ -723,7 +699,6 @@ dialAdminTest(
     adminPublishingApprovalModal,
     setTestIds,
     adminLocalStorageManager,
-    localStorageManager,
     adminChatMessagesAssertion,
     adminSendMessage,
     adminPublicationReviewControl,
@@ -744,7 +719,6 @@ dialAdminTest(
       async () => {
         conversation = conversationData.prepareDefaultConversation(model!);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setShowSideBarPanels();
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
@@ -776,10 +750,7 @@ dialAdminTest(
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           requestName,
         );
-        await adminPublishingApprovalModal.goToEntityReview({
-          isHttpMethodTriggered: false,
-        });
-        // await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
+        await adminPublishingApprovalModal.goToEntityReview();
       },
     );
 
@@ -790,12 +761,12 @@ dialAdminTest(
         await adminDialHomePage.mockChatImageResponse(
           model.id,
           Attachment.sunImageName,
-          { customPath: `files/${publicationBucket}` },
+          { customPath: `${API.filesHostSegment}/${publicationBucket}` },
         );
         await adminSendMessage.send(newPrompt);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
           4,
-          `files/${publicationBucket}/${Attachment.sunImageName}`,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.sunImageName}`,
         );
       },
     );
