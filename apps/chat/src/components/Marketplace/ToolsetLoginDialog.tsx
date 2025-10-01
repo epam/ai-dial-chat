@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -15,7 +16,13 @@ import { MarketplaceSelectors } from '@/src/store/selectors';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
-import { ToolsetLoginFormType } from '@/src/components/ToolsetEditor/form';
+import {
+  ToolsetLoginFormSchema,
+  ToolsetLoginFormType,
+  getDefaultLoginFormData,
+} from '@/src/components/ToolsetEditor/form';
+
+import { zodResolver } from '@hookform/resolvers/zod';
 
 export const ToolsetLoginDialogView = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -24,6 +31,16 @@ export const ToolsetLoginDialogView = () => {
   const entity = useAppSelector(
     MarketplaceSelectors.selectLoginEntity,
   ) as ToolsetModel;
+
+  const formMethods = useForm<ToolsetLoginFormType>({
+    defaultValues: getDefaultLoginFormData(
+      entity.authSettings.authenticationType,
+      entity,
+    ),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    resolver: zodResolver(ToolsetLoginFormSchema),
+  });
 
   const isSignedIn = isToolsetSignedIn(entity);
 
@@ -79,13 +96,15 @@ export const ToolsetLoginDialogView = () => {
         </h4>
       </div>
 
-      <ToolsetLoginForm
-        type={entity.authSettings.authenticationType}
-        toolset={entity}
-        buttonClassName="ml-auto"
-        onLogin={handleLogin}
-        onLogout={handleLogout}
-      />
+      <FormProvider {...formMethods}>
+        <ToolsetLoginForm
+          type={entity.authSettings.authenticationType}
+          toolset={entity}
+          buttonClassName="ml-auto"
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+        />
+      </FormProvider>
     </Modal>
   );
 };
