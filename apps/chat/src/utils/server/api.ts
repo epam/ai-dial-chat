@@ -15,6 +15,10 @@ import { Conversation } from '@/src/types/chat';
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
+import {
+  ParseEntityApiKeyOptions,
+  ParseEntityApiKeyResult,
+} from '@/src/types/parse-entity';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -88,29 +92,6 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
 
   return [prompt.name, prompt.publicationInfo.version].join(pathKeySeparator);
 };
-
-interface ParseEntityApiKeyOptions {
-  parseModel?: boolean;
-  parseVersion?: boolean;
-}
-
-interface ModelInfo {
-  model: { id: string };
-  isPlayback: boolean;
-  isReplay: boolean;
-}
-
-// version will be string if parseVersion is true, modelInfo will be ModelInfo if parseModel is true
-type ParseEntityApiKeyResult<T extends ParseEntityApiKeyOptions> = {
-  name: string;
-} & (T extends { parseModel: true }
-  ? {
-      modelInfo: ModelInfo;
-    }
-  : { modelInfo?: ModelInfo }) &
-  (T extends { parseVersion: true }
-    ? { version: string }
-    : { version?: string });
 
 export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
   apiKey: string,

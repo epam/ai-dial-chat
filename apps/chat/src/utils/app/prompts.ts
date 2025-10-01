@@ -27,14 +27,27 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
 
 export const getPromptInfoFromId = (
   id: string,
-  options?: { parseVersion?: boolean },
+  options?: Partial<{ parseVersion: boolean }>,
 ): PromptInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
 
-  return regeneratePromptId({
-    ...parseEntityApiKey(name, options),
-    folderId: constructPath(apiKey, bucket, parentPath),
+  const { name: parsedName, version } = parseEntityApiKey(name, {
+    parseVersion: options?.parseVersion,
+    parseModel: true,
   });
+
+  const regeneratePayload: Omit<PromptInfo, 'id'> = {
+    name: parsedName,
+    folderId: constructPath(apiKey, bucket, parentPath),
+  };
+
+  if (version) {
+    regeneratePayload.publicationInfo = {
+      version,
+    };
+  }
+
+  return regeneratePromptId(regeneratePayload);
 };
 
 /**

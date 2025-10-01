@@ -152,7 +152,7 @@ export const regenerateConversationId = <T extends ConversationInfo>(
 
 export const getConversationInfoFromId = (
   id: string,
-  options?: { parseVersion?: boolean },
+  options?: Partial<{ parseVersion: boolean }>,
 ): ConversationInfo => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
   const { modelInfo, version } = parseEntityApiKey(name, {
