@@ -20,8 +20,11 @@ export class ShareModal extends BaseElement {
   public entityName = this.getChildElementBySelector(
     ShareModalSelectors.entityName,
   );
-  public shareQrCode = this.getChildElementBySelector(
+  public shareQrCodeContainer = this.getChildElementBySelector(
     ShareModalSelectors.qrCode,
+  );
+  public shareQrCodeImage = this.shareQrCodeContainer.getChildElementBySelector(
+    Tags.svg,
   );
 
   public linkInputLoader = this.getChildElementBySelector(

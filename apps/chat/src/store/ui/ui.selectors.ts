@@ -96,6 +96,15 @@ const selectIsNavigationVisible = createSelector(
   },
 );
 
+const selectVisibleSidebarItems = createSelector(
+  [
+    rootSelector,
+    (_state: RootState, featureType: FeatureType.Chat | FeatureType.Prompt) =>
+      featureType,
+  ],
+  (state, featureType) => state.visibleSidebarItems[featureType],
+);
+
 export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
@@ -120,4 +129,5 @@ export const UISelectors = {
   selectScrollToEntityId,
   selectIsNavigationVisible,
   selectCodeEditorTheme,
+  selectVisibleSidebarItems,
 };

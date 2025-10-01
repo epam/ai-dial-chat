@@ -580,23 +580,25 @@ dialTest(
 );
 
 dialTest(
-  'Playback: exit the mode at the end of playback',
+  'Playback: exit the mode at the end of playback.\n' +
+    'Header context menu options for chat in Playback mode',
   async ({
     dialHomePage,
     dataInjector,
     conversationData,
     chat,
-    chatMessages,
     chatMessagesAssertion,
     sendMessage,
     chatHeader,
+    chatHeaderAssertion,
+    conversationDropdownMenuAssertion,
     iconApiHelper,
     playbackControl,
     setTestIds,
     conversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1425');
+    setTestIds('EPMRTC-1425', 'EPMRTC-4736');
     let conversation: Conversation;
     let playbackConversation: Conversation;
 
@@ -622,20 +624,35 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click Stop Playback and verify chat messages input is available',
+      'Select Playback conversation and verify chat header dots menu options',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(playbackConversation.name);
+        await chatHeader.dotsMenu.click();
+        await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.rename,
+          MenuOptions.duplicate,
+          MenuOptions.export,
+          MenuOptions.moveTo,
+          MenuOptions.share,
+          MenuOptions.publish,
+          MenuOptions.delete,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Stop Playback and verify chat messages input is available',
+      async () => {
         await chatHeader.leavePlaybackMode.click();
-        await expect
-          .soft(
-            playbackControl.getElementLocator(),
-            ExpectedMessages.playbackControlsHidden,
-          )
-          .toBeHidden();
+        await chatHeaderAssertion.assertElementState(
+          playbackControl,
+          'hidden',
+          ExpectedMessages.playbackControlsHidden,
+        );
 
         await sendMessage.messageInput.waitForState();
         await dialHomePage.mockChatTextResponse(
@@ -643,12 +660,9 @@ dialTest(
         );
         await chat.sendRequestWithButton('3+4=');
 
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(conversation.messages.length + 2);
-
+        await chatMessagesAssertion.assertMessagesCount(
+          conversation.messages.length + 2,
+        );
         const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
         await chatMessagesAssertion.assertMessageIcon(
           conversation.messages.length + 2,

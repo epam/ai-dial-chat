@@ -100,8 +100,11 @@ export const ExpectedConstants = {
       invitationLink.indexOf(invitationPath) + invitationPath.length;
     return invitationLink.slice(startIndex);
   },
-  sharedConversationUrl: (invitationLink: string) => {
+  sharedSideBarEntityUrl: (invitationLink: string) => {
     return `${config.use!.baseURL}/share/${ExpectedConstants.sharedLink(invitationLink)}`;
+  },
+  sharedAppUrl: (invitationLink: string) => {
+    return `${config.use!.baseURL}/marketplace/share/${ExpectedConstants.sharedLink(invitationLink)}`;
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
@@ -310,6 +313,9 @@ export const ExpectedConstants = {
   dragFileDescription: 'Drop files here to attach them to the message',
   dragFileNotAllowedTitle: 'No attachments allowed',
   dragFileNotAllowedDescription: `Attachments can't be added to the message`,
+  exportedArchiveHistoryConversationPath:
+    'conversations/conversations_history.json',
+  exportedArchiveImageRootFolder: 'res',
 };
 
 export enum Types {

@@ -66,7 +66,7 @@ const handler = async (
 
     res.status(200).json({ url });
   } catch (error) {
-    logger.error('Error during federated logout:', error);
+    logger.error(error, 'Error during federated logout:');
     res.status(200).json({ url: null });
   }
 };
