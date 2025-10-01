@@ -1,3 +1,4 @@
+import { ShareByLinkResponseModel } from '@/chat/types/share';
 import { FileType } from '@/src/assertions';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
@@ -18,6 +19,7 @@ const getIconName = (iconUrl: string) =>
 
 dialSharedWithMeTest(
   'Sharing custom app without editing permissions via context menu in DIAL Marketplace.\n' +
+    'Share custom application via QR code without edit rights.\n' +
     'Share pop up: Message about not shared yet app for not shared app.\n' +
     `[Custom app] App's card pop-up open when receive sharing link for app.\n` +
     'Shared with me apps displayed on My workspace page by default.\n' +
@@ -71,6 +73,7 @@ dialSharedWithMeTest(
   ) => {
     setTestIds(
       'EPMRTC-5170',
+      'EPMRTC-6057',
       'EPMRTC-5197',
       'EPMRTC-5316',
       'EPMRTC-5192',
@@ -86,6 +89,7 @@ dialSharedWithMeTest(
     );
     let agentElement: BaseElement;
     let iconName: string;
+    let shareLinkResponse: ShareByLinkResponseModel;
 
     await dialSharedWithMeTest.step(
       'Create a custom app with icon via API',
@@ -110,7 +114,10 @@ dialSharedWithMeTest(
         );
         await agentElement.hoverOver();
         await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents.getAgentDropdownMenu().selectShareMenuOption();
+        const shareLinkRequestResponse = await marketplaceAgents
+          .getAgentDropdownMenu()
+          .selectShareMenuOption();
+        shareLinkResponse = shareLinkRequestResponse!.response;
       },
     );
 
@@ -125,6 +132,9 @@ dialSharedWithMeTest(
             ExpectedConstants.shareAppText,
           ],
           qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedAppUrl(
+            shareLinkResponse.invitationLink,
+          ),
           shareLinkInput: 'visible',
           copyLinkButton: 'visible',
           notSharedEntityLabel: ExpectedConstants.notSharedAppText,
@@ -386,6 +396,7 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Sharing custom app with editing permissions for other users.\n' +
+    'Share custom application via QR code with edit rights.\n' +
     `Sharing custom app without editing permissions via share icon on app's card pop-up in DIAL Marketplace.\n` +
     `[Custom app] App's card pop-up open when receive sharing link for app.\n` +
     '[Custom app]:Context menu for shared with me app with edit option.\n' +
@@ -430,6 +441,7 @@ dialSharedWithMeTest(
   }) => {
     setTestIds(
       'EPMRTC-5171',
+      'EPMRTC-6058',
       'EPMRTC-5184',
       'EPMRTC-5316',
       'EPMRTC-5198',
@@ -473,9 +485,29 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Check "Allow editing by other users" checkbox, click on Copy icon, navigate to the copied url by another user and verify the app card is opened',
+      'Check "Allow editing by other users" checkbox and verify QR code link is changed, click on Copy icon, navigate to the copied url by another user and verify the app card is opened',
       async () => {
-        await shareAppModal.checkAllowEditingByOtherUsers();
+        const initShareLink =
+          await shareAppModal.shareLinkInput.getElementContent();
+        const shareLinkResponse =
+          await shareAppModal.checkAllowEditingByOtherUsers();
+        await shareModalAssertion.assertGeneralInfo({
+          qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedAppUrl(
+            shareLinkResponse.invitationLink,
+          ),
+        });
+        shareModalAssertion.assertBooleanCondition(
+          initShareLink !== shareLinkResponse.invitationLink,
+          true,
+          ExpectedMessages.shareLinkIsUpdated,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Click on Copy icon, navigate to the copied url by another user and verify the app card is opened',
+      async () => {
         await shareAppModal.copyLinkButton.click();
         const shareLink = await marketplacePage.readTextFromClipboard();
         await additionalShareUserMarketplacePage.navigateToUrl(shareLink);
