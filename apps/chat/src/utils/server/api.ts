@@ -89,17 +89,19 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
   return [prompt.name, prompt.publicationInfo.version].join(pathKeySeparator);
 };
 
-type ParseEntityApiKeyOptionsStrict =
-  | { parseModel: true; parseVersion?: boolean }
-  | { parseModel?: false; parseVersion?: boolean };
+interface ParseEntityApiKeyOptions {
+  parseModel?: boolean;
+  parseVersion?: boolean;
+}
 
 interface ModelInfo {
   model: { id: string };
   isPlayback: boolean;
-  isReplay?: boolean;
+  isReplay: boolean;
 }
 
-type ParseEntityApiKeyResult<T extends ParseEntityApiKeyOptionsStrict> = {
+// version will be string if parseVersion is true, modelInfo will be ModelInfo if parseModel is true
+type ParseEntityApiKeyResult<T extends ParseEntityApiKeyOptions> = {
   name: string;
 } & (T extends { parseModel: true }
   ? {
@@ -110,7 +112,7 @@ type ParseEntityApiKeyResult<T extends ParseEntityApiKeyOptionsStrict> = {
     ? { version: string }
     : { version?: string });
 
-export const parseEntityApiKey = <T extends ParseEntityApiKeyOptionsStrict>(
+export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
   apiKey: string,
   options?: T,
 ): ParseEntityApiKeyResult<T> => {

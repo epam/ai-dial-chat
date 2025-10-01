@@ -1,7 +1,7 @@
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { getPromptApiKey, parseEntityApiKey } from '@/src/utils/server/api';
 
-import { ParseOptions, PartialBy } from '@/src/types/common';
+import { PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
