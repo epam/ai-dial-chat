@@ -311,6 +311,9 @@ export const ExpectedConstants = {
   dragFileDescription: 'Drop files here to attach them to the message',
   dragFileNotAllowedTitle: 'No attachments allowed',
   dragFileNotAllowedDescription: `Attachments can't be added to the message`,
+  exportedArchiveHistoryConversationPath:
+    'conversations/conversations_history.json',
+  exportedArchiveImageRootFolder: 'res',
 };
 
 export enum Types {
