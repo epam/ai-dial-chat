@@ -497,6 +497,15 @@ export class BaseAssertion {
       .toEqual(expectedValue);
   }
 
+  public assertValueIsNotUndefined(
+    actualValue: unknown,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valueIsDefined)
+      .toBeDefined();
+  }
+
   public async assertScrollPosition(
     element: BaseElement | Locator,
     scrollProperty: Properties,
