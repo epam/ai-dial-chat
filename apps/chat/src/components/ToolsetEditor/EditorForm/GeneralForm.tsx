@@ -23,6 +23,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
@@ -136,13 +137,18 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
         />
       </div>
       <div className="mt-auto flex justify-end gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6">
-        <button
-          className="button button-primary py-2"
-          type="submit"
-          disabled={!isValid || isToolsetDetailsLoading}
+        <Tooltip
+          tooltip={t('Fill in all required fields')}
+          hideTooltip={isValid}
         >
-          {t('Next')}
-        </button>
+          <button
+            className="button button-primary py-2"
+            type="submit"
+            disabled={!isValid || isToolsetDetailsLoading}
+          >
+            {t('Next')}
+          </button>
+        </Tooltip>
       </div>
     </form>
   );
