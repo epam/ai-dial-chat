@@ -418,7 +418,7 @@ export class BaseAssertion {
 
   public assertValue(
     actualValue: string | number | undefined | null,
-    expectedValue: string | number,
+    expectedValue: string | number | undefined,
     expectedMessage?: string,
   ) {
     expect.soft(actualValue, expectedMessage ?? '').toBe(expectedValue);
@@ -495,6 +495,15 @@ export class BaseAssertion {
     expect
       .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreEqual)
       .toEqual(expectedValue);
+  }
+
+  public assertValueIsNotUndefined(
+    actualValue: unknown,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valueIsDefined)
+      .toBeDefined();
   }
 
   public async assertScrollPosition(
