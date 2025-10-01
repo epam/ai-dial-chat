@@ -38,14 +38,14 @@ if (!process.env.E2E_HOST) {
 
 config.projects = [
   {
-    name: 'auth',
+    name: 'debug_auth',
     fullyParallel: true,
-    testMatch: /desktopAuth\.ts/,
+    testMatch: /debugAuth\.ts/,
   },
   {
     name: 'cleanup',
     testMatch: /cleanup\.ts/,
-    dependencies: ['auth'],
+    dependencies: ['debug_auth'],
   },
   {
     name: 'chat e2e',
