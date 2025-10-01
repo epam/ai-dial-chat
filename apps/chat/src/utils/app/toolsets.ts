@@ -208,6 +208,18 @@ export const getToolsetPayload = (
     ...(authType === ToolsetAuthTypes.OAUTH && {
       redirectUri: getToolsetRedirectUri(),
     }),
+    ...(newToolset.authSettings.clientId && {
+      clientId: newToolset.authSettings.clientId,
+    }),
+    ...(newToolset.authSettings.clientSecret && {
+      clientSecret: newToolset.authSettings.clientSecret,
+    }),
+    ...(newToolset.authSettings.authorizationEndpoint && {
+      authorizationEndpoint: newToolset.authSettings.authorizationEndpoint,
+    }),
+    ...(newToolset.authSettings.tokenEndpoint && {
+      tokenEndpoint: newToolset.authSettings.tokenEndpoint,
+    }),
   };
 
   return {
