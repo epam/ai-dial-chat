@@ -51,7 +51,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
