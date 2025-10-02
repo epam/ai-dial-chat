@@ -373,6 +373,10 @@ export class ApiStorage implements DialStorage {
     return this._toolsetApiStorage.updateEntity(data);
   }
 
+  getToolsetsByPath(path: string): Observable<ToolsetInfo[]> {
+    return this._toolsetApiStorage.getEntities(path);
+  }
+
   deleteToolset(toolsetId: string): Observable<void> {
     return this._toolsetApiStorage.deleteEntity({
       id: toolsetId,

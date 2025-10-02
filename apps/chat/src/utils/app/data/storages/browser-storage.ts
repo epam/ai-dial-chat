@@ -457,6 +457,9 @@ export class BrowserStorage implements DialStorage {
   getToolsetById(_id: string): Observable<ToolsetModel | null> {
     throw new Error('Method not implemented.');
   }
+  getToolsetsByPath(_path: string): Observable<ToolsetInfo[]> {
+    throw new Error('Method not implemented.');
+  }
   deleteToolset(_id: string): Observable<void> {
     throw new Error('Method not implemented.');
   }

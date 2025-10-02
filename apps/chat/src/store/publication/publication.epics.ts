@@ -26,6 +26,7 @@ import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import {
   addMessageAttachmentsToPublication$,
   getPublicationResourceEntityData,
@@ -249,9 +250,11 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                     return PromptService.getPrompts(path, isRoot);
                   }
 
-                  // TODO: Add toolsets
+                  if (isToolsetId(path)) {
+                    return ToolsetService.getToolsetsByPath(path);
+                  }
 
-                  return ApplicationService.getByPath(path, isRoot);
+                  return ApplicationService.getAllByPath(path, isRoot);
                 }),
                 toArray(),
                 map((data) => new Set(data.flat().map((data) => data.id))),

@@ -42,7 +42,7 @@ export class ApplicationService {
     return DataService.getDataStorage().getApplication(applicationId);
   }
 
-  public static getByPath(
+  public static getAllByPath(
     path?: string,
     recursive?: boolean,
   ): Observable<ApplicationInfo[]> {
