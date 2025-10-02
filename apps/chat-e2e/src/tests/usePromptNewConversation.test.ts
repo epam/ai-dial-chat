@@ -46,7 +46,9 @@ dialTest(
     );
     // Select a model that allows file attachments
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) => m.features?.configuration !== true,
+      ),
     );
     await localStorageManager.setRecentModelsIdsAndUseLastModel(
       modelWithAttachment,
