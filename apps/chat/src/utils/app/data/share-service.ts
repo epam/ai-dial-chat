@@ -3,8 +3,8 @@ import { Observable, map } from 'rxjs';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   ApiUtils,
-  parseApplicationApiKey,
   parseConversationApiKey,
+  parseMarketplaceEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { ApplicationInfo } from '@/src/types/applications';
@@ -218,7 +218,7 @@ export class ShareService {
 
               entities.push({
                 name: application.name,
-                version: parseApplicationApiKey(application.name).version,
+                version: parseMarketplaceEntityApiKey(application.name).version,
                 id,
                 permissions: application.permissions,
               });

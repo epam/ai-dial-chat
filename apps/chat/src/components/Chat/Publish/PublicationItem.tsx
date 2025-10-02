@@ -12,7 +12,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   getVersionFromId,
-  parseApplicationApiKey,
+  parseMarketplaceEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { SharingType } from '@/src/types/share';
@@ -142,7 +142,7 @@ const EditablePublicationItem: React.FC<PublicItemsProps> = ({
           )}
           data-qa="version"
         >
-          {parseApplicationApiKey(constructedPublicId).version}
+          {parseMarketplaceEntityApiKey(constructedPublicId).version}
         </span>
       </div>
     );

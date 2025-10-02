@@ -7,9 +7,9 @@ import {
 import { constructPath } from '@/src/utils/app/file';
 import {
   ApiUtils,
-  getApplicationApiKey,
+  getMarketplaceEntityApiKey,
   getOpsApiUrl,
-  parseApplicationApiKey,
+  parseMarketplaceEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -51,10 +51,10 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     return convertApplicationToApi(application, schema);
   }
   getEntityKey(info: ApplicationInfo): string {
-    return getApplicationApiKey(info);
+    return getMarketplaceEntityApiKey(info);
   }
   parseEntityKey(key: string): Omit<ApplicationInfo, 'folderId' | 'id'> {
-    return parseApplicationApiKey(key);
+    return parseMarketplaceEntityApiKey(key);
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Applications;
