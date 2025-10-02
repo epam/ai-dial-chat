@@ -154,6 +154,11 @@ export class PublicationApiHelper extends BaseApiHelper {
     return JSON.parse(responseText) as Publication;
   }
 
+  public getPublicationBucket(publication: Publication) {
+    const reviewUrl = publication.resources[0].reviewUrl;
+    return reviewUrl.split('/')[1];
+  }
+
   public async createUnpublishRequest(
     publicationRequest: Publication | PublicationRequestModel,
   ) {

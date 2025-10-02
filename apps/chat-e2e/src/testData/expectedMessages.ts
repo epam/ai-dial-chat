@@ -422,6 +422,9 @@ export const ExpectedMessages = {
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
+  requestCannotBeApproved:
+    "Request can't be approved as some conversations have no messages",
+  shareLinkIsUpdated: 'Share link is updated',
   valueIsDefined: 'Values is defined',
   shareLinkIsUpdated: 'Share link is updated',
 };
