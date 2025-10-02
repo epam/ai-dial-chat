@@ -28,8 +28,8 @@ export class DebugAuth {
     private readonly request: APIRequestContext,
     private readonly baseUrl: string,
   ) {
-    this.bucketAPI = new BucketApiHelper(request, baseUrl);
-    this.dataAPI = new DataApiHelper(request, baseUrl);
+    this.bucketAPI = new BucketApiHelper(request);
+    this.dataAPI = new DataApiHelper(request);
     this.authApiHelper = new AuthApiHelper(request);
   }
 
