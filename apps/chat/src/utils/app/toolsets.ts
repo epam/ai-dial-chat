@@ -1,7 +1,7 @@
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
-import { ApiUtils, getToolsetApiKey } from '@/src/utils/server/api';
+import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
 
 import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -122,14 +122,14 @@ export const getGeneratedToolsetId = (
   toolset: PartialBy<ToolsetModel, 'id'>,
 ): string => {
   if (toolset.folderId) {
-    return constructPath(toolset.folderId, getToolsetApiKey(toolset));
+    return constructPath(toolset.folderId, getMarketplaceEntityApiKey(toolset));
   }
 
   return constructPath(
     getToolsetRootId(
       toolset.id ? getEntityBucket({ id: toolset.id }) : undefined,
     ),
-    getToolsetApiKey(toolset),
+    getMarketplaceEntityApiKey(toolset),
   );
 };
 
