@@ -7,6 +7,7 @@ import {
   ExpectedMessages,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
+import { Cursors } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -85,20 +86,21 @@ dialTest(
         const appSettingsStep = appEditorHeader.getAppSettingsStep();
         await baseAssertion.assertElementState(generalInfoStep);
         await baseAssertion.assertElementState(appSettingsStep);
-        await baseAssertion.assertElementActionabilityState(
+        await appEditorHeaderAssertion.assertStepState(
           generalInfoStep,
-          'enabled',
+          'visible',
+          Cursors.pointer,
         );
-        await baseAssertion.assertElementActionabilityState(
+        await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
-          'disabled',
+          'visible',
+          Cursors.default,
         );
-
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
-          false,
+          true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           appSettingsStep,
           false,
         );
@@ -147,13 +149,13 @@ dialTest(
           'enabled',
         );
 
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
-          true,
-        );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
-          appSettingsStep,
           false,
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          appSettingsStep,
+          true,
         );
       },
     );
