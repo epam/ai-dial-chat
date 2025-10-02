@@ -153,13 +153,6 @@ export const getMarketplaceEntityApiKey = (
   return [entity.name, entity.version].join(pathKeySeparator);
 };
 
-// Format key: {name}__{version}
-export const getToolsetApiKey = (
-  toolset: Omit<ToolsetModel, 'folderId' | 'id'>,
-) => {
-  return [toolset.name, toolset.version].join(pathKeySeparator);
-};
-
 export class ApiUtils {
   static safeEncodeURIComponent = (urlComponent: string) =>
     // eslint-disable-next-line no-misleading-character-class
