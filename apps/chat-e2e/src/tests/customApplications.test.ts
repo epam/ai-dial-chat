@@ -197,7 +197,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'App editor General Info step is opened, header features are valid, step titles in the header marked as not completed',
+      'App editor General Info step is opened, header features are valid, "General info" step in the header is selected',
       async () => {
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
         generalInfoStep = appEditorHeader.getGeneralInfoStep();
@@ -212,13 +212,21 @@ dialTest(
           'visible',
           Cursors.default,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
-          false,
+          true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
           appSettingsStep,
           false,
+        );
+        await appEditorHeaderAssertion.assertNotSelectedDotCircleIconState(
+          appSettingsStep,
+          'visible',
         );
       },
     );
@@ -288,13 +296,21 @@ dialTest(
           'visible',
           Cursors.default,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
-          false,
+          true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
           appSettingsStep,
           false,
+        );
+        await appEditorHeaderAssertion.assertNotSelectedDotCircleIconState(
+          appSettingsStep,
+          'visible',
         );
       },
     );
@@ -361,13 +377,21 @@ dialTest(
           'enabled',
         );
 
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
+          false,
+        );
+        await appEditorHeaderAssertion.assertNotSelectedCheckedCircleIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          appSettingsStep,
           true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
           appSettingsStep,
-          false,
+          'visible',
         );
       },
     );
@@ -668,13 +692,21 @@ dialTest(
           'hidden',
         );
         await baseAssertion.assertElementState(appEditorGeneralForm);
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           AppEditSteps.appSettings,
+          false,
+        );
+        await appEditorHeaderAssertion.assertNotSelectedCheckedCircleIconState(
+          AppEditSteps.appSettings,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          AppEditSteps.generalInfo,
           true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
           AppEditSteps.generalInfo,
-          false,
+          'visible',
         );
         //need to explicitly click on the form to trigger autosave after fields update
         await appEditorGeneralForm.version.click();
