@@ -66,8 +66,8 @@ import {
   ApiUtils,
   getIdWithoutVersionFromApiKey,
   getVersionFromId,
-  parseApplicationApiKey,
   parseConversationApiKey,
+  parseMarketplaceEntityApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
@@ -2159,7 +2159,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                   ...applications.map((application) => {
                     const newApplication = {
                       ...application,
-                      name: parseApplicationApiKey(
+                      name: parseMarketplaceEntityApiKey(
                         splitEntityId(application.id).name,
                       ).name,
                       version: getVersionFromId(application.id),
