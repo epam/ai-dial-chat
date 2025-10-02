@@ -297,6 +297,7 @@ export class ApiStorage implements DialStorage {
   ): Observable<ApplicationInfo> {
     return this._applicationApiStorage.updateEntity(application, schema);
   }
+
   getApplication(
     applicationId: string,
   ): Observable<CustomApplicationModel | null> {
@@ -305,6 +306,13 @@ export class ApiStorage implements DialStorage {
       folderId: '',
       ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
+  }
+
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]> {
+    return this._applicationApiStorage.getEntities(path, recursive);
   }
 
   deleteApplication(applicationId: string): Observable<void> {

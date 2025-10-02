@@ -171,6 +171,11 @@ export interface DialStorage {
     applicationId: string,
   ): Observable<CustomApplicationModel | null>;
 
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]>;
+
   deleteApplication(applicationId: string): Observable<void>;
 
   deployApplication(applicationName: string): Observable<void>;

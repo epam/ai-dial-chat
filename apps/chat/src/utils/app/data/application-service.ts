@@ -42,6 +42,13 @@ export class ApplicationService {
     return DataService.getDataStorage().getApplication(applicationId);
   }
 
+  public static getByPath(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]> {
+    return DataService.getDataStorage().getApplications(path, recursive);
+  }
+
   public static deploy(applicationId: string): Observable<void> {
     return DataService.getDataStorage().deployApplication(applicationId);
   }
