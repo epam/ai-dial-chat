@@ -52,7 +52,7 @@ export abstract class ApiEntityStorage<
       updatedAt: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
       permissions: entity.permissions,
-    } as unknown as TEntityInfo;
+    } as TEntityInfo;
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
