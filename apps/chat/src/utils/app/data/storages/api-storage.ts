@@ -353,7 +353,7 @@ export class ApiStorage implements DialStorage {
       id: toolsetId,
       //TODO: add folderId to toolsets when folders for toolsets are implemented
       folderId: '',
-      ...parseEntityApiKey(applicationId, { parseVersion: true }),
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
     });
   }
 
@@ -370,7 +370,7 @@ export class ApiStorage implements DialStorage {
       id: toolsetId,
       //TODO: add folderId to toolsets when folders for toolsets are implemented
       folderId: '',
-      ...parseEntityApiKey(applicationId, { parseVersion: true }),
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
     });
   }
 }
