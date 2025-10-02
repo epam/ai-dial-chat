@@ -7,6 +7,7 @@ import { BaseElement } from '@/src/ui/webElements';
 import { BucketUtil, FileUtil, ItemUtil } from '@/src/utils';
 import { JSHandle, Locator, Page } from '@playwright/test';
 import { fileTypeFromFile } from 'file-type';
+import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import path from 'path';
 import { CDPSession, Download } from 'playwright-chromium';
@@ -546,16 +547,43 @@ export class BasePage {
   public async mockChatImageResponse(
     modelId: string,
     imageName: string,
-    options?: { isOverlay: boolean },
+    options?: { isOverlay?: boolean; customPath?: string },
   ) {
+    const imagePath =
+      options?.customPath ??
+      API.importFilePath(BucketUtil.getBucket(), modelId);
     await this.page.route(
       options?.isOverlay
         ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
         : API.chatHost,
       async (route) => {
+        const responseId = `chatcmpl-${crypto.randomUUID()}`;
+        const imageExtension = imageName.split('.').pop();
+        const imageType = `image/${
+          imageExtension === 'jpg' ? 'jpeg' : imageExtension
+        }`;
+        const mainJson = {
+          content: '',
+          custom_content: {
+            attachments: [
+              {
+                data: 'That is a mock prompt example',
+                title: 'Revised prompt',
+              },
+              {
+                title: imageName,
+                type: imageType,
+                url: `${imagePath}/${imageName}`,
+              },
+            ],
+          },
+          role: 'assistant',
+        };
         await route.fulfill({
           status: 200,
-          body: `{"responseId":"0dea98ff-1e66-4294-8542-457890e5f8c0"}\u0000{"role":"assistant"}\u0000{"custom_content":{"attachments":[{"index":0,"type":"image/jpg","title":"Image","url":"${API.importFilePath(BucketUtil.getBucket(), modelId)}/${imageName}"}]}}\u0000{"content":" "}\u0000{}\u0000`,
+          body: `{"responseId":"${responseId}"}\u0000${JSON.stringify(
+            mainJson,
+          )}\u0000`,
         });
       },
     );
@@ -619,8 +647,28 @@ export class BasePage {
       );
       responsePromises.push(promise);
     }
+
     await action();
-    return await Promise.all(responsePromises);
+
+    const responses = [];
+    for (let i = 0; i < responsePromises.length; i++) {
+      try {
+        const response = await responsePromises[i];
+        responses.push(response);
+      } catch (error) {
+        const expectedResponse = expectedApiResponses[i];
+        console.error('[API Request Failed]', {
+          method: expectedResponse.apiMethod || 'ANY',
+          urlPattern: expectedResponse.urlPattern?.toString() || 'ANY',
+          expectedStatus: expectedResponse.status ?? defaultStatus,
+          timeout: timeout,
+          error: (error as Error).message,
+        });
+        throw error;
+      }
+    }
+
+    return responses;
   }
 
   public async getAttachmentFileMetadataAndContent(
