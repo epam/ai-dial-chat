@@ -107,22 +107,24 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 
   const result: ParseEntityApiKeyResult<T> = {} as ParseEntityApiKeyResult<T>;
 
-  if (parts.length < 2) {
-    result.modelInfo = {
-      model: { id: EMPTY_MODEL_ID },
-      isPlayback: false,
-      isReplay: false,
-    };
-  } else {
-    // decoding modelId if it has '%5F%5F' as part of the modelId to avoid conflict with pathKeySeparator
-    // conversation key: 'gpt-4o%5F%5F2025-09-20__name__0.0.1' split by pathKeySeparator will be ['gpt-4o%5F%5F2025-09-20', 'name', '0.0.1']
-    // after decoding modelId: 'gpt-4o%5F%5F2025-09-20' will be decoded to 'gpt-4o__2025-09-20'
-    const modelId = decodeModelId(parts.shift() ?? EMPTY_MODEL_ID);
-    result.modelInfo = {
-      model: { id: modelId },
-      isPlayback: modelId === PseudoModel.Playback,
-      isReplay: modelId === PseudoModel.Replay,
-    };
+  if (options?.parseModel) {
+    if (parts.length < 2) {
+      result.modelInfo = {
+        model: { id: EMPTY_MODEL_ID },
+        isPlayback: false,
+        isReplay: false,
+      };
+    } else {
+      // decoding modelId if it has '%5F%5F' as part of the modelId to avoid conflict with pathKeySeparator
+      // conversation key: 'gpt-4o%5F%5F2025-09-20__name__0.0.1' split by pathKeySeparator will be ['gpt-4o%5F%5F2025-09-20', 'name', '0.0.1']
+      // after decoding modelId: 'gpt-4o%5F%5F2025-09-20' will be decoded to 'gpt-4o__2025-09-20'
+      const modelId = decodeModelId(parts.shift() ?? EMPTY_MODEL_ID);
+      result.modelInfo = {
+        model: { id: modelId },
+        isPlayback: modelId === PseudoModel.Playback,
+        isReplay: modelId === PseudoModel.Replay,
+      };
+    }
   }
 
   if (options?.parseVersion) {
