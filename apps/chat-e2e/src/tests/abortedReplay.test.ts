@@ -23,6 +23,7 @@ dialTest.beforeAll(async () => {
 dialTest(
   'Replay after Stop generating.\n' +
     'Share menu item is not available for the chat in Replay mode.\n' +
+    'Header context menu options for chat in Replay mode.\n' +
     'No Edit, Delete and Clear buttons when chat is in replay mode.\n' +
     'Publish item is not available in context menu for the chat in Replay mode',
   async ({
@@ -50,6 +51,7 @@ dialTest(
     setTestIds(
       'EPMRTC-512',
       'EPMRTC-3451',
+      'EPMRTC-4735',
       'EPMRTC-1448',
       'EPMRTC-1132',
       'EPMRTC-3452',
@@ -130,6 +132,17 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step('Verify header dots menu options', async () => {
+      await chatHeader.dotsMenu.click();
+      await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+        MenuOptions.rename,
+        MenuOptions.duplicate,
+        MenuOptions.export,
+        MenuOptions.moveTo,
+        MenuOptions.delete,
+      );
+    });
 
     await dialTest.step(
       'Verify no "Edit", "Delete", "Set message template" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',

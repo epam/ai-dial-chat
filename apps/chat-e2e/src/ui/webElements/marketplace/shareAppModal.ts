@@ -1,3 +1,4 @@
+import { ShareByLinkResponseModel } from '@/chat/types/share';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { ShareModalSelectors } from '@/src/ui/selectors';
@@ -22,6 +23,8 @@ export class ShareAppModal extends ShareModal {
         resp.status() === 200,
     );
     await this.shareOptionCheckbox.click();
-    await respPromise;
+    const response = await respPromise;
+    const responseText = await response.text();
+    return JSON.parse(responseText) as ShareByLinkResponseModel;
   }
 }

@@ -4,12 +4,13 @@ import { FeatureType } from '@/src/types/common';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import { DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT } from '@/src/constants/sidebars';
 
 import { UIState } from './ui.types';
 
 import uniq from 'lodash-es/uniq';
 
-export const openFoldersInitialState = {
+const openFoldersInitialState = {
   [FeatureType.Chat]: [],
   [FeatureType.Prompt]: [],
   [FeatureType.File]: [],
@@ -36,6 +37,10 @@ const initialState: UIState = {
   showSelectToMigrateWindow: false,
   customLogo: '',
   collapsedSections: openFoldersInitialState,
+  visibleSidebarItems: {
+    [FeatureType.Chat]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
+    [FeatureType.Prompt]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
+  },
 };
 
 export const uiSlice = createSlice({
@@ -204,6 +209,17 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<string | undefined>,
     ) => {
       state.scrollToEntityId = payload;
+    },
+    setVisibleSidebarItems: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        featureType: FeatureType.Chat | FeatureType.Prompt;
+        visibleItems: number;
+      }>,
+    ) => {
+      state.visibleSidebarItems[payload.featureType] = payload.visibleItems;
     },
   },
 });

@@ -90,7 +90,9 @@ dialTest(
         await chat.changeAgentButton.waitForState();
         await chat.configureSettingsButton.waitForState();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(initialModel2);
+        await talkToAgentDialog.selectAgent(initialModel2, {
+          isHttpMethodTriggered: false,
+        });
         await agentInfoAssertion.assertAgentName(initialModel2.name);
         const expectedModelIcon = iconApiHelper.getEntityIcon(initialModel2);
         await agentInfoAssertion.assertAgentIcon(expectedModelIcon);

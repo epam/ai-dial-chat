@@ -17,76 +17,10 @@ import { z as zodValidation } from 'zod';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
-export const ToolsetEditorFormSchema = zodValidation.object({
-  name: zodValidation
-    .string()
-    .nonempty(formErrors.required)
-    .min(2, formErrors.tooShort('Name', 2))
-    .max(160, formErrors.tooLong('Name', 160))
-    .refine(
-      (str) => !doesHaveNotAllowedSymbols(str),
-      formErrors.hasSpecialCharacters(),
-    ),
-  endpoint: zodValidation
-    .string()
-    .nonempty(formErrors.required)
-    .regex(/^(https?|sse):\/\//, {
-      error: urlErrors.notValidProtocol,
-    })
-    .refine(
-      (str) => !str.endsWith('.') && !str.endsWith('//'),
-      urlErrors.notValidEnding,
-    )
-    .refine((str) => {
-      try {
-        const url = new URL(str);
-        return !!url;
-      } catch {
-        return false;
-      }
-    }, urlErrors.notValidUrl)
-    .or(zodValidation.literal(ENDPOINT_PLACEHOLDER)),
-  protocol: zodValidation.enum(ToolsetTransportType),
-  version: zodValidation
-    .string()
-    .nonempty(versionsErrors.required)
-    .refine(isVersionValid, versionsErrors.notValid)
-    .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
-  description: zodValidation.string(),
-  allowedTools: zodValidation.array(zodValidation.string()),
-  iconUrl: zodValidation.string(),
-  topics: zodValidation.array(zodValidation.string()),
-  authenticationType: zodValidation.enum(ToolsetAuthTypes),
-});
-
-export type ToolsetEditorForm = zodValidation.infer<
-  typeof ToolsetEditorFormSchema
->;
-
-export const getDefaultFormData = (
-  toolset?: ToolsetModel,
-  toolsets?: ToolsetModel[],
-): ToolsetEditorForm => {
-  return {
-    name:
-      toolset?.name ??
-      getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
-    endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
-    protocol: toolset?.transport ?? ToolsetTransportType.SSE,
-    authenticationType:
-      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
-    description: toolset?.description ?? '',
-    allowedTools: toolset?.allowedTools ?? [],
-    iconUrl: toolset?.iconUrl ?? '',
-    version: toolset?.version ?? DEFAULT_VERSION,
-    topics: toolset?.topics ?? [],
-  };
-};
-
 export const ToolsetLoginFormSchema = zodValidation
   .object({
     includeOAuthFields: zodValidation.boolean().optional(),
-    type: zodValidation.enum(ToolsetAuthTypes),
+    authenticationType: zodValidation.enum(ToolsetAuthTypes),
     // API_KEY
     keyHeader: zodValidation.string().optional(),
     apiKey: zodValidation.string().optional(),
@@ -97,7 +31,7 @@ export const ToolsetLoginFormSchema = zodValidation
     tokenEndpoint: zodValidation.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.type === ToolsetAuthTypes.API_KEY) {
+    if (data.authenticationType === ToolsetAuthTypes.API_KEY) {
       if (!data.keyHeader?.trim()) {
         ctx.addIssue({
           code: 'custom',
@@ -113,7 +47,7 @@ export const ToolsetLoginFormSchema = zodValidation
         });
       }
     }
-    if (data.type === ToolsetAuthTypes.OAUTH) {
+    if (data.authenticationType === ToolsetAuthTypes.OAUTH) {
       if (!data.clientId && data.includeOAuthFields) {
         ctx.addIssue({
           code: 'custom',
@@ -133,3 +67,105 @@ export const ToolsetLoginFormSchema = zodValidation
 export type ToolsetLoginFormType = zodValidation.infer<
   typeof ToolsetLoginFormSchema
 >;
+
+export const ToolsetEditorFormSchema = zodValidation
+  .object({
+    name: zodValidation
+      .string()
+      .nonempty(formErrors.required)
+      .min(2, formErrors.tooShort('Name', 2))
+      .max(160, formErrors.tooLong('Name', 160))
+      .refine(
+        (str) => !doesHaveNotAllowedSymbols(str),
+        formErrors.hasSpecialCharacters(),
+      ),
+    endpoint: zodValidation
+      .string()
+      .nonempty(formErrors.required)
+      .regex(/^(https?|sse):\/\//, {
+        error: urlErrors.notValidProtocol,
+      })
+      .refine(
+        (str) => !str.endsWith('.') && !str.endsWith('//'),
+        urlErrors.notValidEnding,
+      )
+      .refine((str) => {
+        try {
+          const url = new URL(str);
+          return !!url;
+        } catch {
+          return false;
+        }
+      }, urlErrors.notValidUrl)
+      .or(zodValidation.literal(ENDPOINT_PLACEHOLDER)),
+    protocol: zodValidation.enum(ToolsetTransportType),
+    version: zodValidation
+      .string()
+      .nonempty(versionsErrors.required)
+      .refine(isVersionValid, versionsErrors.notValid)
+      .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
+    description: zodValidation.string(),
+    allowedTools: zodValidation.array(zodValidation.string()),
+    iconUrl: zodValidation.string(),
+    topics: zodValidation.array(zodValidation.string()),
+  })
+  .and(ToolsetLoginFormSchema);
+
+export type ToolsetEditorForm = zodValidation.infer<
+  typeof ToolsetEditorFormSchema
+>;
+
+export const getDefaultLoginFormData = (
+  authenticationType: ToolsetAuthTypes,
+  toolset?: ToolsetModel,
+  prevData?: ToolsetLoginFormType,
+): ToolsetLoginFormType => {
+  switch (authenticationType) {
+    case ToolsetAuthTypes.API_KEY:
+      return {
+        authenticationType,
+        keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
+        apiKey: prevData?.apiKey ?? '',
+      };
+    case ToolsetAuthTypes.OAUTH:
+      return {
+        authenticationType,
+        clientId: toolset?.authSettings?.clientId ?? '',
+        clientSecret: toolset?.authSettings?.clientSecret ?? '',
+        authorizationEndpoint:
+          toolset?.authSettings?.authorizationEndpoint ?? '',
+        tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
+        includeOAuthFields: prevData?.includeOAuthFields ?? false,
+      };
+    case ToolsetAuthTypes.NONE:
+    default:
+      return {
+        authenticationType,
+      };
+  }
+};
+
+export const getDefaultFormData = (
+  toolset?: ToolsetModel,
+  toolsets?: ToolsetModel[],
+  prevData?: ToolsetEditorForm,
+): ToolsetEditorForm => {
+  return {
+    name:
+      toolset?.name ??
+      getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
+    endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
+    protocol: toolset?.transport ?? ToolsetTransportType.SSE,
+    description: toolset?.description ?? '',
+    allowedTools: toolset?.allowedTools ?? [],
+    iconUrl: toolset?.iconUrl ?? '',
+    version: toolset?.version ?? DEFAULT_VERSION,
+    topics: toolset?.topics ?? [],
+
+    ...getDefaultLoginFormData(
+      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
+      toolset,
+      prevData,
+    ),
+  };
+};

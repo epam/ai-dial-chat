@@ -172,6 +172,7 @@ const dialAdminTest = dialTest.extend<{
   adminPublishingRequestModalAssertion: PublishingRequestModalAssertion;
   adminAppToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
   adminPublishingRulesAssertion: PublishingRulesAssertion;
+  adminConversationDropdownMenuAssertion: MenuAssertion;
 }>({
   adminPromptDropdownMenuAssertion: async (
     { adminPromptDropdownMenu },
@@ -706,6 +707,15 @@ const dialAdminTest = dialTest.extend<{
       adminPublishingRules,
     );
     await use(adminPublishingRulesAssertion);
+  },
+  adminConversationDropdownMenuAssertion: async (
+    { adminConversationDropdownMenu },
+    use,
+  ) => {
+    const adminConversationDropdownMenuAssertion = new MenuAssertion(
+      adminConversationDropdownMenu,
+    );
+    await use(adminConversationDropdownMenuAssertion);
   },
 });
 

@@ -21,10 +21,7 @@ import {
   excludeSystemMessages,
   getConversationModelParams,
 } from '@/src/utils/app/conversation';
-import {
-  isConversationWithFormSchema,
-  isFormSchemaValid,
-} from '@/src/utils/app/form-schema';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
@@ -158,12 +155,6 @@ const ChatView = memo(() => {
   );
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
-  );
-  const isConfigurationSchemaLoading = useAppSelector(
-    ChatSelectors.selectIsConfigurationSchemaLoading,
-  );
-  const configurationSchema = useAppSelector(
-    ChatSelectors.selectConfigurationSchema,
   );
   const isApproveRequiredEntity = useAppSelector((state) =>
     PublicationSelectors.selectIsApproveRequiredEntity(
@@ -561,9 +552,7 @@ const ChatView = memo(() => {
 
   const isConversationWithSchema = selectedConversations.some(
     (conv) =>
-      (!isConfigurationSchemaLoading &&
-        configurationSchema &&
-        isFormSchemaValid(configurationSchema)) ||
+      doesModelHaveConfiguration(modelsMap[conv.model.id]) ||
       isConversationWithFormSchema(conv),
   );
 
@@ -1004,10 +993,14 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
   customViewer,
 }) => {
   const dispatch = useAppDispatch();
+
   const { t } = useTranslation(Translation.Chat);
 
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
   );
 
   const handleTalkToConversationId = useCallback(
@@ -1023,9 +1016,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
     return router.pathname === Routes.AppsEditorSettings;
   }, [router.pathname]);
 
-  const isStartedCustomViewerConversation = useAppSelector(
-    ConversationsSelectors.selectIsStartedCustomViewerConversation,
-  );
   return (
     <>
       {selectedConversations[0].messages.length !== 0 ||
@@ -1118,6 +1108,8 @@ export function Chat({ isPreview }: ChatProps) {
     PublicationSelectors.selectIsPublicationUpdating,
   );
 
+  const agentConfigurationLoadedRef = useRef<string | null>(null);
+
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
   );
@@ -1127,18 +1119,24 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
-    const configurationAppReference = selectedConversations.find((conv) =>
-      doesModelHaveConfiguration(modelsMap[conv.model.id]),
-    )?.model?.id;
-    const configurationAppId = configurationAppReference
-      ? modelsMap[configurationAppReference]?.id
-      : undefined;
+    const modelReference = selectedConversations.at(0)?.model.id;
 
-    if (configurationAppId && isNoMessages) {
-      dispatch(
-        ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
-      );
+    if (modelReference === agentConfigurationLoadedRef.current) {
+      return;
+    }
+
+    if (!modelReference || selectedConversations.length > 1) {
+      dispatch(ChatActions.resetConfigurationSchema());
+      agentConfigurationLoadedRef.current = null;
+      return;
+    }
+
+    const model = modelsMap[modelReference];
+    if (model && doesModelHaveConfiguration(model) && isNoMessages) {
+      agentConfigurationLoadedRef.current = modelReference;
+      dispatch(ChatActions.getConfigurationSchema({ modelId: model.id }));
     } else {
+      agentConfigurationLoadedRef.current = null;
       dispatch(ChatActions.resetConfigurationSchema());
     }
   }, [dispatch, isNoMessages, modelsMap, selectedConversations]);
