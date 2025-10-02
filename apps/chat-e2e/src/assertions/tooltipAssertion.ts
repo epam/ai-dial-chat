@@ -20,6 +20,14 @@ export class TooltipAssertion extends BaseAssertion {
       .toBe(expectedContent);
   }
 
+  public async assertTooltipContains(expectedContent: string | RegExp) {
+    await this.assertElementContainsText(
+      this.tooltip,
+      expectedContent,
+      ExpectedMessages.tooltipContentIsValid,
+    );
+  }
+
   public async assertTooltipStyle(property: string, value: string) {
     await expect(
       this.tooltip.getElementLocator(),

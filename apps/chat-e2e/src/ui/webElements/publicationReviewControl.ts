@@ -16,6 +16,9 @@ export class PublicationReviewControl extends BaseElement {
   public backToPublicationRequestButton = this.getChildElementBySelector(
     PublicationReviewControls.backToPublication,
   );
+  public editButton = this.getChildElementBySelector(
+    PublicationReviewControls.editButton,
+  );
 
   public async backToPublicationRequest() {
     await this.backToPublicationRequestButton.click();

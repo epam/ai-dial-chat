@@ -1,9 +1,11 @@
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
 import { DialAIEntityModel } from '@/chat/types/models';
-import { API, Attachment } from '@/src/testData';
+import { Publication } from '@/chat/types/publication';
+import { API, Attachment, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
@@ -12,14 +14,17 @@ export class FileApiHelper extends BaseApiHelper {
   private async putFileGeneric(
     buffer: Buffer,
     filename: string,
-    parentPath?: string,
+    options?: { parentPath?: string; optionalBucket?: string },
   ) {
     const encodedFilename = encodeURIComponent(filename);
+    const parentPath = options?.parentPath;
     const encodedParentPath = parentPath
       ? ItemUtil.getEncodedItemId(parentPath)
       : undefined;
 
-    const baseUrl = `${API.fileHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
+    const bucket =
+      options?.optionalBucket ?? this.userBucket ?? BucketUtil.getBucket();
+    const baseUrl = `${API.fileHost()}/${bucket}`;
     const url = parentPath
       ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
@@ -47,27 +52,67 @@ export class FileApiHelper extends BaseApiHelper {
     return decodeURIComponent(body.url);
   }
 
-  public async putFile(filename: string, parentPath?: string) {
-    return this.putFileWithCustomName(filename, filename, parentPath);
+  public async putFile(
+    filename: string,
+    options?: { parentPath?: string; optionalBucket?: string },
+  ) {
+    return this.putFileWithCustomName(filename, filename, options);
   }
 
   public async putFileWithCustomName(
     filename: string,
     file: string,
-    parentPath?: string,
+    options?: { parentPath?: string; optionalBucket?: string },
   ) {
     const filePath = path.join(Attachment.attachmentPath, file);
     const buffer = fs.readFileSync(filePath);
-    return this.putFileGeneric(buffer, filename, parentPath);
+    return this.putFileGeneric(buffer, filename, options);
   }
 
   public async putStringAsFile(
     filename: string,
     content: string,
-    parentPath?: string,
+    options?: { parentPath?: string; optionalBucket?: string },
   ) {
     const buffer = Buffer.from(content, 'utf-8');
-    return this.putFileGeneric(buffer, filename, parentPath);
+    return this.putFileGeneric(buffer, filename, options);
+  }
+
+  public async putFileToPublicationBucket(
+    publication: Publication,
+    sourceFileUrl: string,
+  ) {
+    const filename = FileApiHelper.extractFilename(sourceFileUrl);
+    const targetFileUrl = `files/public/${filename}`;
+
+    const resources = [
+      ...(publication.resources ?? []),
+      {
+        action: PublishActions.ADD_IF_ABSENT,
+        sourceUrl: sourceFileUrl,
+        targetUrl: targetFileUrl,
+      },
+    ];
+
+    const requestData = {
+      url: publication.url,
+      resources: resources,
+      targetFolder: ExpectedConstants.rootPublicationFolder,
+      displayAuthor: '',
+      rules: [],
+    };
+
+    const response = await this.request.post(
+      this.getHost(API.publicationUpdate),
+      {
+        data: requestData,
+      },
+    );
+
+    expect(
+      response.status(),
+      `File ${sourceFileUrl} was put to publication bucket for publication ${publication.url}. Status: ${response.status()}`,
+    ).toBe(200);
   }
 
   public async updateInstalledDeployments(agents: DialAIEntityModel[]) {
@@ -78,7 +123,7 @@ export class FileApiHelper extends BaseApiHelper {
     await this.putStringAsFile(
       API.installedDeploymentsFile,
       installedDeploymentsJson,
-      API.installedDeploymentsFolder,
+      { parentPath: API.installedDeploymentsFolder },
     );
   }
 
