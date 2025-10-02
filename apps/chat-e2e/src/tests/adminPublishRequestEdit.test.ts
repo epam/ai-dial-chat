@@ -220,7 +220,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'Update settings of agent for chat from publication request.\n' +
     'Update agent for chat from publication request.\n' +
     'Edit existing message for chat from publication request Approve required.\n' +
@@ -236,7 +236,6 @@ dialAdminTest.only(
     adminChatHeader,
     setTestIds,
     adminLocalStorageManager,
-    localStorageManager,
     adminChatHeaderAssertion,
     adminConversationSettings,
     adminTalkToAgentDialog,
@@ -265,20 +264,19 @@ dialAdminTest.only(
       async () => {
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setShowSideBarPanels();
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialAdminTest.step(
       'Login as admin, open publication request and click on "Go to a review" link',
       async () => {
-        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
@@ -396,13 +394,13 @@ dialAdminTest(
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialAdminTest.step(
       'Login as admin, open publication request and click on "Go to a review" link',
       async () => {
-        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
@@ -483,7 +481,6 @@ dialAdminTest(
     adminPublishingApprovalModal,
     setTestIds,
     adminLocalStorageManager,
-    localStorageManager,
     baseAssertion,
     adminPublicationReviewControl,
   }) => {
@@ -502,7 +499,6 @@ dialAdminTest(
           conversation,
           playbackConversation,
         ]);
-        await localStorageManager.setShowSideBarPanels();
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
@@ -512,13 +508,13 @@ dialAdminTest(
           )
           .build();
         await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialAdminTest.step(
       'Login as admin, open publication request and click on "Go to a review" link',
       async () => {
-        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
@@ -589,13 +585,13 @@ dialAdminTest(
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialAdminTest.step(
       'Login as admin, open publication request and click on "Go to a review" link',
       async () => {
-        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
@@ -700,10 +696,10 @@ dialAdminTest(
     setTestIds,
     adminLocalStorageManager,
     adminChatMessagesAssertion,
-    adminSendMessage,
     adminPublicationReviewControl,
     adminFilesToApproveAssertion,
     adminFileApiHelper,
+    adminChat,
   }) => {
     setTestIds('EPMRTC-6605');
     let conversation: Conversation;
@@ -738,13 +734,13 @@ dialAdminTest(
           publication,
           imageUrl,
         );
+        await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialAdminTest.step(
       'Login as admin, open publication request and click on "Go to a review" link',
       async () => {
-        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
@@ -763,7 +759,7 @@ dialAdminTest(
           Attachment.sunImageName,
           { customPath: `${API.filesHostSegment}/${publicationBucket}` },
         );
-        await adminSendMessage.send(newPrompt);
+        await adminChat.sendRequestWithButton(newPrompt);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
           4,
           `${API.filesHostSegment}/${publicationBucket}/${Attachment.sunImageName}`,
