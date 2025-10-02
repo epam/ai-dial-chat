@@ -77,14 +77,17 @@ export function OverflowContainer<T>({
       }
     });
 
-    const visibleKeys = newVisibleItems.map(getKey).join();
-    const currentVisibleKeys = visibleItems.map(getKey).join();
-
-    if (visibleKeys !== currentVisibleKeys) {
-      setVisibleItems(newVisibleItems);
-      setHiddenItems(newHiddenItems);
-    }
-  }, [items, overflowIndicatorWidth, visibleItems, getKey]);
+    setVisibleItems((currentVisible) => {
+      const newKeys = newVisibleItems.map(getKey).join(',');
+      const currentKeys = currentVisible.map(getKey).join(',');
+      return newKeys === currentKeys ? currentVisible : newVisibleItems;
+    });
+    setHiddenItems((currentHidden) => {
+      const newKeys = newHiddenItems.map(getKey).join(',');
+      const currentKeys = currentHidden.map(getKey).join(',');
+      return newKeys === currentKeys ? currentHidden : newHiddenItems;
+    });
+  }, [items, overflowIndicatorWidth, getKey]);
 
   useResizeObserver(containerRef.current, recalculateItems);
   useLayoutEffect(() => {
