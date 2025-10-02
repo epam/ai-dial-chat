@@ -688,7 +688,9 @@ dialTest(
     let conversation: Conversation;
 
     await dialTest.step('Upload file to folder', async () => {
-      await fileApiHelper.putFile(Attachment.sunImageName, folderName);
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderName,
+      });
     });
 
     await dialTest.step(

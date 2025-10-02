@@ -124,7 +124,9 @@ dialTest(
     const folderName = GeneratorUtil.randomString(7);
 
     await dialTest.step('Upload file to some folder', async () => {
-      await fileApiHelper.putFile(Attachment.longImageName, folderName);
+      await fileApiHelper.putFile(Attachment.longImageName, {
+        parentPath: folderName,
+      });
       await localStorageManager.setShowSideBarPanels();
     });
 
