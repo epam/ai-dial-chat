@@ -37,6 +37,9 @@ export enum PseudoModel {
   Playback = 'playback',
 }
 
+// encoding modelId if it has '__' as part of the modelId to avoid conflict with pathKeySeparator
+// conversation modelId: 'gpt-4o__2025-09-20' will be encoded to 'gpt-4o%5F%5F2025-09-20'
+// and conversation key will be 'gpt-4o%5F%5F2025-09-20__name__0.0.1' to then properly split apiKey by pathKeySeparator
 export const encodeModelId = (modelId: string): string =>
   modelId
     .split(pathKeySeparator)
@@ -66,6 +69,9 @@ export const getConversationApiKey = (
     return conversation.name;
   }
 
+  // encoding modelId if it has '__' as part of the modelId to avoid conflict with pathKeySeparator
+  // conversation modelId: 'gpt-4o__2025-09-20' will be encoded to 'gpt-4o%5F%5F2025-09-20'
+  // and conversation key will be 'gpt-4o%5F%5F2025-09-20__name__0.0.1' to then properly split apiKey by pathKeySeparator
   const keyParts = [
     encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
@@ -102,12 +108,23 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
   const result: ParseEntityApiKeyResult<T> = {} as ParseEntityApiKeyResult<T>;
 
   if (options?.parseModel) {
-    const modelId = decodeModelId(parts.shift() ?? EMPTY_MODEL_ID);
-    result.modelInfo = {
-      model: { id: modelId },
-      isPlayback: modelId === PseudoModel.Playback,
-      isReplay: modelId === PseudoModel.Replay,
-    };
+    if (parts.length < 2) {
+      result.modelInfo = {
+        model: { id: EMPTY_MODEL_ID },
+        isPlayback: false,
+        isReplay: false,
+      };
+    } else {
+      // decoding modelId if it has '%5F%5F' as part of the modelId to avoid conflict with pathKeySeparator
+      // conversation key: 'gpt-4o%5F%5F2025-09-20__name__0.0.1' split by pathKeySeparator will be ['gpt-4o%5F%5F2025-09-20', 'name', '0.0.1']
+      // after decoding modelId: 'gpt-4o%5F%5F2025-09-20' will be decoded to 'gpt-4o__2025-09-20'
+      const modelId = decodeModelId(parts.shift() ?? EMPTY_MODEL_ID);
+      result.modelInfo = {
+        model: { id: modelId },
+        isPlayback: modelId === PseudoModel.Playback,
+        isReplay: modelId === PseudoModel.Replay,
+      };
+    }
   }
 
   if (options?.parseVersion) {

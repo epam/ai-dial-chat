@@ -9,4 +9,7 @@ export const IconSelectors = {
   listDetailsIcon: '.tabler-icon-list-details',
   helpIcon: '.tabler-icon-help',
   fileIcon: '.tabler-icon-file',
+  checkedCircleIcon: '.tabler-icon-circle-check',
+  filledDotCircleIcon: '.tabler-icon-circle-dot-filled',
+  dotCircleIcon: '.tabler-icon-circle-dot',
 };
