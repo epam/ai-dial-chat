@@ -2,7 +2,11 @@ import { ApiApplicationModelRegular } from '@/chat/types/applications';
 import { BackendEntity } from '@/chat/types/common';
 import config from '@/config/chat.playwright.config';
 import { API } from '@/src/testData';
-import { ApplicationEditorHeader, HeaderSelectors } from '@/src/ui/selectors';
+import {
+  ApplicationEditorHeader,
+  HeaderSelectors,
+  IconSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
@@ -43,9 +47,27 @@ export class AppEditorHeader extends BaseElement {
     );
   }
 
+  public selectedFilledDotCircleIcon(step: BaseElement) {
+    return step.getChildElementBySelector(
+      `${ApplicationEditorHeader.selectedStepIcon}${IconSelectors.filledDotCircleIcon}`,
+    );
+  }
+
   public notSelectedIcon(step: BaseElement) {
     return step.getChildElementBySelector(
       ApplicationEditorHeader.notSelectedStepIcon,
+    );
+  }
+
+  public notSelectedCheckedCircleIcon(step: BaseElement) {
+    return step.getChildElementBySelector(
+      `${ApplicationEditorHeader.notSelectedStepIcon}${IconSelectors.checkedCircleIcon}`,
+    );
+  }
+
+  public notSelectedDotCircleIcon(step: BaseElement) {
+    return step.getChildElementBySelector(
+      `${ApplicationEditorHeader.notSelectedStepIcon}${IconSelectors.dotCircleIcon}`,
     );
   }
 
