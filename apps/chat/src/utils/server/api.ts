@@ -16,7 +16,7 @@ import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetInfo } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -142,23 +142,16 @@ export const parsePromptApiKey = (
 };
 
 // Format key: {name}__{version}
-export const getApplicationApiKey = (
-  application: Omit<ApplicationInfo, 'folderId' | 'id'>,
+export const getMarketplaceEntityApiKey = (
+  entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
-  return [application.name, application.version].join(pathKeySeparator);
+  return [entity.name, entity.version].join(pathKeySeparator);
 };
 
 // Format key: {name}__{version}
-export const getToolsetApiKey = (
-  toolset: Omit<ToolsetModel, 'folderId' | 'id'>,
-) => {
-  return [toolset.name, toolset.version].join(pathKeySeparator);
-};
-
-// Format key: {name}__{version}
-export const parseApplicationApiKey = (
+export const parseMarketplaceEntityApiKey = (
   apiKey: string,
-): Omit<ApplicationInfo, 'folderId' | 'id'> => {
+): Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
   const [name, version] =
     parts.length < 2
@@ -322,7 +315,7 @@ export const isValidEntityApiType = (apiKey: string): boolean => {
 export const getIdWithoutVersionFromApiKey = (
   id: string,
   parseMethod:
-    | typeof parseApplicationApiKey
+    | typeof parseMarketplaceEntityApiKey
     | typeof parseConversationApiKey
     | typeof parsePromptApiKey,
 ) => {
