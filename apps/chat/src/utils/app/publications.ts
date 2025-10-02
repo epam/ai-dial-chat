@@ -11,9 +11,9 @@ import {
   getIdWithoutVersionFromApiKey,
   getPublicItemIdWithoutVersion,
   getVersionFromId,
-  parseApplicationApiKey,
   parseConversationApiKey,
   parseFileApiKey,
+  parseMarketplaceEntityApiKey,
   parsePromptApiKey,
   pathKeySeparator,
 } from '@/src/utils/server/api';
@@ -488,7 +488,7 @@ export const getDefaultAllEditEntities = (
     const parseFunction = isConversation
       ? parseConversationApiKey
       : isApplication
-        ? parseApplicationApiKey
+        ? parseMarketplaceEntityApiKey
         : isFile
           ? parseFileApiKey
           : parsePromptApiKey;
