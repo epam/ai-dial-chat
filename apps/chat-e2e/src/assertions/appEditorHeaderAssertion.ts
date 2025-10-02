@@ -23,10 +23,7 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     expectedState: ElementState,
     expectedCursor: Cursors,
   ) {
-    const stepLocator =
-      typeof step === 'string'
-        ? this.appEditorHeader.getStepByTitle(step)
-        : step;
+    const stepLocator = this.getStepLocator(step);
     await this.assertElementState(
       stepLocator,
       expectedState,
@@ -46,18 +43,14 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
   /**
    * Asserts whether a specific step is currently selected based on its icon.
    *   * @param step The title of the step (string) or the BaseElement representing the step link.
-   *   * @param isCompleted Expected selection state (true for selected, false for not selected).
+   *   * @param isSelected Expected selection state (true for selected, false for not selected).
    */
-  public async assertStepIsCompleted(
+  public async assertStepIsSelected(
     step: BaseElement | string,
-    isCompleted: boolean,
+    isSelected: boolean,
   ) {
-    const stepLocator =
-      typeof step === 'string'
-        ? this.appEditorHeader.getStepByTitle(step)
-        : step;
-
-    if (isCompleted) {
+    const stepLocator = this.getStepLocator(step);
+    if (isSelected) {
       await this.assertElementState(
         this.appEditorHeader.selectedIcon(stepLocator),
         'visible',
@@ -82,6 +75,39 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     }
   }
 
+  public async assertSelectedFilledDotCircleIconState(
+    step: BaseElement | string,
+    expectedState: ElementState,
+  ) {
+    const stepLocator = this.getStepLocator(step);
+    await this.assertElementState(
+      this.appEditorHeader.selectedFilledDotCircleIcon(stepLocator),
+      expectedState,
+    );
+  }
+
+  public async assertNotSelectedDotCircleIconState(
+    step: BaseElement | string,
+    expectedState: ElementState,
+  ) {
+    const stepLocator = this.getStepLocator(step);
+    await this.assertElementState(
+      this.appEditorHeader.notSelectedDotCircleIcon(stepLocator),
+      expectedState,
+    );
+  }
+
+  public async assertNotSelectedCheckedCircleIconState(
+    step: BaseElement | string,
+    expectedState: ElementState,
+  ) {
+    const stepLocator = this.getStepLocator(step);
+    await this.assertElementState(
+      this.appEditorHeader.notSelectedCheckedCircleIcon(stepLocator),
+      expectedState,
+    );
+  }
+
   /**
    * Asserts the text content of the main action title (e.g., "Add custom app", "Edit custom app").
    * @param expectedTitle The expected title text.
@@ -92,5 +118,11 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
       expectedTitle,
       ExpectedMessages.headerTitleIsValid, // Or a more specific message
     );
+  }
+
+  private getStepLocator(step: BaseElement | string) {
+    return typeof step === 'string'
+      ? this.appEditorHeader.getStepByTitle(step)
+      : step;
   }
 }
