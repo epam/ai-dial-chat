@@ -11,15 +11,12 @@ import {
   getIdWithoutVersionFromApiKey,
   getPublicItemIdWithoutVersion,
   getVersionFromId,
-  parseConversationApiKey,
-  parseFileApiKey,
-  parseMarketplaceEntityApiKey,
-  parsePromptApiKey,
+  parseEntityApiKey,
   pathKeySeparator,
 } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { ApiKeys, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
@@ -56,7 +53,6 @@ import { getFolderIdFromEntityId, sortByName } from './folders';
 import {
   getEntityBucket,
   getRootId,
-  isApplicationId,
   isConversationId,
   isEntityIdExternal,
   isFileId,
@@ -150,23 +146,20 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
     items: T[];
   }>(
     (acc, item) => {
-      const parseMethod =
-        featureType === FeatureType.Chat
-          ? parseConversationApiKey
-          : parsePromptApiKey;
-      const parsedApiKey = parseMethod(splitEntityId(item.id).name, {
+      const parsedApiKey = parseEntityApiKey(splitEntityId(item.id).name, {
         parseVersion: true,
+        parseModel: featureType === FeatureType.Chat,
       });
 
-      if (parsedApiKey.publicationInfo?.version) {
+      if (parsedApiKey.version) {
         const idWithoutVersion = getPublicItemIdWithoutVersion(
-          parsedApiKey.publicationInfo.version,
+          parsedApiKey.version,
           item.id,
         );
         const currentVersionGroup = acc.publicVersionGroups[idWithoutVersion];
 
         const newVersion = {
-          version: parsedApiKey.publicationInfo.version,
+          version: parsedApiKey.version,
           id: item.id,
         };
 
@@ -195,14 +188,25 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
 
       const folderId = getFolderIdFromEntityId(item.id);
       const itemToAdd = {
-        ...parsedApiKey,
+        name: parsedApiKey.name,
+        publicationInfo: {
+          version: parsedApiKey.version,
+        },
         id: item.id,
         folderId,
         publishedWithMe: isRootId(folderId),
       } as T;
 
       if (featureType === FeatureType.Chat) {
-        (itemToAdd as ConversationInfo).updatedAt = item.updatedAt;
+        itemToAdd.updatedAt = item.updatedAt;
+
+        if (parsedApiKey.modelInfo) {
+          (itemToAdd as ConversationInfo).model = parsedApiKey.modelInfo.model;
+          (itemToAdd as ConversationInfo).isPlayback =
+            parsedApiKey.modelInfo.isPlayback;
+          (itemToAdd as ConversationInfo).isReplay =
+            parsedApiKey.modelInfo.isReplay;
+        }
       }
 
       acc.items.push(itemToAdd);
@@ -367,17 +371,8 @@ export const getPublishFolderResources = (
 };
 
 export const getVersionGroupFromId = (id: string) => {
-  const featureType = EnumMapper.getFeatureTypeByApiKey(
-    id.split('/')[0] as ApiKeys,
-  );
-
-  const parseMethod =
-    featureType === FeatureType.Chat
-      ? parseConversationApiKey
-      : parsePromptApiKey;
-
   return {
-    versionGroupId: getIdWithoutVersionFromApiKey(id, parseMethod),
+    versionGroupId: getIdWithoutVersionFromApiKey(id),
     currentVersion: getVersionFromId(id),
   };
 };
@@ -480,28 +475,14 @@ export const getDefaultAllEditEntities = (
   > = {};
 
   resources.forEach((item) => {
-    const isConversation = isConversationId(item.reviewUrl);
-    const isApplication = isApplicationId(item.reviewUrl);
-    const isFile = isFileId(item.reviewUrl);
     const apiKey = splitEntityId(item.reviewUrl).name;
 
-    const parseFunction = isConversation
-      ? parseConversationApiKey
-      : isApplication
-        ? parseMarketplaceEntityApiKey
-        : isFile
-          ? parseFileApiKey
-          : parsePromptApiKey;
-    const parsedApiKey = parseFunction(apiKey, {
+    const { name, version } = parseEntityApiKey(apiKey, {
       parseVersion: true,
+      parseModel: isConversationId(item.reviewUrl),
     });
 
-    allEditEntitiesMap[item.reviewUrl] = {
-      name: parsedApiKey.name,
-      version: isApplication
-        ? getVersionFromId(item.reviewUrl)
-        : (parsedApiKey.publicationInfo?.version ?? NA_VERSION),
-    };
+    allEditEntitiesMap[item.reviewUrl] = { name, version };
   });
 
   const allFoldersStructure: FolderEditTree = {};
@@ -549,7 +530,9 @@ export const regenerateApiKeyNameAndVersionParts = (
 
   if (isConversationId(entityId)) {
     const modelName = splitEntityId(entityId).name;
-    const parsedModelReference = parseConversationApiKey(modelName).model.id;
+    const parsedModelReference = parseEntityApiKey(modelName, {
+      parseModel: true,
+    }).modelInfo.model.id;
     return [parsedModelReference, preparedName, version].join(pathKeySeparator);
   }
 

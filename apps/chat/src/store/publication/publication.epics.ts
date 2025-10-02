@@ -66,9 +66,7 @@ import {
   ApiUtils,
   getIdWithoutVersionFromApiKey,
   getVersionFromId,
-  parseConversationApiKey,
-  parseMarketplaceEntityApiKey,
-  parsePromptApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -281,17 +279,18 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                   of(
                     ConversationsActions.addConversations({
                       conversations: conversationUnpublishEntities.map((r) => {
-                        const parsedApiKey = parseConversationApiKey(
+                        const { name, version, modelInfo } = parseEntityApiKey(
                           splitEntityId(r.targetUrl).name,
-                          { parseVersion: true },
+                          { parseVersion: true, parseModel: true },
                         );
 
                         return {
-                          ...parsedApiKey,
+                          name,
+                          ...modelInfo,
                           id: r.reviewUrl,
                           folderId: getFolderIdFromEntityId(r.reviewUrl),
                           publicationInfo: {
-                            ...parsedApiKey.publicationInfo,
+                            version,
                             action: r.action,
                             isNotExist: !uploadedUnpublishEntitiesIds.includes(
                               r.reviewUrl,
@@ -329,7 +328,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                   of(
                     PromptsActions.addPrompts({
                       prompts: promptUnpublishEntities.map((r) => {
-                        const parsedApiKey = parsePromptApiKey(
+                        const { name, version } = parseEntityApiKey(
                           splitEntityId(r.targetUrl).name,
                           { parseVersion: true },
                         );
@@ -337,9 +336,9 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                         return {
                           id: r.reviewUrl,
                           folderId: getFolderIdFromEntityId(r.reviewUrl),
-                          name: parsedApiKey.name,
+                          name,
                           publicationInfo: {
-                            ...parsedApiKey.publicationInfo,
+                            version,
                             action: r.action,
                             isNotExist: !uploadedUnpublishEntitiesIds.includes(
                               r.reviewUrl,
@@ -388,7 +387,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   PromptsActions.addPrompts({
                     prompts: promptResources.map((r) => {
-                      const parsedApiKey = parsePromptApiKey(
+                      const { name, version } = parseEntityApiKey(
                         splitEntityId(r.targetUrl).name,
                         { parseVersion: true },
                       );
@@ -396,9 +395,9 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                       return {
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        name: parsedApiKey.name,
+                        name,
                         publicationInfo: {
-                          ...parsedApiKey.publicationInfo,
+                          version,
                           action: r.action,
                           publicationUrl: payload.url,
                         },
@@ -420,14 +419,14 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   ModelsActions.addPublishRequestModels({
                     models: applicationResources.map((r) => {
-                      const parsedApiKey = parsePromptApiKey(
+                      const { name } = parseEntityApiKey(
                         splitEntityId(r.targetUrl).name,
                         { parseVersion: true },
                       );
 
                       return {
                         id: r.reviewUrl,
-                        name: parsedApiKey.name,
+                        name,
                         isDefault: false,
                         reference: r.reviewUrl,
                         type: EntityType.Application,
@@ -460,14 +459,14 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   ToolsetActions.addPublishRequestToolsets({
                     toolsets: toolsetResources.map((r) => {
-                      const parsedApiKey = parsePromptApiKey(
+                      const { name } = parseEntityApiKey(
                         splitEntityId(r.targetUrl).name,
                         { parseVersion: true },
                       );
 
                       return {
                         id: r.reviewUrl,
-                        name: parsedApiKey.name,
+                        name,
                         isDefault: false,
                         reference: r.reviewUrl,
                         type: EntityType.Toolset,
@@ -515,17 +514,18 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 of(
                   ConversationsActions.addConversations({
                     conversations: conversationResources.map((r) => {
-                      const parsedApiKey = parseConversationApiKey(
+                      const { name, version, modelInfo } = parseEntityApiKey(
                         splitEntityId(r.targetUrl).name,
-                        { parseVersion: true },
+                        { parseVersion: true, parseModel: true },
                       );
 
                       return {
-                        ...parsedApiKey,
+                        ...modelInfo,
+                        name,
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
                         publicationInfo: {
-                          ...parsedApiKey.publicationInfo,
+                          version,
                           action: r.action,
                           publicationUrl: payload.url,
                         },
@@ -894,9 +894,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             });
 
             const versionGroups = uniq(
-              idsToExclude.map((id) =>
-                getIdWithoutVersionFromApiKey(id, parseConversationApiKey),
-              ),
+              idsToExclude.map(getIdWithoutVersionFromApiKey),
             );
 
             actions.push(
@@ -946,11 +944,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 PublicationActions.removePublicVersionGroups({
                   groupsToRemove: versionGroups.map((groupId) => ({
                     groupIds: idsToExclude.filter(
-                      (id) =>
-                        getIdWithoutVersionFromApiKey(
-                          id,
-                          parseConversationApiKey,
-                        ) === groupId,
+                      (id) => getIdWithoutVersionFromApiKey(id) === groupId,
                     ),
                     versionGroupId: groupId,
                   })),
@@ -1048,9 +1042,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               return !hasPrompts && hasHiddenPrompts;
             });
             const versionGroups = uniq(
-              idsToExclude.map((id) => {
-                return getIdWithoutVersionFromApiKey(id, parsePromptApiKey);
-              }),
+              idsToExclude.map(getIdWithoutVersionFromApiKey),
             );
 
             actions.push(
@@ -1098,12 +1090,9 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               of(
                 PublicationActions.removePublicVersionGroups({
                   groupsToRemove: versionGroups.map((groupId) => ({
-                    groupIds: idsToExclude.filter((id) => {
-                      return (
-                        getIdWithoutVersionFromApiKey(id, parsePromptApiKey) ===
-                        groupId
-                      );
-                    }),
+                    groupIds: idsToExclude.filter(
+                      (id) => getIdWithoutVersionFromApiKey(id) === groupId,
+                    ),
                     versionGroupId: groupId,
                   })),
                 }),
@@ -2159,8 +2148,9 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
                   ...applications.map((application) => {
                     const newApplication = {
                       ...application,
-                      name: parseMarketplaceEntityApiKey(
+                      name: parseEntityApiKey(
                         splitEntityId(application.id).name,
+                        { parseVersion: true },
                       ).name,
                       version: getVersionFromId(application.id),
                     };
