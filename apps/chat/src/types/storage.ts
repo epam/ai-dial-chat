@@ -11,6 +11,7 @@ import {
 import { BackendChatEntity, MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
+import { ToolsetInfo, ToolsetModel } from './toolsets';
 
 import {
   ConversationInfo,
@@ -157,6 +158,7 @@ export interface DialStorage {
 
   move(data: MoveModel): Observable<MoveModel>;
 
+  // Application methods
   createApplication(
     application: CustomApplicationModel,
     schema?: ApiDetailedApplicationTypeSchema,
@@ -187,4 +189,10 @@ export interface DialStorage {
   getApplicationLogs(path: string): Observable<ApplicationLogsType>;
 
   getApplicationConfig(name: string): Observable<MessageFormSchema>;
+
+  // Toolsets methods
+  getToolsetById(id: string): Observable<ToolsetModel | null>;
+  updateToolset(data: ToolsetModel): Observable<ToolsetInfo>;
+  createToolset(data: ToolsetModel): Observable<ToolsetInfo>;
+  deleteToolset(toolsetId: string): Observable<void>;
 }

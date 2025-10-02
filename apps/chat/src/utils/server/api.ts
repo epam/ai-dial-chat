@@ -21,7 +21,7 @@ import {
 } from '@/src/types/parse-entity';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetInfo } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -147,17 +147,10 @@ export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
 };
 
 // Format key: {name}__{version}
-export const getApplicationApiKey = (
-  application: Omit<ApplicationInfo, 'folderId' | 'id'>,
+export const getMarketplaceEntityApiKey = (
+  entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
-  return [application.name, application.version].join(pathKeySeparator);
-};
-
-// Format key: {name}__{version}
-export const getToolsetApiKey = (
-  toolset: Omit<ToolsetModel, 'folderId' | 'id'>,
-) => {
-  return [toolset.name, toolset.version].join(pathKeySeparator);
+  return [entity.name, entity.version].join(pathKeySeparator);
 };
 
 export class ApiUtils {

@@ -7,7 +7,7 @@ import {
 import { constructPath } from '@/src/utils/app/file';
 import {
   ApiUtils,
-  getApplicationApiKey,
+  getMarketplaceEntityApiKey,
   getOpsApiUrl,
   parseEntityApiKey,
 } from '@/src/utils/server/api';
@@ -53,7 +53,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     return convertApplicationToApi(application, schema);
   }
   getEntityKey(info: ApplicationInfo): string {
-    return getApplicationApiKey(info);
+    return getMarketplaceEntityApiKey(info);
   }
   parseEntityKey(key: string): Omit<ApplicationInfo, 'folderId' | 'id'> {
     return parseEntityApiKey(key, {

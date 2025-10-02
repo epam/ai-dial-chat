@@ -27,6 +27,7 @@ import {
   MigrationStorageKeys,
   UIStorageKeys,
 } from '@/src/types/storage';
+import { ToolsetInfo, ToolsetModel } from '@/src/types/toolsets';
 
 import { DEFAULT_AGENT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -443,6 +444,20 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
   getPromptMetadata(_id: string): Observable<BackendChatEntity | null> {
+    throw new Error('Method not implemented.');
+  }
+
+  //Toolsets methods
+  createToolset(_data: ToolsetModel): Observable<ToolsetInfo> {
+    throw new Error('Method not implemented.');
+  }
+  updateToolset(_data: ToolsetModel): Observable<ToolsetInfo> {
+    throw new Error('Method not implemented.');
+  }
+  getToolsetById(_id: string): Observable<ToolsetModel | null> {
+    throw new Error('Method not implemented.');
+  }
+  deleteToolset(_id: string): Observable<void> {
     throw new Error('Method not implemented.');
   }
 }

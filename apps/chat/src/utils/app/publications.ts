@@ -443,12 +443,11 @@ export const getDefaultAllEditEntities = (
   > = {};
 
   resources.forEach((item) => {
-    const isConversation = isConversationId(item.reviewUrl);
     const apiKey = splitEntityId(item.reviewUrl).name;
 
     const { name, version } = parseEntityApiKey(apiKey, {
       parseVersion: true,
-      parseModel: isConversation,
+      parseModel: isConversationId(item.reviewUrl),
     });
 
     allEditEntitiesMap[item.reviewUrl] = { name, version };
