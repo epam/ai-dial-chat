@@ -268,7 +268,9 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertReviewButtonTitle(
           ExpectedConstants.continueReviewButtonTitle,
         );
-        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
         await baseAssertion.assertElementState(adminChatMessages, 'visible');
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
