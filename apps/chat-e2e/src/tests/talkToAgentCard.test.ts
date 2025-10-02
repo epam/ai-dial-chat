@@ -311,7 +311,8 @@ dialTest(
     '[Select an agent for conversation] Version is shown for custom application. When the application is at the top of recent list (pre-selected already).\n' +
     `[Select an agent for conversation] Three dots menu doesn't exist for models, applications created from config.\n` +
     '[Select an agent for conversation] Version and other items are shown for model when the model was removed from My workspace' +
-    '[Select an agent for conversation] Red warning is shown when selected custom app was unpublished',
+    '[Select an agent for conversation] Red warning is shown when selected custom app was unpublished.\n' +
+    `[First screen] 'Not available agent selected' error instead of input message field, on Select an agent for conversation, on Settings`,
   async ({
     dialHomePage,
     talkToAgentDialog,
@@ -319,6 +320,9 @@ dialTest(
     talkToAgentDialogAssertion,
     modelApiHelper,
     chat,
+    conversationSettingsModal,
+    agentSettings,
+    agentSettingAssertion,
     topicsTooltip,
     marketplacePage,
     marketplaceHeader,
@@ -343,6 +347,8 @@ dialTest(
     conversations,
     chatHeader,
     chatAssertion,
+    sendMessage,
+    sendMessageAssertion,
   }) => {
     setTestIds(
       'EPMRTC-5160',
@@ -352,6 +358,7 @@ dialTest(
       'EPMRTC-5155',
       'EPMRTC-1054',
       'EPMRTC-4623',
+      'EPMRTC-5218',
     );
 
     const appVersion = GeneratorUtil.randomApplicationVersion();
@@ -692,6 +699,33 @@ dialTest(
         await chatAssertion.assertNotAllowedModelLabelContent(
           conversation.model.id,
         );
+        await sendMessageAssertion.assertElementState(
+          sendMessage.messageInput,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Hover over "change the agent" button and verify it does not change the color',
+      async () => {
+        await chat.changeAgentBtn.hoverOver();
+        await chatAssertion.assertElementColor(
+          chat.changeAgentBtn,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on "Configure settings" button and verify "Agent is not available" label is displayed',
+      async () => {
+        await chatHeader.conversationSettings.click();
+        await agentSettingAssertion.assertElementText(
+          agentSettings,
+          ExpectedConstants.agentIsNotAvailableLabel,
+        );
+        await conversationSettingsModal.cancelButton.click();
       },
     );
 
@@ -705,9 +739,20 @@ dialTest(
         );
         const notAvailableAgentElement =
           talkToAgents.getNotAvailableAgentElement(agent.reference);
+        const errorDescriptionElement = talkToAgents.getAgentDescription(
+          notAvailableAgentElement,
+        );
         await talkToAgentDialogAssertion.assertElementText(
-          talkToAgents.getAgentDescription(notAvailableAgentElement),
+          errorDescriptionElement,
           ExpectedConstants.notAllowedModelError,
+        );
+        await talkToAgentDialogAssertion.assertElementColor(
+          errorDescriptionElement,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+        );
+        await talkToAgentDialogAssertion.assertElementBorderColors(
+          notAvailableAgentElement,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
         );
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgents.getAgentVersion(notAvailableAgentElement),
