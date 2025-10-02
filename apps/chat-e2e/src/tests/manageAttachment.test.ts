@@ -664,7 +664,7 @@ dialTest(
           file.url = await fileApiHelper.putStringAsFile(
             file.name,
             GeneratorUtil.randomString(100),
-            file.folderName,
+            { parentPath: file.folderName },
           );
         } else if (file.isText) {
           file.url = await fileApiHelper.putStringAsFile(
