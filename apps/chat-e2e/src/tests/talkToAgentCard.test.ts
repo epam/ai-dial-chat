@@ -746,13 +746,16 @@ dialTest(
           errorDescriptionElement,
           ExpectedConstants.notAllowedModelError,
         );
+        const expectedColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textError,
+        );
         await talkToAgentDialogAssertion.assertElementColor(
           errorDescriptionElement,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+          expectedColor,
         );
         await talkToAgentDialogAssertion.assertElementBorderColors(
           notAvailableAgentElement,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+          expectedColor,
         );
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgents.getAgentVersion(notAvailableAgentElement),

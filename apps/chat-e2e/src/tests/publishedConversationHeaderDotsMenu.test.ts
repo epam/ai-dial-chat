@@ -3,6 +3,7 @@ import { BackendEntity } from '@/chat/types/common';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
   Attachment,
@@ -10,6 +11,7 @@ import {
   MenuOptions,
   PseudoModel,
 } from '@/src/testData';
+import { UploadDownloadData } from '@/src/ui/pages';
 import { BucketUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -71,6 +73,7 @@ dialAdminTest(
     const publications: Publication[] = [];
     let expectedTodayConversationId: string;
     let expectedPlaybackConversationId: string;
+    let exportedData: UploadDownloadData;
 
     await dialAdminTest.step(
       'As admin user prepare conversation with image in the response and playback conversation via API',
@@ -136,7 +139,7 @@ dialAdminTest(
           .waitFor();
         await chatHeader.dotsMenu.click();
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.export);
-        const exportedData = await dialHomePage.downloadData(
+        exportedData = await dialHomePage.downloadData(
           () =>
             chatHeaderDropdownMenu.selectMenuOption(
               MenuOptions.withoutAttachments,
@@ -144,7 +147,12 @@ dialAdminTest(
           GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
         await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
+      },
+    );
 
+    await dialSharedWithMeTest.step(
+      'Import the file and verify published conversation is created as a user conversation',
+      async () => {
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
@@ -182,7 +190,7 @@ dialAdminTest(
           .waitFor();
         await chatHeader.dotsMenu.click();
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.export);
-        const exportedData = await dialHomePage.downloadData(
+        exportedData = await dialHomePage.downloadData(
           () =>
             chatHeaderDropdownMenu.selectMenuOption(
               MenuOptions.withAttachments,
@@ -190,7 +198,12 @@ dialAdminTest(
           GeneratorUtil.exportedWithAttachmentsFilename(),
         );
         await downloadAssertion.assertPlainFileIsDownloaded(exportedData);
+      },
+    );
 
+    await dialSharedWithMeTest.step(
+      'Import the file and verify published conversation with attachment is created as a user conversation',
+      async () => {
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
@@ -239,7 +252,9 @@ dialAdminTest(
           },
         );
         const respJson = (await response?.json()) as BackendEntity;
-        const replayConversationId = `${expectedTodayConversationId.substring(0, expectedTodayConversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
+        const replayConversationId = ExpectedConstants.replayConversationById(
+          expectedTodayConversationId,
+        );
         apiAssertion.assertEntityUrl(respJson, replayConversationId);
       },
     );
@@ -315,7 +330,7 @@ dialAdminTest(
         }
         await chatHeader.dotsMenu.click();
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.export);
-        const exportedData = await dialHomePage.downloadData(
+        exportedData = await dialHomePage.downloadData(
           () =>
             chatHeaderDropdownMenu.selectMenuOption(
               MenuOptions.withoutAttachments,
@@ -323,7 +338,12 @@ dialAdminTest(
           GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
         await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
+      },
+    );
 
+    await dialSharedWithMeTest.step(
+      'Import the file and verify published playback conversation is created as a user playback',
+      async () => {
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
@@ -364,7 +384,7 @@ dialAdminTest(
           .waitFor();
         await chatHeader.dotsMenu.click();
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.export);
-        const exportedData = await dialHomePage.downloadData(
+        exportedData = await dialHomePage.downloadData(
           () =>
             chatHeaderDropdownMenu.selectMenuOption(
               MenuOptions.withAttachments,
@@ -372,7 +392,12 @@ dialAdminTest(
           GeneratorUtil.exportedWithAttachmentsFilename(),
         );
         await downloadAssertion.assertPlainFileIsDownloaded(exportedData);
+      },
+    );
 
+    await dialSharedWithMeTest.step(
+      'Import the file and verify published playback conversation with attachment is created as a user playback',
+      async () => {
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
