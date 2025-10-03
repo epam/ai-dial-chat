@@ -28,6 +28,10 @@ export class ToolsetService {
     return DataService.getDataStorage().getToolsetById(id);
   }
 
+  public static getToolsetsByPath(path: string): Observable<ToolsetInfo[]> {
+    return DataService.getDataStorage().getToolsetsByPath(path);
+  }
+
   public static deleteToolset(id: string): Observable<void> {
     return DataService.getDataStorage().deleteToolset(id);
   }

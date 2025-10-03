@@ -194,7 +194,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Open and close Info modal and verify "Add to my workspace" is not visible',
       async () => {
-        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.info);
+        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
         await adminInformationModal.cancelButton.click();
         await adminChatAssertion.assertAddAgentButtonState('hidden');
         await baseAssertion.assertElementState(

@@ -3,10 +3,18 @@ import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
-import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
-import { constructPath, isMyEntity } from '@/src/utils/app/shared-utils';
+import {
+  getIdWithoutRootPathSegments,
+  isConversationId,
+  isFileId,
+} from '@/src/utils/app/id';
+import {
+  constructPath,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { PublicationResource } from '@/src/types/publication';
@@ -18,6 +26,8 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { PublicationSelectors } from '@/src/store/selectors';
+
+import { getFolderIdFromEntityId } from '../folders';
 
 import { Message, PublishActions } from '@epam/ai-dial-shared';
 
@@ -176,3 +186,51 @@ export const getUpdateApplicationGeneralInfoAction$ = (
     }),
   );
 };
+
+export function getPublicationResourceEntityData<T>(
+  resources: PublicationResource[],
+  uploadedUnpublishIdsSet: Set<string>,
+  publicationUrl: string,
+  extraFields?: (resource: PublicationResource) => Partial<T>,
+): T[] {
+  return resources.map((resource) => {
+    const { reviewUrl, action } = resource;
+
+    const apiKey = splitEntityId(reviewUrl).name;
+    const { name, version, modelInfo } = parseEntityApiKey(apiKey, {
+      parseVersion: !isFileId(reviewUrl),
+      parseModel: isConversationId(reviewUrl),
+    });
+
+    const base = {
+      name,
+      id: reviewUrl,
+      folderId: getFolderIdFromEntityId(reviewUrl),
+      publicationInfo: {
+        version,
+        action,
+        isNotExist:
+          action === PublishActions.DELETE &&
+          !isFileId(reviewUrl) &&
+          !uploadedUnpublishIdsSet.has(reviewUrl),
+        publicationUrl,
+      },
+    };
+
+    const extra = extraFields ? extraFields(resource) : {};
+
+    const modelExtra = modelInfo
+      ? {
+          model: modelInfo.model,
+          isPlayback: modelInfo.isPlayback,
+          isReplay: modelInfo.isReplay,
+        }
+      : {};
+
+    return {
+      ...base,
+      ...modelExtra,
+      ...extra,
+    } as T;
+  });
+}
