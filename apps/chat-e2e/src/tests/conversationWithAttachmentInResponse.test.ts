@@ -38,7 +38,7 @@ dialTest(
       async () => {
         const responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          imagePath,
+          { parentPath: imagePath },
         );
         responseImageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
@@ -87,7 +87,9 @@ dialTest(
           Attachment.cloudImageName,
         );
         await chat.sendRequestWithButton(requestContent);
-        await fileApiHelper.putFile(Attachment.cloudImageName, imagePath);
+        await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: imagePath,
+        });
 
         await chatBar.openManageAttachmentsModal();
         for (const segment of imagePathSegments) {
@@ -119,10 +121,9 @@ dialTest(
           Attachment.flowerImageName,
         );
         await chat.sendRequestWithButton(requestContent);
-        await fileApiHelper.putFile(
-          Attachment.flowerImageName,
-          secondImagePath,
-        );
+        await fileApiHelper.putFile(Attachment.flowerImageName, {
+          parentPath: secondImagePath,
+        });
 
         await chatBar.openManageAttachmentsModal();
         for (const segment of secondImagePathSegments) {

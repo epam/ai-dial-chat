@@ -1,8 +1,12 @@
 /* eslint-disable jsx-a11y/alt-text */
 
 /* eslint-disable @next/next/no-img-element */
-import { IconHistoryToggle, IconMessage2 } from '@tabler/icons-react';
-import { memo, useCallback, useMemo, useRef } from 'react';
+import {
+  IconBlocks,
+  IconHistoryToggle,
+  IconMessage2,
+} from '@tabler/icons-react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -21,6 +25,24 @@ import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
 import { DEFAULT_AGENT, LAST_USED_AGENT } from '@/src/constants/chat';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
+const DEFAULT_ICON_RETRY = 2;
+
+interface FallbackIconProps {
+  entityType: string | undefined;
+  size: number;
+}
+
+export function FallbackIcon({ entityType, size }: FallbackIconProps) {
+  const Icon = entityType === EntityType.Toolset ? IconBlocks : IconMessage2;
+  return (
+    <Icon
+      size={Math.round(size / 1.25)}
+      className="dark:invert"
+      stroke={entityType === EntityType.Toolset ? 1.1 : 1.2}
+    />
+  );
+}
 
 interface ModelTooltipProps {
   entityId: string;
@@ -46,9 +68,12 @@ const ModelIconTemplate = memo(
     enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
     const ref = useRef<HTMLImageElement>(null);
+    const [iconError, setIconError] = useState(false);
+    const [iconRetry, setIconRetry] = useState(DEFAULT_ICON_RETRY);
+
     const fallbackUrl =
-      entity?.type === EntityType.Addon
-        ? getThemeIconUrl('default-addon')
+      entity?.type === EntityType.Toolset
+        ? getThemeIconUrl('default-toolset')
         : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
     const applicationTypeSchemas = useAppSelector(
@@ -65,10 +90,20 @@ const ModelIconTemplate = memo(
 
     const handleError = useCallback(() => {
       if (ref.current) {
+        if (iconRetry > 0) {
+          setIconRetry((prev) => prev - 1);
+        } else {
+          setIconError(true);
+        }
         ref.current.src = fallbackUrl;
         ref.current.onerror = null;
       }
-    }, [fallbackUrl]);
+    }, [fallbackUrl, iconRetry]);
+
+    useEffect(() => {
+      setIconError(false);
+      setIconRetry(DEFAULT_ICON_RETRY);
+    }, [entity?.iconUrl]);
 
     if (entity?.id === LAST_USED_AGENT) {
       return <IconHistoryToggle size={size} className="text-secondary" />;
@@ -91,10 +126,11 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none',
+          'relative shrink-0 leading-none',
           entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
           animate && 'animate-bounce',
           enableShrinking && 'shrink',
+          iconError ? 'flex items-center justify-center' : 'inline-block',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
         data-qa="entity-icon"
@@ -103,18 +139,22 @@ const ModelIconTemplate = memo(
           className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon"
           style={{ height: `${size}px`, width: `${size}px` }}
         ></div>
-        <img
-          key={entityId}
-          src={getIconUrl(entity)}
-          width={size}
-          height={size}
-          onError={handleError}
-          data-image-name={description}
-          ref={ref}
-          className="absolute left-0 top-0 z-10 size-full"
-          style={{ height: `${size}px`, width: `${size}px` }}
-          id={entityId}
-        />
+        {iconError ? (
+          <FallbackIcon entityType={entity?.type} size={size} />
+        ) : (
+          <img
+            key={entityId}
+            src={getIconUrl(entity)}
+            width={size}
+            height={size}
+            onError={handleError}
+            data-image-name={description}
+            ref={ref}
+            className="absolute left-0 top-0 z-10 size-full"
+            style={{ height: `${size}px`, width: `${size}px` }}
+            id={entityId}
+          />
+        )}
       </span>
     );
   },
