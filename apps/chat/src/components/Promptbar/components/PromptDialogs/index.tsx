@@ -1,12 +1,15 @@
+import { SharingType } from '@/src/types/share';
+
+import { PublishDialog } from '@/src/components/Chat/Publish/PublishDialog';
+
 import { PromptDeleteDialog } from './PromptDeleteDialog';
 import { PromptMoveToDialog } from './PromptMoveToDialog';
-import { PromptPublishDialog } from './PromptPublishDialog';
 
 export const PromptDialogs: React.FC = () => {
   return (
     <>
       <PromptDeleteDialog />
-      <PromptPublishDialog />
+      <PublishDialog type={SharingType.Prompt} />
       <PromptMoveToDialog />
     </>
   );

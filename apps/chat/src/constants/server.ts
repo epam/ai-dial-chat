@@ -37,4 +37,14 @@ export const mappingServerUrls: Record<string, { response: boolean }> = {
   [ServerSlugs.APPLICATION_LOGS]: {
     response: true,
   },
+  [ServerSlugs.TOOLSET_SIGN_IN]: {
+    response: false,
+  },
+  [ServerSlugs.TOOLSET_SIGN_OUT]: {
+    response: false,
+  },
 };
+
+export enum HeadersNames {
+  CONTENT_SECURITY_POLICY = 'content-security-policy',
+}

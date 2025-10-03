@@ -88,7 +88,7 @@ import {
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { parseConversationApiKey } from '@/src/utils/server/api';
+import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -328,14 +328,19 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                   if (!isEntityIdPublic(conv)) {
                     return conv;
                   }
-                  const parsedApiKey = parseConversationApiKey(
+
+                  const { name, version, modelInfo } = parseEntityApiKey(
                     splitEntityId(conv.id).name,
-                    { parseVersion: true },
+                    { parseVersion: true, parseModel: true },
                   );
+
                   return {
                     ...conv,
-                    name: parsedApiKey.name,
-                    publicationInfo: parsedApiKey.publicationInfo,
+                    ...modelInfo,
+                    name,
+                    publicationInfo: {
+                      version,
+                    },
                   };
                 }),
               }),
@@ -3135,19 +3140,23 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
           return concat(
             of(
               ConversationsActions.addConversations({
-                conversations: conversations.map((conv) =>
-                  publicConversationIds.includes(conv.id)
-                    ? {
-                        ...conv,
-                        ...parseConversationApiKey(
-                          splitEntityId(conv.id).name,
-                          {
-                            parseVersion: true,
-                          },
-                        ),
-                      }
-                    : conv,
-                ),
+                conversations: conversations.map((conv) => {
+                  if (publicConversationIds.includes(conv.id)) {
+                    const { name, version, modelInfo } = parseEntityApiKey(
+                      splitEntityId(conv.id).name,
+                      { parseVersion: true, parseModel: true },
+                    );
+                    return {
+                      ...conv,
+                      ...modelInfo,
+                      name,
+                      publicationInfo: {
+                        version,
+                      },
+                    };
+                  }
+                  return conv;
+                }),
                 suspendHideSidebar: true,
               }),
             ),
@@ -3365,7 +3374,7 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
           PublicationSelectors.selectSelectedPublicationUrl(state$.value);
 
         return concat(
-          of(MarketplaceActions.setDetailsModel()),
+          of(MarketplaceActions.setDetailsEntity()),
           of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADING)),
           iif(
             () => shouldUpload && !!conversation,

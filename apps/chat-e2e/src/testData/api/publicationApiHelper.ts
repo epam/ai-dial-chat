@@ -35,7 +35,7 @@ export class PublicationApiHelper extends BaseApiHelper {
   }
 
   public async listPublishedResources(resourceType: BackendResourceType) {
-    let host: string;
+    let host = '';
     switch (resourceType) {
       case BackendResourceType.CONVERSATION:
         host = API.publishedConversations;
@@ -152,6 +152,11 @@ export class PublicationApiHelper extends BaseApiHelper {
     );
     const responseText = await response.text();
     return JSON.parse(responseText) as Publication;
+  }
+
+  public getPublicationBucket(publication: Publication) {
+    const reviewUrl = publication.resources[0].reviewUrl;
+    return reviewUrl.split('/')[1];
   }
 
   public async createUnpublishRequest(

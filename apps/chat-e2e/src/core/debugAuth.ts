@@ -1,0 +1,98 @@
+import { AuthApiHelper } from '../testData/api/authApiHelper';
+import { AuthUtils } from '../utils/authUtils';
+
+import { BucketApiHelper } from '@/src/testData/api/bucketApiHelper';
+import { DataApiHelper } from '@/src/testData/api/dataApiHelper';
+import { APIRequestContext } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface AuthTokens {
+  sessionToken: string;
+  csrfToken: string;
+  bucket: string;
+  bucketJson?: string;
+  models?: string;
+  addons?: string;
+  themes?: string;
+  recentAddons?: string;
+  recentModels?: string;
+}
+
+export class DebugAuth {
+  private bucketAPI: BucketApiHelper;
+  private dataAPI: DataApiHelper;
+  private authApiHelper: AuthApiHelper;
+
+  constructor(
+    private readonly request: APIRequestContext,
+    private readonly baseUrl: string,
+  ) {
+    this.bucketAPI = new BucketApiHelper(request);
+    this.dataAPI = new DataApiHelper(request);
+    this.authApiHelper = new AuthApiHelper(request);
+  }
+
+  /**
+   * Performs API-based authentication flow mimicking the performance framework
+   */
+  async authenticate(username: string, password: string): Promise<AuthTokens> {
+    try {
+      // Step 1: Get CSRF token
+      const { csrfToken, urlCsrfToken } = await this.authApiHelper.getCsrfToken(
+        this.baseUrl,
+      );
+
+      // Step 2: Get Auth0 dynamic parameters
+      const dynamicParams = await this.authApiHelper.getAuth0DynamicParams(
+        this.baseUrl,
+        urlCsrfToken,
+      );
+
+      // Step 3: Submit credentials to Auth0
+      const authParams = await this.authApiHelper.submitCredentials(
+        username,
+        password,
+        dynamicParams,
+      );
+
+      // Step 4: Complete authentication flow
+      const sessionToken =
+        await this.authApiHelper.completeAuthFlow(authParams);
+
+      // Step 5: Fetch user data
+      const { bucket, bucketJson } = await this.bucketAPI.getBucket();
+      const additionalData = await this.dataAPI.fetchAdditionalData();
+
+      return {
+        sessionToken,
+        csrfToken,
+        bucket,
+        bucketJson,
+        ...additionalData,
+      };
+    } catch (error) {
+      throw new Error(`Debug authentication failed: ${error}`);
+    }
+  }
+
+  /**
+   * Authenticates and saves the storage state to a file
+   */
+  async authenticateAndSaveState(
+    username: string,
+    password: string,
+    statePath: string,
+  ): Promise<AuthTokens> {
+    const authTokens = await this.authenticate(username, password);
+    const storageState = AuthUtils.createStorageState(authTokens, this.baseUrl);
+
+    const dir = path.dirname(statePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFileSync(statePath, JSON.stringify(storageState, null, 2));
+    return authTokens;
+  }
+}

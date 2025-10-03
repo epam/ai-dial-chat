@@ -2,7 +2,7 @@ import config from './chat.playwright.config';
 
 import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
-import { ReporterDescription } from '@playwright/test';
+import { ReporterDescription, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -16,8 +16,8 @@ dotenv.config({ path: './.env.local' });
  * Config used for a local run
  */
 config.retries = 0;
-config.timeout = 300000;
-config.use!.headless = true;
+config.timeout = 3000000;
+config.use!.headless = false;
 config.use!.video = 'on';
 config.use!.trace = 'on';
 (config.reporter as ReporterDescription[]).push([
@@ -36,4 +36,26 @@ if (!process.env.E2E_HOST) {
   };
 }
 
+config.projects = [
+  {
+    name: 'debug_auth',
+    fullyParallel: true,
+    testMatch: /debugAuth\.ts/,
+  },
+  {
+    name: 'cleanup',
+    testMatch: /cleanup\.ts/,
+    dependencies: ['debug_auth'],
+  },
+  {
+    name: 'chat e2e',
+    testIgnore:
+      /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
+    use: {
+      ...devices['Desktop Chrome'],
+      viewport: { width: 1536, height: 864 },
+    },
+    dependencies: ['cleanup'],
+  },
+];
 export default config;

@@ -6,6 +6,7 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
+import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
@@ -53,6 +54,12 @@ export const Promptbar = () => {
 
   const filteredPrompts = useAppSelector(filteredPromptsSelector);
   const filteredFolders = useAppSelector(filteredFoldersSelector);
+
+  const rootFilteredPrompts = useMemo(
+    () =>
+      filteredPrompts.filter((prompt) => prompt.folderId === getPromptRootId()),
+    [filteredPrompts],
+  );
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
@@ -121,23 +128,21 @@ export const Promptbar = () => {
   );
 
   return (
-    <>
-      <Sidebar<PromptInfo>
-        featureType={FeatureType.Prompt}
-        side="right"
-        isOpen={showPromptbar}
-        itemComponent={<Prompts prompts={filteredPrompts} />}
-        folderComponent={<PromptFolders />}
-        filteredItems={filteredPrompts}
-        filteredFolders={filteredFolders}
-        searchTerm={searchTerm}
-        searchFilters={searchFilters}
-        onSearchTerm={handleSearchTerm}
-        onSearchFilters={handleSearchFilters}
-        onDrop={handleDrop}
-        footerComponent={<PromptbarSettings />}
-        areEntitiesUploaded={areEntitiesUploaded}
-      />
-    </>
+    <Sidebar<PromptInfo>
+      featureType={FeatureType.Prompt}
+      side={SidebarSide.Right}
+      isOpen={showPromptbar}
+      itemComponent={<Prompts prompts={rootFilteredPrompts} />}
+      folderComponent={<PromptFolders />}
+      filteredItems={rootFilteredPrompts}
+      filteredFolders={filteredFolders}
+      searchTerm={searchTerm}
+      searchFilters={searchFilters}
+      onSearchTerm={handleSearchTerm}
+      onSearchFilters={handleSearchFilters}
+      onDrop={handleDrop}
+      footerComponent={<PromptbarSettings />}
+      areEntitiesUploaded={areEntitiesUploaded}
+    />
   );
 };

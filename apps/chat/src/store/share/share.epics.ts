@@ -38,7 +38,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { hasWritePermission } from '@/src/utils/app/share';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
@@ -79,7 +79,10 @@ import {
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { DeleteType } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
@@ -137,9 +140,12 @@ const shareConversationEpic: AppEpic = (action$) =>
       const { apiKey, bucket, parentPath, name } = splitEntityId(
         payload.resourceId,
       );
+      const { modelInfo } = parseEntityApiKey(payload.resourceId, {
+        parseModel: true,
+      });
 
       return ConversationService.getConversation({
-        ...parseConversationApiKey(payload.resourceId),
+        ...modelInfo,
         id: payload.resourceId,
         name,
         folderId: constructPath(apiKey, bucket, parentPath),
@@ -983,13 +989,14 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               state$.value,
             );
 
-            const acceptedApplicationReference =
-              acceptedId && modelsMap[acceptedId]?.reference;
+            const acceptedApplication =
+              (acceptedId && modelsMap[acceptedId]) || undefined;
 
-            if (acceptedApplicationReference) {
+            if (acceptedApplication) {
               updateSharedActions.push(
-                MarketplaceActions.setDetailsModel({
-                  reference: acceptedApplicationReference,
+                MarketplaceActions.setDetailsEntity({
+                  reference: acceptedApplication.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
                   isSuggested: false,
                 }),
               );
@@ -1293,7 +1300,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             EMPTY,
           ),
 
-          of(MarketplaceActions.setDetailsModel()),
+          of(MarketplaceActions.setDetailsEntity()),
         );
       }
 

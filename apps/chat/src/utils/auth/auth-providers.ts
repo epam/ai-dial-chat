@@ -40,6 +40,7 @@ const allProviders: (Provider | boolean)[] = [
     !!process.env.AUTH_AZURE_B2C_TENANT_ID &&
     !!process.env.AUTH_AZURE_B2C_USER_FLOW &&
     AzureB2CProvider({
+      issuer: process.env.AUTH_AZURE_B2C_ISSUER,
       clientId: process.env.AUTH_AZURE_B2C_CLIENT_ID,
       clientSecret: process.env.AUTH_AZURE_B2C_CLIENT_SECRET,
       tenantId: process.env.AUTH_AZURE_B2C_TENANT_ID,

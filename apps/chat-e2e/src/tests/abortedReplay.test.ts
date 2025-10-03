@@ -23,6 +23,7 @@ dialTest.beforeAll(async () => {
 dialTest(
   'Replay after Stop generating.\n' +
     'Share menu item is not available for the chat in Replay mode.\n' +
+    'Header context menu options for chat in Replay mode.\n' +
     'No Edit, Delete and Clear buttons when chat is in replay mode.\n' +
     'Publish item is not available in context menu for the chat in Replay mode',
   async ({
@@ -50,6 +51,7 @@ dialTest(
     setTestIds(
       'EPMRTC-512',
       'EPMRTC-3451',
+      'EPMRTC-4735',
       'EPMRTC-1448',
       'EPMRTC-1132',
       'EPMRTC-3452',
@@ -130,6 +132,17 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step('Verify header dots menu options', async () => {
+      await chatHeader.dotsMenu.click();
+      await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+        MenuOptions.rename,
+        MenuOptions.duplicate,
+        MenuOptions.export,
+        MenuOptions.moveTo,
+        MenuOptions.delete,
+      );
+    });
 
     await dialTest.step(
       'Verify no "Edit", "Delete", "Set message template" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',
@@ -271,33 +284,19 @@ dialTest(
     setTestIds('EPMRTC-1132');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
-    let thirdConversation: Conversation;
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     const firstRandomModel = GeneratorUtil.randomArrayElement(models);
     const secondRandomModel = GeneratorUtil.randomArrayElement(
       models.filter((m) => m.id !== firstRandomModel.id),
     );
-    const thirdRandomModel = GeneratorUtil.randomArrayElement(
+    const newRandomModel = GeneratorUtil.randomArrayElement(
       models.filter(
         (m) => m.id !== firstRandomModel.id && m.id !== secondRandomModel.id,
       ),
     );
-    const randomAddon = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getAddons(),
-    );
-    const newRandomModel = GeneratorUtil.randomArrayElement(
-      models.filter(
-        (m) =>
-          m.id !== firstRandomModel.id &&
-          m.id !== secondRandomModel.id &&
-          m.id !== thirdRandomModel.id,
-      ),
-    );
     const expectedSecondModelIcon =
       iconApiHelper.getEntityIcon(secondRandomModel);
-    const expectedThirdModelIcon =
-      iconApiHelper.getEntityIcon(thirdRandomModel);
 
     await dialTest.step(
       'Prepare conversation with different models to replay',
@@ -308,15 +307,9 @@ dialTest(
         secondConversation =
           conversationData.prepareDefaultConversation(secondRandomModel);
         conversationData.resetData();
-        thirdConversation = conversationData.prepareAddonsConversation(
-          thirdRandomModel,
-          [randomAddon.id],
-        );
-        conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
           firstConversation,
           secondConversation,
-          thirdConversation,
         );
         replayConversation =
           conversationData.preparePartiallyReplayedConversation(
@@ -331,7 +324,6 @@ dialTest(
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
           firstRandomModel,
           secondRandomModel,
-          thirdRandomModel,
           newRandomModel,
         );
         await localStorageManager.setChatCollapsedSection(
@@ -364,10 +356,6 @@ dialTest(
         await chatMessagesAssertion.assertMessageIcon(
           4,
           expectedSecondModelIcon,
-        );
-        await chatMessagesAssertion.assertMessageIcon(
-          6,
-          expectedThirdModelIcon,
         );
       },
     );
@@ -519,6 +507,9 @@ dialTest(
       'Proceed replaying and verify response received',
       async () => {
         await context.setOffline(false);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.proceedReplaying(true);
         const generatedContent = await chatMessages.getGeneratedChatContent(
           conversation.messages.length,

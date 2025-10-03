@@ -44,14 +44,18 @@ dialSharedWithMeTest(
   async ({
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationAssertion,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalShareUserChatMessages,
+    additionalShareUserChatHeader,
     additionalShareUserNotFound,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConfirmationDialog,
-    additionalShareUserToast,
+    additionalShareUserToastAssertion,
+    additionalShareUserChatSettingsTooltip,
+    baseAssertion,
     setTestIds,
   }) => {
     dialSharedWithMeTest.slow();
@@ -63,11 +67,16 @@ dialSharedWithMeTest(
       'EPMRTC-2722',
       'EPMRTC-1877',
     );
+    const randomModel = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getModels().filter(
+        (m) => m.features?.temperature && m.features?.systemPrompt,
+      ),
+    );
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
     await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
-      conversation = conversationData.prepareDefaultConversation();
+      conversation = conversationData.prepareDefaultConversation(randomModel);
       conversationData.resetData();
       await dataInjector.createConversations([conversation]);
       shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
@@ -79,14 +88,13 @@ dialSharedWithMeTest(
       'Change share link, open it by another user and verify error message is shown',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink + 'abc',
           ),
         );
-        const errorMessage = await additionalShareUserToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
-          .toBe(ExpectedConstants.shareInviteDoesNotExist);
+        await additionalShareUserToastAssertion.assertToastMessage(
+          ExpectedConstants.shareInviteDoesNotExist,
+        );
       },
     );
 
@@ -94,7 +102,7 @@ dialSharedWithMeTest(
       'Open share link by another user and verify chat stays under Shared with me and is selected automatically',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -102,14 +110,9 @@ dialSharedWithMeTest(
           selectedSharedConversationName: conversation.name,
           skipSidebars: true,
         });
-        await expect
-          .soft(
-            additionalShareUserSharedWithMeConversations.selectedEntity(
-              conversation.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await additionalShareUserSharedWithMeConversationAssertion.assertSelectedEntity(
+          conversation.name,
+        );
       },
     );
 
@@ -135,24 +138,25 @@ dialSharedWithMeTest(
         await dataInjector.updateConversations([conversation]);
 
         await additionalShareUserDialHomePage.reloadPage();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          skipSidebars: true,
+        });
         await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
         await additionalShareUserChatMessages.getChatMessage(4).waitFor();
 
-        //TODO: add setting verification when clarified where to display (TBD: do we need to show settings icon for external entities)
-        // await additionalShareUserChatHeader.hoverOverChatModel();
-        // const promptInfo =
-        //   await additionalShareUserChatInfoTooltip.getPromptInfo();
-        // expect
-        //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
-        //   .toBe(updatedPrompt);
-        //
-        // const tempInfo =
-        //   await additionalShareUserChatInfoTooltip.getTemperatureInfo();
-        // expect
-        //   .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        //   .toBe(updatedTemp.toString());
+        await additionalShareUserChatHeader.hoverOverChatSettings();
+        await baseAssertion.assertElementText(
+          additionalShareUserChatSettingsTooltip.promptInfo,
+          updatedPrompt,
+          ExpectedMessages.chatInfoPromptIsValid,
+        );
+        await baseAssertion.assertElementText(
+          additionalShareUserChatSettingsTooltip.temperatureInfo,
+          updatedTemp,
+          ExpectedMessages.chatInfoTemperatureIsValid,
+        );
       },
     );
 
@@ -163,25 +167,19 @@ dialSharedWithMeTest(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });
-        await expect
-          .soft(
-            additionalShareUserSharedWithMeConversations.getEntityByName(
-              conversation.name,
-            ),
-            ExpectedMessages.conversationIsNotVisible,
-          )
-          .toBeHidden();
-        await expect
-          .soft(
-            additionalShareUserNotFound.getElementLocator(),
-            ExpectedMessages.conversationIsSelected,
-          )
-          .toBeHidden();
+        await additionalShareUserSharedWithMeConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'hidden',
+        );
+        await additionalShareUserSharedWithMeConversationAssertion.assertElementState(
+          additionalShareUserNotFound,
+          'hidden',
+        );
       },
     );
   },
@@ -227,7 +225,7 @@ dialSharedWithMeTest(
         for (let i = 1; i <= 2; i++) {
           await additionalShareUserDialHomePage.openHomePage(
             { iconsToBeLoaded: [defaultModel!.iconUrl] },
-            ExpectedConstants.sharedConversationUrl(
+            ExpectedConstants.sharedSideBarEntityUrl(
               shareByLinkResponse.invitationLink,
             ),
           );
@@ -308,7 +306,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -475,7 +473,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -829,7 +827,7 @@ dialSharedWithMeTest(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
-          MenuOptions.delete,
+          MenuOptions.unshare,
         );
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
@@ -1018,7 +1016,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkConversationResponse.invitationLink,
           ),
         );
@@ -1032,7 +1030,8 @@ dialSharedWithMeTest(
 );
 
 dialSharedWithMeTest(
-  'Shared with me. Replay chat',
+  'Shared with me. Replay chat.\n' +
+    'Header context menu options for chats from folder inside Shared with me section',
   async ({
     conversationData,
     dataInjector,
@@ -1045,9 +1044,11 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     setTestIds,
     additionalShareUserSharedFolderConversations,
+    additionalShareUserChatHeader,
+    additionalShareUserConversationDropdownMenuAssertion,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1846');
+    setTestIds('EPMRTC-1846', 'EPMRTC-4777');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -1072,7 +1073,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open app by another user and verify Replay conversation creation for shared chat via dropdown menu',
+      'Open app by another user, open chat header dots menu and verify available options',
       async () => {
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
@@ -1085,6 +1086,20 @@ dialSharedWithMeTest(
           conversationInFolder.folders.name,
           conversation.name,
         );
+        await additionalShareUserChatHeader.dotsMenu.click();
+        await additionalShareUserConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify Replay conversation creation for shared chat via dropdown menu',
+      async () => {
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
@@ -1126,6 +1141,7 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Metadata for chat from Shared with me section.\n' +
+    'Header context menu options for chats from root from Shared with me section.\n' +
     'Shared with me. Playback chat',
   async (
     {
@@ -1135,6 +1151,7 @@ dialSharedWithMeTest(
       additionalUserShareApiHelper,
       additionalShareUserDialHomePage,
       additionalShareUserSharedWithMeConversations,
+      additionalShareUserChatHeader,
       additionalShareUserSharedWithMeConversationDropdownMenu,
       additionalShareUserInformationModal,
       additionalShareUserInformationModalAssertion,
@@ -1142,11 +1159,12 @@ dialSharedWithMeTest(
       setTestIds,
       additionalShareUserLocalStorageManager,
       baseAssertion,
+      additionalShareUserConversationDropdownMenuAssertion,
       additionalShareUserConversationAssertion,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-5553', 'EPMRTC-1847');
+    setTestIds('EPMRTC-5553', 'EPMRTC-4739', 'EPMRTC-1847');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const currentDate = DateUtil.getCurrentLocalDate();
@@ -1163,7 +1181,7 @@ dialSharedWithMeTest(
     });
 
     await dialSharedWithMeTest.step(
-      'Open app by another user, select "Info" option from the dropdown menu and verify modal data',
+      'Open app by another user, open header dots menu and verify available options',
       async () => {
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
@@ -1172,6 +1190,22 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.selectEntity(
           conversation.name,
         );
+        await additionalShareUserChatHeader.dotsMenu.click();
+        await additionalShareUserConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+          MenuOptions.unshare,
+          MenuOptions.info,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Select "Info" option from the dropdown menu and verify modal data',
+      async () => {
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
@@ -1256,7 +1290,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -1318,7 +1352,7 @@ dialTest(
           username,
           process.env.E2E_PASSWORD!,
           false,
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );

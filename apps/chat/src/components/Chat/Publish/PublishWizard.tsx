@@ -17,6 +17,7 @@ import {
   getIdWithoutRootPathSegments,
   isApplicationId,
 } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   createTargetUrl,
   getApplicationPublishResources,
@@ -297,12 +298,7 @@ export function PublishModal<
                   action: publishAction,
                   sourceUrl: item.id,
                   targetUrl: createTargetUrl(
-                    type === SharingType.ConversationFolder ||
-                      type === SharingType.Conversation
-                      ? FeatureType.Chat
-                      : type === SharingType.Application
-                        ? FeatureType.Application
-                        : FeatureType.Prompt,
+                    EnumMapper.getFeatureTypeBySharingType(type),
                     trimmedPath,
                     type === SharingType.ConversationFolder ||
                       type === SharingType.PromptFolder
@@ -527,7 +523,10 @@ export function PublishModal<
                 </section>
               )}
             </div>
-            <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
+            <section
+              className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5"
+              data-qa="rules-container"
+            >
               <h2
                 className="mb-4 flex gap-2 font-semibold"
                 data-qa="allow-access-label"
@@ -544,7 +543,7 @@ export function PublishModal<
                 ))
               )}
               {!isRulesLoading && path && (
-                <div data-qa="rules-container">
+                <div>
                   <div
                     className="mb-1 text-xs text-secondary"
                     data-qa="published-path"

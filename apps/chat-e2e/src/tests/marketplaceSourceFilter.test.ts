@@ -501,8 +501,6 @@ dialSharedWithMeTest(
           } else {
             await additionalShareUserNavigationPanel.goToMyWorkspace();
             await additionalShareUserMarketplacePage.waitForPageLoaded();
-            //remove next line when fixed https://github.com/epam/ai-dial-chat/issues/3303
-            await additionalShareUserMarketplaceAgentsSection.goTop();
             actualAgents =
               await additionalShareUserMarketplaceAgentsSection.getAllAgents();
             baseAssertion.assertValue(

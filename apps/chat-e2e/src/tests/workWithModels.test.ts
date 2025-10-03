@@ -408,7 +408,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(simpleRequestModel!);
+        await talkToAgentDialog.selectAgent(simpleRequestModel!, {
+          isHttpMethodTriggered: false,
+        });
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
         await sendMessage.stopGenerating.click();

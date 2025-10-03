@@ -1,3 +1,5 @@
+import { BackendEntity, EntityType } from '@/chat/types/common';
+import { DialAIEntityModel } from '@/chat/types/models';
 import {
   Attachment,
   CustomApplicationBuilder,
@@ -11,24 +13,23 @@ import {
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-export interface CustomAppAttributes {
-  name: string;
-  version: string;
+export interface CustomAppAttributes extends DialAIEntityModel {
+  backendEntity: BackendEntity;
 }
 
 export class CustomApplicationPublishingUtil {
   private customApplicationBuilder: CustomApplicationBuilder;
   private applicationApiHelper: ApplicationApiHelper;
-  private publishRequestBuilder: PublishRequestBuilder;
-  private publicationApiHelper: PublicationApiHelper;
   private fileApiHelper: FileApiHelper;
+  private publishRequestBuilder?: PublishRequestBuilder;
+  private publicationApiHelper?: PublicationApiHelper;
 
   constructor(
     customApplicationBuilder: CustomApplicationBuilder,
     applicationApiHelper: ApplicationApiHelper,
-    publishRequestBuilder: PublishRequestBuilder,
-    publicationApiHelper: PublicationApiHelper,
     fileApiHelper: FileApiHelper,
+    publishRequestBuilder?: PublishRequestBuilder,
+    publicationApiHelper?: PublicationApiHelper,
   ) {
     this.customApplicationBuilder = customApplicationBuilder;
     this.applicationApiHelper = applicationApiHelper;
@@ -37,35 +38,31 @@ export class CustomApplicationPublishingUtil {
     this.fileApiHelper = fileApiHelper;
   }
 
-  public async publishApplicationWithVersion(
-    appName?: string,
-    ...namesToExclude: string[]
-  ): Promise<CustomAppAttributes> {
-    appName = appName ?? GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion(namesToExclude);
-    const applicationWithVersionModel = this.customApplicationBuilder
-      .withDisplayName(appName)
-      .withDisplayVersion(appVersion)
-      .build();
-    const app = await this.applicationApiHelper.createApplication(
-      applicationWithVersionModel,
-    );
-    const publishRequest = this.publishRequestBuilder
-      .withName(GeneratorUtil.randomPublicationRequestName())
-      .withApplicationResource(app, PublishActions.ADD)
-      .build();
+  public async publishApplicationWithVersion(options?: {
+    appName?: string;
+    namesToExclude?: string[];
+  }): Promise<CustomAppAttributes> {
+    const appData = await this.createCustomApp(options);
+    const publishRequestBuilder = this.publishRequestBuilder!.withName(
+      GeneratorUtil.randomPublicationRequestName(),
+    ).withApplicationResource(appData.backendEntity, PublishActions.ADD);
+    if (appData.iconUrl) {
+      publishRequestBuilder.withFileResource(
+        appData.iconUrl,
+        PublishActions.ADD_IF_ABSENT,
+      );
+    }
     const appPublication =
-      await this.publicationApiHelper.createPublishRequest(publishRequest);
-    await this.publicationApiHelper.approveRequest(appPublication);
-    return {
-      name: appName,
-      version: appVersion,
-    };
+      await this.publicationApiHelper!.createPublishRequest(
+        publishRequestBuilder.build(),
+      );
+    await this.publicationApiHelper!.approveRequest(appPublication);
+    return appData;
   }
 
   public async uploadApplicationIcon() {
     const filename = `${GeneratorUtil.randomString(7)}.svg`;
-    const iconUrl = await this.fileApiHelper.putFileWithCustomName(
+    const iconUrl = await this.fileApiHelper!.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,
     );
@@ -73,5 +70,41 @@ export class CustomApplicationPublishingUtil {
       iconUrl.substring(0, iconUrl.lastIndexOf('/') + 1) +
       encodeURIComponent(filename)
     );
+  }
+
+  public async createCustomApp(options?: {
+    appName?: string;
+    inputAttachmentTypes?: string[];
+    hasIcon?: boolean;
+    namesToExclude?: string[];
+  }): Promise<CustomAppAttributes> {
+    const appName = options?.appName ?? GeneratorUtil.randomApplicationName();
+    const appVersion = GeneratorUtil.randomApplicationVersion(
+      options?.namesToExclude,
+    );
+    const builder = this.customApplicationBuilder
+      .withDisplayName(appName)
+      .withDisplayVersion(appVersion)
+      .withInputAttachmentTypes(...(options?.inputAttachmentTypes ?? []));
+
+    let iconUrl;
+    if (options?.hasIcon) {
+      iconUrl = await this.uploadApplicationIcon();
+      builder.withIconUrl(iconUrl);
+    }
+
+    const applicationModel = builder.build();
+    const backendEntity =
+      await this.applicationApiHelper.createApplication(applicationModel);
+    return {
+      id: backendEntity.url,
+      name: appName,
+      version: appVersion,
+      reference: applicationModel.reference!,
+      type: EntityType.Application,
+      isDefault: false,
+      iconUrl: iconUrl,
+      backendEntity: backendEntity,
+    };
   }
 }

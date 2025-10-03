@@ -3,13 +3,12 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
-  API,
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
   MenuOptions,
 } from '@/src/testData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -287,7 +286,9 @@ dialTest(
       'visible',
     );
     await selectFolderModal.clickSelectFolderButton({
-      triggeredApiHost: API.promptHost,
+      triggeredApiHost: ItemUtil.getEncodedItemId(
+        `${newFolderName}/${prompt.name}`,
+      ),
     });
     await selectFolderModalAssertion.assertElementState(
       selectFolderModal,
@@ -340,7 +341,9 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
     await selectFolderModal.clickSelectFolderButton({
-      triggeredApiHost: API.promptHost,
+      triggeredApiHost: ItemUtil.getEncodedItemId(
+        `${ExpectedConstants.newFolderWithIndexTitle(1)}/${prompt.name}`,
+      ),
     });
     await selectFolderModalAssertion.assertElementState(
       selectFolderModal,

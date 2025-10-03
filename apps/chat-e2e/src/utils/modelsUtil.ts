@@ -1,7 +1,6 @@
 import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/chat/utils/app/models';
@@ -63,19 +62,11 @@ export class ModelsUtil {
     );
   }
 
-  public static getAddons() {
-    return JSON.parse(process.env.ADDONS!) as DialAIEntityModel[];
-  }
-
   public static getLatestModels(excludeSlowModels = true) {
     if (excludeSlowModels) {
       return this.getLatestEntities(EntityType.Model, this.slowModelIds);
     }
     return this.getLatestEntities(EntityType.Model);
-  }
-
-  public static getLatestAssistants() {
-    return this.getLatestEntities(EntityType.Assistant);
   }
 
   public static getLatestApplications() {
@@ -87,10 +78,6 @@ export class ModelsUtil {
       return this.getEntities(EntityType.Model, this.slowModelIds);
     }
     return this.getEntities(EntityType.Model);
-  }
-
-  public static getAssistants() {
-    return this.getEntities(EntityType.Assistant);
   }
 
   public static getApplications() {
@@ -121,10 +108,6 @@ export class ModelsUtil {
     return doesModelAllowTemperature(model);
   }
 
-  public static doesModelAllowAddons(model: DialAIEntityModel | undefined) {
-    return doesModelAllowAddons(model);
-  }
-
   public static getModelsWithoutAttachment() {
     return ModelsUtil.getModels().filter(
       (m) => m.inputAttachmentTypes === undefined,
@@ -133,7 +116,9 @@ export class ModelsUtil {
 
   public static getLatestModelsWithAttachment(excludeSlowModels = true) {
     return ModelsUtil.getLatestModels(excludeSlowModels).filter(
-      (m) => m.inputAttachmentTypes !== undefined,
+      (m) =>
+        m.inputAttachmentTypes !== undefined &&
+        m.inputAttachmentTypes.length > 0,
     );
   }
 
@@ -181,37 +166,9 @@ export class ModelsUtil {
     return link;
   }
 
-  public static getOpenAIEntitySelectedAddons(entityId: string) {
-    const allEntities = ModelsUtil.getOpenAIEntities();
-    const entityObject = allEntities.find((e) => e.id === entityId);
-    const selectedAddons: DialAIEntityModel[] = [];
-    const entityAddonObjects = entityObject!.selectedAddons;
-    if (entityAddonObjects) {
-      const allAddons = ModelsUtil.getAddons();
-      entityAddonObjects.forEach((addonId) => {
-        selectedAddons.push(allAddons.find((a) => a.id === addonId)!);
-      });
-    }
-    return selectedAddons;
-  }
-
-  public static getAddon(addonId: string) {
-    return ModelsUtil.getAddons().find((a) => a.id === addonId);
-  }
-
-  public static getAssistant(assistantId: string) {
-    return ModelsUtil.getAssistants().find((a) => a.id === assistantId);
-  }
-
   public static getRecentModelIds(): string[] {
     return process.env.RECENT_MODELS !== 'undefined'
       ? JSON.parse(process.env.RECENT_MODELS!)
-      : [];
-  }
-
-  public static getRecentAddonIds(): string[] {
-    return process.env.RECENT_ADDONS !== 'undefined'
-      ? JSON.parse(process.env.RECENT_ADDONS!)
       : [];
   }
 

@@ -53,7 +53,7 @@ dialSharedWithMeTest(
       'Open share link by another user and verify prompt stays under expanded "Shared with me" section and prompt details popup is opened',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
@@ -117,14 +117,14 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Delete prompt from "Shared with me" section and verify it is not visible any more',
+      'Unshare prompt from "Shared with me" section and verify it is not visible any more',
       async () => {
         await additionalShareUserSharedWithMePrompts.openEntityDropdownMenu(
           prompt.name,
         );
         await additionalShareUserSharedWithMePrompts
           .getDropdownMenu()
-          .selectMenuOption(MenuOptions.delete);
+          .selectMenuOption(MenuOptions.unshare);
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });

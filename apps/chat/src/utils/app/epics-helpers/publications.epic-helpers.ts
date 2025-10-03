@@ -21,7 +21,7 @@ import { PublicationSelectors } from '@/src/store/selectors';
 
 import { Message, PublishActions } from '@epam/ai-dial-shared';
 
-export const getSetUpdatedItemsToApproveAction = (
+export const getSetUpdatedItemsToApproveAction$ = (
   state: RootState,
   oldPublicationResources: PublicationResource[],
   newPublicationResources: PublicationResource[],
@@ -51,7 +51,7 @@ export const getSetUpdatedItemsToApproveAction = (
   return EMPTY;
 };
 
-export const addMessageAttachmentsToPublication = (
+export const addMessageAttachmentsToPublication$ = (
   message: Message,
   conversationFolderId: string,
   publicationUrl: string,
@@ -125,7 +125,7 @@ export const addMessageAttachmentsToPublication = (
   );
 };
 
-export const getUpdateApplicationGeneralInfoAction = (
+export const getUpdateApplicationGeneralInfoAction$ = (
   oldApplication: CustomApplicationModel,
   newApplication: CustomApplicationModel,
 ) => {

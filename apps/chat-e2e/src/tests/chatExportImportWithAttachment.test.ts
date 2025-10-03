@@ -167,7 +167,7 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -397,7 +397,7 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -537,11 +537,13 @@ dialTest(
     fileApiHelper,
     dataInjector,
     dialHomePage,
+    toastAssertion,
     conversations,
     conversationDropdownMenu,
     chatBar,
     confirmationDialog,
     chat,
+    page,
     chatMessages,
     chatAssertion,
     agentInfo,
@@ -576,6 +578,7 @@ dialTest(
               attachmentUrl: [requestDocUrl],
             },
           });
+        conversationData.resetData();
         replayConversation =
           conversationData.prepareDefaultReplayConversation(
             historyConversation,
@@ -615,6 +618,7 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
+        await toastAssertion.assertToastIsVisible();
         await conversationAssertion.assertEntityState(
           { name: replayConversation.name },
           'visible',
@@ -633,7 +637,11 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
+        const respPromise = page.waitForResponse((resp) =>
+          resp.url().includes(API.moveHost),
+        );
         const replayRequests = await chat.startReplayForDifferentModels();
+        await respPromise;
         apiAssertion.verifyRequestAttachments(
           replayRequests[0],
           requestImageUrl,
@@ -701,11 +709,11 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         secondResponseImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         historyConversation =
           conversationData.prepareHistoryConversationWithAttachmentsInResponse({

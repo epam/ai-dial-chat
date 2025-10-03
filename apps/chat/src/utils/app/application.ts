@@ -1,6 +1,6 @@
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
-import { ApiUtils, getApplicationApiKey } from '@/src/utils/server/api';
+import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -15,8 +15,10 @@ import {
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
-import { QuickAppConfig } from '@/src/types/quick-apps';
+import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
@@ -26,6 +28,7 @@ import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
@@ -59,7 +62,7 @@ export const getGeneratedApplicationId = (
   if (application.folderId) {
     return constructPath(
       application.folderId,
-      getApplicationApiKey(application),
+      getMarketplaceEntityApiKey(application),
     );
   }
 
@@ -67,7 +70,7 @@ export const getGeneratedApplicationId = (
     getApplicationRootId(
       application.id ? getEntityBucket({ id: application.id }) : undefined,
     ),
-    getApplicationApiKey(application),
+    getMarketplaceEntityApiKey(application),
   );
 };
 
@@ -87,15 +90,37 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  const docUrls = properties?.document_relative_url as string[] | undefined;
-  if (docUrls?.length) {
-    return {
-      ...properties,
-      document_relative_url: docUrls.map((url) => ApiUtils.encodeApiUrl(url)),
-    };
+  if (!properties) {
+    return properties;
   }
 
-  return properties;
+  let documentsRelativeUrls:
+    | QuickApp2Config['contexts']
+    | QuickAppConfig['document_relative_url'];
+  const propertiesQA = properties as QuickAppConfig;
+  const propertiesQA2 = properties as QuickApp2Config;
+  const result = {
+    ...properties,
+  };
+
+  if (propertiesQA2.contexts) {
+    documentsRelativeUrls = propertiesQA2.contexts.map((context) => ({
+      ...context,
+      url: ApiUtils.encodeApiUrl(context.url),
+    }));
+    (result as QuickApp2Config).contexts = documentsRelativeUrls;
+  } else {
+    if (!propertiesQA.document_relative_url) {
+      (result as QuickAppConfig).document_relative_url = [];
+    } else {
+      documentsRelativeUrls = propertiesQA.document_relative_url.map((url) =>
+        ApiUtils.encodeApiUrl(url),
+      );
+      (result as QuickAppConfig).document_relative_url = documentsRelativeUrls;
+    }
+  }
+
+  return result;
 };
 
 export const convertApplicationToApi = (
@@ -148,31 +173,50 @@ export const convertApplicationToApi = (
 
   return {
     ...commonData,
-    endpoint: applicationData.completionUrl,
+    endpoint: applicationData.completionUrl ?? '',
   };
 };
 
 // migrate document_relative_url: string to document_relative_url: string[]
-type DocumentRelativeUrlApiType = string[] | string | undefined;
 export const mapApplicationPropertiesFromApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
-  const documentsRelativeUrls =
-    properties?.document_relative_url as DocumentRelativeUrlApiType;
-
-  if (documentsRelativeUrls) {
-    const documentsRelativeUrlArr = Array.isArray(documentsRelativeUrls)
-      ? documentsRelativeUrls
-      : [documentsRelativeUrls];
-
-    return {
-      ...properties,
-      document_relative_url: documentsRelativeUrlArr.map((url) =>
-        ApiUtils.decodeApiUrl(url),
-      ),
-    };
+  if (!properties) {
+    return properties;
   }
-  return properties;
+
+  let documentsRelativeUrls:
+    | QuickApp2Config['contexts']
+    | QuickAppConfig['document_relative_url'];
+  const propertiesQA = properties as QuickAppConfig;
+  const propertiesQA2 = properties as QuickApp2Config;
+  const result = {
+    ...properties,
+  };
+
+  if (propertiesQA2.contexts) {
+    documentsRelativeUrls = propertiesQA2.contexts.map((context) => ({
+      ...context,
+      url: ApiUtils.decodeApiUrl(context.url),
+    }));
+    (result as QuickApp2Config).contexts = documentsRelativeUrls;
+  } else {
+    if (!propertiesQA.document_relative_url) {
+      (result as QuickAppConfig).document_relative_url = [];
+    } else {
+      const documentsRelativeUrlArr = Array.isArray(
+        propertiesQA.document_relative_url,
+      )
+        ? propertiesQA.document_relative_url
+        : [propertiesQA.document_relative_url];
+      documentsRelativeUrls = documentsRelativeUrlArr.map(
+        ApiUtils.decodeApiUrl,
+      );
+      (result as QuickAppConfig).document_relative_url = documentsRelativeUrls;
+    }
+  }
+
+  return result;
 };
 
 export const convertApplicationFromApi = (
@@ -217,15 +261,19 @@ export const isQuickApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===
   DefaultsService.get('quickAppsSchemaId', DEFAULT_QUICK_APPS_SCHEMA_ID);
 
+export const isQuickApp2 = (entity: DialAIEntityModel) =>
+  entity.applicationTypeSchemaId ===
+  DefaultsService.get('quickAppsSchemaId2', DEFAULT_QUICK_APPS_SCHEMA_2_ID);
+
 export const isExternalApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===
   DefaultsService.get('externalAppsSchemaId', DEFAULT_EXTERNAL_APPS_SCHEMA_ID);
 
-export const getModelDescription = (entity: DialAIEntityModel) => {
+export const getModelDescription = (entity: { description?: string }) => {
   return entity.description ?? '';
 };
 
-export const getModelShortDescription = (entity: DialAIEntityModel) =>
+export const getModelShortDescription = (entity: { description?: string }) =>
   getModelDescription(entity).split(DESCRIPTION_DELIMITER_REGEX)[0];
 
 export const getQuickAppConfig = (
@@ -241,8 +289,20 @@ export const getQuickAppConfig = (
       };
 };
 
+export const getQuickApp2Config = (
+  entity: CustomApplicationModel,
+): QuickApp2Config => {
+  return entity.applicationProperties as QuickApp2Config;
+};
+
 export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
   return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
+};
+
+export const getQuick2AppDocumentUrl = (entity?: CustomApplicationModel) => {
+  return entity
+    ? getQuickApp2Config(entity).contexts.map((context) => context.url)
+    : undefined;
 };
 
 export const getToolsetStr = (
@@ -339,8 +399,9 @@ export const getSharedTooltip = (context: string) => {
   );
 };
 
-export const isApplicationPublic = (entity: DialAIEntityModel) =>
-  isEntityIdPublic(entity) || entity.id === entity.reference;
+export const isMarketplaceEntityPublic = (
+  entity: DialAIEntityModel | ToolsetModel,
+) => isEntityIdPublic(entity) || entity.id === entity.reference;
 
 export const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -379,3 +440,10 @@ export const getApplicationEntityFields = (
     applicationTypeSchemaId: schema?.$id ?? '',
   };
 };
+
+export const isDialAiEntityModel = (
+  entity: MarketplaceEntity,
+): entity is DialAIEntityModel =>
+  entity?.type === EntityType.Application ||
+  entity?.type === EntityType.Model ||
+  entity?.type === EntityType.Assistant;

@@ -7,6 +7,7 @@ export enum EntityType {
   Application = 'application',
   Assistant = 'assistant',
   Addon = 'addon',
+  Toolset = 'toolset',
 }
 
 export enum BackendDataNodeType {
@@ -19,6 +20,7 @@ export enum BackendResourceType {
   PROMPT = 'PROMPT',
   CONVERSATION = 'CONVERSATION',
   APPLICATION = 'APPLICATION',
+  TOOLSET = 'TOOL_SET',
 }
 
 export enum BackendResourceTypeName {
@@ -26,6 +28,7 @@ export enum BackendResourceTypeName {
   PROMPT = 'Prompt',
   CONVERSATION = 'Conversation',
   APPLICATION = 'Application',
+  TOOLSET = 'Toolset',
 }
 
 export interface BackendDataEntity {
@@ -82,15 +85,12 @@ export const isNotLoaded = (status?: UploadStatus) => {
 
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-export interface ParseOptions {
-  parseVersion?: boolean;
-}
-
 export enum ApiKeys {
   Files = 'files',
   Conversations = 'conversations',
   Prompts = 'prompts',
   Applications = 'applications',
+  Toolsets = 'toolsets',
 }
 
 export enum CoreApiKeys {
@@ -143,6 +143,7 @@ export enum PageType {
   Marketplace = 'marketplace',
   AppsEditorSettings = 'application-settings',
   AppsEditorGeneralInfo = 'application-general-info',
+  ToolsetEditor = 'toolset-editor',
 }
 
 export enum ScreenState {

@@ -17,7 +17,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ItemApiHelper } from '@/src/testData/api';
-import { StyleValues } from '@/src/ui/domData';
+import { Cursors, StyleValues } from '@/src/ui/domData';
 import { Styles } from '@/src/ui/domData/styles';
 import {
   AppEditSteps,
@@ -100,6 +100,8 @@ dialTest(
       description: `${shortDescription}\n\n${longDescription}`,
     } as DialAIEntityModel;
     let agentElement: BaseElement;
+    let generalInfoStep: BaseElement;
+    let appSettingsStep: BaseElement;
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
@@ -195,30 +197,36 @@ dialTest(
     );
 
     await dialTest.step(
-      'App editor General Info step is opened, header features are valid, step titles in the header marked as not completed',
+      'App editor General Info step is opened, header features are valid, "General info" step in the header is selected',
       async () => {
         await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
-
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
-        await baseAssertion.assertElementState(generalInfoStep);
-        await baseAssertion.assertElementState(appSettingsStep);
-        await baseAssertion.assertElementActionabilityState(
+        generalInfoStep = appEditorHeader.getGeneralInfoStep();
+        appSettingsStep = appEditorHeader.getAppSettingsStep();
+        await appEditorHeaderAssertion.assertStepState(
           generalInfoStep,
-          'enabled',
+          'visible',
+          Cursors.pointer,
         );
-        await baseAssertion.assertElementActionabilityState(
+        await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
-          'disabled',
+          'visible',
+          Cursors.default,
         );
-
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
+          true,
+        );
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          appSettingsStep,
           false,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertNotSelectedDotCircleIconState(
           appSettingsStep,
-          false,
+          'visible',
         );
       },
     );
@@ -279,21 +287,30 @@ dialTest(
         );
 
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getGeneralInfoStep(),
+          generalInfoStep,
           'visible',
+          Cursors.pointer,
         );
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getAppSettingsStep(),
+          appSettingsStep,
           'visible',
-          'disabled',
+          Cursors.default,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
-          appEditorHeader.getGeneralInfoStep(),
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          generalInfoStep,
+          true,
+        );
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          appSettingsStep,
           false,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
-          appEditorHeader.getAppSettingsStep(),
-          false,
+        await appEditorHeaderAssertion.assertNotSelectedDotCircleIconState(
+          appSettingsStep,
+          'visible',
         );
       },
     );
@@ -351,10 +368,6 @@ dialTest(
       'Wait for app settings step form to load and check the header changes',
       async () => {
         await baseAssertion.assertElementState(appEditorViewForm, 'visible');
-
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
-
         await baseAssertion.assertElementActionabilityState(
           generalInfoStep,
           'enabled',
@@ -364,13 +377,21 @@ dialTest(
           'enabled',
         );
 
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
+          false,
+        );
+        await appEditorHeaderAssertion.assertNotSelectedCheckedCircleIconState(
+          generalInfoStep,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          appSettingsStep,
           true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
           appSettingsStep,
-          false,
+          'visible',
         );
       },
     );
@@ -505,14 +526,15 @@ dialTest(
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.edit(AddAppMenuOptions.customApp)}`,
         );
-
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getGeneralInfoStep(),
+          generalInfoStep,
           'visible',
+          Cursors.pointer,
         );
         await appEditorHeaderAssertion.assertStepState(
-          appEditorHeader.getAppSettingsStep(),
+          appSettingsStep,
           'visible',
+          Cursors.pointer,
         );
       },
     );
@@ -670,13 +692,21 @@ dialTest(
           'hidden',
         );
         await baseAssertion.assertElementState(appEditorGeneralForm);
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertStepIsSelected(
           AppEditSteps.appSettings,
+          false,
+        );
+        await appEditorHeaderAssertion.assertNotSelectedCheckedCircleIconState(
+          AppEditSteps.appSettings,
+          'visible',
+        );
+        await appEditorHeaderAssertion.assertStepIsSelected(
+          AppEditSteps.generalInfo,
           true,
         );
-        await appEditorHeaderAssertion.assertStepIsCompleted(
+        await appEditorHeaderAssertion.assertSelectedFilledDotCircleIconState(
           AppEditSteps.generalInfo,
-          false,
+          'visible',
         );
         //need to explicitly click on the form to trigger autosave after fields update
         await appEditorGeneralForm.version.click();
@@ -1394,8 +1424,7 @@ dialTest(
       });
     });
 
-    //TODO blocked by the issue 4225
-    await dialTest.step.skip(
+    await dialTest.step(
       'Verify clip icon appears in preview chat message box',
       async () => {
         await sendMessage.click();
@@ -1919,6 +1948,8 @@ dialAdminTest(
     let agentElement: BaseElement;
     let createdAppBackendEntity: BackendEntity;
     let appPublication: Publication;
+    let reviewIconUrl: string;
+    let targetIconUrl: string;
 
     const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
     const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
@@ -1928,7 +1959,6 @@ dialAdminTest(
     const encodedFileUrl =
       expectedNewIconUrl.substring(0, expectedNewIconUrl.lastIndexOf('/') + 1) +
       encodeURIComponent(filename);
-    const encodedIconUrl = `/api/${encodedFileUrl}`;
 
     await dialTest.step(
       'Precondition: Create a custom application with an icon, create a publish request for it, and delete the original app',
@@ -1951,10 +1981,18 @@ dialAdminTest(
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withApplicationResource(createdAppBackendEntity, PublishActions.ADD)
+          .withFileResource(expectedNewIconUrl, PublishActions.ADD_IF_ABSENT)
           .build();
 
         appPublication =
           await publicationApiHelper.createPublishRequest(publishRequest);
+
+        const fileResource = appPublication.resources.find((r) =>
+          r.sourceUrl?.startsWith(API.filesHostSegment),
+        )!;
+        reviewIconUrl = `${API.api}/${fileResource.reviewUrl}`;
+        targetIconUrl = `${API.api}/${fileResource.targetUrl}`;
+
         await localStorageManager.setShowSideBarPanels();
         await adminLocalStorageManager.setShowSideBarPanels();
       },
@@ -1978,7 +2016,7 @@ dialAdminTest(
         });
         await baseAssertion.assertEntityIcon(
           adminPublishedApplicationReviewModal.getApplicationIcon(),
-          encodedIconUrl,
+          reviewIconUrl,
         );
 
         await adminPublishedApplicationReviewModal
@@ -2013,7 +2051,7 @@ dialAdminTest(
           isInstalledDeploymentsUpdated: false,
         });
         await dialHomePage.waitForPageLoaded();
-        await agentInfoAssertion.assertAgentIcon(encodedIconUrl);
+        await agentInfoAssertion.assertAgentIcon(targetIconUrl);
       },
     );
 
@@ -2027,9 +2065,9 @@ dialAdminTest(
         await chat.sendRequestWithButton(message);
         await conversationAssertion.assertTreeEntityIcon(
           { name: message },
-          encodedIconUrl,
+          targetIconUrl,
         );
-        await chatHeaderAssertion.assertHeaderIcon(encodedIconUrl);
+        await chatHeaderAssertion.assertHeaderIcon(targetIconUrl);
       },
     );
   },

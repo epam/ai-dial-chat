@@ -88,7 +88,7 @@ dialSharedWithMeTest(
       'Accept share folder link and verify folder stays under expanded "Shared with me" section',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
@@ -112,7 +112,7 @@ dialSharedWithMeTest(
       'Accept share prompt link and verify single prompt stays under expanded "Shared with me" section and prompt details popup is opened',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             sharePromptByLinkResponse.invitationLink,
           ),
         );
@@ -222,7 +222,7 @@ dialSharedWithMeTest(
       'Accept share folder link and verify shared folder prompt preview modal is opened',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
@@ -312,7 +312,7 @@ dialSharedWithMeTest(
       'Navigate to share folder link again and verify folder is re-shared',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
@@ -391,7 +391,7 @@ dialSharedWithMeTest(
           CollapsedSections.Organization,
         );
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareFolderByLinkResponse.invitationLink,
           ),
         );

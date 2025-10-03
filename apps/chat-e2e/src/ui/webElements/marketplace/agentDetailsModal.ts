@@ -45,6 +45,15 @@ export class AgentDetailsModal extends BaseElement {
   public publishButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.publishButton,
   );
+  public shareButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.shareButton,
+  );
+  public unshareButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.unshareButton,
+  );
+  public arrowIcon = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.arrowIcon,
+  ).getChildElementBySelector(Tags.svg);
   public unpublishButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.unpublishButton,
   );
@@ -137,7 +146,7 @@ export class AgentDetailsModal extends BaseElement {
 
   public async clickPublishButton(
     options: {
-      expectedHttpStatus?: number;
+      expectedHttpStatus: number;
     } = { expectedHttpStatus: 200 },
   ) {
     await this.openPublishRequestModal(
@@ -148,7 +157,7 @@ export class AgentDetailsModal extends BaseElement {
 
   public async clickUnpublishButton(
     options: {
-      expectedHttpStatus?: number;
+      expectedHttpStatus: number;
     } = { expectedHttpStatus: 200 },
   ) {
     await this.openPublishRequestModal(
@@ -157,16 +166,52 @@ export class AgentDetailsModal extends BaseElement {
     );
   }
 
+  public async clickShareButton(
+    options: {
+      expectedHttpStatus: number;
+    } = { expectedHttpStatus: 200 },
+  ) {
+    await this.openShareAppModal(() => this.shareButton.click(), options);
+  }
+
+  private async openShareAppModal(
+    method: () => Promise<void>,
+    options: {
+      expectedHttpStatus: number;
+    },
+  ) {
+    await this.openAppModal(() => method(), {
+      expectedHttpMethod: 'POST',
+      expectedUrl: API.shareEntityHost,
+      expectedHttpStatus: options.expectedHttpStatus,
+    });
+  }
+
   private async openPublishRequestModal(
     method: () => Promise<void>,
     options: {
-      expectedHttpStatus?: number;
+      expectedHttpStatus: number;
+    },
+  ) {
+    await this.openAppModal(() => method(), {
+      expectedHttpMethod: 'GET',
+      expectedUrl: API.applicationCreateHost,
+      expectedHttpStatus: options.expectedHttpStatus,
+    });
+  }
+
+  private async openAppModal(
+    method: () => Promise<void>,
+    options: {
+      expectedHttpMethod: string;
+      expectedUrl: string;
+      expectedHttpStatus: number;
     },
   ) {
     const respPromise = this.page.waitForResponse(
       (resp) =>
-        resp.request().method() === 'GET' &&
-        resp.url().includes(API.applicationCreateHost) &&
+        resp.request().method() === options.expectedHttpMethod &&
+        resp.url().includes(options.expectedUrl) &&
         resp.status() === options.expectedHttpStatus,
     );
     await method();

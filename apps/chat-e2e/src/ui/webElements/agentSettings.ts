@@ -1,7 +1,6 @@
 import { ChatSelectors, ChatSettingsModalSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Addons } from '@/src/ui/webElements/addons';
 import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
 import { PromptList } from '@/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
@@ -25,11 +24,10 @@ export class AgentSettings extends BaseElement {
   );
   public systemPromptSpinner =
     this.systemPromptContainer.getChildElementBySelector(
-      ChatSelectors.messageSpinner,
+      ChatSelectors.entitySpinner,
     );
 
   private temperatureSlider!: TemperatureSlider;
-  private addons!: Addons;
   private promptList!: PromptList;
 
   getPromptList() {
@@ -47,13 +45,6 @@ export class AgentSettings extends BaseElement {
       );
     }
     return this.temperatureSlider;
-  }
-
-  getAddons(): Addons {
-    if (!this.addons) {
-      this.addons = new Addons(this.page, this.rootLocator);
-    }
-    return this.addons;
   }
 
   public async setSystemPrompt(prompt: string) {

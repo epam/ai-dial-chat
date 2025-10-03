@@ -10,10 +10,7 @@ import {
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
-import {
-  getIdWithoutFeatureType,
-  getIdWithoutRootPathSegments,
-} from '@/src/utils/app/id';
+import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -47,13 +44,13 @@ import { PublishToSection } from '../PublishToSection';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
+import { ApplicationPublicationResources } from './PublicationReviewResources/ApplicationPublicationResources';
+import { ConversationPublicationResources } from './PublicationReviewResources/ConversationPublicationResources';
+import { FilePublicationResources } from './PublicationReviewResources/FilePublicationResources';
+import { PromptPublicationResources } from './PublicationReviewResources/PromptPublicationResources';
+import { ToolsetPublicationResources } from './PublicationReviewResources/ToolsetPublicationResources';
 import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
-import {
-  ApplicationPublicationResources,
-  ConversationPublicationResources,
-  FilePublicationResources,
-  PromptPublicationResources,
-} from './ReviewResources';
+import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
@@ -61,6 +58,8 @@ import isEqual from 'lodash-es/isEqual';
 interface Props {
   publication: Publication;
 }
+
+const LEADING_SLASH_REGEX = /^\/+/;
 
 const sections = [
   {
@@ -87,6 +86,12 @@ const sections = [
     dataQa: 'files-to-approve',
     Component: FilePublicationResources,
   },
+  {
+    featureType: FeatureType.Toolset,
+    sectionName: translate('Toolsets'),
+    dataQa: 'toolsets-to-approve',
+    Component: ToolsetPublicationResources,
+  },
 ];
 
 export function PublicationHandler({ publication }: Props) {
@@ -102,6 +107,9 @@ export function PublicationHandler({ publication }: Props) {
   );
   const isApplicationReview = useAppSelector(
     PublicationSelectors.selectIsApplicationReview,
+  );
+  const isToolsetReview = useAppSelector(
+    PublicationSelectors.selectIsToolsetReview,
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
@@ -218,10 +226,16 @@ export function PublicationHandler({ publication }: Props) {
                     : currentFolder[EDITED_FOLDER_NAME_KEY],
                 );
               });
+
               if (action !== PublishActions.DELETE) {
                 newFolderSegments[1] = publication.targetFolder;
               }
-              const newFolderId = newFolderSegments.join('/');
+
+              let newFolderId = newFolderSegments.join('/');
+              newFolderId = newFolderId.replace(
+                publication.targetFolder,
+                editedPublishToUrl,
+              );
 
               // get new api key
               const newApiKey = regenerateApiKeyNameAndVersionParts(
@@ -285,6 +299,10 @@ export function PublicationHandler({ publication }: Props) {
     [dispatch, displayAuthorEditState.length],
   );
 
+  const handleCloseCompareModal = useCallback(() => {
+    setIsCompareModalOpened(false);
+  }, []);
+
   const publishToUrl = editedPublishToUrl
     ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
     : '';
@@ -331,12 +349,23 @@ export function PublicationHandler({ publication }: Props) {
 
   const maxPublishToDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
-      return Math.max(
-        max,
-        getIdWithoutRootPathSegments(resource.targetUrl).split('/').length,
+      const targetUrl = getFolderIdFromEntityId(
+        getIdWithoutFeatureType(resource.targetUrl),
       );
+      const cleanTargetUrlPath = targetUrl
+        .replace(publication.targetFolder, '')
+        .replace(LEADING_SLASH_REGEX, '');
+      const cleanTargetUrlPathLength = cleanTargetUrlPath
+        ? cleanTargetUrlPath.split('/').length
+        : 0;
+
+      return Math.max(max, cleanTargetUrlPathLength);
     }, 0);
-  }, [publication.resources]);
+  }, [publication.resources, publication.targetFolder]);
+
+  const isSomeResourceIsUnpublish = publication.resources.some(
+    (resource) => resource.action === PublishActions.DELETE,
+  );
 
   return (
     <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
@@ -368,7 +397,7 @@ export function PublicationHandler({ publication }: Props) {
               <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                 <div className="flex flex-col px-3 pb-4 md:px-5">
                   <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                  {isEditMode ? (
+                  {isEditMode && !isSomeResourceIsUnpublish ? (
                     <PublishToSection
                       path={publishToUrl}
                       maxDepth={maxPublishToDepth}
@@ -416,7 +445,10 @@ export function PublicationHandler({ publication }: Props) {
                     valueToDisplay={formatDate(publication.createdAt)}
                   />
                 </div>
-                <section className="px-3 py-4 md:px-5">
+                <section
+                  className="px-3 py-4 md:px-5"
+                  data-qa="rules-container"
+                >
                   <h2 className="mb-4 flex items-center gap-2 text-sm">
                     <div className="flex w-full justify-between">
                       <p data-qa="allow-access-label">
@@ -426,6 +458,7 @@ export function PublicationHandler({ publication }: Props) {
                         <span
                           onClick={() => setIsCompareModalOpened(true)}
                           className="cursor-pointer text-accent-primary"
+                          data-qa="see-changes"
                         >
                           {t('See changes')}
                         </span>
@@ -497,11 +530,12 @@ export function PublicationHandler({ publication }: Props) {
           allRuleEntries={filteredRuleEntries}
           newRulesToCompare={newRules}
           oldRulesToCompare={rules[publication.targetFolder]}
-          onClose={() => setIsCompareModalOpened(false)}
+          onClose={handleCloseCompareModal}
           newRulesPath={publication.targetFolder}
         />
       )}
       {isApplicationReview && <ReviewApplicationDialog />}
+      {isToolsetReview && <ReviewToolsetDialog />}
     </div>
   );
 }

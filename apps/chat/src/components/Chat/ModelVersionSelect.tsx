@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
@@ -25,17 +25,21 @@ const VersionPrefix = () => {
   );
 };
 
-interface ModelVersionSelectProps {
-  entities: DialAIEntityModel[];
-  currentEntity: DialAIEntity;
+const getDisplayValue = <T extends MarketplaceEntity>(entity: T) =>
+  entity.version || entity.id;
+
+interface EntityVersionSelectProps<T extends MarketplaceEntity> {
+  entities: T[];
+  currentEntity: T;
   className?: string;
   showVersionPrefix?: boolean;
   readonly?: boolean;
-  onSelect: (entity: DialAIEntityModel) => void;
+  onSelect: (entity: T) => void;
   triggerClassName?: string;
+  selectedBaseIdsSet?: Set<string>;
 }
 
-export const ModelVersionSelect = ({
+export const ModelVersionSelect = <T extends MarketplaceEntity>({
   entities,
   currentEntity,
   className,
@@ -43,10 +47,11 @@ export const ModelVersionSelect = ({
   readonly = false,
   onSelect,
   triggerClassName,
-}: ModelVersionSelectProps) => {
+  selectedBaseIdsSet,
+}: EntityVersionSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onChangeHandler = (entity: DialAIEntityModel) => {
+  const handleChange = (entity: T) => {
     onSelect(entity);
     setIsOpen(false);
   };
@@ -94,7 +99,7 @@ export const ModelVersionSelect = ({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {currentEntity.version || currentEntity.id}
+            {getDisplayValue(currentEntity)}
           </span>
           <ChevronDownIcon
             className={classNames(
@@ -112,19 +117,21 @@ export const ModelVersionSelect = ({
           key={entity.id}
           className={classNames(
             'max-w-[350px] text-nowrap hover:bg-accent-primary-alpha',
-            currentEntity.id === entity.id && 'bg-accent-primary-alpha',
+            (currentEntity.id === entity.id ||
+              selectedBaseIdsSet?.has(entity.id)) &&
+              'bg-accent-primary-alpha',
           )}
           item={
             <div className="flex items-center gap-2">
               <ModelIcon entityId={entity.id} entity={entity} size={16} />
-              {entity.version || entity.id}
+              {getDisplayValue(entity)}
             </div>
           }
           disabled={readonly}
           value={entity.id}
           onClick={(e) => {
             e.stopPropagation();
-            onChangeHandler(entity);
+            handleChange(entity);
           }}
           data-model-versions
           data-qa="model-version-option"

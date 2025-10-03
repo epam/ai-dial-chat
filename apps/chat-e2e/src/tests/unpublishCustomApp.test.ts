@@ -32,6 +32,7 @@ dialAdminTest(
       marketplaceAgents,
       publishingRequestModal,
       publishingRequestModalAssertion,
+      publishingRulesAssertion,
       appToPublishAssertion,
       adminDialHomePage,
       adminLocalStorageManager,
@@ -39,6 +40,7 @@ dialAdminTest(
       adminApproveRequiredPrompts,
       adminPublishingApprovalModal,
       adminPublishingApprovalModalAssertion,
+      adminPublishingRulesAssertion,
       adminAppToApproveAssertion,
       adminPublishedApplicationReviewModal,
       adminPublishedAppReviewModalAssertion,
@@ -152,6 +154,8 @@ dialAdminTest(
           unpublishFromLabel: 'visible',
           unpublishFrom: PublishPath.Organization,
           authorLabel: 'hidden',
+        });
+        await publishingRulesAssertion.assertLabels({
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
@@ -258,6 +262,8 @@ dialAdminTest(
           publicAuthorLabel: 'hidden',
           requestCreatedLabel: 'visible',
           requestCreated: publishApiModels.response,
+        });
+        await adminPublishingRulesAssertion.assertLabels({
           allowAccessLabel: 'visible',
           noChangesLabel: 'visible',
           availabilityLabel: 'visible',
@@ -686,12 +692,12 @@ dialAdminTest(
         for (let i = 1; i <= 2; i++) {
           const appAttributes =
             await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-              appName,
+              { appName: appName },
             );
           if (i === 1) {
-            appFirstVersion = appAttributes.version;
+            appFirstVersion = appAttributes.version!;
           } else {
-            appSecondVersion = appAttributes.version;
+            appSecondVersion = appAttributes.version!;
           }
         }
         sortedAppVersions = SortingUtil.sortVersionsArray([

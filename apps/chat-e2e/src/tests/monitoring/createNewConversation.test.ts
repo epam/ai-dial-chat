@@ -7,16 +7,12 @@ import {
 } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 
-let defaultModel: DialAIEntityModel;
 let recentModelIds: string[];
-let recentAddonIds: string[];
 let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultAgent()!;
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
-  recentAddonIds = ModelsUtil.getRecentAddonIds();
 });
 
 dialTest(
@@ -32,10 +28,8 @@ dialTest(
     talkToAgentDialogAssertion,
     talkToAgentDialog,
     conversationSettingsModal,
-    addons,
     localStorageManager,
   }) => {
-    const expectedAddons = ModelsUtil.getAddons();
     const request = 'test request';
 
     await dialTest.step(
@@ -67,23 +61,6 @@ dialTest(
           temperatureSlider.slider,
           ExpectedConstants.defaultTemperature,
           ExpectedMessages.defaultTemperatureIsOne,
-        );
-        await agentSettingAssertion.assertElementInnerText(
-          addons.selectedAddons,
-          defaultModel.selectedAddons ?? [],
-          ExpectedMessages.noAddonsSelected,
-        );
-
-        const expectedDefaultRecentAddons = [];
-        for (const addonId of recentAddonIds) {
-          expectedDefaultRecentAddons.push(
-            expectedAddons.find((a) => a.id === addonId)?.name || addonId,
-          );
-        }
-        await agentSettingAssertion.assertElementInnerText(
-          addons.recentAddons,
-          expectedDefaultRecentAddons,
-          ExpectedMessages.recentAddonsVisible,
         );
         await conversationSettingsModal.cancelButton.click();
       },

@@ -1,6 +1,6 @@
 import { ChatBody, Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
-import { DialAIEntity, DialAIEntityModel } from '@/chat/types/models';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { noImportModelsSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -26,12 +26,16 @@ dialTest.beforeAll(async () => {
   );
   defaultModel = ModelsUtil.getDefaultAgent()!;
   aModel = GeneratorUtil.randomArrayElement(
-    allModels.filter(
-      (m) => m.id !== defaultModel.id && (m as DialAIEntity).features?.addons,
-    ),
+    allModels.filter((m) => m.id !== defaultModel.id),
   );
   bModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
+    allModels.filter(
+      (m) =>
+        m.id !== defaultModel.id &&
+        m.id !== aModel.id &&
+        m.features?.temperature === true &&
+        m.features?.systemPrompt,
+    ),
   );
 });
 
@@ -54,7 +58,6 @@ dialTest(
     talkToAgents,
     agentSettingAssertion,
     temperatureSlider,
-    addons,
     conversationDropdownMenu,
     conversationDropdownMenuAssertion,
     localStorageManager,
@@ -72,7 +75,6 @@ dialTest(
         firstConversation = conversationData.prepareModelConversation(
           0.5,
           'first prompt',
-          [],
           bModel,
         );
         conversationData.resetData();
@@ -80,7 +82,6 @@ dialTest(
         replayConversation = conversationData.prepareModelConversation(
           replayTemp,
           replayPrompt,
-          [],
           aModel,
         );
         await dataInjector.createConversations([
@@ -153,11 +154,6 @@ dialTest(
         expect
           .soft(newModelTemperature, ExpectedMessages.temperatureIsValid)
           .toBe(replayTemp.toString());
-
-        const newModelSelectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(newModelSelectedAddons, ExpectedMessages.selectedAddonsValid)
-          .toEqual([]);
         await conversationSettingsModal.applyChangesButton.click();
       },
     );
@@ -334,7 +330,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify chat header icons are updated with new model and addon',
+      'Verify chat header icons are updated with new model',
       async () => {
         await chatHeaderAssertion.assertHeaderIcon(
           iconApiHelper.getEntityIcon(replayModel),
@@ -373,8 +369,7 @@ dialTest(
 );
 
 dialTest(
-  '"Replay as is" when chat is based on Model.\n' +
-    '"Replay as is" when chat is based on Model with addon',
+  '"Replay as is" when chat is based on Model',
   async ({
     dialHomePage,
     conversationData,
@@ -391,22 +386,17 @@ dialTest(
     baseAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1323', 'EPMRTC-1324');
+    setTestIds('EPMRTC-1323');
     const replayTemp = 0.8;
     const replayPrompt = 'reply the same text';
     let conversation: Conversation;
     let replayConversation: Conversation;
     const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
-    const randomAddon = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getAddons(),
-    )!;
-    const expectedAddonIcon = iconApiHelper.getEntityIcon(randomAddon);
 
     await dialTest.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareModelConversation(
         replayTemp,
         replayPrompt,
-        [randomAddon.id],
         defaultModel,
       );
       replayConversation =
@@ -446,7 +436,6 @@ dialTest(
       'Verify chat header icons are the same as initial model',
       async () => {
         await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
-        await chatHeaderAssertion.assertHeaderAddonIcon([expectedAddonIcon]);
       },
     );
 
@@ -491,35 +480,27 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1322', 'EPMRTC-388', 'EPMRTC-1466');
     let replayConversation: Conversation;
-    let simpleConversation: Conversation;
-    let addonConversation: Conversation;
+    let simpleFirstConversation: Conversation;
+    let simpleSecondConversation: Conversation;
     let historyConversation: Conversation;
-    const simpleModel = defaultModel;
     const simpleTemp = 0.5;
     const simplePrompt = 'simple prompt';
-    const addonModel = aModel;
-    const addons = ModelsUtil.getAddons();
 
     await dialTest.step(
       'Prepare reply conversation for different models with different settings',
       async () => {
-        simpleConversation = conversationData.prepareModelConversation(
+        simpleFirstConversation = conversationData.prepareModelConversation(
           simpleTemp,
           simplePrompt,
-          [],
-          simpleModel,
+          bModel,
         );
         conversationData.resetData();
-        addonConversation =
-          addons.length !== 0
-            ? conversationData.prepareAddonsConversation(addonModel, [
-                GeneratorUtil.randomArrayElement(addons).id,
-              ])
-            : conversationData.prepareDefaultConversation(addonModel);
+        simpleSecondConversation =
+          conversationData.prepareDefaultConversation(aModel);
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
-          simpleConversation,
-          addonConversation,
+          simpleFirstConversation,
+          simpleSecondConversation,
         );
         conversationData.resetData();
         replayConversation =
@@ -545,45 +526,38 @@ dialTest(
         );
         const replayRequests = await chat.startReplayForDifferentModels();
 
-        apiAssertion.assertRequestModelId(replayRequests[0], simpleModel);
+        apiAssertion.assertRequestModelId(replayRequests[0], bModel);
         apiAssertion.assertRequestTemperature(replayRequests[0], simpleTemp);
         apiAssertion.assertRequestPrompt(replayRequests[0], simplePrompt);
-        apiAssertion.assertRequestAddons(
-          replayRequests[0],
-          simpleConversation.selectedAddons,
-        );
 
-        apiAssertion.assertRequestModelId(replayRequests[1], addonModel);
+        apiAssertion.assertRequestModelId(replayRequests[1], aModel);
         apiAssertion.assertRequestTemperature(
           replayRequests[1],
-          addonConversation.temperature,
+          simpleSecondConversation.temperature,
         );
         apiAssertion.assertRequestPrompt(
           replayRequests[1],
-          addonConversation.prompt,
-        );
-        apiAssertion.assertRequestAddons(
-          replayRequests[1],
-          addonConversation.selectedAddons,
+          aModel.features?.systemPrompt === true
+            ? simpleSecondConversation.prompt
+            : undefined,
         );
 
-        const expectedSimpleModelIcon =
-          iconApiHelper.getEntityIcon(simpleModel);
+        const expectedSimpleModelIcon = iconApiHelper.getEntityIcon(bModel);
         await chatMessagesAssertion.assertMessageIcon(
           2,
           expectedSimpleModelIcon,
         );
-        const expectedAddonModelIcon = iconApiHelper.getEntityIcon(addonModel);
+        const expectedSecondModelIcon = iconApiHelper.getEntityIcon(aModel);
         await chatMessagesAssertion.assertMessageIcon(
           4,
-          expectedAddonModelIcon,
+          expectedSecondModelIcon,
         );
         await conversationAssertion.assertTreeEntityIcon(
           {
             name:
               ExpectedConstants.replayConversation + historyConversation.name,
           },
-          expectedAddonModelIcon,
+          expectedSecondModelIcon,
         );
       },
     );
@@ -719,6 +693,10 @@ dialTest(
     talkToAgentDialogAssertion,
     setTestIds,
     localStorageManager,
+    sendMessage,
+    sendMessageAssertion,
+    talkToAgents,
+    marketplaceAgentsAssertion,
   }) => {
     setTestIds('EPMRTC-1328', 'EPMRTC-2839');
     let notAllowedModelConversation: Conversation;
@@ -751,18 +729,42 @@ dialTest(
           agentInfo.agentName,
           ExpectedConstants.replayAsIsLabel,
         );
-        //TODO: add conversation screen verification when fixed https://github.com/epam/ai-dial-chat/issues/2697
+        await agentInfoAssertion.assertShortDescription(
+          ExpectedConstants.replayAsIsDescr,
+        );
+        await sendMessageAssertion.assertElementState(
+          sendMessage.messageInput,
+          'hidden',
+        );
         await chatAssertion.assertReplayButtonState('hidden');
         await chatAssertion.assertNotAllowedModelLabelContent(notAllowedModel);
       },
     );
 
-    await dialTest.step('Verify "Replay as is" is selected', async () => {
-      await chat.changeAgentButton.click();
-      await talkToAgentDialogAssertion.assertAgentIsSelected(
-        ExpectedConstants.replayAsIsLabel,
-      );
-    });
+    await dialTest.step(
+      'Verify "Replay as is" is selected and stays at the first place',
+      async () => {
+        await chat.changeAgentButton.click();
+        await talkToAgentDialogAssertion.assertAgentIsSelected(
+          ExpectedConstants.replayAsIsLabel,
+        );
+        const actualAgentNames = await talkToAgents.getAgentNames();
+        talkToAgentDialogAssertion.assertValue(
+          actualAgentNames[0],
+          ExpectedConstants.replayAsIsLabel,
+        );
+        const replayAsIsModelElement = talkToAgents.getAgent(
+          ExpectedConstants.replayAsIsLabel,
+        );
+        const replayAsIsDescrElement = talkToAgents.getAgentDescription(
+          replayAsIsModelElement,
+        );
+        await marketplaceAgentsAssertion.assertElementText(
+          replayAsIsDescrElement,
+          ExpectedConstants.replayAsIsDescr,
+        );
+      },
+    );
 
     await dialTest.step(
       'Select any available model and start replaying',

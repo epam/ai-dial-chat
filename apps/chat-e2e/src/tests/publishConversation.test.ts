@@ -57,6 +57,7 @@ dialAdminTest(
       adminApproveRequiredConversationsAssertion,
       adminOrganizationConversationAssertion,
       adminPublishingApprovalModalAssertion,
+      adminPublishingRulesAssertion,
       adminConversationToApproveAssertion,
       conversationDropdownMenuAssertion,
       toastAssertion,
@@ -256,16 +257,11 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
         );
-
-        await adminPublishingApprovalModalAssertion.assertAllowAccessLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertNoChangesLabelState(
-          'visible',
-        );
-        await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
-          'visible',
-        );
+        await adminPublishingRulesAssertion.assertLabels({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+          noChangesLabel: 'visible',
+        });
 
         await adminConversationToApproveAssertion.assertEntityState(
           { name: conversation.name },
@@ -442,6 +438,7 @@ dialAdminTest(
   'Publish request name: tab is changed to space if to use it in chat name.\n' +
     'Publication request name: Spaces at the beginning or end of chat name are removed.\n' +
     'Publication request name with hieroglyph, specific letters.\n' +
+    'Header context menu options for chats in Playback mode from Approve required section.\n' +
     'Chat from Approve required section is not shown in Compare mode drop down list',
   async ({
     conversationData,
@@ -451,6 +448,9 @@ dialAdminTest(
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminApproveRequiredConversationsAssertion,
+    adminPublishingApprovalModal,
+    adminChatHeader,
+    adminConversationDropdownMenuAssertion,
     adminDataInjector,
     adminConversations,
     adminConversationDropdownMenu,
@@ -459,7 +459,13 @@ dialAdminTest(
     setTestIds,
     adminLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-3575', 'EPMRTC-3584', 'EPMRTC-3589', 'EPMRTC-4057');
+    setTestIds(
+      'EPMRTC-3575',
+      'EPMRTC-3584',
+      'EPMRTC-3589',
+      'EPMRTC-4741',
+      'EPMRTC-4057',
+    );
     const publicationNames = [
       `${GeneratorUtil.randomPublicationRequestName()}name\t\twith\ttabs`,
       `  ${GeneratorUtil.randomPublicationRequestName()}  `,
@@ -467,6 +473,8 @@ dialAdminTest(
     ];
     const conversations: Conversation[] = [];
     let adminConversation: Conversation;
+    const playbackPublicationName =
+      GeneratorUtil.randomPublicationRequestName();
 
     await dialAdminTest.step(
       'Prepare conversation for admin user',
@@ -485,7 +493,13 @@ dialAdminTest(
           conversations.push(conversation);
           conversationData.resetData();
         }
-        await dataInjector.createConversations(conversations);
+        const playbackConversation =
+          await conversationData.prepareDefaultPlaybackConversation(
+            conversations[0],
+          );
+        await dataInjector.createConversations(
+          conversations.concat(playbackConversation),
+        );
 
         for (let i = 0; i < publicationNames.length; i++) {
           const publishRequest = publishRequestBuilder
@@ -497,6 +511,16 @@ dialAdminTest(
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
         }
+
+        const playbackPublishRequest = publishRequestBuilder
+          .withName(playbackPublicationName)
+          .withConversationInFolderResource(
+            playbackConversation,
+            PublishActions.ADD,
+          )
+          .build();
+        await publicationApiHelper.createPublishRequest(playbackPublishRequest);
+
         await adminLocalStorageManager.setShowSideBarPanels();
 
         await adminDialHomePage.openHomePage();
@@ -507,6 +531,26 @@ dialAdminTest(
             'visible',
           );
         }
+      },
+    );
+
+    await dialTest.step(
+      'Review playback conversation request and verify dots menu available options',
+      async () => {
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          playbackPublicationName,
+        );
+        await adminPublishingApprovalModal.goToEntityReview();
+        for (let i = 1; i <= 2; i++) {
+          await adminChat.getPlaybackControl().playbackNextButton.click();
+        }
+        await adminChatHeader.dotsMenu.click();
+        await adminConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.rename,
+          MenuOptions.duplicate,
+          MenuOptions.export,
+          MenuOptions.info,
+        );
       },
     );
 
@@ -539,8 +583,10 @@ dialAdminTest(
 
 dialTest(
   'Metadata for chat from Organization section.\n' +
+    'Header context menu options for chats from Organization section.\n' +
     'Metadata for chat with several versions from Organization section.\n' +
-    'Metadata for chat duplicated from chat from Organization',
+    'Metadata for chat duplicated from chat from Organization.\n' +
+    'Header context menu options for chat in Playback mode from Organization section',
   async ({
     conversationData,
     adminUserItemApiHelper,
@@ -550,6 +596,7 @@ dialTest(
     organizationConversations,
     conversationDropdownMenu,
     chatHeader,
+    conversationDropdownMenuAssertion,
     chatHeaderDropdownMenu,
     chatHeaderVersionDropdownMenu,
     informationModal,
@@ -558,18 +605,33 @@ dialTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-5555', 'EPMRTC-5557', 'EPMRTC-6100');
+    setTestIds(
+      'EPMRTC-5555',
+      'EPMRTC-4738',
+      'EPMRTC-5557',
+      'EPMRTC-6100',
+      'EPMRTC-4742',
+    );
     let conversation: Conversation;
+    let playbackConversation: Conversation;
     const firstVersion = ExpectedConstants.defaultAppVersion;
     const secondVersion = '0.0.2';
     const currentDate = DateUtil.getCurrentLocalDate();
     const author = GeneratorUtil.randomString(10);
 
     await dialTest.step(
-      'Publish a conversation with two versions',
+      'Publish a conversation with two versions and playback conversation via API',
       async () => {
         conversation = conversationData.prepareDefaultConversation();
-        await adminUserItemApiHelper.createConversations([conversation]);
+        playbackConversation =
+          conversationData.prepareDefaultPlaybackConversation(
+            conversation,
+            conversation.messages.length,
+          );
+        await adminUserItemApiHelper.createConversations([
+          conversation,
+          playbackConversation,
+        ]);
 
         for (const version of [firstVersion, secondVersion]) {
           const publishRequest = publishRequestBuilder
@@ -588,6 +650,20 @@ dialTest(
           publicationsToUnpublish.push(publication);
           await adminPublicationApiHelper.approveRequest(publication);
         }
+
+        const playbackPublishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withConversationInFolderResource(
+            playbackConversation,
+            PublishActions.ADD,
+          )
+          .build();
+        const playbackPublication =
+          await adminPublicationApiHelper.createPublishRequest(
+            playbackPublishRequest,
+          );
+        await adminPublicationApiHelper.approveRequest(playbackPublication);
+
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -599,6 +675,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await organizationConversations.openEntityDropdownMenu(
           conversation.name,
+          { exactMatch: true },
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
@@ -612,14 +689,32 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select first conversation version, select "Info" option from header dropdown menu and verify modal data',
+      'Select first conversation version, open header dots menu and verify available options',
       async () => {
-        await organizationConversations.selectEntity(conversation.name);
+        await organizationConversations.selectEntity(
+          conversation.name,
+          undefined,
+          { exactMatch: true },
+        );
         await chatHeader.version.click();
         await chatHeaderVersionDropdownMenu.selectMenuOption(firstVersion, {
           triggeredHttpMethod: 'GET',
         });
         await chatHeader.dotsMenu.click();
+        await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+          MenuOptions.unpublish,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select "Info" option from header dropdown menu and verify modal data',
+      async () => {
         await chatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
@@ -636,16 +731,39 @@ dialTest(
       async () => {
         await organizationConversations.openEntityDropdownMenu(
           conversation.name,
+          { exactMatch: true },
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
           triggeredHttpMethod: 'POST',
         });
-        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name, {
+          exactMatch: true,
+        });
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info);
         await informationModalAssertion.assertFields({
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
         });
+        await informationModal.cancelButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Select published replay conversation and verify header dots menu options',
+      async () => {
+        await organizationConversations.selectEntity(
+          playbackConversation.name,
+          {
+            isHttpMethodTriggered: true,
+          },
+        );
+        await chatHeader.dotsMenu.click();
+        await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.duplicate,
+          MenuOptions.export,
+          MenuOptions.unpublish,
+          MenuOptions.info,
+        );
       },
     );
   },

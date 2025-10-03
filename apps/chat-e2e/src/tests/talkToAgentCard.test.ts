@@ -176,11 +176,10 @@ dialTest(
           actualDescriptionElement,
           shortDescription(` ${expectedRgbColor}`, ` ${expectedTarget}`),
         );
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3988
-        // await marketplaceAgentsAssertion.assertElementText(
-        //   actualVersionElement,
-        //   SortingUtil.sortVersionsArray([appFirstVersion, appSecondVersion])[0],
-        // );
+        await marketplaceAgentsAssertion.assertElementText(
+          actualVersionElement,
+          appSecondVersion,
+        );
       },
     );
 
@@ -1021,15 +1020,15 @@ dialTest(
         const secondAppName = GeneratorUtil.randomApplicationName();
         secondAppFirstVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            secondAppName,
+            { appName: secondAppName },
           );
         secondAppSecondVersion =
           await adminCustomApplicationPublishingUtil.publishApplicationWithVersion(
-            secondAppName,
+            { appName: secondAppName },
           );
         sortedVersions = SortingUtil.sortVersionsArray([
-          secondAppFirstVersion.version,
-          secondAppSecondVersion.version,
+          secondAppFirstVersion.version!,
+          secondAppSecondVersion.version!,
         ]);
 
         const configAgents = await modelApiHelper.getModels();
@@ -1065,7 +1064,10 @@ dialTest(
     await dialTest.step(
       'Click on the agent with unique version and verify "Select an agent for conversation" modal is closed, the agent is used for the conversation',
       async () => {
-        await talkToAgentDialog.useAgent(firstConfigApp);
+        await talkToAgentDialog.useAgent(firstConfigApp, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'PUT',
+        });
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgentDialog,
           'hidden',
@@ -1128,7 +1130,10 @@ dialTest(
     await dialTest.step(
       'Select not latest second app version and verify "Select an agent for conversation" modal is closed, the agent is used for the conversation',
       async () => {
-        await talkToAgentDialog.useAgent(secondConfigAppMinorV);
+        await talkToAgentDialog.useAgent(secondConfigAppMinorV, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'PUT',
+        });
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgentDialog,
           'hidden',

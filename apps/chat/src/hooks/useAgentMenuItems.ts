@@ -11,14 +11,15 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useApplicationMenuActions } from '@/src/hooks/useApplicationActions';
+import { useAgentMenuActions } from '@/src/hooks/useAgentActions';
 
 import {
   getApplicationSimpleStatus,
   getPlayerCaption,
-  isApplicationPublic,
   isApplicationStatusUpdating,
   isExecutableApp,
+  isMarketplaceEntityPublic,
+  isQuickApp2,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -88,10 +89,10 @@ export const useAgentMenuItems = ({
     handlePublish,
     handleUnpublish,
     handleUpdateFunctionStatus,
-  } = useApplicationMenuActions(entity);
+  } = useAgentMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
-  const isPublicApp = isApplicationPublic(entity);
+  const isPublicApp = isMarketplaceEntityPublic(entity);
   const isAppIdPublic = isEntityIdPublic(entity);
   const canWrite = canWriteSharedWithMe(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
@@ -105,7 +106,9 @@ export const useAgentMenuItems = ({
       schema.id === entity.applicationTypeSchemaId && schema.editorUrl,
   );
   const canEditOrView =
-    isMyApp || canWrite || (isPublicAndAdmin && !hasCustomEditor);
+    isMyApp ||
+    canWrite ||
+    (isPublicAndAdmin && (!hasCustomEditor || isQuickApp2(entity)));
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [

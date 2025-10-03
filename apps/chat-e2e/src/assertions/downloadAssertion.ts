@@ -1,7 +1,7 @@
-import { LatestExportFormat } from '@/chat/types/import-export';
 import { Attachment, ExpectedMessages } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { FileUtil } from '@/src/utils';
+import { LatestExportFormat } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import path from 'path';
 
@@ -9,6 +9,7 @@ export enum FileType {
   JSON = 'json',
   PLAIN = 'plain',
   JPG = 'jpg',
+  SVG = 'svg',
 }
 type FileReader = (path: string) => string | Buffer | object | undefined;
 
@@ -17,6 +18,7 @@ export class DownloadAssertion {
     [FileType.JSON]: FileUtil.readJsonFileData,
     [FileType.PLAIN]: FileUtil.readPlainFileData,
     [FileType.JPG]: FileUtil.readPlainFileData,
+    [FileType.SVG]: FileUtil.readPlainFileData,
   };
 
   public async assertDownloadFileExtension(

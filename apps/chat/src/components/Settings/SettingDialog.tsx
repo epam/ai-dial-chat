@@ -1,10 +1,11 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
+import { ScreenState } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -45,7 +46,6 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
-
   const savedDefaultModelReference = useAppSelector(
     ModelsSelectors.selectDefaultModelOption,
   );
@@ -53,6 +53,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
   );
+
+  const screenState = useScreenState();
 
   useEffect(() => {
     setDefaultModelReference(savedDefaultModelReference);
@@ -185,7 +187,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           onModelChange={onModelChange}
         />
 
-        {!isSmallScreen() && (
+        {screenState !== ScreenState.SM && (
           <ToggleSwitchLabeled
             isOn={isChatFullWidthLocal}
             labelText={t('Full width chat')}

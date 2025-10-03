@@ -16,6 +16,7 @@ const nestedLevels = 3;
 dialTest(
   'Shared icon appears in prompt folder if user open shared link.\n' +
     'Share option appears in context menu for prompt folder if there is any prompt inside.\n' +
+    'Share folder with prompts via QR code.\n' +
     'Share form text differs for prompt and folder.\n' +
     'Shared icon removes in prompt folder if rename prompt folder',
   async ({
@@ -35,7 +36,13 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1816', 'EPMRTC-2731', 'EPMRTC-1817', 'EPMRTC-2817');
+    setTestIds(
+      'EPMRTC-1816',
+      'EPMRTC-2731',
+      'EPMRTC-6056',
+      'EPMRTC-1817',
+      'EPMRTC-2817',
+    );
     let nestedFolders: FolderInterface[];
     const sharedFolderIndex = 2;
     let shareResponse: ShareByLinkResponseModel;
@@ -90,7 +97,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select "Share" option for folder with prompt inside and verify modal window is shown',
+      'Select "Share" option for folder with prompt inside and verify Share modal data',
       async () => {
         await folderPrompts.openFolderDropdownMenu(
           nestedFolders[sharedFolderIndex].name,
@@ -103,13 +110,17 @@ dialTest(
           shareModal.linkInputLoader,
           'hidden',
         );
-        await shareModalAssertion.assertMessageContent(
-          ExpectedConstants.sharePromptFolderText,
-        );
-        await shareModalAssertion.assertElementText(
-          shareModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedFolderText,
-        );
+        await shareModalAssertion.assertGeneralInfo({
+          expectedMessages: [
+            ExpectedConstants.shareLinkText,
+            ExpectedConstants.sharePromptFolderText,
+          ],
+          notSharedEntityLabel: ExpectedConstants.notSharedFolderText,
+          qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedSideBarEntityUrl(
+            shareResponse.invitationLink,
+          ),
+        });
       },
     );
 
@@ -438,7 +449,7 @@ dialTest(
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModal.removeAccessBtn.click();
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeFolderAccessMessage(
+          ExpectedConstants.removeAccessForAllMessage(
             folderPrompt.folders.name,
           ),
         );
@@ -449,7 +460,7 @@ dialTest(
       'Close confirmation modal and verify arrow icon is still displayed',
       async () => {
         await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeFolderAccessMessage(
+          ExpectedConstants.removeAccessForAllMessage(
             folderPrompt.folders.name,
           ),
         );

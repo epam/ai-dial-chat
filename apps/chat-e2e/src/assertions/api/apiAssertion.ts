@@ -1,21 +1,25 @@
 import { ChatBody } from '@/chat/types/chat';
-import { MoveModel } from '@/chat/types/common';
+import { BackendEntity, MoveModel } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { BaseAssertion } from '@/src/assertions';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
+import { ItemUtil } from '@/src/utils';
 import { ConversationEntityModel, Message } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
 
-export class ApiAssertion {
+export class ApiAssertion extends BaseAssertion {
   public assertResponseCode(
     response: APIResponse,
     modelId: string,
     expectedStatus: number,
   ) {
     const status = response.status();
-    expect
-      .soft(status, `${ExpectedMessages.responseCodeIsValid}${modelId}`)
-      .toBe(expectedStatus);
+    this.assertValue(
+      status,
+      expectedStatus,
+      `${ExpectedMessages.responseCodeIsValid}${modelId}`,
+    );
   }
 
   public async assertResponseTextContent(
@@ -30,12 +34,11 @@ export class ApiAssertion {
       ? expect
           .soft(result, `${ExpectedMessages.responseTextIsValid}${modelId}`)
           .toMatch(new RegExp(`.*${expectedContent}.*`, 'i'))
-      : expect
-          .soft(
-            result!.length > 0,
-            `${ExpectedMessages.responseTextIsValid}${modelId}`,
-          )
-          .toBeTruthy();
+      : this.assertBooleanCondition(
+          result!.length > 0,
+          true,
+          `${ExpectedMessages.responseTextIsValid}${modelId}`,
+        );
   }
 
   public async assertResponseAttachment(
@@ -57,39 +60,39 @@ export class ApiAssertion {
     request: ChatBody,
     expectedModel: DialAIEntityModel | ConversationEntityModel,
   ) {
-    expect
-      .soft(request.model?.id, ExpectedMessages.chatRequestModelIsValid)
-      .toBe(expectedModel.id);
+    this.assertValue(
+      request.model?.id,
+      expectedModel.id,
+      ExpectedMessages.chatRequestModelIsValid,
+    );
   }
 
   public assertRequestTemperature(
     request: ChatBody,
     expectedTemperature: number,
   ) {
-    expect
-      .soft(request.temperature, ExpectedMessages.chatRequestTemperatureIsValid)
-      .toBe(expectedTemperature);
+    this.assertValue(
+      request.temperature,
+      expectedTemperature,
+      ExpectedMessages.chatRequestTemperatureIsValid,
+    );
   }
 
   public assertRequestPrompt(
     request: ChatBody,
     expectedPrompt: string | undefined,
   ) {
-    if (request.prompt === undefined) {
+    if (expectedPrompt === undefined) {
       expect
         .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
         .toBeUndefined();
     } else {
-      expect
-        .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
-        .toBe(expectedPrompt);
+      this.assertValue(
+        request.prompt,
+        expectedPrompt,
+        ExpectedMessages.chatRequestPromptIsValid,
+      );
     }
-  }
-
-  public assertRequestAddons(request: ChatBody, expectedAddons: string[]) {
-    expect
-      .soft(request.selectedAddons, ExpectedMessages.chatRequestAddonsAreValid)
-      .toEqual(expectedAddons);
   }
 
   public verifyRequestAttachments(
@@ -115,9 +118,11 @@ export class ApiAssertion {
     requestMessage: Message,
     expectedMessage: string,
   ) {
-    expect
-      .soft(requestMessage.content, ExpectedMessages.chatRequestMessageIsValid)
-      .toBe(expectedMessage);
+    this.assertValue(
+      requestMessage.content,
+      expectedMessage,
+      ExpectedMessages.chatRequestMessageIsValid,
+    );
   }
 
   public assertMoveRequest(
@@ -126,24 +131,40 @@ export class ApiAssertion {
     expectedSource: string,
     isOverwritten = false,
   ) {
-    expect
-      .soft(
-        request.destinationUrl.endsWith(`/${expectedDestination}`),
-        ExpectedMessages.moveDestinationIsValid,
-      )
-      .toBeTruthy();
-    expect
-      .soft(
-        request.sourceUrl.endsWith(`/${expectedSource}`),
-        ExpectedMessages.moveSourceIsValid,
-      )
-      .toBeTruthy();
+    this.assertBooleanCondition(
+      request.destinationUrl.endsWith(`/${expectedDestination}`),
+      true,
+      ExpectedMessages.moveDestinationIsValid,
+    );
+    this.assertBooleanCondition(
+      request.sourceUrl.endsWith(`/${expectedSource}`),
+      true,
+      ExpectedMessages.moveSourceIsValid,
+    );
+
     isOverwritten
-      ? expect
-          .soft(isOverwritten, ExpectedMessages.moveSourceIsValid)
-          .toBeTruthy()
-      : expect
-          .soft(isOverwritten, ExpectedMessages.moveOverwriteIsValid)
-          .toBeFalsy();
+      ? this.assertBooleanCondition(
+          isOverwritten,
+          true,
+          ExpectedMessages.moveSourceIsValid,
+        )
+      : this.assertBooleanCondition(
+          isOverwritten,
+          false,
+          ExpectedMessages.moveOverwriteIsValid,
+        );
+  }
+
+  public assertEntityUrl(entity: BackendEntity, expectedUrl: string) {
+    const expectedEntityNameIndex =
+      expectedUrl.lastIndexOf(ItemUtil.entityIdSeparator) +
+      ItemUtil.entityIdSeparator.length;
+    const expectedEntityName = expectedUrl.substring(expectedEntityNameIndex);
+    const expectedEncodedName = ItemUtil.getEncodedItemId(expectedEntityName);
+    this.assertValue(
+      entity.url,
+      expectedUrl.replace(expectedEntityName, expectedEncodedName),
+      ExpectedMessages.entityUrlIsValid,
+    );
   }
 }

@@ -494,7 +494,7 @@ dialTest(
         await conversations.selectEntity(conversation.name);
         await chatMessages.openMessageTemplateModal(1);
         await messageTemplateModal.getTemplateRowContent(1).click();
-        await dialHomePage.copyToClipboard(firstRowMismatchContent);
+        await dialHomePage.copyTextToClipboard(firstRowMismatchContent);
         await dialHomePage.pasteFromClipboard();
         for (let i = 1; i <= 2; i++) {
           await page.keyboard.press(keys.backspace);
@@ -996,7 +996,10 @@ dialTest(
       'Create replay conversation based on imported',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'GET',
+        });
       },
     );
 
@@ -1005,7 +1008,7 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(replayName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
-          triggeredHttpMethod: 'POST',
+          triggeredHttpMethod: 'GET',
         });
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -1087,7 +1090,9 @@ dialTest(
           secondRowSecondVar.replaceAll(varBracketsRegex, ''),
           secondUpdatedValue,
         );
-        const request = await variableModalDialog.submitReplayVariables();
+        const request = await variableModalDialog.submitReplayVariables({
+          isMoveRequestTriggered: true,
+        });
         apiAssertion.assertRequestMessage(
           request.messages[2],
           requestContent

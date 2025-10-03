@@ -21,6 +21,7 @@ dialTest(
     'Shared URL is copied using Ctrl+A, Ctrl+C\n' +
     'Share chat: tooltip for long chat name.\n' +
     'Share chat: tooltip for URL.\n' +
+    'Share single chat via QR code.\n' +
     'Share chat: copy button changes.\n' +
     'Shared URL is copied if to click on copy button.\n' +
     'Shared chat link is always different.\n' +
@@ -53,6 +54,7 @@ dialTest(
       'EPMRTC-1503',
       'EPMRTC-1508',
       'EPMRTC-1509',
+      'EPMRTC-6053',
       'EPMRTC-1512',
       'EPMRTC-2745',
       'EPMRTC-1820',
@@ -73,7 +75,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open conversation dropdown menu and choose "Share" option and verify modal window text',
+      'Open conversation dropdown menu and choose "Share" option and verify Share modal data',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -83,21 +85,18 @@ dialTest(
           await conversationDropdownMenu.selectShareMenuOption();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        await shareModalAssertion.assertMessageContent(
-          ExpectedConstants.shareConversationText,
-        );
-        await shareModalAssertion.assertElementState(
-          shareModal.notSharedEntityLabel,
-          'visible',
-        );
-        await shareModalAssertion.assertElementText(
-          shareModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedChatText,
-        );
-        await shareModalAssertion.assertElementState(
-          shareModal.removeAccessBtn,
-          'hidden',
-        );
+        await shareModalAssertion.assertGeneralInfo({
+          expectedMessages: [
+            ExpectedConstants.shareLinkText,
+            ExpectedConstants.shareConversationText,
+          ],
+          notSharedEntityLabel: ExpectedConstants.notSharedChatText,
+          removeAccessBtnState: 'hidden',
+          qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedSideBarEntityUrl(
+            firstShareLinkResponse.invitationLink,
+          ),
+        });
       },
     );
 
@@ -142,7 +141,7 @@ dialTest(
         const tooltipChatName = await tooltip.getContent();
         expect
           .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationName(conversation.name));
+          .toBe(ExpectedConstants.sharedEntityName(conversation.name));
 
         const isTooltipChatNameTruncated =
           await tooltip.isElementWidthTruncated();
@@ -190,7 +189,7 @@ dialTest(
         expect
           .soft(actualCopiedLink, ExpectedMessages.shareConversationLinkIsValid)
           .toBe(
-            ExpectedConstants.sharedConversationUrl(
+            ExpectedConstants.sharedSideBarEntityUrl(
               firstShareLinkResponse.invitationLink,
             ),
           );
@@ -237,7 +236,7 @@ dialTest(
       'Open shared link by current user and verify error is shown',
       async () => {
         await dialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             secondShareLinkResponse.invitationLink,
           ),
         );
@@ -323,7 +322,6 @@ dialSharedWithMeTest(
     talkToAgentDialog,
     temperatureSlider,
     agentSettings,
-    addons,
     conversations,
     conversationDropdownMenu,
     conversationSettingsModal,
@@ -346,7 +344,6 @@ dialSharedWithMeTest(
     let firstConversationToShare: Conversation;
     let secondConversationToShare: Conversation;
     let thirdConversationToShare: Conversation;
-    let randomAddon: DialAIEntityModel;
     let randomModel: DialAIEntityModel;
     let defaultModelId: string;
     let newName: string;
@@ -376,13 +373,11 @@ dialSharedWithMeTest(
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
         defaultModelId = ModelsUtil.getDefaultAgent()!.id;
-        randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
         randomModel = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModels().filter(
             (model) => model.id !== defaultModelId,
           ),
         );
-        await localStorageManager.setRecentAddonsIds(randomAddon);
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
           randomModel,
         );
@@ -399,7 +394,6 @@ dialSharedWithMeTest(
         await chatHeader.openConversationSettingsPopup();
         await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
-        await addons.selectAddon(randomAddon.name);
         await conversationSettingsModal.applyChangesButton.click();
         await toast.closeToast();
         await dialHomePage.mockChatTextResponse(
@@ -648,7 +642,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
 
@@ -661,7 +655,7 @@ dialTest(
         const sharedTooltip = await tooltip.getContent();
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.sharedConversationTooltip);
+          .toBe(ExpectedConstants.sharedEntityTooltip);
       },
     );
   },
@@ -807,6 +801,7 @@ dialTest(
 dialTest(
   `Share option appears in context menu for chat folder if there is any chat inside.\n` +
     'Share form text differs for chat and folder.\n' +
+    'Share folder with chats via QR code.\n' +
     'Confirmation message if to delete shared chat folder.\n' +
     'Shared icon disappears from the folder if to use Unshare.\n' +
     'Share form text differs for chat and folder.\n' +
@@ -833,6 +828,7 @@ dialTest(
     setTestIds(
       'EPMRTC-2729',
       'EPMRTC-1811',
+      'EPMRTC-6054',
       'EPMRTC-2811',
       'EPMRTC-2757',
       'EPMRTC-1811',
@@ -851,7 +847,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open app, select "Share" menu option for folder with conversation inside and verify modal window text',
+      'Open app, select "Share" menu option for folder with conversation inside and verify Share modal window',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [ModelsUtil.getDefaultAgent()!.iconUrl],
@@ -869,14 +865,17 @@ dialTest(
         shareLinkResponse = (await folderConversations.selectShareMenuOption())
           .response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        shareModalAssertion.assertValue(
-          await shareModal.getShareTextContent(),
-          ExpectedConstants.shareConversationFolderText,
-        );
-        await shareModalAssertion.assertElementText(
-          shareModal.notSharedEntityLabel,
-          ExpectedConstants.notSharedFolderText,
-        );
+        await shareModalAssertion.assertGeneralInfo({
+          expectedMessages: [
+            ExpectedConstants.shareLinkText,
+            ExpectedConstants.shareConversationFolderText,
+          ],
+          notSharedEntityLabel: ExpectedConstants.notSharedFolderText,
+          qrCodeState: 'visible',
+          qrCodeLink: ExpectedConstants.sharedSideBarEntityUrl(
+            shareLinkResponse.invitationLink,
+          ),
+        });
       },
     );
 

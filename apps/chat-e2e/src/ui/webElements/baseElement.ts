@@ -71,7 +71,7 @@ export class BaseElement {
     text: string,
     options?: { delay?: number; noWaitAfter?: boolean; timeout?: number },
   ) {
-    await this.rootLocator.type(text, options);
+    await this.rootLocator.pressSequentially(text, options);
   }
 
   async fillInInput(
@@ -233,5 +233,11 @@ export class BaseElement {
       .locator(ChatSelectors.iconSelector)
       .first();
     return iconLocator.locator(`${Tags.img}:visible`);
+  }
+
+  public static getElementLocator(element: BaseElement | Locator): Locator {
+    return element instanceof BaseElement
+      ? element.getElementLocator()
+      : (element as Locator);
   }
 }

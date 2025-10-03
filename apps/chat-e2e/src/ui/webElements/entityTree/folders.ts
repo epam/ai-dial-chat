@@ -1,4 +1,5 @@
 import {
+  ChatSelectors,
   EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
@@ -192,6 +193,7 @@ export class Folders extends BaseElement {
 
   public async getFolderDropdownMenu(name: string, index?: number) {
     const folderToEdit = this.getFolderByName(name, index);
+    await folderToEdit.scrollIntoViewIfNeeded();
     await folderToEdit.hover();
     return this.folderDotsMenu(name, index);
   }
@@ -397,6 +399,15 @@ export class Folders extends BaseElement {
     );
   };
 
+  public folderEntityDotsMenuSpinner = (
+    folderName: string,
+    entityName: string,
+  ) => {
+    return this.folderEntityDotsMenu(folderName, entityName).locator(
+      ChatSelectors.entitySpinner,
+    );
+  };
+
   public getFolderEntitiesCount(folderName: string) {
     return this.getFolderEntities(folderName).count();
   }
@@ -463,6 +474,9 @@ export class Folders extends BaseElement {
     });
     await folderEntity.hover();
     await this.folderEntityDotsMenu(folderName, entityName).click();
+    await this.folderEntityDotsMenuSpinner(folderName, entityName).waitFor({
+      state: 'hidden',
+    });
     await this.getDropdownMenu().waitForState();
   }
 

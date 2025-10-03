@@ -65,8 +65,6 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
     author?: string;
     unpublishFromLabel?: ElementState;
     unpublishFrom?: string;
-    allowAccessLabel?: ElementState;
-    availabilityLabel?: ElementState;
   }) {
     if (fieldsToVerify.publishToLabel) {
       await this.assertElementState(
@@ -116,30 +114,6 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
         this.publishingRequestModal.unpublishFrom,
         fieldsToVerify.unpublishFrom,
       );
-    }
-    if (fieldsToVerify.allowAccessLabel) {
-      await this.assertElementState(
-        this.publishingRequestModal.allowAccessLabel,
-        fieldsToVerify.allowAccessLabel,
-      );
-      if (fieldsToVerify.allowAccessLabel === 'visible') {
-        await this.assertElementText(
-          this.publishingRequestModal.allowAccessLabel,
-          ExpectedConstants.allowAccessLabel,
-        );
-      }
-    }
-    if (fieldsToVerify.availabilityLabel) {
-      await this.assertElementState(
-        this.publishingRequestModal.availabilityLabel,
-        fieldsToVerify.availabilityLabel,
-      );
-      if (fieldsToVerify.availabilityLabel === 'visible') {
-        await this.assertElementText(
-          this.publishingRequestModal.availabilityLabel,
-          ExpectedConstants.availabilityLabel,
-        );
-      }
     }
   }
 }

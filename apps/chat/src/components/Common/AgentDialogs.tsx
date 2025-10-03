@@ -1,11 +1,14 @@
+import { SharingType } from '@/src/types/share';
+
+import { PublishDialog } from '@/src/components/Chat/Publish/PublishDialog';
+import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
+
 import { ApplicationLogs } from './ApplicationLogs';
-import { ConfirmAgentDeleteDialog } from './ConfirmAgentDeleteDialog';
-import { PublishAgentDialog } from './PublishAgentDialog';
 
 export const AgentDialogs = () => (
   <>
-    <ConfirmAgentDeleteDialog />
-    <PublishAgentDialog />
+    <DeleteMarketplaceEntityDialog />
+    <PublishDialog type={SharingType.Application} />
     <ApplicationLogs />
   </>
 );

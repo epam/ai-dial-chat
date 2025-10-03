@@ -83,8 +83,7 @@ dialTest(
         ExpectedConstants.nameWithDotErrorMessage,
         ExpectedMessages.notAllowedNameErrorShown,
       );
-      // Waiting for (Closing) the toast to move forward
-      await toast.waitForState({ state: 'hidden' });
+      await toast.closeToast();
     });
 
     await dialTest.step(
@@ -100,11 +99,11 @@ dialTest(
     await dialTest.step(
       'Copy and paste restricted characters to the prompt name and verify the name',
       async () => {
-        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
+        await dialHomePage.copyTextToClipboard(nameWithRestrictedChars);
         await promptModalDialog.name.click();
         await dialHomePage.pasteFromClipboard();
         await promptModalAssertion.assertPromptName(expectedPromptName);
-        await promptModalDialog.saveButton.click();
+        await promptModalDialog.savePrompt({ triggeredHttpMethod: 'PUT' });
         prompt.name = expectedPromptName;
       },
     );
@@ -132,7 +131,7 @@ dialTest(
           promptModalDialog.prompt,
           ExpectedConstants.newPromptTitle(1),
         );
-        await promptModalDialog.saveButton.click();
+        await promptModalDialog.savePrompt({ triggeredHttpMethod: 'PUT' });
         prompt.name = ExpectedConstants.allowedSpecialSymbolsInName();
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
@@ -167,7 +166,7 @@ dialTest(
           promptModalDialog.prompt,
           ExpectedConstants.newPromptTitle(1),
         );
-        await promptModalDialog.saveButton.click();
+        await promptModalDialog.savePrompt({ triggeredHttpMethod: 'PUT' });
         prompt.name = longNameWithEmojis;
       },
     );
@@ -195,7 +194,7 @@ dialTest(
           promptModalDialog.name,
           nameWithSpaces,
         );
-        await promptModalDialog.saveButton.click();
+        await promptModalDialog.savePrompt({ triggeredHttpMethod: 'PUT' });
         prompt.name = expectedNameWithSpaces;
       },
     );

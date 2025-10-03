@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 
+import { Tooltip } from '../Tooltip';
 import { ToggleSwitchProps } from './view-props';
 
 interface SwitchStateTextProps {
@@ -22,27 +23,36 @@ export function ToggleSwitch({
   isOn,
   switchOnText,
   switchOFFText,
+  className,
+  tooltip,
+  disabled,
   handleSwitch,
 }: ToggleSwitchProps) {
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
-    'flex min-w-[50px] shrink-0 cursor-pointer items-center gap-1 rounded-full p-1.5 transition-all duration-200',
+    'flex min-w-[50px] shrink-0 items-center gap-1 rounded-full p-1.5 transition-all duration-200',
     isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-4',
+    disabled ? 'cursor-not-allowed' : 'cursor-pointer',
   );
 
   return (
-    <div data-qa="toggle-switch">
-      <input
-        type="checkbox"
-        onChange={handleSwitch}
-        id="toggle"
-        className="sr-only"
-        checked={isOn}
-      />
-      <label htmlFor="toggle" className={switchClassName}>
-        {switchText && <SwitchStateText switchText={switchText} isOn={isOn} />}
-        <span className="size-3 rounded-full bg-controls-permanent"></span>
-      </label>
-    </div>
+    <Tooltip triggerClassName={className} tooltip={tooltip}>
+      <div data-qa="toggle-switch">
+        <input
+          type="checkbox"
+          disabled={disabled}
+          onChange={handleSwitch}
+          id="toggle"
+          className="sr-only"
+          checked={isOn}
+        />
+        <label htmlFor="toggle" className={switchClassName}>
+          {switchText && (
+            <SwitchStateText switchText={switchText} isOn={isOn} />
+          )}
+          <span className="size-3 rounded-full bg-controls-permanent"></span>
+        </label>
+      </div>
+    </Tooltip>
   );
 }

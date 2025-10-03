@@ -5,10 +5,14 @@ import { EntityType } from '@/chat/types/common';
 import path from 'path';
 
 export const ExpectedConstants = {
-  settingsTooltip: (entityType: EntityType) =>
+  settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
-      : 'Change conversation settings:\nTemperature:',
+      : `Change conversation settings:Temperature:${temperature}`,
+  settingsTooltipWithoutChanges: (entityType: EntityType) =>
+    entityType === EntityType.Application
+      ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+      : 'Conversation settings:Temperature:',
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,
@@ -34,6 +38,9 @@ export const ExpectedConstants = {
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel: 'Try again',
+  conversationSettings: 'Conversation settings:',
+  noConversationSettings: 'There are no conversation settings for this agent',
+  changeConversationSettings: 'Change conversation settings:',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
@@ -62,11 +69,16 @@ export const ExpectedConstants = {
     'Deleting will stop sharing and other users will no longer see this prompt.',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
+  unsharePromptConfirmationModalTitle: 'Confirm unshare prompt',
+  unsharePromptConfirmationModalMessage:
+    'Are you sure that you want to unshare a prompt?',
   deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
   deletePromptConfirmationModalMessage:
     'Are you sure that you want to delete a prompt?',
-  removeFolderAccessMessage: (name: string) =>
+  removeAccessForAllMessage: (name: string) =>
     `Are you sure you want to remove access for all users to ${name}?`,
+  removeYourAccessMessage: (name: string) =>
+    `Are you sure you want to remove your access to ${name}?`,
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -85,16 +97,19 @@ export const ExpectedConstants = {
   regenerateResponseToContinueTooltip:
     'Please regenerate response to continue working with chat',
   regenerateResponseTooltip: 'Regenerate response',
-  sharedConversationTooltip: 'Shared',
-  sharedConversationName: (name: string) => `Share: ${name}`,
+  sharedEntityTooltip: 'Shared',
+  sharedEntityName: (name: string) => `Share: ${name}`,
   sharedLink: (invitationLink: string) => {
     const invitationPath = '/v1/invitations/';
     const startIndex =
       invitationLink.indexOf(invitationPath) + invitationPath.length;
     return invitationLink.slice(startIndex);
   },
-  sharedConversationUrl: (invitationLink: string) => {
+  sharedSideBarEntityUrl: (invitationLink: string) => {
     return `${config.use!.baseURL}/share/${ExpectedConstants.sharedLink(invitationLink)}`;
+  },
+  sharedAppUrl: (invitationLink: string) => {
+    return `${config.use!.baseURL}/marketplace/share/${ExpectedConstants.sharedLink(invitationLink)}`;
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
@@ -104,25 +119,32 @@ export const ExpectedConstants = {
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
   removeAccessTitle: 'Confirm removing access',
+  unshareFileTitle: 'Confirm unsharing file',
+  unshareFileMessage: 'Are you sure that you want to unshare this file?',
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
+  shareLinkText: 'This link is temporary and will be active for 3 days.',
   shareConversationText:
-    'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+    'This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+  shareAppText:
+    'This application and its updates will be visible to users with the link.',
   sharePromptText:
-    'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
+    'This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
   shareApplicationText:
-    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
+    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
-    'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+    'This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   notSharedFolderText: 'This folder has not been shared with anyone yet.',
   notSharedChatText: 'This chat has not been shared with anyone yet.',
   removeAccessText: 'Remove access for all users',
   notSharedPromptText: 'This prompt has not been shared with anyone yet.',
+  notSharedAppText: 'This app has not been shared with anyone yet.',
   sharePromptFolderText:
-    'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+    'This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  allowEditingSharedEntityText: 'Allow editing by other users',
   chatNotFoundMessage:
     'Conversation not found.Please select another conversation.',
   requiredFieldErrorMessage: 'Please fill in all required fields',
@@ -189,6 +211,7 @@ export const ExpectedConstants = {
   noChangesLabel: 'No changes',
   availabilityLabel:
     'This publication will be available to all users in the organization',
+  seeChangesLabel: 'See changes',
   unpublishFromLabel: 'Unpublish from',
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
@@ -260,6 +283,8 @@ export const ExpectedConstants = {
   informationModalAuthorLabel: 'Author:',
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
+  modelTooltip: (modelName: string, modelVersion?: string) =>
+    `Current agent:\nAgent: ${modelName}${modelVersion ? `\nVersion: ${modelVersion}` : ''}`,
   pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
@@ -273,6 +298,31 @@ export const ExpectedConstants = {
   noAvailableItemsLabel: 'No available items',
   appDefaultCompletionUrl: 'http://test.example.com',
   appRateEndpointDefaultFeature: 'http://application1/rate',
+  leadingDotErrorToast: 'Using a dot at the start of a name is not permitted.',
+  promptEditConfirmationDialogTitle: 'Unsaved changes',
+  promptEditConfirmationDialogMessage:
+    'There are unsaved changes. Do you want to save them before closing?',
+  publishingFilterDefaultValue: 'Select',
+  publishingFilterValuePlaceholder: 'Enter one or more options...',
+  dialRolesField: 'dial_roles',
+  fileUploadFolder: 'uploads',
+  fileUploadedToastMessage: (fileFolder: string) =>
+    `The file has been uploaded successfully to "${ExpectedConstants.fileUploadFolder}/${fileFolder}"`,
+  replacedRestrictedCharsName: (restrictedCharsName: string) =>
+    restrictedCharsName.replace(
+      new RegExp(
+        `[${ExpectedConstants.restrictedNameChars.replaceAll('//', '////')}]`,
+        'g',
+      ),
+      '_',
+    ),
+  dragFileTitle: 'Attach files',
+  dragFileDescription: 'Drop files here to attach them to the message',
+  dragFileNotAllowedTitle: 'No attachments allowed',
+  dragFileNotAllowedDescription: `Attachments can't be added to the message`,
+  exportedArchiveHistoryConversationPath:
+    'conversations/conversations_history.json',
+  exportedArchiveImageRootFolder: 'res',
 };
 
 export enum Types {
@@ -376,12 +426,10 @@ export const Chronology = {
 export const API = {
   api: '/api',
   modelsHost: '/api/models',
-  addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: '/api/themes/image',
   defaultModelIconHost: () => `${API.themeUrl}/default-model`,
-  defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
@@ -410,6 +458,7 @@ export const API = {
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/ops/publication/create',
   publicationRequestCreate: '/api/ops/publication/create',
+  publicationUpdate: '/api/ops/publication/update',
   publicationRequestRejection: '/api/ops/publication/reject',
   publicationRequestApproval: '/api/ops/publication/approve',
   publicationRequestDetails: '/api/ops/publication/get',
@@ -453,6 +502,7 @@ export const Attachment = {
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
   flowerImageName: 'flower.jpg',
+  fileToCopyName: 'image.png',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
   specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
   textName: 'text.txt',
@@ -465,6 +515,7 @@ export const Attachment = {
   dotExtensionImageName: 'testdot..JPg',
   restrictedSemicolonCharFilename: 'restricted;char.jpg',
   restrictedEqualCharFilename: 'restricted=char.jpg',
+  restrictedCharsFilename: 'restricted=,;{}%&.JPG',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
@@ -565,4 +616,21 @@ export const ExpectedPromptModalConst = {
 export enum DefaultModelReference {
   defaultAgent = '"default-agent"',
   lastUsedModel = '"last-used-agent"',
+}
+
+export enum PublishingRulesFilterTarget {
+  title = 'Title',
+  jobTitle = 'Job Title',
+  role = 'Role',
+  dialRoles = 'Dial Roles',
+}
+
+export enum BooleanOperator {
+  or = 'or',
+}
+
+export enum E2EUserRole {
+  qa = 'QA',
+  developer = 'Developer',
+  manager = 'Manager',
 }

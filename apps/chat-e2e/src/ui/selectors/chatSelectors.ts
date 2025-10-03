@@ -24,7 +24,7 @@ export const ChatSettingsSelectors = {
   selectedTalkToEntity: '.border-accent-primary',
   agentInfoContainer: '[data-qa="agent-info-container"]',
   agentInfo: '[data-qa="agent-info"]',
-  agentName: '[data-qa="agent-name"]',
+  agentName: '[data-qa="entity-name"]',
   agentDescription: '[data-qa="agent-descr"]',
   agentVersion: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
@@ -46,7 +46,7 @@ export const MessageInputSelectors = {
 
 export const PlaybackSelectors = {
   playbackContainer: '[data-qa="playback"]',
-  playbackAppTitle: '[data-qa="agent-name"]',
+  playbackAppTitle: '[data-qa="entity-name"]',
   playbackChatTitle: '[data-qa="conversation-name"]',
   playbackControl: '[data-qa="playback-control"]',
   playbackMessage: '[data-qa="playback-message"]',
@@ -76,7 +76,6 @@ export const ChatHeaderSelectors = {
   chatHeader: '[data-qa="chat-header"]',
   chatTitle: '[data-qa="chat-title"]',
   chatAgent: '[data-qa="chat-model"]',
-  chatAddons: '[data-qa="chat-addons"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
   leavePlayback: '[data-qa="cancel-playback-mode"]',
@@ -115,6 +114,7 @@ export const ImportExportSelectors = {
 };
 
 export const ChatSelectors = {
+  fileDropArea: '#file-drop-area',
   chat: '[data-qa="chat"]',
   spinner: '[data-qa="spinner"]',
   chatMessages: '[data-qa="chat-messages"]',
@@ -139,13 +139,21 @@ export const ChatSelectors = {
   attachmentExpanded: '[data-qa="attachment-expanded"]',
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
   attachmentsGroup: '[data-qa="grouped-attachments"]',
-  messageSpinner: '[data-qa="message-input-spinner"]',
+  entitySpinner: '[data-qa="entity-spinner"]',
   plotlyContainer: '.plot-container',
   maxWidth: '.max-w-none',
   showMore: '[data-qa="show-more"]',
   showLess: '[data-qa="show-less"]',
   iconSelector: '[data-qa="entity-icon"]',
   addModelToWorkspace: '[data-qa="add-model-to-workspace"]',
+};
+
+export const DragFileSelectors = {
+  dragFileContainer: '[data-qa="drag-file-container"]',
+  dragFileIcon: '#drag-file-icon',
+  dragFileTitle: '[data-qa="drag-file-title"]',
+  dragFileDescription: '[data-qa="drag-file-description"]',
+  dragFileNotAllowedIcon: '#drag-file-not-allowed-icon',
 };
 
 export const TableSelectors = {
@@ -161,6 +169,7 @@ export const PublicationReviewControls = {
   previousButton: '[data-qa="prev-chat-review-button"]',
   nextButton: '[data-qa="next-chat-review-button"]',
   backToPublication: '[data-qa="back-to-publication"]',
+  editButton: '[data-qa="edit-chat"]',
 };
 
 export const RenameConversationModalSelectors = {
@@ -172,8 +181,29 @@ export const RenameConversationModalSelectors = {
 
 export const PublishingRulesSelectors = {
   rulesContainer: '[data-qa="rules-container"]',
+  allowAccessLabel: '[data-qa="allow-access-label"]',
+  noChangesLabel: '[data-qa="no-changes-label"]',
+  availabilityLabel: '[data-qa="availability-label"]',
+  seeChangesButton: '[data-qa="see-changes"]',
   path: '[data-qa="published-path"]',
   rulesList: '[data-qa="rules-list"]',
   rule: '[data-qa="rule"]',
+  ruleTarget: '[data-qa="rule-target"]',
+  ruleFunction: '[data-qa="rule-function"]',
+  ruleValue: '[data-qa="rule-value"]',
+  ruleInnerOperator: '[data-qa="inner-operator"]',
+  ruleOperator: '[data-qa="rule-operator"]',
   addRuleButton: '[data-qa="add-rule"]',
+  cancelAllRulesIcon: '[name="cancel-all-rules"]',
+};
+
+export const PublishingFilterSelectors = {
+  filterContainer: '[data-qa="publish-audience-filter-selectors"]',
+  filterTarget: '[data-qa="filter-selector-targets"]',
+  filterFunction: '[data-qa="filter-selector-filterFns"]',
+  filterValuesContainer: '[data-qa="filter-values-container"]',
+  filterValueInput: '[data-qa="filter-value-input"]',
+  filterValueSuggestion: '[data-qa="value-suggestion"]',
+  filterPill: '[data-qa="combobox-pill"]',
+  saveFilterButton: '[data-qa="save-filter"]',
 };

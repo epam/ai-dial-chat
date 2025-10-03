@@ -25,10 +25,15 @@ import {
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
+import { HeadersNames } from '@/src/constants/server';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { safeParseJSON } from '../json';
+import {
+  cleanHeaderDirectives,
+  getFrameContentSecurityPolicyDirectives,
+} from './headers-helpers';
 
 import packageJSON from '@/../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
@@ -53,17 +58,15 @@ export const getCommonPageProps: GetServerSideProps = async ({
   res,
   resolvedUrl,
 }) => {
-  const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
-    ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-    : 'frame-ancestors none';
+  const requestCSPHeaders = req.headers[HeadersNames.CONTENT_SECURITY_POLICY];
 
-  const frameSrcDirective = process.env.ALLOWED_IFRAME_SOURCES
-    ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
-    : 'frame-src none';
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameContentSecurityPolicyDirectives(process.env.ALLOWED_IFRAME_ORIGINS, process.env.ALLOWED_IFRAME_SOURCES)}`;
+
+  const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 
   res.setHeader(
-    'Content-Security-Policy',
-    ancestorsDirective + '; ' + frameSrcDirective,
+    HeadersNames.CONTENT_SECURITY_POLICY,
+    contentSecurityPolicyHeaderValue,
   );
 
   let params: URLSearchParams | undefined;

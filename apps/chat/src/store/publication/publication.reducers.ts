@@ -51,9 +51,11 @@ const initialState: PublicationState = {
     [FeatureType.Prompt]: false,
     [FeatureType.File]: false,
     [FeatureType.Application]: false,
+    [FeatureType.Toolset]: false,
   },
   selectedItemsToPublish: [],
   isApplicationReview: false,
+  isToolsetReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
 
@@ -255,6 +257,9 @@ export const publicationSlice = createSlice({
     },
     setIsApplicationReview: (state, { payload }: PayloadAction<boolean>) => {
       state.isApplicationReview = payload;
+    },
+    setIsToolsetReview: (state, { payload }: PayloadAction<boolean>) => {
+      state.isToolsetReview = payload;
     },
     addPublicVersionGroups: (
       state,

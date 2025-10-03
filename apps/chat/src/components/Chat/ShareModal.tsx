@@ -220,7 +220,9 @@ export function ShareModalView() {
         </h4>
 
         <div className="flex flex-col justify-between gap-2">
-          {entity?.version && <span>Version: {entity.version}</span>}
+          {entity?.version && (
+            <span data-qa="entity-version">Version: {entity.version}</span>
+          )}
           <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link.description')}
           </p>
@@ -237,7 +239,11 @@ export function ShareModalView() {
             </div>
           )}
           <div className="mt-2 flex justify-center gap-2">
-            <div className="flex w-fit rounded bg-[#FCFCFC] p-3">
+            <div
+              className="flex w-fit rounded bg-[#FCFCFC] p-3"
+              data-qa="share-qr-code"
+              aria-details={url}
+            >
               <QRCodeSVG value={url} size={226} />
             </div>
           </div>

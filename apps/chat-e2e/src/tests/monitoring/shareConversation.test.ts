@@ -39,9 +39,10 @@ dialSharedWithMeTest(
           await conversationDropdownMenu.selectShareMenuOption();
         shareByLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
-        await shareModalAssertion.assertMessageContent(
+        await shareModalAssertion.assertMessageContent([
+          ExpectedConstants.shareLinkText,
           ExpectedConstants.shareConversationText,
-        );
+        ]);
       },
     );
 
@@ -50,7 +51,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
