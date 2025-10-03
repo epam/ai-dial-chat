@@ -17,6 +17,7 @@ interface OverflowContainerProps<T> {
   getKey: (item: T) => string | number;
   overflowIndicatorWidth?: number;
   className?: string;
+  dataQA?: string;
 }
 
 export function OverflowContainer<T>({
@@ -26,6 +27,7 @@ export function OverflowContainer<T>({
   getKey,
   overflowIndicatorWidth = 50,
   className = 'flex w-full flex-nowrap items-center gap-2',
+  dataQA,
 }: OverflowContainerProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
@@ -96,7 +98,7 @@ export function OverflowContainer<T>({
 
   return (
     <>
-      <div ref={containerRef} className={className}>
+      <div ref={containerRef} className={className} data-qa={dataQA}>
         {visibleItems.map((item) => (
           <React.Fragment key={getKey(item)}>{renderItem(item)}</React.Fragment>
         ))}
