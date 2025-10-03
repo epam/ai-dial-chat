@@ -7,6 +7,7 @@ import {
   MenuOptions,
   PseudoModel,
 } from '@/src/testData';
+import { UploadDownloadData } from '@/src/ui/pages';
 import { BucketUtil, GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
 
@@ -54,6 +55,7 @@ dialSharedWithMeTest(
     let imageUrl: string;
     let sharedConversation: Conversation;
     let expectedShareUserConversationId: string;
+    let exportedData: UploadDownloadData;
 
     await dialSharedWithMeTest.step(
       'Prepare conversation with image in the response via API',
@@ -126,7 +128,7 @@ dialSharedWithMeTest(
         await additionalShareUserChatHeaderDropdownMenu.selectMenuOption(
           MenuOptions.export,
         );
-        const exportedData = await additionalShareUserDialHomePage.downloadData(
+        exportedData = await additionalShareUserDialHomePage.downloadData(
           () =>
             additionalShareUserChatHeaderDropdownMenu.selectMenuOption(
               MenuOptions.withAttachments,
@@ -134,7 +136,12 @@ dialSharedWithMeTest(
           GeneratorUtil.exportedWithAttachmentsFilename(),
         );
         await downloadAssertion.assertPlainFileIsDownloaded(exportedData);
+      },
+    );
 
+    await dialSharedWithMeTest.step(
+      'Import the file and verify shared conversation with attachments is created as a user conversation',
+      async () => {
         await additionalShareUserDialHomePage.importFile(exportedData, () =>
           additionalShareUserChatBar.importButton.click(),
         );
@@ -168,7 +175,7 @@ dialSharedWithMeTest(
         await additionalShareUserChatHeaderDropdownMenu.selectMenuOption(
           MenuOptions.export,
         );
-        const exportedData = await additionalShareUserDialHomePage.downloadData(
+        exportedData = await additionalShareUserDialHomePage.downloadData(
           () =>
             additionalShareUserChatHeaderDropdownMenu.selectMenuOption(
               MenuOptions.withoutAttachments,
@@ -176,7 +183,12 @@ dialSharedWithMeTest(
           GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
         await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
+      },
+    );
 
+    await dialSharedWithMeTest.step(
+      'Import the file and verify shared conversation is created as a user conversation',
+      async () => {
         await additionalShareUserDialHomePage.importFile(exportedData, () =>
           additionalShareUserChatBar.importButton.click(),
         );
@@ -211,7 +223,9 @@ dialSharedWithMeTest(
             { triggeredHttpMethod: 'GET' },
           );
         const respJson = (await response?.json()) as BackendEntity;
-        const replayConversationId = `${expectedShareUserConversationId.substring(0, expectedShareUserConversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${sharedConversation.name}`;
+        const replayConversationId = ExpectedConstants.replayConversationById(
+          expectedShareUserConversationId,
+        );
         apiAssertion.assertEntityUrl(respJson, replayConversationId);
       },
     );
