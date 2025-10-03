@@ -139,7 +139,6 @@ export interface FolderInterface extends ShareEntity {
   type: FeatureType;
   temporary?: boolean;
   serverSynced?: boolean;
-  isPublicationFolder?: boolean;
 }
 
 export interface TemporaryFolderInterface
