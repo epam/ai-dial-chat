@@ -45,8 +45,11 @@ dialTest(
       'EPMRTC-5497',
     );
     // Select a model that allows file attachments
+    //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) => m.features?.configuration !== true,
+      ),
     );
     await localStorageManager.setRecentModelsIdsAndUseLastModel(
       modelWithAttachment,

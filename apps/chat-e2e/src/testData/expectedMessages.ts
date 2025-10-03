@@ -426,6 +426,10 @@ export const ExpectedMessages = {
     "Request can't be approved as some conversations have no messages",
   shareLinkIsUpdated: 'Share link is updated',
   valueIsDefined: 'Values is defined',
+  apiItemReceived: (statusCode: number, body: string) =>
+    `Received response code: ${statusCode} with body: ${body}`,
+  apiItemCreated: (body: string) => `Item created with data: ${body}`,
+  apiItemDeleted: (id: string) => `Item with id: ${id} was deleted`,
 };
 
 export const PublishingExpectedMessages = {
