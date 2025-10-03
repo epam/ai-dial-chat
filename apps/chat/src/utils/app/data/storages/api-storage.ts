@@ -300,6 +300,7 @@ export class ApiStorage implements DialStorage {
   ): Observable<ApplicationInfo> {
     return this._applicationApiStorage.updateEntity(application, schema);
   }
+
   getApplication(
     applicationId: string,
   ): Observable<CustomApplicationModel | null> {
@@ -308,6 +309,13 @@ export class ApiStorage implements DialStorage {
       folderId: '',
       ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
+  }
+
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]> {
+    return this._applicationApiStorage.getEntities(path, recursive);
   }
 
   deleteApplication(applicationId: string): Observable<void> {
@@ -363,6 +371,10 @@ export class ApiStorage implements DialStorage {
 
   updateToolset(data: ToolsetModel): Observable<ToolsetInfo> {
     return this._toolsetApiStorage.updateEntity(data);
+  }
+
+  getToolsetsByPath(path: string): Observable<ToolsetInfo[]> {
+    return this._toolsetApiStorage.getEntities(path);
   }
 
   deleteToolset(toolsetId: string): Observable<void> {

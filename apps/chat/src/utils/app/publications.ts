@@ -65,7 +65,6 @@ import {
   PublishActions,
   ShareEntity,
 } from '@epam/ai-dial-shared';
-import mime from 'mime-types';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -297,37 +296,6 @@ export const getApplicationPublishResources = ({
     },
     [],
   );
-};
-
-export const getFilesFromPublicResources = ({
-  fileResources,
-  payloadUrl,
-}: {
-  fileResources: PublicationResource[];
-  payloadUrl: string;
-}): { publicFiles: DialFile[]; foldersSet: Set<string> } => {
-  const foldersSet = new Set<string>();
-  const publicFiles: DialFile[] = fileResources.map((r) => {
-    const folderId = getFolderIdFromEntityId(r.reviewUrl);
-    foldersSet.add(folderId); // Add folderId to the Set
-    const fileName = splitEntityId(r.targetUrl).name;
-
-    return {
-      id: r.reviewUrl,
-      absolutePath: folderId,
-      folderId,
-      name: fileName,
-      contentLength: 0,
-      contentType: mime.lookup(fileName.split('.').pop() ?? '') || '',
-      isPublicationFile: true,
-      publicationInfo: {
-        action: r.action,
-        publicationUrl: payloadUrl,
-      },
-    };
-  });
-
-  return { publicFiles, foldersSet };
 };
 
 export const getPublishFolderResources = (
