@@ -1,11 +1,7 @@
 import { Observable, map } from 'rxjs';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import {
-  ApiUtils,
-  parseConversationApiKey,
-  parseMarketplaceEntityApiKey,
-} from '@/src/utils/server/api';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import {
@@ -134,8 +130,13 @@ export class ShareService {
 
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
+              const { name, modelInfo } = parseEntityApiKey(conversation.name, {
+                parseModel: true,
+              });
+
               entities.push({
-                ...parseConversationApiKey(conversation.name),
+                name,
+                ...modelInfo,
                 id,
                 updatedAt: conversation.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
@@ -215,10 +216,13 @@ export class ShareService {
             if (entity.nodeType === BackendDataNodeType.ITEM) {
               const application = applicationResource as BackendEntity;
               const id = ApiUtils.decodeApiUrl(application.url);
+              const { version } = parseEntityApiKey(application.name, {
+                parseVersion: true,
+              });
 
               entities.push({
                 name: application.name,
-                version: parseMarketplaceEntityApiKey(application.name).version,
+                version,
                 id,
                 permissions: application.permissions,
               });
