@@ -22,7 +22,7 @@ import {
 } from '@/src/utils/app/id';
 import {
   getConversationApiKey,
-  parseConversationApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -59,7 +59,12 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 
   parseEntityKey(key: string): Omit<ConversationInfo, 'folderId' | 'id'> {
-    return parseConversationApiKey(key);
+    const { modelInfo, name } = parseEntityApiKey(key, { parseModel: true });
+
+    return {
+      name,
+      ...modelInfo,
+    };
   }
 
   getStorageKey(): ApiKeys {
