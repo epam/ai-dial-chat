@@ -9,7 +9,7 @@ import {
   ApiUtils,
   getMarketplaceEntityApiKey,
   getOpsApiUrl,
-  parseMarketplaceEntityApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -24,6 +24,8 @@ import {
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import { ServerSlugs } from '@/src/types/slugs-types';
+
+import { DEFAULT_VERSION } from '@/src/constants/publication';
 
 import { ApiEntityStorage } from './api-entity-storage';
 
@@ -54,7 +56,10 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     return getMarketplaceEntityApiKey(info);
   }
   parseEntityKey(key: string): Omit<ApplicationInfo, 'folderId' | 'id'> {
-    return parseMarketplaceEntityApiKey(key);
+    return parseEntityApiKey(key, {
+      parseVersion: true,
+      defaultVersion: DEFAULT_VERSION,
+    });
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Applications;

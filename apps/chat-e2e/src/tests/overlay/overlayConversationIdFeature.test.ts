@@ -46,7 +46,7 @@ dialOverlayTest(
         const defaultModel = ModelsUtil.getDefaultAgent()!;
         plotlyImageUrl = await overlayFileApiHelper.putFile(
           Attachment.plotlyName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(

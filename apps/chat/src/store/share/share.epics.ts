@@ -38,7 +38,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { hasWritePermission } from '@/src/utils/app/share';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
@@ -140,9 +140,12 @@ const shareConversationEpic: AppEpic = (action$) =>
       const { apiKey, bucket, parentPath, name } = splitEntityId(
         payload.resourceId,
       );
+      const { modelInfo } = parseEntityApiKey(payload.resourceId, {
+        parseModel: true,
+      });
 
       return ConversationService.getConversation({
-        ...parseConversationApiKey(payload.resourceId),
+        ...modelInfo,
         id: payload.resourceId,
         name,
         folderId: constructPath(apiKey, bucket, parentPath),
