@@ -15,7 +15,7 @@ import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   ApiUtils,
   getOpsApiUrl,
-  parseMarketplaceEntityApiKey,
+  parseEntityApiKey,
 } from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
@@ -300,20 +300,29 @@ export class ApiStorage implements DialStorage {
   ): Observable<ApplicationInfo> {
     return this._applicationApiStorage.updateEntity(application, schema);
   }
+
   getApplication(
     applicationId: string,
   ): Observable<CustomApplicationModel | null> {
     return this._applicationApiStorage.getEntity({
       id: applicationId,
       folderId: '',
-      ...parseMarketplaceEntityApiKey(applicationId),
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
   }
+
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]> {
+    return this._applicationApiStorage.getEntities(path, recursive);
+  }
+
   deleteApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.deleteEntity({
       id: applicationId,
       folderId: '',
-      ...parseMarketplaceEntityApiKey(applicationId),
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
     });
   }
 
@@ -352,7 +361,7 @@ export class ApiStorage implements DialStorage {
       id: toolsetId,
       //TODO: add folderId to toolsets when folders for toolsets are implemented
       folderId: '',
-      ...parseMarketplaceEntityApiKey(toolsetId),
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
     });
   }
 
@@ -364,12 +373,16 @@ export class ApiStorage implements DialStorage {
     return this._toolsetApiStorage.updateEntity(data);
   }
 
+  getToolsetsByPath(path: string): Observable<ToolsetInfo[]> {
+    return this._toolsetApiStorage.getEntities(path);
+  }
+
   deleteToolset(toolsetId: string): Observable<void> {
     return this._toolsetApiStorage.deleteEntity({
       id: toolsetId,
       //TODO: add folderId to toolsets when folders for toolsets are implemented
       folderId: '',
-      ...parseMarketplaceEntityApiKey(toolsetId),
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
     });
   }
 }

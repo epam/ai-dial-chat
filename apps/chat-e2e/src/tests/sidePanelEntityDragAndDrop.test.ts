@@ -4,6 +4,7 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  API,
   CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
@@ -162,7 +163,11 @@ dialTest(
             .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
             .waitFor();
         }
+        const respPromise = page.waitForResponse((response) =>
+          response.url().includes(API.moveHost),
+        );
         await page.mouse.up();
+        await respPromise;
       },
     );
 

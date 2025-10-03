@@ -24,16 +24,23 @@ let bModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
   defaultModel = ModelsUtil.getDefaultAgent()!;
+  //TODO: excluded models with features?.configuration === true until fixed https://github.com/epam/ai-dial-chat/issues/4785
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
       (m) =>
         m.id !== defaultModel.id &&
         ModelsUtil.doesModelAllowSystemPrompt(m) &&
-        ModelsUtil.doesModelAllowTemperature(m),
+        ModelsUtil.doesModelAllowTemperature(m) &&
+        m.features?.configuration !== true,
     ),
   );
   bModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
+    allModels.filter(
+      (m) =>
+        m.id !== defaultModel.id &&
+        m.id !== aModel.id &&
+        m.features?.configuration !== true,
+    ),
   );
 });
 

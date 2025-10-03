@@ -705,7 +705,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Admins approves the 1st request conversation and verifies folder disappears from "Organization" section ',
+      'Admins approves the 1st request conversation and verifies folder disappears from "Organization" section',
       async () => {
         await adminPublishingApprovalModal.approveRequest();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
