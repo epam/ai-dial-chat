@@ -167,7 +167,7 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -397,7 +397,7 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
@@ -709,11 +709,11 @@ dialTest(
       async () => {
         responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         secondResponseImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          API.modelFilePath(defaultModel.id),
+          { parentPath: API.modelFilePath(defaultModel.id) },
         );
         historyConversation =
           conversationData.prepareHistoryConversationWithAttachmentsInResponse({

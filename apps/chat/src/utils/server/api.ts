@@ -1,6 +1,7 @@
 import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import { isConversationId } from '@/src/utils/app/id';
 import {
   constructPath,
   isPlaybackConversation,
@@ -11,12 +12,16 @@ import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
-import { ApiKeys, CoreApiKeys, ParseOptions } from '@/src/types/common';
+import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HttpErrorStatus } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
+import {
+  ParseEntityApiKeyOptions,
+  ParseEntityApiKeyResult,
+} from '@/src/types/parse-entity';
 import { PromptInfo } from '@/src/types/prompt';
 import { ServerSlugs } from '@/src/types/slugs-types';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetInfo } from '@/src/types/toolsets';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -32,6 +37,9 @@ export enum PseudoModel {
   Playback = 'playback',
 }
 
+// encoding modelId if it has '__' as part of the modelId to avoid conflict with pathKeySeparator
+// conversation modelId: 'gpt-4o__2025-09-20' will be encoded to 'gpt-4o%5F%5F2025-09-20'
+// and conversation key will be 'gpt-4o%5F%5F2025-09-20__name__0.0.1' to then properly split apiKey by pathKeySeparator
 export const encodeModelId = (modelId: string): string =>
   modelId
     .split(pathKeySeparator)
@@ -61,6 +69,9 @@ export const getConversationApiKey = (
     return conversation.name;
   }
 
+  // encoding modelId if it has '__' as part of the modelId to avoid conflict with pathKeySeparator
+  // conversation modelId: 'gpt-4o__2025-09-20' will be encoded to 'gpt-4o%5F%5F2025-09-20'
+  // and conversation key will be 'gpt-4o%5F%5F2025-09-20__name__0.0.1' to then properly split apiKey by pathKeySeparator
   const keyParts = [
     encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
@@ -76,38 +87,6 @@ export const getConversationApiKey = (
   return keyParts.join(pathKeySeparator);
 };
 
-// Format key: {modelId}__{name}
-export const parseConversationApiKey = (
-  apiKey: string,
-  options?: ParseOptions,
-): Omit<ConversationInfo, 'folderId' | 'id'> => {
-  const parts = apiKey.split(pathKeySeparator);
-
-  const [modelId, name] =
-    parts.length < 2
-      ? [EMPTY_MODEL_ID, apiKey] // receive without prefix with model i.e. {name}
-      : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
-
-  const parsedApiKey: Omit<ConversationInfo, 'folderId' | 'id'> = {
-    model: { id: modelId },
-    name,
-    isPlayback: modelId === PseudoModel.Playback,
-    isReplay: modelId === PseudoModel.Replay,
-  };
-
-  if (options?.parseVersion) {
-    const version = getVersionFromId(apiKey);
-
-    parsedApiKey.publicationInfo = { version };
-
-    if (version && version !== NA_VERSION) {
-      parsedApiKey.name = getPublicItemIdWithoutVersion(version, name);
-    }
-  }
-
-  return parsedApiKey;
-};
-
 // Format key: {name} or {name}__{version} if prompt is public
 export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
   if (
@@ -120,68 +99,58 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
   return [prompt.name, prompt.publicationInfo.version].join(pathKeySeparator);
 };
 
-// Format key: {name}
-export const parsePromptApiKey = (
+export const parseEntityApiKey = <T extends ParseEntityApiKeyOptions>(
   apiKey: string,
-  options?: ParseOptions,
-): Omit<PromptInfo, 'folderId' | 'id'> => {
-  const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
-    name: apiKey,
-  };
+  options?: T,
+): ParseEntityApiKeyResult<T> => {
+  const parts = apiKey.split(pathKeySeparator);
 
-  if (options?.parseVersion) {
-    const version = getVersionFromId(apiKey);
+  const result: ParseEntityApiKeyResult<T> = {} as ParseEntityApiKeyResult<T>;
 
-    parsedApiKey.publicationInfo = { version };
-    if (version !== NA_VERSION) {
-      parsedApiKey.name = getPublicItemIdWithoutVersion(version, apiKey);
+  if (options?.parseModel) {
+    if (parts.length < 2) {
+      result.modelInfo = {
+        model: { id: EMPTY_MODEL_ID },
+        isPlayback: false,
+        isReplay: false,
+      };
+    } else {
+      // decoding modelId if it has '%5F%5F' as part of the modelId to avoid conflict with pathKeySeparator
+      // conversation key: 'gpt-4o%5F%5F2025-09-20__name__0.0.1' split by pathKeySeparator will be ['gpt-4o%5F%5F2025-09-20', 'name', '0.0.1']
+      // after decoding modelId: 'gpt-4o%5F%5F2025-09-20' will be decoded to 'gpt-4o__2025-09-20'
+      const modelId = decodeModelId(parts.shift() ?? EMPTY_MODEL_ID);
+      result.modelInfo = {
+        model: { id: modelId },
+        isPlayback: modelId === PseudoModel.Playback,
+        isReplay: modelId === PseudoModel.Replay,
+      };
     }
   }
 
-  return parsedApiKey;
+  if (options?.parseVersion) {
+    if (parts.length < 2) {
+      result.version = options?.defaultVersion ?? NA_VERSION;
+    } else {
+      result.version = parts.pop() ?? options?.defaultVersion ?? NA_VERSION;
+    }
+  }
+
+  if (result.version?.startsWith('_')) {
+    result.version = result.version.replace(/^_/, '');
+    parts[parts.length - 1] = `${parts[parts.length - 1]}_`;
+  }
+
+  return {
+    ...result,
+    name: parts.join(pathKeySeparator),
+  };
 };
 
 // Format key: {name}__{version}
-export const getApplicationApiKey = (
-  application: Omit<ApplicationInfo, 'folderId' | 'id'>,
+export const getMarketplaceEntityApiKey = (
+  entity: Omit<ApplicationInfo | ToolsetInfo, 'folderId' | 'id'>,
 ): string => {
-  return [application.name, application.version].join(pathKeySeparator);
-};
-
-// Format key: {name}__{version}
-export const getToolsetApiKey = (
-  toolset: Omit<ToolsetModel, 'folderId' | 'id'>,
-) => {
-  return [toolset.name, toolset.version].join(pathKeySeparator);
-};
-
-// Format key: {name}__{version}
-export const parseApplicationApiKey = (
-  apiKey: string,
-): Omit<ApplicationInfo, 'folderId' | 'id'> => {
-  const parts = apiKey.split(pathKeySeparator);
-  const [name, version] =
-    parts.length < 2
-      ? [apiKey, '1.0.0'] // receive without postfix with version i.e. {name}
-      : [
-          `${decodeModelId(
-            parts.slice(0, parts.length - 1).join(pathKeySeparator),
-          )}${parts.at(-1)?.startsWith('_') ? '_' : ''}`, // handle even underscore case
-          parts[parts.length - 1].replace(/^_/, ''),
-        ]; // receive correct format {name}__{version}
-  return {
-    name,
-    version,
-  };
-};
-
-export const parseFileApiKey = (
-  apiKey: string,
-): { name: string; publicationInfo: { version: string } } => {
-  return {
-    name: apiKey,
-    publicationInfo: { version: NA_VERSION },
-  };
+  return [entity.name, entity.version].join(pathKeySeparator);
 };
 
 export class ApiUtils {
@@ -319,21 +288,13 @@ export const isValidEntityApiType = (apiKey: string): boolean => {
   );
 };
 
-export const getIdWithoutVersionFromApiKey = (
-  id: string,
-  parseMethod:
-    | typeof parseApplicationApiKey
-    | typeof parseConversationApiKey
-    | typeof parsePromptApiKey,
-) => {
-  const parsedApiKey = parseMethod(splitEntityId(id).name, {
+export const getIdWithoutVersionFromApiKey = (id: string) => {
+  const { version } = parseEntityApiKey(splitEntityId(id).name, {
     parseVersion: true,
+    parseModel: isConversationId(id),
   });
 
-  return getPublicItemIdWithoutVersion(
-    parsedApiKey.publicationInfo?.version ?? NA_VERSION,
-    id,
-  );
+  return getPublicItemIdWithoutVersion(version, id);
 };
 
 export const getVersionFromId = (id: string) => {

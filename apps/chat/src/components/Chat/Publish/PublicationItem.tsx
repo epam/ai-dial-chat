@@ -10,10 +10,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import {
-  getVersionFromId,
-  parseApplicationApiKey,
-} from '@/src/utils/server/api';
+import { getVersionFromId, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -132,6 +129,10 @@ const EditablePublicationItem: React.FC<PublicItemsProps> = ({
   }, [entity.id, latestVersion, onChangeVersion]);
 
   if (!onChangeVersion) {
+    const { version } = parseEntityApiKey(constructedPublicId, {
+      parseVersion: true,
+    });
+
     return (
       <div className="flex w-full items-center gap-2">
         {children}
@@ -142,7 +143,7 @@ const EditablePublicationItem: React.FC<PublicItemsProps> = ({
           )}
           data-qa="version"
         >
-          {parseApplicationApiKey(constructedPublicId).version}
+          {version}
         </span>
       </div>
     );

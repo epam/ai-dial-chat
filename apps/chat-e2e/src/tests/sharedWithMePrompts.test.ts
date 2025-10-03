@@ -117,7 +117,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Delete prompt from "Shared with me" section and verify it is not visible any more',
+      'Unshare prompt from "Shared with me" section and verify it is not visible any more',
       async () => {
         await additionalShareUserSharedWithMePrompts.openEntityDropdownMenu(
           prompt.name,
