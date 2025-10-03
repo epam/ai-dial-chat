@@ -447,13 +447,23 @@ dialTest(
     await dialTest.step(
       'Verify option is highlighted on hover over',
       async () => {
-        const randomOption = GeneratorUtil.randomArrayElement(
-          expectedDotsMenuOptions,
-        );
-        const optionElement = chatHeaderDropdownMenu.getMenuItem(randomOption);
-        await optionElement.hover();
+        let optionElement;
+        let counter = 1;
+        //select random menu option without sub-options
+        while (counter <= expectedDotsMenuOptions.length) {
+          const randomOption = GeneratorUtil.randomArrayElement(
+            expectedDotsMenuOptions,
+          );
+          optionElement = chatHeaderDropdownMenu.getMenuItem(randomOption);
+          if (await optionElement.isVisible()) {
+            break;
+          }
+          counter++;
+        }
+
+        await optionElement!.hover();
         await conversationDropdownMenuAssertion.assertElementBackgroundColors(
-          optionElement,
+          optionElement!,
           ThemesUtil.getRgbColorByKey(
             ThemeColorAttributes.bgAccentPrimaryAlpha,
           ),
