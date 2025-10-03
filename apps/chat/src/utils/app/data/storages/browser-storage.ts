@@ -411,6 +411,12 @@ export class BrowserStorage implements DialStorage {
   ): Observable<CustomApplicationModel | null> {
     throw new Error('Method not implemented.');
   }
+  getApplications(
+    _path: string,
+    _recursive: boolean,
+  ): Observable<ApplicationInfo[]> {
+    throw new Error('Method not implemented.');
+  }
   deleteApplication(_applicationId: string): Observable<void> {
     throw new Error('Method not implemented.');
   }
@@ -449,6 +455,9 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
   getToolsetById(_id: string): Observable<ToolsetModel | null> {
+    throw new Error('Method not implemented.');
+  }
+  getToolsetsByPath(_path: string): Observable<ToolsetInfo[]> {
     throw new Error('Method not implemented.');
   }
   deleteToolset(_id: string): Observable<void> {

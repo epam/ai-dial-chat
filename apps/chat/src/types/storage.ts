@@ -173,6 +173,11 @@ export interface DialStorage {
     applicationId: string,
   ): Observable<CustomApplicationModel | null>;
 
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]>;
+
   deleteApplication(applicationId: string): Observable<void>;
 
   deployApplication(applicationName: string): Observable<void>;
@@ -187,6 +192,7 @@ export interface DialStorage {
 
   // Toolsets methods
   getToolsetById(id: string): Observable<ToolsetModel | null>;
+  getToolsetsByPath(path: string): Observable<ToolsetInfo[]>;
   updateToolset(data: ToolsetModel): Observable<ToolsetInfo>;
   createToolset(data: ToolsetModel): Observable<ToolsetInfo>;
   deleteToolset(toolsetId: string): Observable<void>;

@@ -89,7 +89,21 @@ export class PublicationService {
         ...preparePublicationUpdateData(publicationData),
         url: ApiUtils.encodeApiUrl(url),
       }),
-    });
+    }).pipe(
+      map((publication: Publication) => {
+        return {
+          ...publication,
+          resources: publication.resources.map((resource) => ({
+            ...resource,
+            targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+            reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl),
+            sourceUrl: resource.sourceUrl
+              ? ApiUtils.decodeApiUrl(resource.sourceUrl)
+              : null,
+          })),
+        };
+      }),
+    );
   }
 
   public static publicationList(): Observable<PublicationInfo[]> {
