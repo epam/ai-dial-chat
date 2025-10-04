@@ -113,21 +113,19 @@ dialSharedWithMeTest(
           ModelsUtil.getLatestModelsWithAttachment(),
         );
         defaultModelId = defaultModel.id;
-        imageUrl = await fileApiHelper.putFile(
-          Attachment.sunImageName,
-          API.modelFilePath(defaultModelId),
-        );
-        imageUrl2 = await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          API.modelFilePath(defaultModelId),
-        );
+        imageUrl = await fileApiHelper.putFile(Attachment.sunImageName, {
+          parentPath: API.modelFilePath(defaultModelId),
+        });
+        imageUrl2 = await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: API.modelFilePath(defaultModelId),
+        });
         imageInConversationInFolderUrl = await fileApiHelper.putFile(
           Attachment.flowerImageName,
-          API.modelFilePath(defaultModelId),
+          { parentPath: API.modelFilePath(defaultModelId) },
         );
         specialCharsImageUrl = await fileApiHelper.putFile(
           Attachment.specialSymbolsName,
-          specialCharsFolder,
+          { parentPath: specialCharsFolder },
         );
 
         //TODO EPMRTC-4135 blocked by the #1076

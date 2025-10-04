@@ -169,6 +169,7 @@ export const PublicationReviewControls = {
   previousButton: '[data-qa="prev-chat-review-button"]',
   nextButton: '[data-qa="next-chat-review-button"]',
   backToPublication: '[data-qa="back-to-publication"]',
+  editButton: '[data-qa="edit-chat"]',
 };
 
 export const RenameConversationModalSelectors = {
