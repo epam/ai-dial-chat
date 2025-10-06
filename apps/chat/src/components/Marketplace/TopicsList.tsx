@@ -11,19 +11,22 @@ interface TopicsListProps {
 }
 
 const COUNTER_WIDTH = 30;
+const getKey = (item: { topic: string }) => item.topic;
 
 export const TopicsList = ({
   topics,
   counterMarginRight = 0,
 }: TopicsListProps) => {
+  const items = topics.map((topic) => ({ topic }));
+
   const renderOverflow = useCallback(
-    (hiddenTopics: string[]) => (
+    (hiddenItems: { topic: string }[]) => (
       <OverflowIndicator
-        count={hiddenTopics.length}
+        count={hiddenItems.length}
         tooltipContent={
           <>
-            {hiddenTopics.map((topic) => (
-              <ApplicationTopic key={topic} topic={topic} />
+            {hiddenItems.map((item) => (
+              <ApplicationTopic key={item.topic} topic={item.topic} />
             ))}
           </>
         }
@@ -37,10 +40,10 @@ export const TopicsList = ({
 
   return (
     <OverflowContainer
-      items={topics}
-      getKey={(topic) => topic}
+      items={items}
+      getKey={getKey}
       overflowIndicatorWidth={COUNTER_WIDTH + counterMarginRight}
-      renderItem={(topic) => <ApplicationTopic topic={topic} />}
+      renderItem={ApplicationTopic}
       renderOverflow={renderOverflow}
       className="flex w-full gap-2"
       dataQA="app-topics"
