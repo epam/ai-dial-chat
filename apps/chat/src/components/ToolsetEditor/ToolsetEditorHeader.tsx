@@ -96,7 +96,7 @@ export const ToolsetEditorHeader = ({
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
       setSaveDraftDialog(false);
-      if (!result) {
+      if (result) {
         onSave(true);
         return;
       }
@@ -125,13 +125,12 @@ export const ToolsetEditorHeader = ({
 
       <ConfirmDialog
         isOpen={saveDraftDialog}
-        heading={t('Invalid fields will not be saved')}
+        heading={t('Only valid data will be saved')}
         description={t(
-          'Some fields are filled in incorrectly, or required fields are missing. Any invalid fields will not be saved.\n' +
-            'Are you sure you want to exit?',
+          'Some fields are invalid or required fields are missing.\n Changes in those fields will not be saved.\n Exit and save only valid information?',
         )}
-        confirmLabel={t('Continue editing')}
-        cancelLabel={t('Exit')}
+        confirmLabel={t('Save valid data')}
+        cancelLabel={t('Continue editing')}
         onClose={handleCloseConfirmDialog}
       />
     </>
