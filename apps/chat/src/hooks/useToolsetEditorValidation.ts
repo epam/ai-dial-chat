@@ -110,6 +110,7 @@ export const useToolsetEditorValidation = () => {
     isAdmin,
     isEditing,
     isToolsetDetailsLoading,
+    isToolsetLoadingFailed,
     publication?.resources,
     publication?.url,
     publicationUrl,

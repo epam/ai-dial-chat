@@ -61,6 +61,8 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectLogsEntityId = (state: RootState) =>
   rootSelector(state).logsEntityId;
 
+const selectEditorStep = (state: RootState) => rootSelector(state).editorStep;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -75,4 +77,5 @@ export const ApplicationSelectors = {
   selectInitialized,
   selectSelectedWidget,
   selectLogsEntityId,
+  selectEditorStep,
 };

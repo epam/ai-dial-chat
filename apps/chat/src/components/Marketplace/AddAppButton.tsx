@@ -11,10 +11,7 @@ import { ApplicationType } from '@/src/types/applications';
 import { AddMarketplaceEntityMenuItem } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationTypesSchemasActions,
-} from '@/src/store/actions';
+import { ApplicationTypesSchemasActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
@@ -55,8 +52,7 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
-            router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
+            void router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
           },
         },
         {
@@ -66,8 +62,7 @@ export function AddAppButton() {
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
-            router.push(getAppEditorRoute(ApplicationType.CODE_APP));
+            void router.push(getAppEditorRoute(ApplicationType.CODE_APP));
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
@@ -77,7 +72,6 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
             if (detailedApplicationTypeSchema?.$id !== schema.id) {
               dispatch(
                 ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
@@ -85,7 +79,7 @@ export function AddAppButton() {
                 ),
               );
             }
-            router.push(getAppEditorRoute(schema.id));
+            void router.push(getAppEditorRoute(schema.id));
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),

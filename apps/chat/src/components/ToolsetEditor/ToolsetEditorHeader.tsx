@@ -3,11 +3,12 @@ import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
+import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
@@ -25,20 +26,19 @@ const stepFields: {
 ];
 
 interface ToolsetEditorHeaderProps {
-  currentToolset?: ToolsetModel;
-  currentStep: ToolsetEditorSteps;
   onTabClick: (tab: ToolsetEditorSteps) => void;
   onSave: (saveDraft?: boolean) => void;
 }
 
 export const ToolsetEditorHeader = ({
-  currentToolset,
-  currentStep,
   onTabClick,
   onSave,
 }: ToolsetEditorHeaderProps) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
+
+  const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
+  const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
   const isEditing = !!currentToolset;
 

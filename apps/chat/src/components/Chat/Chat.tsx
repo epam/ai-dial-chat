@@ -54,9 +54,9 @@ import {
 
 import { Routes } from '@/src/constants/routes';
 
-import { CustomChatViewer } from '@/src/components/AppsEditor/Settings/Previews/CustomChatViewer';
 import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
+import { CustomChatViewer } from '@/src/components/Chat/CustomChatViewer';
 import { Loader } from '@/src/components/Common/Loader';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
@@ -224,7 +224,7 @@ const ChatView = memo(() => {
     selectedConversations.some((conv) => conv.messages.length > 0);
 
   const isApplicationPreviewChat = useMemo(() => {
-    return router.pathname === Routes.AppsEditorSettings;
+    return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
   const isAdminPreview = isAdmin && isApplicationPreviewChat;
@@ -1020,7 +1020,7 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
   const router = useRouter();
 
   const isApplicationPreviewChat = useMemo(() => {
-    return router.pathname === Routes.AppsEditorSettings;
+    return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
   const isStartedCustomViewerConversation = useAppSelector(

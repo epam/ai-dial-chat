@@ -1,16 +1,11 @@
-import { isVersionPartSizeValid, isVersionValid } from '@/src/utils/app/common';
-import { doesHaveNotAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import { DEFAULT_TOOLSET_NAME } from '@/src/constants/default-ui-settings';
-import {
-  formErrors,
-  urlErrors,
-  versionsErrors,
-} from '@/src/constants/form-errors';
+import { formErrors, urlErrors } from '@/src/constants/form-errors';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
+import { MarketplaceEntityBaseSchema } from '@/src/constants/validation-helpers';
 
 import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
 import { z as zodValidation } from 'zod';
@@ -70,15 +65,6 @@ export type ToolsetLoginFormType = zodValidation.infer<
 
 export const ToolsetEditorFormSchema = zodValidation
   .object({
-    name: zodValidation
-      .string()
-      .nonempty(formErrors.required)
-      .min(2, formErrors.tooShort('Name', 2))
-      .max(160, formErrors.tooLong('Name', 160))
-      .refine(
-        (str) => !doesHaveNotAllowedSymbols(str),
-        formErrors.hasSpecialCharacters(),
-      ),
     endpoint: zodValidation
       .string()
       .nonempty(formErrors.required)
@@ -99,16 +85,9 @@ export const ToolsetEditorFormSchema = zodValidation
       }, urlErrors.notValidUrl)
       .or(zodValidation.literal(ENDPOINT_PLACEHOLDER)),
     protocol: zodValidation.enum(ToolsetTransportType),
-    version: zodValidation
-      .string()
-      .nonempty(versionsErrors.required)
-      .refine(isVersionValid, versionsErrors.notValid)
-      .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
-    description: zodValidation.string(),
     allowedTools: zodValidation.array(zodValidation.string()),
-    iconUrl: zodValidation.string(),
-    topics: zodValidation.array(zodValidation.string()),
   })
+  .and(MarketplaceEntityBaseSchema)
   .and(ToolsetLoginFormSchema);
 
 export type ToolsetEditorForm = zodValidation.infer<

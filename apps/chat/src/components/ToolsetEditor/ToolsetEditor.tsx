@@ -199,9 +199,7 @@ export const ToolsetEditor = () => {
     <FormProvider {...formMethods}>
       <div className="flex size-full flex-col">
         <ToolsetEditorHeader
-          currentStep={editorStep}
           onTabClick={handleTabClick}
-          currentToolset={toolsetDetails}
           onSave={handleSaveAndExit}
         />
 

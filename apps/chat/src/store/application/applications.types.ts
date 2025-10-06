@@ -3,6 +3,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FolderInterface } from '@/src/types/folder';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -21,4 +22,5 @@ export interface ApplicationState {
   selectedWidget?: string;
 
   logsEntityId: string | undefined;
+  editorStep: MarketplaceEditorSteps;
 }

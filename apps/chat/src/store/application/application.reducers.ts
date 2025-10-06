@@ -12,6 +12,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationState } from './applications.types';
@@ -30,6 +31,7 @@ const initialState: ApplicationState = {
   publicFolders: [],
   hasUnsavedChanges: false,
   logsEntityId: undefined,
+  editorStep: MarketplaceEditorSteps.General,
 };
 
 export const applicationSlice = createSlice({
@@ -44,7 +46,6 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>;
-        slug?: string;
         schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
@@ -108,6 +109,8 @@ export const applicationSlice = createSlice({
         redirectUrl?: string;
         schema?: ApiDetailedApplicationTypeSchema;
         publicationUrl?: string;
+        tabToOpen?: MarketplaceEditorSteps;
+        isSaveAndExit?: boolean;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -240,6 +243,10 @@ export const applicationSlice = createSlice({
     setLogsEntityId(state, { payload }: PayloadAction<string | undefined>) {
       state.logsEntityId = payload;
     },
+    setEditorStep(state, { payload }: PayloadAction<MarketplaceEditorSteps>) {
+      state.editorStep = payload;
+    },
+    initQueryParams: (state) => state,
   },
 });
 

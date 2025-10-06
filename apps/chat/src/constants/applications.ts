@@ -42,3 +42,12 @@ export const CONFIRM_DOCUMENT_VALUES: ConfirmDialogValueTypes = {
 };
 
 export const DRAFT_APPLICATION_ID = `${ApiKeys.Applications}/draft`;
+
+export enum AppsEditorQuery {
+  Id = 'id',
+  Step = 'step',
+  Schema = 'schema',
+  PublicationUrl = 'publicationUrl',
+}
+
+export const COMPLETION_URL_PLACEHOLDER = 'COMPLETION_URL_PLACEHOLDER';

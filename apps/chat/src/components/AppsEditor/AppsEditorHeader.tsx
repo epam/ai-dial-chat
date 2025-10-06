@@ -5,8 +5,11 @@ import { useRouter } from 'next/router';
 import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isApplicationType } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -16,37 +19,24 @@ import {
   PublicationActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors, ModelsSelectors } from '@/src/store/selectors';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  ModelsSelectors,
+} from '@/src/store/selectors';
 
+import { AppsEditorQuery } from '@/src/constants/applications';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
 
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
 import { capitalize } from 'lodash';
 
-enum TabKeys {
-  GENERAL = 'general',
-  SETTINGS = 'settings',
-}
-
-const chatHref = {
-  pathname: Routes.Chat,
-};
-
-const myWorkspaceHref = {
-  pathname: Routes.Marketplace,
-  query: { tab: MarketplaceTabs.MY_WORKSPACE },
-};
-
 const tabKeysInfo = {
-  [TabKeys.GENERAL]: {
-    route: Routes.AppsEditorGeneralInfo,
+  [MarketplaceEditorSteps.General]: {
     label: 'General info',
   },
-  [TabKeys.SETTINGS]: {
-    route: Routes.AppsEditorSettings,
+  [MarketplaceEditorSteps.Settings]: {
     label: 'App settings',
   },
 };
@@ -54,99 +44,81 @@ const tabKeysInfo = {
 const anyRouteExceptAppEditorRegex = /^(?!\/apps-editor(?:\/|$)).*/;
 
 interface AppsEditorHeaderProps {
-  applicationTypeDisplayName: string;
-  isEditApplication?: boolean;
-  hasCustomEditor?: boolean;
+  onTabClick: (tab: MarketplaceEditorSteps) => void;
+  onSave: (saveDraft?: boolean) => void;
 }
 
 export const AppsEditorHeader = ({
-  applicationTypeDisplayName,
-  isEditApplication,
-  hasCustomEditor,
+  onTabClick,
+  onSave,
 }: AppsEditorHeaderProps) => {
   const {
-    query: { id = '', slug = '', add, publicationUrl },
-    pathname,
-    push,
+    query: {
+      [AppsEditorQuery.Id]: id = '',
+      [AppsEditorQuery.Schema]: schemaId = '',
+      [AppsEditorQuery.PublicationUrl]: publicationUrl,
+    },
   } = useRouter();
+  const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
-  const { t } = useTranslation(Translation.Chat);
 
-  const hasUnsavedChanges = useAppSelector(
-    ApplicationSelectors.selectHasUnsavedChanges,
+  const currentStep = useAppSelector(ApplicationSelectors.selectEditorStep);
+  const appDetails = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
   );
+  const schema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+
+  const isEditing = !!appDetails;
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const returnConversationIds = useAppSelector(
     ApplicationSelectors.selectReturnConversationIds,
   );
-  const shouldSaveApplication = useAppSelector(
-    ApplicationSelectors.selectShouldSaveApplication,
+
+  const isSchemaApplicationType = !isApplicationType(
+    decodeURIComponent(schemaId.toString()),
   );
+  const applicationTypeDisplayName = isSchemaApplicationType
+    ? (schema?.[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ??
+      '')
+    : decodeURIComponent(schemaId.toString());
+  const hasCustomEditor =
+    !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
   const agent = id ? modelsMap[id.toString()] : undefined;
-  const activeTab =
-    pathname === Routes.AppsEditorGeneralInfo
-      ? TabKeys.GENERAL
-      : TabKeys.SETTINGS;
 
   const tabs = useMemo(
     () => [
       {
-        key: TabKeys.GENERAL,
-        label: t(tabKeysInfo[TabKeys.GENERAL].label),
+        key: MarketplaceEditorSteps.General,
+        label: t(tabKeysInfo[MarketplaceEditorSteps.General].label),
         disabled: false,
       },
       {
-        key: TabKeys.SETTINGS,
-        label: t(tabKeysInfo[TabKeys.SETTINGS].label),
-        disabled: !id,
+        key: MarketplaceEditorSteps.Settings,
+        label: t(tabKeysInfo[MarketplaceEditorSteps.Settings].label),
+        disabled: !isEditing,
       },
     ],
-    [t, id],
+    [isEditing, t],
   );
 
-  const title = `${t(isEditApplication && !add ? 'Edit' : 'Add')} ${applicationTypeDisplayName}`;
+  const title = `${t(isEditing ? 'Edit' : 'Add')} ${applicationTypeDisplayName}`;
 
   const handleTabClick = useCallback(
-    (tab: { key: TabKeys; disabled: boolean }) => {
+    (tab: { key: MarketplaceEditorSteps; disabled: boolean }) => {
       if (tab.disabled) return;
-      if (hasUnsavedChanges) {
-        dispatch(ApplicationActions.setShouldSaveApplication(true));
-        dispatch(ApplicationActions.setHasUnsavedChanges(false));
-      }
-      push({
-        pathname: tabKeysInfo[tab.key].route,
-        query: { id, slug, add, publicationUrl },
-      });
+      onTabClick(tab.key);
     },
-    [add, dispatch, hasUnsavedChanges, id, publicationUrl, push, slug],
+    [onTabClick],
   );
 
   const handleSaveAndRedirect = useCallback(() => {
-    if (
-      !shouldSaveApplication &&
-      isEditApplication &&
-      !hasCustomEditor &&
-      !isEntityIdPublic({ id: agent?.id as string })
-    ) {
-      dispatch(ApplicationActions.setShouldSaveApplication(true));
-      dispatch(ApplicationActions.setExitAfterSave(true));
-    } else {
-      if (publicationUrl) {
-        void push(chatHref);
-      } else {
-        void push(myWorkspaceHref);
-      }
-    }
-  }, [
-    agent?.id,
-    dispatch,
-    hasCustomEditor,
-    publicationUrl,
-    isEditApplication,
-    push,
-    shouldSaveApplication,
-  ]);
+    // TODO: implement save draft
+    onSave();
+  }, [onSave]);
 
   const handleCustomViewerExit = useCallback(() => {
     if (hasCustomEditor) {
@@ -179,10 +151,10 @@ export const AppsEditorHeader = ({
   }, [dispatch, hasCustomEditor, publicationUrl, returnConversationIds]);
 
   const getMobileLabelText = useCallback(
-    (tabKey: TabKeys) => {
+    (tabKey: MarketplaceEditorSteps) => {
       const capitalizedAppType = capitalize(applicationTypeDisplayName);
       let labelText = tabKeysInfo[tabKey].label.toUpperCase();
-      if (tabKey === TabKeys.SETTINGS) {
+      if (tabKey === MarketplaceEditorSteps.Settings) {
         labelText = labelText.replace(/^app\s+/i, '');
       }
 
@@ -192,9 +164,7 @@ export const AppsEditorHeader = ({
   );
 
   const saveLabel =
-    isEditApplication &&
-    !hasCustomEditor &&
-    !isEntityIdPublic({ id: agent?.id as string })
+    isEditing && !hasCustomEditor && (agent ? !isEntityIdPublic(agent) : false)
       ? 'Save and exit'
       : 'Exit';
 
@@ -203,8 +173,8 @@ export const AppsEditorHeader = ({
   return (
     <EditorHeader
       tabs={tabs}
-      activeTab={activeTab}
-      isEditing={isEditApplication}
+      activeTab={currentStep}
+      isEditing={isEditing}
       onTabClick={handleTabClick}
       getMobileTabLabel={getMobileLabelText}
       title={title}
