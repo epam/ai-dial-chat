@@ -80,7 +80,7 @@ export const MarketplaceEntityPublishItem = ({
             <ErrorMessage
               type="warning"
               error={t(
-                `The icon used for this application is in the "${isEntityIdPublic({ id: entity.iconUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                `The icon used for this ${entity.type} is in the "${isEntityIdPublic({ id: entity.iconUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${entity.type} will be published with the default one.`,
               )}
             />
           </CollapsibleSection>
