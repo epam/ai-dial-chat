@@ -2,11 +2,9 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 interface Props {
-  subModel: DialAIEntityModel | undefined;
   systemPrompt: string;
   temperature: number | null;
   disallowChangeSettings: boolean;
