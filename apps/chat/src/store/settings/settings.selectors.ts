@@ -117,9 +117,6 @@ const selectCodeWarning = (state: RootState) => rootSelector(state).codeWarning;
 const selectDefaultModelReference = (state: RootState) =>
   rootSelector(state).defaultModelReference;
 
-const selectDefaultAssistantSubmodelId = (state: RootState) =>
-  rootSelector(state).defaultAssistantSubmodelId;
-
 const selectDefaultRecentModelsIds = (state: RootState) =>
   rootSelector(state).defaultRecentModelsIds;
 
@@ -210,7 +207,6 @@ const selectDefaultSystemPrompt = (state: RootState) =>
 
 const selectDefaults = createSelector(
   [
-    selectDefaultAssistantSubmodelId,
     selectQuickAppsHost,
     selectQuickAppsModel,
     selectQuickAppsSchemaId,
@@ -219,7 +215,6 @@ const selectDefaults = createSelector(
     selectDefaultSystemPrompt,
   ],
   (
-    assistantSubmodelId,
     quickAppsHost,
     quickAppsModel,
     quickAppsSchemaId,
@@ -228,7 +223,6 @@ const selectDefaults = createSelector(
     defaultSystemPrompt,
   ) =>
     ({
-      assistantSubmodelId,
       quickAppsHost,
       quickAppsModel,
       quickAppsSchemaId,

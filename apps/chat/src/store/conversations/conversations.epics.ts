@@ -120,7 +120,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -1331,7 +1330,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         payload,
-        modelsMap,
         conversations,
         selectedConversationIds,
         overlaySystemPrompt,

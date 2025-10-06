@@ -3,7 +3,6 @@ import { ReactNode } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isPlaybackConversation } from '@/src/utils/app/conversation';
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
@@ -17,8 +16,6 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
-
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
@@ -36,7 +33,6 @@ interface Props {
   conversation: Conversation;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
-  onSelectAssistantSubModel: (modelId: string) => void;
 }
 
 export function FieldContainer({ children }: SettingContainerProps) {

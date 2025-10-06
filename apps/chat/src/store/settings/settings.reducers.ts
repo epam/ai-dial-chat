@@ -3,8 +3,6 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { PageType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
-
 import { SettingsState } from './settings.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -24,7 +22,6 @@ const initialState: SettingsState = {
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],
-  defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
   topics: [],
   codeEditorPythonVersions: [],
   providerId: null,

@@ -4,7 +4,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { doesModelHaveSettings } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
@@ -15,7 +14,6 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
 
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -44,7 +42,6 @@ const ChatSettingsView = ({
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 

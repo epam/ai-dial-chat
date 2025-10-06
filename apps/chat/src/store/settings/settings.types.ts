@@ -18,7 +18,6 @@ export interface SettingsState {
   announcement: string;
   defaultModelReference: string | undefined;
   overlayDefaultModelReference?: string | undefined;
-  defaultAssistantSubmodelId: string;
   defaultRecentModelsIds: string[];
   storageType: StorageType;
   themesHostDefined: boolean;
