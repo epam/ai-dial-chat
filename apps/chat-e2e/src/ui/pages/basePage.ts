@@ -110,7 +110,7 @@ export class BasePage {
         expectedApiResponses.push({ apiMethod: 'GET', urlPattern: iconHost! });
       }
     }
-    const responses = await this.waitForExpectedResponses(
+    const { responses: responses } = await this.waitForExpectedResponses(
       () => method(),
       expectedApiResponses,
     );
@@ -329,7 +329,7 @@ export class BasePage {
   }) {
     if (options?.triggeredApiResponses) {
       const responseBodies = [];
-      const responses = await this.waitForExpectedResponses(
+      const { responses: responses } = await this.waitForExpectedResponses(
         () => this.page.keyboard.press(keys.ctrlPlusV),
         options.triggeredApiResponses,
       );
@@ -422,7 +422,7 @@ export class BasePage {
     }
 
     // 3. Create a DataTransfer object in the browser context and dispatch a 'paste' event
-    const responses = await this.waitForExpectedResponses(
+    const { responses: responses } = await this.waitForExpectedResponses(
       () => this.firePasteFilesEvent(filesMetadata),
       expectedApiResponses,
     );
@@ -618,8 +618,8 @@ export class BasePage {
     });
   }
 
-  public async waitForExpectedResponses(
-    action: () => Promise<void>,
+  public async waitForExpectedResponses<T>(
+    action: () => Promise<T>,
     expectedApiResponses: ExpectedApiResponse[],
     defaultStatus = 200,
     timeout = apiTimeout,
@@ -648,7 +648,7 @@ export class BasePage {
       responsePromises.push(promise);
     }
 
-    await action();
+    const actionResult = await action();
 
     const responses = [];
     for (let i = 0; i < responsePromises.length; i++) {
@@ -668,7 +668,7 @@ export class BasePage {
       }
     }
 
-    return responses;
+    return { actionResult: actionResult, responses: responses };
   }
 
   public async getAttachmentFileMetadataAndContent(
