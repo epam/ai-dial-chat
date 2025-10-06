@@ -307,7 +307,6 @@ export function PublicationHandler({ publication }: Props) {
         const filteredMappedResources = mappedResources.filter((resource) =>
           selectedItemsToApprove.includes(resource.sourceUrl),
         );
-        return;
 
         dispatch(
           PublicationActions.publish({
