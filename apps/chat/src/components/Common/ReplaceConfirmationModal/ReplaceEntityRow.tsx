@@ -1,20 +1,21 @@
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 
+import classNames from 'classnames';
+
 import { AdditionalItemData, ReplaceOptions } from '@/src/types/common';
 
 import { ReplaceSelector } from './ReplaceSelector';
 
-interface EntityRowProps {
-  children: ReactElement;
-  entityId: string;
-  dataQA: string;
+export interface FeatureRowProps {
   additionalItemData?: AdditionalItemData;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
 }
 
-export interface FeatureRowProps {
-  onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: AdditionalItemData;
+interface EntityRowProps extends FeatureRowProps {
+  children: ReactElement;
+  entityId: string;
+  dataQA: string;
+  itemComponentClassNames?: string;
 }
 
 export const EntityRow = ({
@@ -22,6 +23,7 @@ export const EntityRow = ({
   entityId,
   dataQA,
   additionalItemData,
+  itemComponentClassNames,
   onEvent,
 }: EntityRowProps) => {
   const [selectedOption, setSelectedOption] = useState<ReplaceOptions>(
@@ -46,7 +48,10 @@ export const EntityRow = ({
 
   return (
     <div
-      className="flex h-[38px] justify-between hover:rounded hover:bg-accent-primary-alpha"
+      className={classNames(
+        'flex h-[38px] justify-between hover:rounded hover:bg-accent-primary-alpha',
+        itemComponentClassNames,
+      )}
       data-qa={dataQA}
     >
       {children}

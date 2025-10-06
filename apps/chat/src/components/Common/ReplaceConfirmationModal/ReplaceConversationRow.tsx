@@ -71,11 +71,13 @@ const ConversationView = ({
 
 interface ConversationRowProps extends ConversationViewProps, FeatureRowProps {
   featureContainerClassNames?: string;
+  itemComponentClassNames?: string;
 }
 
 export const ConversationRow = ({
   item: conversation,
   additionalItemData,
+  itemComponentClassNames,
   featureContainerClassNames,
   onEvent,
 }: ConversationRowProps) => {
