@@ -34,6 +34,7 @@ export function PublicationFilters({
   isRulesLoading,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const publicationModel = useAppSelector(
@@ -71,10 +72,12 @@ export function PublicationFilters({
     );
   }
 
+  const isPublishRequestAndNoRules = !!publicationModel && !rulesOnEdit.length;
   const isNoRulesToDisplay =
     (!filteredRuleEntries.length ||
       filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
-    !publication.rules?.length;
+    !publication.rules?.length &&
+    isPublishRequestAndNoRules;
   const oldRules = filteredRuleEntries.filter(([_, rules]) => rules.length);
   const isNewRules = !!publication.rules?.length && !!publication.targetFolder;
 

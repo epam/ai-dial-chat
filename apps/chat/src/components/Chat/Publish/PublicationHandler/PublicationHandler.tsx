@@ -115,8 +115,15 @@ export function PublicationHandler({ publication }: Props) {
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
   );
+  const isReview = !publicationModel;
+  const editedPublishToUrl = useAppSelector(
+    PublicationSelectors.selectPublishToUrl,
+  );
   const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
+    PublicationSelectors.selectRulesByPath(
+      state,
+      !isReview ? editedPublishToUrl : publication.targetFolder,
+    ),
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -135,9 +142,6 @@ export function PublicationHandler({ publication }: Props) {
   );
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
-  );
-  const editedPublishToUrl = useAppSelector(
-    PublicationSelectors.selectPublishToUrl,
   );
   const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
   const displayAuthorEditState = useAppSelector(
@@ -158,8 +162,6 @@ export function PublicationHandler({ publication }: Props) {
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [isFormChanged, setIsFormChanged] = useState(false);
-
-  const isReview = !publicationModel;
 
   const {
     register,
@@ -205,12 +207,40 @@ export function PublicationHandler({ publication }: Props) {
     }
   }, [dispatch, publication.targetFolder]);
 
+  useEffect(() => {
+    if (editedPublishToUrl !== PUBLIC_URL_PREFIX && !isReview) {
+      dispatch(
+        PublicationActions.uploadRules({
+          path: getIdWithoutFeatureType(editedPublishToUrl),
+        }),
+      );
+    }
+  }, [editedPublishToUrl, dispatch, isReview]);
+
+  useEffect(() => {
+    if (!isReview) {
+      dispatch(
+        PublicationActions.setRulesOnEdit(rules[editedPublishToUrl] ?? []),
+      );
+    }
+  }, [rules, isReview, dispatch, publication.rules, editedPublishToUrl]);
+
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
-    return !publication.rules
+    return !publication.rules && isReview
       ? rulesEntries
-      : rulesEntries.filter(([path]) => path !== publication.targetFolder);
-  }, [publication.rules, rules, publication.targetFolder]);
+      : rulesEntries.filter(([path]) =>
+          isReview
+            ? path !== publication.targetFolder
+            : path !== editedPublishToUrl,
+        );
+  }, [
+    rules,
+    publication.rules,
+    publication.targetFolder,
+    isReview,
+    editedPublishToUrl,
+  ]);
 
   const newRules: PublicationRule[] = useMemo(
     () =>
