@@ -2,13 +2,18 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
+import { ItemUtil } from '@/src/utils';
 import path from 'path';
 
 export const ExpectedConstants = {
-  settingsTooltip: (entityType: EntityType) =>
+  settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
-      : 'Change conversation settings:\nTemperature:',
+      : `Change conversation settings:Temperature:${temperature}`,
+  settingsTooltipWithoutChanges: (entityType: EntityType) =>
+    entityType === EntityType.Application
+      ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+      : 'Conversation settings:Temperature:',
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,
@@ -34,6 +39,9 @@ export const ExpectedConstants = {
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
   continueReplayAfterErrorLabel: 'Try again',
+  conversationSettings: 'Conversation settings:',
+  noConversationSettings: 'There are no conversation settings for this agent',
+  changeConversationSettings: 'Change conversation settings:',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
@@ -98,8 +106,11 @@ export const ExpectedConstants = {
       invitationLink.indexOf(invitationPath) + invitationPath.length;
     return invitationLink.slice(startIndex);
   },
-  sharedConversationUrl: (invitationLink: string) => {
+  sharedSideBarEntityUrl: (invitationLink: string) => {
     return `${config.use!.baseURL}/share/${ExpectedConstants.sharedLink(invitationLink)}`;
+  },
+  sharedAppUrl: (invitationLink: string) => {
+    return `${config.use!.baseURL}/marketplace/share/${ExpectedConstants.sharedLink(invitationLink)}`;
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
@@ -124,7 +135,7 @@ export const ExpectedConstants = {
   sharePromptText:
     'This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes.',
   shareApplicationText:
-    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
+    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
     'This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   notSharedFolderText: 'This folder has not been shared with anyone yet.',
@@ -273,6 +284,8 @@ export const ExpectedConstants = {
   informationModalAuthorLabel: 'Author:',
   agentIconTooltip: (appName: string, appVersion: string) =>
     `${appName}\nv. ${appVersion}`,
+  modelTooltip: (modelName: string, modelVersion?: string) =>
+    `Current agent:\nAgent: ${modelName}${modelVersion ? `\nVersion: ${modelVersion}` : ''}`,
   pleaseFillInAllMandatoryFields: 'Please fill in all mandatory fields',
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
@@ -308,6 +321,11 @@ export const ExpectedConstants = {
   dragFileDescription: 'Drop files here to attach them to the message',
   dragFileNotAllowedTitle: 'No attachments allowed',
   dragFileNotAllowedDescription: `Attachments can't be added to the message`,
+  exportedArchiveHistoryConversationPath:
+    'conversations/conversations_history.json',
+  exportedArchiveImageRootFolder: 'res',
+  replayConversationById: (conversationId: string) =>
+    `${conversationId.substring(0, conversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversationId.substring(conversationId.indexOf(ItemUtil.entityIdSeparator) + ItemUtil.entityIdSeparator.length)}`,
 };
 
 export enum Types {
@@ -443,6 +461,7 @@ export const API = {
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/ops/publication/create',
   publicationRequestCreate: '/api/ops/publication/create',
+  publicationUpdate: '/api/ops/publication/update',
   publicationRequestRejection: '/api/ops/publication/reject',
   publicationRequestApproval: '/api/ops/publication/approve',
   publicationRequestDetails: '/api/ops/publication/get',

@@ -89,6 +89,7 @@ export const ExpectedMessages = {
   chatRequestTemperatureIsValid: 'Chat API request temperature is valid',
   chatRequestMessageIsValid: 'Chat API request message is valid',
   chatRequestAttachmentIsValid: 'Chat API request attachment is valid',
+  entityUrlIsValid: 'Entity url is valid',
   moveDestinationIsValid: 'Move API request destination is valid',
   moveSourceIsValid: 'Move API request source is valid',
   moveOverwriteIsValid: 'Move API request overwrite is valid',
@@ -421,6 +422,14 @@ export const ExpectedMessages = {
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
+  requestCannotBeApproved:
+    "Request can't be approved as some conversations have no messages",
+  shareLinkIsUpdated: 'Share link is updated',
+  valueIsDefined: 'Values is defined',
+  apiItemReceived: (statusCode: number, body: string) =>
+    `Received response code: ${statusCode} with body: ${body}`,
+  apiItemCreated: (body: string) => `Item created with data: ${body}`,
+  apiItemDeleted: (id: string) => `Item with id: ${id} was deleted`,
 };
 
 export const PublishingExpectedMessages = {

@@ -107,10 +107,9 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Prepare conversation with attachment in the request',
       async () => {
-        imageUrl = await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          filePath,
-        );
+        imageUrl = await fileApiHelper.putFile(Attachment.cloudImageName, {
+          parentPath: filePath,
+        });
         conversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithInputAttachments,
@@ -409,6 +408,7 @@ dialAdminTest(
 
 dialAdminTest(
   'Publish chat with plotly.\n' +
+    'Header context menu options for chats from publication request from Approve required section.\n' +
     'Error message appears if to Share the conversation with an attachment from Organization',
   async ({
     conversationData,
@@ -422,6 +422,8 @@ dialAdminTest(
     publishingRequestModal,
     adminDialHomePage,
     adminPublishingApprovalModal,
+    adminChatHeader,
+    adminApproveRequiredConversationDropdownMenuAssertion,
     adminPublicationReviewControl,
     adminOrganizationConversations,
     adminConversationDropdownMenu,
@@ -442,7 +444,7 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3625', 'EPMRTC-4125');
+    setTestIds('EPMRTC-3625', 'EPMRTC-4740', 'EPMRTC-4125');
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -455,10 +457,9 @@ dialAdminTest(
     await dialTest.step(
       'Prepare conversation with plotly graph in the response',
       async () => {
-        plotlyImageUrl = await fileApiHelper.putFile(
-          Attachment.plotlyName,
-          API.modelFilePath(modelWithInputAttachments.id),
-        );
+        plotlyImageUrl = await fileApiHelper.putFile(Attachment.plotlyName, {
+          parentPath: API.modelFilePath(modelWithInputAttachments.id),
+        });
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             plotlyImageUrl,
@@ -544,11 +545,25 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Admin approves the request and verifies publication disappears from "Approve required" and displayed under "Organization" section',
+      'Admin reviews the conversation and verifies chat header dots menu option',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
         });
+        await adminChatHeader.dotsMenu.click();
+        await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuIncludesOptions(
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin approves the request and verifies publication disappears from "Approve required" and displayed under "Organization" section',
+      async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
         await adminApproveRequiredConversationsAssertion.assertFolderState(

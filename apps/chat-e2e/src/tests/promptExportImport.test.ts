@@ -8,6 +8,7 @@ import {
   FolderPrompt,
   Import,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { ImportPrompt } from '@/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -155,8 +156,13 @@ dialTest(
       async () => {
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
+          await dialHomePage.mockChatTextResponse(
+            MockedChatApiResponseBodies.simpleTextBody,
+          );
           await chat.changeAgentButton.click();
-          await talkToAgentDialog.selectAgent(simpleRequestModel);
+          await talkToAgentDialog.selectAgent(simpleRequestModel, {
+            isHttpMethodTriggered: false,
+          });
           const request = await chat.sendRequestWithPrompt(
             promptContent,
             false,

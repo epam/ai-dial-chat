@@ -3,6 +3,7 @@ import { ShareModalSelectors } from '@/src/ui/selectors';
 import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
+import { Response } from 'playwright-core';
 
 export class ConfirmationDialog extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
@@ -28,11 +29,18 @@ export class ConfirmationDialog extends BaseElement {
 
   public async confirm({
     triggeredHttpMethod = undefined,
-  }: { triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' } = {}) {
+    triggeredHttpHost = undefined,
+  }: {
+    triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' | 'GET';
+    triggeredHttpHost?: string;
+  } = {}) {
     if (isApiStorageType && triggeredHttpMethod) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === triggeredHttpMethod,
-      );
+      const predicate = (resp: Response) =>
+        triggeredHttpHost
+          ? resp.request().method() === triggeredHttpMethod &&
+            resp.url().includes(triggeredHttpHost)
+          : resp.request().method() === triggeredHttpMethod;
+      const respPromise = this.page.waitForResponse(predicate);
       await this.confirmButton.click();
       return respPromise;
     }

@@ -24,7 +24,6 @@ export type DialFile = Omit<
   BaseDialEntity & {
     percent?: number;
     fileContent?: File;
-    isPublicationFile?: boolean;
   } & ShareEntity;
 
 // For file folders folderId is relative path and id is relative path + '/' + name

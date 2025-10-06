@@ -167,10 +167,12 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAgentDetailsModal: AgentDetailsModal;
   additionalShareUserSelectFolderModal: SelectFolderModal;
   additionalShareUserSelectFolders: Folders;
+  additionalShareUserChatHeaderDropdownMenu: DropdownMenu;
   additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
   additionalShareUserAgentDetailsModalAssertion: AgentDetailsModalAssertion;
   additionalShareUserMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
+  additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -871,6 +873,15 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserSelectFolderModal.getSelectFolders();
     await use(additionalShareUserSelectFolders);
   },
+  additionalShareUserChatHeaderDropdownMenu: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserChatHeaderDropdownMenu = new DropdownMenu(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserChatHeaderDropdownMenu);
+  },
   additionalShareUserSelectFoldersAssertion: async (
     { additionalShareUserSelectFolders },
     use,
@@ -903,6 +914,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserMarketplaceAgentsAssertion =
       new MarketplaceAgentsAssertion(additionalShareUserMarketplaceAgents);
     await use(additionalShareUserMarketplaceAgentsAssertion);
+  },
+  additionalShareUserConversationDropdownMenuAssertion: async (
+    { additionalShareUserConversationDropdownMenu },
+    use,
+  ) => {
+    const additionalShareUserConversationDropdownMenuAssertion =
+      new MenuAssertion(additionalShareUserConversationDropdownMenu);
+    await use(additionalShareUserConversationDropdownMenuAssertion);
   },
 });
 

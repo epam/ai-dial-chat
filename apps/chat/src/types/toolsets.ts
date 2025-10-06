@@ -14,6 +14,10 @@ export enum ToolsetCredentialsLevel {
   APP = 'APP',
 }
 
+export interface ToolsetInfo extends ShareEntity {
+  version: string;
+}
+
 export interface ToolsetModel extends ShareEntity {
   transport: ToolsetTransportType;
   allowedTools: string[];

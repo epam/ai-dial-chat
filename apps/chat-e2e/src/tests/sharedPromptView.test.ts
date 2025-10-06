@@ -112,7 +112,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Hover over "Delete" button and verify it is highlighted',
+      'Hover over "Unshare" button and verify it is highlighted',
       async () => {
         await additionalShareUserPromptPreviewModal.promptUnshareButton.hoverOver();
         await additionalShareUserPromptPreviewModalAssertion.assertElementColor(
@@ -123,7 +123,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Click on "Delete" button and verify confirmation popup is shown',
+      'Click on "Unshare" button and verify confirmation popup is shown',
       async () => {
         await additionalShareUserPromptPreviewModal.promptUnshareButton.click();
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationDialogTitle(
@@ -136,7 +136,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Click on "Delete" button and verify prompt is removed from "Share with me" section',
+      'Click on "Unshare" button and verify prompt is removed from "Share with me" section',
       async () => {
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
@@ -188,7 +188,7 @@ dialSharedWithMeTest(
       'Click on "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
-          ExpectedConstants.sharedConversationUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
             shareByLinkResponse.invitationLink,
           ),
         );

@@ -996,7 +996,10 @@ dialTest(
       'Create replay conversation based on imported',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
+          isHttpMethodTriggered: true,
+          triggeredHttpMethod: 'GET',
+        });
       },
     );
 
@@ -1005,7 +1008,7 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(replayName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
-          triggeredHttpMethod: 'POST',
+          triggeredHttpMethod: 'GET',
         });
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -1087,7 +1090,9 @@ dialTest(
           secondRowSecondVar.replaceAll(varBracketsRegex, ''),
           secondUpdatedValue,
         );
-        const request = await variableModalDialog.submitReplayVariables();
+        const request = await variableModalDialog.submitReplayVariables({
+          isMoveRequestTriggered: true,
+        });
         apiAssertion.assertRequestMessage(
           request.messages[2],
           requestContent

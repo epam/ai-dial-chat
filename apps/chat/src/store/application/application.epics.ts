@@ -42,7 +42,7 @@ import {
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
 import { translate } from '@/src/utils/app/translation';
-import { parseApplicationApiKey } from '@/src/utils/server/api';
+import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import {
   ApplicationStatus,
@@ -591,7 +591,7 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
       ),
     ),
     switchMap(({ payload }) => {
-      const { name } = parseApplicationApiKey(payload.id);
+      const { name } = parseEntityApiKey(payload.id, { parseVersion: true });
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
 
       return isAdmin || !isEntityIdExternal(payload)
@@ -608,7 +608,7 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ApplicationActions.updateFunctionStatusFail.type),
     mergeMap(({ payload }) => {
-      const { name } = parseApplicationApiKey(payload.id);
+      const { name } = parseEntityApiKey(payload.id, { parseVersion: true });
 
       return concat(
         of(
