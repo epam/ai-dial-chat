@@ -49,9 +49,11 @@ import { getFolderIdFromEntityId } from './folders';
 import {
   getEntityBucket,
   getRootId,
+  isApplicationId,
   isConversationId,
   isFileId,
   isRootId,
+  isToolsetId,
 } from './id';
 import { EnumMapper } from './mappers';
 
@@ -365,6 +367,8 @@ export const getDefaultAllEditEntities = (
       const apiKey = splitEntityId(item.reviewUrl).name;
       const { name } = parseEntityApiKey(apiKey, {
         parseModel: isConversationId(item.reviewUrl),
+        parseVersion:
+          isApplicationId(item.reviewUrl) || isToolsetId(item.reviewUrl),
       });
 
       const entityIdPart = item.reviewUrl.split('/');

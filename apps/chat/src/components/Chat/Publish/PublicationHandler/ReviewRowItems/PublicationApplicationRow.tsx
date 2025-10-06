@@ -11,7 +11,7 @@ import { PublicationItemRow } from './PublicationItemRow';
 import { ShareEntity } from '@epam/ai-dial-shared';
 
 interface Props {
-  item: Omit<ShareEntity, 'folderId'>;
+  item: ShareEntity;
   level: number;
 }
 
@@ -29,7 +29,7 @@ export const PublicationApplicationRow: React.FC<Props> = ({ item, level }) => {
     <PublicationItemRow
       level={level}
       Icon={<ModelIcon entity={entity} entityId={item.id} size={18} />}
-      item={entity}
+      item={item}
       itemTypeName={BackendResourceTypeName.APPLICATION}
       dataQa="application"
     />

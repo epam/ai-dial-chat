@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
 import { PublicationApplicationRow } from '@/src/components/Chat/Publish/PublicationHandler/ReviewRowItems/PublicationApplicationRow';
 
 import { EntityPublicationResourcesProps } from './view-props';
+
+import uniqBy from 'lodash-es/uniqBy';
 
 export const ApplicationPublicationResources = ({
   resources,
@@ -18,17 +22,20 @@ export const ApplicationPublicationResources = ({
   const filteredApps = useMemo(() => {
     const resourcesIds = resources.map((resource) => resource.reviewUrl);
 
-    return [...publishRequestModels, ...models].filter((model) =>
-      resourcesIds.includes(model.id),
+    return uniqBy(
+      [...publishRequestModels, ...models].filter((model) =>
+        resourcesIds.includes(model.id),
+      ),
+      (item) => item.id,
     );
-  }, [publishRequestModels, resources, models]);
+  }, [publishRequestModels, models, resources]);
 
   return (
     <>
       {filteredApps.map((application) => (
         <PublicationApplicationRow
           key={application.id}
-          item={application}
+          item={application as PublishRequestDialAIEntityModel}
           level={0}
         />
       ))}

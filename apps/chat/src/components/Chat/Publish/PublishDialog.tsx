@@ -53,11 +53,13 @@ const PublishHandlerContainer = ({
 
   const dispatch = useAppDispatch();
 
+  const memoizedEntityArray = useMemo(() => [entity], [entity]);
+
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
   const entities = useAppSelector((state) => {
-    if (!isFolder) return [entity];
+    if (!isFolder) return memoizedEntityArray;
 
     const selector =
       resourceType === BackendResourceType.CONVERSATION
@@ -66,7 +68,10 @@ const PublishHandlerContainer = ({
 
     return selector(state, entity.id);
   });
+
   const filteredEntities = useMemo(() => {
+    if (!isFolder) return entities;
+
     return entities.filter(
       (entity) =>
         !isConversationInfoEntity(entity) ||
@@ -74,7 +79,7 @@ const PublishHandlerContainer = ({
           isLoadedConversationEntity(entity) &&
           entity.messages.length),
     );
-  }, [entities]);
+  }, [entities, isFolder]);
 
   useEffect(() => {
     if (!areConversationsWithContentUploading && !filteredEntities.length) {

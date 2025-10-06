@@ -22,7 +22,6 @@ import {
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
 import { constructPath } from '@/src/utils/app/shared-utils';
-import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
@@ -78,31 +77,31 @@ const LEADING_SLASH_REGEX = /^\/+/;
 const sections = [
   {
     featureType: FeatureType.Chat,
-    sectionName: translate('Conversations'),
+    sectionName: 'Conversations',
     dataQa: 'conversations-to-approve',
     Component: ConversationPublicationResources,
   },
   {
     featureType: FeatureType.Prompt,
-    sectionName: translate('Prompts'),
+    sectionName: 'Prompts',
     dataQa: 'prompts-to-approve',
     Component: PromptPublicationResources,
   },
   {
     featureType: FeatureType.Application,
-    sectionName: translate('Applications'),
+    sectionName: 'Applications',
     dataQa: 'applications-to-approve',
     Component: ApplicationPublicationResources,
   },
   {
     featureType: FeatureType.File,
-    sectionName: translate('Files'),
+    sectionName: 'Files',
     dataQa: 'files-to-approve',
     Component: FilePublicationResources,
   },
   {
     featureType: FeatureType.Toolset,
-    sectionName: translate('Toolsets'),
+    sectionName: 'Toolsets',
     dataQa: 'toolsets-to-approve',
     Component: ToolsetPublicationResources,
   },
@@ -308,6 +307,7 @@ export function PublicationHandler({ publication }: Props) {
         const filteredMappedResources = mappedResources.filter((resource) =>
           selectedItemsToApprove.includes(resource.sourceUrl),
         );
+        return;
 
         dispatch(
           PublicationActions.publish({
@@ -318,6 +318,7 @@ export function PublicationHandler({ publication }: Props) {
             rules: rulesOnEdit,
           }),
         );
+        dispatch(PublicationActions.setPublishModel());
         return;
       }
 
@@ -453,8 +454,8 @@ export function PublicationHandler({ publication }: Props) {
     <form
       onSubmit={submitWrapper(handleUpdateRequest)}
       className={classNames(
-        'flex size-full justify-center overflow-y-auto',
-        isReview && 'p-3 md:px-5 md:pt-5',
+        'flex w-full justify-center overflow-y-auto',
+        isReview ? 'p-3 md:px-5 md:pt-5' : 'h-full',
       )}
     >
       <div
@@ -495,7 +496,12 @@ export function PublicationHandler({ publication }: Props) {
         </div>
         <div className="flex size-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           {isPublicationUpdating || areConversationsWithContentUploading ? (
-            <div className="flex size-full items-center justify-center bg-layer-2 py-10">
+            <div
+              className={classNames(
+                'flex w-full items-center justify-center bg-layer-2 py-10',
+                isReview ? 'h-[300px]' : 'h-full',
+              )}
+            >
               <Spinner size={32} />
             </div>
           ) : (
@@ -601,7 +607,7 @@ export function PublicationHandler({ publication }: Props) {
                       ) && (
                         <CollapsibleSection
                           key={featureType}
-                          name={sectionName}
+                          name={t(sectionName)}
                           openByDefault
                           dataQa={dataQa}
                           togglerClassName="!text-sm !text-primary"

@@ -324,7 +324,7 @@ export const PublicationHandlerFooter = ({
     [notExistEntities, publication.resources],
   );
 
-  const handleApprovePublication = useCallback(() => {
+  const handleApprovePublication = () => {
     if (itemsToApprove.length !== publication.resources.length) {
       dispatch(PublicationActions.updateAndApprovePublicationRequest());
     } else {
@@ -334,12 +334,7 @@ export const PublicationHandlerFooter = ({
         }),
       );
     }
-  }, [
-    dispatch,
-    itemsToApprove.length,
-    publication.resources.length,
-    publication.url,
-  ]);
+  };
 
   const isOnlyFilesPublication = publication.resources.every((resource) =>
     isFileId(resource.reviewUrl),
@@ -499,6 +494,7 @@ export const PublicationHandlerFooter = ({
                       }),
                     )
                   }
+                  type="button"
                   data-qa="reject"
                 >
                   {t('Reject')}
