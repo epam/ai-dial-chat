@@ -97,7 +97,7 @@ dialAdminTest(
           BucketUtil.getBucket(),
           BucketUtil.getAdminUserBucket(),
         );
-        expectedPlaybackConversationId = `${expectedTodayConversationId.substring(0, conversation.id.lastIndexOf('/'))}/${PseudoModel.playback}${ItemUtil.entityIdSeparator}${ExpectedConstants.playbackConversation}${conversation.name}`;
+        expectedPlaybackConversationId = `${expectedTodayConversationId.substring(0, expectedTodayConversationId.lastIndexOf('/'))}/${PseudoModel.playback}${ItemUtil.entityIdSeparator}${ExpectedConstants.playbackConversation}${conversation.name}`;
       },
     );
 
