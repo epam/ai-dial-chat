@@ -31,7 +31,6 @@ interface ChatSettingsViewProps {
       modelId: string;
       prompt: string;
       temperature: number;
-      currentAssistantModelId: string | undefined;
       isShared: boolean;
     },
   ) => void;
@@ -46,32 +45,17 @@ const ChatSettingsView = ({
     conversation.temperature,
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const [currentAssistantModelReference, setCurrentAssistantModelReference] =
-    useState(
-      modelsMap[
-        conversation.assistantModelId ??
-          DefaultsService.get('assistantSubmodelId') ??
-          FALLBACK_ASSISTANT_SUBMODEL_ID
-      ]?.reference ?? FALLBACK_ASSISTANT_SUBMODEL_ID,
-    );
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const handleChangeSettings = useCallback(() => {
     onChangeSettings(conversation, {
-      currentAssistantModelId: currentAssistantModelReference,
       modelId: conversation.model.id,
       prompt: currentPrompt,
       temperature: currentTemperature,
       isShared: !!conversation.isShared,
     });
-  }, [
-    conversation,
-    currentAssistantModelReference,
-    currentPrompt,
-    currentTemperature,
-    onChangeSettings,
-  ]);
+  }, [conversation, currentPrompt, currentTemperature, onChangeSettings]);
 
   useEffect(() => {
     handleChangeSettings();
@@ -81,12 +65,10 @@ const ChatSettingsView = ({
     <ConversationSettings
       conversation={conversation}
       prompts={prompts}
-      assistantModelId={currentAssistantModelReference}
       prompt={currentPrompt}
       temperature={currentTemperature}
       onChangePrompt={setCurrentPrompt}
       onChangeTemperature={setCurrentTemperature}
-      onSelectAssistantSubModel={setCurrentAssistantModelReference}
     />
   );
 };
@@ -102,7 +84,6 @@ interface Props {
       modelId: string;
       prompt: string;
       temperature: number;
-      currentAssistantModelId: string | undefined;
       isShared: boolean;
     },
   ) => void;

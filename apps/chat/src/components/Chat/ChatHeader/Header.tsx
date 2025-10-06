@@ -13,10 +13,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import {
-  getValidEntitiesFromIds,
-  isReplayAsIsConversation,
-} from '@/src/utils/app/conversation';
+import { isReplayAsIsConversation } from '@/src/utils/app/conversation';
 import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
@@ -275,12 +272,6 @@ export const ChatHeader = Inversify.register(
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
                       hasSettings={!!doesModelHaveSettings(model)}
-                      subModel={
-                        conversation.assistantModelId &&
-                        model?.type === EntityType.Assistant
-                          ? modelsMap[conversation.assistantModelId]
-                          : undefined
-                      }
                       systemPrompt={
                         model?.type === EntityType.Model &&
                         doesModelAllowSystemPrompt(model)

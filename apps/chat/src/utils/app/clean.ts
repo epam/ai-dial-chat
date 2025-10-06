@@ -70,9 +70,7 @@ export const cleanConversation = (
   const model: ConversationEntityModel = {
     id: conversation.model ? conversation.model.id : FALLBACK_MODEL_ID,
   };
-  const assistantModelId =
-    conversation.assistantModelId ??
-    DefaultsService.get('assistantSubmodelId', FALLBACK_ASSISTANT_SUBMODEL_ID);
+
   const conversationId =
     conversation.id ||
     constructPath(
@@ -90,7 +88,6 @@ export const cleanConversation = (
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
-    assistantModelId,
     updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     ...(conversation.playback && {
       playback: {
@@ -133,7 +130,6 @@ export const cleanConversationHistory = (
   // added prompts (3/26/23)
   // added messages (4/16/23)
   // added replay (6/22/2023)
-  // added selectedAddons and refactored to not miss any new fields (7/6/2023)
 
   if (!Array.isArray(history)) {
     console.warn('history is not an array. Returning an empty array.');

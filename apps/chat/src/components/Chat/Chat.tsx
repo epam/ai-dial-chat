@@ -470,7 +470,6 @@ const ChatView = memo(() => {
               ),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
-              assistantModelId: temporarySettings.currentAssistantModelId,
               isShared: temporarySettings.isShared,
             },
           }),

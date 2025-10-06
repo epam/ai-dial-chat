@@ -16,9 +16,7 @@ export const doesModelHaveSettings = (model: DialAIEntityModel | undefined) => {
   return (
     model &&
     model.type !== EntityType.Application && // custom settings in future
-    (model.type === EntityType.Assistant ||
-      doesModelAllowSystemPrompt(model) ||
-      doesModelAllowTemperature(model))
+    (doesModelAllowSystemPrompt(model) || doesModelAllowTemperature(model))
   );
 };
 
@@ -61,14 +59,6 @@ export const checkIsNotAllowedModelUtil = (
     modelInMap.functionStatus !== ApplicationStatus.DEPLOYED;
 
   if (isNotDeployedCustomApp) {
-    return true;
-  }
-
-  if (
-    modelInMap.type === EntityType.Assistant &&
-    conv.assistantModelId &&
-    !modelsMap[conv.assistantModelId]
-  ) {
     return true;
   }
 

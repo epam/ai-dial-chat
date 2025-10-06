@@ -47,24 +47,18 @@ const getTokensPerMessage = (
 };
 
 async function getAllEntities(accessToken: string, jobTitle: string) {
-  const [modelsResult, applicationsResult, assistantsResult] =
-    await Promise.allSettled([
-      getEntities<CoreAIEntity<EntityType.Model>[]>(
-        EntityType.Model,
-        accessToken,
-        jobTitle,
-      ),
-      getEntities<CoreAIEntity<EntityType.Application>[]>(
-        EntityType.Application,
-        accessToken,
-        jobTitle,
-      ),
-      getEntities<CoreAIEntity<EntityType.Assistant>[]>(
-        EntityType.Assistant,
-        accessToken,
-        jobTitle,
-      ),
-    ]);
+  const [modelsResult, applicationsResult] = await Promise.allSettled([
+    getEntities<CoreAIEntity<EntityType.Model>[]>(
+      EntityType.Model,
+      accessToken,
+      jobTitle,
+    ),
+    getEntities<CoreAIEntity<EntityType.Application>[]>(
+      EntityType.Application,
+      accessToken,
+      jobTitle,
+    ),
+  ]);
 
   const models: CoreAIEntity<EntityType.Model>[] =
     modelsResult.status === 'fulfilled'
@@ -76,12 +70,7 @@ async function getAllEntities(accessToken: string, jobTitle: string) {
       ? applicationsResult.value
       : (logger.error(applicationsResult.reason), []);
 
-  const assistants: CoreAIEntity<EntityType.Assistant>[] =
-    assistantsResult.status === 'fulfilled'
-      ? assistantsResult.value
-      : (logger.error(assistantsResult.reason), []);
-
-  return { models, applications, assistants };
+  return { models, applications };
 }
 
 const fixDate = (date: number) => (date === 1672534800 ? 1740006000000 : date); // 1/20/1970 -> 2/20/2025
@@ -90,18 +79,15 @@ export const getSortedEntities = async (token: JWT | null) => {
   const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const { models, applications, assistants } = await getAllEntities(
-    accessToken,
-    jobTitle,
-  );
+  const { models, applications } = await getAllEntities(accessToken, jobTitle);
 
-  const preProcessedEntities = [...models, ...applications, ...assistants];
+  const preProcessedEntities = [...models, ...applications];
   let defaultModelReference = preProcessedEntities.find(
     (model) =>
       model.reference === DEFAULT_MODEL_ID || model.id === DEFAULT_MODEL_ID,
   )?.reference;
 
-  for (const entity of [...models, ...applications, ...assistants]) {
+  for (const entity of preProcessedEntities) {
     if (
       entity.capabilities?.embeddings ||
       (entity.object === EntityType.Model &&

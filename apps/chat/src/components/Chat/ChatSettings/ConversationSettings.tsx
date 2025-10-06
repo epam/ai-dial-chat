@@ -20,7 +20,6 @@ import { ModelsSelectors } from '@/src/store/selectors';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
@@ -31,7 +30,6 @@ interface SettingContainerProps {
 }
 
 interface Props {
-  assistantModelId: string | undefined;
   prompt: string | undefined;
   temperature: number | undefined;
   prompts: Prompt[];
@@ -76,12 +74,10 @@ function EmptySettings() {
 export const ConversationSettings = Inversify.register(
   'ConversationSettings',
   ({
-    assistantModelId,
     prompts,
     prompt,
     temperature,
     conversation,
-    onSelectAssistantSubModel,
     onChangePrompt,
     onChangeTemperature,
   }: Props) => {
@@ -106,21 +102,6 @@ export const ConversationSettings = Inversify.register(
 
     return (
       <SettingContainer>
-        {model.type === EntityType.Assistant && (
-          <FieldContainer>
-            <AssistantSubModelSelector
-              assistantModelReference={
-                assistantModelId ??
-                DefaultsService.get(
-                  'assistantSubmodelId',
-                  FALLBACK_ASSISTANT_SUBMODEL_ID,
-                )
-              }
-              onSelectAssistantSubModel={onSelectAssistantSubModel}
-              disabled={isPlayback}
-            />
-          </FieldContainer>
-        )}
         {model.type === EntityType.Model &&
           doesModelAllowSystemPrompt(model) && (
             <FieldContainer>

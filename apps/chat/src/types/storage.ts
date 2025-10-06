@@ -31,7 +31,6 @@ export enum UIStorageKeys {
   SelectedConversationIds = 'selectedConversationIds',
   SelectedPublicationId = 'selectedPublicationId',
   RecentModelsIds = 'recentModelsIds',
-  RecentAddonsIds = 'recentAddonsIds',
   Settings = 'settings',
   ShowChatbar = 'showChatbar',
   ShowPromptbar = 'showPromptbar',

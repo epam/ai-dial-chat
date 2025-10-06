@@ -79,7 +79,6 @@ export const rootEpic = combineEpics(
 
 export const rootReducer = combineReducers({
   models: modelsSlice.reducer,
-  addons: addonsSlice.reducer,
   ui: uiSlice.reducer,
   conversations: conversationsSlice.reducer,
   prompts: promptsSlice.reducer,

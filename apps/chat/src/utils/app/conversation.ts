@@ -304,13 +304,6 @@ export const getConversationModelParams = (
 
   return {
     model: { id: newAiEntity.reference },
-    assistantModelId:
-      newAiEntity.type === EntityType.Assistant
-        ? DefaultsService.get(
-            'assistantSubmodelId',
-            FALLBACK_ASSISTANT_SUBMODEL_ID,
-          )
-        : undefined,
     replay: updatedReplay,
   };
 };

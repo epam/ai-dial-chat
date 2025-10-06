@@ -30,14 +30,7 @@ export class ChatApiHelper extends BaseApiHelper {
       temperature: conversation.temperature,
     };
 
-    return conversation.assistantModelId
-      ? {
-          ...commonData,
-          assistantModel: ModelsUtil.getOpenAIEntity(
-            conversation.assistantModelId,
-          ),
-        }
-      : commonData;
+    return commonData;
   }
 
   public async postRequest(conversation: Conversation) {

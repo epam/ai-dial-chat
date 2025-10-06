@@ -18,7 +18,6 @@ export interface ChatBody {
   prompt?: string;
   temperature?: number;
   model?: DialAIEntityModel;
-  assistantModel?: DialAIEntityModel;
 }
 
 export interface RateBody {
@@ -35,7 +34,6 @@ export interface ConversationsTemporarySettings {
   modelId: string;
   prompt: string;
   temperature: number;
-  currentAssistantModelId: string | undefined;
   isShared: boolean;
 }
 

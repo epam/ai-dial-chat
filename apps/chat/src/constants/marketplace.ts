@@ -52,11 +52,7 @@ export enum DeleteType {
   REMOVE = 'Remove',
 }
 
-export const ENTITY_TYPES = [
-  EntityType.Application,
-  EntityType.Assistant,
-  EntityType.Model,
-];
+export const ENTITY_TYPES = [EntityType.Application, EntityType.Model];
 
 export enum SourceType {
   Public = 'Public',

@@ -44,7 +44,6 @@ export enum LikeState {
 export interface MessageSettings {
   prompt: string;
   temperature: number;
-  assistantModelId?: string;
 }
 
 export interface ConversationEntityModel {
@@ -174,8 +173,6 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   reference?: string;
   replay?: Replay;
   playback?: Playback;
-
-  assistantModelId?: string;
 
   isMessageStreaming?: boolean;
   customViewState?: Record<string, unknown>;

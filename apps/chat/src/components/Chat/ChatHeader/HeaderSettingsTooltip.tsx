@@ -2,12 +2,8 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
-
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
-
-import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 interface Props {
   subModel: DialAIEntityModel | undefined;
@@ -26,7 +22,6 @@ const SM_HEIGHT_THRESHOLDS = [
 const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 
 export const HeaderSettingsTooltip = ({
-  subModel,
   systemPrompt,
   temperature,
   disallowChangeSettings,
@@ -53,18 +48,10 @@ export const HeaderSettingsTooltip = ({
         :
       </div>
       <div className="mt-3 grid max-w-full grid-cols-[auto,1fr] gap-x-4 gap-y-2">
-        {!subModel && !systemPrompt && temperature === null && (
+        {!systemPrompt && temperature === null && (
           <span className="text-secondary">
             {t('There are no conversation settings for this agent ')}
           </span>
-        )}
-        {subModel && (
-          <>
-            <span className="text-secondary">{t('Assistant model')}:</span>
-            <div data-qa="assistant-info">
-              {getOpenAIEntityFullName(subModel)}
-            </div>
-          </>
         )}
         {systemPrompt && (
           <>

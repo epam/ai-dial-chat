@@ -1,4 +1,3 @@
-import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -57,7 +56,6 @@ export const OpenAIStream = async ({
   model,
   temperature,
   messages,
-  assistantModelId,
   chatReference,
   userJWT,
   jobTitle,
@@ -67,7 +65,6 @@ export const OpenAIStream = async ({
   model: DialAIEntityModel;
   temperature: number | undefined;
   messages: Message[];
-  assistantModelId: string | undefined;
   userJWT: string;
   chatReference: string;
   jobTitle: string | undefined;
@@ -92,7 +89,7 @@ export const OpenAIStream = async ({
       messages: messagesToSend,
       temperature,
       stream: true,
-      model: assistantModelId ?? model.reference,
+      model: model.reference,
       max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
       ...(configurationSchemaValue && {
         custom_fields: { configuration: configurationSchemaValue },

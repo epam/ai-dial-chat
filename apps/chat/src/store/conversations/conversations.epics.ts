@@ -513,10 +513,6 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
-                assistantModelId: DefaultsService.get(
-                  'assistantSubmodelId',
-                  FALLBACK_ASSISTANT_SUBMODEL_ID,
-                ),
               }),
             );
             const selectedConversationsIds =
@@ -1366,7 +1362,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         const messageSettings: Message['settings'] = {
           prompt: payload.conversation.prompt,
           temperature: payload.conversation.temperature,
-          assistantModelId: payload.conversation.assistantModelId,
         };
 
         const assistantMessage: Message = {
@@ -1479,7 +1474,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
-      const assistantModelId = payload.conversation.assistantModelId;
       const conversationModelType = lastModel?.type ?? EntityType.Model;
       let modelAdditionalSettings = {};
 
@@ -1488,14 +1482,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           prompt: doesModelAllowSystemPrompt(lastModel)
             ? payload.conversation.prompt
             : undefined,
-          temperature: doesModelAllowTemperature(lastModel)
-            ? payload.conversation.temperature
-            : FALLBACK_TEMPERATURE,
-        };
-      }
-      if (conversationModelType === EntityType.Assistant && assistantModelId) {
-        modelAdditionalSettings = {
-          assistantModel: modelsMap[assistantModelId],
           temperature: doesModelAllowTemperature(lastModel)
             ? payload.conversation.temperature
             : FALLBACK_TEMPERATURE,
@@ -1939,14 +1925,13 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         activeMessage.model &&
         activeMessage.model.id
       ) {
-        const { prompt, temperature, assistantModelId } = activeMessage.settings
+        const { prompt, temperature } = activeMessage.settings
           ? activeMessage.settings
           : conv;
 
         const newConversationSettings: MessageSettings = {
           prompt,
           temperature,
-          assistantModelId,
         };
 
         const model = {
@@ -2275,8 +2260,9 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
             userMessage,
             assistantMessage,
           );
-          const { prompt, temperature, assistantModelId } =
-            assistantMessage.settings ? assistantMessage.settings : conv;
+          const { prompt, temperature } = assistantMessage.settings
+            ? assistantMessage.settings
+            : conv;
 
           return concat(
             of(
@@ -2288,7 +2274,6 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
                   model: { ...conv.model, ...assistantMessage.model },
                   prompt,
                   temperature: temperature,
-                  assistantModelId: assistantModelId,
                   playback: {
                     ...conv.playback,
                     activePlaybackIndex: activeIndex + 1,
@@ -2399,8 +2384,9 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
           const model = assistantMessage?.model
             ? { ...conv.model, ...assistantMessage.model }
             : conv.model;
-          const { prompt, temperature, assistantModelId } =
-            assistantMessage?.settings ? assistantMessage.settings : conv;
+          const { prompt, temperature } = assistantMessage?.settings
+            ? assistantMessage.settings
+            : conv;
           const playbackState = {
             ...conv.playback,
             activePlaybackIndex: activeIndex,
@@ -2423,7 +2409,6 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
                   model,
                   prompt,
                   temperature: temperature,
-                  assistantModelId: assistantModelId,
                   playback: {
                     ...conv.playback,
                     activePlaybackIndex: activeIndex,
