@@ -3,6 +3,7 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { OverflowContainer } from '../OverflowContainer';
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
 import { OverflowButton } from './OverflowButton';
+import { OverflowListItem } from './OverflowListItem';
 
 interface SelectedItemsContainerProps {
   selectedIds: string[];
@@ -17,11 +18,15 @@ export const SelectedItemsContainer = ({
   allItemsMap,
   onRemove,
 }: SelectedItemsContainerProps) => {
-  const validItems = selectedIds
-    .map((id) => ({ id, data: allItemsMap[id] }))
-    .filter(
-      (item): item is { id: string; data: MarketplaceEntity } => !!item.data,
-    );
+  const validItems = selectedIds.flatMap((id) => {
+    const data = allItemsMap[id];
+
+    if (data) {
+      return [{ id, data }];
+    }
+
+    return [];
+  });
 
   return (
     <OverflowContainer
@@ -36,7 +41,11 @@ export const SelectedItemsContainer = ({
         />
       )}
       renderOverflow={(hiddenItems) => (
-        <OverflowButton hiddenItems={hiddenItems} onRemove={onRemove} />
+        <OverflowButton<MarketplaceEntity>
+          hiddenItems={hiddenItems}
+          onRemove={onRemove}
+          ItemComponent={OverflowListItem}
+        />
       )}
     />
   );

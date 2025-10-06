@@ -1,9 +1,7 @@
-import React, { useCallback, useRef, useState } from 'react';
-
-import { stopBubbling } from '@/src/constants/chat';
+import React, { useCallback } from 'react';
 
 import { OverflowContainer } from '@/src/components/Common/OverflowContainer';
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { OverflowIndicator } from '@/src/components/Common/OverflowIndicator';
 
 import { ApplicationTopic } from './ApplicationTopic';
 
@@ -13,54 +11,28 @@ interface TopicsListProps {
 }
 
 const COUNTER_WIDTH = 30;
-const maxTooltipWidth = 198;
-const DISPLAY_DELAY = 100;
 
 export const TopicsList = ({
   topics,
   counterMarginRight = 0,
 }: TopicsListProps) => {
-  const [openHiddenTopics, setOpenHiddenTopics] = useState<boolean>(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-
-  const handleDelayShowTooltip = useCallback((show: boolean) => {
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(
-      () => setOpenHiddenTopics(show),
-      DISPLAY_DELAY,
-    );
-  }, []);
-
-  const renderOverflow = (hiddenTopics: string[]) => (
-    <Tooltip
-      tooltip={
-        <div
-          className="my-1 flex flex-wrap gap-2"
-          style={{ maxWidth: `${maxTooltipWidth}px` }}
-          onClick={stopBubbling}
-        >
-          {hiddenTopics.map((topic) => (
-            <ApplicationTopic key={topic} topic={topic} />
-          ))}
-        </div>
-      }
-      open={openHiddenTopics}
-      onOpenChange={setOpenHiddenTopics}
-      placement="top"
-    >
-      <span
-        className="flex cursor-pointer items-center rounded border border-accent-primary px-1.5 py-1 text-xs leading-3"
-        onClick={(event) => {
-          stopBubbling(event);
-          handleDelayShowTooltip(!openHiddenTopics);
-        }}
-        onMouseEnter={() => handleDelayShowTooltip(true)}
-        onMouseLeave={() => handleDelayShowTooltip(false)}
-        data-qa="hidden-topics"
-      >
-        +{hiddenTopics.length}
-      </span>
-    </Tooltip>
+  const renderOverflow = useCallback(
+    (hiddenTopics: string[]) => (
+      <OverflowIndicator
+        count={hiddenTopics.length}
+        tooltipContent={
+          <>
+            {hiddenTopics.map((topic) => (
+              <ApplicationTopic key={topic} topic={topic} />
+            ))}
+          </>
+        }
+        placement="top"
+        displayDelay={100}
+        dataQA="hidden-topics"
+      />
+    ),
+    [],
   );
 
   return (

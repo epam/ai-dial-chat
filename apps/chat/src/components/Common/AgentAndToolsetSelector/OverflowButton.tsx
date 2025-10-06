@@ -5,28 +5,37 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { useState } from 'react';
+import { type ComponentType, useState } from 'react';
 
 import classNames from 'classnames';
-
-import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import {
   ESCAPE_KEY_PRESS,
   OUTSIDE_PRESS_AND_MOUSE_EVENT,
 } from '@/src/constants/modal';
 
-import { OverflowListItem } from './OverflowListItem';
+export interface HiddenItem<T> {
+  id: string;
+  data?: T;
+}
 
-interface OverflowButtonProps {
-  hiddenItems: { id: string; data?: MarketplaceEntity }[];
+export interface ItemComponentProps<T> {
+  id: string;
+  item?: T;
   onRemove: (id: string) => void;
 }
 
-export const OverflowButton = ({
+interface OverflowButtonProps<T> {
+  hiddenItems: HiddenItem<T>[];
+  onRemove: (id: string) => void;
+  ItemComponent: ComponentType<ItemComponentProps<T>>;
+}
+
+export const OverflowButton = <T,>({
   hiddenItems,
   onRemove,
-}: OverflowButtonProps) => {
+  ItemComponent,
+}: OverflowButtonProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { refs, floatingStyles, context } = useFloating({
@@ -72,12 +81,7 @@ export const OverflowButton = ({
         >
           <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
             {hiddenItems.map(({ id, data }) => (
-              <OverflowListItem
-                key={id}
-                id={id}
-                item={data}
-                onRemove={onRemove}
-              />
+              <ItemComponent key={id} id={id} item={data} onRemove={onRemove} />
             ))}
           </div>
         </div>
