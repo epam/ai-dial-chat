@@ -11,11 +11,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
-import { DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { AddonsSelectors } from '@/src/store/selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -35,16 +33,7 @@ interface StageTitleProps {
 }
 
 const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
-  const [addon, setAddon] = useState<DialAIEntityAddon | undefined>();
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-
   const match = stage.name?.match(/^[^(]*/);
-
-  useEffect(() => {
-    if (match) {
-      setAddon(addonsMap[match[0]]);
-    }
-  }, [addonsMap, match]);
 
   return (
     <div className="relative grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden text-ellipsis">
@@ -63,7 +52,6 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
           className="shrink-0 grow-0 basis-auto text-secondary"
         />
       )}
-      {!!addon && <ModelIcon entity={addon} entityId={addon.id} size={18} />}
       <span
         className={classNames(
           'block whitespace-pre text-start',

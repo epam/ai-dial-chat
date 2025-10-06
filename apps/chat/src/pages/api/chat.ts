@@ -8,7 +8,6 @@ import {
 } from '@/src/utils/app/conversation';
 import { getConfigurationValue } from '@/src/utils/app/form-schema';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
@@ -47,7 +46,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     messages,
     prompt,
     temperature,
-    selectedAddons,
     model,
     assistantModel,
   } = req.body as ChatBody;
@@ -140,10 +138,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       temperature: temperatureToUse,
       messages: messagesToSend,
-      selectedAddonsIds:
-        selectedAddons?.length && doesModelAllowAddons(model)
-          ? selectedAddons
-          : undefined,
       assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
       chatReference: reference ?? id,

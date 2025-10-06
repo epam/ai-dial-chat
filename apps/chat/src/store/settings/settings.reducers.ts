@@ -21,7 +21,6 @@ const initialState: SettingsState = {
   announcement: '',
   defaultModelReference: undefined,
   defaultRecentModelsIds: [],
-  defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],

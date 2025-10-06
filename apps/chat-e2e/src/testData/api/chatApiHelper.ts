@@ -28,7 +28,6 @@ export class ChatApiHelper extends BaseApiHelper {
       model: ModelsUtil.getOpenAIEntity(conversation.model.id),
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
 
     return conversation.assistantModelId

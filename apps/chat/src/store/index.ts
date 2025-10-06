@@ -18,8 +18,6 @@ import {
 import { ChatEpics } from '@/src/store/chat/chat.epics';
 import { SettingsState } from '@/src/store/settings/settings.types';
 
-import { AddonsEpics } from './addons/addons.epics';
-import { addonsSlice } from './addons/addons.reducers';
 import { ApplicationEpics } from './application/application.epics';
 import { applicationSlice } from './application/application.reducers';
 import { ApplicationTypesSchemasEpics } from './applicationTypeSchemas/applicationTypeSchemas.epics';
@@ -60,7 +58,6 @@ import { uiSlice } from './ui/ui.reducers';
 
 export const rootEpic = combineEpics(
   ModelsEpics,
-  AddonsEpics,
   UIEpics,
   ShareEpics,
   PromptsEpics,

@@ -32,7 +32,6 @@ declare global {
       DEFAULT_MODEL?: string;
       NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL?: string;
       RECENT_MODELS_IDS?: string;
-      RECENT_ADDONS_IDS?: string;
       E2E_HOST?: string;
       E2E_USERNAME?: string;
       E2E_PASSWORD?: string;

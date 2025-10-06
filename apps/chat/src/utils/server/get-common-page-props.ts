@@ -119,9 +119,6 @@ export const getCommonPageProps: GetServerSideProps = async ({
     defaultRecentModelsIds: parseCommaSeparatedList(
       process.env.RECENT_MODELS_IDS,
     ),
-    defaultRecentAddonsIds: parseCommaSeparatedList(
-      process.env.RECENT_ADDONS_IDS,
-    ),
     defaultModelReference: DEFAULT_MODEL_ID,
     defaultAssistantSubmodelId:
       process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??

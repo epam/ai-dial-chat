@@ -65,7 +65,6 @@ export const cleanConversation = (
   // added prompts (3/26/23)
   // added messages (4/16/23)
   // added replay (6/22/2023)
-  // added selectedAddons and refactored to not miss any new fields (7/6/2023)
   // added reference to make chatId (x-conversation-id header) a constant value (16/4/2025)
 
   const model: ConversationEntityModel = {
@@ -91,7 +90,6 @@ export const cleanConversation = (
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
-    selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
     updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     ...(conversation.playback && {

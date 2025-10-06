@@ -32,7 +32,6 @@ interface ChatSettingsViewProps {
       prompt: string;
       temperature: number;
       currentAssistantModelId: string | undefined;
-      addonsIds: string[];
       isShared: boolean;
     },
   ) => void;
@@ -55,21 +54,8 @@ const ChatSettingsView = ({
           FALLBACK_ASSISTANT_SUBMODEL_ID
       ]?.reference ?? FALLBACK_ASSISTANT_SUBMODEL_ID,
     );
-  const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
-    conversation.selectedAddons || [],
-  );
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
-
-  const handleOnChangeAddon = useCallback((addonId: string) => {
-    setCurrentSelectedAddonsIds((addons) => {
-      if (addons.includes(addonId)) {
-        return addons.filter((id) => id !== addonId);
-      }
-
-      return [...addons, addonId];
-    });
-  }, []);
 
   const handleChangeSettings = useCallback(() => {
     onChangeSettings(conversation, {
@@ -77,14 +63,12 @@ const ChatSettingsView = ({
       modelId: conversation.model.id,
       prompt: currentPrompt,
       temperature: currentTemperature,
-      addonsIds: currentSelectedAddonsIds,
       isShared: !!conversation.isShared,
     });
   }, [
     conversation,
     currentAssistantModelReference,
     currentPrompt,
-    currentSelectedAddonsIds,
     currentTemperature,
     onChangeSettings,
   ]);
@@ -99,13 +83,10 @@ const ChatSettingsView = ({
       prompts={prompts}
       assistantModelId={currentAssistantModelReference}
       prompt={currentPrompt}
-      selectedAddons={currentSelectedAddonsIds}
       temperature={currentTemperature}
       onChangePrompt={setCurrentPrompt}
       onChangeTemperature={setCurrentTemperature}
       onSelectAssistantSubModel={setCurrentAssistantModelReference}
-      onChangeAddon={handleOnChangeAddon}
-      onApplyAddons={setCurrentSelectedAddonsIds}
     />
   );
 };
@@ -122,7 +103,6 @@ interface Props {
       prompt: string;
       temperature: number;
       currentAssistantModelId: string | undefined;
-      addonsIds: string[];
       isShared: boolean;
     },
   ) => void;

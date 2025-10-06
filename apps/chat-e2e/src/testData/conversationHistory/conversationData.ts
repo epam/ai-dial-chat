@@ -48,7 +48,6 @@ export class ConversationData extends FolderData {
     const settings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -91,7 +90,6 @@ export class ConversationData extends FolderData {
     const messageSettings: MessageSettings = {
       prompt: sysPrompt,
       temperature: temp,
-      selectedAddons: [],
     };
     basicConversation.messages.forEach(
       (message) => (message.settings = messageSettings),
@@ -116,7 +114,6 @@ export class ConversationData extends FolderData {
     const settings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
     requests.forEach((r) => {
       basicConversation.messages.push(
@@ -248,7 +245,6 @@ export class ConversationData extends FolderData {
         (m) => (m.model!.id = updatedModel.id),
       );
       defaultReplayConversation.replay!.replayAsIs = false;
-      defaultReplayConversation.selectedAddons = [];
     }
     defaultReplayConversation.messages
       .filter((m) => m.role === 'user')
@@ -267,7 +263,6 @@ export class ConversationData extends FolderData {
     const messageSettings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -460,7 +455,6 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -525,7 +519,6 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -573,7 +566,6 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,
@@ -620,7 +612,6 @@ export class ConversationData extends FolderData {
     const settings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
-      selectedAddons: [],
     };
     const userMessage: Message = {
       role: Role.User,

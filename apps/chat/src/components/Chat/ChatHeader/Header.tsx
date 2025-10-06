@@ -14,12 +14,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
-  getSelectedAddons,
   getValidEntitiesFromIds,
   isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
   doesModelHaveSettings,
@@ -33,7 +31,6 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  AddonsSelectors,
   ConversationsSelectors,
   ModelsSelectors,
   PublicationSelectors,
@@ -89,7 +86,6 @@ export const ChatHeader = Inversify.register(
     const [isContextMenu, setIsContextMenu] = useState(false);
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-    const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const isPlayback = useAppSelector(
       ConversationsSelectors.selectIsPlaybackSelectedConversations,
@@ -141,10 +137,6 @@ export const ChatHeader = Inversify.register(
     const isContextMenuVisible =
       isChatbarEnabled && !isSelectMode && !isTopContextMenuHidden;
 
-    const selectedAddons = useMemo(
-      () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
-      [conversation, model, addonsMap],
-    );
     const isMessageStreaming = useMemo(
       () => selectedConversations.some((conv) => conv.isMessageStreaming),
       [selectedConversations],
@@ -169,14 +161,7 @@ export const ChatHeader = Inversify.register(
       [dispatch],
     );
 
-    const conversationSelectedAddons =
-      conversation.selectedAddons?.filter(
-        (id) => !model?.selectedAddons?.includes(id),
-      ) || [];
-
     const iconSize = screenState === ScreenState.SM ? 20 : 18;
-    const hideAddons =
-      screenState === ScreenState.SM && conversationSelectedAddons.length > 2;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const disallowChangeAgent =
@@ -278,69 +263,6 @@ export const ChatHeader = Inversify.register(
                     </button>
                   </Tooltip>
                 </span>
-                {model ? (
-                  model.type !== EntityType.Application &&
-                  doesModelAllowAddons(model) &&
-                  (conversation.selectedAddons.length > 0 ||
-                    (model.selectedAddons &&
-                      model.selectedAddons.length > 0)) && (
-                    <span
-                      className="flex items-center gap-2"
-                      data-qa="chat-addons"
-                    >
-                      {model.selectedAddons?.map((addon) => (
-                        <ModelIcon
-                          key={addon}
-                          entityId={addon}
-                          size={18}
-                          entity={addonsMap[addon]}
-                        />
-                      ))}
-                      {hideAddons ? (
-                        <>
-                          <ModelIcon
-                            entityId={conversationSelectedAddons[0]}
-                            size={iconSize}
-                            entity={addonsMap[conversationSelectedAddons[0]]}
-                          />
-                          <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-xxs md:size-[18px]">
-                            +{conversationSelectedAddons.length - 1}
-                          </div>
-                        </>
-                      ) : (
-                        conversation.selectedAddons
-                          ?.filter((id) => !model.selectedAddons?.includes(id))
-                          .map((addon) => (
-                            <ModelIcon
-                              key={addon}
-                              entityId={addon}
-                              size={iconSize}
-                              entity={addonsMap[addon]}
-                            />
-                          ))
-                      )}
-                    </span>
-                  )
-                ) : (
-                  <>
-                    {doesModelAllowAddons(model) &&
-                      conversation.selectedAddons.length > 0 && (
-                        <span
-                          className="flex items-center gap-2"
-                          data-qa="chat-addons"
-                        >
-                          {conversation.selectedAddons.map((addon) => (
-                            <ModelIcon
-                              key={addon}
-                              entityId={addon}
-                              size={iconSize}
-                              entity={addonsMap[addon]}
-                            />
-                          ))}
-                        </span>
-                      )}
-                  </>
-                )}
               </>
             )}
             <div className="flex items-center gap-2">
@@ -370,16 +292,6 @@ export const ChatHeader = Inversify.register(
                           ? doesModelAllowTemperature(model)
                             ? conversation.temperature
                             : FALLBACK_TEMPERATURE
-                          : null
-                      }
-                      selectedAddons={
-                        doesModelAllowAddons(model)
-                          ? model
-                            ? selectedAddons
-                            : getValidEntitiesFromIds(
-                                conversation.selectedAddons,
-                                addonsMap,
-                              )
                           : null
                       }
                     />

@@ -123,9 +123,6 @@ const selectDefaultAssistantSubmodelId = (state: RootState) =>
 const selectDefaultRecentModelsIds = (state: RootState) =>
   rootSelector(state).defaultRecentModelsIds;
 
-const selectDefaultRecentAddonsIds = (state: RootState) =>
-  rootSelector(state).defaultRecentAddonsIds;
-
 const selectStorageType = (state: RootState) => rootSelector(state).storageType;
 
 const selectAnnouncement = (state: RootState) =>
@@ -263,7 +260,6 @@ export const SettingsSelectors = {
   selectCodeWarning,
   selectDefaultModelReference,
   selectDefaultRecentModelsIds,
-  selectDefaultRecentAddonsIds,
   selectStorageType,
   selectAnnouncement,
   selectThemeHostDefined,

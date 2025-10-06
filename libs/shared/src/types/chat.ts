@@ -44,9 +44,6 @@ export enum LikeState {
 export interface MessageSettings {
   prompt: string;
   temperature: number;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
   assistantModelId?: string;
 }
 
@@ -178,8 +175,6 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   replay?: Replay;
   playback?: Playback;
 
-  // Addons selected by user clicks
-  selectedAddons: string[];
   assistantModelId?: string;
 
   isMessageStreaming?: boolean;

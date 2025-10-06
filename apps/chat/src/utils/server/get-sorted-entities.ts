@@ -166,7 +166,6 @@ export const getSortedEntities = async (token: JWT | null) => {
           ? ApiUtils.decodeApiUrl(entity.icon_url)
           : entity.icon_url,
       type: entity.object,
-      selectedAddons: entity.addons,
       topics: entity.description_keywords,
       applicationTypeSchemaId: entity.application_type_schema_id,
       limits:
@@ -182,7 +181,6 @@ export const getSortedEntities = async (token: JWT | null) => {
       features: entity.features && {
         systemPrompt: entity.features.system_prompt ?? true,
         temperature: entity.features.temperature ?? true,
-        addons: entity.features.addons ?? true,
         truncatePrompt: entity.features.truncate_prompt ?? false,
         urlAttachments: entity.features.url_attachments ?? false,
         folderAttachments: entity.features.folder_attachments ?? false,

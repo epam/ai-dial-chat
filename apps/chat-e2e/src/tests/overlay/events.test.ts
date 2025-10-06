@@ -391,7 +391,6 @@ dialOverlayTest(
               prompt: conversation.prompt,
               temperature: conversation.temperature,
               replay: conversation.replay,
-              selectedAddons: [],
               status: UploadStatus.LOADED,
               isMessageStreaming: false,
             };

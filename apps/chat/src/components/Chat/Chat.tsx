@@ -41,7 +41,6 @@ import { Translation } from '@/src/types/translation';
 import { ChatActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  AddonsSelectors,
   ApplicationTypesSchemasSelectors,
   AuthSelectors,
   ChatSelectors,
@@ -99,7 +98,6 @@ const ChatView = memo(() => {
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -178,9 +176,6 @@ const ChatView = memo(() => {
   const isNotAllowed = useAppSelector(
     ConversationsSelectors.selectIsNotAllowed,
   );
-  const hasNotAllowedAddons = useAppSelector(
-    ConversationsSelectors.selectHasNotAllowedAddons,
-  );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
@@ -236,12 +231,10 @@ const ChatView = memo(() => {
   useLayoutEffect(() => {
     if (isNotAllowed) {
       dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
-    } else if (hasNotAllowedAddons) {
-      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Addon));
     } else {
       dispatch(ChatActions.setNotAvailableEntityType(undefined));
     }
-  }, [dispatch, isNotAllowed, hasNotAllowedAddons]);
+  }, [dispatch, isNotAllowed]);
 
   const handleLike = useCallback(
     (index: number, conversation: Conversation, rate: LikeState) => {
@@ -474,21 +467,17 @@ const ChatView = memo(() => {
                 conversation,
                 temporarySettings.modelId,
                 modelsMap,
-                addonsMap,
               ),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
               assistantModelId: temporarySettings.currentAssistantModelId,
-              selectedAddons: temporarySettings.addonsIds.filter(
-                (addonId) => addonsMap[addonId],
-              ),
               isShared: temporarySettings.isShared,
             },
           }),
         );
       }
     });
-  }, [selectedConversations, dispatch, modelsMap, addonsMap]);
+  }, [selectedConversations, dispatch, modelsMap]);
 
   const handleTemporarySettingsSave = useCallback(
     (conversation: Conversation, args: ConversationsTemporarySettings) => {

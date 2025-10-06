@@ -5,7 +5,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { isPlaybackConversation } from '@/src/utils/app/conversation';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
   doesModelHaveSettings,
@@ -21,7 +20,6 @@ import { ModelsSelectors } from '@/src/store/selectors';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { Addons } from './Addons';
 import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
@@ -37,13 +35,10 @@ interface Props {
   prompt: string | undefined;
   temperature: number | undefined;
   prompts: Prompt[];
-  selectedAddons: string[];
   conversation: Conversation;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectAssistantSubModel: (modelId: string) => void;
-  onApplyAddons: (addonsIds: string[]) => void;
-  onChangeAddon: (addonsId: string) => void;
 }
 
 export function FieldContainer({ children }: SettingContainerProps) {
@@ -85,13 +80,10 @@ export const ConversationSettings = Inversify.register(
     prompts,
     prompt,
     temperature,
-    selectedAddons,
     conversation,
     onSelectAssistantSubModel,
     onChangePrompt,
     onChangeTemperature,
-    onChangeAddon,
-    onApplyAddons,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
@@ -148,17 +140,6 @@ export const ConversationSettings = Inversify.register(
               label={t('Temperature')}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
-              disabled={isPlayback}
-            />
-          </FieldContainer>
-        )}
-        {doesModelAllowAddons(model) && (
-          <FieldContainer>
-            <Addons
-              preselectedAddonsIds={model?.selectedAddons || []}
-              selectedAddonsIds={selectedAddons}
-              onChangeAddon={onChangeAddon}
-              onApplyAddons={onApplyAddons}
               disabled={isPlayback}
             />
           </FieldContainer>
