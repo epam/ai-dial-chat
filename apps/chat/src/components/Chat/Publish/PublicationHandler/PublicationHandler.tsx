@@ -318,6 +318,7 @@ export function PublicationHandler({ publication }: Props) {
             rules: rulesOnEdit,
           }),
         );
+        dispatch(PublicationActions.setPublishModel());
         return;
       }
 
@@ -495,7 +496,7 @@ export function PublicationHandler({ publication }: Props) {
         </div>
         <div className="flex size-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           {isPublicationUpdating || areConversationsWithContentUploading ? (
-            <div className="flex h-[300px] w-full items-center justify-center bg-layer-2 py-10">
+            <div className="flex size-full items-center justify-center bg-layer-2 py-10">
               <Spinner size={32} />
             </div>
           ) : (
