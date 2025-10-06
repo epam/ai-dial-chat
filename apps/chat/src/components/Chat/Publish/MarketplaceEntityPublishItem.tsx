@@ -23,6 +23,7 @@ interface Props {
   publishAction: PublishActions;
   chosenItemsIds: string[];
   path: string;
+  sectionName: string;
   handleSelectItems: (ids: string[]) => void;
 }
 
@@ -31,6 +32,7 @@ export const MarketplaceEntityPublishItem = ({
   publishAction,
   chosenItemsIds,
   path,
+  sectionName,
   handleSelectItems,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -39,7 +41,7 @@ export const MarketplaceEntityPublishItem = ({
     <>
       <CollapsibleSection
         togglerClassName="!text-sm !text-primary"
-        name={t('Applications')}
+        name={sectionName}
         openByDefault
         dataQa="applications-to-send-request"
         className="!pl-0"
