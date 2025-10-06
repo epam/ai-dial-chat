@@ -162,7 +162,7 @@ const publishEpic: AppEpic = (action$) =>
       return PublicationService.createPublicationRequest({
         ...publicationData,
       }).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => of(PublicationActions.setPublishModel())),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.publishFail(err.message));

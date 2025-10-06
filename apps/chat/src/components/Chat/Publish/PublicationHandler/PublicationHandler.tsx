@@ -318,7 +318,6 @@ export function PublicationHandler({ publication }: Props) {
             rules: rulesOnEdit,
           }),
         );
-        dispatch(PublicationActions.setPublishModel());
         return;
       }
 
