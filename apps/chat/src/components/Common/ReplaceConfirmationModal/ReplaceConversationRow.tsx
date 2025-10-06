@@ -85,8 +85,9 @@ export const ConversationRow = ({
     <EntityRow
       entityId={conversation.id}
       additionalItemData={additionalItemData}
-      onEvent={onEvent}
+      itemComponentClassNames={itemComponentClassNames}
       dataQA="conversation"
+      onEvent={onEvent}
     >
       <ConversationView
         item={conversation}
