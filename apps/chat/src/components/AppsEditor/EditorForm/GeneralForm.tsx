@@ -64,6 +64,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
   const isMobileView = screenState === ScreenState.SM;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
   const isSharedWithMe = !!appDetails?.sharedWithMe;
+  const isEditing = !!appDetails;
   const isAppDeployed =
     appDetails?.functionStatus === ApplicationStatus.DEPLOYED;
   const isDeploying =
@@ -222,12 +223,12 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
       <div className="mt-auto flex justify-end gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6">
         <Tooltip
           tooltip={t('Fill in all required fields')}
-          hideTooltip={isValid}
+          hideTooltip={isValid || isEditing}
         >
           <button
             className="button button-primary py-2"
             type="submit"
-            disabled={!isValid || isAppLoading}
+            disabled={(!isValid && !isEditing) || isAppLoading}
           >
             {t('Next')}
           </button>
