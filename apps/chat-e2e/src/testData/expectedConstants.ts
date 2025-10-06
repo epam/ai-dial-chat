@@ -2,6 +2,7 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
+import { ItemUtil } from '@/src/utils';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -323,6 +324,8 @@ export const ExpectedConstants = {
   exportedArchiveHistoryConversationPath:
     'conversations/conversations_history.json',
   exportedArchiveImageRootFolder: 'res',
+  replayConversationById: (conversationId: string) =>
+    `${conversationId.substring(0, conversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversationId.substring(conversationId.indexOf(ItemUtil.entityIdSeparator) + ItemUtil.entityIdSeparator.length)}`,
 };
 
 export enum Types {

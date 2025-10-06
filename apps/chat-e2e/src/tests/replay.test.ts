@@ -524,8 +524,16 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        const replayRequests = await chat.startReplayForDifferentModels();
-
+        const { actionResult: replayRequests } =
+          await dialHomePage.waitForExpectedResponses(
+            () => chat.startReplayForDifferentModels(),
+            [
+              {
+                apiMethod: 'POST',
+                urlPattern: API.moveHost,
+              },
+            ],
+          );
         apiAssertion.assertRequestModelId(replayRequests[0], bModel);
         apiAssertion.assertRequestTemperature(replayRequests[0], simpleTemp);
         apiAssertion.assertRequestPrompt(replayRequests[0], simplePrompt);

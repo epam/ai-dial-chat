@@ -108,6 +108,8 @@ export const filterIdsByFeatureType = (
     return ids.filter(isApplicationId);
   } else if (featureType === FeatureType.File) {
     return ids.filter(isFileId);
+  } else if (featureType === FeatureType.Toolset) {
+    return ids.filter(isToolsetId);
   }
 
   return [];

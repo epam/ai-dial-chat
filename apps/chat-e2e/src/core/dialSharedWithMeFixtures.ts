@@ -167,6 +167,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAgentDetailsModal: AgentDetailsModal;
   additionalShareUserSelectFolderModal: SelectFolderModal;
   additionalShareUserSelectFolders: Folders;
+  additionalShareUserChatHeaderDropdownMenu: DropdownMenu;
   additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
   additionalShareUserAgentDetailsModalAssertion: AgentDetailsModalAssertion;
@@ -871,6 +872,15 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSelectFolders =
       additionalShareUserSelectFolderModal.getSelectFolders();
     await use(additionalShareUserSelectFolders);
+  },
+  additionalShareUserChatHeaderDropdownMenu: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserChatHeaderDropdownMenu = new DropdownMenu(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserChatHeaderDropdownMenu);
   },
   additionalShareUserSelectFoldersAssertion: async (
     { additionalShareUserSelectFolders },
