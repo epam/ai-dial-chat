@@ -19,15 +19,19 @@ import { ConversationInfo, FeatureType } from '@epam/ai-dial-shared';
 
 interface ConversationViewProps {
   item: ConversationInfo;
+  featureContainerClassNames?: string;
 }
 
-const ConversationView = ({ item: conversation }: ConversationViewProps) => {
+const ConversationView = ({
+  item: conversation,
+  featureContainerClassNames,
+}: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isReplay = isReplayConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
 
   return (
-    <FeatureContainer>
+    <FeatureContainer className={featureContainerClassNames}>
       <ShareIcon
         featureType={FeatureType.Chat}
         isHighlighted={false}
@@ -65,11 +69,14 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
   );
 };
 
-interface ConversationRowProps extends ConversationViewProps, FeatureRowProps {}
+interface ConversationRowProps extends ConversationViewProps, FeatureRowProps {
+  featureContainerClassNames?: string;
+}
 
 export const ConversationRow = ({
   item: conversation,
   additionalItemData,
+  featureContainerClassNames,
   onEvent,
 }: ConversationRowProps) => {
   return (
@@ -79,7 +86,10 @@ export const ConversationRow = ({
       onEvent={onEvent}
       dataQA="conversation"
     >
-      <ConversationView item={conversation} />
+      <ConversationView
+        item={conversation}
+        featureContainerClassNames={featureContainerClassNames}
+      />
     </EntityRow>
   );
 };
