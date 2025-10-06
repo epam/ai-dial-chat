@@ -84,14 +84,16 @@ export const ToolsetEditorHeader = ({
   );
 
   const handleSaveClick = useCallback(async () => {
-    const isValid = await trigger();
+    if (isEditing) {
+      const isValid = await trigger();
 
-    if (!isValid) {
-      setSaveDraftDialog(true);
-      return;
+      if (!isValid) {
+        setSaveDraftDialog(true);
+        return;
+      }
     }
     onSave();
-  }, [onSave, trigger]);
+  }, [isEditing, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
