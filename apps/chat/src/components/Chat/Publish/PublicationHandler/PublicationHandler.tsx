@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -14,6 +17,7 @@ import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
+  getPublicationDefaultName,
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
@@ -30,17 +34,27 @@ import {
   EDITED_FOLDER_NAME_KEY,
   FolderNode,
 } from '@/src/store/publication/publication.types';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  AuthSelectors,
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { Field } from '@/src/components/Common/Forms/Field';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublicationInfoSection } from '../PublicationInfoSection';
 import { PublishToSection } from '../PublishToSection';
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+  validators,
+} from '../form';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
@@ -99,6 +113,9 @@ export function PublicationHandler({ publication }: Props) {
 
   const { t } = useTranslation(Translation.Chat);
 
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  );
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
@@ -128,18 +145,48 @@ export function PublicationHandler({ publication }: Props) {
     PublicationSelectors.selectDisplayAuthorEditState,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
+  const userName = useAppSelector(AuthSelectors.selectUserName);
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
+  );
+  const selectedItemsToApprove = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToApprove,
+  );
+  const areConversationsWithContentUploading = useAppSelector(
+    ConversationsSelectors.selectAreConversationsWithContentUploading,
+  );
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-
   const [isFormChanged, setIsFormChanged] = useState(false);
+
+  const isReview = !publicationModel;
+
+  const {
+    register,
+    formState: { errors: formErrors },
+    trigger,
+    handleSubmit: submitWrapper,
+  } = useForm<PublicationRequestFormData>({
+    defaultValues: {
+      publishRequestName: getPublicationDefaultName(
+        prepareEntityName(replaceSpacesFromString(userName)),
+      ),
+      publicationAuthor: prepareEntityName(replaceSpacesFromString(userName)),
+    },
+    mode: 'onChange',
+  });
 
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
   }, [publication.author, t]);
 
   useEffect(() => {
-    if (isEditMode) {
+    trigger();
+  }, [trigger]);
+
+  useEffect(() => {
+    if (isEditMode || isReview) {
       setErrors(() =>
         getStringValidationErrors({
           value: replaceSpacesFromString(publication.displayAuthor),
@@ -147,7 +194,7 @@ export function PublicationHandler({ publication }: Props) {
         }),
       );
     }
-  }, [isEditMode, publication.displayAuthor]);
+  }, [isEditMode, isReview, publication.displayAuthor]);
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -187,9 +234,13 @@ export function PublicationHandler({ publication }: Props) {
   const initialState = useMemo(() => {
     const { entities, folders } = getDefaultAllEditEntities(
       publication.resources,
+      publicVersionGroups,
+      { isReview },
     );
     const initialRules = publication.rules ?? [];
-    const initialDisplayAuthor = publication.displayAuthor ?? '';
+    const initialDisplayAuthor = isReview
+      ? (publication.displayAuthor ?? '')
+      : userName;
 
     return {
       entities,
@@ -198,74 +249,105 @@ export function PublicationHandler({ publication }: Props) {
       displayAuthor: initialDisplayAuthor,
       publishToUrl: publication.targetFolder,
     };
-  }, [publication]);
-
-  const handleUpdateRequest = useCallback(() => {
-    dispatch(
-      PublicationActions.updatePublicationRequest({
-        url: publication.url,
-        dataToUpdate: {
-          targetFolder: editedPublishToUrl,
-          rules: rulesOnEdit,
-          displayAuthor: displayAuthorEditState,
-          resources: publication.resources.map(
-            ({ sourceUrl, reviewUrl, action }) => {
-              const { name, version } = entitiesEditState[reviewUrl];
-
-              // calculate new folderId
-              const folderSegments =
-                getFolderIdFromEntityId(reviewUrl).split('/');
-              const newFolderSegments: string[] = [];
-              let currentFolder = foldersEditState as FolderNode;
-              folderSegments.forEach((segment, i) => {
-                currentFolder = currentFolder[segment] as FolderNode;
-                newFolderSegments.push(
-                  // prepare name if it's not root path segments
-                  i > 1
-                    ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
-                    : currentFolder[EDITED_FOLDER_NAME_KEY],
-                );
-              });
-
-              if (action !== PublishActions.DELETE) {
-                newFolderSegments[1] = publication.targetFolder;
-              }
-
-              let newFolderId = newFolderSegments.join('/');
-              newFolderId = newFolderId.replace(
-                publication.targetFolder,
-                editedPublishToUrl,
-              );
-
-              // get new api key
-              const newApiKey = regenerateApiKeyNameAndVersionParts(
-                reviewUrl,
-                name,
-                version.trim(),
-              );
-
-              return {
-                action,
-                sourceUrl: sourceUrl ?? '',
-                targetUrl: constructPath(newFolderId, newApiKey),
-              };
-            },
-          ),
-        },
-      }),
-    );
-    dispatch(PublicationActions.setIsEditMode(false));
   }, [
-    dispatch,
-    publication.url,
+    isReview,
+    publicVersionGroups,
+    publication.displayAuthor,
     publication.resources,
+    publication.rules,
     publication.targetFolder,
-    editedPublishToUrl,
-    rulesOnEdit,
-    displayAuthorEditState,
-    entitiesEditState,
-    foldersEditState,
+    userName,
   ]);
+
+  const handleUpdateRequest = useCallback(
+    (data: PublicationRequestFormData) => {
+      const mappedResources = publication.resources.map(
+        ({ sourceUrl, reviewUrl, action }) => {
+          const { name, version } = entitiesEditState[reviewUrl];
+
+          // calculate new folderId
+          const folderSegments = getFolderIdFromEntityId(reviewUrl).split('/');
+          const newFolderSegments: string[] = [];
+          let currentFolder = foldersEditState as FolderNode;
+          folderSegments.forEach((segment, i) => {
+            currentFolder = currentFolder[segment] as FolderNode;
+            newFolderSegments.push(
+              // prepare name if it's not root path segments
+              i > 1
+                ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
+                : currentFolder[EDITED_FOLDER_NAME_KEY],
+            );
+          });
+
+          if (action !== PublishActions.DELETE) {
+            newFolderSegments[1] = publication.targetFolder;
+          }
+
+          let newFolderId = newFolderSegments.join('/');
+          newFolderId = newFolderId.replace(
+            publication.targetFolder,
+            editedPublishToUrl,
+          );
+
+          // get new api key
+          const newApiKey = regenerateApiKeyNameAndVersionParts(
+            reviewUrl,
+            name,
+            version.trim(),
+          );
+
+          return {
+            action,
+            sourceUrl: sourceUrl ?? '',
+            targetUrl: constructPath(newFolderId, newApiKey),
+          };
+        },
+      );
+
+      if (!isReview) {
+        const filteredMappedResources = mappedResources.filter((resource) =>
+          selectedItemsToApprove.includes(resource.sourceUrl),
+        );
+
+        dispatch(
+          PublicationActions.publish({
+            name: data.publishRequestName.trim(),
+            resources: filteredMappedResources,
+            targetFolder: editedPublishToUrl,
+            displayAuthor: data.publicationAuthor.trim(),
+            rules: rulesOnEdit,
+          }),
+        );
+        return;
+      }
+
+      dispatch(
+        PublicationActions.updatePublicationRequest({
+          url: publication.url,
+          dataToUpdate: {
+            targetFolder: editedPublishToUrl,
+            rules: rulesOnEdit,
+            displayAuthor: displayAuthorEditState,
+            resources: mappedResources,
+          },
+        }),
+      );
+      dispatch(PublicationActions.setIsEditMode(false));
+    },
+    [
+      publication.resources,
+      publication.url,
+      publication.targetFolder,
+      isReview,
+      dispatch,
+      editedPublishToUrl,
+      rulesOnEdit,
+      displayAuthorEditState,
+      entitiesEditState,
+      foldersEditState,
+      selectedItemsToApprove,
+    ],
+  );
 
   const handleSelectPublishToFolder = useCallback(
     (folderId?: string) => {
@@ -368,28 +450,52 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   return (
-    <div className="flex size-full justify-center overflow-y-auto p-3 md:px-5 md:pt-5">
+    <form
+      onSubmit={submitWrapper(handleUpdateRequest)}
+      className={classNames(
+        'flex size-full justify-center overflow-y-auto',
+        isReview && 'p-3 md:px-5 md:pt-5',
+      )}
+    >
       <div
         className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
         data-qa="publish-approval-modal"
       >
-        <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
-          <Tooltip
-            tooltip={publicationName}
-            contentClassName="break-all"
-            triggerClassName="truncate"
-          >
-            <h4
-              data-qa="publish-name"
-              className="truncate whitespace-pre break-all text-base font-semibold"
+        <div className="flex w-full flex-col justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
+          {isReview ? (
+            <Tooltip
+              tooltip={publicationName}
+              contentClassName="break-all"
+              triggerClassName="truncate"
             >
-              {publicationName}
-            </h4>
-          </Tooltip>
+              <h4
+                data-qa="publish-name"
+                className="truncate whitespace-pre break-all text-base font-semibold"
+              >
+                {publicationName}
+              </h4>
+            </Tooltip>
+          ) : (
+            <Field
+              className="border-none p-0 text-base font-semibold"
+              {...register(
+                PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+                validators.publishRequestName,
+              )}
+              placeholder={t(
+                t(
+                  `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
+                ),
+              )}
+              id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
+              error={formErrors.publishRequestName?.message}
+              dataQa="request-name"
+            />
+          )}
         </div>
-        <div className="flex w-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
-          {isPublicationUpdating ? (
-            <div className="flex h-[300px] items-center justify-center bg-layer-2 py-10">
+        <div className="flex size-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
+          {isPublicationUpdating || areConversationsWithContentUploading ? (
+            <div className="flex h-[300px] w-full items-center justify-center bg-layer-2 py-10">
               <Spinner size={32} />
             </div>
           ) : (
@@ -397,7 +503,7 @@ export function PublicationHandler({ publication }: Props) {
               <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                 <div className="flex flex-col px-3 pb-4 md:px-5">
                   <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                  {isEditMode && !isSomeResourceIsUnpublish ? (
+                  {!isReview || (isEditMode && !isSomeResourceIsUnpublish) ? (
                     <PublishToSection
                       path={publishToUrl}
                       maxDepth={maxPublishToDepth}
@@ -415,14 +521,16 @@ export function PublicationHandler({ publication }: Props) {
                     />
                   )}
 
-                  <PublicationInfoSection
-                    labelDataQa="publication-author-label"
-                    label={t('Author')}
-                    valueDataQa="publication-author"
-                    valueToDisplay={publicationAuthor}
-                  />
+                  {isReview && (
+                    <PublicationInfoSection
+                      labelDataQa="publication-author-label"
+                      label={t('Author')}
+                      valueDataQa="publication-author"
+                      valueToDisplay={publicationAuthor}
+                    />
+                  )}
 
-                  {!isPublicationHasOnlyUnpublishEntities && (
+                  {(!isPublicationHasOnlyUnpublishEntities || !isReview) && (
                     <PublicationInfoSection
                       labelDataQa="publication-display-author-label"
                       label={t("Author's public name")}
@@ -433,17 +541,19 @@ export function PublicationHandler({ publication }: Props) {
                       )}
                       editValue={displayAuthorEditState}
                       onChangeValue={handleChangeDisplayAuthor}
-                      isEditMode={isEditMode}
+                      isEditMode={isEditMode || !isReview}
                       errors={errors}
                     />
                   )}
 
-                  <PublicationInfoSection
-                    labelDataQa="creation-date-label"
-                    label={t('Request created')}
-                    valueDataQa="creation-date"
-                    valueToDisplay={formatDate(publication.createdAt)}
-                  />
+                  {isReview && (
+                    <PublicationInfoSection
+                      labelDataQa="creation-date-label"
+                      label={t('Request created')}
+                      valueDataQa="creation-date"
+                      valueToDisplay={formatDate(publication.createdAt)}
+                    />
+                  )}
                 </div>
                 <section
                   className="px-3 py-4 md:px-5"
@@ -519,10 +629,10 @@ export function PublicationHandler({ publication }: Props) {
           )}
         </div>
         <PublicationHandlerFooter
-          onUpdateRequest={handleUpdateRequest}
           publication={publication}
           isFormChanged={isFormChanged}
           areRulesChanged={hasUserChangedRules}
+          initialState={initialState}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (
@@ -536,6 +646,6 @@ export function PublicationHandler({ publication }: Props) {
       )}
       {isApplicationReview && <ReviewApplicationDialog />}
       {isToolsetReview && <ReviewToolsetDialog />}
-    </div>
+    </form>
   );
 }

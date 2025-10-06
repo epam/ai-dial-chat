@@ -67,4 +67,20 @@ export class EnumMapper {
         return BackendResourceType.FILE;
     }
   };
+
+  public static getBackendResourceTypeByApiKey = (apiKey: ApiKeys) => {
+    switch (apiKey) {
+      case ApiKeys.Conversations:
+        return BackendResourceType.CONVERSATION;
+      case ApiKeys.Prompts:
+        return BackendResourceType.PROMPT;
+      case ApiKeys.Applications:
+        return BackendResourceType.APPLICATION;
+      case ApiKeys.Toolsets:
+        return BackendResourceType.TOOLSET;
+      case ApiKeys.Files:
+      default:
+        return BackendResourceType.FILE;
+    }
+  };
 }

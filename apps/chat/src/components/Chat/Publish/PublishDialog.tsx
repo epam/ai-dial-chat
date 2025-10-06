@@ -1,35 +1,193 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { SharingType } from '@/src/types/share';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { PublicationActions } from '@/src/store/actions';
+import {
+  isConversationInfoEntity,
+  isLoadedConversationEntity,
+} from '@/src/utils/app/conversation';
+import { EnumMapper } from '@/src/utils/app/mappers';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { NotReplayFilter } from '@/src/utils/app/search';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+
+import { BackendResourceType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { ModalState } from '@/src/types/modal';
+import { PublicationStatus } from '@/src/types/publication';
+import { Translation } from '@/src/types/translation';
+
+import { PublicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PromptsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
+import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-interface Props {
-  type: SharingType;
+import { PublicationHandler } from './PublicationHandler/PublicationHandler';
+
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+
+interface PublishHandlerContainerProps {
+  entity: ShareEntity & { iconUrl?: string };
+  action: PublishActions;
+  resourceType: BackendResourceType;
+  isFolder: boolean;
+  filteredConversationFiles: DialFile[];
 }
 
-const PublishDialogView = ({ type }: Props) => {
+const PublishHandlerContainer = ({
+  entity,
+  action,
+  resourceType,
+  isFolder,
+  filteredConversationFiles,
+}: PublishHandlerContainerProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
-  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel)!;
+  const areConversationsWithContentUploading = useAppSelector(
+    ConversationsSelectors.selectAreConversationsWithContentUploading,
+  );
+  const entities = useAppSelector((state) => {
+    if (!isFolder) return [entity];
 
-  const handlePublishClose = useCallback(() => {
+    const selector =
+      resourceType === BackendResourceType.CONVERSATION
+        ? ConversationsSelectors.selectConversationsByFolderId
+        : PromptsSelectors.selectPromptsByFolderId;
+
+    return selector(state, entity.id);
+  });
+  const filteredEntities = useMemo(() => {
+    return entities.filter(
+      (entity) =>
+        !isConversationInfoEntity(entity) ||
+        (!entity.isReplay &&
+          isLoadedConversationEntity(entity) &&
+          entity.messages.length),
+    );
+  }, [entities]);
+
+  useEffect(() => {
+    if (!areConversationsWithContentUploading && !filteredEntities.length) {
+      dispatch(
+        UIActions.showErrorToast(t('There are no valid items to publish')),
+      );
+      dispatch(PublicationActions.setPublishModel());
+    }
+  }, [areConversationsWithContentUploading, dispatch, filteredEntities, t]);
+
+  const publication = useMemo(() => {
+    const baseResources = filteredEntities.map((entity) => ({
+      action,
+      sourceUrl: entity.id,
+      targetUrl: entity.id,
+      reviewUrl: entity.id,
+    }));
+
+    const fileResources = filteredConversationFiles.map((file) => ({
+      action,
+      sourceUrl: file.id,
+      targetUrl: file.id,
+      reviewUrl: file.id,
+    }));
+
+    const iconResource =
+      entity.iconUrl && !isFolder
+        ? [
+            {
+              action,
+              sourceUrl: entity.iconUrl,
+              targetUrl: entity.iconUrl,
+              reviewUrl: entity.iconUrl,
+            },
+          ]
+        : [];
+
+    const resourceTypes = [
+      resourceType,
+      ...(filteredConversationFiles.length ? [BackendResourceType.FILE] : []),
+    ];
+
+    return {
+      url: '',
+      resources: [...baseResources, ...iconResource, ...fileResources],
+      targetFolder: PUBLIC_URL_PREFIX,
+      resourceTypes,
+      createdAt: entity.createdAt ?? 0,
+      publicationStatus: PublicationStatus.PENDING,
+    };
+  }, [
+    filteredEntities,
+    action,
+    resourceType,
+    entity,
+    filteredConversationFiles,
+    isFolder,
+  ]);
+
+  useEffect(() => {
+    if (publication.resources.length) {
+      dispatch(
+        PublicationActions.setItemsToApprove({
+          publicationUrl: '',
+          ids: publication.resources.map((r) => r.reviewUrl),
+        }),
+      );
+    }
+  }, [dispatch, publication.resources]);
+
+  return <PublicationHandler publication={publication} />;
+};
+
+const PublishDialogView = () => {
+  const dispatch = useAppDispatch();
+
+  const { entity, action, isFolder } = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  )!;
+  const conversationFiles = useAppSelector((state) =>
+    ConversationsSelectors.getAttachments(state, entity.id, NotReplayFilter),
+  );
+
+  const filteredConversationFiles = useMemo(() => {
+    return action === PublishActions.DELETE
+      ? conversationFiles.filter((file) => isEntityIdPublic(file))
+      : conversationFiles;
+  }, [conversationFiles, action]);
+
+  const handleClose = useCallback(() => {
     dispatch(PublicationActions.setPublishModel());
   }, [dispatch]);
 
+  const resourceType = EnumMapper.getBackendResourceTypeByApiKey(
+    splitEntityId(entity.id).apiKey,
+  );
+
   return (
-    <PublishModal
-      entity={publishModel.entity}
-      type={type}
-      isOpen
-      onClose={handlePublishClose}
-      publishAction={publishModel.action}
-    />
+    <Modal
+      portalId="theme-main"
+      state={ModalState.OPENED}
+      onClose={handleClose}
+      dataQa="publish-dialog"
+      containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]"
+    >
+      <PublishHandlerContainer
+        entity={entity}
+        action={action}
+        resourceType={resourceType}
+        isFolder={!!isFolder}
+        filteredConversationFiles={filteredConversationFiles}
+      />
+    </Modal>
   );
 };
 

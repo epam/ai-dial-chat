@@ -106,6 +106,9 @@ const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
 const selectSelectedItemsToPublish = (state: RootState) =>
   rootSelector(state).selectedItemsToPublish;
 
+const selectSelectedCredentialsToPublish = (state: RootState) =>
+  rootSelector(state).selectedCredentialsToPublish;
+
 const _selectRules = (state: RootState) => rootSelector(state).rules;
 
 const selectRulesByPath = createSelector(
@@ -131,11 +134,7 @@ const selectAllSelectedItemsToApprove = (state: RootState) =>
 const selectSelectedItemsToApprove = createSelector(
   [selectAllSelectedItemsToApprove, selectSelectedPublicationUrl],
   (selectedItemsToApprove, selectedPublicationUrl) => {
-    if (!selectedPublicationUrl) {
-      return [];
-    }
-
-    return selectedItemsToApprove[selectedPublicationUrl] ?? [];
+    return selectedItemsToApprove[selectedPublicationUrl ?? ''] ?? [];
   },
 );
 
@@ -340,6 +339,7 @@ export const PublicationSelectors = {
   selectIsRulesLoading,
   selectIsAllItemsUploaded,
   selectSelectedItemsToPublish,
+  selectSelectedCredentialsToPublish,
   selectAllSelectedItemsToApprove,
   selectSelectedItemsToApprove,
   selectChosenFolderIds,

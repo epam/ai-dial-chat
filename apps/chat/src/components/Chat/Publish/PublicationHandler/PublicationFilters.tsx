@@ -36,8 +36,14 @@ export function PublicationFilters({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
+  const editedPublishToUrl = useAppSelector(
+    PublicationSelectors.selectPublishToUrl,
+  );
 
   const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
@@ -55,7 +61,7 @@ export function PublicationFilters({
     [dispatch],
   );
 
-  const isRootTarget = publication.targetFolder.split('/').length === 1;
+  const isRootTarget = editedPublishToUrl.split('/').length === 1;
 
   if (isRulesLoading) {
     return (
@@ -84,10 +90,10 @@ export function PublicationFilters({
       {oldRules.map(([path, rules]) => (
         <RuleListItem key={path} path={path} rules={rules} />
       ))}
-      {isNewRules && !isEditMode && (
+      {isNewRules && (!isEditMode || publicationModel) && (
         <RuleListItem path={publication.targetFolder} rules={newRules} />
       )}
-      {isEditMode && !isRootTarget && (
+      {(isEditMode || publicationModel) && !isRootTarget && (
         <RulesInput
           isOpen={isRulesSetterVisible}
           filters={filters}

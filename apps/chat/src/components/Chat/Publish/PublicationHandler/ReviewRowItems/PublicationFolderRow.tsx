@@ -61,6 +61,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
   const [isPartialSelected, setIsPartialSelected] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
@@ -208,7 +209,9 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
           >
             <EditableField
               value={inputName}
-              isEditMode={isEditDisabled ? false : isEditMode}
+              isEditMode={
+                publishModel ? true : isEditDisabled ? false : isEditMode
+              }
               onChange={handleChangeName}
               inputClassName={classNames(
                 'w-full',

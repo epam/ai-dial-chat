@@ -1,3 +1,5 @@
+import { FolderEditTree } from '@/src/store/publication/publication.types';
+
 import { BackendDataNodeType, BackendResourceType } from './common';
 import { DialFile } from './files';
 
@@ -156,3 +158,11 @@ export type PublicVersionGroups = Record<
 >;
 
 export type PublicationReviewItem = ShareEntity | DialFile;
+
+export interface PublicationHandlerState {
+  entities: Record<string, { name: string; version: string }>;
+  folders: FolderEditTree;
+  rules: PublicationRule[];
+  displayAuthor: string;
+  publishToUrl: string;
+}

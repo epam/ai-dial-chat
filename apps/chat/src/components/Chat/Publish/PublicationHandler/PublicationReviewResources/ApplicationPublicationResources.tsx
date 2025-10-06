@@ -13,14 +13,15 @@ export const ApplicationPublicationResources = ({
   const publishRequestModels = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
   );
+  const models = useAppSelector(ModelsSelectors.selectModels);
 
   const filteredApps = useMemo(() => {
     const resourcesIds = resources.map((resource) => resource.reviewUrl);
 
-    return publishRequestModels.filter((model) =>
+    return [...publishRequestModels, ...models].filter((model) =>
       resourcesIds.includes(model.id),
     );
-  }, [publishRequestModels, resources]);
+  }, [publishRequestModels, resources, models]);
 
   return (
     <>

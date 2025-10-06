@@ -27,7 +27,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublicVersionSelector } from './PublicVersionSelector';
 
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { FeatureType, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface ReadonlyPublicItemsProps {
   entityId: string;
@@ -131,6 +131,8 @@ const EditablePublicationItem: React.FC<PublicItemsProps> = ({
   if (!onChangeVersion) {
     const { version } = parseEntityApiKey(constructedPublicId, {
       parseVersion: true,
+      parseModel:
+        EnumMapper.getFeatureTypeBySharingType(type) === FeatureType.Chat,
     });
 
     return (

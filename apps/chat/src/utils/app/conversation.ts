@@ -16,7 +16,7 @@ import {
   parseEntityApiKey,
 } from '@/src/utils/server/api';
 
-import { EntityType, PartialBy } from '@/src/types/common';
+import { ApiKeys, EntityType, PartialBy } from '@/src/types/common';
 import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
@@ -38,6 +38,7 @@ import {
   MessageSettings,
   Replay,
   Role,
+  ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
@@ -425,3 +426,13 @@ export const updateMessagesAttachmentsTitles = (
     },
   }));
 };
+
+export const isConversationInfoEntity = (
+  entity: ShareEntity,
+): entity is ConversationInfo =>
+  entity.id.startsWith(`${ApiKeys.Conversations}/`);
+
+export const isLoadedConversationEntity = (
+  entity: ShareEntity,
+): entity is Conversation =>
+  isConversationInfoEntity(entity) && entity.status === UploadStatus.LOADED;

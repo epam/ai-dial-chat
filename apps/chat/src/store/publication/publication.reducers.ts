@@ -54,6 +54,7 @@ const initialState: PublicationState = {
     [FeatureType.Toolset]: false,
   },
   selectedItemsToPublish: [],
+  selectedCredentialsToPublish: [],
   isApplicationReview: false,
   isToolsetReview: false,
   publicVersionGroups: {},
@@ -246,6 +247,15 @@ export const publicationSlice = createSlice({
         payload.ids,
       );
     },
+    selectCredentialsToPublish: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.selectedCredentialsToPublish = xor(
+        state.selectedCredentialsToPublish,
+        payload.ids,
+      );
+    },
     selectItemsToApprove: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
@@ -371,6 +381,7 @@ export const publicationSlice = createSlice({
               iconUrl?: string;
               folderId?: string;
             };
+            isFolder?: boolean;
             action: PublishActions;
           }
         | undefined
@@ -384,6 +395,7 @@ export const publicationSlice = createSlice({
             folderId: getFolderIdFromEntityId(payload.entity.id),
             iconUrl: payload.entity.iconUrl,
           },
+          isFolder: payload.isFolder,
           action: payload.action,
         };
       } else {

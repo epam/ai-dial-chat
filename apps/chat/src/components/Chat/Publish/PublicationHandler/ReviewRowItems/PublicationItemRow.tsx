@@ -47,6 +47,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
   const dispatch = useAppDispatch();
 
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const editState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
@@ -54,6 +57,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+  const publishToUrl = useAppSelector(PublicationSelectors.selectPublishToUrl);
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
@@ -66,11 +70,26 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     setInputVersion(defaultVersion);
   }, [defaultVersion, isEditMode]);
 
+  const publicItemId = useMemo(() => {
+    let itemId = item.id;
+    if (publicationModel) {
+      const parts = item.id.split('/');
+      if (parts.length > 1) {
+        parts[1] = publishToUrl;
+        itemId = parts.join('/');
+      }
+    }
+    return itemId;
+  }, [item.id, publicationModel, publishToUrl]);
+
   useEffect(() => {
-    if (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE) {
+    if (
+      publicationModel ||
+      (isEditMode && item.publicationInfo?.action !== PublishActions.DELETE)
+    ) {
       const isExistVersion = isVersionExists(
         inputVersion,
-        item.id,
+        publicItemId,
         publicVersionGroups,
         item.name,
       );
@@ -89,7 +108,10 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     item.id,
     item.name,
     item.publicationInfo?.action,
+    publicItemId,
     publicVersionGroups,
+    publicationModel,
+    publishToUrl,
   ]);
 
   const handleChangeVersion = useCallback(
@@ -107,7 +129,17 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     [dispatch, editState?.name, item.id, item.name],
   );
 
-  const publicVersionGroupId = usePublicVersionGroupId(item);
+  const usePublicVersionGroupIdParams = useMemo(
+    () => ({
+      ...item,
+      id: publicItemId,
+    }),
+    [item, publicItemId],
+  );
+
+  const publicVersionGroupId = usePublicVersionGroupId(
+    usePublicVersionGroupIdParams,
+  );
 
   if (isFileId(item.id)) {
     return (
@@ -147,7 +179,11 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         <EditableField
           value={inputVersion}
           isEditMode={
-            isDeleteAction || isToolsetId(item.id) ? false : isEditMode
+            publicationModel
+              ? true
+              : isDeleteAction || isToolsetId(item.id)
+                ? false
+                : isEditMode
           }
           onChange={handleChangeVersion}
           inputClassName={classNames(
@@ -181,6 +217,9 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
@@ -288,7 +327,11 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <EditableField
           value={inputName}
           isEditMode={
-            isDeleteAction || isToolsetId(item.id) ? false : isEditMode
+            publicationModel
+              ? true
+              : isDeleteAction || isToolsetId(item.id)
+                ? false
+                : isEditMode
           }
           onChange={handleChangeName}
           inputClassName={classNames('w-full', errors.length && 'pr-5')}

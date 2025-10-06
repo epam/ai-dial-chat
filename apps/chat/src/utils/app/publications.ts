@@ -1,12 +1,7 @@
 import { Observable, forkJoin, of, switchMap } from 'rxjs';
 
-import {
-  isPlaybackConversation,
-  isReplayConversation,
-} from '@/src/utils/app/conversation';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
-  ApiUtils,
   addVersionToId,
   getIdWithoutVersionFromApiKey,
   getPublicItemIdWithoutVersion,
@@ -15,11 +10,7 @@ import {
   pathKeySeparator,
 } from '@/src/utils/server/api';
 
-import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
-import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
   PublicVersionGroups,
@@ -45,26 +36,26 @@ import {
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/publication';
 
-import { isEntityNameValid, isVersionValid, prepareEntityName } from './common';
+import {
+  isEntityNameValid,
+  isVersionValid,
+  prepareEntityName,
+  sortItemsVersions,
+} from './common';
 import { BucketService } from './data/bucket-service';
 import { FileService } from './data/file-service';
 import { constructPath } from './file';
-import { getFolderIdFromEntityId, sortByName } from './folders';
+import { getFolderIdFromEntityId } from './folders';
 import {
   getEntityBucket,
   getRootId,
   isConversationId,
-  isEntityIdExternal,
   isFileId,
   isRootId,
 } from './id';
 import { EnumMapper } from './mappers';
 
-import {
-  ConversationInfo,
-  PublishActions,
-  ShareEntity,
-} from '@epam/ai-dial-shared';
+import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -252,92 +243,6 @@ export const getItemsIdsToRemoveAndHide = (
   };
 };
 
-export const getApplicationPublishResources = ({
-  entity,
-  publishAction,
-  path,
-}: {
-  entity: PublishRequestDialAIEntityModel;
-  publishAction: PublishActions;
-  path: string;
-}) => {
-  const iconUrl = entity.iconUrl;
-
-  const resources = [
-    iconUrl && !isEntityIdExternal({ id: iconUrl }) ? iconUrl : undefined,
-  ];
-
-  return resources.reduce(
-    (
-      acc: {
-        action: PublishActions;
-        sourceUrl?: string | undefined;
-        targetUrl: string;
-      }[],
-      id,
-    ) => {
-      if (id) {
-        return [
-          ...acc,
-          {
-            action: publishAction,
-            targetUrl:
-              publishAction === PublishActions.DELETE
-                ? ApiUtils.decodeApiUrl(id)
-                : createTargetUrl(FeatureType.File, path, id, SharingType.File),
-            sourceUrl:
-              publishAction === PublishActions.DELETE
-                ? undefined
-                : ApiUtils.decodeApiUrl(id),
-          },
-        ];
-      }
-      return acc;
-    },
-    [],
-  );
-};
-
-export const getPublishFolderResources = (
-  folder: FolderInterface,
-  entities: (ShareEntity | DialFile | ConversationInfo)[],
-  publicVersionGroups: PublicVersionGroups,
-  isUnpublishing?: boolean,
-) => {
-  const folderPath = `${folder.id}/`;
-  const sortedItems = sortByName(
-    entities?.filter((item) => item.id.startsWith(folderPath)) || [],
-  );
-
-  if (isUnpublishing) {
-    return sortedItems.filter((item) => {
-      const currentVersionGroupId = item.publicationInfo?.version
-        ? getPublicItemIdWithoutVersion(item.publicationInfo.version, item.id)
-        : null;
-
-      if (currentVersionGroupId) {
-        const selectedVersion =
-          publicVersionGroups[currentVersionGroupId]?.selectedVersion;
-
-        return selectedVersion && selectedVersion.id === item.id;
-      }
-
-      return false;
-    });
-  }
-
-  if (!isConversationId(folderPath)) {
-    return sortedItems;
-  }
-
-  return (sortedItems as (ConversationInfo & Partial<Conversation>)[]).filter(
-    (item) =>
-      isPlaybackConversation(item) ||
-      (!isReplayConversation(item) &&
-        (item.messages?.length || !item.messages)),
-  );
-};
-
 export const getVersionGroupFromId = (id: string) => {
   return {
     versionGroupId: getIdWithoutVersionFromApiKey(id),
@@ -430,6 +335,8 @@ export const getReviewItems = (
 
 export const getDefaultAllEditEntities = (
   resources: PublicationResource[],
+  versionGroups: PublicVersionGroups,
+  { isReview }: { isReview: boolean },
 ): {
   entities: Record<string, { name: string; version: string }>;
   folders: FolderEditTree;
@@ -442,16 +349,48 @@ export const getDefaultAllEditEntities = (
     }
   > = {};
 
-  resources.forEach((item) => {
-    const apiKey = splitEntityId(item.reviewUrl).name;
+  if (isReview) {
+    resources.forEach((item) => {
+      const apiKey = splitEntityId(item.reviewUrl).name;
 
-    const { name, version } = parseEntityApiKey(apiKey, {
-      parseVersion: true,
-      parseModel: isConversationId(item.reviewUrl),
+      const { name, version } = parseEntityApiKey(apiKey, {
+        parseVersion: true,
+        parseModel: isConversationId(item.reviewUrl),
+      });
+
+      allEditEntitiesMap[item.reviewUrl] = { name, version };
     });
+  } else {
+    resources.forEach((item) => {
+      const apiKey = splitEntityId(item.reviewUrl).name;
+      const { name } = parseEntityApiKey(apiKey, {
+        parseModel: isConversationId(item.reviewUrl),
+      });
 
-    allEditEntitiesMap[item.reviewUrl] = { name, version };
-  });
+      const entityIdPart = item.reviewUrl.split('/');
+      entityIdPart[1] = PUBLIC_URL_PREFIX;
+      const publicEntityId = entityIdPart.join('/');
+      const versionGroup = versionGroups[publicEntityId];
+
+      const latestVersion = sortItemsVersions(
+        versionGroup?.allVersions ?? [],
+      ).at(0)?.version;
+
+      if (!latestVersion) {
+        allEditEntitiesMap[item.reviewUrl] = {
+          name,
+          version: DEFAULT_VERSION,
+        };
+      } else {
+        const nextVersion = latestVersion.split('.');
+        nextVersion[2] = String(+nextVersion[2] + 1);
+        allEditEntitiesMap[item.reviewUrl] = {
+          name,
+          version: nextVersion.join('.'),
+        };
+      }
+    });
+  }
 
   const allFoldersStructure: FolderEditTree = {};
   resources.forEach(({ reviewUrl }) => {
