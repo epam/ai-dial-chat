@@ -577,9 +577,13 @@ export function PublicationHandler({ publication }: Props) {
                       label={t("Author's public name")}
                       valueDataQa="publication-display-author"
                       valueToDisplay={publication.displayAuthor ?? ''}
-                      infoTooltip={t(
-                        `This name will be displayed instead of the author's name for this publication.`,
-                      )}
+                      infoTooltip={
+                        isReview
+                          ? t(
+                              "This name will be displayed instead of the author's name for this publication.",
+                            )
+                          : undefined
+                      }
                       editValue={displayAuthorEditState}
                       onChangeValue={handleChangeDisplayAuthor}
                       isEditMode={isEditMode || !isReview}
@@ -605,21 +609,25 @@ export function PublicationHandler({ publication }: Props) {
                       <p data-qa="allow-access-label">
                         {t('Allow access if all match')}
                       </p>
-                      {hasUserChangedRules ? (
-                        <span
-                          onClick={() => setIsCompareModalOpened(true)}
-                          className="cursor-pointer text-accent-primary"
-                          data-qa="see-changes"
-                        >
-                          {t('See changes')}
-                        </span>
-                      ) : (
-                        <span
-                          className="text-secondary"
-                          data-qa="no-changes-label"
-                        >
-                          {t('No changes')}
-                        </span>
+                      {isReview && (
+                        <>
+                          {hasUserChangedRules ? (
+                            <span
+                              onClick={() => setIsCompareModalOpened(true)}
+                              className="cursor-pointer text-accent-primary"
+                              data-qa="see-changes"
+                            >
+                              {t('See changes')}
+                            </span>
+                          ) : (
+                            <span
+                              className="text-secondary"
+                              data-qa="no-changes-label"
+                            >
+                              {t('No changes')}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   </h2>
@@ -647,13 +655,15 @@ export function PublicationHandler({ publication }: Props) {
                           dataQa={dataQa}
                           togglerClassName="!text-sm !text-primary"
                           sectionTooltip={
-                            <>
-                              {t('Publish')},
-                              <span className="text-error">
-                                {' '}
-                                {t('Unpublish')}
-                              </span>
-                            </>
+                            isReview && (
+                              <>
+                                {t('Publish')},
+                                <span className="text-error">
+                                  {' '}
+                                  {t('Unpublish')}
+                                </span>
+                              </>
+                            )
                           }
                         >
                           <BasePublicationResources
