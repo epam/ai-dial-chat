@@ -52,6 +52,9 @@ const migrateMessageAttachmentUrls = (message: Message): Message => {
       ),
       stages: message.custom_content.stages?.map(migrateStagesAttachmentUrls),
     },
+    settings: message.settings
+      ? { ...message.settings, selectedAddons: [] }
+      : undefined,
   };
 };
 
@@ -87,6 +90,7 @@ export const cleanConversation = (
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
+    selectedAddons: [],
     updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     ...(conversation.playback && {
       playback: {
