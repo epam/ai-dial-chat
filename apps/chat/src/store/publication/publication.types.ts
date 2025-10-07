@@ -28,7 +28,6 @@ export interface PublicationState {
   isRulesLoading: boolean;
   allPublishedWithMeItemsUploaded: Record<FeatureType, boolean>;
   selectedItemsToPublish: string[];
-  selectedCredentialsToPublish: string[];
   isApplicationReview: boolean;
   isToolsetReview: boolean;
   publicVersionGroups: PublicVersionGroups;

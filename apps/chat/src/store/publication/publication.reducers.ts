@@ -54,7 +54,6 @@ const initialState: PublicationState = {
     [FeatureType.Toolset]: false,
   },
   selectedItemsToPublish: [],
-  selectedCredentialsToPublish: [],
   isApplicationReview: false,
   isToolsetReview: false,
   publicVersionGroups: {},
@@ -245,15 +244,6 @@ export const publicationSlice = createSlice({
     ) => {
       state.selectedItemsToPublish = xor(
         state.selectedItemsToPublish,
-        payload.ids,
-      );
-    },
-    selectCredentialsToPublish: (
-      state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
-      state.selectedCredentialsToPublish = xor(
-        state.selectedCredentialsToPublish,
         payload.ids,
       );
     },
