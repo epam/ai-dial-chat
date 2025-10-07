@@ -23,10 +23,10 @@ dialAdminTest(
       customApplicationBuilder,
       applicationApiHelper,
       adminMarketplaceAgentsAssertion,
-      publishingRequestModal,
+      publishingRequestDialog,
       selectFolderModal,
       selectFolders,
-      publishingRequestModalAssertion,
+      publishingRequestDialogAssertion,
       fileApiHelper,
       dialHomePage,
       adminDialHomePage,
@@ -48,7 +48,7 @@ dialAdminTest(
       conversationData,
       adminConversations,
       adminConversationDropdownMenu,
-      adminPublishingRequestModal,
+      adminPublishingRequestDialog,
       adminSelectFolderModal,
       adminSelectFoldersAssertion,
     },
@@ -125,8 +125,8 @@ dialAdminTest(
           'visible',
         );
         await agentDetailsModal.clickPublishButton();
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
       },
@@ -135,7 +135,7 @@ dialAdminTest(
     await dialTest.step(
       'Click on "Change" link, create a new folder, rename it and select',
       async () => {
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
@@ -143,8 +143,8 @@ dialAdminTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRequestDialog.getChangePublishToPath().path,
           publicationPath,
         );
       },
@@ -153,9 +153,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name and send the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
 
         const fileResource = publishApiModels.response.resources.find((r) =>
           r.reviewUrl.endsWith(filename),
@@ -274,8 +274,8 @@ dialAdminTest(
         await adminConversationDropdownMenu.selectMenuOption(
           MenuOptions.publish,
         );
-        await adminPublishingRequestModal.waitForState();
-        await adminPublishingRequestModal
+        await adminPublishingRequestDialog.waitForState();
+        await adminPublishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await adminSelectFoldersAssertion.assertFolderState(
@@ -286,9 +286,9 @@ dialAdminTest(
         await adminSelectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await adminPublishingRequestModal.requestName.fillInInput(requestName);
-        await adminPublishingRequestModal.sendPublicationRequest();
-        await adminPublishingRequestModal.waitForState({ state: 'hidden' });
+        await adminPublishingRequestDialog.requestName.fillInInput(requestName);
+        await adminPublishingRequestDialog.sendPublicationRequest();
+        await adminPublishingRequestDialog.waitForState({ state: 'hidden' });
       },
     );
   },

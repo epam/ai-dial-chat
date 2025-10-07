@@ -1,4 +1,4 @@
-import { EntitySelectors, PublishingModalSelectors } from '@/src/ui/selectors';
+import { EntitySelectors, PublishingDialogSelectors } from '@/src/ui/selectors';
 import { PublishFolder } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
@@ -7,7 +7,7 @@ export class FolderConversationsToPublish extends PublishFolder {
     super(
       page,
       parentLocator,
-      PublishingModalSelectors.conversationsToPublishContainer,
+      PublishingDialogSelectors.conversationsToPublishContainer,
       EntitySelectors.conversation,
     );
   }

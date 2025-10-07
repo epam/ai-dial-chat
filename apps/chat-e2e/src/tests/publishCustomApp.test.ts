@@ -38,8 +38,8 @@ dialAdminTest(
       adminMarketplaceHeader,
       adminMarketplaceAgentsSection,
       adminMarketplaceAgentsAssertion,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
+      publishingRequestDialog,
+      publishingRequestDialogAssertion,
       publishingRulesAssertion,
       appToPublishAssertion,
       fileApiHelper,
@@ -162,11 +162,11 @@ dialAdminTest(
     await dialTest.step(
       'Verify Publish modal with valid data is displayed',
       async () => {
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           publishTo: PublishPath.Organization,
           author: defaultAuthor,
         });
@@ -189,10 +189,10 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, update Author and send the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        await publishingRequestModal.author.fillInInput(updatedAuthor);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialog.author.fillInInput(updatedAuthor);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
 
         const fileResource = publishApiModels.response.resources.find((r) =>
           r.reviewUrl.endsWith(filename),

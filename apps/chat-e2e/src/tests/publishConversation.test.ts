@@ -38,9 +38,9 @@ dialAdminTest(
       conversations,
       organizationConversations,
       conversationDropdownMenu,
-      publishingRequestModal,
+      publishingRequestDialog,
       conversationsToPublishTree,
-      publishingRequestModalAssertion,
+      publishingRequestDialogAssertion,
       iconApiHelper,
       tooltipAssertion,
       adminDialHomePage,
@@ -118,12 +118,12 @@ dialAdminTest(
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal.requestName.fillInInput('');
-        await publishingRequestModalAssertion.assertNoFilesRequestedToPublish();
-        await publishingRequestModalAssertion.assertSendRequestButtonActionabilityState(
+        await publishingRequestDialog.requestName.fillInInput('');
+        await publishingRequestDialogAssertion.assertNoFilesRequestedToPublish();
+        await publishingRequestDialogAssertion.assertSendRequestButtonActionabilityState(
           'disabled',
         );
       },
@@ -132,7 +132,7 @@ dialAdminTest(
     await dialTest.step(
       'Verify tooltip on hover "Send request" button',
       async () => {
-        await publishingRequestModal.sendRequestButton.hoverOver();
+        await publishingRequestDialog.sendRequestButton.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.noPublishNameTooltip,
         );
@@ -142,9 +142,9 @@ dialAdminTest(
     await dialTest.step(
       'Set spaces as publication request name and verify tooltip on hover "Send request" button',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(' '.repeat(3));
-        await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
-        await publishingRequestModal.sendRequestButton.hoverOver();
+        await publishingRequestDialog.requestName.fillInInput(' '.repeat(3));
+        await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
+        await publishingRequestDialog.sendRequestButton.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.noPublishNameTooltip,
         );
@@ -154,11 +154,11 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, uncheck conversation and verify tooltip on hover "Send request" button',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         await conversationsToPublishTree
           .getEntityCheckbox(conversation.name)
           .click();
-        await publishingRequestModal.sendRequestButton.hoverOver();
+        await publishingRequestDialog.sendRequestButton.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.nothingToPublishTooltip,
         );
@@ -169,7 +169,7 @@ dialAdminTest(
       await conversationsToPublishTree
         .getEntityCheckbox(conversation.name)
         .click();
-      publishApiModels = await publishingRequestModal.sendPublicationRequest();
+      publishApiModels = await publishingRequestDialog.sendPublicationRequest();
       publicationsToUnpublish.push(publishApiModels.response);
     });
 
@@ -368,11 +368,11 @@ dialAdminTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         await conversationsToPublishTree
           .getEntityVersionInput(conversation.name)
           .fill(ExpectedConstants.defaultAppVersion);
-        await publishingRequestModal.sendRequestButton.click();
+        await publishingRequestDialog.sendRequestButton.click();
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(
           ExpectedConstants.duplicatedPublicationErrorMessage(

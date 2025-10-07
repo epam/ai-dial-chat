@@ -150,8 +150,8 @@ export const SelectFolderModalSelectors = {
   searchInput: '[data-qa="search-folder"]',
 };
 
-export const PublishingModalSelectors = {
-  modalContainer: '[data-qa="publish-modal"]',
+export const PublishingDialogSelectors = {
+  dialogContainer: '[data-qa="publish-dialog"]',
   requestName: '[data-qa="publishRequestName"]',
   authorLabel: '[data-qa="publicationAuthor-label"]',
   author: '#publicationAuthor',
@@ -169,7 +169,7 @@ export const PublishingModalSelectors = {
   noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
   fieldErrorMessage: `[data-qa="error-message"]`,
   requestNameErrorMessage: () =>
-    `${PublishingModalSelectors.requestName} + ${PublishingModalSelectors.fieldErrorMessage}`,
+    `${PublishingDialogSelectors.requestName} + ${PublishingDialogSelectors.fieldErrorMessage}`,
 };
 
 export const ChangePathElement = {

@@ -18,8 +18,8 @@ dialAdminTest(
     dataInjector,
     prompts,
     promptDropdownMenu,
-    publishingRequestModal,
-    publishingRequestModalAssertion,
+    publishingRequestDialog,
+    publishingRequestDialogAssertion,
     selectFolderModal,
     adminDialHomePage,
     adminApproveRequiredPromptsAssertion,
@@ -55,13 +55,13 @@ dialAdminTest(
       await dialHomePage.waitForPageLoaded();
       await prompts.openEntityDropdownMenu(prompt.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-      await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+      await baseAssertion.assertElementState(publishingRequestDialog, 'visible');
     });
 
     await dialTest.step(
       'User clicks on "Change path" and create a new folder',
       async () => {
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
@@ -75,13 +75,13 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRequestDialog.getChangePublishToPath().path,
           `${PublishPath.Organization}/${folderName}`,
         );
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
       },
     );
 

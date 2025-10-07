@@ -51,7 +51,7 @@ dialAdminTest(
     chatMessagesAssertion,
     conversationDropdownMenu,
     renameConversationModal,
-    publishingRequestModal,
+    publishingRequestDialog,
     toast,
     filesToPublishTree,
     conversationToPublishAssertion,
@@ -131,7 +131,7 @@ dialAdminTest(
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
         await conversationToPublishAssertion.assertEntityState(
@@ -177,12 +177,12 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, update author and submit the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        await publishingRequestModal.author.fillInInput(author);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialog.author.fillInInput(author);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'hidden',
         );
         publicationsToUnpublish.push(publishApiModels.response);
@@ -358,11 +358,11 @@ dialAdminTest(
 
         await conversations.openEntityDropdownMenu(updatedConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           GeneratorUtil.randomPublicationRequestName(),
         );
         const publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         baseAssertion.assertValue(
           publishApiModels.response.resources.filter(
             (r) =>
@@ -388,17 +388,17 @@ dialAdminTest(
       async () => {
         await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           GeneratorUtil.randomPublicationRequestName(),
         );
-        await publishingRequestModal.sendRequestButton.click();
+        await publishingRequestDialog.sendRequestButton.click();
         await baseAssertion.assertElementState(toast, 'visible');
         await baseAssertion.assertElementText(
           toast,
           ExpectedConstants.attachmentPublishErrorMessage,
         );
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'hidden',
         );
       },
@@ -419,7 +419,7 @@ dialAdminTest(
     conversationDropdownMenu,
     baseAssertion,
     apiAssertion,
-    publishingRequestModal,
+    publishingRequestDialog,
     adminDialHomePage,
     adminPublishingApprovalModal,
     adminChatHeader,
@@ -479,7 +479,7 @@ dialAdminTest(
         await conversations.openEntityDropdownMenu(plotlyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
         await publishFileAssertion.assertEntityState(
@@ -492,11 +492,11 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name and submit the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'hidden',
         );
         publicationsToUnpublish.push(publishApiModels.response);

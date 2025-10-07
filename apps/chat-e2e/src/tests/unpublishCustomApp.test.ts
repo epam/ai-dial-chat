@@ -30,8 +30,8 @@ dialAdminTest(
       marketplaceHeader,
       marketplaceAgentsSection,
       marketplaceAgents,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
+      publishingRequestDialog,
+      publishingRequestDialogAssertion,
       publishingRulesAssertion,
       appToPublishAssertion,
       adminDialHomePage,
@@ -146,11 +146,11 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify Unpublish modal with valid data is displayed',
       async () => {
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           unpublishFromLabel: 'visible',
           unpublishFrom: PublishPath.Organization,
           authorLabel: 'hidden',
@@ -176,11 +176,11 @@ dialAdminTest(
     await dialAdminTest.step(
       'Set publication request name and send',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+          await publishingRequestDialog.sendPublicationRequest();
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'hidden',
         );
       },
@@ -404,8 +404,8 @@ dialAdminTest(
     adminMarketplaceHeader,
     adminMarketplaceAgentsSection,
     adminMarketplaceAgents,
-    adminPublishingRequestModal,
-    adminPublishingRequestModalAssertion,
+    adminPublishingRequestDialog,
+    adminPublishingRequestDialogAssertion,
     baseAssertion,
     adminAppToPublishAssertion,
     adminAgentDetailsModal,
@@ -524,8 +524,8 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify the latest version is displayed on Unpublish request modal',
       async () => {
-        await adminPublishingRequestModalAssertion.assertElementState(
-          adminPublishingRequestModal,
+        await adminPublishingRequestDialogAssertion.assertElementState(
+          adminPublishingRequestDialog,
           'visible',
         );
         await adminAppToPublishAssertion.assertEntityToPublish(
@@ -539,10 +539,10 @@ dialAdminTest(
     );
 
     await dialAdminTest.step('Set the request name and send', async () => {
-      await adminPublishingRequestModal.requestName.fillInInput(requestName);
-      await adminPublishingRequestModal.sendPublicationRequest();
-      await adminPublishingRequestModalAssertion.assertElementState(
-        adminPublishingRequestModal,
+      await adminPublishingRequestDialog.requestName.fillInInput(requestName);
+      await adminPublishingRequestDialog.sendPublicationRequest();
+      await adminPublishingRequestDialogAssertion.assertElementState(
+        adminPublishingRequestDialog,
         'hidden',
       );
     });
@@ -661,8 +661,8 @@ dialAdminTest(
     marketplaceAgentsSection,
     agentDetailsModal,
     marketplaceAgents,
-    publishingRequestModal,
-    publishingRequestModalAssertion,
+    publishingRequestDialog,
+    publishingRequestDialogAssertion,
     appToPublishAssertion,
     adminDialHomePage,
     adminLocalStorageManager,
@@ -729,8 +729,8 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify the minor version is displayed on Unpublish request modal',
       async () => {
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await appToPublishAssertion.assertEntityToPublish(
@@ -744,10 +744,10 @@ dialAdminTest(
     );
 
     await dialAdminTest.step('Set the request name and send', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
-      await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+      await publishingRequestDialog.requestName.fillInInput(requestName);
+      await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });

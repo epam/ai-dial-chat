@@ -7,20 +7,20 @@ import {
   PublishingExpectedMessages,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
-import { PublishingRequestModal } from '@/src/ui/webElements';
+import { PublishingRequestDialog } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class PublishingRequestModalAssertion extends BaseAssertion {
-  readonly publishingRequestModal: PublishingRequestModal;
+export class PublishingRequestDialogAssertion extends BaseAssertion {
+  readonly publishingRequestDialog: PublishingRequestDialog;
 
-  constructor(publishingRequestModal: PublishingRequestModal) {
+  constructor(publishingRequestDialog: PublishingRequestDialog) {
     super();
-    this.publishingRequestModal = publishingRequestModal;
+    this.publishingRequestDialog = publishingRequestDialog;
   }
 
   public async assertNoFilesRequestedToPublish() {
     await this.assertElementState(
-      this.publishingRequestModal.getFilesToPublishTree()
+      this.publishingRequestDialog.getFilesToPublishTree()
         .noPublishingFilesMessage,
       'visible',
       PublishingExpectedMessages.noFilesToPublishRequested,
@@ -31,13 +31,13 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
     expectedState: ElementActionabilityState,
   ) {
     await this.assertElementActionabilityState(
-      this.publishingRequestModal.sendRequestButton,
+      this.publishingRequestDialog.sendRequestButton,
       expectedState,
     );
 
     if (expectedState === 'disabled') {
       const textColor =
-        await this.publishingRequestModal.sendRequestButton.getComputedStyleProperty(
+        await this.publishingRequestDialog.sendRequestButton.getComputedStyleProperty(
           Styles.color,
         );
       expect
@@ -45,7 +45,7 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
         .toBe(Colors.controlsTextDisable);
     } else {
       const backgroundColor =
-        await this.publishingRequestModal.sendRequestButton.getComputedStyleProperty(
+        await this.publishingRequestDialog.sendRequestButton.getComputedStyleProperty(
           Styles.backgroundColor,
         );
       expect
@@ -68,50 +68,50 @@ export class PublishingRequestModalAssertion extends BaseAssertion {
   }) {
     if (fieldsToVerify.publishToLabel) {
       await this.assertElementState(
-        this.publishingRequestModal.publishToLabel,
+        this.publishingRequestDialog.publishToLabel,
         fieldsToVerify.publishToLabel,
       );
     }
     if (fieldsToVerify.publishTo) {
       await this.assertElementText(
-        this.publishingRequestModal.getChangePublishToPath().path,
+        this.publishingRequestDialog.getChangePublishToPath().path,
         fieldsToVerify.publishTo,
       );
     }
     if (fieldsToVerify.authorLabel) {
       await this.assertElementState(
-        this.publishingRequestModal.authorLabel,
+        this.publishingRequestDialog.authorLabel,
         fieldsToVerify.authorLabel,
       );
       fieldsToVerify.authorLabel === 'visible'
         ? await this.assertElementText(
-            this.publishingRequestModal.authorLabel,
+            this.publishingRequestDialog.authorLabel,
             ExpectedConstants.authorLabel,
           )
         : await this.assertElementState(
-            this.publishingRequestModal.author,
+            this.publishingRequestDialog.author,
             'hidden',
           );
     }
     if (fieldsToVerify.author) {
       await this.assertInputValue(
-        this.publishingRequestModal.author,
+        this.publishingRequestDialog.author,
         fieldsToVerify.author,
       );
     }
     if (fieldsToVerify.unpublishFromLabel) {
       await this.assertElementState(
-        this.publishingRequestModal.unpublishFromLabel,
+        this.publishingRequestDialog.unpublishFromLabel,
         fieldsToVerify.unpublishFromLabel,
       );
       await this.assertElementText(
-        this.publishingRequestModal.unpublishFromLabel,
+        this.publishingRequestDialog.unpublishFromLabel,
         ExpectedConstants.unpublishFromLabel,
       );
     }
     if (fieldsToVerify.unpublishFrom) {
       await this.assertElementText(
-        this.publishingRequestModal.unpublishFrom,
+        this.publishingRequestDialog.unpublishFrom,
         fieldsToVerify.unpublishFrom,
       );
     }

@@ -29,7 +29,7 @@ dialAdminTest(
       folderPrompts,
       folderDropdownMenu,
       promptDropdownMenu,
-      publishingRequestModal,
+      publishingRequestDialog,
       publishingRequestFolderPromptAssertion,
       organizationFolderPrompts,
       adminDialHomePage,
@@ -42,7 +42,7 @@ dialAdminTest(
       adminPublishedPromptPreviewModalControlsAssertion,
       adminPublishingApprovalModalAssertion,
       adminFolderPromptsToApproveAssertion,
-      publishingRequestModalAssertion,
+      publishingRequestDialogAssertion,
       adminOrganizationFolderPrompts,
       adminPromptDropdownMenu,
       adminInformationModalAssertion,
@@ -94,8 +94,8 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await folderPrompts.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         for (const prompt of folderPrompt.prompts) {
@@ -111,9 +111,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, update Author field and send the request',
       async () => {
-        await publishingRequestModal.author.fillInInput(author);
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.author.fillInInput(author);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialog.sendPublicationRequest();
       },
     );
 
@@ -285,8 +285,8 @@ dialAdminTest(
           folderPrompt.prompts[0].name,
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await promptToPublishAssertion.assertEntityToPublish(
@@ -307,13 +307,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         firstUnpublishRequestName,
       );
       unpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });

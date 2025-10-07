@@ -46,11 +46,11 @@ dialAdminTest(
     dataInjector,
     organizationFolderConversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     conversationToPublishAssertion,
     baseAssertion,
     publishingRules,
-    publishingRequestModalAssertion,
+    publishingRequestDialogAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
@@ -133,12 +133,12 @@ dialAdminTest(
           firstConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.unpublishFrom,
+          publishingRequestDialog.unpublishFrom,
           publishPath,
         );
 
@@ -186,13 +186,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         firstConversationUnpublishingRequestName,
       );
       firstUnpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -205,14 +205,14 @@ dialAdminTest(
           secondConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           secondConversationUnpublishingRequestName,
         );
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
       },
     );
 
@@ -458,9 +458,9 @@ dialAdminTest(
     dataInjector,
     organizationFolderConversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     conversationToPublishAssertion,
-    publishingRequestModalAssertion,
+    publishingRequestDialogAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
@@ -538,8 +538,8 @@ dialAdminTest(
           publishedFolderName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         for (const conversation of folderConversations) {
@@ -572,13 +572,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         firstFolderUnpublishingRequestName,
       );
       firstUnpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -590,14 +590,14 @@ dialAdminTest(
           publishedFolderName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           secondFolderUnpublishingRequestName,
         );
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
       },
     );
 
@@ -795,10 +795,10 @@ dialAdminTest(
     dataInjector,
     organizationFolderConversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     publishingRules,
     folderToPublishAssertion,
-    publishingRequestModalAssertion,
+    publishingRequestDialogAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
@@ -878,8 +878,8 @@ dialAdminTest(
           innerFolderName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await folderToPublishAssertion.assertFolderState(
@@ -924,19 +924,19 @@ dialAdminTest(
           { name: innerFolderConversationName },
           expectedConversationIcon,
         );
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.unpublishFrom,
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRequestDialog.unpublishFrom,
           publishPath,
         );
-        await publishingRequestModalAssertion.assertElementText(
+        await publishingRequestDialogAssertion.assertElementText(
           publishingRules.publishingPath,
           rootFolderName,
         );
-        await publishingRequestModalAssertion.assertElementState(
+        await publishingRequestDialogAssertion.assertElementState(
           publishingRules.addRuleButton,
           'visible',
         );
-        await publishingRequestModalAssertion.assertElementsCount(
+        await publishingRequestDialogAssertion.assertElementsCount(
           publishingRules.allRules,
           0,
         );
@@ -944,13 +944,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         folderUnpublishingRequestName,
       );
       unpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });

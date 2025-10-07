@@ -19,7 +19,7 @@ import {
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
-  PublishingRequestModal,
+  PublishingRequestDialog,
   PublishingRules,
   SelectFolderModal,
   SendMessage,
@@ -46,7 +46,7 @@ import {
   PublishedAppReviewModalAssertion,
   PublishedPromptPreviewModalAssertion,
   PublishingApprovalModalAssertion,
-  PublishingRequestModalAssertion,
+  PublishingRequestDialogAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
@@ -125,7 +125,7 @@ const dialAdminTest = dialTest.extend<{
   adminApiInjector: ApiInjector;
   adminBrowserStorageInjector: BrowserStorageInjector;
   adminDataInjector: DataInjectorInterface;
-  adminPublishingRequestModal: PublishingRequestModal;
+  adminPublishingRequestDialog: PublishingRequestDialog;
   adminToast: Toast;
   adminShareModal: ShareModal;
   adminPromptsToPublishTree: PromptsToPublishTree;
@@ -181,7 +181,7 @@ const dialAdminTest = dialTest.extend<{
   adminMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   adminAgentDetailsModalAssertion: AgentDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
-  adminPublishingRequestModalAssertion: PublishingRequestModalAssertion;
+  adminPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
   adminAppToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
   adminPublishingRulesAssertion: PublishingRulesAssertion;
   adminConversationSettings: ConversationSettingsModal;
@@ -493,9 +493,9 @@ const dialAdminTest = dialTest.extend<{
     const adminShareModal = new ShareModal(adminPage);
     await use(adminShareModal);
   },
-  adminPublishingRequestModal: async ({ adminPage }, use) => {
-    const adminPublishingRequestModal = new PublishingRequestModal(adminPage);
-    await use(adminPublishingRequestModal);
+  adminPublishingRequestDialog: async ({ adminPage }, use) => {
+    const adminPublishingRequestDialog = new PublishingRequestDialog(adminPage);
+    await use(adminPublishingRequestDialog);
   },
   adminDataInjector: async (
     { adminApiInjector, adminBrowserStorageInjector },
@@ -506,9 +506,9 @@ const dialAdminTest = dialTest.extend<{
       : adminBrowserStorageInjector;
     await use(adminDataInjector);
   },
-  adminPromptsToPublishTree: async ({ adminPublishingRequestModal }, use) => {
+  adminPromptsToPublishTree: async ({ adminPublishingRequestDialog }, use) => {
     const adminPromptsToPublishTree =
-      adminPublishingRequestModal.getPromptsToPublishTree();
+      adminPublishingRequestDialog.getPromptsToPublishTree();
     await use(adminPromptsToPublishTree);
   },
   adminApproveRequiredConversationsAssertion: async (
@@ -644,11 +644,11 @@ const dialAdminTest = dialTest.extend<{
     await use(adminConversationAssertion);
   },
   adminConversationsToPublishTree: async (
-    { adminPublishingRequestModal },
+    { adminPublishingRequestDialog },
     use,
   ) => {
     const adminConversationsToPublishTree =
-      adminPublishingRequestModal.getConversationsToPublishTree();
+      adminPublishingRequestDialog.getConversationsToPublishTree();
     await use(adminConversationsToPublishTree);
   },
   adminConversationToPublishAssertion: async (
@@ -705,9 +705,9 @@ const dialAdminTest = dialTest.extend<{
       adminMarketplaceAgents.getAgentDetailsModal();
     await use(adminAgentDetailsModal);
   },
-  adminAppsToPublishTree: async ({ adminPublishingRequestModal }, use) => {
+  adminAppsToPublishTree: async ({ adminPublishingRequestDialog }, use) => {
     const adminAppsToPublishTree =
-      adminPublishingRequestModal.getApplicationsToPublishTree();
+      adminPublishingRequestDialog.getApplicationsToPublishTree();
     await use(adminAppsToPublishTree);
   },
   adminPublishingRules: async ({ adminPublishingApprovalModal }, use) => {
@@ -743,13 +743,13 @@ const dialAdminTest = dialTest.extend<{
     );
     await use(adminSelectFoldersAssertion);
   },
-  adminPublishingRequestModalAssertion: async (
-    { adminPublishingRequestModal },
+  adminPublishingRequestDialogAssertion: async (
+    { adminPublishingRequestDialog },
     use,
   ) => {
-    const adminPublishingRequestModalAssertion =
-      new PublishingRequestModalAssertion(adminPublishingRequestModal);
-    await use(adminPublishingRequestModalAssertion);
+    const adminPublishingRequestDialogAssertion =
+      new PublishingRequestDialogAssertion(adminPublishingRequestDialog);
+    await use(adminPublishingRequestDialogAssertion);
   },
   adminAppToPublishAssertion: async ({ adminAppsToPublishTree }, use) => {
     const adminAppToPublishAssertion =

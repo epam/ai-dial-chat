@@ -30,13 +30,13 @@ dialAdminTest(
       dataInjector,
       organizationConversations,
       conversationDropdownMenu,
-      publishingRequestModal,
+      publishingRequestDialog,
       iconApiHelper,
       conversationToPublishAssertion,
       baseAssertion,
       publishingRulesAssertion,
       organizationConversationAssertion,
-      publishingRequestModalAssertion,
+      publishingRequestDialogAssertion,
       tooltipAssertion,
       adminDialHomePage,
       adminApproveRequiredConversations,
@@ -113,16 +113,16 @@ dialAdminTest(
           publishedConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.unpublishFromLabel,
+          publishingRequestDialog.unpublishFromLabel,
           ExpectedConstants.unpublishFromLabel,
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.unpublishFrom,
+          publishingRequestDialog.unpublishFrom,
           PublishPath.Organization,
         );
         await publishingRulesAssertion.assertLabels({
@@ -161,9 +161,9 @@ dialAdminTest(
       'Set empty or spaces as request name and verify "Send request" button is disabled',
       async () => {
         for (const name of ['', ' '.repeat(3)]) {
-          await publishingRequestModal.requestName.fillInInput(name);
-          await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
-          await publishingRequestModal.sendRequestButton.hoverOver();
+          await publishingRequestDialog.requestName.fillInInput(name);
+          await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
+          await publishingRequestDialog.sendRequestButton.hoverOver();
           await tooltipAssertion.assertTooltipContent(
             ExpectedConstants.noPublishNameTooltip,
           );
@@ -172,10 +172,10 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
-      publishApiModels = await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+      await publishingRequestDialog.requestName.fillInInput(requestName);
+      publishApiModels = await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });

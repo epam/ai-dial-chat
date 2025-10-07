@@ -149,7 +149,7 @@ export class AgentDetailsModal extends BaseElement {
       expectedHttpStatus: number;
     } = { expectedHttpStatus: 200 },
   ) {
-    await this.openPublishRequestModal(
+    await this.openPublishRequestDialog(
       () => this.publishButton.click(),
       options,
     );
@@ -160,7 +160,7 @@ export class AgentDetailsModal extends BaseElement {
       expectedHttpStatus: number;
     } = { expectedHttpStatus: 200 },
   ) {
-    await this.openPublishRequestModal(
+    await this.openPublishRequestDialog(
       () => this.unpublishButton.click(),
       options,
     );
@@ -187,7 +187,7 @@ export class AgentDetailsModal extends BaseElement {
     });
   }
 
-  private async openPublishRequestModal(
+  private async openPublishRequestDialog(
     method: () => Promise<void>,
     options: {
       expectedHttpStatus: number;

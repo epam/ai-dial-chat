@@ -28,12 +28,12 @@ dialTest(
     promptDropdownMenu,
     promptPreviewModal,
     promptPreviewVersionDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     promptDropdownMenuAssertion,
     promptPreviewModalAssertion,
     organizationPromptAssertion,
     promptAssertion,
-    publishingRequestModalAssertion,
+    publishingRequestDialogAssertion,
     promptToPublishAssertion,
     prompts,
   }) => {
@@ -289,8 +289,8 @@ dialTest(
           },
         );
         await promptPreviewModal.promptUnpublishButton.click();
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await promptToPublishAssertion.assertEntityToPublish(
@@ -302,7 +302,7 @@ dialTest(
             expectedVersionColor: expectedColor,
           },
         );
-        await publishingRequestModal.cancelButton.click();
+        await publishingRequestDialog.cancelButton.click();
         await promptPreviewModal.closeButton.click();
       },
     );
@@ -312,8 +312,8 @@ dialTest(
       async () => {
         await organizationPrompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await promptToPublishAssertion.assertEntityToPublish(

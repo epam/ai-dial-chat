@@ -1,7 +1,7 @@
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { IconSelectors, PublishingModalSelectors } from '@/src/ui/selectors';
+import { IconSelectors, PublishingDialogSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import {
@@ -15,9 +15,9 @@ import {
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Locator, Page } from '@playwright/test';
 
-export class PublishingRequestModal extends BaseElement {
+export class PublishingRequestDialog extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
-    super(page, PublishingModalSelectors.modalContainer, parentLocator);
+    super(page, PublishingDialogSelectors.dialogContainer, parentLocator);
   }
 
   public cancelButton = this.getChildElementBySelector(
@@ -113,28 +113,28 @@ export class PublishingRequestModal extends BaseElement {
   }
 
   public requestName = this.getChildElementBySelector(
-    PublishingModalSelectors.requestName,
+    PublishingDialogSelectors.requestName,
   ).getChildElementBySelector(Tags.input);
   public requestNameErrorMessage = this.getChildElementBySelector(
-    PublishingModalSelectors.requestNameErrorMessage(),
+    PublishingDialogSelectors.requestNameErrorMessage(),
   );
   public author = this.getChildElementBySelector(
-    PublishingModalSelectors.author,
+    PublishingDialogSelectors.author,
   );
   public sendRequestButton = this.getChildElementBySelector(
-    PublishingModalSelectors.sendButton,
+    PublishingDialogSelectors.sendButton,
   );
   public unpublishFromLabel = this.getChildElementBySelector(
-    PublishingModalSelectors.unpublishFromLabel,
+    PublishingDialogSelectors.unpublishFromLabel,
   );
   public unpublishFrom = this.getChildElementBySelector(
-    PublishingModalSelectors.unpublishFromPath,
+    PublishingDialogSelectors.unpublishFromPath,
   );
   public publishToLabel = this.getChildElementBySelector(
-    PublishingModalSelectors.publishToLabel,
+    PublishingDialogSelectors.publishToLabel,
   );
   public authorLabel = this.getChildElementBySelector(
-    PublishingModalSelectors.authorLabel,
+    PublishingDialogSelectors.authorLabel,
   );
 
   public async sendPublicationRequest() {

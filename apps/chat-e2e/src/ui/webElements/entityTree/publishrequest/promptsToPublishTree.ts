@@ -1,7 +1,7 @@
 import {
   EntitySelectors,
   IconSelectors,
-  PublishingModalSelectors,
+  PublishingDialogSelectors,
 } from '@/src/ui/selectors';
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree/publishEntitiesTree';
 import { Locator, Page } from '@playwright/test';
@@ -11,7 +11,7 @@ export class PromptsToPublishTree extends PublishEntitiesTree {
     super(
       page,
       parentLocator,
-      PublishingModalSelectors.promptsToPublishContainer,
+      PublishingDialogSelectors.promptsToPublishContainer,
       EntitySelectors.prompt,
     );
   }
