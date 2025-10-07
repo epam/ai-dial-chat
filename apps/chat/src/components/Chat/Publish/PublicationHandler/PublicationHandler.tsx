@@ -360,7 +360,7 @@ export function PublicationHandler({ publication }: Props) {
             name: data.publishRequestName.trim(),
             resources: filteredMappedResources,
             targetFolder: editedPublishToUrl,
-            displayAuthor: publicationAuthor.trim(),
+            displayAuthor: displayAuthorEditState.trim(),
             rules: rulesOnEdit,
           }),
         );
@@ -374,7 +374,7 @@ export function PublicationHandler({ publication }: Props) {
           dataToUpdate: {
             targetFolder: editedPublishToUrl,
             rules: rulesOnEdit,
-            displayAuthor: displayAuthorEditState,
+            displayAuthor: displayAuthorEditState.trim(),
             resources: mappedResources,
           },
         }),
@@ -392,7 +392,6 @@ export function PublicationHandler({ publication }: Props) {
       displayAuthorEditState,
       entitiesEditState,
       foldersEditState,
-      publicationAuthor,
       selectedPublicationItems,
     ],
   );
