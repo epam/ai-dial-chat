@@ -60,7 +60,8 @@ export const CustomAppForm = () => {
   }, [clearErrors, completionUrl, setValue]);
 
   return (
-    <div className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
+    <div className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
+         data-qa="app-view-form">
       <FieldTextArea
         {...register('features')}
         label={t('Features data')}
