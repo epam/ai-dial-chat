@@ -402,7 +402,13 @@ export const PublicationHandlerFooter = ({
 
   const getSubmitTooltipText = useCallback(() => {
     if (publishModel) {
-      return t("Request can't be published as some fields are invalid");
+      return t(
+        isFormErrors
+          ? 'Enter a valid name for the publish request'
+          : isDisplayAuthorInvalid
+            ? 'Enter a valid name for the author'
+            : "Request can't be published as some items are invalid",
+      );
     }
 
     return t(
@@ -423,6 +429,8 @@ export const PublicationHandlerFooter = ({
     someReviewedConversationHasNoMessages,
     isPublicationUpdating,
     areNoChanges,
+    isFormErrors,
+    isDisplayAuthorInvalid,
   ]);
 
   const getSubmitBtnText = useCallback(() => {
