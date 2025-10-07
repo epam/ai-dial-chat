@@ -178,9 +178,8 @@ export function PublicationHandler({ publication }: Props) {
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
       publishRequestName: getPublicationDefaultName(
-        prepareEntityName(replaceSpacesFromString(userName)),
+        replaceSpacesFromString(userName),
       ),
-      publicationAuthor: prepareEntityName(replaceSpacesFromString(userName)),
     },
     mode: 'onChange',
   });
@@ -355,7 +354,7 @@ export function PublicationHandler({ publication }: Props) {
             name: data.publishRequestName.trim(),
             resources: filteredMappedResources,
             targetFolder: editedPublishToUrl,
-            displayAuthor: data.publicationAuthor.trim(),
+            displayAuthor: publicationAuthor.trim(),
             rules: rulesOnEdit,
           }),
         );
@@ -387,6 +386,7 @@ export function PublicationHandler({ publication }: Props) {
       displayAuthorEditState,
       entitiesEditState,
       foldersEditState,
+      publicationAuthor,
       selectedItemsToApprove,
     ],
   );
@@ -718,6 +718,7 @@ export function PublicationHandler({ publication }: Props) {
           isFormChanged={isFormChanged}
           areRulesChanged={hasUserChangedRules}
           initialState={initialState}
+          isFormErrors={Object.values(formErrors).length > 0}
         />
       </div>
       {isCompareModalOpened && publication.targetFolder && (

@@ -75,6 +75,7 @@ interface Props {
   publication: Publication;
   isFormChanged: boolean;
   areRulesChanged: boolean;
+  isFormErrors: boolean;
 }
 
 export const PublicationHandlerFooter = ({
@@ -82,6 +83,7 @@ export const PublicationHandlerFooter = ({
   publication,
   isFormChanged,
   areRulesChanged,
+  isFormErrors,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -399,7 +401,7 @@ export const PublicationHandlerFooter = ({
 
   const getSubmitTooltipText = useCallback(() => {
     if (publishModel) {
-      return "Request can't be published as some resources are invalid";
+      return t("Request can't be published as some fields are invalid");
     }
 
     return t(
@@ -511,12 +513,14 @@ export const PublicationHandlerFooter = ({
               </>
             )}
             <Tooltip
-              hideTooltip={!isApproveDisabled}
+              hideTooltip={
+                !isApproveDisabled && !isEditInvalid && !isFormErrors
+              }
               tooltip={getSubmitTooltipText()}
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={isApproveDisabled}
+                disabled={isApproveDisabled || isEditInvalid || isFormErrors}
                 type={publishModel ? 'submit' : 'button'}
                 onClick={publishModel ? undefined : handleApprovePublication}
                 data-qa="approve"
