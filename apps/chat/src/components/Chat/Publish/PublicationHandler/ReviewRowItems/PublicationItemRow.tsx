@@ -21,7 +21,6 @@ import { constructPath } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { BackendResourceTypeName } from '@/src/types/common';
-import { PublicationReviewItem } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -34,10 +33,10 @@ import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersi
 import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
-import { PublishActions } from '@epam/ai-dial-shared';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface PublicationVersionInfoProps {
-  item: PublicationReviewItem;
+  item: ShareEntity;
 }
 
 const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
@@ -203,7 +202,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 interface PublicationRowProps {
   level: number;
   Icon: ReactNode;
-  item: PublicationReviewItem;
+  item: ShareEntity;
   dataQa: string;
   itemTypeName: BackendResourceTypeName;
 }
