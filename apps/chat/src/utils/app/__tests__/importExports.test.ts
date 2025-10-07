@@ -116,6 +116,7 @@ describe('cleanData Functions', () => {
     model: expectedModel,
     prompt: DEFAULT_SYSTEM_PROMPT,
     temperature: DEFAULT_TEMPERATURE,
+    selectedAddons: [],
     folderId: getConversationRootId(bucket),
     updatedAt: expect.any(Number),
   };
