@@ -27,6 +27,18 @@ interface FilterComponentProps {
   isRulesLoading: boolean;
 }
 
+const showNoRulesLabel = (
+  publicationModel: boolean,
+  rulesOnEditLength: number,
+  isNoRulesToDisplay: boolean,
+) => {
+  if (publicationModel) {
+    return !rulesOnEditLength && isNoRulesToDisplay;
+  }
+
+  return isNoRulesToDisplay;
+};
+
 export function PublicationFilters({
   filteredRuleEntries,
   newRules,
@@ -72,18 +84,20 @@ export function PublicationFilters({
     );
   }
 
-  const isPublishRequestAndNoRules = !!publicationModel && !rulesOnEdit.length;
   const isNoRulesToDisplay =
     (!filteredRuleEntries.length ||
       filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
-    !publication.rules?.length &&
-    isPublishRequestAndNoRules;
+    !publication.rules?.length;
   const oldRules = filteredRuleEntries.filter(([_, rules]) => rules.length);
   const isNewRules = !!publication.rules?.length && !!publication.targetFolder;
 
   return (
     <>
-      {isNoRulesToDisplay && (
+      {showNoRulesLabel(
+        !!publicationModel,
+        rulesOnEdit.length,
+        isNoRulesToDisplay,
+      ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
           {t(
             'This publication will be available to all users in the organization',
