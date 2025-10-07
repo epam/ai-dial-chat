@@ -21,6 +21,7 @@ export class ConversationBuilder {
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
+      selectedAddons: [],
       updatedAt: Date.now(),
       folderId: '',
     };
