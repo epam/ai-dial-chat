@@ -27,6 +27,7 @@
         "replayUserMessagesStack": [],
         "activeReplayIndex": 0
       },
+      "selectedAddons": [],
       "assistantModelId": ""
     },
     {
