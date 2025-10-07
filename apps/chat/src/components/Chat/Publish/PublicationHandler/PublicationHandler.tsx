@@ -351,35 +351,32 @@ export function PublicationHandler({ publication }: Props) {
       );
 
       if (!isReview) {
-        const filteredMappedResources = mappedResources.filter((resource) =>
-          selectedPublicationItems.includes(resource.reviewUrl),
-        );
-
         dispatch(
           PublicationActions.publish({
             name: data.publishRequestName.trim(),
-            resources: filteredMappedResources,
+            resources: mappedResources.filter((resource) =>
+              selectedPublicationItems.includes(resource.reviewUrl),
+            ),
             targetFolder: editedPublishToUrl,
             displayAuthor: displayAuthorEditState.trim(),
             rules: rulesOnEdit,
           }),
         );
         dispatch(PublicationActions.setPublishModel());
-        return;
+      } else {
+        dispatch(
+          PublicationActions.updatePublicationRequest({
+            url: publication.url,
+            dataToUpdate: {
+              targetFolder: editedPublishToUrl,
+              rules: rulesOnEdit,
+              displayAuthor: displayAuthorEditState.trim(),
+              resources: mappedResources,
+            },
+          }),
+        );
+        dispatch(PublicationActions.setIsEditMode(false));
       }
-
-      dispatch(
-        PublicationActions.updatePublicationRequest({
-          url: publication.url,
-          dataToUpdate: {
-            targetFolder: editedPublishToUrl,
-            rules: rulesOnEdit,
-            displayAuthor: displayAuthorEditState.trim(),
-            resources: mappedResources,
-          },
-        }),
-      );
-      dispatch(PublicationActions.setIsEditMode(false));
     },
     [
       publication.resources,
