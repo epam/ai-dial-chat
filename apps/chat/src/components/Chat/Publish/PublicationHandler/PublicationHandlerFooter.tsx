@@ -90,8 +90,8 @@ export const PublicationHandlerFooter = ({
   const screenState = useScreenState();
   const isSmallScreen = screenState === ScreenState.SM;
 
-  const userName = useAppSelector(AuthSelectors.selectUserName);
   const publishModel = useAppSelector(PublicationSelectors.selectPublishModel);
+  const userName = useAppSelector(AuthSelectors.selectUserName);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const conversations = useAppSelector(
@@ -407,7 +407,11 @@ export const PublicationHandlerFooter = ({
           ? 'Enter a valid name for the publish request'
           : isDisplayAuthorInvalid
             ? 'Enter a valid name for the author'
-            : "Request can't be published as some items are invalid",
+            : !selectedPublicationItems.length
+              ? 'Nothing is selected and rules have not changed'
+              : areNoChanges
+                ? 'Nothing is selected and rules have not changed'
+                : "Request can't be published as some items are invalid",
       );
     }
 
@@ -431,6 +435,7 @@ export const PublicationHandlerFooter = ({
     areNoChanges,
     isFormErrors,
     isDisplayAuthorInvalid,
+    selectedPublicationItems.length,
   ]);
 
   const getSubmitBtnText = useCallback(() => {

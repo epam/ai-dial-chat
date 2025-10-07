@@ -13,7 +13,11 @@ import {
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
-import { getIdWithoutFeatureType, isConversationId } from '@/src/utils/app/id';
+import {
+  getIdWithoutFeatureType,
+  isConversationId,
+  isFileId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -28,7 +32,7 @@ import {
   splitEntityId,
 } from '@/src/utils/app/shared-utils';
 
-import { FeatureType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -254,12 +258,14 @@ export function PublicationHandler({ publication }: Props) {
 
   const newRules: PublicationRule[] = useMemo(
     () =>
-      publication.rules?.map((rule) => ({
-        source: rule.source,
-        function: rule.function,
-        targets: rule.targets,
-      })) ?? [],
-    [publication.rules],
+      (!isReview
+        ? rulesOnEdit
+        : publication.rules?.map((rule) => ({
+            source: rule.source,
+            function: rule.function,
+            targets: rule.targets,
+          }))) ?? [],
+    [isReview, publication.rules, rulesOnEdit],
   );
 
   const isPublicationHasOnlyUnpublishEntities = useMemo(
@@ -468,8 +474,18 @@ export function PublicationHandler({ publication }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    return !isEqual(rules[publication.targetFolder] ?? [], newRules ?? []);
-  }, [newRules, publication.targetFolder, rules]);
+    return !isEqual(
+      rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
+      (isReview ? newRules : rulesOnEdit) ?? [],
+    );
+  }, [
+    editedPublishToUrl,
+    isReview,
+    newRules,
+    publication.targetFolder,
+    rules,
+    rulesOnEdit,
+  ]);
 
   const maxPublishToDepth = useMemo(() => {
     return publication.resources.reduce((max, resource) => {
@@ -492,6 +508,9 @@ export function PublicationHandler({ publication }: Props) {
   );
   const firstNotMyEntity = publication.resources.find(
     ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }),
+  );
+  const doesPublicationContainFiles = publication.resources.some(
+    ({ reviewUrl }) => isFileId(reviewUrl),
   );
 
   return (
@@ -693,7 +712,8 @@ export function PublicationHandler({ publication }: Props) {
                                 />
                               )}
                               {!isReview &&
-                                featureType === FeatureType.File && (
+                                featureType === FeatureType.File &&
+                                !doesPublicationContainFiles && (
                                   <p
                                     className="pl-3.5 text-secondary"
                                     data-qa="no-publishing-files"
@@ -713,14 +733,18 @@ export function PublicationHandler({ publication }: Props) {
                         );
                       },
                     )}
-                    {!isReview && firstNotMyEntity && (
-                      <ErrorMessage
-                        type="warning"
-                        error={t(
-                          `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
-                        )}
-                      />
-                    )}
+                    {!isReview &&
+                      firstNotMyEntity &&
+                      publication.resourceTypes.includes(
+                        BackendResourceType.APPLICATION,
+                      ) && (
+                        <ErrorMessage
+                          type="warning"
+                          error={t(
+                            `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                          )}
+                        />
+                      )}
                   </>
                 ) : (
                   <p className="my-3">
