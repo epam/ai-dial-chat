@@ -19,9 +19,14 @@ import {
   getDefaultAllEditEntities,
   getPublicationDefaultName,
   getPublicationId,
+  isEntityIdPublic,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
-import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  constructPath,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
@@ -43,6 +48,7 @@ import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -484,6 +490,9 @@ export function PublicationHandler({ publication }: Props) {
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
+  const firstNotMyEntity = publication.resources.find(
+    ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }),
+  );
 
   return (
     <form
@@ -641,50 +650,60 @@ export function PublicationHandler({ publication }: Props) {
               </div>
               <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
                 {publication.resources.length ? (
-                  sections.map(
-                    ({ dataQa, sectionName, ItemComponent, featureType }) =>
-                      publication.resourceTypes.includes(
-                        EnumMapper.getBackendResourceTypeByFeatureType(
-                          featureType,
-                        ),
-                      ) && (
-                        <CollapsibleSection
-                          key={featureType}
-                          name={t(sectionName)}
-                          openByDefault
-                          dataQa={dataQa}
-                          togglerClassName="!text-sm !text-primary"
-                          sectionTooltip={
-                            isReview && (
-                              <>
-                                {t('Publish')},
-                                <span className="text-error">
-                                  {' '}
-                                  {t('Unpublish')}
-                                </span>
-                              </>
-                            )
-                          }
-                        >
-                          <BasePublicationResources
-                            resources={publication.resources.filter(
-                              ({ reviewUrl }) => {
-                                const { apiKey } = splitEntityId(reviewUrl);
-                                const itemFeatureType =
-                                  EnumMapper.getFeatureTypeByApiKey(apiKey);
-                                return itemFeatureType === featureType;
-                              },
-                            )}
-                            ItemComponent={
-                              ItemComponent as React.FC<{
-                                item: ShareEntity;
-                                level: number;
-                              }>
+                  <>
+                    {sections.map(
+                      ({ dataQa, sectionName, ItemComponent, featureType }) =>
+                        publication.resourceTypes.includes(
+                          EnumMapper.getBackendResourceTypeByFeatureType(
+                            featureType,
+                          ),
+                        ) && (
+                          <CollapsibleSection
+                            key={featureType}
+                            name={t(sectionName)}
+                            openByDefault
+                            dataQa={dataQa}
+                            togglerClassName="!text-sm !text-primary"
+                            sectionTooltip={
+                              isReview && (
+                                <>
+                                  {t('Publish')},
+                                  <span className="text-error">
+                                    {' '}
+                                    {t('Unpublish')}
+                                  </span>
+                                </>
+                              )
                             }
-                          />
-                        </CollapsibleSection>
-                      ),
-                  )
+                          >
+                            <BasePublicationResources
+                              resources={publication.resources.filter(
+                                ({ reviewUrl }) => {
+                                  const { apiKey } = splitEntityId(reviewUrl);
+                                  const itemFeatureType =
+                                    EnumMapper.getFeatureTypeByApiKey(apiKey);
+                                  return itemFeatureType === featureType;
+                                },
+                              )}
+                              ItemComponent={
+                                ItemComponent as React.FC<{
+                                  item: ShareEntity;
+                                  level: number;
+                                }>
+                              }
+                            />
+                          </CollapsibleSection>
+                        ),
+                    )}
+                    {!isReview && firstNotMyEntity && (
+                      <ErrorMessage
+                        type="warning"
+                        error={t(
+                          `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                        )}
+                      />
+                    )}
+                  </>
                 ) : (
                   <p className="my-3">
                     {t('This publication has no resources')}
