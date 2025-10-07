@@ -78,6 +78,7 @@ dialTest(
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
         const exportedFiles = FileUtil.getExportedFiles();
+        //verify there is no .dial archive with compressed image inside export folder
         exportedFiles
           ?.filter((f) => f.includes(Import.importAttachmentExtension))
           .forEach((path) => {

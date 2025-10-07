@@ -38,9 +38,10 @@ export class Chat extends BaseElement {
   public notAllowedModelLabel = this.getChildElementBySelector(
     ErrorLabelSelectors.notAllowedModel,
   );
-  public changeAgentBtn = this.notAllowedModelLabel.getChildElementBySelector(
-    ErrorLabelSelectors.changeAgentBtn,
-  );
+  public changeNotAvailableAgentButton =
+    this.notAllowedModelLabel.getChildElementBySelector(
+      ErrorLabelSelectors.changeAgentBtn,
+    );
   public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
   public scrollableArea = this.getChildElementBySelector(
     ChatSelectors.chatScrollableArea,

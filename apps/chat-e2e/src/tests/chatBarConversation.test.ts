@@ -448,9 +448,12 @@ dialTest(
       'Verify option is highlighted on hover over',
       async () => {
         let optionElement;
-        let counter = 1;
         //select random menu option without sub-options
-        while (counter <= expectedDotsMenuOptions.length) {
+        for (
+          let counter = 1;
+          counter < expectedDotsMenuOptions.length;
+          counter++
+        ) {
           const randomOption = GeneratorUtil.randomArrayElement(
             expectedDotsMenuOptions,
           );
@@ -458,7 +461,6 @@ dialTest(
           if (await optionElement.isVisible()) {
             break;
           }
-          counter++;
         }
 
         await optionElement!.hover();

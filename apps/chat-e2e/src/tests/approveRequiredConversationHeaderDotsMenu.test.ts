@@ -72,6 +72,7 @@ dialAdminTest(
     const publications: Publication[] = [];
     let expectedTodayConversationId: string;
     let expectedPlaybackConversationId: string;
+    let expectedEncodedPlaybackConversationId: string;
     let exportedData: UploadDownloadData;
 
     await dialAdminTest.step(
@@ -98,6 +99,11 @@ dialAdminTest(
           BucketUtil.getAdminUserBucket(),
         );
         expectedPlaybackConversationId = `${expectedTodayConversationId.substring(0, expectedTodayConversationId.lastIndexOf('/'))}/${PseudoModel.playback}${ItemUtil.entityIdSeparator}${ExpectedConstants.playbackConversation}${conversation.name}`;
+        expectedEncodedPlaybackConversationId =
+          expectedPlaybackConversationId.replace(
+            ExpectedConstants.playbackConversation,
+            ItemUtil.getEncodedItemId(ExpectedConstants.playbackConversation),
+          );
       },
     );
 
@@ -149,10 +155,22 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Import the file and verify review conversation is created as a user conversation',
       async () => {
-        await adminDialHomePage.importFile(exportedData, () =>
-          adminChatBar.importButton.click(),
+        await adminDialHomePage.waitForExpectedResponses(
+          () =>
+            adminDialHomePage.importFile(exportedData, () =>
+              adminChatBar.importButton.click(),
+            ),
+          [
+            {
+              apiMethod: 'POST',
+              urlPattern: expectedTodayConversationId,
+            },
+            {
+              apiMethod: 'GET',
+              urlPattern: expectedTodayConversationId,
+            },
+          ],
         );
-        await adminToast.waitForState();
         await adminToast.closeToast();
 
         const exportedConversation = await adminUserItemApiHelper.getItem(
@@ -199,10 +217,26 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Import the file and verify review conversation with attachment is created as a user conversation',
       async () => {
-        await adminDialHomePage.importFile(exportedData, () =>
-          adminChatBar.importButton.click(),
+        await adminDialHomePage.waitForExpectedResponses(
+          () =>
+            adminDialHomePage.importFile(exportedData, () =>
+              adminChatBar.importButton.click(),
+            ),
+          [
+            {
+              apiMethod: 'POST',
+              urlPattern: expectedTodayConversationId,
+            },
+            {
+              apiMethod: 'POST',
+              urlPattern: imageName,
+            },
+            {
+              apiMethod: 'GET',
+              urlPattern: expectedTodayConversationId,
+            },
+          ],
         );
-        await adminToast.waitForState();
         await adminToast.closeToast();
 
         const exportedConversation = await adminUserItemApiHelper.getItem(
@@ -338,10 +372,22 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Import the file and verify review playback conversation is created as a user playback',
       async () => {
-        await adminDialHomePage.importFile(exportedData, () =>
-          adminChatBar.importButton.click(),
+        await adminDialHomePage.waitForExpectedResponses(
+          () =>
+            adminDialHomePage.importFile(exportedData, () =>
+              adminChatBar.importButton.click(),
+            ),
+          [
+            {
+              apiMethod: 'POST',
+              urlPattern: expectedEncodedPlaybackConversationId,
+            },
+            {
+              apiMethod: 'GET',
+              urlPattern: expectedEncodedPlaybackConversationId,
+            },
+          ],
         );
-        await adminToast.waitForState();
         await adminToast.closeToast();
 
         const exportedPlaybackConversation =
@@ -399,10 +445,26 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Import the file and verify review playback conversation with attachment is created as a user playback',
       async () => {
-        await adminDialHomePage.importFile(exportedData, () =>
-          adminChatBar.importButton.click(),
+        await adminDialHomePage.waitForExpectedResponses(
+          () =>
+            adminDialHomePage.importFile(exportedData, () =>
+              adminChatBar.importButton.click(),
+            ),
+          [
+            {
+              apiMethod: 'POST',
+              urlPattern: expectedEncodedPlaybackConversationId,
+            },
+            {
+              apiMethod: 'POST',
+              urlPattern: imageName,
+            },
+            {
+              apiMethod: 'GET',
+              urlPattern: expectedEncodedPlaybackConversationId,
+            },
+          ],
         );
-        await adminToast.waitForState();
         await adminToast.closeToast();
 
         const exportedConversation = await adminUserItemApiHelper.getItem(

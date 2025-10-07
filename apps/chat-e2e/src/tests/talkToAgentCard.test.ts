@@ -709,9 +709,9 @@ dialTest(
     await dialTest.step(
       'Hover over "change the agent" button and verify it does not change the color',
       async () => {
-        await chat.changeAgentBtn.hoverOver();
+        await chat.changeNotAvailableAgentButton.hoverOver();
         await chatAssertion.assertElementColor(
-          chat.changeAgentBtn,
+          chat.changeNotAvailableAgentButton,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
         );
       },
