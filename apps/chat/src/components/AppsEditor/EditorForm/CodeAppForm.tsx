@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -19,6 +20,7 @@ import {
 
 import {
   CodeAppForm as CodeAppFormType,
+  MANDATORY_FIELD_PLACEHOLDER,
   getAttachmentTypeErrorHandlers,
 } from '@/src/components/AppsEditor/form';
 import { FormCodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/FormCodeEditor';
@@ -33,11 +35,14 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
-const FilesEditor = withController(withLabel(SourceFilesEditor));
+const FilesEditor = withLabel(SourceFilesEditor);
 const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormType, 'endpoints' | 'env'>,
 );
+
+const getActualSource = (value: string) =>
+  value === MANDATORY_FIELD_PLACEHOLDER ? '' : value;
 
 export const CodeAppForm = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -46,15 +51,23 @@ export const CodeAppForm = () => {
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const { control, formState, setError, clearErrors, watch } =
+  const { control, formState, setError, clearErrors, watch, setValue } =
     useFormContext<CodeAppFormType>();
   const errors = formState.errors;
+  const sources = watch('sources');
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppShared = !!appDetails?.isShared;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
-  const sources = watch('sources');
+  useEffect(() => {
+    if (sources === MANDATORY_FIELD_PLACEHOLDER) {
+      setValue('sources', '', { shouldDirty: false, shouldTouch: false });
+      setValue('sourceFiles', []);
+      clearErrors('sources');
+      clearErrors('sourceFiles');
+    }
+  }, [clearErrors, setValue, sources]);
 
   return (
     <div className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
@@ -93,24 +106,34 @@ export const CodeAppForm = () => {
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
       />
 
-      <FilesEditor
-        mandatory
-        control={control}
+      <Controller
         name="sources"
-        label={t('Select folder with source files')}
-        error={errors.sources?.message || errors.sourceFiles?.message}
-        disabled={isSharedWithMe || isAppPublic}
-        tooltip={
-          (isAppPublic && PUBLIC_APP_TOOLTIP) ||
-          (isSharedWithMe && getSharedTooltip('folder with source files')) ||
-          ''
-        }
-        confirmDialogValues={
-          isAppShared ? CONFIRM_SOURCE_FOLDER_VALUES : undefined
-        }
+        control={control}
+        render={({ field }) => (
+          <FilesEditor
+            mandatory
+            value={getActualSource(field.value)}
+            onChange={field.onChange}
+            label={t('Select folder with source files')}
+            error={errors.sources?.message || errors.sourceFiles?.message}
+            disabled={isSharedWithMe || isAppPublic}
+            tooltip={
+              (isAppPublic && PUBLIC_APP_TOOLTIP) ||
+              (isSharedWithMe &&
+                getSharedTooltip('folder with source files')) ||
+              ''
+            }
+            confirmDialogValues={
+              isAppShared ? CONFIRM_SOURCE_FOLDER_VALUES : undefined
+            }
+          />
+        )}
       />
       {sources && (
-        <FormCodeEditor disabled={isAppPublic} sourcesFolderId={sources} />
+        <FormCodeEditor
+          disabled={isAppPublic}
+          sourcesFolderId={getActualSource(sources)}
+        />
       )}
 
       <RuntimeSelector

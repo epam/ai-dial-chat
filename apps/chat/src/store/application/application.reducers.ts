@@ -193,6 +193,15 @@ export const applicationSlice = createSlice({
     updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
       state.appDetails = action.payload;
     },
+    setAppDetails: (
+      state,
+      { payload }: PayloadAction<CustomApplicationModel | undefined>,
+    ) => {
+      state.appDetails = payload;
+      if (!payload) {
+        state.appLoading = UploadStatus.UNINITIALIZED;
+      }
+    },
     setShouldSaveApplication: (state, action: PayloadAction<boolean>) => {
       state.shouldSaveApplication = action.payload;
     },

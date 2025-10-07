@@ -13,11 +13,11 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { COMPLETION_URL_PLACEHOLDER } from '@/src/constants/applications';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 
 import {
   CustomAppForm as CustomAppFormType,
+  MANDATORY_FIELD_PLACEHOLDER,
   getAttachmentTypeErrorHandlers,
 } from '@/src/components/AppsEditor/form';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
@@ -53,11 +53,9 @@ export const CustomAppForm = () => {
     usePreventSpaceHandlers();
 
   useEffect(() => {
-    if (completionUrl === COMPLETION_URL_PLACEHOLDER) {
-      setValue('completionUrl', '', {
-        shouldDirty: true,
-        shouldValidate: false,
-      });
+    if (completionUrl === MANDATORY_FIELD_PLACEHOLDER) {
+      setValue('completionUrl', '', { shouldDirty: false, shouldTouch: false });
+      clearErrors('completionUrl');
     }
   }, [clearErrors, completionUrl, setValue]);
 

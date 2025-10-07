@@ -152,7 +152,12 @@ export const AppsEditor = () => {
       if (!appDetails) {
         dispatch(
           ApplicationActions.create({
-            applicationData: payload,
+            applicationData: {
+              ...payload,
+              ...(schema && {
+                applicationTypeSchemaId: schema.$id,
+              }),
+            },
             schema: (isSchemaApplicationType && schema) || undefined,
           }),
         );
@@ -175,6 +180,9 @@ export const AppsEditor = () => {
             oldApplication: appDetails,
             applicationData: {
               ...payload,
+              ...(schema && {
+                applicationTypeSchemaId: schema.$id,
+              }),
               isShared: shouldRevokeAccess ? false : isShared,
             },
             schema: (isSchemaApplicationType && schema) || undefined,
@@ -208,34 +216,36 @@ export const AppsEditor = () => {
   );
 
   const handleSubmit = useCallback(
-    (cb?: () => void, forceSave = false) => {
-      formMethods.trigger().then((isValid) => {
-        if (!isValid && isDirty) {
-          if (!forceSave) {
-            changeEditorTabRef.current = null;
-          } else {
-            const data = formMethods.getValues();
-            submitHandler({
-              ...(lastSubmittedValuesRef.current as AppsEditorFormType),
-              ...(getValidFormFields(
-                data,
-                formMethods.getFieldState,
-              ) as AppsEditorFormType),
-            });
-          }
-          return;
-        }
+    async (cb?: () => void, forceSave = false, skipValidation = false) => {
+      const isValid = await (skipValidation
+        ? Promise.resolve(true)
+        : formMethods.trigger());
 
-        if (isDirty || !appDetails) {
-          void formMethods
-            .handleSubmit(submitHandler)()
-            .then(() => cb?.());
-        } else {
+      if (!isValid && isDirty) {
+        if (!forceSave) {
           changeEditorTabRef.current = null;
-          saveAndExitRef.current = false;
-          cb?.();
+        } else {
+          const data = formMethods.getValues();
+          submitHandler({
+            ...(lastSubmittedValuesRef.current as AppsEditorFormType),
+            ...(getValidFormFields(
+              data,
+              formMethods.getFieldState,
+            ) as AppsEditorFormType),
+          });
         }
-      });
+        return;
+      }
+
+      if (isDirty || !appDetails) {
+        void formMethods
+          .handleSubmit(submitHandler)()
+          .then(() => cb?.());
+      } else {
+        changeEditorTabRef.current = null;
+        saveAndExitRef.current = false;
+        cb?.();
+      }
     },
     [formMethods, isDirty, submitHandler, appDetails],
   );
@@ -286,7 +296,7 @@ export const AppsEditor = () => {
 
   const handleAutoSave = useCallback(() => {
     if (editorStep === MarketplaceEditorSteps.General) return;
-    handleSubmit(undefined, true);
+    handleSubmit(undefined, true, true);
   }, [editorStep, handleSubmit]);
 
   return (

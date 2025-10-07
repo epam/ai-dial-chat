@@ -46,18 +46,19 @@ export const ToolsetEditorHeader = ({
 
   const { formState, trigger } = useFormContext<ToolsetEditorForm>();
   const errors = formState.errors;
+  const isValid = formState.isValid;
 
   const errorSteps = useMemo(() => {
     return stepFields.reduce<Set<ToolsetEditorSteps>>(
       (steps, { step, fields }) => {
-        if (fields.some((field) => errors[field])) {
+        if (!isValid && fields.some((field) => errors[field])) {
           steps.add(step);
         }
         return steps;
       },
       new Set(),
     );
-  }, [errors]);
+  }, [errors, isValid]);
 
   const tabs = useMemo(
     () => [

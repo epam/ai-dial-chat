@@ -1,4 +1,5 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -28,9 +29,12 @@ import {
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
+import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
 import { capitalize } from 'lodash';
+import omit from 'lodash-es/omit';
 
 const tabKeysInfo = {
   [MarketplaceEditorSteps.General]: {
@@ -42,6 +46,8 @@ const tabKeysInfo = {
 };
 
 const anyRouteExceptAppEditorRegex = /^(?!\/apps-editor(?:\/|$)).*/;
+
+const generalStepFields = ['name', 'version'];
 
 interface AppsEditorHeaderProps {
   onTabClick: (tab: MarketplaceEditorSteps) => void;
@@ -61,6 +67,12 @@ export const AppsEditorHeader = ({
   } = useRouter();
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
+
+  const { formState, trigger } = useFormContext<AppsEditorFormType>();
+  const errors = formState.errors;
+  const isValid = formState.isValid;
+
+  const [saveDraftDialog, setSaveDraftDialog] = useState(false);
 
   const currentStep = useAppSelector(ApplicationSelectors.selectEditorStep);
   const appDetails = useAppSelector(
@@ -105,6 +117,20 @@ export const AppsEditorHeader = ({
     [isEditing, t],
   );
 
+  const errorSteps = useMemo(() => {
+    const steps = new Set<MarketplaceEditorSteps>();
+    const errorKeys = Object.keys(errors);
+
+    if (generalStepFields.some((f) => errorKeys.includes(f)) && !isValid) {
+      steps.add(MarketplaceEditorSteps.General);
+    }
+    if (Object.keys(omit(errors, generalStepFields)).length > 0 && !isValid) {
+      steps.add(MarketplaceEditorSteps.Settings);
+    }
+
+    return steps;
+  }, [errors, isValid]);
+
   const title = `${t(isEditing ? 'Edit' : 'Add')} ${applicationTypeDisplayName}`;
 
   const handleTabClick = useCallback(
@@ -115,10 +141,33 @@ export const AppsEditorHeader = ({
     [onTabClick],
   );
 
-  const handleSaveAndRedirect = useCallback(() => {
-    // TODO: implement save draft
+  const handleSaveAndRedirect = useCallback(async () => {
+    if (isEditing) {
+      const isValid = await trigger();
+
+      if (!isValid) {
+        setSaveDraftDialog(true);
+        return;
+      }
+    }
     onSave();
-  }, [onSave]);
+  }, [isEditing, onSave, trigger]);
+
+  const handleCloseConfirmDialog = useCallback(
+    (result: boolean) => {
+      setSaveDraftDialog(false);
+      if (result) {
+        onSave(true);
+        return;
+      }
+      const invalidStep = Array.from(errorSteps)[0];
+
+      if (invalidStep) {
+        dispatch(ApplicationActions.setEditorStep(invalidStep));
+      }
+    },
+    [dispatch, errorSteps, onSave],
+  );
 
   const handleCustomViewerExit = useCallback(() => {
     if (hasCustomEditor) {
@@ -171,16 +220,30 @@ export const AppsEditorHeader = ({
   useBeforeRedirect(handleCustomViewerExit, anyRouteExceptAppEditorRegex);
 
   return (
-    <EditorHeader
-      tabs={tabs}
-      activeTab={currentStep}
-      isEditing={isEditing}
-      onTabClick={handleTabClick}
-      getMobileTabLabel={getMobileLabelText}
-      title={title}
-      saveLabel={saveLabel}
-      onSave={handleSaveAndRedirect}
-      dataQa="app-editor-header"
-    />
+    <>
+      <EditorHeader
+        tabs={tabs}
+        activeTab={currentStep}
+        errorTabsSet={errorSteps}
+        isEditing={isEditing}
+        onTabClick={handleTabClick}
+        getMobileTabLabel={getMobileLabelText}
+        title={title}
+        saveLabel={saveLabel}
+        onSave={handleSaveAndRedirect}
+        dataQa="app-editor-header"
+      />
+
+      <ConfirmDialog
+        isOpen={saveDraftDialog}
+        heading={t('Only valid data will be saved')}
+        description={t(
+          'Some fields are invalid or required fields are missing.\n Changes in those fields will not be saved.\n Exit and save only valid information?',
+        )}
+        confirmLabel={t('Save valid data')}
+        cancelLabel={t('Continue editing')}
+        onClose={handleCloseConfirmDialog}
+      />
+    </>
   );
 };

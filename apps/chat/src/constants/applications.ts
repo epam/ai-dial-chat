@@ -49,5 +49,3 @@ export enum AppsEditorQuery {
   Schema = 'schema',
   PublicationUrl = 'publicationUrl',
 }
-
-export const COMPLETION_URL_PLACEHOLDER = 'COMPLETION_URL_PLACEHOLDER';

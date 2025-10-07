@@ -34,7 +34,6 @@ import {
 
 import {
   CODEAPPS_REQUIRED_FILES,
-  COMPLETION_URL_PLACEHOLDER,
   FEATURES_ENDPOINTS,
   FEATURES_ENDPOINTS_DEFAULT_VALUES,
   FEATURES_ENDPOINTS_NAMES,
@@ -73,6 +72,8 @@ export enum AppsEditorSchemaTypes {
   CodeApp = 'Code App',
 }
 
+export const MANDATORY_FIELD_PLACEHOLDER = 'MANDATORY_FIELD_PLACEHOLDER';
+
 // Definition
 export type BaseAppForm = zodValidation.infer<
   typeof MarketplaceEntityBaseSchema
@@ -82,7 +83,7 @@ export const CustomAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.CustomApp),
   inputAttachmentTypes: AttachmentTypesSchema,
   completionUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
-    zodValidation.literal(COMPLETION_URL_PLACEHOLDER),
+    zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
   ),
   features: zodValidation
     .string()
@@ -146,7 +147,7 @@ export type CustomAppForm = zodValidation.infer<typeof CustomAppSchema>;
 export const ExternalAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.ExternalApp),
   externalUrl: CompletionUrlSchema.nonempty(formErrors.required).or(
-    zodValidation.literal(COMPLETION_URL_PLACEHOLDER),
+    zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER),
   ),
 });
 export type ExternalAppForm = zodValidation.infer<typeof ExternalAppSchema>;
@@ -190,43 +191,56 @@ export const QuickApp2Schema = zodValidation.object({
 });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
 
-export const CodeAppSchema = zodValidation.object({
-  type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
-  inputAttachmentTypes: AttachmentTypesSchema,
-  sources: zodValidation.string().nonempty('Source folder is required'),
-  sourceFiles: zodValidation
-    .array(zodValidation.string())
-    .refine(
-      (files) => files.includes(CODEAPPS_REQUIRED_FILES.APP),
-      `This folder does not contain the required "${CODEAPPS_REQUIRED_FILES.APP}" file`,
-    )
-    .refine(
-      (files) => files.includes(CODEAPPS_REQUIRED_FILES.REQUIREMENTS),
-      `This folder does not contain the required "${CODEAPPS_REQUIRED_FILES.REQUIREMENTS}" file`,
-    ),
-  runtime: zodValidation.string(),
-  endpoints: zodValidation
-    .array(
-      DynamicFieldSchema.omit({ value: true }).extend({
-        value: zodValidation
-          .string()
-          .trim()
-          .nonempty('Endpoint is required')
-          .startsWith('/', "Endpoint should start with '/'")
-          .regex(
-            /^[a-zA-Z0-9/_-]+$/,
-            "Endpoint should contain only letters, numbers, '-', '_' and '/'",
-          )
-          .max(255, 'Endpoint should be no longer than 255 characters'),
-      }),
-    )
-    .refine((endpoints) => {
-      const keys = endpoints.map(({ label }) => label);
-      return endpoints.length === uniq(keys).length;
-    }, 'Key must be unique'),
-  maxInputAttachments: MaxInputAttachmentsSchema.optional(),
-  env: zodValidation.array(DynamicFieldSchema),
-});
+export const CodeAppSchema = zodValidation
+  .object({
+    type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
+    inputAttachmentTypes: AttachmentTypesSchema,
+    sources: zodValidation
+      .string()
+      .nonempty('Source folder is required')
+      .or(zodValidation.literal(MANDATORY_FIELD_PLACEHOLDER)),
+    sourceFiles: zodValidation.array(zodValidation.string()),
+    runtime: zodValidation.string(),
+    endpoints: zodValidation
+      .array(
+        DynamicFieldSchema.omit({ value: true }).extend({
+          value: zodValidation
+            .string()
+            .trim()
+            .nonempty('Endpoint is required')
+            .startsWith('/', "Endpoint should start with '/'")
+            .regex(
+              /^[a-zA-Z0-9/_-]+$/,
+              "Endpoint should contain only letters, numbers, '-', '_' and '/'",
+            )
+            .max(255, 'Endpoint should be no longer than 255 characters'),
+        }),
+      )
+      .refine((endpoints) => {
+        const keys = endpoints.map(({ label }) => label);
+        return endpoints.length === uniq(keys).length;
+      }, 'Key must be unique'),
+    maxInputAttachments: MaxInputAttachmentsSchema.optional(),
+    env: zodValidation.array(DynamicFieldSchema),
+  })
+  .superRefine((data, ctx) => {
+    if (data.sources === MANDATORY_FIELD_PLACEHOLDER || !data.sources) return;
+
+    if (!data.sourceFiles.includes(CODEAPPS_REQUIRED_FILES.APP)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['sourceFiles'],
+        message: `This folder does not contain the required "${CODEAPPS_REQUIRED_FILES.APP}" file`,
+      });
+    }
+    if (!data.sourceFiles.includes(CODEAPPS_REQUIRED_FILES.REQUIREMENTS)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['sourceFiles'],
+        message: `This folder does not contain the required "${CODEAPPS_REQUIRED_FILES.REQUIREMENTS}" file`,
+      });
+    }
+  });
 export type CodeAppForm = zodValidation.infer<typeof CodeAppSchema>;
 
 export type AppsEditorFormType = (
@@ -259,7 +273,7 @@ const getCustomAppFormData = (app?: CustomApplicationModel): CustomAppForm => ({
   type: AppsEditorSchemaTypes.CustomApp,
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
-  completionUrl: app?.completionUrl || COMPLETION_URL_PLACEHOLDER,
+  completionUrl: app?.completionUrl || MANDATORY_FIELD_PLACEHOLDER,
   features: safeStringifyApplicationFeatures(app?.features),
 });
 
@@ -330,7 +344,7 @@ const getFormSourceFolder = (sourceFolder?: string) => {
 
   return sourceFolder && sourceFolder !== `files/${bucket}`
     ? ApiUtils.decodeApiUrl(sourceFolder)
-    : '';
+    : MANDATORY_FIELD_PLACEHOLDER;
 };
 
 const getCodeAppFormData = ({
@@ -383,7 +397,7 @@ const getExternalAppFormData = (
   type: AppsEditorSchemaTypes.ExternalApp,
   externalUrl:
     (app?.applicationProperties as ExternalAppConfig)?.external_url ||
-    COMPLETION_URL_PLACEHOLDER,
+    MANDATORY_FIELD_PLACEHOLDER,
 });
 
 const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
@@ -493,7 +507,9 @@ export const getAttachmentTypeErrorHandlers = (
 const getActualSourceFolder = (formSources?: string) => {
   const bucket = BucketService.getBucket();
 
-  return formSources || `files/${bucket}`;
+  return !formSources || formSources === MANDATORY_FIELD_PLACEHOLDER
+    ? `files/${bucket}`
+    : formSources;
 };
 
 const getQuickApp2Toolsets = ({
@@ -607,12 +623,12 @@ export const getApplicationPayload = ({
     case AppsEditorSchemaTypes.ExternalApp:
       return {
         ...generalData,
-        applicationProperties: {
-          external_url:
-            data.externalUrl === COMPLETION_URL_PLACEHOLDER
-              ? ''
-              : data.externalUrl,
-        },
+        applicationProperties:
+          data.externalUrl === MANDATORY_FIELD_PLACEHOLDER || !data.externalUrl
+            ? undefined
+            : {
+                external_url: data.externalUrl,
+              },
       };
     case AppsEditorSchemaTypes.QuickApp:
       return {
@@ -658,7 +674,7 @@ export const getApplicationPayload = ({
       return {
         ...generalData,
         completionUrl:
-          data.completionUrl === COMPLETION_URL_PLACEHOLDER
+          data.completionUrl === MANDATORY_FIELD_PLACEHOLDER
             ? ''
             : data.completionUrl,
         inputAttachmentTypes: data.inputAttachmentTypes,
