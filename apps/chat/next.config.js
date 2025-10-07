@@ -92,6 +92,20 @@ const nextConfig = {
         destination: '/?isolated-model-id=:slug',
         permanent: false,
       },
+      // Support old two route app editor links
+      {
+        source: '/apps-editor/:slug/settings',
+        has: [
+          { type: 'query', key: 'id', value: '(?<id>.*)' }
+        ],
+        destination: '/apps-editor?step=General&schema=:slug&id=:id',
+        permanent: false,
+      },
+      {
+        source: '/apps-editor/:slug',
+        destination: '/apps-editor?step=General&schema=:slug',
+        permanent: false,
+      },
     ];
   },
 

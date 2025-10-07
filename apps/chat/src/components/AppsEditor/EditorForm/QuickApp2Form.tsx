@@ -27,6 +27,7 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
+import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 
 import uniq from 'lodash-es/uniq';
 
@@ -36,6 +37,7 @@ const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 const AgentAndToolsetSelectorField = withErrorMessage(
   withLabel(AgentAndToolsetSelector),
 );
+const ToggleSwitchField = withLabel(ToggleSwitch);
 
 const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
@@ -132,6 +134,23 @@ export const QuickApp2Form = () => {
         id="instructions"
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+      />
+
+      <Controller
+        name="codeInterpreter"
+        control={control}
+        render={({ field }) => (
+          <ToggleSwitchField
+            label={t('Code Interpreter')}
+            isOn={field.value}
+            handleSwitch={field.onChange}
+            switchOnText={t('ON')}
+            switchOFFText={t('OFF')}
+            className="flex w-fit"
+            disabled={isAppPublic}
+            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+          />
+        )}
       />
 
       <Controller

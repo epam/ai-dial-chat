@@ -10,6 +10,7 @@ import { isApplicationType } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
+import { ApplicationType } from '@/src/types/applications';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
@@ -43,6 +44,11 @@ const tabKeysInfo = {
   [MarketplaceEditorSteps.Settings]: {
     label: 'App settings',
   },
+};
+
+const applicationTypeNames = {
+  [ApplicationType.CODE_APP]: 'Code app',
+  [ApplicationType.CUSTOM_APP]: 'Custom app',
 };
 
 const anyRouteExceptAppEditorRegex = /^(?!\/apps-editor(?:\/|$)).*/;
@@ -95,7 +101,9 @@ export const AppsEditorHeader = ({
   const applicationTypeDisplayName = isSchemaApplicationType
     ? (schema?.[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ??
       '')
-    : decodeURIComponent(schemaId.toString());
+    : applicationTypeNames[
+        decodeURIComponent(schemaId.toString()) as ApplicationType
+      ];
   const hasCustomEditor =
     !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
