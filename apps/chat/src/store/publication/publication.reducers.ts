@@ -53,14 +53,13 @@ const initialState: PublicationState = {
     [FeatureType.Application]: false,
     [FeatureType.Toolset]: false,
   },
-  selectedItemsToPublish: [],
   isApplicationReview: false,
   isToolsetReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
 
-  // Review edit mode
-  selectedItemsToApprove: {},
+  // Edit or publish mode
+  selectedPublicationItems: {},
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
@@ -226,33 +225,18 @@ export const publicationSlice = createSlice({
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
     },
-    setItemsToPublish: (
-      state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
-      state.selectedItemsToPublish = payload.ids;
-    },
-    setItemsToApprove: (
+    setPublicationItems: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
     ) => {
-      state.selectedItemsToApprove[payload.publicationUrl] = payload.ids;
+      state.selectedPublicationItems[payload.publicationUrl] = payload.ids;
     },
-    selectItemsToPublish: (
-      state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
-      state.selectedItemsToPublish = xor(
-        state.selectedItemsToPublish,
-        payload.ids,
-      );
-    },
-    selectItemsToApprove: (
+    selectPublicationItems: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
     ) => {
-      state.selectedItemsToApprove[payload.publicationUrl] = xor(
-        state.selectedItemsToApprove[payload.publicationUrl] ?? [],
+      state.selectedPublicationItems[payload.publicationUrl] = xor(
+        state.selectedPublicationItems[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },

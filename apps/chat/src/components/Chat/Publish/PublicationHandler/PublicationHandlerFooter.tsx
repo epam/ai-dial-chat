@@ -119,8 +119,8 @@ export const PublicationHandlerFooter = ({
   const displayAuthorEditState = useAppSelector(
     PublicationSelectors.selectDisplayAuthorEditState,
   );
-  const itemsToApprove = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToApprove,
+  const selectedPublicationItems = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationItems,
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
@@ -335,7 +335,7 @@ export const PublicationHandlerFooter = ({
   }, [dispatch, invalidEntities]);
 
   const handleApprovePublication = () => {
-    if (itemsToApprove.length !== publication.resources.length) {
+    if (selectedPublicationItems.length !== publication.resources.length) {
       dispatch(PublicationActions.updateAndApprovePublicationRequest());
     } else {
       dispatch(
@@ -385,11 +385,12 @@ export const PublicationHandlerFooter = ({
   const someReviewedConversationHasNoMessages =
     uploadedPublicationConversations.some(({ messages }) => !messages.length);
   const areNoChanges =
-    !itemsToApprove.length &&
+    !selectedPublicationItems.length &&
     (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
   const selectedInvalidEntities = useMemo(
-    () => invalidEntities.filter((e) => itemsToApprove.includes(e.id)),
-    [invalidEntities, itemsToApprove],
+    () =>
+      invalidEntities.filter((e) => selectedPublicationItems.includes(e.id)),
+    [invalidEntities, selectedPublicationItems],
   );
   const isApproveDisabled =
     !isAllResourcesReviewed ||

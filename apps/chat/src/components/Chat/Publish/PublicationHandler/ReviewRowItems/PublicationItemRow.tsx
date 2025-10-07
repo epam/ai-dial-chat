@@ -226,16 +226,16 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
-  const selectedPublicationResources = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToApprove,
+  const selectedPublicationItems = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationItems,
   );
   const editState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
   );
 
   const isSelected = useMemo(
-    () => selectedPublicationResources.includes(item.id),
-    [item.id, selectedPublicationResources],
+    () => selectedPublicationItems.includes(item.id),
+    [item.id, selectedPublicationItems],
   );
 
   const [inputName, setInputName] = useState(item.name);
@@ -284,7 +284,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
 
   const handleSelect = useCallback(() => {
     dispatch(
-      PublicationActions.selectItemsToApprove({
+      PublicationActions.selectPublicationItems({
         publicationUrl: selectedPublication?.url ?? '',
         ids: [item.id],
       }),

@@ -159,8 +159,8 @@ export function PublicationHandler({ publication }: Props) {
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
-  const selectedItemsToApprove = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToApprove,
+  const selectedPublicationItems = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationItems,
   );
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
@@ -346,7 +346,7 @@ export function PublicationHandler({ publication }: Props) {
 
       if (!isReview) {
         const filteredMappedResources = mappedResources.filter((resource) =>
-          selectedItemsToApprove.includes(resource.reviewUrl),
+          selectedPublicationItems.includes(resource.reviewUrl),
         );
 
         dispatch(
@@ -387,7 +387,7 @@ export function PublicationHandler({ publication }: Props) {
       entitiesEditState,
       foldersEditState,
       publicationAuthor,
-      selectedItemsToApprove,
+      selectedPublicationItems,
     ],
   );
 

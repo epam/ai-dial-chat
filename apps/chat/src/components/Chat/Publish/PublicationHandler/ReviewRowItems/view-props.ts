@@ -1,6 +1,6 @@
 import { ShareEntity } from '@epam/ai-dial-shared';
 
-export interface Props {
+export interface PublicationItemProps {
   item: ShareEntity;
   level: number;
 }

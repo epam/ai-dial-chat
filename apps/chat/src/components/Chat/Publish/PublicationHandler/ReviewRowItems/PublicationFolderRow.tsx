@@ -68,7 +68,10 @@ export const PublicationFolderRow = ({
 
   const chosenFoldersSelector = useMemo(
     () =>
-      PublicationSelectors.selectChosenFolderIdsToApprove(allFolders, allItems),
+      PublicationSelectors.selectChosenPublicationFolderIds(
+        allFolders,
+        allItems,
+      ),
     [allFolders, allItems],
   );
   const {
@@ -77,7 +80,7 @@ export const PublicationFolderRow = ({
   } = useAppSelector(chosenFoldersSelector);
 
   const chosenItemsIds = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToApprove,
+    PublicationSelectors.selectSelectedPublicationItems,
   );
 
   const folderEditState = useAppSelector(
@@ -135,7 +138,7 @@ export const PublicationFolderRow = ({
     });
 
     dispatch(
-      PublicationActions.selectItemsToApprove({
+      PublicationActions.selectPublicationItems({
         publicationUrl: selectedPublication?.url ?? '',
         ids: entitiesToSelect,
       }),

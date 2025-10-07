@@ -153,7 +153,7 @@ const PublishDialogContainer = ({
   useEffect(() => {
     if (publication.resources.length) {
       dispatch(
-        PublicationActions.setItemsToApprove({
+        PublicationActions.setPublicationItems({
           publicationUrl: '',
           ids: publication.resources.map((r) => r.reviewUrl),
         }),

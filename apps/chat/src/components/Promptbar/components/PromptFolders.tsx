@@ -463,12 +463,15 @@ export function PromptFolders() {
 
   const publicationItems = useAppSelector(publicationItemsSelector);
 
-  const toApproveFolderItem = {
-    hidden: !publicationItems.length,
-    name: APPROVE_REQUIRED_SECTION_NAME,
-    displayRootFiles: true,
-    dataQa: 'approve-required',
-  };
+  const toApproveFolderItem = useMemo(
+    () => ({
+      hidden: !publicationItems.length,
+      name: APPROVE_REQUIRED_SECTION_NAME,
+      displayRootFiles: true,
+      dataQa: 'approve-required',
+    }),
+    [publicationItems.length],
+  );
 
   const folderItems: FolderSectionProps[] = useMemo(
     () =>

@@ -5,11 +5,11 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
 import { Publication, PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
 import {
+  FolderInterface,
   PublishActions,
   ShareEntity,
   UploadStatus,
@@ -103,9 +103,6 @@ const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
   },
 );
 
-const selectSelectedItemsToPublish = (state: RootState) =>
-  rootSelector(state).selectedItemsToPublish;
-
 const _selectRules = (state: RootState) => rootSelector(state).rules;
 
 const selectRulesByPath = createSelector(
@@ -125,24 +122,24 @@ const selectIsRulesLoading = (state: RootState) =>
 const selectIsAllItemsUploaded = (state: RootState, featureType: FeatureType) =>
   rootSelector(state).allPublishedWithMeItemsUploaded[featureType];
 
-const selectAllSelectedItemsToApprove = (state: RootState) =>
-  rootSelector(state).selectedItemsToApprove;
+const selectAllSelectedPublicationItems = (state: RootState) =>
+  rootSelector(state).selectedPublicationItems;
 
-const selectSelectedItemsToApprove = createSelector(
-  [selectAllSelectedItemsToApprove, selectSelectedPublicationUrl],
-  (selectedItemsToApprove, selectedPublicationUrl) => {
-    return selectedItemsToApprove[selectedPublicationUrl ?? ''] ?? [];
+const selectSelectedPublicationItems = createSelector(
+  [selectAllSelectedPublicationItems, selectSelectedPublicationUrl],
+  (selectedPublicationItems, selectedPublicationUrl) => {
+    return selectedPublicationItems[selectedPublicationUrl ?? ''] ?? [];
   },
 );
 
 const selectResourcesToReviewByPublicationUrl = createSelector(
   [
     selectResourcesToReview,
-    selectSelectedItemsToApprove,
+    selectSelectedPublicationItems,
     (_state, id: string) => id,
   ],
-  (resourcesToReview, selectedItemsToApprove, id) => {
-    const itemsToPublish = new Set(selectedItemsToApprove);
+  (resourcesToReview, selectedPublicationItems, id) => {
+    const itemsToPublish = new Set(selectedPublicationItems);
     return resourcesToReview.filter(
       (r) =>
         r.publicationUrl === id &&
@@ -151,9 +148,9 @@ const selectResourcesToReviewByPublicationUrl = createSelector(
   },
 );
 
-const _selectChosenFolderIds = createSelector(
+const _selectChosenPublicationFolderIds = createSelector(
   [
-    selectSelectedItemsToPublish,
+    selectSelectedPublicationItems,
     (_state, folders: FolderInterface[]) => folders,
     (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
       itemsShouldBeChosen,
@@ -167,29 +164,9 @@ const _selectChosenFolderIds = createSelector(
   },
 );
 
-const _selectChosenFolderIdsToApprove = createSelector(
-  [
-    selectSelectedItemsToApprove,
-    (_state, folders: FolderInterface[]) => folders,
-    (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
-      itemsShouldBeChosen,
-  ],
-  (selectedItems, folders, itemsShouldBeChosen) => {
-    return getPartialAndFullyChosenFolders(
-      folders,
-      itemsShouldBeChosen,
-      selectedItems,
-    );
-  },
-);
-
-const selectChosenFolderIds =
+const selectChosenPublicationFolderIds =
   (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
-    _selectChosenFolderIds(state, folders, items);
-
-const selectChosenFolderIdsToApprove =
-  (folders: FolderInterface[], items: ShareEntity[]) => (state: RootState) =>
-    _selectChosenFolderIdsToApprove(state, folders, items);
+    _selectChosenPublicationFolderIds(state, folders, items);
 
 const selectPublicationsToReviewCount = createSelector(
   [
@@ -338,11 +315,9 @@ export const PublicationSelectors = {
   selectRulesByPath,
   selectIsRulesLoading,
   selectIsAllItemsUploaded,
-  selectSelectedItemsToPublish,
-  selectAllSelectedItemsToApprove,
-  selectSelectedItemsToApprove,
-  selectChosenFolderIds,
-  selectChosenFolderIdsToApprove,
+  selectAllSelectedPublicationItems,
+  selectSelectedPublicationItems,
+  selectChosenPublicationFolderIds,
   selectPublicationsToReviewCount,
   selectIsFolderContainsResourcesToReview,
   selectIsApplicationReview,

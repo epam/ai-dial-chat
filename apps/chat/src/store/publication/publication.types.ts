@@ -27,7 +27,6 @@ export interface PublicationState {
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;
   allPublishedWithMeItemsUploaded: Record<FeatureType, boolean>;
-  selectedItemsToPublish: string[];
   isApplicationReview: boolean;
   isToolsetReview: boolean;
   publicVersionGroups: PublicVersionGroups;
@@ -39,8 +38,8 @@ export interface PublicationState {
       }
     | undefined;
 
-  // Review edit mode
-  selectedItemsToApprove: Record<string, string[]>;
+  // Edit or publish mode
+  selectedPublicationItems: Record<string, string[]>;
   isEditMode: boolean;
   entitiesEditState: Record<string, { name: string; version: string }>;
   foldersEditState: FolderEditTree;
