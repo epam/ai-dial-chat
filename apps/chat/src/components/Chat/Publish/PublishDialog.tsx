@@ -36,7 +36,7 @@ import { PublicationHandler } from './PublicationHandler/PublicationHandler';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
-interface PublishHandlerContainerProps {
+interface PublishDialogContainerProps {
   entity: ShareEntity & { iconUrl?: string };
   action: PublishActions;
   resourceType: BackendResourceType;
@@ -44,13 +44,13 @@ interface PublishHandlerContainerProps {
   filteredConversationFiles: DialFile[];
 }
 
-const PublishHandlerContainer = ({
+const PublishDialogContainer = ({
   entity,
   action,
   resourceType,
   isFolder,
   filteredConversationFiles,
-}: PublishHandlerContainerProps) => {
+}: PublishDialogContainerProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -116,7 +116,10 @@ const PublishHandlerContainer = ({
             {
               action,
               sourceUrl: entity.iconUrl,
-              targetUrl: entity.iconUrl,
+              targetUrl: constructPath(
+                getFolderIdFromEntityId(entity.id),
+                splitEntityId(entity.iconUrl).name,
+              ),
               reviewUrl: entity.iconUrl,
             },
           ]
@@ -190,7 +193,7 @@ const PublishDialogView = () => {
       dataQa="publish-dialog"
       containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1000px]"
     >
-      <PublishHandlerContainer
+      <PublishDialogContainer
         entity={entity}
         action={action}
         resourceType={resourceType}
