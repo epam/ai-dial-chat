@@ -1,14 +1,8 @@
 import { FolderEditTree } from '@/src/store/publication/publication.types';
 
 import { BackendDataNodeType, BackendResourceType } from './common';
-import { DialFile } from './files';
 
-import {
-  MIMEType,
-  PublishActions,
-  ShareEntity,
-  UploadStatus,
-} from '@epam/ai-dial-shared';
+import { MIMEType, PublishActions, UploadStatus } from '@epam/ai-dial-shared';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -156,8 +150,6 @@ export type PublicVersionGroups = Record<
   string,
   PublicVersionGroup | undefined
 >;
-
-export type PublicationReviewItem = ShareEntity | DialFile;
 
 export interface PublicationHandlerState {
   entities: Record<string, { name: string; version: string }>;

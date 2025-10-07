@@ -69,6 +69,7 @@ const initialState: PublicationState = {
   isPublicationUpdating: false,
   displayAuthorEditState: '',
   publishToUrl: '',
+  currentPublicationInvalidEntities: new Set(),
 };
 
 export const publicationSlice = createSlice({
@@ -532,6 +533,12 @@ export const publicationSlice = createSlice({
     },
     setPublishToUrl: (state, { payload }: PayloadAction<string>) => {
       state.publishToUrl = payload;
+    },
+    setCurrentPublicationInvalidEntities: (
+      state,
+      { payload }: PayloadAction<Set<string>>,
+    ) => {
+      state.currentPublicationInvalidEntities = payload;
     },
   },
 });

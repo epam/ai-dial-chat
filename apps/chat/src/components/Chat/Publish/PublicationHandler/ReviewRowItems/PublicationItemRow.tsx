@@ -276,19 +276,11 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
           name,
-          version:
-            entityEditState?.version ??
-            item.publicationInfo?.version ??
-            NA_VERSION,
+          version: entityEditState?.version ?? NA_VERSION,
         }),
       );
     },
-    [
-      dispatch,
-      entityEditState?.version,
-      item.id,
-      item.publicationInfo?.version,
-    ],
+    [dispatch, entityEditState?.version, item.id],
   );
 
   const handleSelect = useCallback(() => {

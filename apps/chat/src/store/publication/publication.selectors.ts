@@ -324,6 +324,9 @@ const selectIsResourceUnpublishing = createSelector(
   },
 );
 
+const selectCurrentPublicationInvalidEntities = (state: RootState) =>
+  rootSelector(state).currentPublicationInvalidEntities;
+
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
@@ -363,4 +366,5 @@ export const PublicationSelectors = {
   selectDisplayAuthorEditState,
   selectPublishToUrl,
   selectIsResourceUnpublishing,
+  selectCurrentPublicationInvalidEntities,
 };

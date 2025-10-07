@@ -141,3 +141,12 @@ export const getEntityNameFromId = (
 
   return name;
 };
+
+export const transformIdToRootEntityId = (id: string) => {
+  const { apiKey, name: entityName } = splitEntityId(id);
+
+  return constructPath(
+    getRootId({ featureType: EnumMapper.getFeatureTypeByApiKey(apiKey), id }),
+    entityName,
+  );
+};

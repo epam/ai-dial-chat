@@ -15,8 +15,6 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isFolderNameNotUniq } from '@/src/utils/app/publications';
 
-import { PublicationReviewItem } from '@/src/types/publication';
-
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
@@ -28,31 +26,32 @@ import {
   FeatureType,
   FolderInterface,
   PublishActions,
+  ShareEntity,
 } from '@epam/ai-dial-shared';
 
-interface Props<T extends PublicationReviewItem> {
+interface Props {
   currentFolder: FolderInterface;
   allFolders: FolderInterface[];
-  allItems: T[];
+  allItems: ShareEntity[];
   level: number;
   ItemComponent: React.FC<{
-    item: T;
+    item: ShareEntity;
     level: number;
   }>;
 }
 
-const filteredItems = <T extends PublicationReviewItem | FolderInterface>(
+const filteredItems = <T extends ShareEntity>(
   allItems: T[],
   currentFolderId: string,
 ) => sortByName(allItems.filter((item) => item.folderId === currentFolderId));
 
-export const PublicationFolderRow = <T extends PublicationReviewItem>({
+export const PublicationFolderRow = ({
   currentFolder,
   allFolders,
   allItems,
   level,
   ItemComponent,
-}: Props<T>) => {
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const [inputName, setInputName] = useState(currentFolder.name);
@@ -236,7 +235,7 @@ export const PublicationFolderRow = <T extends PublicationReviewItem>({
             />
           ))}
         </div>
-        {items.map((item: T) => (
+        {items.map((item) => (
           <div key={item.id}>
             <ItemComponent item={item} level={level + 1} />
           </div>

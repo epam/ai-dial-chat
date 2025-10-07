@@ -4,6 +4,9 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
 import { BackendResourceTypeName, EntityType } from '@/src/types/common';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { ToolsetSelectors } from '@/src/store/selectors';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { PublicationItemRow } from './PublicationItemRow';
@@ -16,13 +19,25 @@ interface Props {
 }
 
 export const PublicationToolsetRow: React.FC<Props> = ({ item, level }) => {
+  const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const publishRequestToolsets = useAppSelector(
+    ToolsetSelectors.selectPublishRequestToolsets,
+  );
+
+  const agent = useMemo(() => {
+    return [...publishRequestToolsets, ...toolsets].find(
+      (agent) => item.id === agent.id,
+    );
+  }, [publishRequestToolsets, toolsets, item.id]);
+
   const entity = useMemo(
     () => ({
       ...item,
       folderId: getFolderIdFromEntityId(item.name),
+      iconUrl: agent?.iconUrl,
       type: EntityType.Toolset,
     }),
-    [item],
+    [item, agent?.iconUrl],
   );
 
   return (

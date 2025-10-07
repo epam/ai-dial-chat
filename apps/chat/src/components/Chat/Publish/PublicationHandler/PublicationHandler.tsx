@@ -21,7 +21,7 @@ import {
   getPublicationId,
   regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
-import { constructPath } from '@/src/utils/app/shared-utils';
+import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
@@ -54,18 +54,19 @@ import {
   PublishRequestFieldsNames,
   validators,
 } from '../form';
+import { BasePublicationResources } from './BasePublicationResources';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
 import { PublicationHandlerFooter } from './PublicationHandlerFooter';
-import { ApplicationPublicationResources } from './PublicationReviewResources/ApplicationPublicationResources';
-import { ConversationPublicationResources } from './PublicationReviewResources/ConversationPublicationResources';
-import { FilePublicationResources } from './PublicationReviewResources/FilePublicationResources';
-import { PromptPublicationResources } from './PublicationReviewResources/PromptPublicationResources';
-import { ToolsetPublicationResources } from './PublicationReviewResources/ToolsetPublicationResources';
 import { ReviewApplicationDialog } from './ReviewApplicationDialog/ReviewApplicationDialog';
+import { PublicationApplicationRow } from './ReviewRowItems/PublicationApplicationRow';
+import { PublicationConversationRow } from './ReviewRowItems/PublicationConversationRow';
+import { PublicationFileRow } from './ReviewRowItems/PublicationFileRow';
+import { PublicationPromptRow } from './ReviewRowItems/PublicationPromptRow';
+import { PublicationToolsetRow } from './ReviewRowItems/PublicationToolsetRow';
 import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 
-import { PublishActions } from '@epam/ai-dial-shared';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 
 interface Props {
@@ -79,31 +80,31 @@ const sections = [
     featureType: FeatureType.Chat,
     sectionName: 'Conversations',
     dataQa: 'conversations-to-approve',
-    Component: ConversationPublicationResources,
+    ItemComponent: PublicationConversationRow,
   },
   {
     featureType: FeatureType.Prompt,
     sectionName: 'Prompts',
     dataQa: 'prompts-to-approve',
-    Component: PromptPublicationResources,
+    ItemComponent: PublicationPromptRow,
   },
   {
     featureType: FeatureType.Application,
     sectionName: 'Applications',
     dataQa: 'applications-to-approve',
-    Component: ApplicationPublicationResources,
+    ItemComponent: PublicationApplicationRow,
   },
   {
     featureType: FeatureType.File,
     sectionName: 'Files',
     dataQa: 'files-to-approve',
-    Component: FilePublicationResources,
+    ItemComponent: PublicationFileRow,
   },
   {
     featureType: FeatureType.Toolset,
     sectionName: 'Toolsets',
     dataQa: 'toolsets-to-approve',
-    Component: ToolsetPublicationResources,
+    ItemComponent: PublicationToolsetRow,
   },
 ];
 
@@ -208,7 +209,11 @@ export function PublicationHandler({ publication }: Props) {
   }, [dispatch, publication.targetFolder]);
 
   useEffect(() => {
-    if (editedPublishToUrl !== PUBLIC_URL_PREFIX && !isReview) {
+    if (
+      editedPublishToUrl &&
+      editedPublishToUrl !== PUBLIC_URL_PREFIX &&
+      !isReview
+    ) {
       dispatch(
         PublicationActions.uploadRules({
           path: getIdWithoutFeatureType(editedPublishToUrl),
@@ -329,13 +334,14 @@ export function PublicationHandler({ publication }: Props) {
             action,
             sourceUrl: sourceUrl ?? '',
             targetUrl: constructPath(newFolderId, newApiKey),
+            reviewUrl,
           };
         },
       );
 
       if (!isReview) {
         const filteredMappedResources = mappedResources.filter((resource) =>
-          selectedItemsToApprove.includes(resource.sourceUrl),
+          selectedItemsToApprove.includes(resource.reviewUrl),
         );
 
         dispatch(
@@ -628,7 +634,7 @@ export function PublicationHandler({ publication }: Props) {
               <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
                 {publication.resources.length ? (
                   sections.map(
-                    ({ dataQa, sectionName, Component, featureType }) =>
+                    ({ dataQa, sectionName, ItemComponent, featureType }) =>
                       publication.resourceTypes.includes(
                         EnumMapper.getBackendResourceTypeByFeatureType(
                           featureType,
@@ -650,7 +656,22 @@ export function PublicationHandler({ publication }: Props) {
                             </>
                           }
                         >
-                          <Component resources={publication.resources} />
+                          <BasePublicationResources
+                            resources={publication.resources.filter(
+                              ({ reviewUrl }) => {
+                                const { apiKey } = splitEntityId(reviewUrl);
+                                const itemFeatureType =
+                                  EnumMapper.getFeatureTypeByApiKey(apiKey);
+                                return itemFeatureType === featureType;
+                              },
+                            )}
+                            ItemComponent={
+                              ItemComponent as React.FC<{
+                                item: ShareEntity;
+                                level: number;
+                              }>
+                            }
+                          />
                         </CollapsibleSection>
                       ),
                   )

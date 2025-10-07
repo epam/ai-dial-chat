@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 
-import {
-  isPlaybackConversation,
-  isReplayConversation,
-} from '@/src/utils/app/conversation';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import { BackendResourceTypeName } from '@/src/types/common';
 
@@ -28,32 +26,42 @@ export const PublicationConversationRow: React.FC<Props> = ({
   level,
 }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isReplay = isReplayConversation(item);
-  const isPlayback = isPlaybackConversation(item);
+
+  const { apiKey } = splitEntityId(item.id);
+  const { modelInfo } = useMemo(
+    () => parseEntityApiKey(apiKey, { parseModel: true }),
+    [apiKey],
+  );
+  const entity = useMemo(() => {
+    return {
+      ...item,
+      ...modelInfo,
+    };
+  }, [item, modelInfo]);
 
   const Icon = useMemo(() => {
-    if (isReplay) {
+    if (entity.isReplay) {
       return <ReplayAsIsIcon size={18} />;
     }
 
-    if (isPlayback) {
+    if (entity.isPlayback) {
       return <PlaybackIcon size={18} />;
     }
 
     return (
       <ModelIcon
         size={18}
-        entityId={item.model.id}
-        entity={modelsMap[item.model.id]}
+        entityId={entity.model.id}
+        entity={modelsMap[entity.model.id]}
       />
     );
-  }, [isReplay, isPlayback, item.model.id, modelsMap]);
+  }, [entity.isReplay, entity.isPlayback, entity.model.id, modelsMap]);
 
   return (
     <PublicationItemRow
       level={level}
       Icon={Icon}
-      item={item}
+      item={entity}
       itemTypeName={BackendResourceTypeName.CONVERSATION}
       dataQa="conversation"
     />

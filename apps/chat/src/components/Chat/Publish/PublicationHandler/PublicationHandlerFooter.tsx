@@ -324,6 +324,14 @@ export const PublicationHandlerFooter = ({
     [notExistEntities, publication.resources],
   );
 
+  useEffect(() => {
+    dispatch(
+      PublicationActions.setCurrentPublicationInvalidEntities(
+        new Set(invalidEntities.map((entity) => entity.id)),
+      ),
+    );
+  }, [dispatch, invalidEntities]);
+
   const handleApprovePublication = () => {
     if (itemsToApprove.length !== publication.resources.length) {
       dispatch(PublicationActions.updateAndApprovePublicationRequest());
@@ -390,9 +398,10 @@ export const PublicationHandlerFooter = ({
   const isEditDisabled = isEditInvalid || !isFormChanged;
 
   const getSubmitTooltipText = useCallback(() => {
-    if (publishModel?.isFolder) {
-      return 'Request can not be approved as some resources are invalid';
+    if (publishModel) {
+      return "Request can't be published as some resources are invalid";
     }
+
     return t(
       selectedInvalidEntities.length
         ? "Request can't be approved as some items are unpublished"
@@ -405,12 +414,12 @@ export const PublicationHandlerFooter = ({
               : "It's required to review all resources",
     );
   }, [
-    publishModel?.isFolder,
+    publishModel,
+    t,
     selectedInvalidEntities.length,
     someReviewedConversationHasNoMessages,
     isPublicationUpdating,
     areNoChanges,
-    t,
   ]);
 
   const getSubmitBtnText = useCallback(() => {

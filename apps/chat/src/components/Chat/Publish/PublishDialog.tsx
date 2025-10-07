@@ -6,10 +6,12 @@ import {
   isConversationInfoEntity,
   isLoadedConversationEntity,
 } from '@/src/utils/app/conversation';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { transformIdToRootEntityId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
-import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { BackendResourceType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -91,18 +93,21 @@ const PublishHandlerContainer = ({
   }, [areConversationsWithContentUploading, dispatch, filteredEntities, t]);
 
   const publication = useMemo(() => {
-    const baseResources = filteredEntities.map((entity) => ({
+    const baseResources = filteredEntities.map(({ id }) => ({
       action,
-      sourceUrl: entity.id,
-      targetUrl: entity.id,
-      reviewUrl: entity.id,
+      sourceUrl: id,
+      targetUrl: id,
+      reviewUrl: isFolder ? id : transformIdToRootEntityId(id),
     }));
 
-    const fileResources = filteredConversationFiles.map((file) => ({
+    const fileResources = filteredConversationFiles.map(({ id }) => ({
       action,
-      sourceUrl: file.id,
-      targetUrl: file.id,
-      reviewUrl: file.id,
+      sourceUrl: id,
+      targetUrl: constructPath(
+        getFolderIdFromEntityId(entity.id),
+        splitEntityId(id).name,
+      ),
+      reviewUrl: transformIdToRootEntityId(id),
     }));
 
     const iconResource =
@@ -183,7 +188,7 @@ const PublishDialogView = () => {
       state={ModalState.OPENED}
       onClose={handleClose}
       dataQa="publish-dialog"
-      containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]"
+      containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1000px]"
     >
       <PublishHandlerContainer
         entity={entity}
