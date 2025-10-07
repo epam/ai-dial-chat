@@ -10,15 +10,12 @@ import { ModelsSelectors } from '@/src/store/selectors';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { PublicationItemRow } from './PublicationItemRow';
+import { PublicationItemProps } from './view-props';
 
-import { ShareEntity } from '@epam/ai-dial-shared';
-
-interface Props {
-  item: ShareEntity;
-  level: number;
-}
-
-export const PublicationApplicationRow: React.FC<Props> = ({ item, level }) => {
+export const PublicationApplicationRow: React.FC<PublicationItemProps> = ({
+  item,
+  level,
+}) => {
   const models = useAppSelector(ModelsSelectors.selectModels);
   const publishRequestModels = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,

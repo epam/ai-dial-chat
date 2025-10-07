@@ -13,15 +13,9 @@ import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { PublicationItemRow } from './PublicationItemRow';
+import { PublicationItemProps } from './view-props';
 
-import { ConversationInfo } from '@epam/ai-dial-shared';
-
-interface Props {
-  item: ConversationInfo;
-  level: number;
-}
-
-export const PublicationConversationRow: React.FC<Props> = ({
+export const PublicationConversationRow: React.FC<PublicationItemProps> = ({
   item,
   level,
 }) => {

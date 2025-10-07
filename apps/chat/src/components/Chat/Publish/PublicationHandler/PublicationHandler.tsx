@@ -72,7 +72,7 @@ import { PublicationPromptRow } from './ReviewRowItems/PublicationPromptRow';
 import { PublicationToolsetRow } from './ReviewRowItems/PublicationToolsetRow';
 import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 
 interface Props {
@@ -689,12 +689,7 @@ export function PublicationHandler({ publication }: Props) {
                               {!!filteredResources.length && (
                                 <BasePublicationResources
                                   resources={filteredResources}
-                                  ItemComponent={
-                                    ItemComponent as React.FC<{
-                                      item: ShareEntity;
-                                      level: number;
-                                    }>
-                                  }
+                                  ItemComponent={ItemComponent}
                                 />
                               )}
                               {!isReview &&
