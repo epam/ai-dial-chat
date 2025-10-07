@@ -13,7 +13,7 @@ import {
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
-import { getIdWithoutFeatureType } from '@/src/utils/app/id';
+import { getIdWithoutFeatureType, isConversationId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
@@ -652,48 +652,71 @@ export function PublicationHandler({ publication }: Props) {
                 {publication.resources.length ? (
                   <>
                     {sections.map(
-                      ({ dataQa, sectionName, ItemComponent, featureType }) =>
-                        publication.resourceTypes.includes(
-                          EnumMapper.getBackendResourceTypeByFeatureType(
-                            featureType,
-                          ),
-                        ) && (
-                          <CollapsibleSection
-                            key={featureType}
-                            name={t(sectionName)}
-                            openByDefault
-                            dataQa={dataQa}
-                            togglerClassName="!text-sm !text-primary"
-                            sectionTooltip={
-                              isReview && (
-                                <>
-                                  {t('Publish')},
-                                  <span className="text-error">
-                                    {' '}
-                                    {t('Unpublish')}
-                                  </span>
-                                </>
-                              )
-                            }
-                          >
-                            <BasePublicationResources
-                              resources={publication.resources.filter(
-                                ({ reviewUrl }) => {
-                                  const { apiKey } = splitEntityId(reviewUrl);
-                                  const itemFeatureType =
-                                    EnumMapper.getFeatureTypeByApiKey(apiKey);
-                                  return itemFeatureType === featureType;
-                                },
-                              )}
-                              ItemComponent={
-                                ItemComponent as React.FC<{
-                                  item: ShareEntity;
-                                  level: number;
-                                }>
+                      ({ dataQa, sectionName, ItemComponent, featureType }) => {
+                        const filteredResources = publication.resources.filter(
+                          ({ reviewUrl }) => {
+                            const { apiKey } = splitEntityId(reviewUrl);
+                            const itemFeatureType =
+                              EnumMapper.getFeatureTypeByApiKey(apiKey);
+                            return itemFeatureType === featureType;
+                          },
+                        );
+
+                        return (
+                          publication.resourceTypes.includes(
+                            EnumMapper.getBackendResourceTypeByFeatureType(
+                              featureType,
+                            ),
+                          ) && (
+                            <CollapsibleSection
+                              key={featureType}
+                              name={t(sectionName)}
+                              openByDefault
+                              dataQa={dataQa}
+                              togglerClassName="!text-sm !text-primary"
+                              sectionTooltip={
+                                isReview && (
+                                  <>
+                                    {t('Publish')},
+                                    <span className="text-error">
+                                      {' '}
+                                      {t('Unpublish')}
+                                    </span>
+                                  </>
+                                )
                               }
-                            />
-                          </CollapsibleSection>
-                        ),
+                            >
+                              {!!filteredResources.length && (
+                                <BasePublicationResources
+                                  resources={filteredResources}
+                                  ItemComponent={
+                                    ItemComponent as React.FC<{
+                                      item: ShareEntity;
+                                      level: number;
+                                    }>
+                                  }
+                                />
+                              )}
+                              {!isReview &&
+                                featureType === FeatureType.File && (
+                                  <p
+                                    className="pl-3.5 text-secondary"
+                                    data-qa="no-publishing-files"
+                                  >
+                                    {t(
+                                      publication.resources.filter(
+                                        ({ reviewUrl }) =>
+                                          isConversationId(reviewUrl),
+                                      ).length < 2
+                                        ? "This conversation doesn't contain any files"
+                                        : "These conversations don't contain any files",
+                                    )}
+                                  </p>
+                                )}
+                            </CollapsibleSection>
+                          )
+                        );
+                      },
                     )}
                     {!isReview && firstNotMyEntity && (
                       <ErrorMessage

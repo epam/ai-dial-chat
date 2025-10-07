@@ -7,7 +7,10 @@ import {
   isLoadedConversationEntity,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { transformIdToRootEntityId } from '@/src/utils/app/id';
+import {
+  isConversationId,
+  transformIdToRootEntityId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -79,7 +82,7 @@ const PublishDialogContainer = ({
         !isConversationInfoEntity(entity) ||
         (!entity.isReplay &&
           isLoadedConversationEntity(entity) &&
-          entity.messages.length),
+          (entity.messages.length || entity.playback?.messagesStack.length)),
     );
   }, [entities, isFolder]);
 
@@ -127,7 +130,7 @@ const PublishDialogContainer = ({
 
     const resourceTypes = [
       resourceType,
-      ...(filteredConversationFiles.length ? [BackendResourceType.FILE] : []),
+      ...(isConversationId(entity.id) ? [BackendResourceType.FILE] : []),
     ];
 
     return {

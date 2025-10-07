@@ -27,10 +27,10 @@ export const PublicationConversationRow: React.FC<Props> = ({
 }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const { apiKey } = splitEntityId(item.id);
+  const { name } = splitEntityId(item.id);
   const { modelInfo } = useMemo(
-    () => parseEntityApiKey(apiKey, { parseModel: true }),
-    [apiKey],
+    () => parseEntityApiKey(name, { parseModel: true }),
+    [name],
   );
   const entity = useMemo(() => {
     return {
