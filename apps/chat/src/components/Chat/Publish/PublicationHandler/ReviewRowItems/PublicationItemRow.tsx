@@ -179,7 +179,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           value={inputVersion}
           isEditMode={
             publicationModel &&
-            publicationModel?.action !== PublishActions.DELETE
+            publicationModel.action !== PublishActions.DELETE
               ? true
               : isDeleteAction || isToolsetId(item.id)
                 ? false
@@ -320,7 +320,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           value={inputName}
           isEditMode={
             publicationModel &&
-            publicationModel?.action !== PublishActions.DELETE
+            publicationModel.action !== PublishActions.DELETE
               ? true
               : isDeleteAction || isToolsetId(item.id)
                 ? false
