@@ -37,7 +37,6 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions, ModelsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
 import {
-  AddonsSelectors,
   ModelsSelectors,
   SettingsSelectors,
   WidgetsSelectors,
@@ -111,7 +110,6 @@ const TalkToModalView = ({
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const installedModelIdsSet = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -264,7 +262,6 @@ const TalkToModalView = ({
                 conversation,
                 entity.reference,
                 modelsMap,
-                addonsMap,
               ),
             },
             publicationUrl: conversation.publicationInfo?.publicationUrl,
@@ -288,14 +285,7 @@ const TalkToModalView = ({
 
       onClose();
     },
-    [
-      addonsMap,
-      conversation,
-      dispatch,
-      installedModelIdsSet,
-      modelsMap,
-      onClose,
-    ],
+    [conversation, dispatch, installedModelIdsSet, modelsMap, onClose],
   );
 
   const handleGoToWorkspace = useCallback(

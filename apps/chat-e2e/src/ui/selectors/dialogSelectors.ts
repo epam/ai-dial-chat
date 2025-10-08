@@ -88,7 +88,6 @@ export const SettingsTooltip = {
   settingsTooltip: '[data-qa="chat-settings-tooltip"]',
   applicationInfo: '[data-qa="application-info"]',
   assistantInfo: '[data-qa="assistant-info"]',
-  assistantModelInfo: '[data-qa="assistant agent-info"]',
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
 };

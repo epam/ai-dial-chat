@@ -60,8 +60,6 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import { AddonsSelectors } from '../selectors';
-
 import {
   ConversationInfo,
   Feature,
@@ -724,27 +722,6 @@ const selectIsNotAllowed = createSelector(
   },
 );
 
-const selectHasNotAllowedAddons = createSelector(
-  [
-    selectSelectedConversations,
-    AddonsSelectors.selectAddonsMap,
-    AddonsSelectors.selectInitialized,
-  ],
-  (selectedConversations, addonsMap, areAddonsInitialized) => {
-    if (!areAddonsInitialized) {
-      return false;
-    }
-    if (Object.keys(addonsMap).length === 0) {
-      return selectedConversations.some(
-        (conv) => conv.selectedAddons && conv.selectedAddons.length > 0,
-      );
-    }
-    return selectedConversations.some((conversation) =>
-      conversation.selectedAddons?.some((addonId) => !addonsMap[addonId]),
-    );
-  },
-);
-
 const selectNotAllowedItemsForDisplay = createSelector(
   [
     selectSelectedConversations,
@@ -773,7 +750,6 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     PublicationSelectors.selectResourcesToReview,
     ChatSelectors.selectIsConfigurationBlocksInput,
     selectIsNotAllowed,
-    selectHasNotAllowedAddons,
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
   ],
@@ -782,7 +758,6 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     resourcesToReview,
     isConfigurationBlocksInput,
     isNotAllowedModels,
-    hasNotAllowedAddonsFlag,
     areReadOnly,
     isAdmin,
   ) => {
@@ -798,7 +773,6 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         (!conversation.messages?.length &&
           (isConfigurationBlocksInput || isReplayConversation(conversation))) ||
         isNotAllowedModels ||
-        hasNotAllowedAddonsFlag ||
         isPlaybackConversation(conversation) ||
         (areReadOnly && !isReviewEntity) ||
         (isReviewEntity && !isAdmin) ||
@@ -898,6 +872,5 @@ export const ConversationsSelectors = {
   getUniqueAttachments,
   selectAction,
   selectIsNotAllowed,
-  selectHasNotAllowedAddons,
   selectNotAllowedItemsForDisplay,
 };

@@ -74,7 +74,6 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
@@ -96,7 +95,6 @@ import { HTTPMethod } from '@/src/types/http';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
-  AddonsActions,
   ChatActions,
   ConversationsActions,
   FilesActions,
@@ -108,7 +106,6 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import {
-  AddonsSelectors,
   ConversationsSelectors,
   MarketplaceSelectors,
   ModelsSelectors,
@@ -123,7 +120,6 @@ import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -514,13 +510,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 prompt: DefaultsService.get('defaultSystemPrompt', ''),
                 temperature:
                   lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
-                selectedAddons: [],
                 status: UploadStatus.LOADED,
                 folderId: defaultFolderId,
-                assistantModelId: DefaultsService.get(
-                  'assistantSubmodelId',
-                  FALLBACK_ASSISTANT_SUBMODEL_ID,
-                ),
               }),
             );
             const selectedConversationsIds =
@@ -1339,7 +1330,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         payload,
-        modelsMap,
         conversations,
         selectedConversationIds,
         overlaySystemPrompt,
@@ -1370,8 +1360,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         const messageSettings: Message['settings'] = {
           prompt: payload.conversation.prompt,
           temperature: payload.conversation.temperature,
-          selectedAddons: payload.conversation.selectedAddons,
-          assistantModelId: payload.conversation.assistantModelId,
         };
 
         const assistantMessage: Message = {
@@ -1449,19 +1437,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           isMessageStreaming: true,
         });
 
-        if (
-          updatedConversation.selectedAddons.length &&
-          modelsMap[updatedConversation.model.id]?.type !==
-            EntityType.Application
-        ) {
-          actions.push(
-            of(
-              AddonsActions.updateRecentAddons({
-                addonIds: updatedConversation.selectedAddons,
-              }),
-            ),
-          );
-        }
         if (!payload.skipRecentModelsUpdate) {
           actions.push(
             of(
@@ -1497,11 +1472,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
-      const selectedAddons = uniq([
-        ...payload.conversation.selectedAddons,
-        ...(lastModel?.selectedAddons ?? []),
-      ]);
-      const assistantModelId = payload.conversation.assistantModelId;
       const conversationModelType = lastModel?.type ?? EntityType.Model;
       let modelAdditionalSettings = {};
 
@@ -1513,16 +1483,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           temperature: doesModelAllowTemperature(lastModel)
             ? payload.conversation.temperature
             : FALLBACK_TEMPERATURE,
-          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
-        };
-      }
-      if (conversationModelType === EntityType.Assistant && assistantModelId) {
-        modelAdditionalSettings = {
-          assistantModel: modelsMap[assistantModelId],
-          temperature: doesModelAllowTemperature(lastModel)
-            ? payload.conversation.temperature
-            : FALLBACK_TEMPERATURE,
-          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
 
@@ -1963,14 +1923,13 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         activeMessage.model &&
         activeMessage.model.id
       ) {
-        const { prompt, temperature, selectedAddons, assistantModelId } =
-          activeMessage.settings ? activeMessage.settings : conv;
+        const { prompt, temperature } = activeMessage.settings
+          ? activeMessage.settings
+          : conv;
 
         const newConversationSettings: MessageSettings = {
           prompt,
           temperature,
-          selectedAddons,
-          assistantModelId,
         };
 
         const model = {
@@ -2299,8 +2258,9 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
             userMessage,
             assistantMessage,
           );
-          const { prompt, temperature, selectedAddons, assistantModelId } =
-            assistantMessage.settings ? assistantMessage.settings : conv;
+          const { prompt, temperature } = assistantMessage.settings
+            ? assistantMessage.settings
+            : conv;
 
           return concat(
             of(
@@ -2312,8 +2272,6 @@ const playbackNextMessageStartEpic: AppEpic = (action$, state$) =>
                   model: { ...conv.model, ...assistantMessage.model },
                   prompt,
                   temperature: temperature,
-                  selectedAddons: selectedAddons,
-                  assistantModelId: assistantModelId,
                   playback: {
                     ...conv.playback,
                     activePlaybackIndex: activeIndex + 1,
@@ -2424,8 +2382,9 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
           const model = assistantMessage?.model
             ? { ...conv.model, ...assistantMessage.model }
             : conv.model;
-          const { prompt, temperature, selectedAddons, assistantModelId } =
-            assistantMessage?.settings ? assistantMessage.settings : conv;
+          const { prompt, temperature } = assistantMessage?.settings
+            ? assistantMessage.settings
+            : conv;
           const playbackState = {
             ...conv.playback,
             activePlaybackIndex: activeIndex,
@@ -2448,8 +2407,6 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
                   model,
                   prompt,
                   temperature: temperature,
-                  selectedAddons: selectedAddons,
-                  assistantModelId: assistantModelId,
                   playback: {
                     ...conv.playback,
                     activePlaybackIndex: activeIndex,
@@ -3331,7 +3288,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
       forkJoin({
         selectedModelId: of(payload.selectedModelId),
         modelsMap: of(ModelsSelectors.selectModelsMap(state$.value)),
-        addonsMap: of(AddonsSelectors.selectAddonsMap(state$.value)),
         installedModelIds: of(
           ModelsSelectors.selectInstalledModelIds(state$.value),
         ),
@@ -3356,7 +3312,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
         conversation,
         selectedModelId,
         modelsMap,
-        addonsMap,
         installedModelIds,
         shouldUpload,
       }) => {
@@ -3393,7 +3348,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
                         conversation as Conversation,
                         modelToApply?.reference,
                         modelsMap,
-                        addonsMap,
                       )
                     : {}),
                 },
