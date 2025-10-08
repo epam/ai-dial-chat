@@ -28,16 +28,15 @@ import { expect } from '@playwright/test';
 const publicationsToUnpublish: Publication[] = [];
 
 const addSelectedAddons = (message: Message): Message => {
-  if (!message.settings) return message;
   return {
     ...message,
-    settings: message.settings
-      ? { ...message.settings, selectedAddons: [] }
-      : undefined,
+    ...(message.settings
+      ? { settings: { ...message.settings, selectedAddons: [] } }
+      : {}),
   };
 };
 
-dialOverlayTest.only(
+dialOverlayTest(
   `[Overlay. Events in sandbox] Send 'Hello' to Chat.\n` +
     '[Overlay. Events in sandbox] Set system prompt.\n' +
     '[Overlay. Events in sandbox] Get messages.\n' +
