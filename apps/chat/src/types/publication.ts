@@ -31,6 +31,7 @@ export interface PublicationRequestModel extends BasePublicationRequestModel {
     action: PublishActions;
     sourceUrl?: string;
     targetUrl: string;
+    publishCredentials?: boolean;
   }[];
 }
 
@@ -55,6 +56,7 @@ export interface PublicationResource {
   targetUrl: string;
   reviewUrl: string;
   author?: string;
+  publishCredentials?: boolean;
 }
 
 export interface Publication {

@@ -44,10 +44,12 @@ const preparePublicationCreateData = (
 ): PublicationRequestModel => {
   return {
     name: publicationData.name,
-    resources: publicationData.resources.map((r) => ({
-      action: r.action,
-      sourceUrl: r.sourceUrl ? ApiUtils.encodeApiUrl(r.sourceUrl) : undefined,
-      targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+    resources: publicationData.resources.map((resource) => ({
+      ...resource,
+      sourceUrl: resource.sourceUrl
+        ? ApiUtils.encodeApiUrl(resource.sourceUrl)
+        : undefined,
+      targetUrl: ApiUtils.encodeApiUrl(resource.targetUrl),
     })),
     ...prepareBasePublicationDataTargetFolder(publicationData),
   };

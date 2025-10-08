@@ -45,7 +45,7 @@ export const BasePublicationResources = ({
 
   const entities: ShareEntity[] = useMemo(
     () =>
-      resources.map(({ reviewUrl, action }) => {
+      resources.map(({ reviewUrl, action, publishCredentials }) => {
         const { name } = parseEntityApiKey(splitEntityId(reviewUrl).name, {
           parseVersion:
             !publicationModel ||
@@ -61,6 +61,7 @@ export const BasePublicationResources = ({
           publicationInfo: {
             isNotExist: currentPublicationInvalidEntities.has(reviewUrl),
             action,
+            publishCredentials,
           },
         };
       }),

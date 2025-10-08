@@ -229,6 +229,9 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,
   );
+  const selectedCredentialsItems = useAppSelector(
+    PublicationSelectors.selectSelectedCredentialsItems,
+  );
   const editState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
   );
@@ -289,7 +292,29 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         ids: [item.id],
       }),
     );
-  }, [dispatch, item.id, selectedPublication?.url]);
+
+    if (isToolsetId(item.id)) {
+      if (
+        (!selectedCredentialsItems.includes(item.id) &&
+          !selectedPublicationItems.includes(item.id)) ||
+        (selectedCredentialsItems.includes(item.id) &&
+          selectedPublicationItems.includes(item.id))
+      ) {
+        dispatch(
+          PublicationActions.selectCredentialsItems({
+            publicationUrl: selectedPublication?.url ?? '',
+            ids: [item.id],
+          }),
+        );
+      }
+    }
+  }, [
+    dispatch,
+    item.id,
+    selectedCredentialsItems,
+    selectedPublication?.url,
+    selectedPublicationItems,
+  ]);
 
   const isDeleteAction = item.publicationInfo?.action === PublishActions.DELETE;
 

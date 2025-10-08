@@ -2,6 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { isToolsetId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -57,9 +58,10 @@ const initialState: PublicationState = {
   isToolsetReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
+  selectedPublicationItems: {},
+  selectedCredentialsItems: {},
 
   // Edit or publish mode
-  selectedPublicationItems: {},
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
@@ -227,9 +229,30 @@ export const publicationSlice = createSlice({
     },
     setPublicationItems: (
       state,
-      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        publicationUrl: string;
+        ids: string[];
+      }>,
     ) => {
       state.selectedPublicationItems[payload.publicationUrl] = payload.ids;
+
+      const publishCredentials = state.publishModel?.publishCredentials;
+      const publishCredentialsResources = state.publications
+        .find((publication) => publication.url === payload.publicationUrl)
+        ?.resources?.filter(
+          ({ publishCredentials, reviewUrl }) =>
+            publishCredentials && payload.ids.includes(reviewUrl),
+        );
+
+      if (publishCredentials) {
+        state.selectedCredentialsItems[payload.publicationUrl] =
+          payload.ids.filter(isToolsetId);
+      } else if (publishCredentialsResources) {
+        state.selectedCredentialsItems[payload.publicationUrl] =
+          publishCredentialsResources.map(({ reviewUrl }) => reviewUrl);
+      }
     },
     selectPublicationItems: (
       state,
@@ -237,6 +260,15 @@ export const publicationSlice = createSlice({
     ) => {
       state.selectedPublicationItems[payload.publicationUrl] = xor(
         state.selectedPublicationItems[payload.publicationUrl] ?? [],
+        payload.ids,
+      );
+    },
+    selectCredentialsItems: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedCredentialsItems[payload.publicationUrl] = xor(
+        state.selectedCredentialsItems[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },
@@ -358,6 +390,7 @@ export const publicationSlice = createSlice({
             };
             isFolder?: boolean;
             action: PublishActions;
+            publishCredentials?: boolean;
           }
         | undefined
       >,
@@ -372,6 +405,7 @@ export const publicationSlice = createSlice({
           },
           isFolder: payload.isFolder,
           action: payload.action,
+          publishCredentials: payload.publishCredentials,
         };
       } else {
         state.publishModel = undefined;

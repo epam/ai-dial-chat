@@ -2016,10 +2016,15 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
 
       const selectedPublicationItems =
         PublicationSelectors.selectSelectedPublicationItems(state);
+      const selectedCredentialsItems =
+        PublicationSelectors.selectSelectedCredentialsItems(state);
       const filteredResources = selectedPublication.resources
         .filter(({ reviewUrl }) => selectedPublicationItems.includes(reviewUrl))
         .map((resource) => ({
           ...resource,
+          publishCredentials:
+            resource.publishCredentials &&
+            selectedCredentialsItems.includes(resource.reviewUrl),
           sourceUrl: resource.sourceUrl ?? '',
         }));
 

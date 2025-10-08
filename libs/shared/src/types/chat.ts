@@ -114,6 +114,7 @@ export interface EntityPublicationInfo {
   action?: PublishActions;
   isNotExist?: boolean;
   versionGroup?: string;
+  publishCredentials?: boolean;
 }
 
 export enum FeatureType {

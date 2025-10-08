@@ -35,11 +35,13 @@ export interface PublicationState {
         entity: ShareEntity & { iconUrl?: string };
         action: PublishActions;
         isFolder?: boolean;
+        publishCredentials?: boolean;
       }
     | undefined;
+  selectedPublicationItems: Record<string, string[]>;
+  selectedCredentialsItems: Record<string, string[]>;
 
   // Edit or publish mode
-  selectedPublicationItems: Record<string, string[]>;
   isEditMode: boolean;
   entitiesEditState: Record<string, { name: string; version: string }>;
   foldersEditState: FolderEditTree;

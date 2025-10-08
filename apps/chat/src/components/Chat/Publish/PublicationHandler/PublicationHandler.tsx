@@ -166,6 +166,9 @@ export function PublicationHandler({ publication }: Props) {
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,
   );
+  const selectedCredentialsItems = useAppSelector(
+    PublicationSelectors.selectSelectedCredentialsItems,
+  );
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
@@ -307,7 +310,7 @@ export function PublicationHandler({ publication }: Props) {
   const handleUpdateRequest = useCallback(
     (data: PublicationRequestFormData) => {
       const mappedResources = publication.resources.map(
-        ({ sourceUrl, reviewUrl, action }) => {
+        ({ sourceUrl, reviewUrl, action, publishCredentials }) => {
           const { name, version } = entitiesEditState[reviewUrl];
 
           // calculate new folderId
@@ -346,6 +349,10 @@ export function PublicationHandler({ publication }: Props) {
             sourceUrl: sourceUrl ?? '',
             targetUrl: constructPath(newFolderId, newApiKey),
             reviewUrl,
+            publishCredentials:
+              (publishCredentials &&
+                selectedCredentialsItems.includes(reviewUrl)) ||
+              (isReview && publishCredentials),
           };
         },
       );
@@ -380,15 +387,16 @@ export function PublicationHandler({ publication }: Props) {
     },
     [
       publication.resources,
-      publication.url,
       publication.targetFolder,
+      publication.url,
       isReview,
-      dispatch,
-      editedPublishToUrl,
-      rulesOnEdit,
-      displayAuthorEditState,
       entitiesEditState,
       foldersEditState,
+      editedPublishToUrl,
+      selectedCredentialsItems,
+      dispatch,
+      displayAuthorEditState,
+      rulesOnEdit,
       selectedPublicationItems,
     ],
   );
