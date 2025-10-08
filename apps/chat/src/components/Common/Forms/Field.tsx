@@ -31,7 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     }, []);
 
     return (
-      <Tooltip tooltip={tooltip}>
+      <Tooltip tooltip={tooltip} triggerClassName="grow">
         <div className="relative">
           <input
             {...rest}
