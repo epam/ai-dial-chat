@@ -19,12 +19,13 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
 import {
   AdditionalItemData,
-  EntityType,
   FeatureType,
   ReplaceOptions,
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -39,11 +40,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Checkbox } from '../Checkbox';
 
-import {
-  ConversationInfo,
-  PublishActions,
-  ShareEntity,
-} from '@epam/ai-dial-shared';
+import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
 
 interface ReplaceSelectorProps {
   selectedOption: ReplaceOptions;
@@ -442,7 +439,7 @@ export const FilesRow = ({
 };
 
 interface ApplicationViewProps {
-  item: ShareEntity;
+  item: PublishRequestDialAIEntityModel | ToolsetModel;
   isChosen?: boolean;
   featureContainerClassNames?: string;
   onSelect?: (ids: string[]) => void;
@@ -464,7 +461,6 @@ const ApplicationView = ({
   const entity = {
     ...application,
     folderId: getFolderIdFromEntityId(application.name),
-    type: EntityType.Application,
   };
 
   return (

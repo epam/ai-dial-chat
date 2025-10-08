@@ -29,7 +29,6 @@ import {
 import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
@@ -40,6 +39,7 @@ import {
   AgentAndToolsetSelectItem,
   AgentAndToolsetSelectItemProps,
 } from './AgentAndToolsetSelectItem';
+import { SelectedItemsContainer } from './SelectedItemsContainer';
 
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
@@ -278,16 +278,13 @@ const AgentAndToolsetModalView = ({
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
             {t('Selected')}
           </span>
-          <div className="my-2 flex  flex-wrap gap-2">
+          <div className="my-2 flex h-[34px] items-center">
             {selectedIds.length ? (
-              selectedIds.map((id) => (
-                <AgentAndToolsetChip
-                  key={id}
-                  id={id}
-                  item={allItemsMap[id]}
-                  onRemove={handleRemoveItem}
-                />
-              ))
+              <SelectedItemsContainer
+                selectedIds={selectedIds}
+                allItemsMap={allItemsMap}
+                onRemove={handleRemoveItem}
+              />
             ) : (
               <span className="flex h-[34px] items-center text-xs">
                 {t('No resources selected')}
@@ -315,7 +312,7 @@ const AgentAndToolsetModalView = ({
           itemProps={sliderItemProps}
           modalHeaderHeight={headerHeight}
           modalFooterHeight={footerHeight}
-          sliderDotsClassName="mt-6 h-[60px]"
+          sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
         />
       </div>
 
