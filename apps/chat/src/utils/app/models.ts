@@ -12,17 +12,11 @@ export const doesModelAllowTemperature = (
   model: DialAIEntityModel | undefined,
 ) => !!model?.features?.temperature;
 
-export const doesModelAllowAddons = (model: DialAIEntityModel | undefined) =>
-  !!model?.features?.addons;
-
 export const doesModelHaveSettings = (model: DialAIEntityModel | undefined) => {
   return (
     model &&
     model.type !== EntityType.Application && // custom settings in future
-    (model.type === EntityType.Assistant ||
-      doesModelAllowSystemPrompt(model) ||
-      doesModelAllowTemperature(model) ||
-      doesModelAllowAddons(model))
+    (doesModelAllowSystemPrompt(model) || doesModelAllowTemperature(model))
   );
 };
 
@@ -65,14 +59,6 @@ export const checkIsNotAllowedModelUtil = (
     modelInMap.functionStatus !== ApplicationStatus.DEPLOYED;
 
   if (isNotDeployedCustomApp) {
-    return true;
-  }
-
-  if (
-    modelInMap.type === EntityType.Assistant &&
-    conv.assistantModelId &&
-    !modelsMap[conv.assistantModelId]
-  ) {
     return true;
   }
 

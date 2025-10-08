@@ -6,7 +6,6 @@ import { Prompt } from '@/src/types/prompt';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
@@ -53,6 +52,9 @@ const migrateMessageAttachmentUrls = (message: Message): Message => {
       ),
       stages: message.custom_content.stages?.map(migrateStagesAttachmentUrls),
     },
+    ...(message.settings
+      ? { settings: { ...message.settings, selectedAddons: [] } }
+      : {}),
   };
 };
 
@@ -65,15 +67,12 @@ export const cleanConversation = (
   // added prompts (3/26/23)
   // added messages (4/16/23)
   // added replay (6/22/2023)
-  // added selectedAddons and refactored to not miss any new fields (7/6/2023)
   // added reference to make chatId (x-conversation-id header) a constant value (16/4/2025)
 
   const model: ConversationEntityModel = {
     id: conversation.model ? conversation.model.id : FALLBACK_MODEL_ID,
   };
-  const assistantModelId =
-    conversation.assistantModelId ??
-    DefaultsService.get('assistantSubmodelId', FALLBACK_ASSISTANT_SUBMODEL_ID);
+
   const conversationId =
     conversation.id ||
     constructPath(
@@ -91,8 +90,7 @@ export const cleanConversation = (
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
-    selectedAddons: conversation.selectedAddons ?? [],
-    assistantModelId,
+    selectedAddons: [],
     updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     ...(conversation.playback && {
       playback: {
@@ -135,7 +133,6 @@ export const cleanConversationHistory = (
   // added prompts (3/26/23)
   // added messages (4/16/23)
   // added replay (6/22/2023)
-  // added selectedAddons and refactored to not miss any new fields (7/6/2023)
 
   if (!Array.isArray(history)) {
     console.warn('history is not an array. Returning an empty array.');

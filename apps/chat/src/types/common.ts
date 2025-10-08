@@ -5,8 +5,6 @@ export { FeatureType } from '@epam/ai-dial-shared';
 export enum EntityType {
   Model = 'model',
   Application = 'application',
-  Assistant = 'assistant',
-  Addon = 'addon',
   Toolset = 'toolset',
 }
 
