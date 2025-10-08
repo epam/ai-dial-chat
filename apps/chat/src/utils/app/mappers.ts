@@ -26,6 +26,8 @@ export class EnumMapper {
         return FeatureType.Chat;
       case ApiKeys.Applications:
         return FeatureType.Application;
+      case ApiKeys.Toolsets:
+        return FeatureType.Toolset;
       case ApiKeys.Files:
       default:
         return FeatureType.File;
