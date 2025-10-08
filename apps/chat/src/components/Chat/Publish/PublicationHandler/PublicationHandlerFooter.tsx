@@ -488,6 +488,7 @@ export const PublicationHandlerFooter = ({
             className="text-accent-primary"
             onClick={handlePublicationReview}
             data-qa="go-to-review"
+            type="button"
           >
             {t(
               resourcesToReview.some((r) => r.reviewed)
