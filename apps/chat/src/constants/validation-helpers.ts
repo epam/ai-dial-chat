@@ -13,6 +13,7 @@ import { z as zodValidation } from 'zod';
 export const MarketplaceEntityBaseSchema = zodValidation.object({
   name: zodValidation
     .string()
+    .trim()
     .nonempty(formErrors.required)
     .min(2, formErrors.tooShort('Name', 2))
     .max(160, formErrors.tooLong('Name', 160))

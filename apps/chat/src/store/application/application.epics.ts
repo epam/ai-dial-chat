@@ -150,18 +150,22 @@ const createApplicationEpic: AppEpic = (action$) =>
         }),
 
         catchError((err) => {
-          if (err.status === 412) {
-            return of(
-              UIActions.showErrorToast(
-                translate(
-                  'An application with this name and this version already exists.',
+          console.error('Failed to create application:', err);
+
+          return concat(
+            of(ApplicationActions.createFail()),
+            iif(
+              () => err.status === 412,
+              of(
+                UIActions.showErrorToast(
+                  translate(
+                    'An application with this name and this version already exists.',
+                  ),
                 ),
               ),
-            );
-          }
-
-          console.error('Failed to create application:', err);
-          return of(ApplicationActions.createFail());
+              EMPTY,
+            ),
+          );
         }),
       );
     }),
