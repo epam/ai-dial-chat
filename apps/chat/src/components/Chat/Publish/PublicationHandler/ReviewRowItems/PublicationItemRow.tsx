@@ -178,6 +178,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         <EditableField
           value={inputVersion}
           isEditMode={
+            publicationModel &&
             publicationModel?.action !== PublishActions.DELETE
               ? true
               : isDeleteAction || isToolsetId(item.id)
@@ -318,6 +319,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <EditableField
           value={inputName}
           isEditMode={
+            publicationModel &&
             publicationModel?.action !== PublishActions.DELETE
               ? true
               : isDeleteAction || isToolsetId(item.id)
