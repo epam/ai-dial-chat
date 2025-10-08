@@ -109,11 +109,8 @@ const PublishDialogContainer = ({
     const fileResources = filteredConversationFiles.map(({ id }) => ({
       action,
       sourceUrl: id,
-      targetUrl: constructPath(
-        getFolderIdFromEntityId(entity.id),
-        splitEntityId(id).name,
-      ),
-      reviewUrl: transformIdToRootEntityId(id),
+      targetUrl: id,
+      reviewUrl: id,
     }));
 
     const iconResource =
