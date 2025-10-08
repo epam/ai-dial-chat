@@ -23,7 +23,11 @@ import { PublicationSelectors } from '@/src/store/selectors';
 
 import { PublicationFolderRow } from '@/src/components/Chat/Publish/PublicationHandler/ReviewRowItems/PublicationFolderRow';
 
-import { ShareEntity, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -50,6 +54,7 @@ export const BasePublicationResources = ({
         const { name } = parseEntityApiKey(splitEntityId(reviewUrl).name, {
           parseVersion:
             !publicationModel ||
+            publicationModel.action === PublishActions.DELETE ||
             isApplicationId(reviewUrl) ||
             isToolsetId(reviewUrl),
           parseModel: isConversationId(reviewUrl),

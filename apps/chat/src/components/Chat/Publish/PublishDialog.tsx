@@ -104,25 +104,28 @@ const PublishDialogContainer = ({
       reviewUrl: isFolder ? id : transformIdToRootEntityId(id),
     }));
 
-    const fileResources = filteredConversationFiles.map(({ id }) => {
-      const decodedId = ApiUtils.decodeApiUrl(id);
+    const fileResources =
+      action === PublishActions.DELETE
+        ? []
+        : filteredConversationFiles.map(({ id }) => {
+            const decodedId = ApiUtils.decodeApiUrl(id);
 
-      return {
-        action,
-        sourceUrl: decodedId,
-        targetUrl: constructPath(
-          getFolderIdFromEntityId(entity.id),
-          splitEntityId(decodedId).name,
-        ),
-        reviewUrl: decodedId,
-      };
-    });
+            return {
+              action,
+              sourceUrl: decodedId,
+              targetUrl: constructPath(
+                getFolderIdFromEntityId(entity.id),
+                splitEntityId(decodedId).name,
+              ),
+              reviewUrl: decodedId,
+            };
+          });
 
     const decodedIconUrl = entity.iconUrl
       ? ApiUtils.decodeApiUrl(entity.iconUrl)
       : '';
     const iconResource =
-      decodedIconUrl && !isFolder
+      decodedIconUrl && !isFolder && action !== PublishActions.DELETE
         ? [
             {
               action,
@@ -138,7 +141,9 @@ const PublishDialogContainer = ({
 
     const resourceTypes = [
       resourceType,
-      ...(isConversationId(entity.id) ? [BackendResourceType.FILE] : []),
+      ...(isConversationId(entity.id) && action !== PublishActions.DELETE
+        ? [BackendResourceType.FILE]
+        : []),
     ];
 
     return {

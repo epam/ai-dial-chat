@@ -363,15 +363,17 @@ export const getDefaultAllEditEntities = (
       allEditEntitiesMap[item.reviewUrl] = { name, version };
     });
   } else {
-    resources.forEach((item) => {
-      const apiKey = splitEntityId(item.reviewUrl).name;
+    resources.forEach(({ reviewUrl, action }) => {
+      const apiKey = splitEntityId(reviewUrl).name;
       const { name } = parseEntityApiKey(apiKey, {
-        parseModel: isConversationId(item.reviewUrl),
+        parseModel: isConversationId(reviewUrl),
         parseVersion:
-          isApplicationId(item.reviewUrl) || isToolsetId(item.reviewUrl),
+          isApplicationId(reviewUrl) ||
+          isToolsetId(reviewUrl) ||
+          action === PublishActions.DELETE,
       });
 
-      const entityIdPart = item.reviewUrl.split('/');
+      const entityIdPart = reviewUrl.split('/');
       entityIdPart[1] = PUBLIC_URL_PREFIX;
       const publicEntityId = entityIdPart.join('/');
       const versionGroup = versionGroups[publicEntityId];
@@ -381,14 +383,14 @@ export const getDefaultAllEditEntities = (
       ).at(0)?.version;
 
       if (!latestVersion) {
-        allEditEntitiesMap[item.reviewUrl] = {
+        allEditEntitiesMap[reviewUrl] = {
           name,
           version: DEFAULT_VERSION,
         };
       } else {
         const nextVersion = latestVersion.split('.');
         nextVersion[2] = String(+nextVersion[2] + 1);
-        allEditEntitiesMap[item.reviewUrl] = {
+        allEditEntitiesMap[reviewUrl] = {
           name,
           version: nextVersion.join('.'),
         };
