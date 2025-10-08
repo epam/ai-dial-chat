@@ -44,7 +44,6 @@ interface PublishDialogContainerProps {
   entity: ShareEntity & { iconUrl?: string };
   action: PublishActions;
   resourceType: BackendResourceType;
-  publishCredentials: boolean;
   isFolder: boolean;
   filteredConversationFiles: DialFile[];
 }
@@ -53,7 +52,6 @@ const PublishDialogContainer = ({
   entity,
   action,
   resourceType,
-  publishCredentials,
   isFolder,
   filteredConversationFiles,
 }: PublishDialogContainerProps) => {
@@ -104,7 +102,6 @@ const PublishDialogContainer = ({
       sourceUrl: id,
       targetUrl: id,
       reviewUrl: isFolder ? id : transformIdToRootEntityId(id),
-      publishCredentials,
     }));
 
     const fileResources = filteredConversationFiles.map(({ id }) => {
@@ -161,7 +158,6 @@ const PublishDialogContainer = ({
     isFolder,
     action,
     resourceType,
-    publishCredentials,
   ]);
 
   useEffect(() => {
@@ -173,7 +169,7 @@ const PublishDialogContainer = ({
         }),
       );
     }
-  }, [dispatch, publication.resources, publishCredentials]);
+  }, [dispatch, publication.resources]);
 
   return <PublicationHandler publication={publication} />;
 };
@@ -181,7 +177,7 @@ const PublishDialogContainer = ({
 const PublishDialogView = () => {
   const dispatch = useAppDispatch();
 
-  const { entity, action, isFolder, publishCredentials } = useAppSelector(
+  const { entity, action, isFolder } = useAppSelector(
     PublicationSelectors.selectPublishModel,
   )!;
   const conversationFiles = useAppSelector((state) =>
@@ -214,7 +210,6 @@ const PublishDialogView = () => {
         entity={entity}
         action={action}
         resourceType={resourceType}
-        publishCredentials={publishCredentials ?? false}
         isFolder={!!isFolder}
         filteredConversationFiles={filteredConversationFiles}
       />
