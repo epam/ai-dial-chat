@@ -1,6 +1,6 @@
 import {
   EntitySelectors,
-  PublishingApprovalModalSelectors,
+  PublishingTreeSelectors,
 } from '@/src/ui/selectors';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publishFilesTree';
 import { Locator, Page } from '@playwright/test';
@@ -10,7 +10,7 @@ export class FilesToApproveTree extends PublishFilesTree {
     super(
       page,
       parentLocator,
-      PublishingApprovalModalSelectors.filesToApproveContainer,
+      PublishingTreeSelectors.filesTree,
       EntitySelectors.file,
     );
   }

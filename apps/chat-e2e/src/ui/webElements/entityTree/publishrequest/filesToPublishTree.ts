@@ -1,4 +1,8 @@
-import { EntitySelectors, PublishingDialogSelectors } from '@/src/ui/selectors';
+import {
+  EntitySelectors,
+  PublishingDialogSelectors,
+  PublishingTreeSelectors,
+} from '@/src/ui/selectors';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publishFilesTree';
 import { Locator, Page } from '@playwright/test';
 
@@ -7,7 +11,7 @@ export class FilesToPublishTree extends PublishFilesTree {
     super(
       page,
       parentLocator,
-      PublishingDialogSelectors.filesToPublishContainer,
+      PublishingTreeSelectors.filesTree,
       EntitySelectors.file,
     );
   }

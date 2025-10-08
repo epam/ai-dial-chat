@@ -1,6 +1,6 @@
 import {
   EntitySelectors,
-  PublishingApprovalModalSelectors,
+  PublishingTreeSelectors,
 } from '@/src/ui/selectors';
 import { PublishFolder } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
@@ -10,7 +10,7 @@ export class FolderConversationsToApprove extends PublishFolder {
     super(
       page,
       parentLocator,
-      PublishingApprovalModalSelectors.conversationsToApproveContainer,
+      PublishingTreeSelectors.conversationsTree,
       EntitySelectors.conversation,
     );
   }

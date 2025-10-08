@@ -159,12 +159,7 @@ export const PublishingDialogSelectors = {
   unpublishFromLabel: '[data-qa="unpublish-from-label"]',
   unpublishFromPath: '[data-qa="unpublish-from-path"]',
   changePublishToPath: '[data-qa="change-button"]',
-  conversationsToPublishContainer:
-    '[data-qa="conversations-to-send-request-container"]',
-  filesToPublishContainer: '[data-qa="files-to-send-request-container"]',
-  promptsToPublishContainer: '[data-qa="prompts-to-send-request-container"]',
-  appsToPublishContainer: '[data-qa="applications-to-send-request-container"]',
-  sendButton: '[data-qa="publish"]',
+  sendButton: '[data-qa="send-request"]',
   noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
   fieldErrorMessage: `[data-qa="error-message"]`,
   requestNameErrorMessage: () =>
@@ -188,16 +183,17 @@ export const PublishingApprovalModalSelectors = {
   publicAuthor: '[data-qa="publication-display-author"]',
   publicAuthorLabel: '[data-qa="publication-display-author-label"]',
   requestCreatedLabel: '[data-qa="creation-date-label"]',
-  conversationsToApproveContainer:
-    '[data-qa="conversations-to-approve-container"]',
-  filesToApproveContainer: '[data-qa="files-to-approve-container"]',
-  promptsToApproveContainer: '[data-qa="prompts-to-approve-container"]',
-  applicationsToApproveContainer:
-    '[data-qa="applications-to-approve-container"]',
   goToReviewButton: '[data-qa="go-to-review"]',
   rejectButton: '[data-qa="reject"]',
   approveButton: '[data-qa="approve"]',
   duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
+};
+
+export const PublishingTreeSelectors = {
+  conversationsTree: '[data-qa="conversations-tree-container"]',
+  filesTree: '[data-qa="files-tree-container"]',
+  promptsTree: '[data-qa="prompts-tree-container"]',
+  appsTree: '[data-qa="applications-tree-container"]',
 };
 
 export const ChatSettingsModalSelectors = {

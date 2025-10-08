@@ -1,6 +1,6 @@
 import {
   EntitySelectors,
-  PublishingApprovalModalSelectors,
+  PublishingTreeSelectors,
 } from '../../../selectors';
 
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree/publishEntitiesTree';
@@ -11,7 +11,7 @@ export class ApplicationsToApproveTree extends PublishEntitiesTree {
     super(
       page,
       parentLocator,
-      PublishingApprovalModalSelectors.applicationsToApproveContainer,
+      PublishingTreeSelectors.appsTree,
       EntitySelectors.application,
     );
   }

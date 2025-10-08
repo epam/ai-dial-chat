@@ -194,6 +194,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           placeholder="0.0.1"
           errors={errors}
           tooltipIconClassName="ml-1"
+          dataQA="version"
         />
       </span>
     </div>

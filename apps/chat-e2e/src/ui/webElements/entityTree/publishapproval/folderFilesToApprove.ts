@@ -1,7 +1,7 @@
 import {
   EntitySelectors,
   FileSelectors,
-  PublishingApprovalModalSelectors,
+  PublishingTreeSelectors,
 } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
@@ -11,7 +11,7 @@ export class FolderFilesToApprove extends Folders {
     super(
       page,
       parentLocator,
-      PublishingApprovalModalSelectors.filesToApproveContainer,
+      PublishingTreeSelectors.filesTree,
       EntitySelectors.file,
     );
   }

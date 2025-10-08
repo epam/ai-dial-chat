@@ -64,9 +64,17 @@ export class EntitiesTree extends BaseElement {
   }
 
   getEntityByName(name: string, index?: number) {
-    return this.getChildElementBySelector(
-      this.entitySelector,
-    ).getElementLocatorByText(name, index);
+    return this.getChildElementBySelector(this.entitySelector)
+      .getElementLocatorByText(name, index)
+      .or(
+        this.getChildElementBySelector(this.entitySelector)
+          .getElementLocator()
+          .filter({
+            has: this.page.locator(
+              `${Tags.input}[${Attributes.value}="${name}"]`,
+            ),
+          }),
+      );
   }
 
   getEntityByExactName(name: string): Locator {

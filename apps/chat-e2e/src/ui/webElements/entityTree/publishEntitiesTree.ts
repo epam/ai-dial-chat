@@ -1,5 +1,5 @@
 import { Tags } from '@/src/ui/domData';
-import { PublishEntitySelectors } from '@/src/ui/selectors';
+import { IconSelectors, PublishEntitySelectors } from '@/src/ui/selectors';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
 
 export class PublishEntitiesTree extends EntitiesTree {
@@ -16,8 +16,14 @@ export class PublishEntitiesTree extends EntitiesTree {
   }
 
   public getEntityVersionInput(entityName: string, entityIndex?: number) {
-    return this.getEntityByName(entityName, entityIndex).locator(
-      `~* > ${Tags.input}${PublishEntitySelectors.version}`,
-    );
+    return this.getEntityByName(entityName, entityIndex)
+      .locator('~*')
+      .locator(`${Tags.input}${PublishEntitySelectors.version}`);
+  }
+
+  public getEntityVersionErrorIcon(entityName: string, entityIndex?: number) {
+    return this.getEntityVersionInput(entityName, entityIndex)
+      .locator('~*')
+      .locator(IconSelectors.exclamationCircleIcon);
   }
 }

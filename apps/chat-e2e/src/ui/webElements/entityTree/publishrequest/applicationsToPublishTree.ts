@@ -1,4 +1,4 @@
-import { EntitySelectors, PublishingDialogSelectors } from '../../../selectors';
+import {EntitySelectors, PublishingTreeSelectors} from '../../../selectors';
 
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree/publishEntitiesTree';
 import { Locator, Page } from '@playwright/test';
@@ -8,7 +8,7 @@ export class ApplicationsToPublishTree extends PublishEntitiesTree {
     super(
       page,
       parentLocator,
-      PublishingDialogSelectors.appsToPublishContainer,
+      PublishingTreeSelectors.appsTree,
       EntitySelectors.application,
     );
   }

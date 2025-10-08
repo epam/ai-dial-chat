@@ -89,31 +89,31 @@ const sections = [
   {
     featureType: FeatureType.Chat,
     sectionName: 'Conversations',
-    dataQa: 'conversations-to-approve',
+    dataQa: 'conversations-tree',
     ItemComponent: PublicationConversationRow,
   },
   {
     featureType: FeatureType.Prompt,
     sectionName: 'Prompts',
-    dataQa: 'prompts-to-approve',
+    dataQa: 'prompts-tree',
     ItemComponent: PublicationPromptRow,
   },
   {
     featureType: FeatureType.Application,
     sectionName: 'Applications',
-    dataQa: 'applications-to-approve',
+    dataQa: 'applications-tree',
     ItemComponent: PublicationApplicationRow,
   },
   {
     featureType: FeatureType.File,
     sectionName: 'Files',
-    dataQa: 'files-to-approve',
+    dataQa: 'files-tree',
     ItemComponent: PublicationFileRow,
   },
   {
     featureType: FeatureType.Toolset,
     sectionName: 'Toolsets',
-    dataQa: 'toolsets-to-approve',
+    dataQa: 'toolsets-tree',
     ItemComponent: PublicationToolsetRow,
   },
 ];
@@ -615,7 +615,7 @@ export function PublicationHandler({ publication }: Props) {
                     (publicationModel &&
                       publicationModel.action !== PublishActions.DELETE)) && (
                     <PublicationInfoSection
-                      labelDataQa="publication-display-author-label"
+                      labelDataQa="publicationAuthor-label"
                       label={t("Author's public name")}
                       valueDataQa="publication-display-author"
                       valueToDisplay={publication.displayAuthor ?? ''}
