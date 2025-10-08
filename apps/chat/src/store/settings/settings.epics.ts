@@ -22,7 +22,6 @@ import { PageType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 
 import {
-  AddonsActions,
   ApplicationActions,
   ApplicationTypesSchemasActions,
   ConversationsActions,
@@ -47,7 +46,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(UIActions.init()),
         of(ModelsActions.init()),
         of(ApplicationActions.init()),
-        of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
@@ -63,7 +61,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(MigrationActions.init()),
         of(ModelsActions.init()),
         of(ApplicationActions.init()),
-        of(AddonsActions.init()),
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
         of(FilesActions.init()),
@@ -76,7 +73,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),
-        of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ConversationsActions.init()),
@@ -88,7 +84,6 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(UIActions.init()),
         of(ModelsActions.init()),
         of(ApplicationActions.init()),
-        of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ConversationsActions.init()),

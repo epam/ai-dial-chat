@@ -15,7 +15,6 @@ export interface ThemesConfig {
   themes: Theme[];
   images: {
     'default-model': string;
-    'default-addon': string;
     favicon: string;
   };
 }
