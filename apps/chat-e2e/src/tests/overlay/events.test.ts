@@ -27,13 +27,16 @@ import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
-const addSelectedAddons = (message: Message): Message => {
-  return {
-    ...message,
-    ...(message.settings
-      ? { settings: { ...message.settings, selectedAddons: [] } }
-      : {}),
-  };
+const removeSelectedAddons = (message: Message): Message => {
+  if (message.settings) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { selectedAddons, ...restSettings } = message.settings;
+    return {
+      ...message,
+      settings: restSettings,
+    };
+  }
+  return message;
 };
 
 dialOverlayTest(
@@ -120,8 +123,8 @@ dialOverlayTest(
           actualMessagesString,
         ) as GetMessagesResponse;
         expect
-          .soft(messages.map(addSelectedAddons))
-          .toStrictEqual(expectedItem.messages);
+          .soft(messages)
+          .toStrictEqual(expectedItem.messages.map(removeSelectedAddons));
         await overlayDialog.closeButton.click();
       },
     );
