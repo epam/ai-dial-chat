@@ -15,6 +15,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { BackendResourceType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -43,6 +44,7 @@ interface PublishDialogContainerProps {
   entity: ShareEntity & { iconUrl?: string };
   action: PublishActions;
   resourceType: BackendResourceType;
+  publishCredentials: boolean;
   isFolder: boolean;
   filteredConversationFiles: DialFile[];
 }
@@ -51,6 +53,7 @@ const PublishDialogContainer = ({
   entity,
   action,
   resourceType,
+  publishCredentials,
   isFolder,
   filteredConversationFiles,
 }: PublishDialogContainerProps) => {
@@ -101,29 +104,37 @@ const PublishDialogContainer = ({
       sourceUrl: id,
       targetUrl: id,
       reviewUrl: isFolder ? id : transformIdToRootEntityId(id),
+      publishCredentials,
     }));
 
-    const fileResources = filteredConversationFiles.map(({ id }) => ({
-      action,
-      sourceUrl: id,
-      targetUrl: constructPath(
-        getFolderIdFromEntityId(entity.id),
-        splitEntityId(id).name,
-      ),
-      reviewUrl: id,
-    }));
+    const fileResources = filteredConversationFiles.map(({ id }) => {
+      const decodedId = ApiUtils.decodeApiUrl(id);
 
+      return {
+        action,
+        sourceUrl: decodedId,
+        targetUrl: constructPath(
+          getFolderIdFromEntityId(entity.id),
+          splitEntityId(decodedId).name,
+        ),
+        reviewUrl: decodedId,
+      };
+    });
+
+    const decodedIconUrl = entity.iconUrl
+      ? ApiUtils.decodeApiUrl(entity.iconUrl)
+      : '';
     const iconResource =
-      entity.iconUrl && !isFolder
+      decodedIconUrl && !isFolder
         ? [
             {
               action,
-              sourceUrl: entity.iconUrl,
+              sourceUrl: decodedIconUrl,
               targetUrl: constructPath(
                 getFolderIdFromEntityId(entity.id),
-                splitEntityId(entity.iconUrl).name,
+                splitEntityId(decodedIconUrl).name,
               ),
-              reviewUrl: entity.iconUrl,
+              reviewUrl: decodedIconUrl,
             },
           ]
         : [];
@@ -143,11 +154,14 @@ const PublishDialogContainer = ({
     };
   }, [
     filteredEntities,
+    filteredConversationFiles,
+    entity.iconUrl,
+    entity.id,
+    entity.createdAt,
+    isFolder,
     action,
     resourceType,
-    entity,
-    filteredConversationFiles,
-    isFolder,
+    publishCredentials,
   ]);
 
   useEffect(() => {
@@ -159,7 +173,7 @@ const PublishDialogContainer = ({
         }),
       );
     }
-  }, [dispatch, publication.resources]);
+  }, [dispatch, publication.resources, publishCredentials]);
 
   return <PublicationHandler publication={publication} />;
 };
@@ -167,7 +181,7 @@ const PublishDialogContainer = ({
 const PublishDialogView = () => {
   const dispatch = useAppDispatch();
 
-  const { entity, action, isFolder } = useAppSelector(
+  const { entity, action, isFolder, publishCredentials } = useAppSelector(
     PublicationSelectors.selectPublishModel,
   )!;
   const conversationFiles = useAppSelector((state) =>
@@ -200,6 +214,7 @@ const PublishDialogView = () => {
         entity={entity}
         action={action}
         resourceType={resourceType}
+        publishCredentials={publishCredentials ?? false}
         isFolder={!!isFolder}
         filteredConversationFiles={filteredConversationFiles}
       />
