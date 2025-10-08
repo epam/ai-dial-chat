@@ -1,5 +1,4 @@
 export { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
-export { AddonsActions } from '@/src/store/addons/addons.reducers';
 export { ApplicationActions } from '@/src/store/application/application.reducers';
 export { ApplicationTypesSchemasActions } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.reducers';
 export { AuthActions } from '@/src/store/auth/auth.reducers';
