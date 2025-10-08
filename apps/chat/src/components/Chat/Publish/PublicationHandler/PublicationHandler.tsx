@@ -571,7 +571,8 @@ export function PublicationHandler({ publication }: Props) {
               <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                 <div className="flex flex-col px-3 pb-4 md:px-5">
                   <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                  {!isReview || (isEditMode && !isSomeResourceIsUnpublish) ? (
+                  {publicationModel?.action !== PublishActions.DELETE ||
+                  (isEditMode && !isSomeResourceIsUnpublish) ? (
                     <PublishToSection
                       path={publishToUrl}
                       maxDepth={maxPublishToDepth}
@@ -580,7 +581,11 @@ export function PublicationHandler({ publication }: Props) {
                   ) : (
                     <PublicationInfoSection
                       labelDataQa="publish-to-label"
-                      label={t('Publish to')}
+                      label={t(
+                        publicationModel?.action === PublishActions.DELETE
+                          ? 'Unpublish from'
+                          : 'Publish to',
+                      )}
                       valueDataQa="publish-to-path"
                       valueToDisplay={publishToUrl}
                       tooltip={
@@ -598,7 +603,8 @@ export function PublicationHandler({ publication }: Props) {
                     />
                   )}
 
-                  {(!isPublicationHasOnlyUnpublishEntities || !isReview) && (
+                  {(!isPublicationHasOnlyUnpublishEntities ||
+                    publicationModel?.action !== PublishActions.DELETE) && (
                     <PublicationInfoSection
                       labelDataQa="publication-display-author-label"
                       label={t("Author's public name")}
