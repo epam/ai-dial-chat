@@ -74,7 +74,10 @@ export function PublicationFilters({
     [dispatch],
   );
 
-  const isRootTarget = editedPublishToUrl.split('/').length === 1;
+  const targetFolder = publicationModel
+    ? editedPublishToUrl
+    : publication.targetFolder;
+  const isRootTarget = targetFolder.split('/').length === 1;
 
   if (isRulesLoading) {
     return (
