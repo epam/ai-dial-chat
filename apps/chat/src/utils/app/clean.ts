@@ -52,9 +52,9 @@ const migrateMessageAttachmentUrls = (message: Message): Message => {
       ),
       stages: message.custom_content.stages?.map(migrateStagesAttachmentUrls),
     },
-    settings: message.settings
-      ? { ...message.settings, selectedAddons: [] }
-      : undefined,
+    ...(message.settings
+      ? { settings: { ...message.settings, selectedAddons: [] } }
+      : {}),
   };
 };
 
