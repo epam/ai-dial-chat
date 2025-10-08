@@ -212,7 +212,11 @@ export const PublicationFolderRow = ({
             <EditableField
               value={inputName}
               isEditMode={
-                publishModel ? true : isEditDisabled ? false : isEditMode
+                publishModel?.action !== PublishActions.DELETE
+                  ? true
+                  : isEditDisabled
+                    ? false
+                    : isEditMode
               }
               onChange={handleChangeName}
               inputClassName={classNames(
