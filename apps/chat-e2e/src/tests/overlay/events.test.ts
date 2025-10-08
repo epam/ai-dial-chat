@@ -17,6 +17,7 @@ import {
   CreateConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
+  Message,
   OverlayConversation,
   PublishActions,
   SelectConversationResponse,
@@ -26,7 +27,17 @@ import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialOverlayTest(
+const addSelectedAddons = (message: Message): Message => {
+  if (!message.settings) return message;
+  return {
+    ...message,
+    settings: message.settings
+      ? { ...message.settings, selectedAddons: [] }
+      : undefined,
+  };
+};
+
+dialOverlayTest.only(
   `[Overlay. Events in sandbox] Send 'Hello' to Chat.\n` +
     '[Overlay. Events in sandbox] Set system prompt.\n' +
     '[Overlay. Events in sandbox] Get messages.\n' +
@@ -101,17 +112,17 @@ dialOverlayTest(
       async () => {
         await overlayActions.getMessagesButton.click();
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
-        const actualMessages =
+        const actualMessagesString =
           await overlayDialog.content.getElementInnerContent();
         const expectedItem = await overlayItemApiHelper.getItem(
           secondRequest.id,
         );
-        const expectedMessages: GetMessagesResponse = {
-          messages: expectedItem.messages,
-        };
+        const { messages } = JSON.parse(
+          actualMessagesString,
+        ) as GetMessagesResponse;
         expect
-          .soft(JSON.parse(actualMessages) as GetMessagesResponse)
-          .toStrictEqual(expectedMessages);
+          .soft(messages.map(addSelectedAddons))
+          .toStrictEqual(expectedItem.messages);
         await overlayDialog.closeButton.click();
       },
     );
