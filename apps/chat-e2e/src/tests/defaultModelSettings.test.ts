@@ -438,7 +438,6 @@ dialTest.skip(
     const searchTerm = randomEntity.name.substring(0, 3);
     let expectedMatchedModelsCount: number;
     let expectedMatchedAppsCount: number;
-    let expectedMatchedAssistantsCount: number;
 
     await dialTest.step(
       'Create new conversation and click "Search on My workspace" link',
@@ -472,26 +471,14 @@ dialTest.skip(
             (a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
               a.version?.toLowerCase().includes(searchTerm.toLowerCase())),
         );
-        const matchedAssistants = configModels.filter(
-          (a) =>
-            a.type === EntityType.Assistant &&
-            (a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              a.version?.toLowerCase().includes(searchTerm.toLowerCase())),
-        );
         expectedMatchedModelsCount =
           ModelsUtil.groupEntitiesByName(matchedModels).size;
         expectedMatchedAppsCount =
           ModelsUtil.groupEntitiesByName(matchedApplications).size;
-        expectedMatchedAssistantsCount =
-          ModelsUtil.groupEntitiesByName(matchedAssistants).size;
 
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(
-            expectedMatchedModelsCount +
-              expectedMatchedAppsCount +
-              expectedMatchedAssistantsCount,
-          );
+          .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
       },
     );
 
@@ -509,17 +496,13 @@ dialTest.skip(
         entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(expectedMatchedModelsCount + expectedMatchedAssistantsCount);
+          .toBe(expectedMatchedModelsCount);
 
         await marketplaceFilter.checkTypeFilterOption(Types.applications);
         entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(
-            expectedMatchedModelsCount +
-              expectedMatchedAssistantsCount +
-              expectedMatchedAppsCount,
-          );
+          .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
       },
     );
 

@@ -13,9 +13,7 @@ export interface AuthTokens {
   bucket: string;
   bucketJson?: string;
   models?: string;
-  addons?: string;
   themes?: string;
-  recentAddons?: string;
   recentModels?: string;
 }
 
