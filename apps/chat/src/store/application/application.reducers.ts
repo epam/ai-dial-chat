@@ -26,10 +26,7 @@ const initialState: ApplicationState = {
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
   appLogs: undefined,
-  shouldSaveApplication: false,
-  exitAfterSave: false,
   publicFolders: [],
-  hasUnsavedChanges: false,
   logsEntityId: undefined,
   editorStep: MarketplaceEditorSteps.General,
 };
@@ -202,12 +199,6 @@ export const applicationSlice = createSlice({
         state.appLoading = UploadStatus.UNINITIALIZED;
       }
     },
-    setShouldSaveApplication: (state, action: PayloadAction<boolean>) => {
-      state.shouldSaveApplication = action.payload;
-    },
-    setExitAfterSave: (state, action: PayloadAction<boolean>) => {
-      state.exitAfterSave = action.payload;
-    },
     enterEditMode: (
       state,
       _action: PayloadAction<{
@@ -242,9 +233,6 @@ export const applicationSlice = createSlice({
       { payload }: PayloadAction<string[] | undefined>,
     ) {
       state.returnConversationIds = payload;
-    },
-    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
-      state.hasUnsavedChanges = action.payload;
     },
     setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
       state.selectedWidget = payload;

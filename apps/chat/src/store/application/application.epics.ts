@@ -213,10 +213,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ApplicationActions.update.type),
     switchMap(({ payload }) => {
-      const initialActions$ = of(
-        ApplicationActions.updateStart(),
-        ApplicationActions.setShouldSaveApplication(false),
-      );
+      const initialActions$ = of(ApplicationActions.updateStart());
 
       if (payload.applicationData.sharedWithMe) {
         return concat(
@@ -364,7 +361,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
     }),
   );
 
-const editApplicationEpic: AppEpic = (action$, state$) =>
+const editApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ApplicationActions.edit.type),
     switchMap(({ payload }) => {
@@ -386,16 +383,10 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
           ),
         ),
         tap(() => {
-          if (payload.redirectUrl && !state$.value.application.exitAfterSave) {
+          if (payload.redirectUrl) {
             Router.push({
               pathname: payload.redirectUrl,
               query: { id: payload.updatedApplication.id },
-            });
-          }
-          if (state$.value.application.exitAfterSave) {
-            Router.push({
-              pathname: Routes.Marketplace,
-              query: { tab: MarketplaceTabs.MY_WORKSPACE },
             });
           }
         }),

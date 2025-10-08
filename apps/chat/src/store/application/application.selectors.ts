@@ -38,20 +38,11 @@ const selectApplicationLogs = createSelector([_selectAppLogs], (appLogs) => {
     .join('');
 });
 
-const selectShouldSaveApplication = (state: RootState) =>
-  rootSelector(state).shouldSaveApplication;
-
-const selectExitAfterSave = (state: RootState) =>
-  rootSelector(state).exitAfterSave;
-
 const selectPublicFolders = (state: RootState) =>
   rootSelector(state).publicFolders;
 
 const selectReturnConversationIds = (state: RootState) =>
   rootSelector(state).returnConversationIds;
-
-const selectHasUnsavedChanges = (state: RootState) =>
-  rootSelector(state).hasUnsavedChanges;
 
 const selectSelectedWidget = (state: RootState) =>
   rootSelector(state).selectedWidget;
@@ -68,12 +59,9 @@ export const ApplicationSelectors = {
   selectIsApplicationLoading,
   selectIsLogsLoading,
   selectApplicationDetail,
-  selectShouldSaveApplication,
-  selectExitAfterSave,
   selectApplicationLogs,
   selectPublicFolders,
   selectReturnConversationIds,
-  selectHasUnsavedChanges,
   selectInitialized,
   selectSelectedWidget,
   selectLogsEntityId,

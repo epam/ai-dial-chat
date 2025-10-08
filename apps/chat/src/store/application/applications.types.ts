@@ -13,12 +13,9 @@ export interface ApplicationState {
   logsLoadingStatus: UploadStatus;
   appDetails: CustomApplicationModel | undefined;
   appLogs: ApplicationLogsType | undefined;
-  shouldSaveApplication?: boolean;
-  exitAfterSave?: boolean;
   publicFolders: FolderInterface[];
 
   returnConversationIds?: string[];
-  hasUnsavedChanges?: boolean;
   selectedWidget?: string;
 
   logsEntityId: string | undefined;
