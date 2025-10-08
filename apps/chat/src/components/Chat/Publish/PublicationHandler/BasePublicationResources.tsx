@@ -8,6 +8,7 @@ import {
 import {
   isApplicationId,
   isConversationId,
+  isFileId,
   isRootEntity,
   isToolsetId,
 } from '@/src/utils/app/id';
@@ -67,9 +68,15 @@ export const BasePublicationResources = ({
       }),
     [currentPublicationInvalidEntities, publicationModel, resources],
   );
+
   const rootEntities = useMemo(
-    () => entities.filter((entity) => isRootEntity(entity.id)),
-    [entities],
+    () =>
+      entities.filter(
+        (entity) =>
+          // in case of publication creation, we need to show all files as root entities
+          isRootEntity(entity.id) || (publicationModel && isFileId(entity.id)),
+      ),
+    [entities, publicationModel],
   );
 
   const folders = useMemo(
@@ -86,8 +93,13 @@ export const BasePublicationResources = ({
     [apiKey, entities],
   );
   const rootFolders = useMemo(
-    () => folders.filter((folder) => isRootEntity(folder.id)),
-    [folders],
+    () =>
+      folders.filter(
+        (folder) =>
+          // for files, we don't need to show folders in case of publication creation
+          isRootEntity(folder.id) && !(publicationModel && isFileId(folder.id)),
+      ),
+    [folders, publicationModel],
   );
 
   return (

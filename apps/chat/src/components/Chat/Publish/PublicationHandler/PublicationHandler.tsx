@@ -32,7 +32,7 @@ import {
   splitEntityId,
 } from '@/src/utils/app/shared-utils';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { ApiKeys, BackendResourceType, FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -347,7 +347,10 @@ export function PublicationHandler({ publication }: Props) {
           return {
             action,
             sourceUrl: sourceUrl ?? '',
-            targetUrl: constructPath(newFolderId, newApiKey),
+            targetUrl:
+              isReview || !isFileId(reviewUrl)
+                ? constructPath(newFolderId, newApiKey)
+                : constructPath(ApiKeys.Files, editedPublishToUrl, newApiKey),
             reviewUrl,
             publishCredentials:
               (publishCredentials &&
