@@ -9,6 +9,7 @@ import {
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
 import { getValidFormFields } from '@/src/utils/app/forms';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import {
@@ -103,6 +104,7 @@ export const AppsEditor = () => {
 
   const changeEditorTabRef = useRef<MarketplaceEditorSteps | null>(null);
   const saveAndExitRef = useRef<boolean>(false);
+  const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const modelsWithFolder = useMemo(
     () => models.map((m) => ({ ...m, folderId: '' })),
@@ -252,7 +254,7 @@ export const AppsEditor = () => {
 
   const handleSaveAndExit = useCallback(
     (saveDraft = false) => {
-      if ((!isDirty && appDetails) || !appDetails) {
+      if ((!isDirty && appDetails) || !appDetails || isAppPublic) {
         void router.push(
           router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
         );
@@ -262,12 +264,16 @@ export const AppsEditor = () => {
       saveAndExitRef.current = true;
       handleSubmit(undefined, saveDraft);
     },
-    [handleSubmit, isDirty, router, appDetails],
+    [isDirty, appDetails, isAppPublic, handleSubmit, router],
   );
 
   const handleTabClick = useCallback(
     (tab: MarketplaceEditorSteps) => {
       if (tab === editorStep) return;
+      if (isAppPublic) {
+        dispatch(ApplicationActions.setEditorStep(tab));
+        return;
+      }
       if (!isDirty && appDetails) {
         handleSubmit(
           () => dispatch(ApplicationActions.setEditorStep(tab)),
@@ -278,10 +284,16 @@ export const AppsEditor = () => {
         handleSubmit(undefined, true);
       }
     },
-    [appDetails, dispatch, editorStep, handleSubmit, isDirty],
+    [appDetails, dispatch, editorStep, handleSubmit, isAppPublic, isDirty],
   );
 
   const handleNextClick = useCallback(() => {
+    if (isAppPublic) {
+      dispatch(
+        ApplicationActions.setEditorStep(MarketplaceEditorSteps.Settings),
+      );
+      return;
+    }
     if (!isDirty && appDetails) {
       handleSubmit(() =>
         dispatch(
@@ -292,12 +304,12 @@ export const AppsEditor = () => {
       changeEditorTabRef.current = MarketplaceEditorSteps.Settings;
       handleSubmit();
     }
-  }, [dispatch, handleSubmit, isDirty, appDetails]);
+  }, [isAppPublic, isDirty, appDetails, dispatch, handleSubmit]);
 
   const handleAutoSave = useCallback(() => {
-    if (editorStep === MarketplaceEditorSteps.General) return;
+    if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
     handleSubmit(undefined, true, true);
-  }, [editorStep, handleSubmit]);
+  }, [editorStep, handleSubmit, isAppPublic]);
 
   return (
     <FormProvider {...formMethods}>
