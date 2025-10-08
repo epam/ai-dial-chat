@@ -47,7 +47,7 @@ export const ToolsetEditor = () => {
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
 
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
-  const saveAndExitRef = useRef<boolean>(false);
+  const saveAndExitRef = useRef<Routes.Chat | Routes.Marketplace | null>(null);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -91,7 +91,7 @@ export const ToolsetEditor = () => {
             oldToolset: toolsetDetails,
             newToolset: payloadToolset,
             tabToOpen: changeEditorTabRef.current ?? undefined,
-            isSaveAndExit: saveAndExitRef.current,
+            redirectUrl: saveAndExitRef.current ?? undefined,
           }),
         );
       } else {
@@ -103,7 +103,7 @@ export const ToolsetEditor = () => {
       }
 
       changeEditorTabRef.current = null;
-      saveAndExitRef.current = false;
+      saveAndExitRef.current = null;
       formMethods.reset(formMethods.getValues(), {
         keepIsValid: true,
         keepErrors: true,
@@ -135,7 +135,7 @@ export const ToolsetEditor = () => {
             .then(() => cb?.());
         } else {
           changeEditorTabRef.current = null;
-          saveAndExitRef.current = false;
+          saveAndExitRef.current = null;
           cb?.();
         }
       });
@@ -144,15 +144,17 @@ export const ToolsetEditor = () => {
   );
 
   const handleSaveAndExit = useCallback(
-    (saveDraft = false) => {
+    (saveDraft = false, redirectToChat = false) => {
+      const chatUrl =
+        (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
+
       if ((!isDirty && toolsetDetails) || !toolsetDetails) {
-        void router.push(
-          router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
-        );
+        void router.push(chatUrl || marketplaceRoute);
+
         return;
       }
 
-      saveAndExitRef.current = true;
+      saveAndExitRef.current = chatUrl || Routes.Marketplace;
       handleSubmit(undefined, saveDraft);
     },
     [handleSubmit, isDirty, router, toolsetDetails],

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -24,16 +24,20 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
+  ConversationsSelectors,
   ModelsSelectors,
+  SettingsSelectors,
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { Routes } from '@/src/constants/routes';
 
 import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
+import { Feature } from '@epam/ai-dial-shared';
 import { capitalize } from 'lodash';
 import omit from 'lodash-es/omit';
 
@@ -57,7 +61,7 @@ const generalStepFields = ['name', 'version'];
 
 interface AppsEditorHeaderProps {
   onTabClick: (tab: MarketplaceEditorSteps) => void;
-  onSave: (saveDraft?: boolean) => void;
+  onSave: (saveDraft?: boolean, redirectToChat?: boolean) => void;
 }
 
 export const AppsEditorHeader = ({
@@ -72,6 +76,7 @@ export const AppsEditorHeader = ({
     },
   } = useRouter();
   const { t } = useTranslation(Translation.Marketplace);
+  const router = useRouter();
   const dispatch = useAppDispatch();
 
   const { formState, trigger } = useFormContext<AppsEditorFormType>();
@@ -79,6 +84,7 @@ export const AppsEditorHeader = ({
   const isValid = formState.isValid;
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
+  const [redirectToChat, setRedirectToChat] = useState(false);
 
   const currentStep = useAppSelector(ApplicationSelectors.selectEditorStep);
   const appDetails = useAppSelector(
@@ -86,6 +92,15 @@ export const AppsEditorHeader = ({
   );
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const areConversationsLoaded = useAppSelector(
+    ConversationsSelectors.areConversationsUploaded,
+  );
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const isNewConversationDisabled = enabledFeatures.has(
+    Feature.HideNewConversation,
   );
 
   const isEditing = !!appDetails;
@@ -149,6 +164,34 @@ export const AppsEditorHeader = ({
     [onTabClick],
   );
 
+  const createNewConversation = useCallback(() => {
+    if (!areConversationsLoaded || isNewConversationDisabled) return;
+    dispatch(
+      ConversationsActions.createNewConversations({
+        names: [DEFAULT_CONVERSATION_NAME],
+      }),
+    );
+    dispatch(ConversationsActions.resetSearch());
+  }, [areConversationsLoaded, dispatch, isNewConversationDisabled]);
+
+  const handleLogoClick = useCallback(
+    async (e: MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      if (isEditing) {
+        const isValid = await trigger();
+
+        if (!isValid) {
+          setSaveDraftDialog(true);
+          setRedirectToChat(true);
+          return;
+        }
+      }
+      createNewConversation();
+      void router.push(Routes.Chat);
+    },
+    [createNewConversation, isEditing, router, trigger],
+  );
+
   const handleSaveAndRedirect = useCallback(async () => {
     if (isEditing) {
       const isValid = await trigger();
@@ -164,17 +207,22 @@ export const AppsEditorHeader = ({
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
       setSaveDraftDialog(false);
-      if (result) {
+      if (result && redirectToChat) {
+        createNewConversation();
+        onSave(true, true);
+        return;
+      } else if (result) {
         onSave(true);
         return;
       }
+      setRedirectToChat(false);
       const invalidStep = Array.from(errorSteps)[0];
 
       if (invalidStep) {
         dispatch(ApplicationActions.setEditorStep(invalidStep));
       }
     },
-    [dispatch, errorSteps, onSave],
+    [createNewConversation, dispatch, errorSteps, onSave, redirectToChat],
   );
 
   const handleCustomViewerExit = useCallback(() => {
@@ -239,6 +287,7 @@ export const AppsEditorHeader = ({
         title={title}
         saveLabel={saveLabel}
         onSave={handleSaveAndRedirect}
+        onLogoClick={handleLogoClick}
         dataQa="app-editor-header"
       />
 

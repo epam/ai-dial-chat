@@ -331,8 +331,12 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   iif(
-                    () => !!payload.isSaveAndExit,
-                    of(ApplicationActions.exitEditor({})),
+                    () => !!payload.isSaveAndExit || !!payload.redirectUrl,
+                    of(
+                      ApplicationActions.exitEditor({
+                        redirectUrl: payload.redirectUrl,
+                      }),
+                    ),
                     EMPTY,
                   ),
                   iif(
@@ -738,6 +742,12 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       if (payload.redirectUrl) {
         router.push({
           pathname: payload.redirectUrl,
+          query:
+            payload.redirectUrl === Routes.Marketplace
+              ? {
+                  tab: MarketplaceTabs.MY_WORKSPACE,
+                }
+              : undefined,
         });
       } else if (publicationUrl) {
         router.push({

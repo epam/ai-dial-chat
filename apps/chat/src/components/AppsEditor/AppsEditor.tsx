@@ -103,7 +103,7 @@ export const AppsEditor = () => {
   const isSchemaApplicationType = !isApplicationType(type);
 
   const changeEditorTabRef = useRef<MarketplaceEditorSteps | null>(null);
-  const saveAndExitRef = useRef<boolean>(false);
+  const saveAndExitRef = useRef<Routes.Chat | Routes.Marketplace | null>(null);
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const modelsWithFolder = useMemo(
@@ -192,13 +192,13 @@ export const AppsEditor = () => {
               ? decodeURIComponent(publicationUrl.toString())
               : undefined,
             tabToOpen: changeEditorTabRef.current ?? undefined,
-            isSaveAndExit: saveAndExitRef.current,
+            redirectUrl: saveAndExitRef.current ?? undefined,
           }),
         );
       }
 
       changeEditorTabRef.current = null;
-      saveAndExitRef.current = false;
+      saveAndExitRef.current = null;
       formMethods.reset(formMethods.getValues(), {
         keepIsValid: true,
         keepErrors: true,
@@ -245,7 +245,7 @@ export const AppsEditor = () => {
           .then(() => cb?.());
       } else {
         changeEditorTabRef.current = null;
-        saveAndExitRef.current = false;
+        saveAndExitRef.current = null;
         cb?.();
       }
     },
@@ -253,15 +253,16 @@ export const AppsEditor = () => {
   );
 
   const handleSaveAndExit = useCallback(
-    (saveDraft = false) => {
+    (saveDraft = false, redirectToChat = false) => {
+      const chatUrl =
+        (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
+
       if ((!isDirty && appDetails) || !appDetails || isAppPublic) {
-        void router.push(
-          router.query.publicationUrl ? Routes.Chat : marketplaceRoute,
-        );
+        void router.push(chatUrl || marketplaceRoute);
         return;
       }
 
-      saveAndExitRef.current = true;
+      saveAndExitRef.current = chatUrl || Routes.Marketplace;
       handleSubmit(undefined, saveDraft);
     },
     [isDirty, appDetails, isAppPublic, handleSubmit, router],
