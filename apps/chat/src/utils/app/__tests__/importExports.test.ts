@@ -117,7 +117,6 @@ describe('cleanData Functions', () => {
     prompt: DEFAULT_SYSTEM_PROMPT,
     temperature: DEFAULT_TEMPERATURE,
     selectedAddons: [],
-    assistantModelId: 'gpt-4o',
     folderId: getConversationRootId(bucket),
     updatedAt: expect.any(Number),
   };

@@ -44,10 +44,10 @@ export enum LikeState {
 export interface MessageSettings {
   prompt: string;
   temperature: number;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
-  assistantModelId?: string;
+  /**
+   * @deprecated but required by core validation
+   */
+  selectedAddons?: string[];
 }
 
 export interface ConversationEntityModel {
@@ -175,13 +175,13 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
   prompt: string;
   temperature: number;
+  /**
+   * @deprecated but required by core validation
+   */
+  selectedAddons?: string[];
   reference?: string;
   replay?: Replay;
   playback?: Playback;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
-  assistantModelId?: string;
 
   isMessageStreaming?: boolean;
   customViewState?: Record<string, unknown>;

@@ -33,9 +33,7 @@ usernames.forEach((username, index) => {
       // Store additional data for first worker only
       if (index < numWorkers) {
         process.env.MODELS = authData.models ?? '[]';
-        process.env.ADDONS = authData.addons ?? '[]';
         process.env.THEMES = authData.themes ?? '[]';
-        process.env.RECENT_ADDONS = authData.recentAddons ?? '[]';
         process.env.RECENT_MODELS = authData.recentModels ?? '[]';
       }
     } catch (error) {
