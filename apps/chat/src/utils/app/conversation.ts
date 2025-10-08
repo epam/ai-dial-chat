@@ -16,7 +16,7 @@ import {
   parseEntityApiKey,
 } from '@/src/utils/server/api';
 
-import { ApiKeys, EntityType, PartialBy } from '@/src/types/common';
+import { ApiKeys, PartialBy } from '@/src/types/common';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
