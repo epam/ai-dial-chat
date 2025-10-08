@@ -15,6 +15,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { BackendResourceType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -106,27 +107,34 @@ const PublishDialogContainer = ({
       publishCredentials,
     }));
 
-    const fileResources = filteredConversationFiles.map(({ id }) => ({
-      action,
-      sourceUrl: id,
-      targetUrl: constructPath(
-        getFolderIdFromEntityId(entity.id),
-        splitEntityId(id).name,
-      ),
-      reviewUrl: id,
-    }));
+    const fileResources = filteredConversationFiles.map(({ id }) => {
+      const decodedId = ApiUtils.decodeApiUrl(id);
 
+      return {
+        action,
+        sourceUrl: decodedId,
+        targetUrl: constructPath(
+          getFolderIdFromEntityId(entity.id),
+          splitEntityId(decodedId).name,
+        ),
+        reviewUrl: decodedId,
+      };
+    });
+
+    const decodedIconUrl = entity.iconUrl
+      ? ApiUtils.decodeApiUrl(entity.iconUrl)
+      : '';
     const iconResource =
-      entity.iconUrl && !isFolder
+      decodedIconUrl && !isFolder
         ? [
             {
               action,
-              sourceUrl: entity.iconUrl,
+              sourceUrl: decodedIconUrl,
               targetUrl: constructPath(
                 getFolderIdFromEntityId(entity.id),
-                splitEntityId(entity.iconUrl).name,
+                splitEntityId(decodedIconUrl).name,
               ),
-              reviewUrl: entity.iconUrl,
+              reviewUrl: decodedIconUrl,
             },
           ]
         : [];
