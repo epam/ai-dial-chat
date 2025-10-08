@@ -715,7 +715,7 @@ dialTest(
           version: appEntity.version,
           description: appEntity.description,
         });
-        await appEditorHeader.focusOn({isHttpMethodTriggered: false});
+        await appEditorHeader.focusOn({ isHttpMethodTriggered: false });
         await appEditorHeader.logo.click();
         await dialHomePage.waitForPageLoaded();
         await baseAssertion.assertElementState(agentInfo, 'visible'); // Assert no validation error appeared
