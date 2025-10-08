@@ -10,7 +10,7 @@ import {
   isDialAiEntityModel,
   isExternalApp,
 } from '@/src/utils/app/application';
-import { isMyApplication } from '@/src/utils/app/id';
+import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -89,7 +89,9 @@ export const ApplicationCard = memo(
 
     const screenState = useScreenState();
 
-    const isMyEntity = isMyApplication(entity);
+    const isMyEntity = isAgentsTab
+      ? isMyApplication(entity)
+      : isMyToolset(entity);
     const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
     return (
