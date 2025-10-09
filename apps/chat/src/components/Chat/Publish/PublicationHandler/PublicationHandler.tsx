@@ -208,14 +208,14 @@ export function PublicationHandler({ publication }: Props) {
   }, [isEditMode, isReview, publication.displayAuthor]);
 
   useEffect(() => {
-    if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
+    if (publication.targetFolder !== PUBLIC_URL_PREFIX && isReview) {
       dispatch(
         PublicationActions.uploadRules({
           path: getIdWithoutFeatureType(publication.targetFolder),
         }),
       );
     }
-  }, [dispatch, publication.targetFolder]);
+  }, [dispatch, isReview, publication.targetFolder]);
 
   useEffect(() => {
     if (
@@ -229,7 +229,7 @@ export function PublicationHandler({ publication }: Props) {
         }),
       );
     }
-  }, [editedPublishToUrl, dispatch, isReview]);
+  }, [dispatch, editedPublishToUrl, isReview]);
 
   useEffect(() => {
     if (!isReview) {
