@@ -16,7 +16,11 @@ import {
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
-import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  constructPath,
+  getEntityBucket,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApiKeys, BackendResourceType } from '@/src/types/common';
@@ -55,11 +59,15 @@ const transformFileId = (
   entity: ShareEntity,
   isFolder: boolean,
 ) => {
-  const { bucket } = splitEntityId(decodedId);
+  const bucket = getEntityBucket(entity);
   const splittedEntityId = entity.id.split('/');
   splittedEntityId[0] = ApiKeys.Files;
   splittedEntityId[1] = bucket;
   const transformedEntityId = splittedEntityId.join('/');
+
+  // console.log(transformedEntityId);
+  // console.log(decodedId);
+  // console.log(transformIdToRootEntityId(decodedId));
 
   return isFolder
     ? constructPath(
@@ -97,7 +105,7 @@ const PublishDialogContainer = ({
   });
 
   const filteredEntities = useMemo(() => {
-    if (!isFolder) return entities;
+    if (!isFolder || action === PublishActions.DELETE) return entities;
 
     return entities.filter(
       (entity) =>
@@ -106,16 +114,26 @@ const PublishDialogContainer = ({
           isLoadedConversationEntity(entity) &&
           (entity.messages.length || entity.playback?.messagesStack.length)),
     );
-  }, [entities, isFolder]);
+  }, [action, entities, isFolder]);
 
   useEffect(() => {
-    if (!areConversationsWithContentUploading && !filteredEntities.length) {
+    if (
+      !areConversationsWithContentUploading &&
+      !filteredEntities.length &&
+      action !== PublishActions.DELETE
+    ) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
       );
       dispatch(PublicationActions.setPublishModel());
     }
-  }, [areConversationsWithContentUploading, dispatch, filteredEntities, t]);
+  }, [
+    action,
+    areConversationsWithContentUploading,
+    dispatch,
+    filteredEntities,
+    t,
+  ]);
 
   const publication = useMemo(() => {
     const baseResources = filteredEntities.map(({ id }) => {
