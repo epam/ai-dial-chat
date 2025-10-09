@@ -180,7 +180,8 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
           isEditMode={
             publicationModel &&
             !isToolsetId(publicationModel.entity.id) &&
-            !isApplicationId(publicationModel.entity.id)
+            !isApplicationId(publicationModel.entity.id) &&
+            publicationModel.action !== PublishActions.DELETE
               ? true
               : isDeleteAction || isToolsetId(item.id)
                 ? false
