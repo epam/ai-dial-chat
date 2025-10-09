@@ -345,7 +345,7 @@ export function PublicationHandler({ publication }: Props) {
 
           if (
             (!isReview && publicationModel.action === PublishActions.DELETE) ||
-            isFileId(reviewUrl)
+            (!isReview && isFileId(reviewUrl))
           ) {
             newTargetUrl = targetUrl;
           } else {
