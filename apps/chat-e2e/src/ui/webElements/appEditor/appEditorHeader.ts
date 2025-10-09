@@ -49,7 +49,7 @@ export class AppEditorHeader extends BaseElement {
 
   public selectedFilledDotCircleIcon(step: BaseElement) {
     return step.getChildElementBySelector(
-      `${ApplicationEditorHeader.selectedStepIcon}${IconSelectors.filledDotCircleIcon}`,
+      `${ApplicationEditorHeader.selectedStepIcon}${IconSelectors.filledPointIcon}`,
     );
   }
 
@@ -61,7 +61,7 @@ export class AppEditorHeader extends BaseElement {
 
   public notSelectedCheckedCircleIcon(step: BaseElement) {
     return step.getChildElementBySelector(
-      `${ApplicationEditorHeader.notSelectedStepIcon}${IconSelectors.checkedCircleIcon}`,
+      `${ApplicationEditorHeader.notSelectedStepIcon}${IconSelectors.checkIcon}`,
     );
   }
 

@@ -205,7 +205,7 @@ dialTest(
         await appEditorHeaderAssertion.assertStepState(
           generalInfoStep,
           'visible',
-          Cursors.pointer,
+          Cursors.default,
         );
         await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
@@ -289,7 +289,7 @@ dialTest(
         await appEditorHeaderAssertion.assertStepState(
           generalInfoStep,
           'visible',
-          Cursors.pointer,
+          Cursors.default,
         );
         await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
@@ -534,7 +534,7 @@ dialTest(
         await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
           'visible',
-          Cursors.pointer,
+          Cursors.default,
         );
       },
     );
