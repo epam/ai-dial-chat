@@ -256,7 +256,9 @@ dialAdminTest(
     const model = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels().filter(
         (m) =>
-          m.features?.temperature == true && m.features?.systemPrompt == true,
+          !m.isDefault &&
+          m.features?.temperature == true &&
+          m.features?.systemPrompt == true,
       ),
     )!;
     const modelIcon = iconApiHelper.getEntityIcon(model);
