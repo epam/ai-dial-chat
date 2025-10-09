@@ -102,7 +102,12 @@ const PublishDialogContainer = ({
       action,
       sourceUrl: id,
       targetUrl: id,
-      reviewUrl: isFolder ? id : transformIdToRootEntityId(id),
+      reviewUrl: isFolder
+        ? constructPath(
+            transformIdToRootEntityId(entity.id),
+            id.replace(`${entity.id}/`, ''),
+          )
+        : transformIdToRootEntityId(id),
     }));
 
     const fileResources =
