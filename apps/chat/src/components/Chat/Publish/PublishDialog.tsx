@@ -98,17 +98,21 @@ const PublishDialogContainer = ({
   }, [areConversationsWithContentUploading, dispatch, filteredEntities, t]);
 
   const publication = useMemo(() => {
-    const baseResources = filteredEntities.map(({ id }) => ({
-      action,
-      sourceUrl: id,
-      targetUrl: id,
-      reviewUrl: isFolder
+    const baseResources = filteredEntities.map(({ id }) => {
+      const url = isFolder
         ? constructPath(
             transformIdToRootEntityId(entity.id),
             id.replace(`${entity.id}/`, ''),
           )
-        : transformIdToRootEntityId(id),
-    }));
+        : transformIdToRootEntityId(id);
+
+      return {
+        action,
+        sourceUrl: id,
+        targetUrl: url,
+        reviewUrl: url,
+      };
+    });
 
     const fileResources =
       action === PublishActions.DELETE

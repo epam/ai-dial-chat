@@ -15,6 +15,8 @@ import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -28,12 +30,16 @@ interface FilterComponentProps {
 }
 
 const showNoRulesLabel = (
-  publicationModel: boolean,
   rulesOnEditLength: number,
   isNoRulesToDisplay: boolean,
+  publicationModelObject?: { publishToUrl: string },
 ) => {
-  if (publicationModel) {
-    return !rulesOnEditLength && isNoRulesToDisplay;
+  if (publicationModelObject) {
+    return (
+      !rulesOnEditLength &&
+      isNoRulesToDisplay &&
+      PUBLIC_URL_PREFIX === publicationModelObject.publishToUrl
+    );
   }
 
   return isNoRulesToDisplay;
@@ -97,9 +103,9 @@ export function PublicationFilters({
   return (
     <>
       {showNoRulesLabel(
-        !!publicationModel,
         rulesOnEdit.length,
         isNoRulesToDisplay,
+        publicationModel ? { publishToUrl: editedPublishToUrl } : undefined,
       ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
           {t(
@@ -114,12 +120,19 @@ export function PublicationFilters({
         <RuleListItem path={publication.targetFolder} rules={newRules} />
       )}
       {(isEditMode || publicationModel) && !isRootTarget && (
-        <RulesInput
-          isOpen={isRulesSetterVisible}
-          filters={filters}
-          setFilters={handleFilterUpdate}
-          onSwitchRulesSetter={setIsRulesSetterVisible}
-        />
+        <>
+          {publicationModel && (
+            <p className="mb-1 text-xs text-secondary" data-qa="published-path">
+              {editedPublishToUrl.split('/').pop()}
+            </p>
+          )}
+          <RulesInput
+            isOpen={isRulesSetterVisible}
+            filters={filters}
+            setFilters={handleFilterUpdate}
+            onSwitchRulesSetter={setIsRulesSetterVisible}
+          />
+        </>
       )}
     </>
   );
