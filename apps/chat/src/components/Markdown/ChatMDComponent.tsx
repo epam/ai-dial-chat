@@ -152,7 +152,7 @@ const rehypePlugins = [
         code: [
           ...(defaultSchema.attributes?.code || []),
           // Preserve className for syntax highlighting
-          ['className', /^language-./],
+          ['className'],
         ],
       },
     },
