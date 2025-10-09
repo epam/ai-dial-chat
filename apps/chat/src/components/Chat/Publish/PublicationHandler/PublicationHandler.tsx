@@ -519,8 +519,8 @@ export function PublicationHandler({ publication }: Props) {
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
-  const firstNotMyEntity = publication.resources.find(
-    ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }),
+  const firstNotMyFileEntity = publication.resources.find(
+    ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }) && isFileId(reviewUrl),
   );
   const doesPublicationContainFiles = publication.resources.some(
     ({ reviewUrl }) => isFileId(reviewUrl),
@@ -703,9 +703,16 @@ export function PublicationHandler({ publication }: Props) {
                           },
                         );
 
+                        const isConversationSectionAndNoFiles =
+                          !isReview &&
+                          featureType === FeatureType.File &&
+                          publication.resourceTypes.includes(
+                            BackendResourceType.CONVERSATION,
+                          ) &&
+                          !doesPublicationContainFiles;
                         const doesInvalidPublishApplicationIconExist =
                           !isReview &&
-                          firstNotMyEntity &&
+                          firstNotMyFileEntity &&
                           publication.resourceTypes.includes(
                             BackendResourceType.APPLICATION,
                           ) &&
@@ -747,33 +754,27 @@ export function PublicationHandler({ publication }: Props) {
                                   ItemComponent={ItemComponent}
                                 />
                               )}
-                            {!isReview &&
-                              featureType === FeatureType.File &&
-                              !doesPublicationContainFiles && (
-                                <p
-                                  className="pl-3.5 text-secondary"
-                                  data-qa="no-publishing-files"
-                                >
-                                  {t(
-                                    publication.resources.filter(
-                                      ({ reviewUrl }) =>
-                                        isConversationId(reviewUrl),
-                                    ).length < 2
-                                      ? "This conversation doesn't contain any files"
-                                      : "These conversations don't contain any files",
-                                  )}
-                                </p>
-                              )}
-                            {!isReview &&
-                              firstNotMyEntity &&
-                              publication.resourceTypes.includes(
-                                BackendResourceType.APPLICATION,
-                              ) &&
+                            {isConversationSectionAndNoFiles && (
+                              <p
+                                className="pl-3.5 text-secondary"
+                                data-qa="no-publishing-files"
+                              >
+                                {t(
+                                  publication.resources.filter(
+                                    ({ reviewUrl }) =>
+                                      isConversationId(reviewUrl),
+                                  ).length < 2
+                                    ? "This conversation doesn't contain any files"
+                                    : "These conversations don't contain any files",
+                                )}
+                              </p>
+                            )}
+                            {doesInvalidPublishApplicationIconExist &&
                               featureType === FeatureType.File && (
                                 <ErrorMessage
                                   type="warning"
                                   error={t(
-                                    `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                                    `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
                                   )}
                                 />
                               )}
