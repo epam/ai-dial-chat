@@ -40,11 +40,15 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1980');
     let cancelExportConversation: Conversation;
+    const filename = `${GeneratorUtil.randomString(8)}.jpg`;
 
     await dialTest.step(
       'Upload image to root folder and prepare conversation containing this image',
       async () => {
-        const imageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
+        const imageUrl = await fileApiHelper.putFileWithCustomName(
+          filename,
+          Attachment.sunImageName,
+        );
         cancelExportConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl,
@@ -74,14 +78,21 @@ dialTest(
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
         const exportedFiles = FileUtil.getExportedFiles();
-        expect
-          .soft(
-            exportedFiles?.find((f) =>
-              f.includes(Import.importAttachmentExtension),
-            ),
-            ExpectedMessages.dataIsNotExported,
-          )
-          .toBeUndefined();
+        //verify there is no .dial archive with compressed image inside export folder
+        exportedFiles
+          ?.filter((f) => f.includes(Import.importAttachmentExtension))
+          .forEach((path) => {
+            const archive = FileUtil.readArchive(path);
+            const entries = FileUtil.getArchiveEntries(archive);
+            const imageEntry = entries.find((e) =>
+              e.entryName.includes(
+                `${ExpectedConstants.exportedArchiveImageRootFolder}/${filename}`,
+              ),
+            );
+            expect
+              .soft(imageEntry, ExpectedMessages.dataIsNotExported)
+              .toBeUndefined();
+          });
       },
     );
   },
