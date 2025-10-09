@@ -9,6 +9,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
+  ModelsSelectors,
 } from '@/src/store/selectors';
 
 import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
@@ -26,9 +27,11 @@ export const AppEditorPreview = ({ onSave }: AppEditorPreviewProps) => {
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+  const model = appDetails ? modelsMap[appDetails.reference] : undefined;
 
   const { control } = useFormContext<AppsEditorFormType>();
   const [name, version, description, iconUrl, topics] = useWatch({
@@ -49,14 +52,14 @@ export const AppEditorPreview = ({ onSave }: AppEditorPreviewProps) => {
       completionUrl: '',
       type: EntityType.Application,
       isDefault: true,
-      owner: appDetails?.owner,
-      createdAt: appDetails?.createdAt,
+      owner: model?.owner,
+      createdAt: model?.createdAt,
       applicationTypeSchemaId: schema?.$id ?? '',
     }),
     [
-      appDetails?.createdAt,
+      model?.createdAt,
       appDetails?.id,
-      appDetails?.owner,
+      model?.owner,
       description,
       iconUrl,
       name,
