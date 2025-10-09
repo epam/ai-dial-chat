@@ -27,7 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/publication';
+import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { Checkbox } from '@/src/components/Common/Checkbox';
@@ -192,7 +192,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
             (errors.length || inputVersion === NA_VERSION) && '!border-b-error',
             errors.length && 'pl-5',
           )}
-          placeholder="0.0.1"
+          placeholder={DEFAULT_VERSION}
           errors={errors}
           tooltipIconClassName="ml-1"
           dataQA="version"
