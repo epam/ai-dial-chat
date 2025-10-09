@@ -703,70 +703,84 @@ export function PublicationHandler({ publication }: Props) {
                           },
                         );
 
-                        return (
+                        const doesInvalidPublishApplicationIconExist =
+                          !isReview &&
+                          firstNotMyEntity &&
+                          publication.resourceTypes.includes(
+                            BackendResourceType.APPLICATION,
+                          ) &&
+                          featureType === FeatureType.File;
+                        const shouldRenderSection =
                           publication.resourceTypes.includes(
                             EnumMapper.getBackendResourceTypeByFeatureType(
                               featureType,
                             ),
-                          ) && (
-                            <CollapsibleSection
-                              key={featureType}
-                              name={t(sectionName)}
-                              openByDefault
-                              dataQa={dataQa}
-                              togglerClassName="!text-sm !text-primary"
-                              sectionTooltip={
-                                isReview && (
-                                  <>
-                                    {t('Publish')},
-                                    <span className="text-error">
-                                      {' '}
-                                      {t('Unpublish')}
-                                    </span>
-                                  </>
-                                )
-                              }
-                            >
-                              {!!filteredResources.length && (
+                          ) || doesInvalidPublishApplicationIconExist;
+
+                        if (!shouldRenderSection) {
+                          return null;
+                        }
+
+                        return (
+                          <CollapsibleSection
+                            key={featureType}
+                            name={t(sectionName)}
+                            openByDefault
+                            dataQa={dataQa}
+                            togglerClassName="!text-sm !text-primary"
+                            sectionTooltip={
+                              isReview && (
+                                <>
+                                  {t('Publish')},
+                                  <span className="text-error">
+                                    {' '}
+                                    {t('Unpublish')}
+                                  </span>
+                                </>
+                              )
+                            }
+                          >
+                            {!!filteredResources.length &&
+                              !doesInvalidPublishApplicationIconExist && (
                                 <BasePublicationResources
                                   resources={filteredResources}
                                   ItemComponent={ItemComponent}
                                 />
                               )}
-                              {!isReview &&
-                                featureType === FeatureType.File &&
-                                !doesPublicationContainFiles && (
-                                  <p
-                                    className="pl-3.5 text-secondary"
-                                    data-qa="no-publishing-files"
-                                  >
-                                    {t(
-                                      publication.resources.filter(
-                                        ({ reviewUrl }) =>
-                                          isConversationId(reviewUrl),
-                                      ).length < 2
-                                        ? "This conversation doesn't contain any files"
-                                        : "These conversations don't contain any files",
-                                    )}
-                                  </p>
-                                )}
-                            </CollapsibleSection>
-                          )
+                            {!isReview &&
+                              featureType === FeatureType.File &&
+                              !doesPublicationContainFiles && (
+                                <p
+                                  className="pl-3.5 text-secondary"
+                                  data-qa="no-publishing-files"
+                                >
+                                  {t(
+                                    publication.resources.filter(
+                                      ({ reviewUrl }) =>
+                                        isConversationId(reviewUrl),
+                                    ).length < 2
+                                      ? "This conversation doesn't contain any files"
+                                      : "These conversations don't contain any files",
+                                  )}
+                                </p>
+                              )}
+                            {!isReview &&
+                              firstNotMyEntity &&
+                              publication.resourceTypes.includes(
+                                BackendResourceType.APPLICATION,
+                              ) &&
+                              featureType === FeatureType.File && (
+                                <ErrorMessage
+                                  type="warning"
+                                  error={t(
+                                    `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                                  )}
+                                />
+                              )}
+                          </CollapsibleSection>
                         );
                       },
                     )}
-                    {!isReview &&
-                      firstNotMyEntity &&
-                      publication.resourceTypes.includes(
-                        BackendResourceType.APPLICATION,
-                      ) && (
-                        <ErrorMessage
-                          type="warning"
-                          error={t(
-                            `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
-                          )}
-                        />
-                      )}
                   </>
                 ) : (
                   <p className="my-3">
