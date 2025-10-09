@@ -343,7 +343,10 @@ export function PublicationHandler({ publication }: Props) {
 
           let newTargetUrl = '';
 
-          if (!isReview && publicationModel.action === PublishActions.DELETE) {
+          if (
+            (!isReview && publicationModel.action === PublishActions.DELETE) ||
+            isFileId(reviewUrl)
+          ) {
             newTargetUrl = targetUrl;
           } else {
             newTargetUrl = constructPath(newFolderId, newApiKey);
