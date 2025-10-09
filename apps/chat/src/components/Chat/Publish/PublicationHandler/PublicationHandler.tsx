@@ -32,7 +32,7 @@ import {
   splitEntityId,
 } from '@/src/utils/app/shared-utils';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { ApiKeys, BackendResourceType, FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -343,11 +343,16 @@ export function PublicationHandler({ publication }: Props) {
 
           let newTargetUrl = '';
 
-          if (
-            (!isReview && publicationModel.action === PublishActions.DELETE) ||
-            (!isReview && isFileId(reviewUrl))
-          ) {
+          if (!isReview && publicationModel.action === PublishActions.DELETE) {
             newTargetUrl = targetUrl;
+          } else if (!isReview && isFileId(reviewUrl)) {
+            // files is a flat list in publication request, strictly dependent on entity it bounds to.
+            // We need to construct the targetUrl using the original targetUrl, which depends on the entity and add new publishFolder.
+            newTargetUrl = constructPath(
+              ApiKeys.Files,
+              editedPublishToUrl,
+              ...targetUrl.split('/').slice(2),
+            );
           } else {
             newTargetUrl = constructPath(newFolderId, newApiKey);
           }
