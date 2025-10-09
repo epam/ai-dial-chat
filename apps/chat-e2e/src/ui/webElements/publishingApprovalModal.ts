@@ -6,13 +6,13 @@ import {
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import {
   ApplicationsToApproveTree,
-  FilesToApproveTree,
   FolderConversationsToApprove,
   FolderFilesToApprove,
   FolderPromptsToApprove,
   PublishConversationsTree,
   PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Page } from '@playwright/test';
 
@@ -25,7 +25,7 @@ export class PublishingApprovalModal extends BaseElement {
   private conversationsToApproveTree!: PublishConversationsTree;
   private folderConversationsToApprove!: FolderConversationsToApprove;
   //files to approve trees
-  private filesToApproveTree!: FilesToApproveTree;
+  private filesToApproveTree!: PublishFilesTree;
   private folderFilesToApprove!: FolderFilesToApprove;
   //prompts to approve trees
   private promptsToApproveTree!: PublishPromptsTree;
@@ -54,9 +54,9 @@ export class PublishingApprovalModal extends BaseElement {
     return this.folderConversationsToApprove;
   }
 
-  getFilesToApproveTree(): FilesToApproveTree {
+  getFilesToApproveTree(): PublishFilesTree {
     if (!this.filesToApproveTree) {
-      this.filesToApproveTree = new FilesToApproveTree(
+      this.filesToApproveTree = new PublishFilesTree(
         this.page,
         this.rootLocator,
       );

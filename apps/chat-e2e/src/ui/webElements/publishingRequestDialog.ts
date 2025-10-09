@@ -6,12 +6,12 @@ import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import {
   ApplicationsToPublishTree,
-  FilesToPublishTree,
   FolderConversationsToPublish,
   FolderPromptsToPublish,
   PublishConversationsTree,
   PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Locator, Page } from '@playwright/test';
 
@@ -28,7 +28,7 @@ export class PublishingRequestDialog extends BaseElement {
   private conversationsToPublishTree!: PublishConversationsTree;
   private folderConversationsToPublish!: FolderConversationsToPublish;
   //files to publish tree
-  private filesToPublishTree!: FilesToPublishTree;
+  private filesToPublishTree!: PublishFilesTree;
   //prompts to publish trees
   private promptsToPublishTree!: PublishPromptsTree;
   private folderPromptsToPublish!: FolderPromptsToPublish;
@@ -58,9 +58,9 @@ export class PublishingRequestDialog extends BaseElement {
     return this.folderConversationsToPublish;
   }
 
-  getFilesToPublishTree(): FilesToPublishTree {
+  getFilesToPublishTree(): PublishFilesTree {
     if (!this.filesToPublishTree) {
-      this.filesToPublishTree = new FilesToPublishTree(
+      this.filesToPublishTree = new PublishFilesTree(
         this.page,
         this.rootLocator,
       );

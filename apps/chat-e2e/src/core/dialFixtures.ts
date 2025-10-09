@@ -112,7 +112,6 @@ import {
   ApplicationsToPublishTree,
   AttachFilesTree,
   ConversationsTree,
-  FilesToPublishTree,
   FolderConversations,
   FolderConversationsToPublish,
   FolderPrompts,
@@ -125,6 +124,7 @@ import {
   SharedFolderConversations,
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { Filter } from '@/src/ui/webElements/filter';
@@ -290,7 +290,7 @@ const dialTest = test.extend<{
   settingsModal: SettingsModal;
   publishingRequestDialog: PublishingRequestDialog;
   conversationsToPublishTree: PublishConversationsTree;
-  filesToPublishTree: FilesToPublishTree;
+  filesToPublishTree: PublishFilesTree;
   promptsToPublishTree: PublishPromptsTree;
   appsToPublishTree: ApplicationsToPublishTree;
   folderConversationsToPublish: FolderConversationsToPublish;
@@ -351,7 +351,7 @@ const dialTest = test.extend<{
   publishingRequestFolderPromptAssertion: PublishFolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   publishConversationAssertion: PublishEntityAssertion<PublishConversationsTree>;
-  publishFileAssertion: PublishFileAssertion<FilesToPublishTree>;
+  publishFileTreeAssertion: PublishFileAssertion<PublishFilesTree>;
   publishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   appToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
   folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
@@ -1333,9 +1333,11 @@ const dialTest = test.extend<{
       );
     await use(publishConversationAssertion);
   },
-  publishFileAssertion: async ({ filesToPublishTree }, use) => {
-    const publishFileAssertion = new PublishFileAssertion(filesToPublishTree);
-    await use(publishFileAssertion);
+  publishFileTreeAssertion: async ({ filesToPublishTree }, use) => {
+    const publishFileTreeAssertion = new PublishFileAssertion(
+      filesToPublishTree,
+    );
+    await use(publishFileTreeAssertion);
   },
   publishPromptsTreeAssertion: async ({ promptsToPublishTree }, use) => {
     const publishPromptsTreeAssertion =

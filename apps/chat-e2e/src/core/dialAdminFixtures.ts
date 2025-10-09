@@ -71,7 +71,6 @@ import {
   ApproveRequiredConversationsTree,
   ApproveRequiredPrompts,
   ConversationsTree,
-  FilesToApproveTree,
   FolderConversationsToApprove,
   FolderPrompts,
   FolderPromptsToApprove,
@@ -82,6 +81,7 @@ import {
   PublishConversationsTree,
   PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
@@ -115,7 +115,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderConversations: Folders;
   adminOrganizationFolderPrompts: Folders;
   adminConversationsToApproveTree: PublishConversationsTree;
-  adminFilesToApprove: FilesToApproveTree;
+  adminFilesToApproveTree: PublishFilesTree;
   adminPromptsToApproveTree: PublishPromptsTree;
   adminAppsToApprove: ApplicationsToApproveTree;
   adminPublishingApprovalModal: PublishingApprovalModal;
@@ -132,7 +132,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminAppToApproveAssertion: PublishEntityAssertion<ApplicationsToApproveTree>;
-  adminFilesToApproveAssertion: PublishFileAssertion<FilesToApproveTree>;
+  adminPublishFilesAssertion: PublishFileAssertion<PublishFilesTree>;
   adminPublishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   adminFolderConversationsToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
   adminFolderPromptsToApproveAssertion: PublishFolderAssertion<FolderPromptsToApprove>;
@@ -373,10 +373,10 @@ const dialAdminTest = dialTest.extend<{
       adminPublishingApprovalModal.getConversationsToApproveTree();
     await use(adminConversationsToApproveTree);
   },
-  adminFilesToApprove: async ({ adminPublishingApprovalModal }, use) => {
-    const adminFilesToApprove =
+  adminFilesToApproveTree: async ({ adminPublishingApprovalModal }, use) => {
+    const adminFilesToApproveTree =
       adminPublishingApprovalModal.getFilesToApproveTree();
-    await use(adminFilesToApprove);
+    await use(adminFilesToApproveTree);
   },
   adminPromptsToApproveTree: async ({ adminPublishingApprovalModal }, use) => {
     const adminPromptsToApproveTree =
@@ -550,11 +550,11 @@ const dialAdminTest = dialTest.extend<{
       new PublishEntityAssertion<ApplicationsToApproveTree>(adminAppsToApprove);
     await use(adminAppToApproveAssertion);
   },
-  adminFilesToApproveAssertion: async ({ adminFilesToApprove }, use) => {
-    const adminFilesToApproveAssertion = new PublishFileAssertion(
-      adminFilesToApprove,
+  adminPublishFilesAssertion: async ({ adminFilesToApproveTree }, use) => {
+    const adminPublishFilesAssertion = new PublishFileAssertion(
+      adminFilesToApproveTree,
     );
-    await use(adminFilesToApproveAssertion);
+    await use(adminPublishFilesAssertion);
   },
   adminPublishPromptsTreeAssertion: async (
     { adminPromptsToApproveTree },

@@ -563,7 +563,7 @@ dialAdminTest(
     adminAttachmentDropdownMenu,
     adminAttachFilesModal,
     adminChatHeaderAssertion,
-    adminFilesToApproveAssertion,
+    adminPublishFilesAssertion,
     adminChatMessages,
     adminInputAttachments,
     adminChat,
@@ -649,11 +649,11 @@ dialAdminTest(
       'Click on "Back to publication request" and verify both files are displayed in request',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.sunImageName },
           'visible',
         );
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.cloudImageName },
           'visible',
         );
@@ -674,11 +674,11 @@ dialAdminTest(
         await adminChat.saveAndSubmitRequest(true);
         await adminChatMessagesAssertion.assertMessageContent(1, firstMessage);
         await adminPublicationReviewControl.backToPublicationRequest();
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.sunImageName },
           'visible',
         );
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.cloudImageName },
           'visible',
         );
@@ -701,7 +701,7 @@ dialAdminTest(
     adminLocalStorageManager,
     adminChatMessagesAssertion,
     adminPublicationReviewControl,
-    adminFilesToApproveAssertion,
+    adminPublishFilesAssertion,
     adminFileApiHelper,
     adminChat,
   }) => {
@@ -775,7 +775,7 @@ dialAdminTest(
       'Click on "Back to publication request" and verify generated file is displayed in request',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.sunImageName },
           'visible',
         );

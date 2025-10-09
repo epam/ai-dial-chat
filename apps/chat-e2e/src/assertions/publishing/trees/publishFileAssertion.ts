@@ -1,7 +1,7 @@
 import { PublishEntityAssertion } from '@/src/assertions';
 import { CheckboxState, ElementState, TreeEntity } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
-import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publishFilesTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 
 export class PublishFileAssertion<
   K extends PublishFilesTree,

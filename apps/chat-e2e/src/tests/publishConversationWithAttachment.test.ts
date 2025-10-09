@@ -55,7 +55,7 @@ dialAdminTest(
     toast,
     filesToPublishTree,
     publishConversationAssertion,
-    publishFileAssertion,
+    publishFileTreeAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     chatBar,
@@ -63,7 +63,7 @@ dialAdminTest(
     manageAttachmentsAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
-    adminFilesToApprove,
+    adminFilesToApproveTree,
     adminChatMessages,
     informationModal,
     downloadAssertion,
@@ -71,7 +71,7 @@ dialAdminTest(
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
     adminPublishConversationsTreeAssertion,
-    adminFilesToApproveAssertion,
+    adminPublishFilesAssertion,
     baseAssertion,
     fileApiHelper,
     setTestIds,
@@ -137,7 +137,7 @@ dialAdminTest(
           { name: conversation.name },
           'visible',
         );
-        await publishFileAssertion.assertFileToPublish(
+        await publishFileTreeAssertion.assertFileToPublish(
           { name: Attachment.cloudImageName },
           {
             expectedState: 'visible',
@@ -155,7 +155,7 @@ dialAdminTest(
           await filesToPublishTree
             .getEntityCheckbox(Attachment.cloudImageName)
             .click();
-          await publishFileAssertion.assertEntityCheckboxState(
+          await publishFileTreeAssertion.assertEntityCheckboxState(
             { name: Attachment.cloudImageName },
             state,
           );
@@ -216,16 +216,18 @@ dialAdminTest(
           { name: conversation.name },
           'visible',
         );
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.cloudImageName },
           'visible',
         );
-        await adminFilesToApproveAssertion.assertElementState(
-          adminFilesToApprove.getFileDownloadIcon(Attachment.cloudImageName),
+        await adminPublishFilesAssertion.assertElementState(
+          adminFilesToApproveTree.getFileDownloadIcon(
+            Attachment.cloudImageName,
+          ),
           'visible',
         );
         const downloadedData = await adminDialHomePage.downloadData(() =>
-          adminFilesToApprove
+          adminFilesToApproveTree
             .getFileDownloadIcon(Attachment.cloudImageName)
             .click(),
         );
@@ -369,6 +371,7 @@ dialAdminTest(
           ).length,
           1,
         );
+        await toast.closeToast();
       },
     );
 
@@ -422,12 +425,12 @@ dialAdminTest(
     adminShareModal,
     adminConversations,
     adminConversationAssertion,
-    publishFileAssertion,
+    publishFileTreeAssertion,
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
     adminApproveRequiredConversations,
-    adminFilesToApproveAssertion,
+    adminPublishFilesAssertion,
     setTestIds,
     localStorageManager,
     adminLocalStorageManager,
@@ -471,7 +474,7 @@ dialAdminTest(
           publishingRequestDialog,
           'visible',
         );
-        await publishFileAssertion.assertEntityState(
+        await publishFileTreeAssertion.assertEntityState(
           { name: Attachment.plotlyName },
           'visible',
         );
@@ -526,7 +529,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify plotly is displayed under "Files" tree',
       async () => {
-        await adminFilesToApproveAssertion.assertEntityState(
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.plotlyName },
           'visible',
         );

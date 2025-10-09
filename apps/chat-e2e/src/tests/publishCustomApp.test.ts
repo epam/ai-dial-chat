@@ -53,7 +53,7 @@ dialAdminTest(
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
       adminPublishingRulesAssertion,
-      adminFilesToApproveAssertion,
+      adminPublishFilesAssertion,
       adminAppToApproveAssertion,
       adminTooltip,
       adminTooltipAssertion,
@@ -284,7 +284,7 @@ dialAdminTest(
             // expectedIcon: expectedIconUrl
           },
         );
-        await adminFilesToApproveAssertion.assertFileToPublish(
+        await adminPublishFilesAssertion.assertFileToPublish(
           { name: filename },
           {
             expectedState: 'visible',
