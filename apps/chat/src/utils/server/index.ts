@@ -1,4 +1,3 @@
-import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -35,16 +34,8 @@ interface DialAIErrorResponse extends Response {
   };
 }
 
-function getUrl(
-  model: DialAIEntityModel,
-  selectedAddonsIds: string[] | undefined,
-): string {
-  const isAddonsAdded: boolean = Array.isArray(selectedAddonsIds);
-  const { type, id } = model;
-  if (type === EntityType.Model && isAddonsAdded) {
-    return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
-  }
-
+function getUrl(model: DialAIEntityModel): string {
+  const { id } = model;
   return `${DIAL_API_HOST}/openai/deployments/${ApiUtils.encodeApiUrl(id)}/chat/completions?api-version=${DIAL_API_VERSION}`;
 }
 
@@ -65,8 +56,6 @@ export const OpenAIStream = async ({
   model,
   temperature,
   messages,
-  selectedAddonsIds,
-  assistantModelId,
   chatReference,
   userJWT,
   jobTitle,
@@ -76,8 +65,6 @@ export const OpenAIStream = async ({
   model: DialAIEntityModel;
   temperature: number | undefined;
   messages: Message[];
-  selectedAddonsIds: string[] | undefined;
-  assistantModelId: string | undefined;
   userJWT: string;
   chatReference: string;
   jobTitle: string | undefined;
@@ -85,7 +72,7 @@ export const OpenAIStream = async ({
   configurationSchemaValue?: MessageFormValue;
 }) => {
   let messagesToSend = messages;
-  const url = getUrl(model, selectedAddonsIds);
+  const url = getUrl(model);
 
   const requestHeaders = getApiHeaders({
     chatReference,
@@ -102,8 +89,7 @@ export const OpenAIStream = async ({
       messages: messagesToSend,
       temperature,
       stream: true,
-      model: assistantModelId ?? model.reference,
-      addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
+      model: model.reference,
       max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
       ...(configurationSchemaValue && {
         custom_fields: { configuration: configurationSchemaValue },

@@ -11,13 +11,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
-import { DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { AddonsSelectors } from '@/src/store/selectors';
-
-import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -34,48 +29,34 @@ interface StageTitleProps {
   stage: Stage;
 }
 
-const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
-  const [addon, setAddon] = useState<DialAIEntityAddon | undefined>();
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-
-  const match = stage.name?.match(/^[^(]*/);
-
-  useEffect(() => {
-    if (match) {
-      setAddon(addonsMap[match[0]]);
-    }
-  }, [addonsMap, match]);
-
-  return (
-    <div className="relative grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden text-ellipsis">
-      {stage.status == null ? (
-        <Spinner size={20} />
-      ) : stage.status === 'completed' ? (
-        <CircleCheck
-          height={20}
-          width={20}
-          className="shrink-0 grow-0 basis-auto text-secondary"
-          data-qa="stage-completed"
-        />
-      ) : (
-        <IconExclamationCircle
-          size={20}
-          className="shrink-0 grow-0 basis-auto text-secondary"
-        />
+const StageTitle = ({ isOpened, stage }: StageTitleProps) => (
+  <div className="relative grid min-w-0 grid-flow-col items-center gap-3 overflow-hidden text-ellipsis">
+    {stage.status == null ? (
+      <Spinner size={20} />
+    ) : stage.status === 'completed' ? (
+      <CircleCheck
+        height={20}
+        width={20}
+        className="shrink-0 grow-0 basis-auto text-secondary"
+        data-qa="stage-completed"
+      />
+    ) : (
+      <IconExclamationCircle
+        size={20}
+        className="shrink-0 grow-0 basis-auto text-secondary"
+      />
+    )}
+    <span
+      className={classNames(
+        'block whitespace-pre text-start',
+        isOpened ? 'max-w-full' : 'truncate',
       )}
-      {!!addon && <ModelIcon entity={addon} entityId={addon.id} size={18} />}
-      <span
-        className={classNames(
-          'block whitespace-pre text-start',
-          isOpened ? 'max-w-full' : 'truncate',
-        )}
-        data-qa={isOpened ? 'stage-opened' : 'stage-closed'}
-      >
-        {stage.name}
-      </span>
-    </div>
-  );
-};
+      data-qa={isOpened ? 'stage-opened' : 'stage-closed'}
+    >
+      {stage.name}
+    </span>
+  </div>
+);
 
 interface Props {
   stage: Stage;

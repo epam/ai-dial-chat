@@ -37,14 +37,8 @@ export class AuthUtils {
       ...(authTokens.models
         ? [{ name: 'models', value: authTokens.models }]
         : []),
-      ...(authTokens.addons
-        ? [{ name: 'addons', value: authTokens.addons }]
-        : []),
       ...(authTokens.themes
         ? [{ name: 'themes', value: authTokens.themes }]
-        : []),
-      ...(authTokens.recentAddons
-        ? [{ name: 'recentAddons', value: authTokens.recentAddons }]
         : []),
       ...(authTokens.recentModels
         ? [{ name: 'recentModels', value: authTokens.recentModels }]

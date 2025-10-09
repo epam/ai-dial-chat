@@ -33,7 +33,7 @@ const getImage = async (
   const contentType = response.headers.get('content-type');
 
   if (!response.ok) {
-    if (name === 'default-model' || name === 'default-addon') {
+    if (name === 'default-model') {
       return res.redirect(
         307,
         `//${req.headers.origin}/images/icons/message-square-lines-alt.svg`,

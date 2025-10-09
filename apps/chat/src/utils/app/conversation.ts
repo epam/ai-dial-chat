@@ -16,13 +16,11 @@ import {
   parseEntityApiKey,
 } from '@/src/utils/server/api';
 
-import { EntityType, PartialBy } from '@/src/types/common';
-import { AddonsMap, DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import { PartialBy } from '@/src/types/common';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
 import {
   getConversationRootId,
@@ -41,28 +39,6 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
-import uniq from 'lodash-es/uniq';
-
-export const getValidEntitiesFromIds = <T>(
-  entitiesIds: string[],
-  addonsMap: Partial<Record<string, T>>,
-): T[] =>
-  entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
-
-export const getSelectedAddons = (
-  selectedAddons: string[],
-  addonsMap: AddonsMap,
-  model?: DialAIEntityModel,
-) => {
-  if (model && model.type !== EntityType.Application) {
-    const preselectedAddons = model.selectedAddons ?? [];
-    const addons = uniq([...preselectedAddons, ...selectedAddons]);
-
-    return getValidEntitiesFromIds(addons, addonsMap);
-  }
-
-  return null;
-};
 
 export const isSettingsChanged = (
   conversation: Conversation,
@@ -258,11 +234,7 @@ export const addPausedError = (
   models: DialAIEntityModel[],
   messages: Message[],
 ): Message[] => {
-  if (
-    models.every(
-      (m) => m.features?.allowResume && !conversation.selectedAddons.length,
-    )
-  ) {
+  if (models.every((m) => m.features?.allowResume)) {
     return messages;
   }
   let assistantMessageIndex = -1;
@@ -307,7 +279,6 @@ export const getConversationModelParams = (
   conversation: Conversation,
   modelId: string | undefined,
   modelsMap: ModelsMap,
-  addonsMap: AddonsMap,
 ): Partial<Conversation> => {
   if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
     return {
@@ -328,24 +299,10 @@ export const getConversationModelParams = (
         ...conversation.replay,
         replayAsIs: false,
       };
-  const updatedAddons =
-    isReplayConversation(conversation) &&
-    isReplayAsIsConversation(conversation) &&
-    !updatedReplay?.replayAsIs
-      ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
-      : conversation.selectedAddons;
 
   return {
     model: { id: newAiEntity.reference },
-    assistantModelId:
-      newAiEntity.type === EntityType.Assistant
-        ? DefaultsService.get(
-            'assistantSubmodelId',
-            FALLBACK_ASSISTANT_SUBMODEL_ID,
-          )
-        : undefined,
     replay: updatedReplay,
-    selectedAddons: updatedAddons,
   };
 };
 
