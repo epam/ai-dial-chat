@@ -28,7 +28,7 @@ import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 import 'katex/dist/katex.min.css';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 
@@ -143,7 +143,20 @@ const remarkPlugins: PluggableList = [
 const rehypePlugins = [
   rehypeRaw,
   [rehypeKatex, { output: 'mathml', strict: false }],
-  rehypeSanitize,
+  [
+    rehypeSanitize,
+    {
+      ...defaultSchema,
+      attributes: {
+        ...defaultSchema.attributes,
+        code: [
+          ...(defaultSchema.attributes?.code || []),
+          // Preserve className for syntax highlighting
+          ['className', /^language-./],
+        ],
+      },
+    },
+  ],
 ] as PluggableList;
 
 export const ChatMDComponent = memo(
