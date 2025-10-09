@@ -8,6 +8,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
+  getIdWithoutRootPathSegments,
   isConversationId,
   transformIdToRootEntityId,
 } from '@/src/utils/app/id';
@@ -149,7 +150,13 @@ const PublishDialogContainer = ({
     return {
       url: '',
       resources: [...baseResources, ...iconResource, ...fileResources],
-      targetFolder: PUBLIC_URL_PREFIX,
+      targetFolder:
+        action === PublishActions.DELETE
+          ? constructPath(
+              PUBLIC_URL_PREFIX,
+              getFolderIdFromEntityId(getIdWithoutRootPathSegments(entity.id)),
+            )
+          : PUBLIC_URL_PREFIX,
       resourceTypes,
       createdAt: entity.createdAt ?? 0,
       publicationStatus: PublicationStatus.PENDING,
