@@ -103,6 +103,14 @@ const nextConfig = {
       },
       {
         source: '/apps-editor/:slug',
+        has: [
+          { type: 'query', key: 'id', value: '(?<id>.*)' }
+        ],
+        destination: '/apps-editor?step=General&schema=:slug&id=:id',
+        permanent: false,
+      },
+      {
+        source: '/apps-editor/:slug',
         destination: '/apps-editor?step=General&schema=:slug',
         permanent: false,
       },
