@@ -23,6 +23,7 @@ import {
   CreateConversationResponse,
   GetConversationsResponse,
   GetMessagesResponse,
+  Message,
   OverlayConversation,
   PublishActions,
   SelectConversationResponse,
@@ -32,6 +33,18 @@ import { expect } from '@playwright/test';
 
 const expectedFolderPath = 'test-folder';
 const expectedFoldersPath = 'test-inner-folder-root/test-inner-folder-child';
+
+const removeSelectedAddons = (message: Message): Message => {
+  if (message.settings) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { selectedAddons, ...restSettings } = message.settings;
+    return {
+      ...message,
+      settings: restSettings,
+    };
+  }
+  return message;
+};
 
 dialOverlayTest(
   `[Overlay. Events in sandbox] Send 'Hello' to Chat.\n` +
@@ -108,17 +121,17 @@ dialOverlayTest(
       async () => {
         await overlayActions.getMessagesButton.click();
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
-        const actualMessages =
+        const actualMessagesString =
           await overlayDialog.content.getElementInnerContent();
         const expectedItem = await overlayItemApiHelper.getItem(
           secondRequest.id,
         );
-        const expectedMessages: GetMessagesResponse = {
-          messages: expectedItem.messages,
-        };
+        const { messages } = JSON.parse(
+          actualMessagesString,
+        ) as GetMessagesResponse;
         expect
-          .soft(JSON.parse(actualMessages) as GetMessagesResponse)
-          .toStrictEqual(expectedMessages);
+          .soft(messages)
+          .toStrictEqual(expectedItem.messages.map(removeSelectedAddons));
         await overlayDialog.closeButton.click();
       },
     );

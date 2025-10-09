@@ -3,9 +3,7 @@ import { ReactNode } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isPlaybackConversation } from '@/src/utils/app/conversation';
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
-  doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
   doesModelHaveSettings,
@@ -19,10 +17,6 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
-
-import { Addons } from './Addons';
-import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
@@ -33,17 +27,12 @@ interface SettingContainerProps {
 }
 
 interface Props {
-  assistantModelId: string | undefined;
   prompt: string | undefined;
   temperature: number | undefined;
   prompts: Prompt[];
-  selectedAddons: string[];
   conversation: Conversation;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
-  onSelectAssistantSubModel: (modelId: string) => void;
-  onApplyAddons: (addonsIds: string[]) => void;
-  onChangeAddon: (addonsId: string) => void;
 }
 
 export function FieldContainer({ children }: SettingContainerProps) {
@@ -81,17 +70,12 @@ function EmptySettings() {
 export const ConversationSettings = Inversify.register(
   'ConversationSettings',
   ({
-    assistantModelId,
     prompts,
     prompt,
     temperature,
-    selectedAddons,
     conversation,
-    onSelectAssistantSubModel,
     onChangePrompt,
     onChangeTemperature,
-    onChangeAddon,
-    onApplyAddons,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
@@ -114,21 +98,6 @@ export const ConversationSettings = Inversify.register(
 
     return (
       <SettingContainer>
-        {model.type === EntityType.Assistant && (
-          <FieldContainer>
-            <AssistantSubModelSelector
-              assistantModelReference={
-                assistantModelId ??
-                DefaultsService.get(
-                  'assistantSubmodelId',
-                  FALLBACK_ASSISTANT_SUBMODEL_ID,
-                )
-              }
-              onSelectAssistantSubModel={onSelectAssistantSubModel}
-              disabled={isPlayback}
-            />
-          </FieldContainer>
-        )}
         {model.type === EntityType.Model &&
           doesModelAllowSystemPrompt(model) && (
             <FieldContainer>
@@ -148,17 +117,6 @@ export const ConversationSettings = Inversify.register(
               label={t('Temperature')}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
-              disabled={isPlayback}
-            />
-          </FieldContainer>
-        )}
-        {doesModelAllowAddons(model) && (
-          <FieldContainer>
-            <Addons
-              preselectedAddonsIds={model?.selectedAddons || []}
-              selectedAddonsIds={selectedAddons}
-              onChangeAddon={onChangeAddon}
-              onApplyAddons={onApplyAddons}
               disabled={isPlayback}
             />
           </FieldContainer>
