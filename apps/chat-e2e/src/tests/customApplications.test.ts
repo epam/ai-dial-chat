@@ -70,8 +70,6 @@ dialTest(
     agentDetailsModalAssertion,
     marketplaceContainer,
     marketplace,
-    toastAssertion,
-    toast,
     appEditorAppSettingsAgentPreview,
     navigationPanel,
     appEditorGeneralInfoAgentPreview,
