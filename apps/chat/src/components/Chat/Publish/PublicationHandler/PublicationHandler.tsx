@@ -307,7 +307,7 @@ export function PublicationHandler({ publication }: Props) {
   const handleUpdateRequest = useCallback(
     (data: PublicationRequestFormData) => {
       const mappedResources = publication.resources.map(
-        ({ sourceUrl, reviewUrl, action }) => {
+        ({ sourceUrl, reviewUrl, action, targetUrl }) => {
           const { name, version } = entitiesEditState[reviewUrl];
 
           // calculate new folderId
@@ -341,13 +341,24 @@ export function PublicationHandler({ publication }: Props) {
             version.trim(),
           );
 
+          let newTargetUrl = '';
+
+          if (!isReview && publicationModel.action === PublishActions.DELETE) {
+            newTargetUrl = targetUrl;
+          } else if (isReview || !isFileId(reviewUrl)) {
+            newTargetUrl = constructPath(newFolderId, newApiKey);
+          } else {
+            newTargetUrl = constructPath(
+              ApiKeys.Files,
+              editedPublishToUrl,
+              newApiKey,
+            );
+          }
+
           return {
             action,
             sourceUrl: sourceUrl ?? '',
-            targetUrl:
-              isReview || !isFileId(reviewUrl)
-                ? constructPath(newFolderId, newApiKey)
-                : constructPath(ApiKeys.Files, editedPublishToUrl, newApiKey),
+            targetUrl: newTargetUrl,
             reviewUrl,
           };
         },
@@ -383,15 +394,16 @@ export function PublicationHandler({ publication }: Props) {
     },
     [
       publication.resources,
-      publication.url,
       publication.targetFolder,
+      publication.url,
       isReview,
-      dispatch,
-      editedPublishToUrl,
-      rulesOnEdit,
-      displayAuthorEditState,
       entitiesEditState,
       foldersEditState,
+      editedPublishToUrl,
+      publicationModel?.action,
+      dispatch,
+      displayAuthorEditState,
+      rulesOnEdit,
       selectedPublicationItems,
     ],
   );
