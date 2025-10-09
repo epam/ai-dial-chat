@@ -91,6 +91,7 @@ export const ExpectedConstants = {
   noResults: 'No results found',
   notAllowedModelError:
     'Not available agent selected. Please, change the agent to proceed',
+  agentIsNotAvailableLabel: 'Agent is not available',
   notAllowedAgentError: (agent: string) =>
     `Agent is not available. Please, change the agent "${agent}" to proceed.`,
   replayAsIsDescr:
@@ -266,6 +267,7 @@ export const ExpectedConstants = {
   removeAgentModalTitle: 'Confirm removing agent',
   removeAgentModalMessage: (name: string) =>
     `Are you sure you want to remove ${name} from My workspace?`,
+  addAgentToWorkspaceTitle: 'Add the agent to My workspace to continue',
   agentNotFoundError: 'Agent by this link not found',
   copiedLinkText: 'Copied!',
   copyLinkText: 'Copy link',
@@ -439,6 +441,7 @@ export const API = {
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
+  conversationsMetadataHost: `/api/metadata/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
   filesHostSegment: 'files',
