@@ -1,8 +1,6 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useRouter } from 'next/router';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
@@ -16,7 +14,6 @@ import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { Routes } from '@/src/constants/routes';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
@@ -45,7 +42,6 @@ export const ToolsetEditorHeader = ({
   onSave,
 }: ToolsetEditorHeaderProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-  const router = useRouter();
   const dispatch = useAppDispatch();
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
@@ -120,9 +116,9 @@ export const ToolsetEditorHeader = ({
         }
       }
       createNewConversation();
-      void router.push(Routes.Chat);
+      onSave(false, true);
     },
-    [createNewConversation, isEditing, router, trigger],
+    [createNewConversation, isEditing, onSave, trigger],
   );
 
   const handleTabClick = useCallback(

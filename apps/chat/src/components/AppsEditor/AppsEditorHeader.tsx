@@ -31,7 +31,6 @@ import {
 
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { Routes } from '@/src/constants/routes';
 
 import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -76,7 +75,6 @@ export const AppsEditorHeader = ({
     },
   } = useRouter();
   const { t } = useTranslation(Translation.Marketplace);
-  const router = useRouter();
   const dispatch = useAppDispatch();
 
   const { formState, trigger } = useFormContext<AppsEditorFormType>();
@@ -187,9 +185,9 @@ export const AppsEditorHeader = ({
         }
       }
       createNewConversation();
-      void router.push(Routes.Chat);
+      onSave(false, true);
     },
-    [createNewConversation, isEditing, router, trigger],
+    [createNewConversation, isEditing, trigger, onSave],
   );
 
   const handleSaveAndRedirect = useCallback(async () => {
