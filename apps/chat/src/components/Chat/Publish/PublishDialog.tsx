@@ -191,23 +191,23 @@ const PublishDialogContainer = ({
             return {
               action: PublishActions.ADD_IF_ABSENT,
               sourceUrl: decodedId,
+              reviewUrl: decodedId,
               targetUrl: url,
-              reviewUrl: url,
             };
           });
 
     const decodedIconUrl = entity.iconUrl
       ? ApiUtils.decodeApiUrl(entity.iconUrl)
       : '';
-    const iconUrl = transformIdToRootEntityId(decodedIconUrl);
+    const targetIconUrl = transformIdToRootEntityId(decodedIconUrl);
     const iconResource =
       decodedIconUrl && !isFolder && action !== PublishActions.DELETE
         ? [
             {
               action: PublishActions.ADD_IF_ABSENT,
               sourceUrl: decodedIconUrl,
-              targetUrl: replaceIdWithBucket(iconUrl, PUBLIC_URL_PREFIX),
-              reviewUrl: iconUrl,
+              reviewUrl: decodedIconUrl,
+              targetUrl: replaceIdWithBucket(targetIconUrl, PUBLIC_URL_PREFIX),
             },
           ]
         : [];
