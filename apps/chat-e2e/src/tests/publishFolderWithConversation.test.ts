@@ -397,7 +397,6 @@ dialAdminTest(
     folderConversations,
     folderDropdownMenu,
     publishingRequestDialog,
-    folderConversationsToPublish,
     selectFolders,
     selectFoldersAssertion,
     publicationApiHelper,
@@ -417,7 +416,7 @@ dialAdminTest(
     adminApproveRequiredConversations,
     adminConversations,
     adminConversationDropdownMenu,
-    adminConversationToPublishAssertion,
+    adminPublishConversationsTreeAssertion,
     adminPublishingApprovalModalAssertion,
     adminFolderConversationsToApproveAssertion,
     adminPublishingApprovalModal,
@@ -576,33 +575,6 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Hover over conversation and verify tooltip is shown',
-      async () => {
-        await folderConversationsToPublish
-          .getFolderEntityNameElement(
-            folderConversationToPublish.folders.name,
-            folderConversationToPublish.conversations[0].name,
-          )
-          .hoverOver();
-        await tooltipAssertion.assertTooltipContent(
-          folderConversationToPublish.conversations[0].name,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Hover over conversation folder and verify tooltip is shown',
-      async () => {
-        await folderConversationsToPublish
-          .getFolderName(folderConversationToPublish.folders.name)
-          .hoverOver();
-        await tooltipAssertion.assertTooltipContent(
-          folderConversationToPublish.folders.name,
-        );
-      },
-    );
-
-    await dialTest.step(
       'Set publication request name and send request',
       async () => {
         await publishingRequestDialog.requestName.fillInInput(requestName);
@@ -679,7 +651,7 @@ dialAdminTest(
           adminPublishingRequestDialog,
           'visible',
         );
-        await adminConversationToPublishAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: adminConversation.name },
           'visible',
         );

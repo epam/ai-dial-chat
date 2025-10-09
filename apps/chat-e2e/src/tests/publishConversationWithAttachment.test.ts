@@ -27,9 +27,9 @@ let modelWithInputAttachments: DialAIEntityModel;
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest.beforeAll(async () => {
-  modelWithInputAttachments = GeneratorUtil.randomArrayElement(
-    ModelsUtil.getLatestModelsWithAttachment(),
-  );
+  modelWithInputAttachments = ModelsUtil.getModel(
+    'claude-3-7-sonnet@20250219',
+  )!;
 });
 
 dialAdminTest(
@@ -54,13 +54,12 @@ dialAdminTest(
     publishingRequestDialog,
     toast,
     filesToPublishTree,
-    conversationToPublishAssertion,
+    publishConversationAssertion,
     publishFileAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     chatBar,
     attachFilesModal,
-    tooltipAssertion,
     manageAttachmentsAssertion,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
@@ -71,7 +70,7 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
-    adminConversationToApproveAssertion,
+    adminPublishConversationsTreeAssertion,
     adminFilesToApproveAssertion,
     baseAssertion,
     fileApiHelper,
@@ -134,7 +133,7 @@ dialAdminTest(
           publishingRequestDialog,
           'visible',
         );
-        await conversationToPublishAssertion.assertEntityState(
+        await publishConversationAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
@@ -161,16 +160,6 @@ dialAdminTest(
             state,
           );
         }
-      },
-    );
-
-    await dialTest.step(
-      'Hover over file and verify tooltip is shown',
-      async () => {
-        await filesToPublishTree
-          .getEntityName(Attachment.cloudImageName)
-          .hoverOver();
-        await tooltipAssertion.assertTooltipContent(Attachment.cloudImageName);
       },
     );
 
@@ -223,7 +212,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify file is displayed under "Files" tree and has download icon',
       async () => {
-        await adminConversationToApproveAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );

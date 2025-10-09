@@ -6,12 +6,12 @@ import {
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import {
   ApplicationsToApproveTree,
-  ConversationsToApproveTree,
   FilesToApproveTree,
   FolderConversationsToApprove,
   FolderFilesToApprove,
   FolderPromptsToApprove,
-  PromptsToApproveTree,
+  PublishConversationsTree,
+  PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Page } from '@playwright/test';
@@ -22,21 +22,21 @@ export class PublishingApprovalModal extends BaseElement {
   }
 
   //conversations to approve trees
-  private conversationsToApproveTree!: ConversationsToApproveTree;
+  private conversationsToApproveTree!: PublishConversationsTree;
   private folderConversationsToApprove!: FolderConversationsToApprove;
   //files to approve trees
   private filesToApproveTree!: FilesToApproveTree;
   private folderFilesToApprove!: FolderFilesToApprove;
   //prompts to approve trees
-  private promptsToApproveTree!: PromptsToApproveTree;
+  private promptsToApproveTree!: PublishPromptsTree;
   private folderPromptsToApprove!: FolderPromptsToApprove;
   //applications to approve tree
   private applicationsToPublishTree!: ApplicationsToApproveTree;
   private publishingRules!: PublishingRules;
 
-  getConversationsToApproveTree(): ConversationsToApproveTree {
+  getConversationsToApproveTree(): PublishConversationsTree {
     if (!this.conversationsToApproveTree) {
-      this.conversationsToApproveTree = new ConversationsToApproveTree(
+      this.conversationsToApproveTree = new PublishConversationsTree(
         this.page,
         this.rootLocator,
       );
@@ -74,9 +74,9 @@ export class PublishingApprovalModal extends BaseElement {
     return this.folderFilesToApprove;
   }
 
-  getPromptsToApproveTree(): PromptsToApproveTree {
+  getPromptsToApproveTree(): PublishPromptsTree {
     if (!this.promptsToApproveTree) {
-      this.promptsToApproveTree = new PromptsToApproveTree(
+      this.promptsToApproveTree = new PublishPromptsTree(
         this.page,
         this.rootLocator,
       );
@@ -114,11 +114,11 @@ export class PublishingApprovalModal extends BaseElement {
   public publishName = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publishName,
   );
-  public publishToPathLabel = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.publishToPathLabel,
+  public publishPathLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publishPathLabel,
   );
-  public publishToPath = this.getChildElementBySelector(
-    PublishingApprovalModalSelectors.publishToPath,
+  public publishPath = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publishPath,
   );
   public requestCreatedLabel = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.requestCreatedLabel,

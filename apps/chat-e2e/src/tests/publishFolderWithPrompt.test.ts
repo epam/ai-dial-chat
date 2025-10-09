@@ -47,7 +47,7 @@ dialAdminTest(
       adminPromptDropdownMenu,
       adminInformationModalAssertion,
       adminOrganizationFolderPromptAssertions,
-      promptToPublishAssertion,
+      publishPromptsTreeAssertion,
       promptBarOrganizationFolderAssertion,
       setTestIds,
       localStorageManager,
@@ -289,7 +289,7 @@ dialAdminTest(
           publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: folderPrompt.prompts[0].name },
           {
             expectedState: 'visible',
@@ -299,7 +299,7 @@ dialAdminTest(
             expectedVersionColor: expectedErrorColor,
           },
         );
-        await promptToPublishAssertion.assertElementState(
+        await publishPromptsTreeAssertion.assertElementState(
           promptsToPublishTree.promptIcon(folderPrompt.prompts[0].name),
           'visible',
         );

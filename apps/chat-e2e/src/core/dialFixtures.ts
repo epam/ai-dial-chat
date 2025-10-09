@@ -111,7 +111,6 @@ import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApplicationsToPublishTree,
   AttachFilesTree,
-  ConversationsToPublishTree,
   ConversationsTree,
   FilesToPublishTree,
   FolderConversations,
@@ -119,9 +118,10 @@ import {
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
-  PromptsToPublishTree,
   PromptsTree,
+  PublishConversationsTree,
   PublishFolder,
+  PublishPromptsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -289,9 +289,9 @@ const dialTest = test.extend<{
   manageAttachmentsAssertion: ManageAttachmentsAssertion;
   settingsModal: SettingsModal;
   publishingRequestDialog: PublishingRequestDialog;
-  conversationsToPublishTree: ConversationsToPublishTree;
+  conversationsToPublishTree: PublishConversationsTree;
   filesToPublishTree: FilesToPublishTree;
-  promptsToPublishTree: PromptsToPublishTree;
+  promptsToPublishTree: PublishPromptsTree;
   appsToPublishTree: ApplicationsToPublishTree;
   folderConversationsToPublish: FolderConversationsToPublish;
   publicationApiHelper: PublicationApiHelper;
@@ -350,9 +350,9 @@ const dialTest = test.extend<{
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
   publishingRequestFolderPromptAssertion: PublishFolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
-  conversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
+  publishConversationAssertion: PublishEntityAssertion<PublishConversationsTree>;
   publishFileAssertion: PublishFileAssertion<FilesToPublishTree>;
-  promptToPublishAssertion: PublishEntityAssertion<PromptsToPublishTree>;
+  publishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   appToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
   folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
@@ -1263,10 +1263,12 @@ const dialTest = test.extend<{
     const shareAppModalAssertion = new ShareAppModalAssertion(shareAppModal);
     await use(shareAppModalAssertion);
   },
-  publishingRequestDialogAssertion: async ({ publishingRequestDialog }, use) => {
-    const publishingRequestDialogAssertion = new PublishingRequestDialogAssertion(
-      publishingRequestDialog,
-    );
+  publishingRequestDialogAssertion: async (
+    { publishingRequestDialog },
+    use,
+  ) => {
+    const publishingRequestDialogAssertion =
+      new PublishingRequestDialogAssertion(publishingRequestDialog);
     await use(publishingRequestDialogAssertion);
   },
   selectFoldersAssertion: async ({ selectFolders }, use) => {
@@ -1324,24 +1326,21 @@ const dialTest = test.extend<{
     );
     await use(talkToAgentDialogAssertion);
   },
-  conversationToPublishAssertion: async (
-    { conversationsToPublishTree },
-    use,
-  ) => {
-    const conversationToPublishAssertion =
-      new PublishEntityAssertion<ConversationsToPublishTree>(
+  publishConversationAssertion: async ({ conversationsToPublishTree }, use) => {
+    const publishConversationAssertion =
+      new PublishEntityAssertion<PublishConversationsTree>(
         conversationsToPublishTree,
       );
-    await use(conversationToPublishAssertion);
+    await use(publishConversationAssertion);
   },
   publishFileAssertion: async ({ filesToPublishTree }, use) => {
     const publishFileAssertion = new PublishFileAssertion(filesToPublishTree);
     await use(publishFileAssertion);
   },
-  promptToPublishAssertion: async ({ promptsToPublishTree }, use) => {
-    const promptToPublishAssertion =
-      new PublishEntityAssertion<PromptsToPublishTree>(promptsToPublishTree);
-    await use(promptToPublishAssertion);
+  publishPromptsTreeAssertion: async ({ promptsToPublishTree }, use) => {
+    const publishPromptsTreeAssertion =
+      new PublishEntityAssertion<PublishPromptsTree>(promptsToPublishTree);
+    await use(publishPromptsTreeAssertion);
   },
   appToPublishAssertion: async ({ appsToPublishTree }, use) => {
     const appToPublishAssertion =

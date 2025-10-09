@@ -587,14 +587,14 @@ export function PublicationHandler({ publication }: Props) {
                     />
                   ) : (
                     <PublicationInfoSection
-                      labelDataQa="publish-to-label"
+                      labelDataQa="publish-label"
                       label={t(
                         publicationModel &&
                           publicationModel.action === PublishActions.DELETE
                           ? 'Unpublish from'
                           : 'Publish to',
                       )}
-                      valueDataQa="publish-to-path"
+                      valueDataQa="publish-path"
                       valueToDisplay={publishToUrl}
                       tooltip={
                         <div className="flex break-words">{publishToUrl}</div>
@@ -615,7 +615,7 @@ export function PublicationHandler({ publication }: Props) {
                     (publicationModel &&
                       publicationModel.action !== PublishActions.DELETE)) && (
                     <PublicationInfoSection
-                      labelDataQa="publicationAuthor-label"
+                      labelDataQa="publication-display-author-label"
                       label={t("Author's public name")}
                       valueDataQa="publication-display-author"
                       valueToDisplay={publication.displayAuthor ?? ''}

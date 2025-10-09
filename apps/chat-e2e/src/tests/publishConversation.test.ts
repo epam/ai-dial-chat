@@ -39,7 +39,7 @@ dialAdminTest(
       conversationDropdownMenu,
       publishingRequestDialog,
       conversationsToPublishTree,
-      conversationToPublishAssertion,
+      publishConversationAssertion,
       publishingRequestDialogAssertion,
       iconApiHelper,
       tooltipAssertion,
@@ -58,7 +58,7 @@ dialAdminTest(
       adminOrganizationConversationAssertion,
       adminPublishingApprovalModalAssertion,
       adminPublishingRulesAssertion,
-      adminConversationToApproveAssertion,
+      adminPublishConversationsTreeAssertion,
       conversationDropdownMenuAssertion,
       downloadAssertion,
       adminTooltip,
@@ -261,15 +261,15 @@ dialAdminTest(
           noChangesLabel: 'visible',
         });
 
-        await adminConversationToApproveAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
-        await adminConversationToApproveAssertion.assertEntityVersion(
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: conversation.name },
           ExpectedConstants.defaultAppVersion,
         );
-        await adminConversationToApproveAssertion.assertTreeEntityIcon(
+        await adminPublishConversationsTreeAssertion.assertTreeEntityIcon(
           { name: conversation.name },
           expectedConversationIcon,
         );
@@ -370,7 +370,7 @@ dialAdminTest(
         await conversationsToPublishTree
           .getEntityVersionInput(conversation.name)
           .fill(ExpectedConstants.defaultAppVersion);
-        await conversationToPublishAssertion.assertElementState(
+        await publishConversationAssertion.assertElementState(
           conversationsToPublishTree.getEntityVersionErrorIcon(
             conversation.name,
           ),

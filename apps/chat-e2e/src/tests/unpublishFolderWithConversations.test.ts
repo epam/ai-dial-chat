@@ -47,7 +47,7 @@ dialAdminTest(
     organizationFolderConversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    conversationToPublishAssertion,
+    publishConversationAssertion,
     baseAssertion,
     publishingRules,
     publishingRequestDialogAssertion,
@@ -138,37 +138,37 @@ dialAdminTest(
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestDialog.unpublishFrom,
+          publishingRequestDialog.publishPath,
           publishPath,
         );
 
-        await conversationToPublishAssertion.assertEntityState(
+        await publishConversationAssertion.assertEntityState(
           { name: firstConversation.name },
           'visible',
         );
-        await conversationToPublishAssertion.assertEntityColor(
+        await publishConversationAssertion.assertEntityColor(
           { name: firstConversation.name },
           expectedErrorColor,
         );
-        await conversationToPublishAssertion.assertEntityCheckboxState(
+        await publishConversationAssertion.assertEntityCheckboxState(
           { name: firstConversation.name },
           CheckboxState.checked,
         );
 
-        await conversationToPublishAssertion.assertEntityVersion(
+        await publishConversationAssertion.assertEntityVersion(
           { name: firstConversation.name },
           ExpectedConstants.defaultAppVersion,
         );
-        await conversationToPublishAssertion.assertEntityVersionColor(
+        await publishConversationAssertion.assertEntityVersionColor(
           { name: firstConversation.name },
           expectedErrorColor,
         );
-        await conversationToPublishAssertion.assertTreeEntityIcon(
+        await publishConversationAssertion.assertTreeEntityIcon(
           { name: firstConversation.name },
           expectedConversationIcon,
         );
 
-        await conversationToPublishAssertion.assertEntityState(
+        await publishConversationAssertion.assertEntityState(
           { name: secondConversation.name },
           'hidden',
         );
@@ -285,7 +285,7 @@ dialAdminTest(
       'Verify only 1t conversation is displayed on "Publication approval" modal',
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           publishPath,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
@@ -459,7 +459,7 @@ dialAdminTest(
     organizationFolderConversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    conversationToPublishAssertion,
+    publishConversationAssertion,
     publishingRequestDialogAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
@@ -543,27 +543,27 @@ dialAdminTest(
           'visible',
         );
         for (const conversation of folderConversations) {
-          await conversationToPublishAssertion.assertEntityState(
+          await publishConversationAssertion.assertEntityState(
             { name: conversation },
             'visible',
           );
-          await conversationToPublishAssertion.assertEntityColor(
+          await publishConversationAssertion.assertEntityColor(
             { name: conversation },
             expectedErrorColor,
           );
-          await conversationToPublishAssertion.assertEntityCheckboxState(
+          await publishConversationAssertion.assertEntityCheckboxState(
             { name: conversation },
             CheckboxState.checked,
           );
-          await conversationToPublishAssertion.assertEntityVersion(
+          await publishConversationAssertion.assertEntityVersion(
             { name: conversation },
             ExpectedConstants.defaultAppVersion,
           );
-          await conversationToPublishAssertion.assertEntityVersionColor(
+          await publishConversationAssertion.assertEntityVersionColor(
             { name: conversation },
             expectedErrorColor,
           );
-          await conversationToPublishAssertion.assertTreeEntityIcon(
+          await publishConversationAssertion.assertTreeEntityIcon(
             { name: conversation },
             expectedConversationIcon,
           );
@@ -651,7 +651,7 @@ dialAdminTest(
       'Verify both conversations are displayed on "Publication approval" modal',
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           PublishPath.Organization,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
@@ -925,7 +925,7 @@ dialAdminTest(
           expectedConversationIcon,
         );
         await publishingRequestDialogAssertion.assertElementText(
-          publishingRequestDialog.unpublishFrom,
+          publishingRequestDialog.publishPath,
           publishPath,
         );
         await publishingRequestDialogAssertion.assertElementText(
@@ -1012,7 +1012,7 @@ dialAdminTest(
       'Verify only inner folder with content is displayed on "Publication approval" modal',
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           publishPath,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(

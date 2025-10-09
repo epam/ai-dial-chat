@@ -80,7 +80,16 @@ export class EntitiesTree extends BaseElement {
   getEntityByExactName(name: string): Locator {
     return this.getChildElementBySelector(this.entitySelector)
       .getElementLocator()
-      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) })
+      .or(
+        this.getChildElementBySelector(this.entitySelector)
+          .getElementLocator()
+          .filter({
+            has: this.page.locator(
+              `${Tags.input}[${Attributes.value}="${name}"]`,
+            ),
+          }),
+      );
   }
 
   getEntityName(name: string, index?: number) {

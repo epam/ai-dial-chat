@@ -6,11 +6,11 @@ import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import {
   ApplicationsToPublishTree,
-  ConversationsToPublishTree,
   FilesToPublishTree,
   FolderConversationsToPublish,
   FolderPromptsToPublish,
-  PromptsToPublishTree,
+  PublishConversationsTree,
+  PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Locator, Page } from '@playwright/test';
@@ -25,12 +25,12 @@ export class PublishingRequestDialog extends BaseElement {
   );
 
   //conversations to publish trees
-  private conversationsToPublishTree!: ConversationsToPublishTree;
+  private conversationsToPublishTree!: PublishConversationsTree;
   private folderConversationsToPublish!: FolderConversationsToPublish;
   //files to publish tree
   private filesToPublishTree!: FilesToPublishTree;
   //prompts to publish trees
-  private promptsToPublishTree!: PromptsToPublishTree;
+  private promptsToPublishTree!: PublishPromptsTree;
   private folderPromptsToPublish!: FolderPromptsToPublish;
   //applications to publish tree
   private applicationsToPublishTree!: ApplicationsToPublishTree;
@@ -38,9 +38,9 @@ export class PublishingRequestDialog extends BaseElement {
   private changePublishToPath!: ChangePath;
   private publishingRules!: PublishingRules;
 
-  getConversationsToPublishTree(): ConversationsToPublishTree {
+  getConversationsToPublishTree(): PublishConversationsTree {
     if (!this.conversationsToPublishTree) {
-      this.conversationsToPublishTree = new ConversationsToPublishTree(
+      this.conversationsToPublishTree = new PublishConversationsTree(
         this.page,
         this.rootLocator,
       );
@@ -68,9 +68,9 @@ export class PublishingRequestDialog extends BaseElement {
     return this.filesToPublishTree;
   }
 
-  getPromptsToPublishTree(): PromptsToPublishTree {
+  getPromptsToPublishTree(): PublishPromptsTree {
     if (!this.promptsToPublishTree) {
-      this.promptsToPublishTree = new PromptsToPublishTree(
+      this.promptsToPublishTree = new PublishPromptsTree(
         this.page,
         this.rootLocator,
       );
@@ -124,14 +124,11 @@ export class PublishingRequestDialog extends BaseElement {
   public sendRequestButton = this.getChildElementBySelector(
     PublishingDialogSelectors.sendButton,
   );
-  public unpublishFromLabel = this.getChildElementBySelector(
-    PublishingDialogSelectors.unpublishFromLabel,
+  public publishPath = this.getChildElementBySelector(
+    PublishingDialogSelectors.publishPath,
   );
-  public unpublishFrom = this.getChildElementBySelector(
-    PublishingDialogSelectors.unpublishFromPath,
-  );
-  public publishToLabel = this.getChildElementBySelector(
-    PublishingDialogSelectors.publishToLabel,
+  public publishLabel = this.getChildElementBySelector(
+    PublishingDialogSelectors.publishLabel,
   );
   public authorLabel = this.getChildElementBySelector(
     PublishingDialogSelectors.authorLabel,

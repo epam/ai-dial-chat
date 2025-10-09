@@ -29,8 +29,8 @@ dialAdminTest(
     baseAssertion,
     selectFolders,
     adminPublishedPromptPreviewModal,
-    adminPromptsToApprove,
-    adminPromptToApproveAssertion,
+    adminPromptsToApproveTree,
+    adminPublishPromptsTreeAssertion,
     promptBarOrganizationFolderAssertion,
     organizationFolderPrompts,
     localStorageManager,
@@ -55,7 +55,10 @@ dialAdminTest(
       await dialHomePage.waitForPageLoaded();
       await prompts.openEntityDropdownMenu(prompt.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-      await baseAssertion.assertElementState(publishingRequestDialog, 'visible');
+      await baseAssertion.assertElementState(
+        publishingRequestDialog,
+        'visible',
+      );
     });
 
     await dialTest.step(
@@ -114,22 +117,22 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           `Organization/${folderName}`,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
         );
-        await adminPromptToApproveAssertion.assertEntityState(
+        await adminPublishPromptsTreeAssertion.assertEntityState(
           { name: prompt.name },
           'visible',
         );
-        await adminPromptToApproveAssertion.assertEntityVersion(
+        await adminPublishPromptsTreeAssertion.assertEntityVersion(
           { name: prompt.name },
           ExpectedConstants.defaultAppVersion,
         );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPromptsToApprove.promptIcon(prompt.name),
+        await adminPublishPromptsTreeAssertion.assertElementState(
+          adminPromptsToApproveTree.promptIcon(prompt.name),
           'visible',
         );
       },

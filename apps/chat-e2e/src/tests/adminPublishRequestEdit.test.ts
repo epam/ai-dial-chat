@@ -256,7 +256,9 @@ dialAdminTest(
     const model = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels().filter(
         (m) =>
-          m.features?.temperature == true && m.features?.systemPrompt == true,
+          m.id !== ModelsUtil.getDefaultAgent()?.id &&
+          m.features?.temperature == true &&
+          m.features?.systemPrompt == true,
       ),
     )!;
     const modelIcon = iconApiHelper.getEntityIcon(model);
@@ -321,7 +323,7 @@ dialAdminTest(
       'Click on agent icon, select another agent and verify it is updated',
       async () => {
         await adminChatHeader.chatAgent.click();
-        await adminTalkToAgentDialog.selectAgent(model.name, {
+        await adminTalkToAgentDialog.selectAgent(model, {
           isHttpMethodTriggered: true,
           triggeredHttpMethod: 'POST',
         });
