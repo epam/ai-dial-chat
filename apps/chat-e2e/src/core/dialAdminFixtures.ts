@@ -101,6 +101,7 @@ const dialAdminTest = dialTest.extend<{
   adminPromptBar: PromptBar;
   adminFileDropArea: FileDropArea;
   adminChat: Chat;
+  adminChatHeaderDropdownMenu: DropdownMenu;
   adminMarketplaceContainer: MarketplaceContainer;
   adminNavigationPanel: NavigationPanel;
   adminMarketplace: Marketplace;
@@ -304,6 +305,10 @@ const dialAdminTest = dialTest.extend<{
   adminChat: async ({ adminFileDropArea }, use) => {
     const additionalShareUserChat = adminFileDropArea.getChat();
     await use(additionalShareUserChat);
+  },
+  adminChatHeaderDropdownMenu: async ({ adminPage }, use) => {
+    const adminChatHeaderDropdownMenu = new DropdownMenu(adminPage);
+    await use(adminChatHeaderDropdownMenu);
   },
   adminMarketplaceContainer: async ({ adminMarketplacePage }, use) => {
     const adminMarketplaceContainer =

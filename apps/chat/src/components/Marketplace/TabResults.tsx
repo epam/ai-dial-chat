@@ -1,4 +1,4 @@
-import { IconMessage2 } from '@tabler/icons-react';
+import { IconBlocks, IconMessage2 } from '@tabler/icons-react';
 import { memo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -89,12 +89,13 @@ export const ResultsView = memo(
     }
 
     if (areAllFiltersEmpty) {
+      const Icon = isAgentsTab ? IconMessage2 : IconBlocks;
       return (
         <NoMarketplaceEntitiesFound
           header={isAgentsTab ? 'No agents' : 'No toolsets'}
           description={`You don't have any ${isAgentsTab ? 'agents' : 'toolsets'}.`}
         >
-          <IconMessage2 size={100} className="stroke-[0.2]" />
+          <Icon size={100} className="stroke-[0.2]" />
         </NoMarketplaceEntitiesFound>
       );
     }

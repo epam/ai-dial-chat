@@ -60,6 +60,7 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
         <button
           onClick={() => handleChangeModel(item.conversationId)}
           className={BUTTON_CLASS_NAME}
+          data-qa="change-agent-btn"
         >
           {t('change the agent')}
         </button>

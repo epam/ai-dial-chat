@@ -242,8 +242,6 @@ const PublishDialogContainer = ({
     resourceType,
   ]);
 
-  console.log(publication);
-
   useEffect(() => {
     if (publication.resources.length) {
       dispatch(
