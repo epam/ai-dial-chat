@@ -2,7 +2,6 @@ import { Observable, forkJoin, of, switchMap } from 'rxjs';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
-  addVersionToId,
   getIdWithoutVersionFromApiKey,
   getPublicItemIdWithoutVersion,
   getVersionFromId,
@@ -10,7 +9,7 @@ import {
   pathKeySeparator,
 } from '@/src/utils/server/api';
 
-import { FeatureType } from '@/src/types/common';
+import { ApiKeys, FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import {
   PublicVersionGroups,
@@ -22,7 +21,6 @@ import {
   ResourceToReview,
   TargetAudienceFilter,
 } from '@/src/types/publication';
-import { SharingType } from '@/src/types/share';
 
 import {
   EDITED_FOLDER_NAME_KEY,
@@ -38,7 +36,6 @@ import {
 
 import {
   isEntityNameValid,
-  isVersionValid,
   prepareEntityName,
   sortItemsVersions,
 } from './common';
@@ -55,7 +52,6 @@ import {
   isRootId,
   isToolsetId,
 } from './id';
-import { EnumMapper } from './mappers';
 
 import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
 
@@ -72,35 +68,16 @@ export const isEntityIdPublic = (
   );
 };
 
-export const createTargetUrl = (
-  featureType: FeatureType,
-  publicPath: string,
-  id: string,
-  type: SharingType,
-  version?: string,
-) => {
-  const baseElements =
-    type === SharingType.PromptFolder || type === SharingType.ConversationFolder
-      ? id.split('/').slice(2, -1)
-      : '';
+export const createFoldersFilesTargetUrl = (id: string) => {
+  const baseElements = id.split('/').slice(2, -1);
   const lastElement = id.split('/').slice(-1);
-  const constructedUrlWithoutVersion = constructPath(
-    EnumMapper.getApiKeyByFeatureType(featureType),
+
+  return constructPath(
+    ApiKeys.Files,
     PUBLIC_URL_PREFIX,
-    publicPath,
     ...baseElements,
     ...lastElement,
   );
-
-  if (featureType !== FeatureType.Chat && featureType !== FeatureType.Prompt) {
-    return constructedUrlWithoutVersion;
-  }
-
-  if (version && isVersionValid(version)) {
-    return addVersionToId(constructedUrlWithoutVersion, version);
-  }
-
-  return addVersionToId(constructedUrlWithoutVersion, DEFAULT_VERSION);
 };
 
 export const findLatestVersion = (versions: string[]) => {

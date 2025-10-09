@@ -32,7 +32,7 @@ import {
   splitEntityId,
 } from '@/src/utils/app/shared-utils';
 
-import { ApiKeys, BackendResourceType, FeatureType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -345,14 +345,8 @@ export function PublicationHandler({ publication }: Props) {
 
           if (!isReview && publicationModel.action === PublishActions.DELETE) {
             newTargetUrl = targetUrl;
-          } else if (isReview || !isFileId(reviewUrl)) {
-            newTargetUrl = constructPath(newFolderId, newApiKey);
           } else {
-            newTargetUrl = constructPath(
-              ApiKeys.Files,
-              editedPublishToUrl,
-              newApiKey,
-            );
+            newTargetUrl = constructPath(newFolderId, newApiKey);
           }
 
           return {

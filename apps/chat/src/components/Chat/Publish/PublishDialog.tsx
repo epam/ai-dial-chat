@@ -14,16 +14,15 @@ import {
   transformIdToRootEntityId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { NotReplayFilter } from '@/src/utils/app/search';
 import {
-  constructPath,
-  getEntityBucket,
-  splitEntityId,
-} from '@/src/utils/app/shared-utils';
+  createFoldersFilesTargetUrl,
+  isEntityIdPublic,
+} from '@/src/utils/app/publications';
+import { NotReplayFilter } from '@/src/utils/app/search';
+import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApiKeys, BackendResourceType } from '@/src/types/common';
+import { BackendResourceType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { PublicationStatus } from '@/src/types/publication';
@@ -44,7 +43,14 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 import { PublicationHandler } from './PublicationHandler/PublicationHandler';
 
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
+import compact from 'lodash-es/compact';
+import escapeRegExp from 'lodash-es/escapeRegExp';
+import flatMapDeep from 'lodash-es/flatMapDeep';
 
 interface PublishDialogContainerProps {
   entity: ShareEntity & { iconUrl?: string };
@@ -54,27 +60,35 @@ interface PublishDialogContainerProps {
   filteredConversationFiles: DialFile[];
 }
 
-const transformFileId = (
-  decodedId: string,
+const transformFoldersFilesIds = (
+  conversations: Conversation[],
   entity: ShareEntity,
-  isFolder: boolean,
 ) => {
-  const bucket = getEntityBucket(entity);
-  const splittedEntityId = entity.id.split('/');
-  splittedEntityId[0] = ApiKeys.Files;
-  splittedEntityId[1] = bucket;
-  const transformedEntityId = splittedEntityId.join('/');
+  const folderOldPathPartsRegExp = new RegExp(
+    escapeRegExp(getIdWithoutRootPathSegments(entity.folderId)),
+  );
 
-  // console.log(transformedEntityId);
-  // console.log(decodedId);
-  // console.log(transformIdToRootEntityId(decodedId));
+  return conversations.flatMap((c) => {
+    const urls = compact(
+      flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+        m.custom_content?.attachments?.map((a) => a.url),
+      ),
+    );
 
-  return isFolder
-    ? constructPath(
-        transformIdToRootEntityId(transformedEntityId),
-        decodedId.replace(`${transformedEntityId}/`, ''),
-      )
-    : transformIdToRootEntityId(decodedId);
+    return urls.map((oldUrl) => {
+      const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+
+      return {
+        oldUrl: decodedOldUrl,
+        newUrl: createFoldersFilesTargetUrl(
+          constructPath(
+            getFolderIdFromEntityId(c.id),
+            ...decodedOldUrl.split('/').slice(-1),
+          ).replace(folderOldPathPartsRegExp, ''),
+        ),
+      };
+    });
+  });
 };
 
 const PublishDialogContainer = ({
@@ -155,17 +169,29 @@ const PublishDialogContainer = ({
       };
     });
 
+    const mappedWithConversationsFiles = transformFoldersFilesIds(
+      filteredEntities as Conversation[],
+      entity,
+    );
+
     const fileResources =
       action === PublishActions.DELETE
         ? []
         : filteredConversationFiles.map(({ id }) => {
             const decodedId = ApiUtils.decodeApiUrl(id);
-            const url = transformFileId(decodedId, entity, isFolder);
+
+            const url =
+              (isFolder
+                ? mappedWithConversationsFiles.find(
+                    (file) => file.oldUrl === decodedId,
+                  )?.newUrl
+                : transformIdToRootEntityId(decodedId)) ??
+              transformIdToRootEntityId(decodedId);
 
             return {
               action,
               sourceUrl: decodedId,
-              targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
+              targetUrl: url,
               reviewUrl: url,
             };
           });
@@ -173,9 +199,9 @@ const PublishDialogContainer = ({
     const decodedIconUrl = entity.iconUrl
       ? ApiUtils.decodeApiUrl(entity.iconUrl)
       : '';
-    const iconUrl = transformFileId(decodedIconUrl, entity, isFolder);
+    const iconUrl = transformIdToRootEntityId(decodedIconUrl);
     const iconResource =
-      decodedIconUrl && iconUrl && !isFolder && action !== PublishActions.DELETE
+      decodedIconUrl && !isFolder && action !== PublishActions.DELETE
         ? [
             {
               action,
