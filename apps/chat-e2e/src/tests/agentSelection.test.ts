@@ -2,7 +2,11 @@ import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { MenuOptions, MockedChatApiResponseBodies } from '@/src/testData';
+import {
+  ExpectedConstants,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -606,7 +610,8 @@ dialTest(
 );
 
 dialTest(
-  'RecentModelIds[0] is updated if remove latest used model from My applications',
+  'RecentModelIds[0] is updated if remove latest used model from My applications.\n' +
+    `[First screen] 'Add agent to My workspace to continue' appears if the agent was removed from My workspace`,
   async ({
     dialHomePage,
     chatBar,
@@ -614,6 +619,7 @@ dialTest(
     chat,
     talkToAgentDialog,
     marketplacePage,
+    iconApiHelper,
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
@@ -621,10 +627,12 @@ dialTest(
     confirmationDialog,
     localStorageAssertion,
     chatAssertion,
+    sendMessage,
+    sendMessageAssertion,
     marketplaceAgentsSection,
     talkToAgentDialogAssertion,
   }) => {
-    setTestIds('EPMRTC-4356');
+    setTestIds('EPMRTC-4356', 'EPMRTC-5113');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
@@ -660,9 +668,36 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify recentModelIds is updated and the second model is selected',
+      'Verify "Add the agent to My workspace to continue" btn is displayed instead of input',
       async () => {
         await chatAssertion.assertAddAgentButtonState('visible');
+        await chatAssertion.assertElementText(
+          chat.addModelButton,
+          ExpectedConstants.addAgentToWorkspaceTitle,
+        );
+        await sendMessageAssertion.assertElementState(
+          sendMessage.messageInput,
+          'hidden',
+        );
+        await agentInfoAssertion.assertAgentName(firstModel.name);
+        await agentInfoAssertion.assertShortDescription(firstModel);
+        await agentInfoAssertion.assertAgentVersion(firstModel.version);
+        const expectedModelIcon = iconApiHelper.getEntityIcon(firstModel);
+        await agentInfoAssertion.assertAgentIcon(expectedModelIcon);
+        await chatAssertion.assertElementState(
+          chat.changeAgentButton,
+          'visible',
+        );
+        await chatAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify recentModelIds is updated and the second model is selected',
+      async () => {
         await chatBar.createNewEntity();
         await talkToAgentDialogAssertion.assertAgentIsSelected(secondModel);
         await talkToAgentDialog.cancelButton.click();
