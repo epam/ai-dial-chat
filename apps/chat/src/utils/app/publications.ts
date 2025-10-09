@@ -342,7 +342,7 @@ export const getDefaultAllEditEntities = (
   } else {
     resources.forEach(({ reviewUrl, action }) => {
       const apiKey = splitEntityId(reviewUrl).name;
-      const { name } = parseEntityApiKey(apiKey, {
+      const { name, version } = parseEntityApiKey(apiKey, {
         parseModel: isConversationId(reviewUrl),
         parseVersion:
           isApplicationId(reviewUrl) ||
@@ -350,27 +350,34 @@ export const getDefaultAllEditEntities = (
           action === PublishActions.DELETE,
       });
 
-      const entityIdPart = reviewUrl.split('/');
-      entityIdPart[1] = PUBLIC_URL_PREFIX;
-      const publicEntityId = entityIdPart.join('/');
-      const versionGroup = versionGroups[publicEntityId];
-
-      const latestVersion = sortItemsVersions(
-        versionGroup?.allVersions ?? [],
-      ).at(0)?.version;
-
-      if (!latestVersion) {
+      if (action === PublishActions.DELETE && version) {
         allEditEntitiesMap[reviewUrl] = {
           name,
-          version: DEFAULT_VERSION,
+          version,
         };
       } else {
-        const nextVersion = latestVersion.split('.');
-        nextVersion[2] = String(+nextVersion[2] + 1);
-        allEditEntitiesMap[reviewUrl] = {
-          name,
-          version: nextVersion.join('.'),
-        };
+        const entityIdPart = reviewUrl.split('/');
+        entityIdPart[1] = PUBLIC_URL_PREFIX;
+        const publicEntityId = entityIdPart.join('/');
+        const versionGroup = versionGroups[publicEntityId];
+
+        const latestVersion = sortItemsVersions(
+          versionGroup?.allVersions ?? [],
+        ).at(0)?.version;
+
+        if (!latestVersion) {
+          allEditEntitiesMap[reviewUrl] = {
+            name,
+            version: DEFAULT_VERSION,
+          };
+        } else {
+          const nextVersion = latestVersion.split('.');
+          nextVersion[2] = String(+nextVersion[2] + 1);
+          allEditEntitiesMap[reviewUrl] = {
+            name,
+            version: nextVersion.join('.'),
+          };
+        }
       }
     });
   }

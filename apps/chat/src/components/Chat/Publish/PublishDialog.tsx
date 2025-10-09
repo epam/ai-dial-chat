@@ -189,7 +189,7 @@ const PublishDialogContainer = ({
               transformIdToRootEntityId(decodedId);
 
             return {
-              action,
+              action: PublishActions.ADD_IF_ABSENT,
               sourceUrl: decodedId,
               targetUrl: url,
               reviewUrl: url,
@@ -204,7 +204,7 @@ const PublishDialogContainer = ({
       decodedIconUrl && !isFolder && action !== PublishActions.DELETE
         ? [
             {
-              action,
+              action: PublishActions.ADD_IF_ABSENT,
               sourceUrl: decodedIconUrl,
               targetUrl: replaceIdWithBucket(iconUrl, PUBLIC_URL_PREFIX),
               reviewUrl: iconUrl,

@@ -266,8 +266,8 @@ export const findLatestVersion = (versions: string[]) => {
 
 export const sortItemsVersions = <T extends { version?: string | undefined }>(
   items: T[],
-): T[] =>
-  items.sort((a, b) => {
+): T[] => {
+  return [...items].sort((a, b) => {
     const versionA = a.version;
     const versionB = b.version;
 
@@ -276,6 +276,7 @@ export const sortItemsVersions = <T extends { version?: string | undefined }>(
 
     return compareVersions(versionB, versionA);
   });
+};
 
 export const groupAllVersions = (versions: PublicVersionOption[]) =>
   Object.values(
