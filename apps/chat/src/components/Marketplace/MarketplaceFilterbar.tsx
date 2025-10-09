@@ -152,6 +152,7 @@ export const MarketplaceFilterbar = memo(() => {
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const topics = useAppSelector(ModelsSelectors.selectModelTopics);
+  const toolsetsTopics = useAppSelector(ToolsetSelectors.selectToolsetsTopics);
   const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
 
   const [openedSections, setOpenedSections] = useState({
@@ -244,7 +245,7 @@ export const MarketplaceFilterbar = memo(() => {
               )}
               <FilterSection
                 sectionName={t('Topics')}
-                filterValues={topics}
+                filterValues={isAgentsTab ? topics : toolsetsTopics}
                 openedSections={openedSections}
                 selectedFilters={selectedFilters}
                 filterType={FilterTypes.TOPICS}
