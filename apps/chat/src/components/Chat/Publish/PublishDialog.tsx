@@ -191,7 +191,7 @@ const PublishDialogContainer = ({
             return {
               action: PublishActions.ADD_IF_ABSENT,
               sourceUrl: decodedId,
-              reviewUrl: decodedId,
+              reviewUrl: url,
               targetUrl: url,
             };
           });
