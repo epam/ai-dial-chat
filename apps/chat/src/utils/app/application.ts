@@ -444,6 +444,4 @@ export const getApplicationEntityFields = (
 export const isDialAiEntityModel = (
   entity: MarketplaceEntity,
 ): entity is DialAIEntityModel =>
-  entity?.type === EntityType.Application ||
-  entity?.type === EntityType.Model ||
-  entity?.type === EntityType.Assistant;
+  entity?.type === EntityType.Application || entity?.type === EntityType.Model;

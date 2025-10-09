@@ -5,8 +5,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getQuickApp2Config, isQuickApp2 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
+import { isApplicationId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
@@ -21,7 +22,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors, ToolsetSelectors } from '@/src/store/selectors';
+import { ModelsSelectors } from '@/src/store/selectors';
 
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -78,18 +79,26 @@ const ReviewQuickApp2SectionView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
 
   const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
       config.tool_sets?.reduce<{
-        agents: DialDeploymentSimpleTool[];
+        agents: (DialDeploymentSimpleTool & { name: string })[];
         toolsets: MCPToolset[];
         isCodeInterpreter: boolean;
       }>(
         (acc, toolset) => {
           if (isDialDeploymentToolset(toolset)) {
-            acc.agents = toolset.tools;
+            acc.agents = toolset.tools.map((tool) => ({
+              ...tool,
+              name: isApplicationId(tool.deployment_id)
+                ? ApiUtils.decodeApiUrl(
+                    parseEntityApiKey(splitEntityId(tool.deployment_id).name, {
+                      parseVersion: true,
+                    }).name,
+                  )
+                : tool.deployment_id,
+            }));
           } else if (isMcpToolset(toolset)) {
             acc.toolsets = [...acc.toolsets, toolset];
           } else if (isCodeInterpreterToolset(toolset)) {
@@ -103,6 +112,20 @@ const ReviewQuickApp2SectionView = ({
     [config.tool_sets],
   );
 
+  const orchestratorModel = modelsMap[config.orchestrator.deployment.name];
+  const orchestratorName = orchestratorModel
+    ? orchestratorModel.name
+    : !isApplicationId(config.orchestrator.deployment.name)
+      ? ApiUtils.decodeApiUrl(
+          parseEntityApiKey(
+            splitEntityId(config.orchestrator.deployment.name).name,
+            {
+              parseVersion: true,
+            },
+          ).name,
+        )
+      : config.orchestrator.deployment.name;
+
   return (
     <>
       {isCodeInterpreter && (
@@ -115,14 +138,12 @@ const ReviewQuickApp2SectionView = ({
           </span>
         </div>
       )}
-      {modelsMap[config.orchestrator.deployment.name] && (
-        <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Model: ')}</span>
-          <span className="max-w-[414px] break-all text-primary">
-            {modelsMap[config.orchestrator.deployment.name]?.name}
-          </span>
-        </div>
-      )}
+      <div className="flex gap-4">
+        <span className="w-[122px] text-secondary">{t('Model: ')}</span>
+        <span className="max-w-[414px] break-all text-primary">
+          {orchestratorName}
+        </span>
+      </div>
 
       <div className="flex gap-4">
         <span className="w-[122px] text-secondary">{t('Temperature: ')}</span>
@@ -131,7 +152,7 @@ const ReviewQuickApp2SectionView = ({
         </span>
       </div>
 
-      {!!config.contexts?.length && (
+      {(config.contexts?.length ?? 0) > 0 && (
         <div className="flex items-center gap-4">
           <span className="w-[122px] shrink-0 self-start text-secondary">
             {t('Document URLs: ')}
@@ -160,44 +181,48 @@ const ReviewQuickApp2SectionView = ({
           <span className="w-[122px] shrink-0 text-secondary">
             {t('Agents: ')}
           </span>
-          <span className="flex gap-2 text-primary">
+          <div className="flex flex-wrap gap-2 text-primary">
             {agents.map((agent) => (
               <AgentAndToolsetChip
                 key={agent.deployment_id}
-                // TODO: handle case when model is not found (+ try search model in a review bucket when will be supported on core side)
-                item={modelsMap[agent.deployment_id]!}
+                item={{
+                  id: agent.deployment_id,
+                  description: '',
+                  name: agent.name,
+                  type: EntityType.Model,
+                  reference: agent.deployment_id,
+                  isDefault: false,
+                }}
                 id={agent.deployment_id}
                 readonly
               />
             ))}
-          </span>
+          </div>
         </div>
       )}
 
       {toolsets.length > 0 && (
-        <div className="flex gap-4">
+        <div className="flex items-center gap-4">
           <span className="w-[122px] shrink-0 text-secondary">
             {t('Toolsets: ')}
           </span>
-          <span className="flex gap-2 text-primary">
+          <div className="flex flex-wrap gap-2 text-primary">
             {toolsets.map((toolset) => (
               <AgentAndToolsetChip
-                id={toolset.name}
-                key={toolset.name}
-                item={
-                  toolsetsMap[toolset.name] ?? {
-                    id: toolset.name,
-                    description: toolset.description,
-                    name: toolset.name,
-                    type: EntityType.Toolset,
-                    reference: toolset.name,
-                    isDefault: false,
-                  }
-                }
+                id={toolset.dial_id}
+                key={toolset.dial_id}
+                item={{
+                  id: toolset.dial_id,
+                  description: toolset.description,
+                  name: toolset.name,
+                  type: EntityType.Toolset,
+                  reference: toolset.dial_id,
+                  isDefault: false,
+                }}
                 readonly
               />
             ))}
-          </span>
+          </div>
         </div>
       )}
     </>
