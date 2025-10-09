@@ -114,7 +114,6 @@ describe('PlaybackControls', () => {
           activeReplayIndex: 0,
           replayAsIs: false,
         },
-        selectedAddons: [],
         isMessageStreaming: false,
       },
     ]);

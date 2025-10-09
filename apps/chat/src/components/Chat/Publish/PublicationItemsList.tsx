@@ -10,7 +10,7 @@ import { getSelectedEntitiesByFolderId } from '@/src/utils/app/folders';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
@@ -370,13 +370,29 @@ export const PublicationItemsList = memo(
             )}
           </CollapsibleSection>
         )}
-        {(type === SharingType.Application || type === SharingType.Toolset) && (
+        {type === SharingType.Application && (
           <MarketplaceEntityPublishItem
             path={path}
-            entity={entity as PublishRequestDialAIEntityModel | ToolsetModel}
+            entity={
+              {
+                ...entity,
+                type: EntityType.Application,
+              } as PublishRequestDialAIEntityModel
+            }
             handleSelectItems={handleSelectItems}
             publishAction={publishAction}
             chosenItemsIds={chosenItemsIds}
+            sectionName={t('Applications')}
+          />
+        )}
+        {type === SharingType.Toolset && (
+          <MarketplaceEntityPublishItem
+            path={path}
+            entity={{ ...entity, type: EntityType.Toolset } as ToolsetModel}
+            handleSelectItems={handleSelectItems}
+            publishAction={publishAction}
+            chosenItemsIds={chosenItemsIds}
+            sectionName={t('Toolsets')}
           />
         )}
       </div>

@@ -13,9 +13,6 @@ export class ChatSettingsTooltip extends BaseElement {
   public assistantInfo = this.getChildElementBySelector(
     SettingsTooltip.assistantInfo,
   );
-  public assistantModelInfo = this.getChildElementBySelector(
-    SettingsTooltip.assistantModelInfo,
-  );
   public promptInfo = this.getChildElementBySelector(
     SettingsTooltip.promptInfo,
   );
@@ -29,10 +26,6 @@ export class ChatSettingsTooltip extends BaseElement {
 
   public async getAssistantInfo() {
     return this.assistantInfo.getElementInnerContent();
-  }
-
-  public async getAssistantModelInfo() {
-    return this.assistantModelInfo.getElementInnerContent();
   }
 
   public async getPromptInfo(isPromptExpected = true) {

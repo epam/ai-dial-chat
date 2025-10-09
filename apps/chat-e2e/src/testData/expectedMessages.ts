@@ -33,8 +33,6 @@ export const ExpectedMessages = {
   tooManyNestedFolders: "It's not allowed to have more nested folders",
   defaultTalkToIsValid: 'Default Talk to is GPT-3.5',
   talkToEntityIsSelected: 'Talk to entity is selected',
-  defaultAssistantModelIsValid: 'Default Assistant model to is GPT-4',
-  assistantModelsValid: 'Assistant models are valid',
   modelSelectorNotVisible: 'Model selector is not visible',
   defaultSystemPromptIsEmpty: 'Default System Prompt is empty',
   systemPromptValid: 'System Prompt is valid',
@@ -109,8 +107,6 @@ export const ExpectedMessages = {
   chatInfoAppIsValid: 'Chat info application is valid',
   chatInfoAppIconIsValid: 'Chat info application icon is valid',
   chatInfoAssistantIsValid: 'Chat info assistant is valid',
-  chatInfoAssistantModelIsValid: 'Chat info assistant model is valid',
-  chatInfoAssistantModelIconIsValid: 'Chat info assistant model icon is valid',
   chatInfoAssistantIconIsValid: 'Chat info assistant icon is valid',
   chatInfoTemperatureIsValid: 'Chat info temperature is valid',
   chatInfoPromptIsValid: 'Chat info prompt is valid',
@@ -132,8 +128,6 @@ export const ExpectedMessages = {
   requestModeIdIsValid: 'Request modelId is valid in API request',
   requestPromptIsValid: 'Request prompt is valid in API request',
   requestTempIsValid: 'Request temperature is valid in API request',
-  requestAssistantModelIdIsValid:
-    'Request assistant modelId is valid in API request',
   requestCustomContentIsValid: 'Request custom content is valid in API request',
   regenerateNotAvailable: 'Regenerate button is not available',
   regenerateIsAvailable: 'Regenerate button is available',
@@ -444,6 +438,10 @@ export const PublishingExpectedMessages = {
   publicationTopicsAreValid: 'Publication topics are valid',
   publishedResourceIsAvailable: (resource: string) =>
     `Published resource: ${resource} is available`,
+  publicationRequestCreated: 'Successfully created publication request',
+  unpublishRequestCreated: 'Successfully created unpublish request',
+  publicationRequestApproved: 'Successfully approved publication request',
+  publicationRequestRejected: 'Successfully rejected publication request',
 };
 
 export const MarketplaceExpectedMessages = {

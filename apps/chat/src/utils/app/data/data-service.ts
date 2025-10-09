@@ -52,19 +52,6 @@ export class DataService {
     );
   }
 
-  public static getRecentAddonsIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.RecentAddonsIds, []);
-  }
-
-  public static setRecentAddonsIds(
-    recentAddonsIds: string[],
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.RecentAddonsIds,
-      recentAddonsIds,
-    );
-  }
-
   public static getTheme(): Observable<string> {
     return BrowserStorage.getData(UIStorageKeys.Settings, { theme: '' }).pipe(
       map((settings) => settings.theme),

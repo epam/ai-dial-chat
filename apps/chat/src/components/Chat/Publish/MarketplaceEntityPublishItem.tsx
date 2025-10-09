@@ -23,6 +23,7 @@ interface Props {
   publishAction: PublishActions;
   chosenItemsIds: string[];
   path: string;
+  sectionName: string;
   handleSelectItems: (ids: string[]) => void;
 }
 
@@ -31,6 +32,7 @@ export const MarketplaceEntityPublishItem = ({
   publishAction,
   chosenItemsIds,
   path,
+  sectionName,
   handleSelectItems,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -39,7 +41,7 @@ export const MarketplaceEntityPublishItem = ({
     <>
       <CollapsibleSection
         togglerClassName="!text-sm !text-primary"
-        name={t('Applications')}
+        name={sectionName}
         openByDefault
         dataQa="applications-to-send-request"
         className="!pl-0"
@@ -78,7 +80,7 @@ export const MarketplaceEntityPublishItem = ({
             <ErrorMessage
               type="warning"
               error={t(
-                `The icon used for this application is in the "${isEntityIdPublic({ id: entity.iconUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                `The icon used for this ${entity.type} is in the "${isEntityIdPublic({ id: entity.iconUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${entity.type} will be published with the default one.`,
               )}
             />
           </CollapsibleSection>

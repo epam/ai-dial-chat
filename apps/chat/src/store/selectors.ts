@@ -1,4 +1,3 @@
-export { AddonsSelectors } from '@/src/store/addons/addons.selectors';
 export { ApplicationSelectors } from '@/src/store/application/application.selectors';
 export { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 export { AuthSelectors } from '@/src/store/auth/auth.selectors';

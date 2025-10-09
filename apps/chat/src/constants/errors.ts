@@ -10,8 +10,6 @@ export const errorsMessages = {
   404: 'Not found',
   ModelDeprecated:
     'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
-  noAssistantModelSelected:
-    'No assistant model selected. Please select an assistant model and try again.',
   contentFiltering:
     'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
   unsupportedConversationsDataFormat:
