@@ -560,6 +560,7 @@ export const PublicationHandlerFooter = ({
               className="button button-secondary"
               onClick={handleToggleEditMode}
               data-qa="cancel"
+              type="button"
             >
               {t('Cancel')}
             </button>
