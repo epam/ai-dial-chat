@@ -37,10 +37,7 @@ export const PublishToSection = ({ path, maxDepth, onSelect }: Props) => {
 
   return (
     <section className="mb-3">
-      <h3
-        className="mb-1 flex text-xs text-secondary"
-        data-qa="publish-label"
-      >
+      <h3 className="mb-1 flex text-xs text-secondary" data-qa="publish-label">
         {t('Publish to')}
       </h3>
       <div
