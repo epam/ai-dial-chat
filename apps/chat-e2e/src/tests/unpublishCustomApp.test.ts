@@ -437,7 +437,10 @@ dialAdminTest(
   }) => {
     setTestIds('EPMRTC-5785', 'EPMRTC-5891');
     const appName = GeneratorUtil.randomApplicationName();
-    const sortedAppVersions = ['28.15.18', '2.36.37'];
+    const sortedAppVersions = SortingUtil.sortVersionsArray([
+      GeneratorUtil.randomApplicationVersion(),
+      GeneratorUtil.randomApplicationVersion(),
+    ]);
     let appElement: BaseElement;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let majorVersionApp: DialAIEntityModel;
