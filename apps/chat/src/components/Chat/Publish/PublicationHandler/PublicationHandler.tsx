@@ -360,15 +360,17 @@ export function PublicationHandler({ publication }: Props) {
             newTargetUrl = constructPath(newFolderId, newApiKey);
           }
 
+          const shouldPublishCredentials =
+            (publishCredentials &&
+              selectedCredentialsItems.includes(reviewUrl)) ||
+            (isReview && publishCredentials);
+
           return {
             action,
             sourceUrl: sourceUrl ?? '',
             targetUrl: newTargetUrl,
             reviewUrl,
-            publishCredentials:
-              (publishCredentials &&
-                selectedCredentialsItems.includes(reviewUrl)) ||
-              (isReview && publishCredentials),
+            ...(shouldPublishCredentials ? { publishCredentials } : {}),
           };
         },
       );
