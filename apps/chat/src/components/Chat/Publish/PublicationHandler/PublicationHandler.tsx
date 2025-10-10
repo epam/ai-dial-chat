@@ -777,7 +777,7 @@ export function PublicationHandler({ publication }: Props) {
                                 <ErrorMessage
                                   type="warning"
                                   error={t(
-                                    `The icon used for this ${featureType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                                    `The icon used for this ${featureType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${featureType} will be published with the default one.`,
                                   )}
                                 />
                               )}
