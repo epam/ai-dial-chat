@@ -47,5 +47,5 @@ export interface PublicationState {
   isPublicationUpdating: boolean;
   displayAuthorEditState: string;
   publishToUrl: string;
-  currentPublicationInvalidEntities: Set<string>;
+  currentPublicationInvalidEntities: string[];
 }
