@@ -6,7 +6,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -38,8 +37,6 @@ const AgentAndToolsetSelectorField = withErrorMessage(
   withLabel(AgentAndToolsetSelector),
 );
 const ToggleSwitchField = withLabel(ToggleSwitch);
-
-const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
 export const QuickApp2Form = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -81,7 +78,6 @@ export const QuickApp2Form = () => {
             readonly={isSharedWithMe || isAppPublic}
             error={errors.documentRelativeUrl?.message}
             fileManagerTitle={t('Select documents')}
-            filesFilter={myFilesFilter}
             files={field.value ?? []}
             addBtnTooltip={
               isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
