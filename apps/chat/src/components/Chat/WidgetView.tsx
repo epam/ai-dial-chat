@@ -6,7 +6,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/selectors';
 
-import { CustomChatViewer } from '@/src/components/AppsEditor/Settings/Previews/CustomChatViewer';
+import { CustomChatViewer } from '@/src/components/Chat/CustomChatViewer';
 
 interface WidgetViewProps {
   id: string;
