@@ -38,7 +38,7 @@ export function FallbackIcon({ entityType, size }: FallbackIconProps) {
   return (
     <Icon
       size={Math.round(size / 1.25)}
-      className="dark:invert"
+      className="text-primary dark:invert"
       stroke={entityType === EntityType.Toolset ? 1.1 : 1.2}
     />
   );

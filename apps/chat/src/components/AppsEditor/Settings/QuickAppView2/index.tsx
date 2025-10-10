@@ -15,7 +15,6 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
-import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -54,8 +53,6 @@ const AgentAndToolsetSelectorField = withErrorMessage(
 const Slider = withLabel(TemperatureSlider, true);
 const ToggleSwitchField = withLabel(ToggleSwitch);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
-
-const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
 interface QuickAppView2Props {
   schema: ApiDetailedApplicationTypeSchema | null;
@@ -233,7 +230,6 @@ export const QuickAppView2: React.FC<QuickAppView2Props> = ({
               readonly={isSharedWithMe || isAppPublic}
               error={errors.documentRelativeUrl?.message}
               fileManagerTitle={t('Select documents')}
-              filesFilter={myFilesFilter}
               files={field.value ?? []}
               addBtnTooltip={
                 isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
