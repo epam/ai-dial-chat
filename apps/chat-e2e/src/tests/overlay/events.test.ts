@@ -1,4 +1,3 @@
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/chat/constants/default-ui-settings';
 import { Conversation } from '@/chat/types/chat';
 import { BackendChatEntity } from '@/chat/types/common';
 import {
@@ -831,12 +830,8 @@ dialOverlayTest(
             model: { id: defaultModelId },
             prompt: '',
             temperature: +ExpectedConstants.defaultTemperature,
-            selectedAddons: [],
             status: UploadStatus.LOADED,
             folderId: ExpectedConstants.localFolderIdPath(),
-            assistantModelId:
-              process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
-              FALLBACK_ASSISTANT_SUBMODEL_ID,
             id: expectedConversationId,
             bucket: ExpectedConstants.localBucket,
           },
@@ -1638,12 +1633,8 @@ dialOverlayTest(
           name: newEmptyConversationName,
           id: `${ExpectedConstants.localFolderIdPath()}/${ModelsUtil.getDefaultAgent()!.reference}${ItemUtil.entityIdSeparator}${newEmptyConversationName}`,
           folderId: ExpectedConstants.localFolderIdPath(),
-          assistantModelId:
-            process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
-            FALLBACK_ASSISTANT_SUBMODEL_ID,
           prompt: apiConversation.prompt,
           temperature: apiConversation.temperature,
-          selectedAddons: apiConversation.selectedAddons,
           status: UploadStatus.LOADED,
           isMessageStreaming: true,
           isNameChanged: true,
