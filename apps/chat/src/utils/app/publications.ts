@@ -342,15 +342,16 @@ export const getDefaultAllEditEntities = (
   } else {
     resources.forEach(({ reviewUrl, action }) => {
       const apiKey = splitEntityId(reviewUrl).name;
+      const shouldParseVersion =
+        isApplicationId(reviewUrl) ||
+        isToolsetId(reviewUrl) ||
+        action === PublishActions.DELETE;
       const { name, version } = parseEntityApiKey(apiKey, {
         parseModel: isConversationId(reviewUrl),
-        parseVersion:
-          isApplicationId(reviewUrl) ||
-          isToolsetId(reviewUrl) ||
-          action === PublishActions.DELETE,
+        parseVersion: shouldParseVersion,
       });
 
-      if (action === PublishActions.DELETE && version) {
+      if (shouldParseVersion && version) {
         allEditEntitiesMap[reviewUrl] = {
           name,
           version,
