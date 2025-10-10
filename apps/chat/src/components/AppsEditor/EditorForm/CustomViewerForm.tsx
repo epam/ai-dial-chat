@@ -4,11 +4,17 @@ import { useRouter } from 'next/router';
 
 import { convertApplicationFromApi } from '@/src/utils/app/application';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApiApplicationResponse } from '@/src/types/applications';
 
 import { ApplicationActions, ModelsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { Routes } from '@/src/constants/routes';
 
@@ -16,26 +22,24 @@ import { IframeRenderer } from '@/src/components/IframeRenderer';
 
 import { VisualizerConnectorRequest } from '@epam/ai-dial-shared';
 
-interface Props {
-  id: string;
-  host: string;
-  theme: string;
-  title: string;
-}
-
-export const CustomApplicationEditorView: React.FC<Props> = ({
-  id,
-  host,
-  theme,
-  title,
-}) => {
+export const CustomViewerForm = () => {
   const providerId = useAppSelector(SettingsSelectors.selectProviderId);
   const router = useRouter();
   const dispatch = useAppDispatch();
 
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const applicationData = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const schema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+
+  const id = applicationData?.id ?? '';
+  const host =
+    schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl] ?? '';
+  const title =
+    schema?.[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ?? '';
 
   const generateTargetUrl = useCallback(() => {
     try {
