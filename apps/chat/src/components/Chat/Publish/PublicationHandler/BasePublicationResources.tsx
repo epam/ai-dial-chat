@@ -65,7 +65,7 @@ export const BasePublicationResources = ({
           folderId: getFolderIdFromEntityId(reviewUrl),
           name,
           publicationInfo: {
-            isNotExist: currentPublicationInvalidEntities.has(reviewUrl),
+            isNotExist: currentPublicationInvalidEntities.includes(reviewUrl),
             action,
             publishCredentials,
           },

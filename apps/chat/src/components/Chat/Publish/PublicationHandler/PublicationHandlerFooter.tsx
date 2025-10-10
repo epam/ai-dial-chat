@@ -332,7 +332,7 @@ export const PublicationHandlerFooter = ({
   useEffect(() => {
     dispatch(
       PublicationActions.setCurrentPublicationInvalidEntities(
-        new Set(invalidEntities.map((entity) => entity.id)),
+        invalidEntities.map((entity) => entity.id),
       ),
     );
   }, [dispatch, invalidEntities]);
