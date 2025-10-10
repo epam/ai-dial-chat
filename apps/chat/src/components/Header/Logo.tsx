@@ -1,4 +1,4 @@
-import { MouseEventHandler } from 'react';
+import { MouseEvent, MouseEventHandler } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -21,7 +21,11 @@ import { Routes } from '@/src/constants/routes';
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
 
-export const Logo = () => {
+interface LogoProps {
+  onLogoClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
+}
+
+export const Logo = ({ onLogoClick }: LogoProps) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -58,11 +62,15 @@ export const Logo = () => {
   };
 
   const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
-    if (messageIsStreaming) return e.preventDefault();
-    if (router.route === Routes.Chat) {
-      e.preventDefault();
+    if (typeof onLogoClick === 'function') {
+      onLogoClick(e);
+    } else {
+      if (messageIsStreaming) return e.preventDefault();
+      if (router.route === Routes.Chat) {
+        e.preventDefault();
+      }
+      createNewConversation();
     }
-    createNewConversation();
   };
 
   return (

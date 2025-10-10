@@ -1,4 +1,3 @@
-import { IconArrowsMinimize } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/router';
@@ -7,6 +6,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { fakeCallback } from '@/src/utils/app/common';
 
+import { PreviewMode } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -14,20 +14,16 @@ import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
 import { ApplicationDetailsContent } from '@/src/components/Marketplace/ApplicationDetails/ApplicationContent';
 import { ApplicationDetailsHeader } from '@/src/components/Marketplace/ApplicationDetails/ApplicationHeader';
+import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
 
-interface GeneralInfoPreviewProps {
+interface GeneralPreviewProps {
   entity: DialAIEntityModel;
-  onClosePreview: () => void;
 }
 
-export const GeneralInfoPreview = ({
-  entity,
-  onClosePreview,
-}: GeneralInfoPreviewProps) => {
+export const GeneralPreview = ({ entity }: GeneralPreviewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const router = useRouter();
@@ -77,14 +73,10 @@ export const GeneralInfoPreview = ({
             switchOFFText={t('OFF')}
           />
         </div>
-        <button
-          className="hidden pl-3 text-secondary hover:text-accent-primary max-xl:flex"
-          onClick={onClosePreview}
-        >
-          <Tooltip tooltip={t('Hide preview')}>
-            <IconArrowsMinimize size={24} />
-          </Tooltip>
-        </button>
+        <PreviewModeButton
+          mode={PreviewMode.closed}
+          className="hidden pl-3 max-xl:flex"
+        />
       </div>
       <div className="flex flex-1 items-center justify-center">
         <div

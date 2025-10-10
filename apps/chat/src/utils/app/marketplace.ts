@@ -1,6 +1,10 @@
 import { getModelIdWithoutVersion } from '@/src/utils/server/api';
 
-import { EntitiesGroup, MarketplaceEntity } from '@/src/types/marketplace';
+import {
+  EntitiesGroup,
+  MarketplaceEditorSteps,
+  MarketplaceEntity,
+} from '@/src/types/marketplace';
 
 import { constructPath } from './shared-utils';
 
@@ -59,4 +63,13 @@ export const deleteFromMarketplaceEntitiesMap = <
     return omit(entitiesMap, entity.reference, entity.id);
   }
   return entitiesMap;
+};
+
+export const isMarketplaceEditorStep = (
+  step: string,
+): step is MarketplaceEditorSteps => {
+  return (
+    step === MarketplaceEditorSteps.General ||
+    step === MarketplaceEditorSteps.Settings
+  );
 };
