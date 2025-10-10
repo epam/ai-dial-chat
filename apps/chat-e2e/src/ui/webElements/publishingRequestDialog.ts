@@ -5,10 +5,10 @@ import { IconSelectors, PublishingDialogSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import {
-  ApplicationsToPublishTree,
-  FolderConversationsToPublish,
-  FolderPromptsToPublish,
+  PublishApplicationsTree,
   PublishConversationsTree,
+  PublishFolderConversations,
+  PublishFolderPrompts,
   PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
@@ -26,14 +26,14 @@ export class PublishingRequestDialog extends BaseElement {
 
   //conversations to publish trees
   private conversationsToPublishTree!: PublishConversationsTree;
-  private folderConversationsToPublish!: FolderConversationsToPublish;
+  private folderConversationsToPublish!: PublishFolderConversations;
   //files to publish tree
   private filesToPublishTree!: PublishFilesTree;
   //prompts to publish trees
   private promptsToPublishTree!: PublishPromptsTree;
-  private folderPromptsToPublish!: FolderPromptsToPublish;
+  private folderPromptsToPublish!: PublishFolderPrompts;
   //applications to publish tree
-  private applicationsToPublishTree!: ApplicationsToPublishTree;
+  private applicationsToPublishTree!: PublishApplicationsTree;
   //change publish path element
   private changePublishToPath!: ChangePath;
   private publishingRules!: PublishingRules;
@@ -48,9 +48,9 @@ export class PublishingRequestDialog extends BaseElement {
     return this.conversationsToPublishTree;
   }
 
-  getFolderConversationsToPublish(): FolderConversationsToPublish {
+  getFolderConversationsToPublish(): PublishFolderConversations {
     if (!this.folderConversationsToPublish) {
-      this.folderConversationsToPublish = new FolderConversationsToPublish(
+      this.folderConversationsToPublish = new PublishFolderConversations(
         this.page,
         this.rootLocator,
       );
@@ -78,9 +78,9 @@ export class PublishingRequestDialog extends BaseElement {
     return this.promptsToPublishTree;
   }
 
-  getFolderPromptsToPublish(): FolderPromptsToPublish {
+  getFolderPromptsToPublish(): PublishFolderPrompts {
     if (!this.folderPromptsToPublish) {
-      this.folderPromptsToPublish = new FolderPromptsToPublish(
+      this.folderPromptsToPublish = new PublishFolderPrompts(
         this.page,
         this.rootLocator,
       );
@@ -88,9 +88,9 @@ export class PublishingRequestDialog extends BaseElement {
     return this.folderPromptsToPublish;
   }
 
-  getApplicationsToPublishTree(): ApplicationsToPublishTree {
+  getApplicationsToPublishTree(): PublishApplicationsTree {
     if (!this.applicationsToPublishTree) {
-      this.applicationsToPublishTree = new ApplicationsToPublishTree(
+      this.applicationsToPublishTree = new PublishApplicationsTree(
         this.page,
         this.rootLocator,
       );
@@ -127,8 +127,8 @@ export class PublishingRequestDialog extends BaseElement {
   public publishPath = this.getChildElementBySelector(
     PublishingDialogSelectors.publishPath,
   );
-  public publishLabel = this.getChildElementBySelector(
-    PublishingDialogSelectors.publishLabel,
+  public publishPathLabel = this.getChildElementBySelector(
+    PublishingDialogSelectors.publishPathLabel,
   );
   public authorLabel = this.getChildElementBySelector(
     PublishingDialogSelectors.authorLabel,

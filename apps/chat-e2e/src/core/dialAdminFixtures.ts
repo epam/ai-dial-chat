@@ -66,19 +66,18 @@ import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInter
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatSettingsTooltip } from '@/src/ui/webElements/chatSettingsTooltip';
 import {
-  ApplicationsToApproveTree,
-  ApplicationsToPublishTree,
   ApproveRequiredConversationsTree,
   ApproveRequiredPrompts,
   ConversationsTree,
-  FolderConversationsToApprove,
   FolderPrompts,
-  FolderPromptsToApprove,
   Folders,
   OrganizationConversationsTree,
   OrganizationPromptsTree,
   PromptsTree,
+  PublishApplicationsTree,
   PublishConversationsTree,
+  PublishFolderConversations,
+  PublishFolderPrompts,
   PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
@@ -118,7 +117,7 @@ const dialAdminTest = dialTest.extend<{
   adminConversationsToApproveTree: PublishConversationsTree;
   adminFilesToApproveTree: PublishFilesTree;
   adminPromptsToApproveTree: PublishPromptsTree;
-  adminAppsToApprove: ApplicationsToApproveTree;
+  adminAppsToApprove: PublishApplicationsTree;
   adminPublishingApprovalModal: PublishingApprovalModal;
   adminPublishedPromptPreviewModal: PublishedPromptPreviewModal;
   adminApiInjector: ApiInjector;
@@ -132,11 +131,11 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
   adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
-  adminAppToApproveAssertion: PublishEntityAssertion<ApplicationsToApproveTree>;
+  adminAppToApproveAssertion: PublishEntityAssertion<PublishApplicationsTree>;
   adminPublishFilesAssertion: PublishFileAssertion<PublishFilesTree>;
   adminPublishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
-  adminFolderConversationsToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
-  adminFolderPromptsToApproveAssertion: PublishFolderAssertion<FolderPromptsToApprove>;
+  adminFolderConversationsToApproveAssertion: PublishFolderAssertion<PublishFolderConversations>;
+  adminFolderPromptsToApproveAssertion: PublishFolderAssertion<PublishFolderPrompts>;
   adminPromptDropdownMenuAssertion: MenuAssertion;
   adminPromptDropdownMenu: DropdownMenu;
   adminPublicationReviewControl: PublicationReviewControl;
@@ -171,14 +170,14 @@ const dialAdminTest = dialTest.extend<{
   adminAttachFilesModal: AttachFilesModal;
   adminAgentDetailsModal: AgentDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
-  adminAppsToPublishTree: ApplicationsToPublishTree;
+  adminAppsToPublishTree: PublishApplicationsTree;
   adminPublishingRules: PublishingRules;
   adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
   adminMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   adminAgentDetailsModalAssertion: AgentDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
   adminPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
-  adminAppToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
+  adminAppToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
   adminPublishingRulesAssertion: PublishingRulesAssertion;
   adminConversationSettings: ConversationSettingsModal;
   adminTalkToAgentDialog: TalkToAgentDialog;
@@ -552,7 +551,7 @@ const dialAdminTest = dialTest.extend<{
   },
   adminAppToApproveAssertion: async ({ adminAppsToApprove }, use) => {
     const adminAppToApproveAssertion =
-      new PublishEntityAssertion<ApplicationsToApproveTree>(adminAppsToApprove);
+      new PublishEntityAssertion<PublishApplicationsTree>(adminAppsToApprove);
     await use(adminAppToApproveAssertion);
   },
   adminPublishFilesAssertion: async ({ adminFilesToApproveTree }, use) => {
@@ -733,7 +732,7 @@ const dialAdminTest = dialTest.extend<{
   },
   adminAppToPublishAssertion: async ({ adminAppsToPublishTree }, use) => {
     const adminAppToPublishAssertion =
-      new PublishEntityAssertion<ApplicationsToPublishTree>(
+      new PublishEntityAssertion<PublishApplicationsTree>(
         adminAppsToPublishTree,
       );
     await use(adminAppToPublishAssertion);

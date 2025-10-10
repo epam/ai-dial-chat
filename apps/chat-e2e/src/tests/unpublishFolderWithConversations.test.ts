@@ -249,6 +249,7 @@ dialAdminTest(
       },
     );
 
+    //TODO: update the step when fixed https://github.com/epam/ai-dial-chat/issues/2064
     await dialAdminTest.step(
       'Expand request folder and verify "Publication approval" modal is displayed',
       async () => {
@@ -281,6 +282,7 @@ dialAdminTest(
       },
     );
 
+    //TODO: update the assertion when fixed https://github.com/epam/ai-dial-chat/issues/2064
     await dialAdminTest.step(
       'Verify only 1t conversation is displayed on "Publication approval" modal',
       async () => {

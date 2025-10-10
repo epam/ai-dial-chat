@@ -109,17 +109,17 @@ import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
-  ApplicationsToPublishTree,
   AttachFilesTree,
   ConversationsTree,
   FolderConversations,
-  FolderConversationsToPublish,
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
   PromptsTree,
+  PublishApplicationsTree,
   PublishConversationsTree,
   PublishFolder,
+  PublishFolderConversations,
   PublishPromptsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
@@ -292,8 +292,8 @@ const dialTest = test.extend<{
   conversationsToPublishTree: PublishConversationsTree;
   filesToPublishTree: PublishFilesTree;
   promptsToPublishTree: PublishPromptsTree;
-  appsToPublishTree: ApplicationsToPublishTree;
-  folderConversationsToPublish: FolderConversationsToPublish;
+  appsToPublishTree: PublishApplicationsTree;
+  folderConversationsToPublish: PublishFolderConversations;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
   additionalShareUserPublicationApiHelper: PublicationApiHelper;
@@ -353,8 +353,8 @@ const dialTest = test.extend<{
   publishConversationAssertion: PublishEntityAssertion<PublishConversationsTree>;
   publishFileTreeAssertion: PublishFileAssertion<PublishFilesTree>;
   publishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
-  appToPublishAssertion: PublishEntityAssertion<ApplicationsToPublishTree>;
-  folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
+  appToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
+  folderToPublishAssertion: PublishFolderAssertion<PublishFolderConversations>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
@@ -1346,7 +1346,7 @@ const dialTest = test.extend<{
   },
   appToPublishAssertion: async ({ appsToPublishTree }, use) => {
     const appToPublishAssertion =
-      new PublishEntityAssertion<ApplicationsToPublishTree>(appsToPublishTree);
+      new PublishEntityAssertion<PublishApplicationsTree>(appsToPublishTree);
     await use(appToPublishAssertion);
   },
   folderToPublishAssertion: async ({ publishingRequestDialog }, use) => {

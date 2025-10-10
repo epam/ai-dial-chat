@@ -144,28 +144,6 @@ export class AgentDetailsModal extends BaseElement {
     }
   }
 
-  public async clickPublishButton(
-    options: {
-      expectedHttpStatus: number;
-    } = { expectedHttpStatus: 200 },
-  ) {
-    await this.openPublishRequestDialog(
-      () => this.publishButton.click(),
-      options,
-    );
-  }
-
-  public async clickUnpublishButton(
-    options: {
-      expectedHttpStatus: number;
-    } = { expectedHttpStatus: 200 },
-  ) {
-    await this.openPublishRequestDialog(
-      () => this.unpublishButton.click(),
-      options,
-    );
-  }
-
   public async clickShareButton(
     options: {
       expectedHttpStatus: number;
@@ -183,19 +161,6 @@ export class AgentDetailsModal extends BaseElement {
     await this.openAppModal(() => method(), {
       expectedHttpMethod: 'POST',
       expectedUrl: API.shareEntityHost,
-      expectedHttpStatus: options.expectedHttpStatus,
-    });
-  }
-
-  private async openPublishRequestDialog(
-    method: () => Promise<void>,
-    options: {
-      expectedHttpStatus: number;
-    },
-  ) {
-    await this.openAppModal(() => method(), {
-      expectedHttpMethod: 'GET',
-      expectedUrl: API.applicationCreateHost,
       expectedHttpStatus: options.expectedHttpStatus,
     });
   }

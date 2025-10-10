@@ -152,10 +152,7 @@ dialAdminTest(
         await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
         await marketplaceAgents
           .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.publish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+          .selectMenuOption(MenuOptions.publish);
       },
     );
 

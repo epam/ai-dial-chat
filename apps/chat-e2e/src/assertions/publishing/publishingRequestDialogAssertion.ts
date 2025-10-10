@@ -68,7 +68,7 @@ export class PublishingRequestDialogAssertion extends BaseAssertion {
   }) {
     if (fieldsToVerify.publishToLabel) {
       await this.assertElementState(
-        this.publishingRequestDialog.publishLabel,
+        this.publishingRequestDialog.publishPathLabel,
         fieldsToVerify.publishToLabel,
       );
     }
@@ -101,11 +101,11 @@ export class PublishingRequestDialogAssertion extends BaseAssertion {
     }
     if (fieldsToVerify.unpublishFromLabel) {
       await this.assertElementState(
-        this.publishingRequestDialog.publishLabel,
+        this.publishingRequestDialog.publishPathLabel,
         fieldsToVerify.unpublishFromLabel,
       );
       await this.assertElementText(
-        this.publishingRequestDialog.publishLabel,
+        this.publishingRequestDialog.publishPathLabel,
         ExpectedConstants.unpublishFromLabel,
       );
     }

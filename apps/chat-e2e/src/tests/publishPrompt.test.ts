@@ -1024,12 +1024,12 @@ dialAdminTest(
   },
 );
 
-// dialTest.afterAll(
-//   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-//     for (const publication of publicationsToUnpublish) {
-//       const unpublishResponse =
-//         await publicationApiHelper.createUnpublishRequest(publication);
-//       await adminPublicationApiHelper.approveRequest(unpublishResponse);
-//     }
-//   },
-// );
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+  },
+);

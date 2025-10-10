@@ -64,32 +64,15 @@ export class EntitiesTree extends BaseElement {
   }
 
   getEntityByName(name: string, index?: number) {
-    return this.getChildElementBySelector(this.entitySelector)
-      .getElementLocatorByText(name, index)
-      .or(
-        this.getChildElementBySelector(this.entitySelector)
-          .getElementLocator()
-          .filter({
-            has: this.page.locator(
-              `${Tags.input}[${Attributes.value}="${name}"]`,
-            ),
-          }),
-      );
+    return this.getChildElementBySelector(
+      this.entitySelector,
+    ).getElementLocatorByText(name, index);
   }
 
   getEntityByExactName(name: string): Locator {
     return this.getChildElementBySelector(this.entitySelector)
       .getElementLocator()
-      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) })
-      .or(
-        this.getChildElementBySelector(this.entitySelector)
-          .getElementLocator()
-          .filter({
-            has: this.page.locator(
-              `${Tags.input}[${Attributes.value}="${name}"]`,
-            ),
-          }),
-      );
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
   }
 
   getEntityName(name: string, index?: number) {

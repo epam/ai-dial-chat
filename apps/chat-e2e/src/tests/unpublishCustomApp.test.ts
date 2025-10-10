@@ -136,10 +136,7 @@ dialAdminTest(
         await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
         await marketplaceAgents
           .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.unpublish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+          .selectMenuOption(MenuOptions.unpublish);
       },
     );
 
@@ -440,10 +437,7 @@ dialAdminTest(
   }) => {
     setTestIds('EPMRTC-5785', 'EPMRTC-5891');
     const appName = GeneratorUtil.randomApplicationName();
-    const sortedAppVersions = SortingUtil.sortVersionsArray([
-      GeneratorUtil.randomApplicationVersion(),
-      GeneratorUtil.randomApplicationVersion(),
-    ]);
+    const sortedAppVersions = ['28.15.18', '2.36.37'];
     let appElement: BaseElement;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let majorVersionApp: DialAIEntityModel;
@@ -514,10 +508,7 @@ dialAdminTest(
           .click();
         await adminMarketplaceAgents
           .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.unpublish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+          .selectMenuOption(MenuOptions.unpublish);
       },
     );
 
@@ -722,7 +713,7 @@ dialAdminTest(
         await agentDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedAppVersions[1]);
-        await agentDetailsModal.clickUnpublishButton();
+        await agentDetailsModal.unpublishButton.click();
       },
     );
 

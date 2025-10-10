@@ -118,7 +118,7 @@ dialAdminTest(
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestDialog.publishLabel,
+          publishingRequestDialog.publishPathLabel,
           ExpectedConstants.unpublishFromLabel,
         );
         await baseAssertion.assertElementText(
