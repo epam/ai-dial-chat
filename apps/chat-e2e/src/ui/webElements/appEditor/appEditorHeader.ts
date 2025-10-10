@@ -67,7 +67,7 @@ export class AppEditorHeader extends BaseElement {
 
   public notSelectedDotCircleIcon(step: BaseElement) {
     return step.getChildElementBySelector(
-      `${ApplicationEditorHeader.notSelectedStepIcon}${IconSelectors.dotCircleIcon}`,
+      `${ApplicationEditorHeader.notSelectedStepIcon}${IconSelectors.filledPointIcon}`,
     );
   }
 

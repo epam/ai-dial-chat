@@ -10,8 +10,8 @@ export const IconSelectors = {
   helpIcon: '.tabler-icon-help',
   fileIcon: '.tabler-icon-file',
   checkedCircleIcon: '.tabler-icon-circle-check',
-  checkIcon: 'tabler-icon-check',
+  checkIcon: '.tabler-icon-check',
   filledDotCircleIcon: '.tabler-icon-circle-dot-filled',
   dotCircleIcon: '.tabler-icon-circle-dot',
-  filledPointIcon: 'tabler-icon-point-filled',
+  filledPointIcon: '.tabler-icon-point-filled',
 };
