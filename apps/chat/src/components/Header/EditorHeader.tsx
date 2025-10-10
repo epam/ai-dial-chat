@@ -1,5 +1,5 @@
 import { IconChevronDown, IconLogout } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -36,6 +36,7 @@ interface EditorHeaderProps<T extends string> {
   saveLabel?: string;
   getMobileTabLabel?: (tab: T) => string;
   onSave?: () => void;
+  onLogoClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export const EditorHeader = <T extends string>({
@@ -50,6 +51,7 @@ export const EditorHeader = <T extends string>({
   saveLabel,
   getMobileTabLabel = (tab: T) => tab,
   onSave,
+  onLogoClick,
 }: EditorHeaderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -148,7 +150,7 @@ export const EditorHeader = <T extends string>({
         </div>
 
         <div className="hidden h-full xl:flex">
-          <Logo />
+          <Logo onLogoClick={onLogoClick} />
         </div>
 
         <div className="flex h-full items-center space-x-2 pr-3 md:pr-5 xl:pr-0">

@@ -36,7 +36,7 @@ export const CustomChatViewer: React.FC<Props> = ({
   const router = useRouter();
 
   const isPreviewConversation = useMemo(() => {
-    return router.pathname === Routes.AppsEditorSettings;
+    return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
   const isPlayback = conversation && isPlaybackConversation(conversation);
