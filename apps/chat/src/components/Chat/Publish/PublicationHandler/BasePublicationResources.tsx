@@ -119,9 +119,9 @@ export const BasePublicationResources = ({
           level={0}
         />
       ))}
-      {rootEntities.map((item) => {
-        return <ItemComponent key={item.id} item={item} level={0} />;
-      })}
+      {rootEntities.map((item) => (
+        <ItemComponent key={item.id} item={item} level={0} />
+      ))}
     </>
   );
 };
