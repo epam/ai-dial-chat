@@ -136,10 +136,7 @@ dialAdminTest(
         await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
         await marketplaceAgents
           .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.unpublish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+          .selectMenuOption(MenuOptions.unpublish);
       },
     );
 
@@ -514,10 +511,7 @@ dialAdminTest(
           .click();
         await adminMarketplaceAgents
           .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.unpublish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+          .selectMenuOption(MenuOptions.unpublish);
       },
     );
 
@@ -722,7 +716,7 @@ dialAdminTest(
         await agentDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedAppVersions[1]);
-        await agentDetailsModal.clickUnpublishButton();
+        await agentDetailsModal.unpublishButton.click();
       },
     );
 

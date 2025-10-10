@@ -12,6 +12,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApplicationState } from './applications.types';
@@ -25,11 +26,9 @@ const initialState: ApplicationState = {
   logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
   appLogs: undefined,
-  shouldSaveApplication: false,
-  exitAfterSave: false,
   publicFolders: [],
-  hasUnsavedChanges: false,
   logsEntityId: undefined,
+  editorStep: MarketplaceEditorSteps.General,
 };
 
 export const applicationSlice = createSlice({
@@ -44,7 +43,6 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>;
-        slug?: string;
         schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
@@ -108,6 +106,8 @@ export const applicationSlice = createSlice({
         redirectUrl?: string;
         schema?: ApiDetailedApplicationTypeSchema;
         publicationUrl?: string;
+        tabToOpen?: MarketplaceEditorSteps;
+        isSaveAndExit?: boolean;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -190,11 +190,14 @@ export const applicationSlice = createSlice({
     updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
       state.appDetails = action.payload;
     },
-    setShouldSaveApplication: (state, action: PayloadAction<boolean>) => {
-      state.shouldSaveApplication = action.payload;
-    },
-    setExitAfterSave: (state, action: PayloadAction<boolean>) => {
-      state.exitAfterSave = action.payload;
+    setAppDetails: (
+      state,
+      { payload }: PayloadAction<CustomApplicationModel | undefined>,
+    ) => {
+      state.appDetails = payload;
+      if (!payload) {
+        state.appLoading = UploadStatus.UNINITIALIZED;
+      }
     },
     enterEditMode: (
       state,
@@ -231,15 +234,16 @@ export const applicationSlice = createSlice({
     ) {
       state.returnConversationIds = payload;
     },
-    setHasUnsavedChanges(state, action: PayloadAction<boolean>) {
-      state.hasUnsavedChanges = action.payload;
-    },
     setSelectedWidget(state, { payload }: PayloadAction<string | undefined>) {
       state.selectedWidget = payload;
     },
     setLogsEntityId(state, { payload }: PayloadAction<string | undefined>) {
       state.logsEntityId = payload;
     },
+    setEditorStep(state, { payload }: PayloadAction<MarketplaceEditorSteps>) {
+      state.editorStep = payload;
+    },
+    initQueryParams: (state) => state,
   },
 });
 

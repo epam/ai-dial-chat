@@ -41,13 +41,15 @@ dialAdminTest(
       adminPublishedPromptPreviewModalAssertion,
       adminPublishedPromptPreviewModalControlsAssertion,
       adminPublishingApprovalModalAssertion,
+      adminPublishingRulesAssertion,
       adminFolderPromptsToApproveAssertion,
       publishingRequestDialogAssertion,
+      publishingRules,
       adminOrganizationFolderPrompts,
       adminPromptDropdownMenu,
       adminInformationModalAssertion,
       adminOrganizationFolderPromptAssertions,
-      promptToPublishAssertion,
+      publishPromptsTreeAssertion,
       promptBarOrganizationFolderAssertion,
       setTestIds,
       localStorageManager,
@@ -77,6 +79,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    const publishToPath = `${PublishPath.Organization}/${folderName}`;
 
     await dialTest.step('Prepare 2 prompts inside folder', async () => {
       folderPrompt = promptData.preparePromptsInFolder(2, folderName);
@@ -289,7 +292,8 @@ dialAdminTest(
           publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        //TODO: update the assertion when fixed https://github.com/epam/ai-dial-chat/issues/2064
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: folderPrompt.prompts[0].name },
           {
             expectedState: 'visible',
@@ -299,8 +303,20 @@ dialAdminTest(
             expectedVersionColor: expectedErrorColor,
           },
         );
-        await promptToPublishAssertion.assertElementState(
+        await publishPromptsTreeAssertion.assertElementState(
           promptsToPublishTree.promptIcon(folderPrompt.prompts[0].name),
+          'visible',
+        );
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRequestDialog.publishPath,
+          publishToPath,
+        );
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRules.publishingPath,
+          folderName,
+        );
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRules.addRuleButton,
           'visible',
         );
       },
@@ -352,10 +368,16 @@ dialAdminTest(
           expectedErrorColor,
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: PublishPath.Organization,
+          publishTo: publishToPath,
           requestCreated: unpublishApiModels.response,
           author: unpublishAuthor,
         });
+        await adminPublishingRulesAssertion.assertLabels({
+          allowAccessLabel: 'visible',
+          availabilityLabel: 'visible',
+          noChangesLabel: 'visible',
+        });
+        //TODO: update the assertion when fixed https://github.com/epam/ai-dial-chat/issues/2064
         await adminFolderPromptsToApproveAssertion.assertFolderEntityToPublish(
           { name: folderName },
           { name: folderPrompt.prompts[0].name },

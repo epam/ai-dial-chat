@@ -89,31 +89,31 @@ const sections = [
   {
     featureType: FeatureType.Chat,
     sectionName: 'Conversations',
-    dataQa: 'conversations-to-approve',
+    dataQa: 'conversations-tree',
     ItemComponent: PublicationConversationRow,
   },
   {
     featureType: FeatureType.Prompt,
     sectionName: 'Prompts',
-    dataQa: 'prompts-to-approve',
+    dataQa: 'prompts-tree',
     ItemComponent: PublicationPromptRow,
   },
   {
     featureType: FeatureType.Application,
     sectionName: 'Applications',
-    dataQa: 'applications-to-approve',
+    dataQa: 'applications-tree',
     ItemComponent: PublicationApplicationRow,
   },
   {
     featureType: FeatureType.File,
     sectionName: 'Files',
-    dataQa: 'files-to-approve',
+    dataQa: 'files-tree',
     ItemComponent: PublicationFileRow,
   },
   {
     featureType: FeatureType.Toolset,
     sectionName: 'Toolsets',
-    dataQa: 'toolsets-to-approve',
+    dataQa: 'toolsets-tree',
     ItemComponent: PublicationToolsetRow,
   },
 ];
@@ -211,14 +211,14 @@ export function PublicationHandler({ publication }: Props) {
   }, [isEditMode, isReview, publication.displayAuthor]);
 
   useEffect(() => {
-    if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
+    if (publication.targetFolder !== PUBLIC_URL_PREFIX && isReview) {
       dispatch(
         PublicationActions.uploadRules({
           path: getIdWithoutFeatureType(publication.targetFolder),
         }),
       );
     }
-  }, [dispatch, publication.targetFolder]);
+  }, [dispatch, isReview, publication.targetFolder]);
 
   useEffect(() => {
     if (
@@ -232,7 +232,7 @@ export function PublicationHandler({ publication }: Props) {
         }),
       );
     }
-  }, [editedPublishToUrl, dispatch, isReview]);
+  }, [dispatch, editedPublishToUrl, isReview]);
 
   useEffect(() => {
     if (!isReview) {
@@ -344,13 +344,26 @@ export function PublicationHandler({ publication }: Props) {
             version.trim(),
           );
 
+          let newTargetUrl = '';
+
+          if (!isReview && publicationModel.action === PublishActions.DELETE) {
+            newTargetUrl = targetUrl;
+          } else if (!isReview && isFileId(reviewUrl)) {
+            // files is a flat list in publication request, strictly dependent on entity it bounds to.
+            // We need to construct the targetUrl using the original targetUrl, which depends on the entity and add new publishFolder.
+            newTargetUrl = constructPath(
+              ApiKeys.Files,
+              editedPublishToUrl,
+              ...targetUrl.split('/').slice(2),
+            );
+          } else {
+            newTargetUrl = constructPath(newFolderId, newApiKey);
+          }
+
           return {
             action,
             sourceUrl: sourceUrl ?? '',
-            targetUrl:
-              isReview || !isFileId(reviewUrl)
-                ? constructPath(newFolderId, newApiKey)
-                : constructPath(ApiKeys.Files, editedPublishToUrl, newApiKey),
+            targetUrl: newTargetUrl,
             reviewUrl,
             publishCredentials:
               (publishCredentials &&
@@ -397,6 +410,7 @@ export function PublicationHandler({ publication }: Props) {
       foldersEditState,
       editedPublishToUrl,
       selectedCredentialsItems,
+      publicationModel?.action,
       dispatch,
       displayAuthorEditState,
       rulesOnEdit,
@@ -513,8 +527,8 @@ export function PublicationHandler({ publication }: Props) {
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
-  const firstNotMyEntity = publication.resources.find(
-    ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }),
+  const firstNotMyFileEntity = publication.resources.find(
+    ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }) && isFileId(reviewUrl),
   );
   const doesPublicationContainFiles = publication.resources.some(
     ({ reviewUrl }) => isFileId(reviewUrl),
@@ -579,7 +593,9 @@ export function PublicationHandler({ publication }: Props) {
               <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                 <div className="flex flex-col px-3 pb-4 md:px-5">
                   <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                  {!isReview || (isEditMode && !isSomeResourceIsUnpublish) ? (
+                  {(publicationModel &&
+                    publicationModel.action !== PublishActions.DELETE) ||
+                  (isEditMode && !isSomeResourceIsUnpublish) ? (
                     <PublishToSection
                       path={publishToUrl}
                       maxDepth={maxPublishToDepth}
@@ -587,9 +603,14 @@ export function PublicationHandler({ publication }: Props) {
                     />
                   ) : (
                     <PublicationInfoSection
-                      labelDataQa="publish-to-label"
-                      label={t('Publish to')}
-                      valueDataQa="publish-to-path"
+                      labelDataQa="publish-label"
+                      label={t(
+                        publicationModel &&
+                          publicationModel.action === PublishActions.DELETE
+                          ? 'Unpublish from'
+                          : 'Publish to',
+                      )}
+                      valueDataQa="publish-path"
                       valueToDisplay={publishToUrl}
                       tooltip={
                         <div className="flex break-words">{publishToUrl}</div>
@@ -606,7 +627,9 @@ export function PublicationHandler({ publication }: Props) {
                     />
                   )}
 
-                  {(!isPublicationHasOnlyUnpublishEntities || !isReview) && (
+                  {(!isPublicationHasOnlyUnpublishEntities ||
+                    (publicationModel &&
+                      publicationModel.action !== PublishActions.DELETE)) && (
                     <PublicationInfoSection
                       labelDataQa="publication-display-author-label"
                       label={t("Author's public name")}
@@ -688,70 +711,85 @@ export function PublicationHandler({ publication }: Props) {
                           },
                         );
 
-                        return (
+                        const isConversationSectionAndNoFiles =
+                          !isReview &&
+                          featureType === FeatureType.File &&
+                          publication.resourceTypes.includes(
+                            BackendResourceType.CONVERSATION,
+                          ) &&
+                          !doesPublicationContainFiles;
+                        const doesInvalidPublishApplicationIconExist =
+                          !isReview &&
+                          firstNotMyFileEntity &&
+                          publication.resourceTypes.includes(
+                            BackendResourceType.APPLICATION,
+                          ) &&
+                          featureType === FeatureType.File;
+                        const shouldRenderSection =
                           publication.resourceTypes.includes(
                             EnumMapper.getBackendResourceTypeByFeatureType(
                               featureType,
                             ),
-                          ) && (
-                            <CollapsibleSection
-                              key={featureType}
-                              name={t(sectionName)}
-                              openByDefault
-                              dataQa={dataQa}
-                              togglerClassName="!text-sm !text-primary"
-                              sectionTooltip={
-                                isReview && (
-                                  <>
-                                    {t('Publish')},
-                                    <span className="text-error">
-                                      {' '}
-                                      {t('Unpublish')}
-                                    </span>
-                                  </>
-                                )
-                              }
-                            >
-                              {!!filteredResources.length && (
+                          ) || doesInvalidPublishApplicationIconExist;
+
+                        if (!shouldRenderSection) {
+                          return null;
+                        }
+
+                        return (
+                          <CollapsibleSection
+                            key={featureType}
+                            name={t(sectionName)}
+                            openByDefault
+                            dataQa={dataQa}
+                            togglerClassName="!text-sm !text-primary"
+                            sectionTooltip={
+                              isReview && (
+                                <>
+                                  {t('Publish')},
+                                  <span className="text-error">
+                                    {' '}
+                                    {t('Unpublish')}
+                                  </span>
+                                </>
+                              )
+                            }
+                          >
+                            {!!filteredResources.length &&
+                              !doesInvalidPublishApplicationIconExist && (
                                 <BasePublicationResources
                                   resources={filteredResources}
                                   ItemComponent={ItemComponent}
                                 />
                               )}
-                              {!isReview &&
-                                featureType === FeatureType.File &&
-                                !doesPublicationContainFiles && (
-                                  <p
-                                    className="pl-3.5 text-secondary"
-                                    data-qa="no-publishing-files"
-                                  >
-                                    {t(
-                                      publication.resources.filter(
-                                        ({ reviewUrl }) =>
-                                          isConversationId(reviewUrl),
-                                      ).length < 2
-                                        ? "This conversation doesn't contain any files"
-                                        : "These conversations don't contain any files",
-                                    )}
-                                  </p>
+                            {isConversationSectionAndNoFiles && (
+                              <p
+                                className="pl-3.5 text-secondary"
+                                data-qa="no-publishing-files"
+                              >
+                                {t(
+                                  publication.resources.filter(
+                                    ({ reviewUrl }) =>
+                                      isConversationId(reviewUrl),
+                                  ).length < 2
+                                    ? "This conversation doesn't contain any files"
+                                    : "These conversations don't contain any files",
                                 )}
-                            </CollapsibleSection>
-                          )
+                              </p>
+                            )}
+                            {doesInvalidPublishApplicationIconExist &&
+                              featureType === FeatureType.File && (
+                                <ErrorMessage
+                                  type="warning"
+                                  error={t(
+                                    `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
+                                  )}
+                                />
+                              )}
+                          </CollapsibleSection>
                         );
                       },
                     )}
-                    {!isReview &&
-                      firstNotMyEntity &&
-                      publication.resourceTypes.includes(
-                        BackendResourceType.APPLICATION,
-                      ) && (
-                        <ErrorMessage
-                          type="warning"
-                          error={t(
-                            `The icon used for this application is in the "${isEntityIdPublic({ id: firstNotMyEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the application will be published with the default one.`,
-                          )}
-                        />
-                      )}
                   </>
                 ) : (
                   <p className="my-3">

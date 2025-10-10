@@ -53,7 +53,7 @@ dialAdminTest(
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
       adminPublishingRulesAssertion,
-      adminFilesToApproveAssertion,
+      adminPublishFilesAssertion,
       adminAppToApproveAssertion,
       adminTooltip,
       adminTooltipAssertion,
@@ -152,10 +152,7 @@ dialAdminTest(
         await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
         await marketplaceAgents
           .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.publish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+          .selectMenuOption(MenuOptions.publish);
       },
     );
 
@@ -284,7 +281,7 @@ dialAdminTest(
             // expectedIcon: expectedIconUrl
           },
         );
-        await adminFilesToApproveAssertion.assertFileToPublish(
+        await adminPublishFilesAssertion.assertFileToPublish(
           { name: filename },
           {
             expectedState: 'visible',

@@ -4,7 +4,6 @@ import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
   PublishPath,
@@ -40,6 +39,7 @@ dialAdminTest(
       conversationDropdownMenu,
       publishingRequestDialog,
       conversationsToPublishTree,
+      publishConversationAssertion,
       publishingRequestDialogAssertion,
       iconApiHelper,
       tooltipAssertion,
@@ -58,9 +58,8 @@ dialAdminTest(
       adminOrganizationConversationAssertion,
       adminPublishingApprovalModalAssertion,
       adminPublishingRulesAssertion,
-      adminConversationToApproveAssertion,
+      adminPublishConversationsTreeAssertion,
       conversationDropdownMenuAssertion,
-      toastAssertion,
       downloadAssertion,
       adminTooltip,
       adminChatHeaderAssertion,
@@ -123,9 +122,7 @@ dialAdminTest(
         );
         await publishingRequestDialog.requestName.fillInInput('');
         await publishingRequestDialogAssertion.assertNoFilesRequestedToPublish();
-        await publishingRequestDialogAssertion.assertSendRequestButtonActionabilityState(
-          'disabled',
-        );
+        await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
       },
     );
 
@@ -158,6 +155,7 @@ dialAdminTest(
         await conversationsToPublishTree
           .getEntityCheckbox(conversation.name)
           .click();
+        await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
         await publishingRequestDialog.sendRequestButton.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.nothingToPublishTooltip,
@@ -263,15 +261,15 @@ dialAdminTest(
           noChangesLabel: 'visible',
         });
 
-        await adminConversationToApproveAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
-        await adminConversationToApproveAssertion.assertEntityVersion(
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: conversation.name },
           ExpectedConstants.defaultAppVersion,
         );
-        await adminConversationToApproveAssertion.assertTreeEntityIcon(
+        await adminPublishConversationsTreeAssertion.assertTreeEntityIcon(
           { name: conversation.name },
           expectedConversationIcon,
         );
@@ -364,7 +362,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Select "Publish" menu option for published conversation, set same name and version and verify error toast is show on send request',
+      'Select "Publish" menu option for published conversation, set same name and version and verify error icon is show in the version input',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
@@ -372,14 +370,17 @@ dialAdminTest(
         await conversationsToPublishTree
           .getEntityVersionInput(conversation.name)
           .fill(ExpectedConstants.defaultAppVersion);
-        await publishingRequestDialog.sendRequestButton.click();
-        await toastAssertion.assertToastIsVisible();
-        await toastAssertion.assertToastMessage(
-          ExpectedConstants.duplicatedPublicationErrorMessage(
-            publishApiModels.response.resources[0].targetUrl,
+        await publishConversationAssertion.assertElementState(
+          conversationsToPublishTree.getEntityVersionErrorIcon(
+            conversation.name,
           ),
-          ExpectedMessages.errorMessageContentIsValid,
+          'visible',
         );
+        await publishingRequestDialogAssertion.assertElementActionabilityState(
+          publishingRequestDialog.sendRequestButton,
+          'disabled',
+        );
+        await publishingRequestDialog.cancelButton.click();
       },
     );
 

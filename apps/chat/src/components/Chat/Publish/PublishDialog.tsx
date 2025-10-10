@@ -8,11 +8,16 @@ import {
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
+  getIdWithoutRootPathSegments,
   isConversationId,
+  replaceIdWithBucket,
   transformIdToRootEntityId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
+import {
+  createFoldersFilesTargetUrl,
+  isEntityIdPublic,
+} from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -38,7 +43,14 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 import { PublicationHandler } from './PublicationHandler/PublicationHandler';
 
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
+import compact from 'lodash-es/compact';
+import escapeRegExp from 'lodash-es/escapeRegExp';
+import flatMapDeep from 'lodash-es/flatMapDeep';
 
 interface PublishDialogContainerProps {
   entity: ShareEntity & { iconUrl?: string };
@@ -48,6 +60,37 @@ interface PublishDialogContainerProps {
   isFolder: boolean;
   filteredConversationFiles: DialFile[];
 }
+
+const transformFoldersFilesIds = (
+  conversations: Conversation[],
+  entity: ShareEntity,
+) => {
+  const folderOldPathPartsRegExp = new RegExp(
+    escapeRegExp(getIdWithoutRootPathSegments(entity.folderId)),
+  );
+
+  return conversations.flatMap((c) => {
+    const urls = compact(
+      flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+        m.custom_content?.attachments?.map((a) => a.url),
+      ),
+    );
+
+    return urls.map((oldUrl) => {
+      const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+
+      return {
+        oldUrl: decodedOldUrl,
+        newUrl: createFoldersFilesTargetUrl(
+          constructPath(
+            getFolderIdFromEntityId(c.id),
+            ...decodedOldUrl.split('/').slice(-1),
+          ).replace(folderOldPathPartsRegExp, ''),
+        ),
+      };
+    });
+  });
+};
 
 const PublishDialogContainer = ({
   entity,
@@ -78,7 +121,7 @@ const PublishDialogContainer = ({
   });
 
   const filteredEntities = useMemo(() => {
-    if (!isFolder) return entities;
+    if (!isFolder || action === PublishActions.DELETE) return entities;
 
     return entities.filter(
       (entity) =>
@@ -87,81 +130,120 @@ const PublishDialogContainer = ({
           isLoadedConversationEntity(entity) &&
           (entity.messages.length || entity.playback?.messagesStack.length)),
     );
-  }, [entities, isFolder]);
+  }, [action, entities, isFolder]);
 
   useEffect(() => {
-    if (!areConversationsWithContentUploading && !filteredEntities.length) {
+    if (
+      !areConversationsWithContentUploading &&
+      !filteredEntities.length &&
+      action !== PublishActions.DELETE
+    ) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
       );
       dispatch(PublicationActions.setPublishModel());
     }
-  }, [areConversationsWithContentUploading, dispatch, filteredEntities, t]);
+  }, [
+    action,
+    areConversationsWithContentUploading,
+    dispatch,
+    filteredEntities,
+    t,
+  ]);
 
   const publication = useMemo(() => {
-    const baseResources = filteredEntities.map(({ id }) => ({
-      action,
-      sourceUrl: id,
-      targetUrl: id,
-      reviewUrl: isFolder ? id : transformIdToRootEntityId(id),
-      publishCredentials,
-    }));
-
-    const fileResources = filteredConversationFiles.map(({ id }) => {
-      const decodedId = ApiUtils.decodeApiUrl(id);
+    const baseResources = filteredEntities.map(({ id }) => {
+      const url = isFolder
+        ? constructPath(
+            transformIdToRootEntityId(entity.id),
+            id.replace(`${entity.id}/`, ''),
+          )
+        : transformIdToRootEntityId(id);
 
       return {
         action,
-        sourceUrl: decodedId,
-        targetUrl: constructPath(
-          getFolderIdFromEntityId(entity.id),
-          splitEntityId(decodedId).name,
+        sourceUrl: id,
+        targetUrl: replaceIdWithBucket(
+          action === PublishActions.DELETE ? id : url,
+          PUBLIC_URL_PREFIX,
         ),
-        reviewUrl: decodedId,
+        reviewUrl: url,
+        publishCredentials,
       };
     });
+
+    const mappedWithConversationsFiles = transformFoldersFilesIds(
+      filteredEntities as Conversation[],
+      entity,
+    );
+
+    const fileResources =
+      action === PublishActions.DELETE
+        ? []
+        : filteredConversationFiles.map(({ id }) => {
+            const decodedId = ApiUtils.decodeApiUrl(id);
+
+            const url =
+              (isFolder
+                ? mappedWithConversationsFiles.find(
+                    (file) => file.oldUrl === decodedId,
+                  )?.newUrl
+                : transformIdToRootEntityId(decodedId)) ??
+              transformIdToRootEntityId(decodedId);
+
+            return {
+              action: PublishActions.ADD_IF_ABSENT,
+              sourceUrl: decodedId,
+              reviewUrl: decodedId,
+              targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
+            };
+          });
 
     const decodedIconUrl = entity.iconUrl
       ? ApiUtils.decodeApiUrl(entity.iconUrl)
       : '';
+    const targetIconUrl = transformIdToRootEntityId(decodedIconUrl);
     const iconResource =
-      decodedIconUrl && !isFolder
+      decodedIconUrl && !isFolder && action !== PublishActions.DELETE
         ? [
             {
-              action,
+              action: PublishActions.ADD_IF_ABSENT,
               sourceUrl: decodedIconUrl,
-              targetUrl: constructPath(
-                getFolderIdFromEntityId(entity.id),
-                splitEntityId(decodedIconUrl).name,
-              ),
               reviewUrl: decodedIconUrl,
+              targetUrl: replaceIdWithBucket(targetIconUrl, PUBLIC_URL_PREFIX),
             },
           ]
         : [];
 
     const resourceTypes = [
       resourceType,
-      ...(isConversationId(entity.id) ? [BackendResourceType.FILE] : []),
+      ...(isConversationId(entity.id) && action !== PublishActions.DELETE
+        ? [BackendResourceType.FILE]
+        : []),
     ];
 
     return {
       url: '',
       resources: [...baseResources, ...iconResource, ...fileResources],
-      targetFolder: PUBLIC_URL_PREFIX,
+      targetFolder:
+        action === PublishActions.DELETE
+          ? constructPath(
+              PUBLIC_URL_PREFIX,
+              getFolderIdFromEntityId(getIdWithoutRootPathSegments(entity.id)),
+            )
+          : PUBLIC_URL_PREFIX,
       resourceTypes,
       createdAt: entity.createdAt ?? 0,
       publicationStatus: PublicationStatus.PENDING,
     };
   }, [
     filteredEntities,
-    filteredConversationFiles,
-    entity.iconUrl,
-    entity.id,
-    entity.createdAt,
-    isFolder,
     action,
+    filteredConversationFiles,
+    entity,
+    isFolder,
     resourceType,
-    publishCredentials,
+    publishCredentials
   ]);
 
   useEffect(() => {

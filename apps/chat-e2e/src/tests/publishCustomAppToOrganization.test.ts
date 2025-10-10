@@ -124,7 +124,7 @@ dialAdminTest(
           agentDetailsModal,
           'visible',
         );
-        await agentDetailsModal.clickPublishButton();
+        await agentDetailsModal.publishButton.click();
         await publishingRequestDialogAssertion.assertElementState(
           publishingRequestDialog,
           'visible',

@@ -53,8 +53,8 @@ dialAdminTest(
       baseAssertion,
       selectFolders,
       adminPublishedPromptPreviewModal,
-      adminPromptsToApprove,
-      adminPromptToApproveAssertion,
+      adminPromptsToApproveTree,
+      adminPublishPromptsTreeAssertion,
       adminPublishedPromptPreviewModalAssertion,
       promptBarOrganizationFolderAssertion,
       organizationFolderPrompts,
@@ -112,7 +112,10 @@ dialAdminTest(
       await dialHomePage.waitForPageLoaded();
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-      await baseAssertion.assertElementState(publishingRequestDialog, 'visible');
+      await baseAssertion.assertElementState(
+        publishingRequestDialog,
+        'visible',
+      );
     });
 
     await dialTest.step(
@@ -200,7 +203,7 @@ dialAdminTest(
           requestCreated: publishApiModels.response,
           publicAuthor: author,
         });
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt1.name },
           {
             expectedState: 'visible',
@@ -209,11 +212,11 @@ dialAdminTest(
             expectedVersionColor: expectedColor,
           },
         );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPromptsToApprove.promptIcon(prompt1.name),
+        await adminPublishPromptsTreeAssertion.assertElementState(
+          adminPromptsToApproveTree.promptIcon(prompt1.name),
           'visible',
         );
-        await adminPromptToApproveAssertion.assertElementState(
+        await adminPublishPromptsTreeAssertion.assertElementState(
           adminPublishingApprovalModal.goToReviewButton,
           'visible',
         );
@@ -389,7 +392,7 @@ dialAdminTest(
           publishTo: `${PublishPath.Organization}/${orgFolderName}`,
           requestCreated: publishApiModels.response,
         });
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt2.name },
           {
             expectedState: 'visible',
@@ -473,7 +476,7 @@ dialAdminTest(
       informationModal,
       informationModalAssertion,
       adminPublishedPromptPreviewModal,
-      adminPromptToApproveAssertion,
+      adminPublishPromptsTreeAssertion,
       adminPublishedPromptPreviewModalAssertion,
       promptBarOrganizationFolderAssertion,
       organizationFolderPrompts,
@@ -532,7 +535,10 @@ dialAdminTest(
       await dialHomePage.waitForPageLoaded();
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-      await baseAssertion.assertElementState(publishingRequestDialog, 'visible');
+      await baseAssertion.assertElementState(
+        publishingRequestDialog,
+        'visible',
+      );
       await publishingRequestDialog.requestName.fillInInput('');
     });
 
@@ -585,7 +591,9 @@ dialAdminTest(
       await dialTest.step(
         `Type ${requestNames[i]} symbols in the request name and verify error hint is displayed under the field`,
         async () => {
-          await publishingRequestDialog.requestName.fillInInput(requestNames[i]);
+          await publishingRequestDialog.requestName.fillInInput(
+            requestNames[i],
+          );
           await publishingRequestDialogAssertion.assertElementText(
             publishingRequestDialog.requestNameErrorMessage,
             i === 0
@@ -655,7 +663,7 @@ dialAdminTest(
           adminPublishingApprovalModal,
           'visible',
         );
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt1.name },
           {
             expectedState: 'visible',
@@ -760,7 +768,7 @@ dialAdminTest(
     dialHomePage,
     organizationPrompts,
     promptPreviewModalAssertion,
-    promptToPublishAssertion,
+    publishPromptsTreeAssertion,
     promptPreviewModal,
     publishingRequestDialog,
     publishingRequestDialogAssertion,
@@ -887,7 +895,7 @@ dialAdminTest(
           publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',

@@ -150,3 +150,9 @@ export const transformIdToRootEntityId = (id: string) => {
     entityName,
   );
 };
+
+export const replaceIdWithBucket = (id: string, bucket: string) => {
+  const splittedId = id.split('/');
+  splittedId[1] = bucket;
+  return splittedId.join('/');
+};

@@ -23,7 +23,7 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
-    adminConversationToApproveAssertion,
+    adminPublishConversationsTreeAssertion,
     baseAssertion,
     localStorageManager,
     adminLocalStorageManager,
@@ -101,15 +101,15 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
         );
-        await adminConversationToApproveAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
-        await adminConversationToApproveAssertion.assertEntityVersion(
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: conversation.name },
           ExpectedConstants.defaultAppVersion,
         );
-        await adminConversationToApproveAssertion.assertTreeEntityIcon(
+        await adminPublishConversationsTreeAssertion.assertTreeEntityIcon(
           { name: conversation.name },
           expectedConversationIcon,
         );

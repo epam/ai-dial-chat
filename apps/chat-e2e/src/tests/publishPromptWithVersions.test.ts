@@ -34,7 +34,7 @@ dialTest(
     organizationPromptAssertion,
     promptAssertion,
     publishingRequestDialogAssertion,
-    promptToPublishAssertion,
+    publishPromptsTreeAssertion,
     prompts,
   }) => {
     setTestIds(
@@ -293,7 +293,7 @@ dialTest(
           publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',
@@ -316,7 +316,7 @@ dialTest(
           publishingRequestDialog,
           'visible',
         );
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',

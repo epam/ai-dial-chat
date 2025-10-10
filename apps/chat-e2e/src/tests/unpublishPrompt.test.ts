@@ -31,7 +31,7 @@ dialAdminTest(
       publishingRequestDialog,
       publishingRequestDialogAssertion,
       publishingRulesAssertion,
-      promptToPublishAssertion,
+      publishPromptsTreeAssertion,
       promptsToPublishTree,
       tooltipAssertion,
       adminApproveRequiredPromptsAssertion,
@@ -39,8 +39,8 @@ dialAdminTest(
       adminPublishingRulesAssertion,
       adminPublishingApprovalModal,
       adminApproveRequiredPrompts,
-      adminPromptsToApprove,
-      adminPromptToApproveAssertion,
+      adminPromptsToApproveTree,
+      adminPublishPromptsTreeAssertion,
       adminPublishedPromptPreviewModal,
       adminPublishedPromptPreviewModalAssertion,
       organizationPromptAssertion,
@@ -108,7 +108,7 @@ dialAdminTest(
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
-        await promptToPublishAssertion.assertEntityToPublish(
+        await publishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',
@@ -118,7 +118,7 @@ dialAdminTest(
             expectedVersionColor: expectedErrorColor,
           },
         );
-        await promptToPublishAssertion.assertElementState(
+        await publishPromptsTreeAssertion.assertElementState(
           promptsToPublishTree.promptIcon(prompt.name),
           'visible',
         );
@@ -203,7 +203,7 @@ dialAdminTest(
           allowAccessLabel: 'visible',
           availabilityLabel: 'visible',
         });
-        await adminPromptToApproveAssertion.assertEntityToPublish(
+        await adminPublishPromptsTreeAssertion.assertEntityToPublish(
           { name: prompt.name },
           {
             expectedState: 'visible',
@@ -213,8 +213,8 @@ dialAdminTest(
             expectedVersionColor: expectedErrorColor,
           },
         );
-        await adminPromptToApproveAssertion.assertElementState(
-          adminPromptsToApprove.promptIcon(prompt.name),
+        await adminPublishPromptsTreeAssertion.assertElementState(
+          adminPromptsToApproveTree.promptIcon(prompt.name),
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertButtonsState({

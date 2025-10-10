@@ -27,7 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { NA_VERSION } from '@/src/constants/publication';
+import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { Checkbox } from '@/src/components/Common/Checkbox';
@@ -178,7 +178,10 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
         <EditableField
           value={inputVersion}
           isEditMode={
-            publicationModel
+            publicationModel &&
+            !isToolsetId(publicationModel.entity.id) &&
+            !isApplicationId(publicationModel.entity.id) &&
+            publicationModel.action !== PublishActions.DELETE
               ? true
               : isDeleteAction || isToolsetId(item.id)
                 ? false
@@ -190,9 +193,10 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
             (errors.length || inputVersion === NA_VERSION) && '!border-b-error',
             errors.length && 'pl-5',
           )}
-          placeholder="0.0.1"
+          placeholder={DEFAULT_VERSION}
           errors={errors}
           tooltipIconClassName="ml-1"
+          dataQA="version"
         />
       </span>
     </div>
@@ -343,11 +347,9 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
         <EditableField
           value={inputName}
           isEditMode={
-            publicationModel
-              ? true
-              : isDeleteAction || isToolsetId(item.id)
-                ? false
-                : isEditMode
+            isDeleteAction || isToolsetId(item.id) || publicationModel
+              ? false
+              : isEditMode
           }
           onChange={handleChangeName}
           inputClassName={classNames('w-full', errors.length && 'pr-5')}
