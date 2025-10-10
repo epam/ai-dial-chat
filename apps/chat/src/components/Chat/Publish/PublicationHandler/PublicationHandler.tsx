@@ -310,7 +310,7 @@ export function PublicationHandler({ publication }: Props) {
   const handleUpdateRequest = useCallback(
     (data: PublicationRequestFormData) => {
       const mappedResources = publication.resources.map(
-        ({ sourceUrl, reviewUrl, action, publishCredentials }) => {
+        ({ sourceUrl, reviewUrl, action, publishCredentials, targetUrl }) => {
           const { name, version } = entitiesEditState[reviewUrl];
 
           // calculate new folderId

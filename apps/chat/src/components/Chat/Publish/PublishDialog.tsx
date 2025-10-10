@@ -63,10 +63,10 @@ interface PublishDialogContainerProps {
 
 const transformFoldersFilesIds = (
   conversations: Conversation[],
-  entity: ShareEntity,
+  entityFolderId: string,
 ) => {
   const folderOldPathPartsRegExp = new RegExp(
-    escapeRegExp(getIdWithoutRootPathSegments(entity.folderId)),
+    escapeRegExp(getIdWithoutRootPathSegments(entityFolderId)),
   );
 
   return conversations.flatMap((c) => {
@@ -174,7 +174,7 @@ const PublishDialogContainer = ({
 
     const mappedWithConversationsFiles = transformFoldersFilesIds(
       filteredEntities as Conversation[],
-      entity,
+      entity.folderId,
     );
 
     const fileResources =
@@ -238,12 +238,15 @@ const PublishDialogContainer = ({
     };
   }, [
     filteredEntities,
+    entity.folderId,
+    entity.iconUrl,
+    entity.id,
+    entity.createdAt,
     action,
     filteredConversationFiles,
-    entity,
     isFolder,
     resourceType,
-    publishCredentials
+    publishCredentials,
   ]);
 
   useEffect(() => {
