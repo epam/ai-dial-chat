@@ -18,7 +18,7 @@ import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
-import { pickBy } from 'lodash-es';
+import pickBy from 'lodash-es/pickBy';
 
 export const parseToolsetApiAuthStatus = (data?: Toolset) => {
   return {
