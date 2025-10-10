@@ -32,13 +32,13 @@ interface FilterComponentProps {
 const showNoRulesLabel = (
   rulesOnEditLength: number,
   isNoRulesToDisplay: boolean,
-  publicationModelObject?: { publishToUrl: string },
+  publishToUrl: string | undefined,
 ) => {
-  if (publicationModelObject) {
+  if (publishToUrl) {
     return (
       !rulesOnEditLength &&
       isNoRulesToDisplay &&
-      PUBLIC_URL_PREFIX === publicationModelObject.publishToUrl
+      PUBLIC_URL_PREFIX === publishToUrl
     );
   }
 
@@ -105,7 +105,7 @@ export function PublicationFilters({
       {showNoRulesLabel(
         rulesOnEdit.length,
         isNoRulesToDisplay,
-        publicationModel ? { publishToUrl: editedPublishToUrl } : undefined,
+        publicationModel ? editedPublishToUrl : undefined,
       ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
           {t(
