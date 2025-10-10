@@ -41,7 +41,6 @@ import { Translation } from '@/src/types/translation';
 import { ChatActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  AddonsSelectors,
   ApplicationTypesSchemasSelectors,
   AuthSelectors,
   ChatSelectors,
@@ -54,9 +53,9 @@ import {
 
 import { Routes } from '@/src/constants/routes';
 
-import { CustomChatViewer } from '@/src/components/AppsEditor/Settings/Previews/CustomChatViewer';
 import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
 import { ChatStarters } from '@/src/components/Chat/ChatStarters';
+import { CustomChatViewer } from '@/src/components/Chat/CustomChatViewer';
 import { Loader } from '@/src/components/Common/Loader';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
@@ -99,7 +98,6 @@ const ChatView = memo(() => {
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -178,9 +176,6 @@ const ChatView = memo(() => {
   const isNotAllowed = useAppSelector(
     ConversationsSelectors.selectIsNotAllowed,
   );
-  const hasNotAllowedAddons = useAppSelector(
-    ConversationsSelectors.selectHasNotAllowedAddons,
-  );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
@@ -224,7 +219,7 @@ const ChatView = memo(() => {
     selectedConversations.some((conv) => conv.messages.length > 0);
 
   const isApplicationPreviewChat = useMemo(() => {
-    return router.pathname === Routes.AppsEditorSettings;
+    return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
   const isAdminPreview = isAdmin && isApplicationPreviewChat;
@@ -236,12 +231,10 @@ const ChatView = memo(() => {
   useLayoutEffect(() => {
     if (isNotAllowed) {
       dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
-    } else if (hasNotAllowedAddons) {
-      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Addon));
     } else {
       dispatch(ChatActions.setNotAvailableEntityType(undefined));
     }
-  }, [dispatch, isNotAllowed, hasNotAllowedAddons]);
+  }, [dispatch, isNotAllowed]);
 
   const handleLike = useCallback(
     (index: number, conversation: Conversation, rate: LikeState) => {
@@ -474,21 +467,16 @@ const ChatView = memo(() => {
                 conversation,
                 temporarySettings.modelId,
                 modelsMap,
-                addonsMap,
               ),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
-              assistantModelId: temporarySettings.currentAssistantModelId,
-              selectedAddons: temporarySettings.addonsIds.filter(
-                (addonId) => addonsMap[addonId],
-              ),
               isShared: temporarySettings.isShared,
             },
           }),
         );
       }
     });
-  }, [selectedConversations, dispatch, modelsMap, addonsMap]);
+  }, [selectedConversations, dispatch, modelsMap]);
 
   const handleTemporarySettingsSave = useCallback(
     (conversation: Conversation, args: ConversationsTemporarySettings) => {
@@ -1020,7 +1008,7 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
   const router = useRouter();
 
   const isApplicationPreviewChat = useMemo(() => {
-    return router.pathname === Routes.AppsEditorSettings;
+    return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
   const isStartedCustomViewerConversation = useAppSelector(

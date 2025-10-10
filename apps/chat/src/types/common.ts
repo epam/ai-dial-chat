@@ -5,8 +5,6 @@ export { FeatureType } from '@epam/ai-dial-shared';
 export enum EntityType {
   Model = 'model',
   Application = 'application',
-  Assistant = 'assistant',
-  Addon = 'addon',
   Toolset = 'toolset',
 }
 
@@ -141,9 +139,8 @@ export interface SelectOption<L, V> {
 export enum PageType {
   Chat = 'chat',
   Marketplace = 'marketplace',
-  AppsEditorSettings = 'application-settings',
-  AppsEditorGeneralInfo = 'application-general-info',
   ToolsetEditor = 'toolset-editor',
+  AppsEditor = 'apps-editor',
 }
 
 export enum ScreenState {

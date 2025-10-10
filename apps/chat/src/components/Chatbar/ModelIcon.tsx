@@ -38,7 +38,7 @@ export function FallbackIcon({ entityType, size }: FallbackIconProps) {
   return (
     <Icon
       size={Math.round(size / 1.25)}
-      className="dark:invert"
+      className="text-primary dark:invert"
       stroke={entityType === EntityType.Toolset ? 1.1 : 1.2}
     />
   );
@@ -126,8 +126,7 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative shrink-0 leading-none',
-          entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
+          'relative shrink-0 overflow-hidden rounded-full leading-none',
           animate && 'animate-bounce',
           enableShrinking && 'shrink',
           iconError ? 'flex items-center justify-center' : 'inline-block',

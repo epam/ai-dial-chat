@@ -21,7 +21,6 @@ import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { DRAFT_APPLICATION_ID } from '@/src/constants/applications';
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
@@ -31,8 +30,6 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
-
-import { ApplicationGeneralInfoFormData } from '@/src/components/AppsEditor/GeneralInfoView/form';
 
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
@@ -296,13 +293,15 @@ export const getQuickApp2Config = (
 };
 
 export const getQuickAppDocumentUrl = (entity?: CustomApplicationModel) => {
-  return entity ? getQuickAppConfig(entity).document_relative_url : undefined;
+  return entity ? getQuickAppConfig(entity)?.document_relative_url : undefined;
 };
 
 export const getQuick2AppDocumentUrl = (entity?: CustomApplicationModel) => {
-  return entity
-    ? getQuickApp2Config(entity).contexts.map((context) => context.url)
-    : undefined;
+  return (
+    (entity &&
+      getQuickApp2Config(entity)?.contexts?.map((context) => context.url)) ||
+    undefined
+  );
 };
 
 export const getToolsetStr = (
@@ -418,32 +417,7 @@ export const getPlayerCaption = (entity: DialAIEntityModel) => {
   }
 };
 
-export const getApplicationEntityFields = (
-  data: ApplicationGeneralInfoFormData,
-  applicationData?: DialAIEntityModel,
-  schema?: ApiDetailedApplicationTypeSchema | null,
-): Omit<CustomApplicationModel, 'folderId'> => {
-  return {
-    name: data.name ?? '',
-    version: data.version ?? '',
-    description: data.description ?? '',
-    iconUrl: data.iconUrl ?? '',
-    topics: data.topics ?? [],
-    reference: '',
-    features: undefined,
-    id: applicationData?.id ?? DRAFT_APPLICATION_ID,
-    completionUrl: '',
-    type: EntityType.Application,
-    isDefault: true,
-    owner: applicationData?.owner,
-    createdAt: applicationData?.createdAt,
-    applicationTypeSchemaId: schema?.$id ?? '',
-  };
-};
-
 export const isDialAiEntityModel = (
   entity: MarketplaceEntity,
 ): entity is DialAIEntityModel =>
-  entity?.type === EntityType.Application ||
-  entity?.type === EntityType.Model ||
-  entity?.type === EntityType.Assistant;
+  entity?.type === EntityType.Application || entity?.type === EntityType.Model;
