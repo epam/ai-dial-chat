@@ -256,7 +256,7 @@ export const ExpectedConstants = {
   workspaceTab: 'tab=workspace',
   workspacePath: () =>
     `${ExpectedConstants.marketplacePath}?${ExpectedConstants.workspaceTab}`,
-  createCustomAppPath: '/apps-editor/custom%20app',
+  createCustomAppPath: '/apps-editor?step=General&schema=custom_app',
   noWorkspaceAgentsFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
@@ -417,8 +417,8 @@ export enum EditPromptFormFields {
 }
 
 export const AppMenuActions = {
-  add: (app: AddAppMenuOptions) => `Add ${app.toLowerCase()}`,
-  edit: (app: AddAppMenuOptions) => `Edit ${app.toLowerCase()}`,
+  add: (app: AddAppMenuOptions) => `Add ${app}`,
+  edit: (app: AddAppMenuOptions) => `Edit ${app}`,
 };
 
 export const Chronology = {
