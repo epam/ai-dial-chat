@@ -15,6 +15,8 @@ import {
 } from '@/src/utils/app/application';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { isToolsetId } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -50,6 +52,8 @@ import {
 } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
+
+import { ToolsetTransportType } from '@epam/ai-dial-shared';
 
 interface ApplicationGeneralInfo {
   name: string;
@@ -296,6 +300,7 @@ export const getQuickAppDefaultValues2 = ({
   app: CustomApplicationModel;
 }): QuickAppFormData2 => {
   const appProperties = app.applicationProperties as QuickApp2Config;
+
   const agentToolsets = appProperties?.tool_sets
     .filter(isDialDeploymentToolset)
     .flatMap((toolset) => toolset.tools);
@@ -464,20 +469,23 @@ export const getQuickAppData2 = (
     }>(
       (acc, agentAndToolset) => {
         const entity = allEntitiesMap[agentAndToolset];
-        if (!entity) return acc;
+        const isDialDeployment =
+          (entity && isDialAiEntityModel(entity)) ||
+          (!entity && isToolsetId(agentAndToolset));
 
-        if (isDialAiEntityModel(entity)) {
+        if (isDialDeployment) {
+          const deploymentId = entity?.id ?? agentAndToolset;
           acc.dialDeploymentsToolsets.push({
             type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
-            deployment_id: ApiUtils.encodeApiUrl(entity.id),
+            deployment_id: ApiUtils.encodeApiUrl(deploymentId),
           });
         } else {
           acc.dialMCPToolsets.push({
-            name: entity.name,
-            dial_id: ApiUtils.encodeApiUrl(entity.id),
-            description: entity.description,
+            name: entity?.name ?? splitEntityId(agentAndToolset).name,
+            dial_id: ApiUtils.encodeApiUrl(agentAndToolset),
+            description: entity?.description ?? '',
             type: ToolsetTypes.DialMcp,
-            transport: entity.transport,
+            transport: entity?.transport ?? ToolsetTransportType.HTTP,
           });
         }
 

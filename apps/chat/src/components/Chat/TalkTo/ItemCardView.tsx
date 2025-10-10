@@ -48,6 +48,7 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
   conversation?: Conversation;
   disabled?: boolean;
   isUnavailableModel?: boolean;
+  isLoggedOut?: boolean;
   hasContextMenu?: boolean;
   className?: string;
   selectedBaseIdsSet?: Set<string>;
@@ -75,6 +76,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   conversation,
   disabled,
   isUnavailableModel,
+  isLoggedOut,
   hasContextMenu = true,
   className,
   selectedBaseIdsSet,
@@ -102,7 +104,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
     }
 
     return sourceList.filter(
-      (item) =>
+      (item: MarketplaceEntity) =>
         getGroupMarketplaceEntityKey(entity) ===
         getGroupMarketplaceEntityKey(item),
     );
@@ -131,7 +133,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
-        isUnavailableModel && 'border-error',
+        (isUnavailableModel || isLoggedOut) && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
         className,

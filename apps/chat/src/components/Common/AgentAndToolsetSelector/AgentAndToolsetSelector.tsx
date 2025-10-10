@@ -59,8 +59,8 @@ export const AgentAndToolsetSelector: React.FC<
     onChange(value.filter((id) => id !== idToRemove));
   };
 
-  const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
-    onChange(newItems.map((item) => item.id));
+  const handleConfirmSelection = (newIds: string[]) => {
+    onChange(newIds);
     setSelectModalOpen(false);
   };
 

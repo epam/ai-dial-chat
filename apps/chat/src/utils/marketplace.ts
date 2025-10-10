@@ -7,7 +7,7 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { PageType } from '@/src/types/common';
+import { EntityType, PageType } from '@/src/types/common';
 import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -21,6 +21,32 @@ import {
 import { pluralizeDisplayName } from './app/application-type-schema';
 
 import intersection from 'lodash-es/intersection';
+
+export interface EntityStatus {
+  isInvalid: boolean;
+  isLoggedOut: boolean;
+  isError: boolean;
+}
+
+export const getEntityStatus = (
+  item: MarketplaceEntity | undefined,
+): EntityStatus => {
+  const isInvalid = !item;
+
+  const isLoggedOut =
+    !!item &&
+    item.type === EntityType.Toolset &&
+    'authSettings' in item &&
+    !!item?.authSettings?.authenticationType;
+
+  const isError = isInvalid || isLoggedOut;
+
+  return {
+    isInvalid,
+    isLoggedOut,
+    isError,
+  };
+};
 
 export const doesMarketplaceEntityMatchFilters = (
   model: MarketplaceEntity,

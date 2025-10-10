@@ -5,9 +5,13 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { type ComponentType, useState } from 'react';
+import { ComponentType, useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
+
+import { getEntityStatus } from '@/src/utils/marketplace';
+
+import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import {
   ESCAPE_KEY_PRESS,
@@ -23,20 +27,30 @@ export interface ItemComponentProps<T> {
   id: string;
   item?: T;
   onRemove: (id: string) => void;
+  onItemClick?: (id: string) => void;
 }
 
 interface OverflowButtonProps<T> {
   hiddenItems: HiddenItem<T>[];
   onRemove: (id: string) => void;
+  onItemClick?: (id: string) => void;
   ItemComponent: ComponentType<ItemComponentProps<T>>;
 }
 
 export const OverflowButton = <T,>({
   hiddenItems,
   onRemove,
+  onItemClick,
   ItemComponent,
 }: OverflowButtonProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const hasErrorInHiddenItems = useMemo(() => {
+    return hiddenItems.some(({ data }) => {
+      const { isError } = getEntityStatus(data as MarketplaceEntity);
+      return isError;
+    });
+  }, [hiddenItems]);
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
@@ -56,16 +70,31 @@ export const OverflowButton = <T,>({
     dismiss,
   ]);
 
+  const handleItemClickAndClose = useCallback(
+    (id: string) => {
+      onItemClick?.(id);
+      setIsOpen(false);
+    },
+    [onItemClick],
+  );
+
   return (
     <>
       <button
         ref={refs.setReference}
         {...getReferenceProps()}
         className={classNames(
-          'box-border flex h-[34px] shrink-0 cursor-pointer items-center rounded bg-accent-primary-alpha px-3 py-1.5 text-primary',
+          'box-border flex h-[34px] shrink-0 cursor-pointer items-center rounded border px-3 py-1.5 transition-colors',
           {
-            'border border-accent-primary': isOpen,
-            'border border-secondary hover:border-accent-primary': !isOpen,
+            'bg-error text-error': hasErrorInHiddenItems,
+            'border-error': hasErrorInHiddenItems && isOpen,
+            'hover:border-error': hasErrorInHiddenItems,
+            'border-transparent': !isOpen,
+
+            'bg-accent-primary-alpha text-primary': !hasErrorInHiddenItems,
+            'border-accent-primary': !hasErrorInHiddenItems && isOpen,
+            'hover:border-accent-primary': !hasErrorInHiddenItems,
+            'border-secondary': !hasErrorInHiddenItems && !isOpen,
           },
         )}
       >
@@ -81,7 +110,13 @@ export const OverflowButton = <T,>({
         >
           <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
             {hiddenItems.map(({ id, data }) => (
-              <ItemComponent key={id} id={id} item={data} onRemove={onRemove} />
+              <ItemComponent
+                key={id}
+                id={id}
+                item={data}
+                onRemove={onRemove}
+                onItemClick={handleItemClickAndClose}
+              />
             ))}
           </div>
         </div>
