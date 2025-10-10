@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -8,6 +8,7 @@ import { getAppEditorRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { AddMarketplaceEntityMenuItem } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -45,6 +46,17 @@ export function AddAppButton() {
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
 
+  const openEditor = useCallback(
+    (type: string) => {
+      void router.push(getAppEditorRoute(type));
+      dispatch(ApplicationActions.setAppDetails(undefined));
+      dispatch(
+        ApplicationActions.setEditorStep(MarketplaceEditorSteps.General),
+      );
+    },
+    [router, dispatch],
+  );
+
   const menuItems: AddMarketplaceEntityMenuItem[] = useMemo(
     () =>
       [
@@ -55,8 +67,7 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
-            router.push(getAppEditorRoute(ApplicationType.CUSTOM_APP));
+            openEditor(ApplicationType.CUSTOM_APP);
           },
         },
         {
@@ -66,8 +77,7 @@ export function AddAppButton() {
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
-            router.push(getAppEditorRoute(ApplicationType.CODE_APP));
+            openEditor(ApplicationType.CODE_APP);
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
@@ -77,7 +87,6 @@ export function AddAppButton() {
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            dispatch(ApplicationActions.setShouldSaveApplication(false));
             if (detailedApplicationTypeSchema?.$id !== schema.id) {
               dispatch(
                 ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
@@ -85,7 +94,7 @@ export function AddAppButton() {
                 ),
               );
             }
-            router.push(getAppEditorRoute(schema.id));
+            openEditor(schema.id);
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
@@ -93,9 +102,9 @@ export function AddAppButton() {
       t,
       isCodeAppsEnabled,
       applicationTypeSchemas,
-      dispatch,
-      router,
+      openEditor,
       detailedApplicationTypeSchema?.$id,
+      dispatch,
     ],
   );
 
