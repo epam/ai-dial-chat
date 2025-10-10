@@ -12,7 +12,6 @@ import {
 } from '@/src/utils/server/api';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import { ApiKeys } from '@/src/types/common';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -220,15 +219,12 @@ export const isVersionExists = (
 ) => {
   const { apiKey, parentPath, name: oldName } = splitEntityId(entityId);
   const modelName = oldName.split(pathKeySeparator)[0];
-
-  let newApiKey: string;
-  if (apiKey === ApiKeys.Conversations) {
-    newApiKey = `${modelName}${pathKeySeparator}${newName}`;
-  } else {
-    newApiKey = newName;
-  }
-
-  const newEntityId = constructPath(apiKey, rootFolder, parentPath, newApiKey);
+  const newEntityId = constructPath(
+    apiKey,
+    rootFolder,
+    parentPath,
+    `${modelName}${pathKeySeparator}${newName}`,
+  );
   const allVersions = publicVersionGroups[newEntityId]?.allVersions;
 
   return allVersions?.some(
@@ -266,8 +262,8 @@ export const findLatestVersion = (versions: string[]) => {
 
 export const sortItemsVersions = <T extends { version?: string | undefined }>(
   items: T[],
-): T[] => {
-  return [...items].sort((a, b) => {
+): T[] =>
+  items.sort((a, b) => {
     const versionA = a.version;
     const versionB = b.version;
 
@@ -276,7 +272,6 @@ export const sortItemsVersions = <T extends { version?: string | undefined }>(
 
     return compareVersions(versionB, versionA);
   });
-};
 
 export const groupAllVersions = (versions: PublicVersionOption[]) =>
   Object.values(

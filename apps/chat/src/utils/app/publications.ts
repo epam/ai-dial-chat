@@ -362,9 +362,9 @@ export const getDefaultAllEditEntities = (
         const publicEntityId = entityIdPart.join('/');
         const versionGroup = versionGroups[publicEntityId];
 
-        const latestVersion = sortItemsVersions(
-          versionGroup?.allVersions ?? [],
-        ).at(0)?.version;
+        const latestVersion = sortItemsVersions([
+          ...(versionGroup?.allVersions ?? []),
+        ]).at(0)?.version;
 
         if (!latestVersion) {
           allEditEntitiesMap[reviewUrl] = {
