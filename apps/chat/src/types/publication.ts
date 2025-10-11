@@ -26,21 +26,12 @@ export interface BasePublicationRequestModel {
 }
 
 export interface PublicationRequestModel extends BasePublicationRequestModel {
-  name: string;
-  resources: {
-    action: PublishActions;
-    sourceUrl?: string;
-    targetUrl: string;
-    publishCredentials?: boolean;
-  }[];
-}
-
-export interface PublicationUpdateRequestModel
-  extends BasePublicationRequestModel {
+  name?: string;
   resources: {
     action: PublishActions;
     sourceUrl: string;
     targetUrl: string;
+    publishCredentials?: boolean;
   }[];
 }
 
