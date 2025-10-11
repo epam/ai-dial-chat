@@ -14,7 +14,6 @@ import {
   PublicationInfo,
   PublicationRequestModel,
   PublicationRule,
-  PublicationUpdateRequestModel,
   ResourceToReview,
 } from '@/src/types/publication';
 
@@ -452,7 +451,7 @@ export const publicationSlice = createSlice({
     updatePublicationRequest: (
       state,
       _action: PayloadAction<{
-        dataToUpdate: PublicationUpdateRequestModel;
+        dataToUpdate: PublicationRequestModel;
         url: string;
       }>,
     ) => {
