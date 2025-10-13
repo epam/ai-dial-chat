@@ -19,7 +19,7 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
 
   public async assertPublishToLabelState(expectedState: ElementState) {
     await this.assertElementState(
-      this.publishingApprovalModal.publishToPathLabel,
+      this.publishingApprovalModal.publishPathLabel,
       expectedState,
       ExpectedConstants.publishToLabel,
     );
@@ -27,7 +27,7 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
 
   public async assertPublishToPath(expectedPath: string) {
     await this.assertElementText(
-      this.publishingApprovalModal.publishToPath,
+      this.publishingApprovalModal.publishPath,
       expectedPath,
       PublishingExpectedMessages.publishToPathIsValid,
     );
@@ -75,17 +75,17 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
     }
     if (fieldsToVerify.publishToLabel) {
       await this.assertElementState(
-        this.publishingApprovalModal.publishToPathLabel,
+        this.publishingApprovalModal.publishPathLabel,
         fieldsToVerify.publishToLabel,
       );
       await this.assertElementText(
-        this.publishingApprovalModal.publishToPathLabel,
+        this.publishingApprovalModal.publishPathLabel,
         ExpectedConstants.publishToLabel,
       );
     }
     if (fieldsToVerify.publishTo) {
       await this.assertElementText(
-        this.publishingApprovalModal.publishToPath,
+        this.publishingApprovalModal.publishPath,
         fieldsToVerify.publishTo,
       );
     }

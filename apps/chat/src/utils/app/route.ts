@@ -1,25 +1,25 @@
 import { BaseRouter } from 'next/dist/shared/lib/router/router';
 
 import { PageType } from '@/src/types/common';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 
+import { AppsEditorQuery } from '@/src/constants/applications';
 import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import { encodeSlug } from './application-type-schema';
+import { cleanSchemaId } from './application-type-schema';
 
 export const getPageType = (route?: string) => {
   switch (route) {
     case Routes.Marketplace:
       return PageType.Marketplace;
-    case Routes.AppsEditorSettings:
-      return PageType.AppsEditorSettings;
-    case Routes.AppsEditorGeneralInfo:
-      return PageType.AppsEditorGeneralInfo;
     case Routes.ToolsetEditor:
       return PageType.ToolsetEditor;
+    case Routes.AppsEditor:
+      return PageType.AppsEditor;
     default:
       return PageType.Chat;
   }
@@ -31,10 +31,8 @@ export const getPageName = ({ route, query }: BaseRouter) => {
       return query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE
         ? 'My Workspace'
         : 'Marketplace';
-    case Routes.AppsEditorSettings:
-      return 'App Editor Settings';
-    case Routes.AppsEditorGeneralInfo:
-      return 'App Editor General Info';
+    case Routes.AppsEditor:
+      return 'App Editor';
     case Routes.Widgets:
       return 'Widgets';
     case Routes.SelectedWidget:
@@ -46,8 +44,10 @@ export const getPageName = ({ route, query }: BaseRouter) => {
   }
 };
 
-export const getRouteForSlug = (route: Routes, slug: string) =>
-  route.replace('[slug]', encodeSlug(slug));
-
-export const getAppEditorRoute = (slug: string) =>
-  getRouteForSlug(Routes.AppsEditorGeneralInfo, slug);
+export const getAppEditorRoute = (type: string) => ({
+  pathname: Routes.AppsEditor,
+  query: {
+    [AppsEditorQuery.Step]: MarketplaceEditorSteps.General,
+    [AppsEditorQuery.Schema]: cleanSchemaId(type),
+  },
+});

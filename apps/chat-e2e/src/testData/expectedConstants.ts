@@ -89,6 +89,7 @@ export const ExpectedConstants = {
   noResults: 'No results found',
   notAllowedModelError:
     'Not available agent selected. Please, change the agent to proceed',
+  agentIsNotAvailableLabel: 'Agent is not available',
   notAllowedAgentError: (agent: string) =>
     `Agent is not available. Please, change the agent "${agent}" to proceed.`,
   replayAsIsDescr:
@@ -253,7 +254,7 @@ export const ExpectedConstants = {
   workspaceTab: 'tab=workspace',
   workspacePath: () =>
     `${ExpectedConstants.marketplacePath}?${ExpectedConstants.workspaceTab}`,
-  createCustomAppPath: '/apps-editor/custom%20app',
+  createCustomAppPath: '/apps-editor?step=General&schema=custom_app',
   noWorkspaceAgentsFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
@@ -264,6 +265,7 @@ export const ExpectedConstants = {
   removeAgentModalTitle: 'Confirm removing agent',
   removeAgentModalMessage: (name: string) =>
     `Are you sure you want to remove ${name} from My workspace?`,
+  addAgentToWorkspaceTitle: 'Add the agent to My workspace to continue',
   agentNotFoundError: 'Agent by this link not found',
   copiedLinkText: 'Copied!',
   copyLinkText: 'Copy link',
@@ -413,8 +415,8 @@ export enum EditPromptFormFields {
 }
 
 export const AppMenuActions = {
-  add: (app: AddAppMenuOptions) => `Add ${app.toLowerCase()}`,
-  edit: (app: AddAppMenuOptions) => `Edit ${app.toLowerCase()}`,
+  add: (app: AddAppMenuOptions) => `Add ${app}`,
+  edit: (app: AddAppMenuOptions) => `Edit ${app}`,
 };
 
 export const Chronology = {
@@ -437,6 +439,7 @@ export const API = {
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
+  conversationsMetadataHost: `/api/metadata/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
   filesHostSegment: 'files',

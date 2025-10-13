@@ -18,6 +18,7 @@ import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
 } from '@epam/ai-dial-shared';
+import pickBy from 'lodash-es/pickBy';
 
 export const parseToolsetApiAuthStatus = (data?: Toolset) => {
   return {
@@ -66,6 +67,7 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
       codeChallenge: data.auth_settings.code_challenge,
       codeChallengeMethod: data.auth_settings.code_challenge_method,
       scopesSupported: data.auth_settings.scopes_supported,
+      tokenEndpoint: data.auth_settings.token_endpoint,
     },
   };
 };
@@ -83,6 +85,8 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         redirect_uri: data.authSettings.redirectUri,
         ...(data.authSettings.clientId && {
           client_id: data.authSettings.clientId,
+        }),
+        ...(data.authSettings.clientSecret && {
           client_secret: data.authSettings.clientSecret,
         }),
         ...(data.authSettings.scopesSupported && {
@@ -93,6 +97,12 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         }),
         ...(data.authSettings.authorizationEndpoint && {
           authorization_endpoint: data.authSettings.authorizationEndpoint,
+        }),
+        ...(data.authSettings.codeChallenge && {
+          code_challenge: data.authSettings.codeChallenge,
+        }),
+        ...(data.authSettings.codeChallengeMethod && {
+          code_challenge_method: data.authSettings.codeChallengeMethod,
         }),
       };
     default:
@@ -197,28 +207,17 @@ export const getToolsetPayload = (
 ): ToolsetModel => {
   const isEndpointChanged = newToolset.endpoint !== oldToolset?.endpoint;
   const authType = newToolset.authSettings.authenticationType;
-  const authSettings = {
+  const authSettings: ToolsetModel['authSettings'] = {
+    authenticationType: authType,
     ...(oldToolset?.authSettings &&
       !isEndpointChanged &&
       oldToolset.authSettings),
-    ...newToolset.authSettings,
+    ...pickBy(newToolset.authSettings, Boolean),
     ...(authType === ToolsetAuthTypes.API_KEY && {
       apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? 'api_key',
     }),
     ...(authType === ToolsetAuthTypes.OAUTH && {
       redirectUri: getToolsetRedirectUri(),
-    }),
-    ...(newToolset.authSettings.clientId && {
-      clientId: newToolset.authSettings.clientId,
-    }),
-    ...(newToolset.authSettings.clientSecret && {
-      clientSecret: newToolset.authSettings.clientSecret,
-    }),
-    ...(newToolset.authSettings.authorizationEndpoint && {
-      authorizationEndpoint: newToolset.authSettings.authorizationEndpoint,
-    }),
-    ...(newToolset.authSettings.tokenEndpoint && {
-      tokenEndpoint: newToolset.authSettings.tokenEndpoint,
     }),
   };
 

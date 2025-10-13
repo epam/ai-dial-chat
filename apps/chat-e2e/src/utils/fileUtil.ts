@@ -71,6 +71,10 @@ export class FileUtil {
     return archiveEntry;
   }
 
+  public static getArchiveEntries(archive: AdmZip) {
+    return archive.getEntries();
+  }
+
   public static parseArchiveEntryJson<T>(archiveEntry: AdmZip.IZipEntry): T {
     let jsonData: T;
     try {
