@@ -1,6 +1,8 @@
-import { Editor, EditorProps } from '@monaco-editor/react';
+import { EditorProps } from '@monaco-editor/react';
 import { IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
+
+import dynamic from 'next/dynamic';
 
 import classNames from 'classnames';
 
@@ -18,6 +20,13 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { TabOption, Tabs } from './Tabs';
 
 import omit from 'lodash-es/omit';
+
+// Use dynamic import to prevent SSR issues with Monaco Editor
+const MonacoEditorNoSSR = dynamic(
+  () => import('@monaco-editor/react').then((mod) => mod.Editor),
+  { ssr: false },
+);
+const Editor = MonacoEditorNoSSR;
 
 const editorOptions: EditorProps['options'] = {
   minimap: {
