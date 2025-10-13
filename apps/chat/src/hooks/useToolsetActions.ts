@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+
 import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
 
 import {
@@ -75,6 +77,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         PublicationActions.setPublishModel({
           entity: toolset,
           action: PublishActions.ADD,
+          publishCredentials: isToolsetSignedIn(toolset),
         }),
       );
     },

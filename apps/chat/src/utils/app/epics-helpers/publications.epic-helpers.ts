@@ -213,6 +213,7 @@ export function getPublicationResourceEntityData<T>(
           !isFileId(reviewUrl) &&
           !uploadedUnpublishIdsSet.has(reviewUrl),
         publicationUrl,
+        publishCredentials: resource.publishCredentials,
       },
     };
 

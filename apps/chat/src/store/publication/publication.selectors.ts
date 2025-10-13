@@ -132,6 +132,16 @@ const selectSelectedPublicationItems = createSelector(
   },
 );
 
+const selectAllSelectedCredentialsItems = (state: RootState) =>
+  rootSelector(state).selectedCredentialsItems;
+
+const selectSelectedCredentialsItems = createSelector(
+  [selectAllSelectedCredentialsItems, selectSelectedPublicationUrl],
+  (selectedCredentialsItems, selectedPublicationUrl) => {
+    return selectedCredentialsItems[selectedPublicationUrl ?? ''] ?? [];
+  },
+);
+
 const selectResourcesToReviewByPublicationUrl = createSelector(
   [
     selectResourcesToReview,
@@ -317,6 +327,7 @@ export const PublicationSelectors = {
   selectIsAllItemsUploaded,
   selectAllSelectedPublicationItems,
   selectSelectedPublicationItems,
+  selectSelectedCredentialsItems,
   selectChosenPublicationFolderIds,
   selectPublicationsToReviewCount,
   selectIsFolderContainsResourcesToReview,
