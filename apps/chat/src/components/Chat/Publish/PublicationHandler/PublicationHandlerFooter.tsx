@@ -121,6 +121,7 @@ export const PublicationHandlerFooter = ({
   );
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,
+  );
   const selectedCredentialsItems = useAppSelector(
     PublicationSelectors.selectSelectedCredentialsItems,
   );
