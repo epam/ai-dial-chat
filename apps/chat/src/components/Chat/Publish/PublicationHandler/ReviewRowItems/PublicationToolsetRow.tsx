@@ -9,6 +9,7 @@ import { ToolsetSelectors } from '@/src/store/selectors';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
+import { PublicationCredentialsRow } from './PublicationCredentialsRow';
 import { PublicationItemRow } from './PublicationItemRow';
 import { PublicationItemProps } from './view-props';
 
@@ -21,9 +22,9 @@ export const PublicationToolsetRow: React.FC<PublicationItemProps> = ({
     ToolsetSelectors.selectPublishRequestToolsets,
   );
 
-  const agent = useMemo(() => {
+  const foundToolset = useMemo(() => {
     return [...publishRequestToolsets, ...toolsets].find(
-      (agent) => item.id === agent.id,
+      (toolset) => item.id === toolset.id,
     );
   }, [publishRequestToolsets, toolsets, item.id]);
 
@@ -31,19 +32,24 @@ export const PublicationToolsetRow: React.FC<PublicationItemProps> = ({
     () => ({
       ...item,
       folderId: getFolderIdFromEntityId(item.name),
-      iconUrl: agent?.iconUrl,
+      iconUrl: foundToolset?.iconUrl,
       type: EntityType.Toolset,
     }),
-    [item, agent?.iconUrl],
+    [item, foundToolset?.iconUrl],
   );
 
   return (
-    <PublicationItemRow
-      level={level}
-      Icon={<ModelIcon entity={entity} entityId={item.id} size={18} />}
-      item={item}
-      itemTypeName={BackendResourceTypeName.TOOLSET}
-      dataQa="toolset"
-    />
+    <>
+      <PublicationItemRow
+        level={level}
+        Icon={<ModelIcon entity={entity} entityId={item.id} size={18} />}
+        item={item}
+        itemTypeName={BackendResourceTypeName.TOOLSET}
+        dataQa="toolset"
+      />
+      {item.publicationInfo?.publishCredentials && (
+        <PublicationCredentialsRow level={level + 1} itemId={item.id} />
+      )}
+    </>
   );
 };
