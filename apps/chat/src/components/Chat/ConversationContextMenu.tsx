@@ -17,18 +17,17 @@ import {
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
 import { getParentAndCurrentFolderIdsById } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
 import { ContextMenuProps } from '@/src/types/menu';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import {
   ChatActions,
   ConversationsActions,
   ImportExportActions,
+  PublicationActions,
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
@@ -38,13 +37,11 @@ import {
   ConversationsSelectors,
   ModelsSelectors,
   PublicationSelectors,
-  SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ExportModal } from '@/src/components/Chatbar/ExportModal';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
@@ -95,9 +92,6 @@ export const ConversationContextMenu = ({
       conversation.id,
     ),
   );
-  const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
-  );
 
   const collapsedSectionsSelector = useMemo(
     () => UISelectors.selectCollapsedSections(FeatureType.Chat),
@@ -110,8 +104,6 @@ export const ConversationContextMenu = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUnshared, setIsUnshared] = useState(false);
   const [isShowExportModal, setIsShowExportModal] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   const screenState = useScreenState();
   const isMobileOrTablet =
@@ -167,17 +159,22 @@ export const ConversationContextMenu = ({
     }, []);
 
   const handleOpenPublishing = useCallback(() => {
-    setIsPublishing(true);
-  }, []);
+    dispatch(
+      PublicationActions.setPublishModel({
+        entity: conversation,
+        action: PublishActions.ADD,
+      }),
+    );
+  }, [conversation, dispatch]);
 
   const handleOpenUnpublishing = useCallback(() => {
-    setIsUnpublishing(true);
-  }, []);
-
-  const handleClosePublishModal = useCallback(() => {
-    setIsPublishing(false);
-    setIsUnpublishing(false);
-  }, []);
+    dispatch(
+      PublicationActions.setPublishModel({
+        entity: conversation,
+        action: PublishActions.DELETE,
+      }),
+    );
+  }, [conversation, dispatch]);
 
   const handleMoveToFolder = useCallback(
     (folderId: string) => {
@@ -446,23 +443,6 @@ export const ConversationContextMenu = ({
 
       {isShowExportModal && (
         <ExportModal onExport={handleExport} onClose={handleCloseExportModal} />
-      )}
-
-      {isPublishingEnabled && (isPublishing || isUnpublishing) && (
-        <PublishModal
-          entity={conversation}
-          type={SharingType.Conversation}
-          isOpen={isPublishing || isUnpublishing}
-          onClose={handleClosePublishModal}
-          publishAction={
-            isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
-          defaultPath={
-            isUnpublishing && !isRootId(conversation.folderId)
-              ? getIdWithoutRootPathSegments(conversation.folderId)
-              : undefined
-          }
-        />
       )}
 
       {isDeleting && (

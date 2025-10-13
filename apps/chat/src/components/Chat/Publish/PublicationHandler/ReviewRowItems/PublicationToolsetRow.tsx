@@ -4,25 +4,37 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
 import { BackendResourceTypeName, EntityType } from '@/src/types/common';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { ToolsetSelectors } from '@/src/store/selectors';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 import { PublicationItemRow } from './PublicationItemRow';
+import { PublicationItemProps } from './view-props';
 
-import { ShareEntity } from '@epam/ai-dial-shared';
+export const PublicationToolsetRow: React.FC<PublicationItemProps> = ({
+  item,
+  level,
+}) => {
+  const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const publishRequestToolsets = useAppSelector(
+    ToolsetSelectors.selectPublishRequestToolsets,
+  );
 
-interface Props {
-  item: ShareEntity;
-  level: number;
-}
+  const agent = useMemo(() => {
+    return [...publishRequestToolsets, ...toolsets].find(
+      (agent) => item.id === agent.id,
+    );
+  }, [publishRequestToolsets, toolsets, item.id]);
 
-export const PublicationToolsetRow: React.FC<Props> = ({ item, level }) => {
   const entity = useMemo(
     () => ({
       ...item,
       folderId: getFolderIdFromEntityId(item.name),
+      iconUrl: agent?.iconUrl,
       type: EntityType.Toolset,
     }),
-    [item],
+    [item, agent?.iconUrl],
   );
 
   return (

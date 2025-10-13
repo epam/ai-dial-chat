@@ -1,14 +1,15 @@
-import { EntitySelectors, PublishingModalSelectors } from '@/src/ui/selectors';
+import { EntitySelectors, PublishingTreeSelectors } from '../../../selectors';
+
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree/publishEntitiesTree';
 import { Locator, Page } from '@playwright/test';
 
-export class ConversationsToPublishTree extends PublishEntitiesTree {
+export class PublishApplicationsTree extends PublishEntitiesTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
       parentLocator,
-      PublishingModalSelectors.conversationsToPublishContainer,
-      EntitySelectors.conversation,
+      PublishingTreeSelectors.appsTree,
+      EntitySelectors.application,
     );
   }
 }
