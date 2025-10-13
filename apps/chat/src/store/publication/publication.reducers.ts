@@ -53,14 +53,13 @@ const initialState: PublicationState = {
     [FeatureType.Application]: false,
     [FeatureType.Toolset]: false,
   },
-  selectedItemsToPublish: [],
   isApplicationReview: false,
   isToolsetReview: false,
   publicVersionGroups: {},
   publishModel: undefined,
 
-  // Review edit mode
-  selectedItemsToApprove: {},
+  // Edit or publish mode
+  selectedPublicationItems: {},
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
@@ -68,6 +67,7 @@ const initialState: PublicationState = {
   isPublicationUpdating: false,
   displayAuthorEditState: '',
   publishToUrl: '',
+  currentPublicationInvalidEntities: [],
 };
 
 export const publicationSlice = createSlice({
@@ -225,33 +225,18 @@ export const publicationSlice = createSlice({
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
     },
-    setItemsToPublish: (
-      state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
-      state.selectedItemsToPublish = payload.ids;
-    },
-    setItemsToApprove: (
+    setPublicationItems: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
     ) => {
-      state.selectedItemsToApprove[payload.publicationUrl] = payload.ids;
+      state.selectedPublicationItems[payload.publicationUrl] = payload.ids;
     },
-    selectItemsToPublish: (
-      state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
-      state.selectedItemsToPublish = xor(
-        state.selectedItemsToPublish,
-        payload.ids,
-      );
-    },
-    selectItemsToApprove: (
+    selectPublicationItems: (
       state,
       { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
     ) => {
-      state.selectedItemsToApprove[payload.publicationUrl] = xor(
-        state.selectedItemsToApprove[payload.publicationUrl] ?? [],
+      state.selectedPublicationItems[payload.publicationUrl] = xor(
+        state.selectedPublicationItems[payload.publicationUrl] ?? [],
         payload.ids,
       );
     },
@@ -371,6 +356,7 @@ export const publicationSlice = createSlice({
               iconUrl?: string;
               folderId?: string;
             };
+            isFolder?: boolean;
             action: PublishActions;
           }
         | undefined
@@ -384,6 +370,7 @@ export const publicationSlice = createSlice({
             folderId: getFolderIdFromEntityId(payload.entity.id),
             iconUrl: payload.entity.iconUrl,
           },
+          isFolder: payload.isFolder,
           action: payload.action,
         };
       } else {
@@ -520,6 +507,12 @@ export const publicationSlice = createSlice({
     },
     setPublishToUrl: (state, { payload }: PayloadAction<string>) => {
       state.publishToUrl = payload;
+    },
+    setCurrentPublicationInvalidEntities: (
+      state,
+      { payload }: PayloadAction<string[]>,
+    ) => {
+      state.currentPublicationInvalidEntities = payload;
     },
   },
 });

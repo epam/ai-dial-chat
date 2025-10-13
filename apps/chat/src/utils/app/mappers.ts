@@ -26,6 +26,8 @@ export class EnumMapper {
         return FeatureType.Chat;
       case ApiKeys.Applications:
         return FeatureType.Application;
+      case ApiKeys.Toolsets:
+        return FeatureType.Toolset;
       case ApiKeys.Files:
       default:
         return FeatureType.File;
@@ -63,6 +65,22 @@ export class EnumMapper {
       case FeatureType.Toolset:
         return BackendResourceType.TOOLSET;
       case FeatureType.File:
+      default:
+        return BackendResourceType.FILE;
+    }
+  };
+
+  public static getBackendResourceTypeByApiKey = (apiKey: ApiKeys) => {
+    switch (apiKey) {
+      case ApiKeys.Conversations:
+        return BackendResourceType.CONVERSATION;
+      case ApiKeys.Prompts:
+        return BackendResourceType.PROMPT;
+      case ApiKeys.Applications:
+        return BackendResourceType.APPLICATION;
+      case ApiKeys.Toolsets:
+        return BackendResourceType.TOOLSET;
+      case ApiKeys.Files:
       default:
         return BackendResourceType.FILE;
     }

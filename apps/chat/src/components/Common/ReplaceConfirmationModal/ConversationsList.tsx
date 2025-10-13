@@ -7,7 +7,7 @@ import { OnItemEvent } from '@/src/types/modal';
 
 import { Folder } from '@/src/components/Folder/Folder';
 
-import { ConversationRow } from './Components';
+import { ConversationRow } from './ReplaceConversationRow';
 
 interface Props {
   folders: FolderInterface[];

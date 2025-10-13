@@ -14,4 +14,5 @@ export const IconSelectors = {
   filledDotCircleIcon: '.tabler-icon-circle-dot-filled',
   dotCircleIcon: '.tabler-icon-circle-dot',
   filledPointIcon: '.tabler-icon-point-filled',
+  exclamationCircleIcon: '.tabler-icon-exclamation-circle',
 };

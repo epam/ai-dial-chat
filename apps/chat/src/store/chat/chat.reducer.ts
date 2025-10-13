@@ -14,6 +14,7 @@ const initialState: ChatState = {
   inputContent: '',
   isConfigurationSchemaLoading: false,
   infoModalState: ModalState.CLOSED,
+  lastLoadedConfigurationSchemaModelId: null,
 };
 
 export const chatSlice = createSlice({
@@ -55,9 +56,12 @@ export const chatSlice = createSlice({
     },
     getConfigurationSchemaSuccess: (
       state,
-      { payload }: PayloadAction<MessageFormSchema>,
+      {
+        payload,
+      }: PayloadAction<{ modelId: string; schema: MessageFormSchema }>,
     ) => {
-      state.configurationSchema = payload;
+      state.configurationSchema = payload.schema;
+      state.lastLoadedConfigurationSchemaModelId = payload.modelId;
       state.isConfigurationSchemaLoading = false;
     },
     getConfigurationSchemaFailed: (state) => {
@@ -67,6 +71,7 @@ export const chatSlice = createSlice({
     resetConfigurationSchema: (state) => {
       state.configurationSchema = undefined;
       state.isConfigurationSchemaLoading = false;
+      state.lastLoadedConfigurationSchemaModelId = null;
     },
     setShouldFocusAndScroll: (state, { payload }: PayloadAction<boolean>) => {
       state.shouldFocusAndScroll = payload;
