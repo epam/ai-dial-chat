@@ -76,8 +76,8 @@ import { DialFile } from '@/src/types/files';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
+  PublicationRequestModel,
   PublicationResource,
-  PublicationUpdateRequestModel,
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -1291,7 +1291,7 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationUpdateRequestModel = {
+      const publicationData: PublicationRequestModel = {
         ...publication,
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl === payload.resourceToUpdateUrl) {
@@ -1498,7 +1498,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
         );
       }
 
-      const resources: PublicationUpdateRequestModel['resources'] =
+      const resources: PublicationRequestModel['resources'] =
         publication.resources?.map((resource) => ({
           ...resource,
           sourceUrl: resource.sourceUrl ?? '',
@@ -1592,7 +1592,7 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationUpdateRequestModel = {
+      const publicationData: PublicationRequestModel = {
         ...publication,
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl.startsWith(`${payload.folderIdToUpdate}/`)) {
@@ -2016,10 +2016,15 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
 
       const selectedPublicationItems =
         PublicationSelectors.selectSelectedPublicationItems(state);
+      const selectedCredentialsItems =
+        PublicationSelectors.selectSelectedCredentialsItems(state);
       const filteredResources = selectedPublication.resources
         .filter(({ reviewUrl }) => selectedPublicationItems.includes(reviewUrl))
         .map((resource) => ({
           ...resource,
+          publishCredentials:
+            resource.publishCredentials &&
+            selectedCredentialsItems.includes(resource.reviewUrl),
           sourceUrl: resource.sourceUrl ?? '',
         }));
 

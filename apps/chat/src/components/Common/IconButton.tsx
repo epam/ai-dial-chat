@@ -13,8 +13,8 @@ interface Props {
   dataQa: string;
   disabled?: boolean;
   Icon?: Icon;
-  onClick?: (e: React.MouseEvent) => void;
   className?: string;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export const IconButton: React.FC<Props> = ({
@@ -22,8 +22,8 @@ export const IconButton: React.FC<Props> = ({
   dataQa,
   disabled,
   Icon,
-  onClick,
   className,
+  onClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -34,6 +34,7 @@ export const IconButton: React.FC<Props> = ({
         onClick={onClick}
         className={classNames('icon-button', className)}
         data-qa={dataQa}
+        type="button"
       >
         {Icon && <Icon className="size-6" strokeWidth="1.5" />}
       </button>
