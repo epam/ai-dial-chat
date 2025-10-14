@@ -352,7 +352,7 @@ export const ChatInputMessage = Inversify.register(
           e.key === 'Enter' &&
           !isTyping &&
           !isMobile() &&
-          !e.shiftKey
+          e.shiftKey
         ) {
           e.preventDefault();
           if (isReplay || messageIsStreaming) {

@@ -110,7 +110,7 @@ export const PromptVariablesDialog: FC<Props> = ({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {

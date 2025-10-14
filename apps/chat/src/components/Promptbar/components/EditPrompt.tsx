@@ -139,7 +139,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey && !saveDisabled) {
+      if (e.key === 'Enter' && e.shiftKey && !saveDisabled) {
         e.preventDefault();
         e.stopPropagation();
         handleEdit(prompt);
