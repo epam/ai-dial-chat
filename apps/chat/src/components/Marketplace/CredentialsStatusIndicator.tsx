@@ -11,14 +11,17 @@ import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface CredentialsStatusIndicatorProps {
   entity: ToolsetModel;
-  level?: ToolsetCredentialsLevel;
 }
 
 export const CredentialsStatusIndicator = ({
   entity,
-  level = ToolsetCredentialsLevel.GLOBAL,
 }: CredentialsStatusIndicatorProps) => {
-  const isSignedIn = isToolsetSignedIn(entity, level);
+  const isSignedInGlobal = isToolsetSignedIn(entity);
+  const isSignedInUser = isToolsetSignedIn(
+    entity,
+    ToolsetCredentialsLevel.USER,
+  );
+  const isSignedIn = isSignedInUser || isSignedInGlobal;
 
   if (entity.authSettings.authenticationType === ToolsetAuthTypes.NONE) {
     return null;
