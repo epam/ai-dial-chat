@@ -52,6 +52,8 @@ export interface CoreAIEntity<T = EntityType.Model> {
   function?: {
     status: ApplicationStatus;
   };
+  viewerUrl?: string;
+  editorUrl?: string;
 }
 
 export interface DialAIEntityFeatures {
@@ -100,6 +102,9 @@ export interface DialAIEntityModel
 
   functionStatus?: ApplicationStatus;
   applicationTypeSchemaId?: string;
+
+  viewerUrl?: string;
+  editorUrl?: string;
 }
 
 export interface InstalledModel {
