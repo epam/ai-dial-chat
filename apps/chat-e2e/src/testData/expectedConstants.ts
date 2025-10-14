@@ -483,6 +483,7 @@ export const API = {
     `${API.publishedApplications}?recursive=true`,
   pagePropsHost: '/en.json',
   appSchemasHost: 'api/application-type-schemas/schemas',
+  themeStylesHost: '/api/themes/styles',
 };
 
 export const Import = {
@@ -639,4 +640,12 @@ export enum E2EUserRole {
   qa = 'QA',
   developer = 'Developer',
   manager = 'Manager',
+}
+
+export enum AppsEditorTypes {
+  CustomApp = 'Custom app',
+  ExternalApp = 'External app',
+  QuickApp = 'Quick app',
+  QuickApp2 = 'Quick app2',
+  CodeApp = 'Code App',
 }

@@ -270,6 +270,8 @@ export const AppEditorGeneralInfoPreviewSelectors = {
 
 export const AppEditorAppSettingsPreviewSelectors = {
   container: '[data-qa="app-preview-settings"]',
+  header: '[data-qa="preview-header"]',
+  body: '[data-qa="preview-body"]',
   appSettingsChatModeContainer: '[data-qa="app-settings-chat-mode"]',
   previewIcon: '[data-qa="entity-icon"]',
   agentInfoContainer: '[data-qa="agent-info-container"]',

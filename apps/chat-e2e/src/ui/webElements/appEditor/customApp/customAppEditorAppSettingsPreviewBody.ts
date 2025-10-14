@@ -3,14 +3,9 @@ import {
   AppEditorAppSettingsPreviewSelectors,
   ChatSelectors,
 } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements';
-import { Locator, Page } from '@playwright/test';
+import { BaseAppEditorAppSettingsPreviewBody } from '@/src/ui/webElements';
 
-export class AppEditorAppSettingsAgentPreview extends BaseElement {
-  constructor(page: Page, parentLocator: Locator) {
-    super(page, AppEditorAppSettingsPreviewSelectors.container, parentLocator);
-  }
-
+export class CustomAppEditorAppSettingsPreviewBody extends BaseAppEditorAppSettingsPreviewBody {
   public appSettingsChatMode = this.getChildElementBySelector(
     AppEditorAppSettingsPreviewSelectors.appSettingsChatModeContainer,
   );

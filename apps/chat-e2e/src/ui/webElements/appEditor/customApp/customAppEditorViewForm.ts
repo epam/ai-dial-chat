@@ -2,22 +2,12 @@ import { ExampleURLs } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { AddApplicationAppSettingsFormSelector } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements';
-import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
+import { BaseAppEditorViewForm, BaseElement } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
-import { Locator, Page } from '@playwright/test';
 
 export const keyEnteringDelay = 20;
 
-export class AppEditorViewForm extends AppEditorForm {
-  constructor(page: Page, parentLocator: Locator) {
-    super(
-      page,
-      AddApplicationAppSettingsFormSelector.appViewFormContainer,
-      parentLocator,
-    );
-  }
-
+export class CustomAppEditorViewForm extends BaseAppEditorViewForm {
   public chatCompletionUrl = this.getChildElementBySelector(
     AddApplicationAppSettingsFormSelector.chatCompletionUrl,
   );

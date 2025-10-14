@@ -1,13 +1,13 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
-import { AppEditorHeader, BaseElement } from '@/src/ui/webElements';
+import { BaseAppEditorHeader, BaseElement } from '@/src/ui/webElements';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 export class AppEditorHeaderAssertion extends BaseAssertion {
-  readonly appEditorHeader: AppEditorHeader;
+  readonly appEditorHeader: BaseAppEditorHeader;
 
-  constructor(appEditorHeader: AppEditorHeader) {
+  constructor(appEditorHeader: BaseAppEditorHeader) {
     super();
     this.appEditorHeader = appEditorHeader;
   }
@@ -72,25 +72,30 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     }
   }
 
-  public async assertSelectedFilledDotCircleIconState(
+  public async assertSelectedFilledPointIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
     const stepLocator = this.getStepLocator(step);
-    await this.assertElementState(
-      this.appEditorHeader.selectedFilledDotCircleIcon(stepLocator),
-      expectedState,
+    const iconElement =
+      this.appEditorHeader.selectedFilledPointIcon(stepLocator);
+    await this.assertElementState(iconElement, expectedState);
+    await this.assertElementColor(
+      iconElement,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
     );
   }
 
-  public async assertNotSelectedDotCircleIconState(
+  public async assertNotSelectedPointIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
     const stepLocator = this.getStepLocator(step);
-    await this.assertElementState(
-      this.appEditorHeader.notSelectedDotCircleIcon(stepLocator),
-      expectedState,
+    const iconElement = this.appEditorHeader.notSelectedPointIcon(stepLocator);
+    await this.assertElementState(iconElement, expectedState);
+    await this.assertElementColor(
+      iconElement,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSecondary),
     );
   }
 
@@ -99,9 +104,12 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     expectedState: ElementState,
   ) {
     const stepLocator = this.getStepLocator(step);
-    await this.assertElementState(
-      this.appEditorHeader.notSelectedCheckedCircleIcon(stepLocator),
-      expectedState,
+    const iconElement =
+      this.appEditorHeader.notSelectedCheckedCircleIcon(stepLocator);
+    await this.assertElementState(iconElement, expectedState);
+    await this.assertElementColor(
+      iconElement,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
     );
   }
 

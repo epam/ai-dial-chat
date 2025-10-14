@@ -6,6 +6,7 @@ import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   AddAppMenuOptions,
   ApplicationTypes,
+  AppsEditorTypes,
   Attachment,
   CheckboxState,
   ExpectedMessages,
@@ -220,7 +221,7 @@ dialTest(
     marketplaceAgents,
     appEditorPage,
     appEditorGeneralForm,
-    appEditorViewForm,
+    customAppEditorViewForm,
     appEditorHeader,
     confirmationDialog,
     setTestIds,
@@ -271,12 +272,12 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
+        await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
         await appEditorGeneralForm.fillInAppFields({
           name: secondAppName,
         });
         await appEditorGeneralForm.goNext();
-        await appEditorViewForm.fillInAppFields();
+        await customAppEditorViewForm.fillInAppFields();
         await appEditorHeader.focusOn();
         await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();

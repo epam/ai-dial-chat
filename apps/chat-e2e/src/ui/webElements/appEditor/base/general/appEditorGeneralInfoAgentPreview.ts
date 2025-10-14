@@ -2,12 +2,13 @@ import { Tags } from '@/src/ui/domData';
 import {
   AppEditorGeneralInfoPreviewSelectors,
   ChatSelectors,
+  IconSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export class AppEditorGeneralInfoAgentPreview extends BaseElement {
-  constructor(page: Page, parentLocator: Locator) {
+  constructor(page: Page, parentLocator?: Locator) {
     super(
       page,
       AppEditorGeneralInfoPreviewSelectors.fullContainer,
@@ -23,6 +24,10 @@ export class AppEditorGeneralInfoAgentPreview extends BaseElement {
     this.generalInfoContainer.getChildElementBySelector(
       AppEditorGeneralInfoPreviewSelectors.previewIconContainer,
     );
+
+  public externalAppIcon = this.previewIconContainer.getChildElementBySelector(
+    IconSelectors.externalAppIcon,
+  );
 
   public previewSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
 
