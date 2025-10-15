@@ -154,6 +154,9 @@ export const MarketplaceFilterbar = memo(() => {
   const topics = useAppSelector(ModelsSelectors.selectModelTopics);
   const toolsetsTopics = useAppSelector(ToolsetSelectors.selectToolsetsTopics);
   const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
+  const toolsetSourceTypes = useAppSelector(
+    MarketplaceSelectors.selectToolsetSourceTypes,
+  );
 
   const [openedSections, setOpenedSections] = useState({
     [FilterTypes.ENTITY_TYPE]: true,
@@ -252,10 +255,10 @@ export const MarketplaceFilterbar = memo(() => {
                 onToggleFilterSection={handleToggleFilterSection}
                 onApplyFilter={handleApplyFilter}
               />
-              {isAgentsTab && sourceTypes.length > 1 && (
+              {(sourceTypes.length > 1 || toolsetSourceTypes.length > 1) && (
                 <FilterSection
                   sectionName={t('Sources')}
-                  filterValues={sourceTypes}
+                  filterValues={isAgentsTab ? sourceTypes : toolsetSourceTypes}
                   openedSections={openedSections}
                   selectedFilters={selectedFilters}
                   filterType={FilterTypes.SOURCES}

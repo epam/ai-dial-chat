@@ -6,14 +6,16 @@ import {
   isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
 import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
-import { isMyApplication } from '@/src/utils/app/id';
+import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import {
   ApplicationTypeToSourceType,
@@ -107,6 +109,48 @@ const selectSourceTypes = createSelector(
   },
 );
 
+const selectToolsetSourceTypes = createSelector(
+  [ToolsetSelectors.selectToolsets],
+  (toolsets: ToolsetModel[]) => {
+    const sourceTypes = new Set<SourceType>([]);
+    if (toolsets.length === 0) {
+      return [];
+    }
+
+    let hasMyToolsets = false;
+    let hasPublic = false;
+    let hasSharedWithMe = false;
+
+    for (const toolset of toolsets) {
+      if (!hasMyToolsets && isMyToolset(toolset)) {
+        hasMyToolsets = true;
+        sourceTypes.add(SourceType.MyToolsets);
+      }
+
+      if (!hasPublic && isMarketplaceEntityPublic(toolset)) {
+        hasPublic = true;
+        sourceTypes.add(SourceType.Public);
+      }
+
+      if (
+        !hasSharedWithMe &&
+        !isMyToolset(toolset) &&
+        !isMarketplaceEntityPublic(toolset)
+      ) {
+        hasSharedWithMe = true;
+        sourceTypes.add(SourceType.SharedWithMe);
+      }
+
+      // Early exit optimization
+      if (hasMyToolsets && hasPublic && hasSharedWithMe) {
+        break;
+      }
+    }
+
+    return Array.from(sourceTypes).sort();
+  },
+);
+
 const selectDeleteEntity = (state: RootState) =>
   rootSelector(state).deleteEntity;
 
@@ -125,6 +169,7 @@ export const MarketplaceSelectors = {
   selectIsApplyingModel,
   selectDetailsModel,
   selectSourceTypes,
+  selectToolsetSourceTypes,
   selectDeleteEntity,
   selectDetailsEntity,
   selectDetailsToolset,
