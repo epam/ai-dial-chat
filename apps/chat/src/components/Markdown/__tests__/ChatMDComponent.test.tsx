@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
 
@@ -7,6 +7,15 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ChatMDComponent } from '../ChatMDComponent';
+
+// Mock the SVG import
+vi.mock('@/public/images/icons/chevron-down.svg', () => ({
+  default: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="chevron-down-icon" {...props}>
+      <path d="M6 9L12 15L18 9" />
+    </svg>
+  ),
+}));
 
 global.ResizeObserver = class ResizeObserver {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
