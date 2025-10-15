@@ -117,27 +117,16 @@ const selectToolsetSourceTypes = createSelector(
       return [];
     }
 
-    let hasMyToolsets = false;
-    let hasPublic = false;
-    let hasSharedWithMe = false;
-
     for (const toolset of toolsets) {
-      if (!hasMyToolsets && isMyToolset(toolset)) {
-        hasMyToolsets = true;
+      if (isMyToolset(toolset)) {
         sourceTypes.add(SourceType.MyToolsets);
       }
 
-      if (!hasPublic && isMarketplaceEntityPublic(toolset)) {
-        hasPublic = true;
+      if (isMarketplaceEntityPublic(toolset)) {
         sourceTypes.add(SourceType.Public);
       }
 
-      if (
-        !hasSharedWithMe &&
-        !isMyToolset(toolset) &&
-        !isMarketplaceEntityPublic(toolset)
-      ) {
-        hasSharedWithMe = true;
+      if (!isMyToolset(toolset) && !isMarketplaceEntityPublic(toolset)) {
         sourceTypes.add(SourceType.SharedWithMe);
       }
 
