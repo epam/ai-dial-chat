@@ -182,7 +182,7 @@ export const ToolsetEditor = () => {
         );
       } else {
         changeEditorTabRef.current = ToolsetEditorSteps.Settings;
-        handleSubmit();
+        handleSubmit(undefined, !!toolsetDetails);
       }
     },
     [dispatch, handleSubmit, isDirty, toolsetDetails],

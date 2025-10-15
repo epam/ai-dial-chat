@@ -293,7 +293,7 @@ export const AppsEditorHeader = ({
         isOpen={saveDraftDialog}
         heading={t('Only valid data will be saved')}
         description={t(
-          'Some fields are invalid or required fields are missing.\n Changes in those fields will not be saved.\n Exit and save only valid information?',
+          'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
         )}
         confirmLabel={t('Save valid data')}
         cancelLabel={t('Continue editing')}
