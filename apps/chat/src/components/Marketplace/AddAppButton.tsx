@@ -111,7 +111,7 @@ export function AddAppButton() {
   return (
     <AddMarketplaceEntityButton
       dataQa="add-app"
-      label="App"
+      label="app"
       menuItems={menuItems}
     />
   );
