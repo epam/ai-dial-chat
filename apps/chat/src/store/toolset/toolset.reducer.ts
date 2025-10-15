@@ -109,6 +109,7 @@ export const toolsetSlice = createSlice({
         redirectUrl?: string;
         auth?: {
           apiKey?: string;
+          authLevel?: ToolsetCredentialsLevel;
         };
       }>,
     ) => {
