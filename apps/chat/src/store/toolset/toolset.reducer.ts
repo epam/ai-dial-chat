@@ -110,6 +110,7 @@ export const toolsetSlice = createSlice({
         shouldSelectToolset?: boolean;
         auth?: {
           apiKey?: string;
+          authLevel?: ToolsetCredentialsLevel;
         };
       }>,
     ) => {

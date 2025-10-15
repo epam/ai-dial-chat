@@ -307,7 +307,9 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       () => !!payload.auth,
                       of(
                         ToolsetActions.startSignInProcess({
-                          authLevel: ToolsetCredentialsLevel.GLOBAL,
+                          authLevel:
+                            payload?.auth?.authLevel ??
+                            ToolsetCredentialsLevel.GLOBAL,
                           apiKey: payload?.auth?.apiKey,
                           toolset: savedUpdatedToolset,
                         }),
