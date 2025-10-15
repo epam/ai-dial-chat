@@ -51,10 +51,7 @@ const selectModels = createSelector([_selectModels], (models) => {
 });
 
 const selectModelTopics = createSelector([_selectModels], (models) => {
-  return sortBy(
-    uniq(models?.flatMap((model) => model.topics ?? []) ?? []),
-    (topic) => topic.toLowerCase(),
-  );
+  return sortBy(uniq(models?.flatMap((model) => model.topics ?? []) ?? []));
 });
 
 const selectModelsMap = (state: RootState) => rootSelector(state).modelsMap;

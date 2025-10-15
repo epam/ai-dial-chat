@@ -255,7 +255,9 @@ export const MarketplaceFilterbar = memo(() => {
                 onToggleFilterSection={handleToggleFilterSection}
                 onApplyFilter={handleApplyFilter}
               />
-              {(sourceTypes.length > 1 || toolsetSourceTypes.length > 1) && (
+              {(isAgentsTab
+                ? sourceTypes.length > 1
+                : toolsetSourceTypes.length > 1) && (
                 <FilterSection
                   sectionName={t('Sources')}
                   filterValues={isAgentsTab ? sourceTypes : toolsetSourceTypes}

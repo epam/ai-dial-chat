@@ -142,7 +142,7 @@ const selectToolsetSourceTypes = createSelector(
       }
 
       // Early exit optimization
-      if (hasMyToolsets && hasPublic && hasSharedWithMe) {
+      if (sourceTypes.size === 3) {
         break;
       }
     }
