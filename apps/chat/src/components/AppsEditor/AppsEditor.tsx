@@ -303,7 +303,7 @@ export const AppsEditor = () => {
       );
     } else {
       changeEditorTabRef.current = MarketplaceEditorSteps.Settings;
-      handleSubmit();
+      handleSubmit(undefined, !!appDetails);
     }
   }, [isAppPublic, isDirty, appDetails, dispatch, handleSubmit]);
 

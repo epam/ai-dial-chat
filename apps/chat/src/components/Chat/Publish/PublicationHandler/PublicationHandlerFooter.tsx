@@ -122,6 +122,9 @@ export const PublicationHandlerFooter = ({
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,
   );
+  const selectedCredentialsItems = useAppSelector(
+    PublicationSelectors.selectSelectedCredentialsItems,
+  );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
@@ -335,7 +338,14 @@ export const PublicationHandlerFooter = ({
   }, [dispatch, invalidEntities]);
 
   const handleApprovePublication = () => {
-    if (selectedPublicationItems.length !== publication.resources.length) {
+    const itemsWithCredentials = publication.resources.filter(
+      (resource) => resource.publishCredentials,
+    );
+
+    if (
+      selectedPublicationItems.length !== publication.resources.length ||
+      selectedCredentialsItems.length !== itemsWithCredentials.length
+    ) {
       dispatch(PublicationActions.updateAndApprovePublicationRequest());
     } else {
       dispatch(
@@ -550,6 +560,7 @@ export const PublicationHandlerFooter = ({
               className="button button-secondary"
               onClick={handleToggleEditMode}
               data-qa="cancel"
+              type="button"
             >
               {t('Cancel')}
             </button>
