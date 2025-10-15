@@ -4,7 +4,7 @@ import {
   isDialAiEntityModel,
   isMarketplaceEntityPublic,
 } from '@/src/utils/app/application';
-import { isMyApplication } from '@/src/utils/app/id';
+import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { PageType } from '@/src/types/common';
@@ -22,52 +22,79 @@ import { pluralizeDisplayName } from './app/application-type-schema';
 
 import intersection from 'lodash-es/intersection';
 
-export const doesMarketplaceEntityMatchFilters = (
+// Filter checkers
+const checkEntityTypeFilter = (
+  marketplaceEntity: MarketplaceEntity,
+  entityTypes?: string[],
+) => !entityTypes?.length || entityTypes.includes(marketplaceEntity.type);
+
+const checkTopicsFilter = (
+  marketplaceEntity: MarketplaceEntity,
+  topics?: string[],
+) =>
+  !topics?.length || intersection(topics, marketplaceEntity.topics).length > 0;
+
+const checkDialAiApplicationSources = (
   model: MarketplaceEntity,
+  sources: string[],
+  schemas?: ApplicationTypeSchema[],
+) => {
+  if (!isDialAiEntityModel(model) || !isMyApplication(model)) return false;
+
+  const applicationType = getApplicationType(model);
+  const displayName = schemas?.find(
+    (schema) => schema.id === applicationType,
+  )?.displayName;
+
+  return (
+    (isApplicationTypeKey(applicationType) &&
+      sources.includes(ApplicationTypeToSourceType[applicationType])) ||
+    (displayName && sources.includes(pluralizeDisplayName(displayName)))
+  );
+};
+
+const checkSourcesFilter = (
+  marketplaceEntity: MarketplaceEntity,
+  sources?: string[],
+  applicationTypeSchemas?: ApplicationTypeSchema[],
+) => {
+  if (!sources?.length) return true;
+
+  return [
+    () =>
+      sources.includes(SourceType.Public) &&
+      isMarketplaceEntityPublic(marketplaceEntity),
+    () =>
+      sources.includes(SourceType.SharedWithMe) &&
+      marketplaceEntity.sharedWithMe,
+    () =>
+      sources.includes(SourceType.MyToolsets) && isMyToolset(marketplaceEntity),
+    () =>
+      checkDialAiApplicationSources(
+        marketplaceEntity,
+        sources,
+        applicationTypeSchemas,
+      ),
+  ].some((check) => check());
+};
+
+export const doesMarketplaceEntityMatchFilters = (
+  marketplaceEntity: MarketplaceEntity,
   selectedFilters: Partial<MarketplaceFilters>,
   applicationTypeSchemas?: ApplicationTypeSchema[],
 ) => {
-  if (
-    selectedFilters[FilterTypes.ENTITY_TYPE]?.length &&
-    !selectedFilters[FilterTypes.ENTITY_TYPE].includes(model.type)
-  ) {
-    return false;
-  }
-
-  if (
-    selectedFilters[FilterTypes.TOPICS]?.length &&
-    !intersection(selectedFilters[FilterTypes.TOPICS], model.topics).length
-  ) {
-    return false;
-  }
-
-  if (
-    selectedFilters[FilterTypes.SOURCES]?.length &&
-    isDialAiEntityModel(model)
-  ) {
-    const sources = selectedFilters[FilterTypes.SOURCES];
-    const applicationType = getApplicationType(model);
-    const displayName = applicationTypeSchemas?.find(
-      (schema) => schema.id === applicationType,
-    )?.displayName;
-
-    if (
-      (sources.includes(SourceType.Public) &&
-        isMarketplaceEntityPublic(model)) ||
-      (sources.includes(SourceType.SharedWithMe) && model.sharedWithMe) ||
-      (isMyApplication(model) &&
-        isApplicationTypeKey(applicationType) &&
-        sources.includes(ApplicationTypeToSourceType[applicationType])) ||
-      (isMyApplication(model) &&
-        displayName &&
-        sources.includes(pluralizeDisplayName(displayName)))
-    ) {
-      return true;
-    }
-    return false;
-  }
-
-  return true;
+  return (
+    checkEntityTypeFilter(
+      marketplaceEntity,
+      selectedFilters[FilterTypes.ENTITY_TYPE],
+    ) &&
+    checkTopicsFilter(marketplaceEntity, selectedFilters[FilterTypes.TOPICS]) &&
+    checkSourcesFilter(
+      marketplaceEntity,
+      selectedFilters[FilterTypes.SOURCES],
+      applicationTypeSchemas,
+    )
+  );
 };
 
 export const getApplicationLink = (entity: DialAIEntityModel) => {
