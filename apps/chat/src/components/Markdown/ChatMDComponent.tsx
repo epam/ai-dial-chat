@@ -25,6 +25,7 @@ import { Table } from '@/src/components/Markdown/Table';
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
+import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
@@ -116,7 +117,7 @@ const getMDComponents = (
     details({ children, ...props }) {
       return (
         <details
-          className="my-4 border border-tertiary bg-layer-3 px-4 py-2"
+          className="my-4 rounded bg-layer-3 px-3 py-2 [&[open]>summary>svg]:rotate-180"
           {...props}
         >
           {children}
@@ -125,12 +126,23 @@ const getMDComponents = (
     },
     summary({ children, ...props }) {
       return (
-        <summary
-          className="cursor-pointer text-secondary hover:text-primary"
-          {...props}
-        >
-          {children}
-        </summary>
+        <>
+          <summary
+            className={classnames(
+              'flex cursor-pointer items-center justify-between gap-3 text-primary',
+              '[&::marker]:hidden',
+            )}
+            {...props}
+          >
+            <span>{children}</span>
+            <ChevronDown
+              height={18}
+              width={18}
+              className="shrink-0 transition"
+            />
+          </summary>
+          <hr className="-mx-4 my-2 border-tertiary" />
+        </>
       );
     },
   };
