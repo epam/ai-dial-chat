@@ -1,9 +1,9 @@
 import {
-  BaseAppEditorAppSettingsPreview,
+  AppEditorAppSettingsPreview,
   CustomAppEditorAppSettingsPreviewBody,
 } from '@/src/ui/webElements';
 
-export class CustomAppEditorAppSettingsPreview extends BaseAppEditorAppSettingsPreview<CustomAppEditorAppSettingsPreviewBody> {
+export class CustomAppEditorAppSettingsPreview extends AppEditorAppSettingsPreview<CustomAppEditorAppSettingsPreviewBody> {
   protected appEditorAppSettingsPreviewBody!: CustomAppEditorAppSettingsPreviewBody;
 
   getAppEditorAppSettingsPreviewBody(): CustomAppEditorAppSettingsPreviewBody {

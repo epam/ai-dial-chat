@@ -2,12 +2,12 @@ import { ExampleURLs } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { AddApplicationAppSettingsFormSelector } from '@/src/ui/selectors';
-import { BaseAppEditorViewForm, BaseElement } from '@/src/ui/webElements';
+import { AppEditorViewForm, BaseElement } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 
 export const keyEnteringDelay = 30;
 
-export class CustomAppEditorViewForm extends BaseAppEditorViewForm {
+export class CustomAppEditorViewForm extends AppEditorViewForm {
   public chatCompletionUrl = this.getChildElementBySelector(
     AddApplicationAppSettingsFormSelector.chatCompletionUrl,
   );

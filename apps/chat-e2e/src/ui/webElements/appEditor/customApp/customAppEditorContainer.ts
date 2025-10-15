@@ -1,17 +1,17 @@
 import {
+  AppEditorAppSettingsPreviewBody,
+  AppEditorContainer,
   AppEditorGeneralForm,
   AppEditorGeneralInfoAgentPreview,
-  BaseAppEditorAppSettingsPreviewBody,
-  BaseAppEditorContainer,
-  BaseAppEditorHeader,
+  AppEditorHeader,
   CustomAppEditorAppSettingsPreview,
   CustomAppEditorViewForm,
 } from '@/src/ui/webElements';
 import { Page } from '@playwright/test';
 
-export class CustomAppEditorContainer extends BaseAppEditorContainer<
+export class CustomAppEditorContainer extends AppEditorContainer<
   CustomAppEditorViewForm,
-  BaseAppEditorAppSettingsPreviewBody,
+  AppEditorAppSettingsPreviewBody,
   CustomAppEditorAppSettingsPreview
 > {
   protected appEditorViewForm!: CustomAppEditorViewForm;
@@ -19,7 +19,7 @@ export class CustomAppEditorContainer extends BaseAppEditorContainer<
 
   constructor(
     page: Page,
-    header: BaseAppEditorHeader,
+    header: AppEditorHeader,
     generalForm: AppEditorGeneralForm,
     generalInfoPreview: AppEditorGeneralInfoAgentPreview,
   ) {

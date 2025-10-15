@@ -253,9 +253,13 @@ export const ApplicationEditorHeader = {
   notSelectedStepIcon: '[data-qa="not-selected-step-icon"]',
 };
 
+export const AppEditorPreviewToggleSelectors = {
+  toggleContainer: '[data-qa="preview-toggle-container"]',
+  detailedSwitch: '[data-qa="toggle-switch"]',
+};
+
 export const AppEditorGeneralInfoPreviewSelectors = {
   fullContainer: '[data-qa="app-preview-general-info-full-container"]',
-  detailedSwitch: '[data-qa="toggle-switch"]',
   appPreviewGeneralInfoContainer: '[data-qa="app-preview-general-info"]',
   previewIconContainer: '[data-qa="entity-icon"]',
   previewAgentName: '[data-qa="entity-name"]',

@@ -1,13 +1,13 @@
 import { AppEditorAppSettingsPreviewSelectors } from '@/src/ui/selectors';
 import {
+  AppEditorAppSettingsPreviewBody,
   AppEditorAppSettingsPreviewHeader,
-  BaseAppEditorAppSettingsPreviewBody,
   BaseElement,
 } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
-export abstract class BaseAppEditorAppSettingsPreview<
-  B extends BaseAppEditorAppSettingsPreviewBody,
+export abstract class AppEditorAppSettingsPreview<
+  B extends AppEditorAppSettingsPreviewBody,
 > extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, AppEditorAppSettingsPreviewSelectors.container, parentLocator);

@@ -1,21 +1,21 @@
 import { ChatSelectors } from '@/src/ui/selectors';
 import {
+  AppEditorAppSettingsPreview,
+  AppEditorAppSettingsPreviewBody,
   AppEditorGeneralForm,
   AppEditorGeneralInfoAgentPreview,
-  BaseAppEditorAppSettingsPreview,
-  BaseAppEditorAppSettingsPreviewBody,
-  BaseAppEditorHeader,
-  BaseAppEditorViewForm,
+  AppEditorHeader,
+  AppEditorViewForm,
   BaseElement,
 } from '@/src/ui/webElements';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Page } from '@playwright/test';
 
-export abstract class BaseAppEditorContainer<
-  E extends BaseAppEditorViewForm,
-  B extends BaseAppEditorAppSettingsPreviewBody,
-  P extends BaseAppEditorAppSettingsPreview<B>,
-> extends BaseLayoutContainer<BaseAppEditorHeader> {
+export abstract class AppEditorContainer<
+  E extends AppEditorViewForm,
+  B extends AppEditorAppSettingsPreviewBody,
+  P extends AppEditorAppSettingsPreview<B>,
+> extends BaseLayoutContainer<AppEditorHeader> {
   //common General form
   private readonly appEditorGeneralForm!: AppEditorGeneralForm;
   //common General Preview
@@ -27,7 +27,7 @@ export abstract class BaseAppEditorContainer<
 
   protected constructor(
     page: Page,
-    header: BaseAppEditorHeader,
+    header: AppEditorHeader,
     generalForm: AppEditorGeneralForm,
     generalInfoPreview: AppEditorGeneralInfoAgentPreview,
   ) {
@@ -38,7 +38,7 @@ export abstract class BaseAppEditorContainer<
   }
 
   //common top header
-  getHeader(): BaseAppEditorHeader {
+  getHeader(): AppEditorHeader {
     return this.header;
   }
 

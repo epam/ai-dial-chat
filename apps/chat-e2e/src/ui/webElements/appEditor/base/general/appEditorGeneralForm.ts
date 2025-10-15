@@ -1,11 +1,11 @@
 import { API, Attachment } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { AddApplicationGeneralInfoFormSelector } from '@/src/ui/selectors';
-import { BaseAppEditorForm } from '@/src/ui/webElements';
+import { AppEditorForm } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
-export class AppEditorGeneralForm extends BaseAppEditorForm {
+export class AppEditorGeneralForm extends AppEditorForm {
   constructor(page: Page, parentLocator?: Locator) {
     super(
       page,

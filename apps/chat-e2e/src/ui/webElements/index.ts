@@ -62,15 +62,18 @@ export * from './listboxMenu';
 export * from './publishingFilter';
 export * from './marketplace/shareAppModal';
 
-export * from './appEditor/base/baseAppEditorForm';
-export * from './appEditor/base/baseAppEditorHeader';
+export * from './appEditor/base/appEditorForm';
+export * from './appEditor/base/appEditorHeader';
 export * from './appEditor/base/general/appEditorGeneralForm';
 export * from './appEditor/base/general/appEditorGeneralInfoAgentPreview';
-export * from './appEditor/base/appSettings/baseAppEditorViewForm';
+export * from './appEditor/base/appSettings/appEditorViewForm';
 export * from './appEditor/base/appSettings/appEditorAppSettingsPreviewHeader';
-export * from './appEditor/base/appSettings/baseAppEditorAppSettingsPreviewBody';
-export * from './appEditor/base/appSettings/baseAppEditorAppSettingsPreview';
-export * from './appEditor/base/baseAppEditorContainer';
+export * from './appEditor/base/appSettings/appEditorAppSettingsPreviewBody';
+export * from './appEditor/base/appSettings/appEditorAppSettingsPreview';
+export * from './appEditor/base/appSettings/appEditorAppSettingsPreviewChat';
+export * from './appEditor/base/appEditorContainer';
+export * from './appEditor/base/general/appEditorPreviewToggle';
+export * from './appEditor/base/general/appEditorPreviewCard';
 
 export * from './appEditor/customApp/customAppEditorViewForm';
 export * from './appEditor/customApp/customAppEditorAppSettingsPreviewBody';

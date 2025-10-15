@@ -16,7 +16,7 @@ export enum AppEditSteps {
   appSettings = 'App settings',
 }
 
-export class BaseAppEditorHeader extends BaseElement {
+export class AppEditorHeader extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
     super(page, ApplicationEditorHeader.header, parentLocator);
   }

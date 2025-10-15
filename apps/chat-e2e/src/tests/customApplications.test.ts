@@ -72,7 +72,7 @@ dialTest(
     customAppEditorAppSettingsPreviewBody,
     navigationPanel,
     appEditorGeneralForm,
-    appEditorGeneralInfoPreview,
+    appEditorPreviewCard,
     customAppEditorViewForm,
     customApplicationBuilder,
     applicationApiHelper,
@@ -178,7 +178,7 @@ dialTest(
 
         // First, wait for the preview panel to render the correct, indexed name.
         // This acts as a reliable synchronization point.
-        await appEditorGeneralInfoPreview.previewName
+        await appEditorPreviewCard.previewName
           .getElementLocatorByText(defaultAppNamePattern)
           .waitFor();
 
@@ -605,6 +605,7 @@ dialTest(
     appEditorHeader,
     setTestIds,
     baseAssertion,
+    appEditorPreviewCard,
     customApplicationBuilder,
     applicationApiHelper,
     appEditorHeaderAssertion,
@@ -799,7 +800,7 @@ dialTest(
     await dialTest.step(
       'On detailed view in section Information there is Release date field',
       async () => {
-        const releaseDateElement = appEditorGeneralInfoPreview.releaseDate;
+        const releaseDateElement = appEditorPreviewCard.releaseDate;
         await baseAssertion.assertElementState(releaseDateElement, 'visible');
         await baseAssertion.assertElementText(
           releaseDateElement,
@@ -1071,6 +1072,7 @@ dialTest(
       listboxMenu,
       setTestIds,
       baseAssertion,
+      appEditorPreviewCard,
       tooltipAssertion,
       customAppEditorViewForm,
       attachFilesModal,
@@ -1079,6 +1081,7 @@ dialTest(
       appEditorHeader,
       customAppEditorAppSettingsPreview,
       customAppEditorAppSettingsPreviewBody,
+      customAppEditorAppSettingsPreviewChat,
       dialHomePage,
       chatMessagesAssertion,
       sendMessage,
@@ -1259,15 +1262,15 @@ dialTest(
         );
 
         await baseAssertion.assertElementText(
-          appEditorGeneralInfoPreview.previewName,
+          appEditorPreviewCard.previewName,
           appEntity.name,
           ExpectedMessages.agentNameIsValid,
         );
 
         const actualShortDescElement =
-          appEditorGeneralInfoPreview.getShortDescriptionDetailedViewElement();
+          appEditorPreviewCard.getShortDescriptionDetailedViewElement();
         const actualLongDescElement =
-          appEditorGeneralInfoPreview.getLongDescriptionDetailedViewElement();
+          appEditorPreviewCard.getLongDescriptionDetailedViewElement();
 
         await baseAssertion.assertElementText(
           actualShortDescElement,
@@ -1281,7 +1284,7 @@ dialTest(
         );
 
         const displayedTopics =
-          await appEditorGeneralInfoPreview.topicElements.getElementsInnerContent();
+          await appEditorPreviewCard.topicElements.getElementsInnerContent();
         baseAssertion.assertArrayIncludesAll(
           displayedTopics,
           topicsToSelect,
@@ -1294,22 +1297,22 @@ dialTest(
         );
 
         await baseAssertion.assertElementState(
-          appEditorGeneralInfoPreview.previewInformationSection,
+          appEditorPreviewCard.previewInformationSection,
           'visible',
         );
         await baseAssertion.assertElementState(
-          appEditorGeneralInfoPreview.previewAuthorContainer,
+          appEditorPreviewCard.previewAuthorContainer,
           'visible',
         );
 
         const currentUsername = UserUtil.getE2EUsername(testInfo.parallelIndex);
         await baseAssertion.assertElementText(
-          appEditorGeneralInfoPreview.previewAuthorValue,
+          appEditorPreviewCard.previewAuthorValue,
           currentUsername,
           ExpectedMessages.authorIsValid,
         );
 
-        const previewAppIcon = appEditorGeneralInfoPreview.previewIcon;
+        const previewAppIcon = appEditorPreviewCard.previewIcon;
         await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
       },
     );
@@ -1317,21 +1320,23 @@ dialTest(
     await dialTest.step(
       'Turn off the detailed view and assert details on General Info screen',
       async () => {
-        await appEditorGeneralInfoPreview.detailedSwitch.click();
+        await appEditorGeneralInfoPreview
+          .getAppEditorPreviewToggle()
+          .detailedSwitch.click();
         await baseAssertion.assertElementText(
-          appEditorGeneralInfoPreview.previewName,
+          appEditorPreviewCard.previewName,
           appEntity.name,
           ExpectedMessages.agentNameIsValid,
         );
 
         await baseAssertion.assertElementText(
-          appEditorGeneralInfoPreview.version,
+          appEditorPreviewCard.version,
           appEntity.version!,
           ExpectedMessages.agentVersionIsValid,
         );
 
         const actualShortDescElement =
-          appEditorGeneralInfoPreview.getShortDescriptionDetailedViewElement();
+          appEditorPreviewCard.getShortDescriptionDetailedViewElement();
 
         await baseAssertion.assertElementText(
           actualShortDescElement,
@@ -1340,7 +1345,7 @@ dialTest(
         );
 
         const displayedTopics =
-          await appEditorGeneralInfoPreview.topicElements.getElementsInnerContent();
+          await appEditorPreviewCard.topicElements.getElementsInnerContent();
         baseAssertion.assertArrayIncludesAll(
           displayedTopics,
           topicsToSelect,
@@ -1351,7 +1356,7 @@ dialTest(
           topicsToSelect.length,
           ExpectedMessages.numberOfTopicsIsCorrect,
         );
-        const previewAppIcon = appEditorGeneralInfoPreview.previewIcon;
+        const previewAppIcon = appEditorPreviewCard.previewIcon;
         await baseAssertion.assertEntityIcon(previewAppIcon, expectedIconUrl);
       },
     );
@@ -1400,11 +1405,11 @@ dialTest(
           'visible',
         );
         await baseAssertion.assertElementState(
-          customAppEditorAppSettingsPreviewBody.appSettingsChatMode,
+          customAppEditorAppSettingsPreviewChat,
           'visible',
         );
         await baseAssertion.assertElementState(
-          customAppEditorAppSettingsPreviewBody.agentInfoContainer,
+          customAppEditorAppSettingsPreviewChat.agentInfoContainer,
           'visible',
         );
         const previewChatInput = sendMessage.messageInput;
@@ -1414,7 +1419,7 @@ dialTest(
           'enabled',
         );
         const previewChatIcon =
-          customAppEditorAppSettingsPreviewBody.previewChatIcon;
+          customAppEditorAppSettingsPreviewChat.previewChatIcon;
         await baseAssertion.assertEntityIcon(previewChatIcon, expectedIconUrl);
       },
     );
@@ -1601,8 +1606,10 @@ dialTest(
     appEditorHeader,
     appEditorGeneralForm,
     appEditorGeneralInfoPreview,
+    appEditorPreviewCard,
     customAppEditorAppSettingsPreview,
     customAppEditorAppSettingsPreviewBody,
+    customAppEditorAppSettingsPreviewChat,
     customApplicationBuilder,
     applicationApiHelper,
     baseAssertion,
@@ -1686,7 +1693,8 @@ dialTest(
     await dialTest.step(
       'Verify the updated icon is displayed in the preview on the "General info" step',
       async () => {
-        const previewIcon = appEditorGeneralInfoPreview.previewIcon;
+        const previewIcon =
+          appEditorGeneralInfoPreview.getAppEditorPreviewCard().previewIcon;
         await baseAssertion.assertEntityIcon(
           previewIcon,
           expectedEncodedIconUrl,
@@ -1697,7 +1705,7 @@ dialTest(
     await dialTest.step(
       'Verify there is Release date field on the detailed view section',
       async () => {
-        const releaseDate = appEditorGeneralInfoPreview.releaseDate;
+        const releaseDate = appEditorPreviewCard.releaseDate;
         await baseAssertion.assertElementState(releaseDate, 'visible');
         await baseAssertion.assertElementText(releaseDate, currentDate);
       },
@@ -1716,7 +1724,7 @@ dialTest(
           'hidden',
         );
         const previewChatIconAppSettings =
-          customAppEditorAppSettingsPreviewBody.previewChatIcon;
+          customAppEditorAppSettingsPreviewChat.previewChatIcon;
         await baseAssertion.assertEntityIcon(
           previewChatIconAppSettings,
           expectedEncodedIconUrl,
@@ -2112,8 +2120,10 @@ dialTest(
     appEditorGeneralInfoPreview,
     customAppEditorAppSettingsPreview,
     customAppEditorAppSettingsPreviewBody,
+    customAppEditorAppSettingsPreviewChat,
     setTestIds,
     baseAssertion,
+    appEditorPreviewCard,
     appEditorHeaderAssertion,
     marketplaceHeader,
     marketplaceAgentsSection,
@@ -2159,7 +2169,7 @@ dialTest(
         );
         // Verify name is truncated with ellipsis on the card preview
         await baseAssertion.assertElementTextIsTruncated(
-          appEditorGeneralInfoPreview.previewName,
+          appEditorPreviewCard.previewName,
           ExpectedMessages.entityNameIsTruncated,
         );
       },
@@ -2192,7 +2202,7 @@ dialTest(
           'visible',
         );
         const previewAgentNameElement =
-          customAppEditorAppSettingsPreviewBody.agentName;
+          customAppEditorAppSettingsPreviewChat.agentName;
         await baseAssertion.assertElementText(
           previewAgentNameElement,
           appEntity.name,

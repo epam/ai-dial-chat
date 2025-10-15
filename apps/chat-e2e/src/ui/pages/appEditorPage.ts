@@ -3,22 +3,22 @@ import { BasePage } from '@/src/ui/pages/basePage';
 import {
   AppEditorGeneralForm,
   AppEditorGeneralInfoAgentPreview,
-  BaseAppEditorHeader,
+  AppEditorHeader,
   CustomAppEditorContainer,
 } from '@/src/ui/webElements';
 
 export class AppEditorPage extends BasePage {
   // Common elements - single instances shared by all containers
-  private appEditorHeader!: BaseAppEditorHeader;
+  private appEditorHeader!: AppEditorHeader;
   private appEditorGeneralForm!: AppEditorGeneralForm;
   private appEditorGeneralInfoPreview!: AppEditorGeneralInfoAgentPreview;
 
   //declare specific app containers
   private customAppEditorContainer!: CustomAppEditorContainer;
 
-  getAppEditorHeader(): BaseAppEditorHeader {
+  getAppEditorHeader(): AppEditorHeader {
     if (!this.appEditorHeader) {
-      this.appEditorHeader = new BaseAppEditorHeader(this.page);
+      this.appEditorHeader = new AppEditorHeader(this.page);
     }
     return this.appEditorHeader;
   }
@@ -70,7 +70,7 @@ export class AppEditorPage extends BasePage {
     await appEditorContainer.getChatLoader().waitForState({ state: 'hidden' });
     await appEditorContainer.getHeader().waitForState();
     await applicationGeneralForm.waitForState();
-    await applicationPreview.generalInfoContainer.waitForState();
+    await applicationPreview.getAppEditorPreviewCard().waitForState();
   }
 
   async waitForPageLoadedForEdit(appType: AppsEditorTypes) {

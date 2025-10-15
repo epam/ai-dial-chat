@@ -1,13 +1,13 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
-import { BaseAppEditorHeader, BaseElement } from '@/src/ui/webElements';
+import { AppEditorHeader, BaseElement } from '@/src/ui/webElements';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 export class AppEditorHeaderAssertion extends BaseAssertion {
-  readonly appEditorHeader: BaseAppEditorHeader;
+  readonly appEditorHeader: AppEditorHeader;
 
-  constructor(appEditorHeader: BaseAppEditorHeader) {
+  constructor(appEditorHeader: AppEditorHeader) {
     super();
     this.appEditorHeader = appEditorHeader;
   }
