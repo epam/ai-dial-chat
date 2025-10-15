@@ -1145,7 +1145,9 @@ export function Chat({ isPreview }: ChatProps) {
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
       <>
-        <PublicationHandler publication={selectedPublication} />
+        <div className="w-full grow">
+          <PublicationHandler publication={selectedPublication} />
+        </div>
         <ChatInputFooter />
       </>
     );
