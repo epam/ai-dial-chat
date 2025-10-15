@@ -454,7 +454,7 @@ export const PublicationHandlerFooter = ({
     }
 
     return t(
-      publication.resources.length || isSmallScreen
+      !publication.resources.length || isSmallScreen
         ? 'Approve'
         : 'Approve selected',
     );
