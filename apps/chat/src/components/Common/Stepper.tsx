@@ -117,15 +117,20 @@ interface StepperProps<T extends string> {
   steps: StepType<T>[];
   active: T;
   onChange: (step: StepType<T>) => void;
+  className?: string;
 }
 
 export const Stepper = <T extends string>({
   steps,
   active,
   onChange,
+  className,
 }: StepperProps<T>) => {
   return (
-    <div data-qa="steps-container" className="flex items-center">
+    <div
+      data-qa="steps-container"
+      className={classNames('flex items-center', className)}
+    >
       {steps.map((step, index) => (
         <>
           <Step
