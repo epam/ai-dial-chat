@@ -2743,8 +2743,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         values.folderId !== getConversationRootId(LOCAL_BUCKET);
 
       const paths = window.location.pathname.split('/');
-      const isApplicationPreviewConversation =
-        paths[1] === 'apps-editor' && paths[3] === 'settings';
+      const isApplicationPreviewConversation = paths[1] === 'apps-editor';
 
       const saveInStorage = isApplicationPreviewConversation
         ? false
@@ -3130,9 +3129,6 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
                 conversationIds: conversations.map((c) => c.id),
                 showLoader: true,
               }),
-            ),
-            of(
-              ConversationsActions.uploadConversationsWithContentRecursiveSuccess(),
             ),
           );
         }),

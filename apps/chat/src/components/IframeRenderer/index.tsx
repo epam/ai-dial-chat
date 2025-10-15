@@ -55,7 +55,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     const router = useRouter();
 
     const isPreviewConversation = useMemo(() => {
-      return router.pathname === Routes.AppsEditorSettings;
+      return router.pathname === Routes.AppsEditor;
     }, [router.pathname]);
 
     const [loading, setLoading] = useState<boolean>(true);

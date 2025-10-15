@@ -1,12 +1,8 @@
-import { BackendDataNodeType, BackendResourceType } from './common';
-import { DialFile } from './files';
+import { FolderEditTree } from '@/src/store/publication/publication.types';
 
-import {
-  MIMEType,
-  PublishActions,
-  ShareEntity,
-  UploadStatus,
-} from '@epam/ai-dial-shared';
+import { BackendDataNodeType, BackendResourceType } from './common';
+
+import { MIMEType, PublishActions, UploadStatus } from '@epam/ai-dial-shared';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -30,20 +26,12 @@ export interface BasePublicationRequestModel {
 }
 
 export interface PublicationRequestModel extends BasePublicationRequestModel {
-  name: string;
-  resources: {
-    action: PublishActions;
-    sourceUrl?: string;
-    targetUrl: string;
-  }[];
-}
-
-export interface PublicationUpdateRequestModel
-  extends BasePublicationRequestModel {
+  name?: string;
   resources: {
     action: PublishActions;
     sourceUrl: string;
     targetUrl: string;
+    publishCredentials?: boolean;
   }[];
 }
 
@@ -59,6 +47,7 @@ export interface PublicationResource {
   targetUrl: string;
   reviewUrl: string;
   author?: string;
+  publishCredentials?: boolean;
 }
 
 export interface Publication {
@@ -155,4 +144,10 @@ export type PublicVersionGroups = Record<
   PublicVersionGroup | undefined
 >;
 
-export type PublicationReviewItem = ShareEntity | DialFile;
+export interface PublicationHandlerState {
+  entities: Record<string, { name: string; version: string }>;
+  folders: FolderEditTree;
+  rules: PublicationRule[];
+  displayAuthor: string;
+  publishToUrl: string;
+}

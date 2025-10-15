@@ -40,6 +40,9 @@ const selectInfoModalOpened = (state: RootState) =>
 const selectSelectedEntityInfo = (state: RootState) =>
   rootSelector(state).selectedEntityInfo;
 
+const selectLastLoadedConfigurationSchemaModelId = (state: RootState) =>
+  rootSelector(state).lastLoadedConfigurationSchemaModelId;
+
 export const ChatSelectors = {
   selectInputContent,
   selectChatFormValue,
@@ -51,4 +54,5 @@ export const ChatSelectors = {
   selectNotAvailableEntityType,
   selectInfoModalOpened,
   selectSelectedEntityInfo,
+  selectLastLoadedConfigurationSchemaModelId,
 };

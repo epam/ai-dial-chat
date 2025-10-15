@@ -1,6 +1,8 @@
 import { FormEvent, useCallback, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -17,6 +19,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -36,6 +39,8 @@ interface GeneralFormProps {
 
 export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
   const { t } = useTranslation(Translation.Common);
+  const router = useRouter();
+  const { [ToolsetEditorQuery.Id]: id } = router.query;
 
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -45,6 +50,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
 
   const screenState = useScreenState();
   const isMobileView = screenState === ScreenState.SM;
+  const isEditing = !!id?.toString();
 
   const {
     register,
@@ -139,12 +145,12 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
       <div className="mt-auto flex justify-end gap-2 border-t border-tertiary px-3 py-4 md:px-5 xl:px-6">
         <Tooltip
           tooltip={t('Fill in all required fields')}
-          hideTooltip={isValid}
+          hideTooltip={isValid || isEditing}
         >
           <button
             className="button button-primary py-2"
             type="submit"
-            disabled={!isValid || isToolsetDetailsLoading}
+            disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
           >
             {t('Next')}
           </button>

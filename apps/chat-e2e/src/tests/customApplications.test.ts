@@ -70,8 +70,6 @@ dialTest(
     agentDetailsModalAssertion,
     marketplaceContainer,
     marketplace,
-    toastAssertion,
-    toast,
     appEditorAppSettingsAgentPreview,
     navigationPanel,
     appEditorGeneralInfoAgentPreview,
@@ -205,7 +203,7 @@ dialTest(
         await appEditorHeaderAssertion.assertStepState(
           generalInfoStep,
           'visible',
-          Cursors.pointer,
+          Cursors.default,
         );
         await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
@@ -289,7 +287,7 @@ dialTest(
         await appEditorHeaderAssertion.assertStepState(
           generalInfoStep,
           'visible',
-          Cursors.pointer,
+          Cursors.default,
         );
         await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
@@ -412,13 +410,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Attempt to save with empty Chat Completion URL and verify error and preview persistence',
+      'Attempt to save with empty Chat Completion URL and verify confirmation dialog appears. Cancel button works correctly',
       async () => {
         await appEditorHeader.saveAndExitButton.click();
-        await toastAssertion.assertToastMessage(
-          ExpectedConstants.pleaseFillInAllMandatoryFields,
-        );
-        await toast.closeToast();
+        await confirmationDialog.cancelDialog();
 
         await baseAssertion.assertElementState(
           appEditorAppSettingsAgentPreview,
@@ -534,7 +529,7 @@ dialTest(
         await appEditorHeaderAssertion.assertStepState(
           appSettingsStep,
           'visible',
-          Cursors.pointer,
+          Cursors.default,
         );
       },
     );
@@ -605,6 +600,7 @@ dialTest(
     agentInfo,
     localStorageManager,
     appEditorGeneralInfoAgentPreview,
+    appEditorPage,
   }) => {
     setTestIds('EPMRTC-5131', 'EPMRTC-4305', 'EPMRTC-5747');
     const updatedDescription = GeneratorUtil.randomString(25);
@@ -654,6 +650,7 @@ dialTest(
     await dialTest.step(
       'App Editor page was opened, title "Edit custom app", two available steps are displayed in the header:',
       async () => {
+        await appEditorPage.waitForPageLoadedForEdit();
         await baseAssertion.assertElementState(appEditorViewForm);
         await baseAssertion.assertElementText(
           appEditorHeader.actionAndApplicationTypeTitle,
@@ -716,7 +713,7 @@ dialTest(
           version: appEntity.version,
           description: appEntity.description,
         });
-        await appEditorHeader.focusOn();
+        await appEditorHeader.focusOn({ isHttpMethodTriggered: false });
         await appEditorHeader.logo.click();
         await dialHomePage.waitForPageLoaded();
         await baseAssertion.assertElementState(agentInfo, 'visible'); // Assert no validation error appeared
