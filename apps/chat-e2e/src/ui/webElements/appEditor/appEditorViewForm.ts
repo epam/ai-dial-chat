@@ -7,7 +7,7 @@ import { AppEditorForm } from '@/src/ui/webElements/appEditor/appEditorForm';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
-export const keyEnteringDelay = 20;
+export const keyEnteringDelay = 30;
 
 export class AppEditorViewForm extends AppEditorForm {
   constructor(page: Page, parentLocator: Locator) {

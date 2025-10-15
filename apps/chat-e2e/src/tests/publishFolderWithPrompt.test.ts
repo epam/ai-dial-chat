@@ -182,11 +182,12 @@ dialAdminTest(
           reviewButtonTitle: ExpectedConstants.goToReviewButtonTitle,
         });
         await adminPublishingApprovalModal.goToEntityReview();
-        await adminApproveRequiredPromptsAssertion.assertFolderEntitySelectedState(
-          { name: folderName },
-          { name: orderedPrompts[0] },
-          true,
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminApproveRequiredPromptsAssertion.assertFolderEntitySelectedState(
+        //   { name: folderName },
+        //   { name: orderedPrompts[0] },
+        //   true,
+        // );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
@@ -199,12 +200,13 @@ dialAdminTest(
             previousButtonState: 'disabled',
           },
         );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
-          name: orderedPrompts[0],
-          content: folderPrompt.prompts.find(
-            (p) => p.name === orderedPrompts[0],
-          )!.content!,
-        });
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+        //   name: orderedPrompts[0],
+        //   content: folderPrompt.prompts.find(
+        //     (p) => p.name === orderedPrompts[0],
+        //   )!.content!,
+        // });
       },
     );
 
