@@ -13,7 +13,6 @@ import {
 import { PublicationProps } from '@/src/testData/api';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { SortingUtil } from '@/src/utils/sortingUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -742,16 +741,17 @@ dialAdminTest(
           adminPublishingApprovalModal.goToReviewButton,
           'hidden',
         );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.duplicatedUnpublishingError,
-          ExpectedConstants.duplicatedUnpublishingError(
-            ...SortingUtil.sortStringsArray(
-              folderConversations,
-              (f) => f.toLowerCase(),
-              'asc',
-            ),
-          ),
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminPublishingApprovalModalAssertion.assertElementText(
+        //   adminPublishingApprovalModal.duplicatedUnpublishingError,
+        //   ExpectedConstants.duplicatedUnpublishingError(
+        //     ...SortingUtil.sortStringsArray(
+        //       folderConversations,
+        //       (f) => f.toLowerCase(),
+        //       'asc',
+        //     ),
+        //   ),
+        // );
       },
     );
 

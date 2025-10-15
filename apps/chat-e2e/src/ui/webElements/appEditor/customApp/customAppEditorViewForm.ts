@@ -5,7 +5,7 @@ import { AddApplicationAppSettingsFormSelector } from '@/src/ui/selectors';
 import { BaseAppEditorViewForm, BaseElement } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 
-export const keyEnteringDelay = 20;
+export const keyEnteringDelay = 30;
 
 export class CustomAppEditorViewForm extends BaseAppEditorViewForm {
   public chatCompletionUrl = this.getChildElementBySelector(
