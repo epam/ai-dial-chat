@@ -38,8 +38,8 @@ dialAdminTest(
       adminMarketplaceHeader,
       adminMarketplaceAgentsSection,
       adminMarketplaceAgentsAssertion,
-      publishingRequestModal,
-      publishingRequestModalAssertion,
+      publishingRequestDialog,
+      publishingRequestDialogAssertion,
       publishingRulesAssertion,
       appToPublishAssertion,
       fileApiHelper,
@@ -53,7 +53,7 @@ dialAdminTest(
       adminApproveRequiredPromptsAssertion,
       adminPublishingApprovalModalAssertion,
       adminPublishingRulesAssertion,
-      adminFilesToApproveAssertion,
+      adminPublishFilesAssertion,
       adminAppToApproveAssertion,
       adminTooltip,
       adminTooltipAssertion,
@@ -152,21 +152,18 @@ dialAdminTest(
         await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
         await marketplaceAgents
           .getAgentDropdownMenu()
-          .selectMenuOption(MenuOptions.publish, {
-            triggeredHttpMethod: 'GET',
-            apiHost: API.applicationCreateHost,
-          });
+          .selectMenuOption(MenuOptions.publish);
       },
     );
 
     await dialTest.step(
       'Verify Publish modal with valid data is displayed',
       async () => {
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModalAssertion.assertGeneralInfo({
+        await publishingRequestDialogAssertion.assertGeneralInfo({
           publishTo: PublishPath.Organization,
           author: defaultAuthor,
         });
@@ -189,10 +186,10 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, update Author and send the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
-        await publishingRequestModal.author.fillInInput(updatedAuthor);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
+        await publishingRequestDialog.author.fillInInput(updatedAuthor);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
 
         const fileResource = publishApiModels.response.resources.find((r) =>
           r.reviewUrl.endsWith(filename),
@@ -284,7 +281,7 @@ dialAdminTest(
             // expectedIcon: expectedIconUrl
           },
         );
-        await adminFilesToApproveAssertion.assertFileToPublish(
+        await adminPublishFilesAssertion.assertFileToPublish(
           { name: filename },
           {
             expectedState: 'visible',

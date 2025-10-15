@@ -106,9 +106,10 @@ export const toolsetSlice = createSlice({
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
         tabToOpen?: ToolsetEditorSteps;
-        isSaveAndExit?: boolean;
+        redirectUrl?: string;
         auth?: {
           apiKey?: string;
+          authLevel?: ToolsetCredentialsLevel;
         };
       }>,
     ) => {

@@ -30,10 +30,7 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
       `Step "${stepLocator}" should be ${expectedState}`,
     );
     await this.assertElementCursor(stepLocator, expectedCursor);
-    const expectedColorAttributes =
-      expectedCursor === 'pointer'
-        ? ThemeColorAttributes.textPrimary
-        : ThemeColorAttributes.textSecondary;
+    const expectedColorAttributes = ThemeColorAttributes.textPrimary;
     await this.assertElementColor(
       stepLocator,
       ThemesUtil.getRgbColorByKey(expectedColorAttributes),

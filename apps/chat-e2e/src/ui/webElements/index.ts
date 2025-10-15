@@ -40,7 +40,7 @@ export * from './editInputActions';
 export * from './playbackMessage';
 export * from './azureAD';
 export * from './keycloak';
-export * from './publishingRequestModal';
+export * from './publishingRequestDialog';
 export * from './changePath';
 export * from './publishingApprovalModal';
 export * from './publicationReviewControl';

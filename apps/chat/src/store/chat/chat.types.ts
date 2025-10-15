@@ -12,4 +12,5 @@ export interface ChatState {
   notAvailableEntityType?: EntityType;
   infoModalState: ModalState;
   selectedEntityInfo?: EntityInfo;
+  lastLoadedConfigurationSchemaModelId: null | string;
 }

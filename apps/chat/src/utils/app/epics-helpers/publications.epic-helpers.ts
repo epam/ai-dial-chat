@@ -38,22 +38,21 @@ export const getSetUpdatedItemsToApproveAction$ = (
   publicationUrl: string,
 ) => {
   const selectedItemsToApprove =
-    PublicationSelectors.selectSelectedItemsToApprove(state);
+    PublicationSelectors.selectSelectedPublicationItems(state);
 
-  const previousSourceUrlsToApprove = oldPublicationResources
-    .filter((resource) => selectedItemsToApprove.includes(resource.reviewUrl))
-    .map((resource) => resource.sourceUrl ?? '');
-  const newSelectedItemsToApprove = newPublicationResources.filter(
-    (resource) =>
-      resource.sourceUrl &&
-      previousSourceUrlsToApprove.includes(resource.sourceUrl),
+  const previousSourceUrlsPublicationItems = oldPublicationResources
+    .filter(({ reviewUrl }) => selectedItemsToApprove.includes(reviewUrl))
+    .map(({ sourceUrl }) => sourceUrl ?? '');
+  const newSelectedPublicationItems = newPublicationResources.filter(
+    ({ sourceUrl }) =>
+      sourceUrl && previousSourceUrlsPublicationItems.includes(sourceUrl),
   );
 
-  if (newSelectedItemsToApprove.length) {
+  if (newSelectedPublicationItems.length) {
     return of(
-      PublicationActions.setItemsToApprove({
+      PublicationActions.setPublicationItems({
         publicationUrl,
-        ids: newSelectedItemsToApprove.map((resource) => resource.reviewUrl),
+        ids: newSelectedPublicationItems.map(({ reviewUrl }) => reviewUrl),
       }),
     );
   }
@@ -118,18 +117,18 @@ export const addMessageAttachmentsToPublication$ = (
   }).pipe(
     map((response) => {
       const newFilesReviewUrls = response.resources
-        .filter((resource) =>
+        .filter(({ sourceUrl }) =>
           messageAttachmentsToAdd.some(
-            (attachment) => attachment.url === resource.sourceUrl,
+            (attachment) => attachment.url === sourceUrl,
           ),
         )
-        .map((resource) => ApiUtils.decodeApiUrl(resource.reviewUrl));
-      const selectedItemsToApprove =
-        PublicationSelectors.selectSelectedItemsToApprove(state);
+        .map(({ reviewUrl }) => ApiUtils.decodeApiUrl(reviewUrl));
+      const selectedPublicationItems =
+        PublicationSelectors.selectSelectedPublicationItems(state);
 
       return {
         updatedPublication: response,
-        newItemsToSelect: [...selectedItemsToApprove, ...newFilesReviewUrls],
+        newItemsToSelect: [...selectedPublicationItems, ...newFilesReviewUrls],
       };
     }),
   );
@@ -214,6 +213,7 @@ export function getPublicationResourceEntityData<T>(
           !isFileId(reviewUrl) &&
           !uploadedUnpublishIdsSet.has(reviewUrl),
         publicationUrl,
+        publishCredentials: resource.publishCredentials,
       },
     };
 

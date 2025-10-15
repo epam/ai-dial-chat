@@ -13,7 +13,7 @@ dialAdminTest(
     dataInjector,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     iconApiHelper,
     adminDialHomePage,
     adminApproveRequiredConversations,
@@ -23,7 +23,7 @@ dialAdminTest(
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
-    adminConversationToApproveAssertion,
+    adminPublishConversationsTreeAssertion,
     baseAssertion,
     localStorageManager,
     adminLocalStorageManager,
@@ -52,7 +52,7 @@ dialAdminTest(
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await baseAssertion.assertElementState(
-          publishingRequestModal,
+          publishingRequestDialog,
           'visible',
         );
       },
@@ -61,9 +61,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name and send the request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
       },
     );
 
@@ -101,15 +101,15 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           publishApiModels.response,
         );
-        await adminConversationToApproveAssertion.assertEntityState(
+        await adminPublishConversationsTreeAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
-        await adminConversationToApproveAssertion.assertEntityVersion(
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: conversation.name },
           ExpectedConstants.defaultAppVersion,
         );
-        await adminConversationToApproveAssertion.assertTreeEntityIcon(
+        await adminPublishConversationsTreeAssertion.assertTreeEntityIcon(
           { name: conversation.name },
           expectedConversationIcon,
         );
