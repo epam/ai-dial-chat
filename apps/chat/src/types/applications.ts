@@ -151,8 +151,8 @@ export enum ApplicationActionType {
 }
 
 export enum ApplicationType {
-  CUSTOM_APP = 'custom app',
-  CODE_APP = 'code app',
+  CUSTOM_APP = 'custom_app',
+  CODE_APP = 'code_app',
 }
 
 export enum Toolsets {

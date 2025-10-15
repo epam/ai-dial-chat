@@ -27,7 +27,7 @@ dialAdminTest(
     dataInjector,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     selectFolderModal,
     selectFolders,
     selectFoldersAssertion,
@@ -105,7 +105,7 @@ dialAdminTest(
         await conversations.selectEntity(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         selectFoldersAssertion.assertStringsSorting(
@@ -138,9 +138,9 @@ dialAdminTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await publishingRequestModal.requestName.fillInInput(requestName);
+        await publishingRequestDialog.requestName.fillInInput(requestName);
         publishApiModels =
-          await publishingRequestModal.sendPublicationRequest();
+          await publishingRequestDialog.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
       },
     );
@@ -229,7 +229,7 @@ dialAdminTest(
     dataInjector,
     conversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     selectFolderModal,
     baseAssertion,
     selectFolders,
@@ -287,7 +287,7 @@ dialAdminTest(
         await conversations.selectEntity(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModal
+        await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
@@ -427,15 +427,15 @@ dialAdminTest(
           triggeredApiHost: API.publicationRulesList,
         });
         await baseAssertion.assertElementText(
-          publishingRequestModal.getChangePublishToPath().path,
+          publishingRequestDialog.getChangePublishToPath().path,
           publicationPath,
         );
       },
     );
 
     await dialTest.step('Enter the name and submit the request', async () => {
-      await publishingRequestModal.requestName.fillInInput(requestName);
-      publishApiModels = await publishingRequestModal.sendPublicationRequest();
+      await publishingRequestDialog.requestName.fillInInput(requestName);
+      publishApiModels = await publishingRequestDialog.sendPublicationRequest();
       publicationsToUnpublish.push(publishApiModels.response);
     });
 

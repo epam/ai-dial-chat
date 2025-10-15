@@ -42,6 +42,11 @@ import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
@@ -265,12 +270,18 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       ),
                     );
                   }
-                  if (payload.isSaveAndExit) {
-                    void router.push(
-                      router.query.publicationUrl
-                        ? Routes.Chat
-                        : Routes.Marketplace,
-                    );
+                  if (payload.redirectUrl) {
+                    void router.push({
+                      pathname: payload.redirectUrl,
+                      ...(payload.redirectUrl === Routes.Marketplace && {
+                        query: {
+                          [MarketplaceQueryParams.tab]:
+                            MarketplaceTabs.MY_WORKSPACE,
+                          [MarketplaceQueryParams.entitiesTab]:
+                            MarketplaceEntitiesTabs.TOOLSETS,
+                        },
+                      }),
+                    });
                   }
 
                   return concat(
@@ -282,7 +293,7 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                     ),
                     iif(
                       () =>
-                        !!payload.isSaveAndExit &&
+                        payload.redirectUrl === Routes.Chat &&
                         !!router.query.publicationUrl,
                       of(PublicationActions.setIsToolsetReview(true)),
                       EMPTY,
@@ -296,7 +307,9 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       () => !!payload.auth,
                       of(
                         ToolsetActions.startSignInProcess({
-                          authLevel: ToolsetCredentialsLevel.GLOBAL,
+                          authLevel:
+                            payload?.auth?.authLevel ??
+                            ToolsetCredentialsLevel.GLOBAL,
                           apiKey: payload?.auth?.apiKey,
                           toolset: savedUpdatedToolset,
                         }),

@@ -23,3 +23,8 @@ export interface EntitiesGroup<T extends MarketplaceEntity> {
   groupName: string;
   entities: T[];
 }
+
+export enum MarketplaceEditorSteps {
+  General = 'General',
+  Settings = 'Settings',
+}
