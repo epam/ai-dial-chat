@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { Children, ReactNode, memo } from 'react';
 import { Components } from 'react-markdown';
 import { PluggableList } from 'react-markdown/lib/react-markdown';
 
@@ -27,6 +27,7 @@ import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
+import { isObject, partition } from 'lodash-es';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -115,34 +116,44 @@ const getMDComponents = (
       );
     },
     details({ children, ...props }) {
+      // In order to style the contents paddings correctly, we need to wrap them into container
+      // Contents of <details> element follow the summary element unwrapped by default,
+      // so styling them otherwise would be hacky.
+      const [summary, content] = partition(
+        Children.toArray(children),
+        (child: ReactNode) =>
+          isObject(child) &&
+          'type' in child &&
+          isObject(child.type) &&
+          'name' in child.type &&
+          child.type.name === 'summary',
+      );
+
       return (
         <details
-          className="my-4 rounded bg-layer-3 px-3 py-2 [&[open]>summary>svg]:rotate-180"
+          className={classnames(
+            'my-4 rounded bg-layer-3',
+            ' [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b',
+          )}
           {...props}
         >
-          {children}
+          {summary}
+          <div className="p-3">{content}</div>
         </details>
       );
     },
     summary({ children, ...props }) {
       return (
-        <>
-          <summary
-            className={classnames(
-              'flex cursor-pointer items-center justify-between gap-3 text-primary',
-              '[&::marker]:hidden',
-            )}
-            {...props}
-          >
-            <span>{children}</span>
-            <ChevronDown
-              height={18}
-              width={18}
-              className="shrink-0 transition"
-            />
-          </summary>
-          <hr className="-mx-4 my-2 border-tertiary" />
-        </>
+        <summary
+          className={classnames(
+            'flex items-center justify-between gap-3 border-tertiary p-3 text-sm',
+            'cursor-pointer [&::marker]:hidden',
+          )}
+          {...props}
+        >
+          <span className="truncate">{children}</span>
+          <ChevronDown height={18} width={18} className="shrink-0 transition" />
+        </summary>
       );
     },
   };
