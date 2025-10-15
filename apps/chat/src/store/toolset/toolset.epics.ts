@@ -314,6 +314,19 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       ),
                       EMPTY,
                     ),
+                    iif(
+                      () =>
+                        payload.redirectUrl === Routes.Marketplace &&
+                        !!payload.shouldSelectToolset,
+                      of(
+                        MarketplaceActions.setDetailsEntity({
+                          reference: savedUpdatedToolset.reference,
+                          type: MarketplaceEntitiesTabs.TOOLSETS,
+                          isSuggested: false,
+                        }),
+                      ),
+                      EMPTY,
+                    ),
                   );
                 }),
               ),

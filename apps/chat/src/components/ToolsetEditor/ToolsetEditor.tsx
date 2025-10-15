@@ -18,6 +18,7 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ToolsetEditorHeader } from '@/src/components/ToolsetEditor/ToolsetEditorHeader';
 import { ToolsetEditorView } from '@/src/components/ToolsetEditor/ToolsetEditorView';
@@ -41,6 +42,9 @@ export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
+
+  const { [ToolsetEditorQuery.Id]: idQuery } = router.query;
+  const isCreateRef = useRef(!idQuery);
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
@@ -92,6 +96,7 @@ export const ToolsetEditor = () => {
             newToolset: payloadToolset,
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: saveAndExitRef.current ?? undefined,
+            shouldSelectToolset: isCreateRef.current,
           }),
         );
       } else {
