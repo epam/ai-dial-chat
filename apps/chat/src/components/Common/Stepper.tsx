@@ -5,7 +5,12 @@ import {
   IconPointFilled,
   IconProps,
 } from '@tabler/icons-react';
-import { ForwardRefExoticComponent, RefAttributes, useMemo } from 'react';
+import {
+  ForwardRefExoticComponent,
+  Fragment,
+  RefAttributes,
+  useMemo,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -132,9 +137,8 @@ export const Stepper = <T extends string>({
       className={classNames('flex items-center', className)}
     >
       {steps.map((step, index) => (
-        <>
+        <Fragment key={step.key}>
           <Step
-            key={step.key}
             label={step.label}
             disabled={step.disabled}
             error={step.error}
@@ -148,7 +152,7 @@ export const Stepper = <T extends string>({
               style={{ backgroundColor: 'var(--text-secondary)' }}
             ></div>
           )}
-        </>
+        </Fragment>
       ))}
     </div>
   );
