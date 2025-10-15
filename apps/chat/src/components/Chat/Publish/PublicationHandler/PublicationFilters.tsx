@@ -15,6 +15,8 @@ import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -27,6 +29,22 @@ interface FilterComponentProps {
   isRulesLoading: boolean;
 }
 
+const showNoRulesLabel = (
+  rulesOnEditLength: number,
+  isNoRulesToDisplay: boolean,
+  publishToUrl: string | undefined,
+) => {
+  if (publishToUrl) {
+    return (
+      !rulesOnEditLength &&
+      isNoRulesToDisplay &&
+      PUBLIC_URL_PREFIX === publishToUrl
+    );
+  }
+
+  return isNoRulesToDisplay;
+};
+
 export function PublicationFilters({
   filteredRuleEntries,
   newRules,
@@ -34,10 +52,17 @@ export function PublicationFilters({
   isRulesLoading,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
+  const editedPublishToUrl = useAppSelector(
+    PublicationSelectors.selectPublishToUrl,
+  );
 
   const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
@@ -55,7 +80,10 @@ export function PublicationFilters({
     [dispatch],
   );
 
-  const isRootTarget = publication.targetFolder.split('/').length === 1;
+  const targetFolder = publicationModel
+    ? editedPublishToUrl
+    : publication.targetFolder;
+  const isRootTarget = targetFolder.split('/').length === 1;
 
   if (isRulesLoading) {
     return (
@@ -74,7 +102,11 @@ export function PublicationFilters({
 
   return (
     <>
-      {isNoRulesToDisplay && (
+      {showNoRulesLabel(
+        rulesOnEdit.length,
+        isNoRulesToDisplay,
+        publicationModel ? editedPublishToUrl : undefined,
+      ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
           {t(
             'This publication will be available to all users in the organization',
@@ -84,16 +116,23 @@ export function PublicationFilters({
       {oldRules.map(([path, rules]) => (
         <RuleListItem key={path} path={path} rules={rules} />
       ))}
-      {isNewRules && !isEditMode && (
+      {isNewRules && (!isEditMode || publicationModel) && (
         <RuleListItem path={publication.targetFolder} rules={newRules} />
       )}
-      {isEditMode && !isRootTarget && (
-        <RulesInput
-          isOpen={isRulesSetterVisible}
-          filters={filters}
-          setFilters={handleFilterUpdate}
-          onSwitchRulesSetter={setIsRulesSetterVisible}
-        />
+      {(isEditMode || publicationModel) && !isRootTarget && (
+        <>
+          {publicationModel && (
+            <p className="mb-1 text-xs text-secondary" data-qa="published-path">
+              {editedPublishToUrl.split('/').pop()}
+            </p>
+          )}
+          <RulesInput
+            isOpen={isRulesSetterVisible}
+            filters={filters}
+            setFilters={handleFilterUpdate}
+            onSwitchRulesSetter={setIsRulesSetterVisible}
+          />
+        </>
       )}
     </>
   );

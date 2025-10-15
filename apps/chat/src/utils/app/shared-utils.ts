@@ -1,5 +1,6 @@
 // SHARED UTILS (do not import other utils)
 import { Conversation } from '@/src/types/chat';
+import { ApiKeys } from '@/src/types/common';
 
 import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { ROOT_SECTION_NAME } from '@/src/constants/sections';
@@ -38,7 +39,7 @@ export const splitEntityId = (
   bucket: string;
   name: string;
   parentPath: string | undefined;
-  apiKey: string;
+  apiKey: ApiKeys;
   isRoot: boolean;
 } => {
   const parts = id.split('/');
@@ -52,7 +53,7 @@ export const splitEntityId = (
   const name = isRoot ? ROOT_SECTION_NAME : parts[parts.length - 1];
 
   return {
-    apiKey: parts[0],
+    apiKey: parts[0] as ApiKeys,
     bucket: parts[1],
     parentPath,
     name,

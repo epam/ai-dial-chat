@@ -438,6 +438,10 @@ export const PublishingExpectedMessages = {
   publicationTopicsAreValid: 'Publication topics are valid',
   publishedResourceIsAvailable: (resource: string) =>
     `Published resource: ${resource} is available`,
+  publicationRequestCreated: 'Successfully created publication request',
+  unpublishRequestCreated: 'Successfully created unpublish request',
+  publicationRequestApproved: 'Successfully approved publication request',
+  publicationRequestRejected: 'Successfully rejected publication request',
 };
 
 export const MarketplaceExpectedMessages = {

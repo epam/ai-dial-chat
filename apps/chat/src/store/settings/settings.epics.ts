@@ -68,8 +68,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
       ];
-    case PageType.AppsEditorSettings:
-    case PageType.AppsEditorGeneralInfo:
+    case PageType.AppsEditor:
       return [
         of(UIActions.init()),
         of(ModelsActions.init()),

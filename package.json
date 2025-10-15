@@ -32,7 +32,7 @@
   "dependencies": {
     "@floating-ui/react": "^0.26.7",
     "@hookform/resolvers": "^5.2.1",
-    "@monaco-editor/react": "^4.6.0",
+    "@monaco-editor/react": "4.6.0",
     "@nx/next": "21.4.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.50.0",
@@ -164,17 +164,19 @@
   "optionalDependencies": {
     "@nx/playwright": "21.4.0",
     "@playwright/test": "^1.55.1",
-    "@types/tinycolor2": "^1.4.6",
     "@types/adm-zip": "^0.5.7",
+    "@types/he": "^1.2.3",
+    "@types/tinycolor2": "^1.4.6",
     "allure-playwright": "^3.3.2",
     "eslint-plugin-playwright": "^2.2.0",
     "file-type": "^21.0.0",
-    "playwright-chromium": "^1.55.1",
-    "@types/he": "^1.2.3"
+    "playwright-chromium": "^1.55.1"
   },
   "overrides": {
     "esbuild": "0.25.10",
-    "tmp": "0.2.5"
+    "tmp": "0.2.5",
+    "monaco-editor": "0.43.0",
+    "@monaco-editor/loader": "1.4.0"
   },
   "engines": {
     "node": ">=22.2.0",
