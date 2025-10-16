@@ -183,7 +183,7 @@ export const PublishingApprovalModalSelectors = {
   requestCreatedLabel: '[data-qa="creation-date-label"]',
   goToReviewButton: '[data-qa="go-to-review"]',
   rejectButton: '[data-qa="reject"]',
-  approveButton: '[data-qa="approve"]',
+  approveButton: '[data-qa="submit"]',
   duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
 };
 
