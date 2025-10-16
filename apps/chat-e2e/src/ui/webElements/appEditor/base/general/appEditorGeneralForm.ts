@@ -39,7 +39,6 @@ export class AppEditorGeneralForm extends AppEditorForm {
     this.topicsDropdownContainer.getChildElementBySelector(
       AddApplicationGeneralInfoFormSelector.topicsDropdownToggle,
     );
-
   public selectedTopicPills =
     this.topicsDropdownContainer.getChildElementBySelector(
       AddApplicationGeneralInfoFormSelector.selectedTopicPills,
@@ -48,6 +47,9 @@ export class AppEditorGeneralForm extends AppEditorForm {
     this.topicsDropdownContainer.getChildElementBySelector(
       AddApplicationGeneralInfoFormSelector.clearAllTopicsButton,
     );
+  public iconField = this.getChildElementBySelector(
+    AddApplicationGeneralInfoFormSelector.icon,
+  );
   public addIconButton = this.getChildElementBySelector(
     AddApplicationGeneralInfoFormSelector.addIcon,
   );

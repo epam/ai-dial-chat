@@ -9,6 +9,7 @@ import {
   ApplicationTypes,
   Attachment,
   CheckboxState,
+  ExpectedConstants,
   ExpectedMessages,
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
@@ -208,7 +209,8 @@ dialTest(
 
 dialTest(
   'Sources: the search results are updated if to remove/add custom application.\n' +
-    'Sources: the filter disappears and search results are updated if to remove custom application when only one existed',
+    'Sources: the filter disappears and search results are updated if to remove custom application when only one existed.\n' +
+    `My workspace: The button is named 'Add app', the menu has names 'Custom app', 'Code app'`,
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -219,6 +221,8 @@ dialTest(
     marketplaceHeader,
     marketplaceAgentsSection,
     marketplaceAgents,
+    marketplaceAgentsAssertion,
+    addAppDropdownMenuAssertion,
     appEditorPage,
     appEditorGeneralForm,
     customAppEditorViewForm,
@@ -228,7 +232,7 @@ dialTest(
     baseAssertion,
     agentDetailsModal,
   }) => {
-    setTestIds('EPMRTC-5351', 'EPMRTC-5238');
+    setTestIds('EPMRTC-5351', 'EPMRTC-5238', 'EPMRTC-7181');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     let myCustomAppsSourceFilterElement: Locator;
@@ -268,22 +272,33 @@ dialTest(
     );
 
     await dialTest.step(
-      'Create one more custom application in the "My Workspace"',
+      'Navigate to "My Workspace" and verify "Add app" button title and available menu options',
       async () => {
         await navigationPanel.goToMyWorkspace();
-        await marketplaceHeader.addAppButton.click();
-        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
-        await appEditorGeneralForm.fillInAppFields({
-          name: secondAppName,
-        });
-        await appEditorGeneralForm.goNext();
-        await customAppEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
+        await marketplaceAgentsAssertion.assertElementText(
+          marketplaceHeader.addAppButton,
+          ExpectedConstants.addAppButtonTitle,
+        );
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenuAssertion.assertMenuIncludesOptions(
+          ...Object.values(AddAppMenuOptions),
+        );
       },
     );
+
+    await dialTest.step('Create one more custom application', async () => {
+      await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
+      await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
+      await appEditorGeneralForm.fillInAppFields({
+        name: secondAppName,
+      });
+      await appEditorGeneralForm.goNext();
+      await customAppEditorViewForm.fillInAppFields();
+      await appEditorHeader.focusOn();
+      await appEditorHeader.saveAndExitButton.click();
+      await marketplacePage.waitForPageLoaded();
+    });
 
     await dialTest.step(
       'Verify newly added app is displayed immediately',

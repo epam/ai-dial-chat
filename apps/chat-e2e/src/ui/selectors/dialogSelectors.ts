@@ -261,7 +261,7 @@ export const AppEditorPreviewToggleSelectors = {
 export const AppEditorGeneralInfoPreviewSelectors = {
   fullContainer: '[data-qa="app-preview-general-info-full-container"]',
   appPreviewGeneralInfoContainer: '[data-qa="app-preview-general-info"]',
-  previewIconContainer: '[data-qa="entity-icon"]',
+  previewIconContainer: '[data-qa="icon-container"]',
   previewAgentName: '[data-qa="entity-name"]',
   previewTopicsContainer: '[data-qa="app-topics"]',
   previewInformationSection: '[data-qa="application-information"]',
@@ -287,6 +287,7 @@ export const AddApplicationGeneralInfoFormSelector = {
   appGeneralFormContainer: '[data-qa="app-general-form"]',
   name: '#name',
   version: '#version',
+  icon: '[data-qa="icon"]',
   addIcon: '[data-qa="add-icon"]',
   changeIcon: '[data-qa="change-icon"]',
   descriptionInput: '#description',
@@ -312,6 +313,10 @@ export const AddApplicationAppSettingsFormSelector = {
   unselectAttachmentTypePillButton: (type: string) =>
     `button[data-qa="unselect-item-${type}"]`,
 };
+
+export const AddExternalAppSettingsFormSelector = {
+  externalUrl: '#externalUrl',
+}
 
 export const InformationModalSelectors = {
   container: '[data-qa="info-modal"]',

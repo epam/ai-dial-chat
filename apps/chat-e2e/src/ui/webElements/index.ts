@@ -79,3 +79,8 @@ export * from './appEditor/customApp/customAppEditorViewForm';
 export * from './appEditor/customApp/customAppEditorAppSettingsPreviewBody';
 export * from './appEditor/customApp/customAppEditorAppSettingsPreview';
 export * from './appEditor/customApp/customAppEditorContainer';
+
+export * from './appEditor/externalApp/externalAppEditorViewForm';
+export * from './appEditor/externalApp/externalAppEditorAppSettingsPreviewBody';
+export * from './appEditor/externalApp/externalAppEditorAppSettingsPreview';
+export * from './appEditor/externalApp/externalAppEditorContainer';

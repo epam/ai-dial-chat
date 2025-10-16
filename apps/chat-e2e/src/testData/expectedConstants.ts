@@ -258,6 +258,8 @@ export const ExpectedConstants = {
   noWorkspaceAgentsFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
   noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  addAppButtonTitle: 'Add app',
+  openInNewTabButtonTitle: 'Open in New Tab',
   versionPrefix: 'Version: ',
   addToMyWorkspaceTooltip: 'Add to My workspace',
   removeFromMyWorkspaceTooltip: 'Remove from My workspace',
@@ -390,7 +392,7 @@ export enum ExampleURLs {
 export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
-  quickApp = 'Quick app',
+  externalApp = 'External app',
 }
 
 export enum AppEditorGeneralFormFields {
@@ -406,6 +408,7 @@ export enum AppEditorViewFormFields {
   attachmentTypes = 'Attachment types',
   maxAttachmentsNumber = 'Max. attachments number',
   chatCompletionUrl = 'Chat completion URL',
+  externalUrl = 'External URL',
 }
 
 export enum EditPromptFormFields {
