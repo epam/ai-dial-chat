@@ -182,6 +182,8 @@ export const getSortedEntities = async (token: JWT | null) => {
       ...(entity.function && {
         functionStatus: entity.function?.status,
       }),
+      ...(entity.viewer_url && { viewerUrl: entity.viewer_url }),
+      ...(entity.editor_url && { editorUrl: entity.editor_url }),
     });
   }
 
