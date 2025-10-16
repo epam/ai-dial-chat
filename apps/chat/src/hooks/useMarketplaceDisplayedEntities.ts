@@ -32,7 +32,7 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
 ) => {
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
-  );
+  ).trim();
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
   const selectedEntitiesTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
