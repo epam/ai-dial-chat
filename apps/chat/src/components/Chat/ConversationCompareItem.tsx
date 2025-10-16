@@ -4,7 +4,7 @@ import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 
-import { ConversationRow } from '@/src/components/Common/ReplaceConfirmationModal/Components';
+import { ConversationRow } from '@/src/components/Common/ReplaceConfirmationModal/ReplaceConversationRow';
 
 import { PublicVersionSelector } from './Publish/PublicVersionSelector';
 

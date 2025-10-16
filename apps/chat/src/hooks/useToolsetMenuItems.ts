@@ -20,7 +20,7 @@ import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -74,9 +74,16 @@ export const useToolsetMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
-  const isSignedIn = isToolsetSignedIn(entity);
   const isWithAuth =
     entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
+  const isSignedInGlobal = isToolsetSignedIn(entity);
+  const isSignedInUser = isToolsetSignedIn(
+    entity,
+    ToolsetCredentialsLevel.USER,
+  );
+  const isSignedIn = isSignedInUser || isSignedInGlobal;
+  const canSignOut =
+    !isPublicApp || isSignedInUser || (isSignedInGlobal && isPublicAndAdmin);
 
   const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
 
@@ -97,10 +104,10 @@ export const useToolsetMenuItems = ({
         onClick: handleEdit,
       },
       {
-        name: t(isSignedIn ? 'Log out' : 'Log in'),
+        name: t(isSignedIn && canSignOut ? 'Log out' : 'Log in'),
         dataQa: 'toolset-login',
-        display: canEditOrView && disabledActions.login !== true && isWithAuth,
-        Icon: isSignedIn ? IconLogout : IconLogin,
+        display: disabledActions.login !== true && isWithAuth,
+        Icon: isSignedIn && canSignOut ? IconLogout : IconLogin,
         onClick: handleLogin,
       },
       // {

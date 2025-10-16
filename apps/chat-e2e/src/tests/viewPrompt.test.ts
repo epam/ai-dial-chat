@@ -37,8 +37,8 @@ dialTest(
     downloadAssertion,
     shareModal,
     shareModalAssertion,
-    publishingRequestModal,
-    publishingRequestModalAssertion,
+    publishingRequestDialog,
+    publishingRequestDialogAssertion,
     informationModal,
     informationModalAssertion,
     baseAssertion,
@@ -249,11 +249,11 @@ dialTest(
       'Verify prompt publishing request can be created',
       async () => {
         await promptPreviewModal.promptPublishButton.click();
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal.cancelButton.click();
+        await publishingRequestDialog.cancelButton.click();
         await promptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );

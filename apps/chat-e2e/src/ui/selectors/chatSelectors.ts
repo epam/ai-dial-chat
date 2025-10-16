@@ -103,6 +103,7 @@ export const ToastSelectors = {
 export const ErrorLabelSelectors = {
   noResultFound: '[data-qa="no-data"]',
   notAllowedModel: '[data-qa="not-allowed-model-error"]',
+  changeAgentBtn: '[data-qa="change-agent-btn"]',
   fieldError: '.text-error',
   errorText: '[data-qa="error-text"]',
   errorContainer: '[data-qa="error-message-container"]',

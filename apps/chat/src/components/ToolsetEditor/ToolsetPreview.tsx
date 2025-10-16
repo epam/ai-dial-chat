@@ -1,4 +1,3 @@
-import { IconArrowsMinimize } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
@@ -7,28 +6,25 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { fakeCallback } from '@/src/utils/app/common';
 
 import { EntityType } from '@/src/types/common';
+import { PreviewMode } from '@/src/types/marketplace';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
+import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
 import { ToolsetDetailsContent } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsContent';
 import { ToolsetDetailsHeader } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsHeader';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
 interface ToolsetPreviewProps {
-  onClosePreview?: () => void;
   currentToolset?: ToolsetModel;
 }
 
-export const ToolsetPreview = ({
-  onClosePreview,
-  currentToolset,
-}: ToolsetPreviewProps) => {
-  const { t } = useTranslation(Translation.Chat);
+export const ToolsetPreview = ({ currentToolset }: ToolsetPreviewProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
   const { control } = useFormContext<ToolsetEditorForm>();
   const [isDetailed, setIsDetailed] = useState(false);
 
@@ -118,14 +114,11 @@ export const ToolsetPreview = ({
             switchOFFText={t('OFF')}
           />
         </div>
-        <button
-          className="hidden pl-3 text-secondary hover:text-accent-primary max-xl:flex"
-          onClick={onClosePreview}
-        >
-          <Tooltip tooltip={t('Hide preview')}>
-            <IconArrowsMinimize size={24} />
-          </Tooltip>
-        </button>
+
+        <PreviewModeButton
+          mode={PreviewMode.closed}
+          className="hidden pl-3 max-xl:flex"
+        />
       </div>
 
       <div className="flex flex-1 items-center justify-center">

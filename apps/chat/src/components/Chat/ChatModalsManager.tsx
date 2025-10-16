@@ -6,6 +6,7 @@ import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
 
 import { PromptVariablesForApplyDialog } from './ChatInput/PromptVariablesForApplyDialog';
+import { PublishDialog } from './Publish/PublishDialog';
 import { RenameConversationModal } from './RenameConversationModal';
 import { ShareModal } from './ShareModal';
 
@@ -21,6 +22,7 @@ export function ChatModalsManager() {
       <PromptVariablesForApplyDialog />
       <PromptModal />
       <SystemDialogs />
+      <PublishDialog />
     </>
   );
 }

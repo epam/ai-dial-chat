@@ -16,6 +16,7 @@ interface Props {
   placeholder?: string;
   errors?: string[];
   onChange: (value: string) => void;
+  dataQA?: string;
 }
 
 export const EditableField: React.FC<Props> = ({
@@ -27,6 +28,7 @@ export const EditableField: React.FC<Props> = ({
   placeholder,
   errors = [],
   onChange,
+  dataQA,
 }) => {
   const isErrors = !!errors?.length;
   const onChangeHandler = useCallback(
@@ -49,6 +51,7 @@ export const EditableField: React.FC<Props> = ({
           value={value}
           onChange={onChangeHandler}
           placeholder={placeholder}
+          data-qa={dataQA}
         />
 
         <ErrorTooltip

@@ -88,6 +88,13 @@ const selectAllGroupToolsetsKeySet = (
   );
 };
 
+const selectToolsetsTopics = createSelector([selectToolsets], (toolsets) => {
+  return sortBy(
+    uniq(toolsets?.flatMap((toolset) => toolset.topics ?? []) ?? []),
+    (topic) => topic.toLowerCase(),
+  );
+});
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -103,4 +110,5 @@ export const ToolsetSelectors = {
   selectEditorStep,
   selectPublishRequestToolsets,
   selectAllGroupToolsetsKeySet,
+  selectToolsetsTopics,
 };
