@@ -578,6 +578,14 @@ const ChatView = memo(() => {
 
     if (!model) return;
 
+    if (model.viewerUrl) {
+      return {
+        viewerUrl: model.viewerUrl,
+        title: model.name,
+        applicationId: model.id,
+      };
+    }
+
     if (
       model.applicationTypeSchemaId &&
       applicationTypeSchemas.some(
