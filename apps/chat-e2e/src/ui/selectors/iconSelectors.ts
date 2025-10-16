@@ -15,4 +15,7 @@ export const IconSelectors = {
   dotCircleIcon: '.tabler-icon-circle-dot',
   filledPointIcon: '.tabler-icon-point-filled',
   exclamationCircleIcon: '.tabler-icon-exclamation-circle',
+  externalAppIcon: '.tabler-icon-external-link',
+  arrowsMaximizeIcon: '.tabler-icon-arrows-maximize',
+  arrowsMinimizeIcon: '.tabler-icon-arrows-minimize',
 };

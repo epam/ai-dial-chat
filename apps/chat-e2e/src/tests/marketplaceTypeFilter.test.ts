@@ -3,6 +3,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
+  AppEditorAppTypes,
   CheckboxState,
   ExpectedMessages,
   MarketplaceExpectedMessages,
@@ -184,7 +185,7 @@ dialTest(
     addAppDropdownMenu,
     appEditorPage,
     appEditorGeneralForm,
-    appEditorViewForm,
+    customAppEditorViewForm,
     appEditorHeader,
     setTestIds,
     baseAssertion,
@@ -240,12 +241,12 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
+        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
         await appEditorGeneralForm.fillInAppFields({
           name: addedAppName,
         });
         await appEditorGeneralForm.goNext();
-        await appEditorViewForm.fillInAppFields();
+        await customAppEditorViewForm.fillInAppFields();
         await appEditorHeader.focusOn();
         await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
