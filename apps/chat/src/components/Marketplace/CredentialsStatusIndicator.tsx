@@ -39,9 +39,13 @@ export const CredentialsStatusIndicator = ({
     <Tooltip
       tooltip={isSignedIn ? 'Signed In' : 'Signed Out'}
       isTriggerClickable
-      triggerClassName="flex"
+      triggerClassName="flex shrink-0"
     >
-      <Badge label={t(label)} type={isSignedIn ? 'success' : 'error'} />
+      <Badge
+        label={t(label)}
+        type={isSignedIn ? 'success' : 'error'}
+        className="shrink-0"
+      />
     </Tooltip>
   );
 };

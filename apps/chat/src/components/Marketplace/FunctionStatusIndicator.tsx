@@ -52,9 +52,13 @@ export const FunctionStatusIndicator = ({
     <Tooltip
       tooltip={getLabel(entity)}
       isTriggerClickable
-      triggerClassName="flex"
+      triggerClassName="flex shrink-0"
     >
-      <Badge label={t(getLabel(entity))} type={getBadgeType(entity)} />
+      <Badge
+        label={t(getLabel(entity))}
+        type={getBadgeType(entity)}
+        className="shrink-0"
+      />
     </Tooltip>
   ) : null;
 };
