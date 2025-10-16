@@ -155,7 +155,7 @@ export const ApplicationCard = memo(
                 <div
                   className={classNames(
                     'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
-                    !isMyEntity && '!mr-12',
+                    !isMyEntity && '!mr-11',
                   )}
                 >
                   {t('Version: ')}
