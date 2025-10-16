@@ -6,10 +6,10 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   AddAppMenuOptions,
+  AppEditorAppTypes,
   AppEditorGeneralFormFields,
   AppEditorViewFormFields,
   AppMenuActions,
-  AppsEditorTypes,
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
@@ -137,7 +137,7 @@ dialTest(
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
+        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
 
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
@@ -216,7 +216,7 @@ dialTest(
           generalInfoStep,
           true,
         );
-        await appEditorHeaderAssertion.assertSelectedFilledPointIconState(
+        await appEditorHeaderAssertion.assertActiveStepIconState(
           generalInfoStep,
           'visible',
         );
@@ -224,7 +224,7 @@ dialTest(
           appSettingsStep,
           false,
         );
-        await appEditorHeaderAssertion.assertNotSelectedPointIconState(
+        await appEditorHeaderAssertion.assertNotActiveStepIconState(
           appSettingsStep,
           'visible',
         );
@@ -269,7 +269,7 @@ dialTest(
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
+        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
 
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
@@ -303,7 +303,7 @@ dialTest(
           generalInfoStep,
           true,
         );
-        await appEditorHeaderAssertion.assertSelectedFilledPointIconState(
+        await appEditorHeaderAssertion.assertActiveStepIconState(
           generalInfoStep,
           'visible',
         );
@@ -311,7 +311,7 @@ dialTest(
           appSettingsStep,
           false,
         );
-        await appEditorHeaderAssertion.assertNotSelectedPointIconState(
+        await appEditorHeaderAssertion.assertNotActiveStepIconState(
           appSettingsStep,
           'visible',
         );
@@ -387,7 +387,7 @@ dialTest(
           generalInfoStep,
           false,
         );
-        await appEditorHeaderAssertion.assertNotSelectedCheckedCircleIconState(
+        await appEditorHeaderAssertion.assertCompletedStepIconState(
           generalInfoStep,
           'visible',
         );
@@ -395,7 +395,7 @@ dialTest(
           appSettingsStep,
           true,
         );
-        await appEditorHeaderAssertion.assertSelectedFilledPointIconState(
+        await appEditorHeaderAssertion.assertActiveStepIconState(
           appSettingsStep,
           'visible',
         );
@@ -525,7 +525,9 @@ dialTest(
       'On card detailed pop-up form click on Edit icon',
       async () => {
         await agentDetailsModal.clickEditButton({ triggeredHttpMethod: 'GET' });
-        await appEditorPage.waitForPageLoadedForEdit(AppsEditorTypes.CustomApp);
+        await appEditorPage.waitForPageLoadedForEdit(
+          AppEditorAppTypes.CustomApp,
+        );
       },
     );
 
@@ -665,7 +667,9 @@ dialTest(
     await dialTest.step(
       'App Editor page was opened, title "Edit custom app", two available steps are displayed in the header:',
       async () => {
-        await appEditorPage.waitForPageLoadedForEdit(AppsEditorTypes.CustomApp);
+        await appEditorPage.waitForPageLoadedForEdit(
+          AppEditorAppTypes.CustomApp,
+        );
         await baseAssertion.assertElementState(customAppEditorViewForm);
         await baseAssertion.assertElementText(
           appEditorHeader.actionAndApplicationTypeTitle,
@@ -708,7 +712,7 @@ dialTest(
           AppEditSteps.appSettings,
           false,
         );
-        await appEditorHeaderAssertion.assertNotSelectedCheckedCircleIconState(
+        await appEditorHeaderAssertion.assertCompletedStepIconState(
           AppEditSteps.appSettings,
           'visible',
         );
@@ -716,7 +720,7 @@ dialTest(
           AppEditSteps.generalInfo,
           true,
         );
-        await appEditorHeaderAssertion.assertSelectedFilledPointIconState(
+        await appEditorHeaderAssertion.assertActiveStepIconState(
           AppEditSteps.generalInfo,
           'visible',
         );
@@ -1119,7 +1123,7 @@ dialTest(
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
-      await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
+      await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
     });
 
     await dialTest.step(
@@ -1662,7 +1666,9 @@ dialTest(
         await agentElement.click();
         await agentDetailsModal.waitForState();
         await agentDetailsModal.clickEditButton({ triggeredHttpMethod: 'GET' });
-        await appEditorPage.waitForPageLoadedForEdit(AppsEditorTypes.CustomApp);
+        await appEditorPage.waitForPageLoadedForEdit(
+          AppEditorAppTypes.CustomApp,
+        );
       },
     );
 
@@ -1823,7 +1829,7 @@ dialTest(
 
     await dialTest.step('Open create custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
-      await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
+      await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
     });
 
     await dialTest.step(
@@ -2144,7 +2150,7 @@ dialTest(
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
-      await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
+      await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
       await appEditorHeaderAssertion.assertActionTitle(
         AppMenuActions.add(AddAppMenuOptions.customApp),
       );
@@ -2232,7 +2238,7 @@ dialTest(
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
+        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
         await toastAssertion.assertToastIsHidden();
         await appEditorHeaderAssertion.assertActionTitle(
           AppMenuActions.add(AddAppMenuOptions.customApp),
@@ -2363,7 +2369,7 @@ dialTest(
 
     await dialTest.step('Click Edit icon', async () => {
       await agentDetailsModal.editButton.click();
-      await appEditorPage.waitForPageLoadedForEdit(AppsEditorTypes.CustomApp);
+      await appEditorPage.waitForPageLoadedForEdit(AppEditorAppTypes.CustomApp);
     });
 
     await dialTest.step(

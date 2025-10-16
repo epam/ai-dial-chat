@@ -642,7 +642,7 @@ export enum E2EUserRole {
   manager = 'Manager',
 }
 
-export enum AppsEditorTypes {
+export enum AppEditorAppTypes {
   CustomApp = 'Custom app',
   ExternalApp = 'External app',
   QuickApp = 'Quick app',

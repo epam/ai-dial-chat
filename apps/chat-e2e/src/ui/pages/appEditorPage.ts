@@ -1,4 +1,4 @@
-import { AppsEditorTypes } from '@/src/testData';
+import { AppEditorAppTypes } from '@/src/testData';
 import { BasePage } from '@/src/ui/pages/basePage';
 import {
   AppEditorGeneralForm,
@@ -53,34 +53,43 @@ export class AppEditorPage extends BasePage {
   }
 
   //get generic container based on app type
-  getAppEditorContainer(appType: AppsEditorTypes) {
+  getAppEditorContainer(appType: AppEditorAppTypes) {
     switch (appType) {
-      case AppsEditorTypes.CustomApp:
+      case AppEditorAppTypes.CustomApp:
         return this.getCustomAppEditorContainer();
       default:
         throw new Error(`Unsupported app type: ${appType}`);
     }
   }
 
-  async waitForPageLoaded(appType: AppsEditorTypes) {
-    const appEditorContainer = this.getAppEditorContainer(appType);
+  async waitForPageLoaded(appType: AppEditorAppTypes) {
+    const appEditorContainer = await this.waitForAppEditorLoaded(appType);
     const applicationGeneralForm = appEditorContainer.getAppEditorGeneralForm();
     const applicationPreview =
       appEditorContainer.getAppEditorGeneralInfoPreview();
-    await appEditorContainer.getChatLoader().waitForState({ state: 'hidden' });
-    await appEditorContainer.getHeader().waitForState();
-    await applicationGeneralForm.waitForState();
-    await applicationPreview.getAppEditorPreviewCard().waitForState();
+    await Promise.all([
+      applicationGeneralForm.waitForState(),
+      applicationPreview.getAppEditorPreviewCard().waitForState(),
+    ]);
   }
 
-  async waitForPageLoadedForEdit(appType: AppsEditorTypes) {
-    const appEditorContainer = this.getAppEditorContainer(appType);
+  async waitForPageLoadedForEdit(appType: AppEditorAppTypes) {
+    const appEditorContainer = await this.waitForAppEditorLoaded(appType);
     const applicationViewForm = appEditorContainer.getAppEditorViewForm();
     const applicationPreview =
       appEditorContainer.getAppEditorAppSettingsPreview();
-    await appEditorContainer.getChatLoader().waitForState({ state: 'hidden' });
-    await appEditorContainer.getHeader().waitForState();
-    await applicationViewForm.waitForState();
-    await applicationPreview.waitForState();
+    await Promise.all([
+      applicationViewForm.waitForState(),
+      applicationPreview.waitForState(),
+    ]);
+  }
+
+  private async waitForAppEditorLoaded(appType: AppEditorAppTypes) {
+    const appEditorContainer = this.getAppEditorContainer(appType);
+    await Promise.all([
+      appEditorContainer.getChatLoader().waitForState({ state: 'hidden' }),
+      appEditorContainer.getHeader().waitForState(),
+    ]);
+    return appEditorContainer;
   }
 }

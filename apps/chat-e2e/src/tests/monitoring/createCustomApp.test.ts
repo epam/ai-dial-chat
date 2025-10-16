@@ -2,8 +2,8 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
+  AppEditorAppTypes,
   AppMenuActions,
-  AppsEditorTypes,
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
@@ -66,7 +66,7 @@ dialTest(
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded(AppsEditorTypes.CustomApp);
+        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
 
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,

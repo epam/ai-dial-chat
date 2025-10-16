@@ -72,7 +72,7 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     }
   }
 
-  public async assertSelectedFilledPointIconState(
+  public async assertActiveStepIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
@@ -86,7 +86,7 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     );
   }
 
-  public async assertNotSelectedPointIconState(
+  public async assertNotActiveStepIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
@@ -99,7 +99,7 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     );
   }
 
-  public async assertNotSelectedCheckedCircleIconState(
+  public async assertCompletedStepIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
