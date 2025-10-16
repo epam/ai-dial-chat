@@ -11,20 +11,26 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
 
 import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import {
+  getToolsetAuthAction,
+  getToolsetAuthActionLabel,
+} from '@/src/utils/app/toolsets';
 
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors } from '@/src/store/selectors';
+
+import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
@@ -51,6 +57,7 @@ export const useToolsetMenuItems = ({
   isPreview = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const screenState = useScreenState();
 
   // const isApplicationsSharingEnabled = useAppSelector((state) =>
   //   SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
@@ -76,14 +83,7 @@ export const useToolsetMenuItems = ({
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const isWithAuth =
     entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
-  const isSignedInGlobal = isToolsetSignedIn(entity);
-  const isSignedInUser = isToolsetSignedIn(
-    entity,
-    ToolsetCredentialsLevel.USER,
-  );
-  const isSignedIn = isSignedInUser || isSignedInGlobal;
-  const canSignOut =
-    !isPublicApp || isSignedInUser || (isSignedInGlobal && isPublicAndAdmin);
+  const authAction = getToolsetAuthAction(entity, isAdmin);
 
   const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
 
@@ -104,10 +104,14 @@ export const useToolsetMenuItems = ({
         onClick: handleEdit,
       },
       {
-        name: t(isSignedIn && canSignOut ? 'Log out' : 'Log in'),
+        name: t(getToolsetAuthActionLabel(authAction, screenState)),
         dataQa: 'toolset-login',
         display: disabledActions.login !== true && isWithAuth,
-        Icon: isSignedIn && canSignOut ? IconLogout : IconLogin,
+        Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
+        iconClassName:
+          authAction === ToolsetAuthAction.LogOut
+            ? 'stroke-error'
+            : 'stroke-accent-secondary',
         onClick: handleLogin,
       },
       // {
@@ -166,7 +170,8 @@ export const useToolsetMenuItems = ({
       isAppIdPublic,
       canEditOrView,
       handleEdit,
-      isSignedIn,
+      authAction,
+      screenState,
       isWithAuth,
       handleLogin,
       isMyAppOrPreview,

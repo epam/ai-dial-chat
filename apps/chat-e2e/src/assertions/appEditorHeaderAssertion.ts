@@ -72,36 +72,44 @@ export class AppEditorHeaderAssertion extends BaseAssertion {
     }
   }
 
-  public async assertSelectedFilledDotCircleIconState(
+  public async assertActiveStepIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
     const stepLocator = this.getStepLocator(step);
-    await this.assertElementState(
-      this.appEditorHeader.selectedFilledDotCircleIcon(stepLocator),
-      expectedState,
+    const iconElement =
+      this.appEditorHeader.selectedFilledPointIcon(stepLocator);
+    await this.assertElementState(iconElement, expectedState);
+    await this.assertElementColor(
+      iconElement,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
     );
   }
 
-  public async assertNotSelectedDotCircleIconState(
+  public async assertNotActiveStepIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
     const stepLocator = this.getStepLocator(step);
-    await this.assertElementState(
-      this.appEditorHeader.notSelectedDotCircleIcon(stepLocator),
-      expectedState,
+    const iconElement = this.appEditorHeader.notSelectedPointIcon(stepLocator);
+    await this.assertElementState(iconElement, expectedState);
+    await this.assertElementColor(
+      iconElement,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSecondary),
     );
   }
 
-  public async assertNotSelectedCheckedCircleIconState(
+  public async assertCompletedStepIconState(
     step: BaseElement | string,
     expectedState: ElementState,
   ) {
     const stepLocator = this.getStepLocator(step);
-    await this.assertElementState(
-      this.appEditorHeader.notSelectedCheckedCircleIcon(stepLocator),
-      expectedState,
+    const iconElement =
+      this.appEditorHeader.notSelectedCheckedCircleIcon(stepLocator);
+    await this.assertElementState(iconElement, expectedState);
+    await this.assertElementColor(
+      iconElement,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
     );
   }
 

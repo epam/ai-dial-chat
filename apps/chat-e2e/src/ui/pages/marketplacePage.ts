@@ -18,10 +18,12 @@ export class MarketplacePage extends BasePage {
       updateInstalledDeployments?: boolean;
       getInstalledDeployments?: boolean;
       getPublishedApplications?: boolean;
+      getStyles?: boolean;
     } = {
       updateInstalledDeployments: true,
       getInstalledDeployments: false,
       getPublishedApplications: true,
+      getStyles: false,
     },
   ): Promise<void> {
     await this.openMarketplaceUrl(ExpectedConstants.workspacePath(), {
@@ -75,6 +77,7 @@ export class MarketplacePage extends BasePage {
       updateInstalledDeployments?: boolean;
       getInstalledDeployments?: boolean;
       getPublishedApplications?: boolean;
+      getStyles?: boolean;
     } = {},
   ): Promise<void> {
     const expectedResponses: ExpectedApiResponse[] = [];
@@ -91,11 +94,16 @@ export class MarketplacePage extends BasePage {
         urlPattern: API.publishedApplicationsHost(),
       });
     }
-
     if (options.updateInstalledDeployments) {
       expectedResponses.push({
         apiMethod: 'PUT',
         urlPattern: API.installedDeploymentsHost(),
+      });
+    }
+    if (options.getStyles) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.themeStylesHost,
       });
     }
 

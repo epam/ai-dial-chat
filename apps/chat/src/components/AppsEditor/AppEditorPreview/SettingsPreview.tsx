@@ -95,7 +95,10 @@ const ChatPreview = () => {
   }
 
   return (
-    <div className="relative flex size-full min-w-0 grow flex-col">
+    <div
+      className="relative flex size-full min-w-0 grow flex-col"
+      data-qa="preview-body"
+    >
       {appLoading === UploadStatus.LOADING && (
         <div className="absolute flex size-full items-center justify-center bg-layer-2">
           <Spinner size={30} />
@@ -247,13 +250,13 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
   return (
     <>
-      <div className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4">
+      <div
+        className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4"
+        data-qa="preview-header"
+      >
         <div className="mr-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
           <span>{t('Preview')}:</span>
-          <span
-            data-qa="preview-app-version"
-            className="min-w-0 shrink truncate"
-          >
+          <span data-qa="preview-app-name" className="min-w-0 shrink truncate">
             {appDetails?.name}
           </span>
           <span data-qa="preview-app-version" className="text-nowrap">
@@ -297,7 +300,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
           {!externalAppsSchemaId.endsWith(type) ? (
             <ChatPreview />
           ) : (
-            <GeneralPreview entity={appDetails} />
+            <GeneralPreview entity={appDetails} dataQA="preview-body" />
           )}
         </div>
       )}

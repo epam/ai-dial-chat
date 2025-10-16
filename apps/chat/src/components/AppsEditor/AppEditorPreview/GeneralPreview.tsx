@@ -21,9 +21,10 @@ import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEdito
 
 interface GeneralPreviewProps {
   entity: DialAIEntityModel;
+  dataQA?: string;
 }
 
-export const GeneralPreview = ({ entity }: GeneralPreviewProps) => {
+export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const router = useRouter();
@@ -57,9 +58,12 @@ export const GeneralPreview = ({ entity }: GeneralPreviewProps) => {
   return (
     <div
       className="flex h-full flex-col px-5 py-4 xl:p-6"
-      data-qa="app-preview-general-info-full-container"
+      data-qa={dataQA ?? 'app-preview-general-info-full-container'}
     >
-      <div className="hidden max-w-full items-center justify-between md:flex xl:justify-end">
+      <div
+        className="hidden max-w-full items-center justify-between md:flex xl:justify-end"
+        data-qa="preview-toggle-container"
+      >
         <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary xl:hidden">
           {t('Preview')}
         </span>
