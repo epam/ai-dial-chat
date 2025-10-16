@@ -154,17 +154,19 @@ export const ApplicationCard = memo(
               {entity.version && (
                 <div
                   className={classNames(
-                    'mr-6 flex gap-1 text-xs leading-[14px] text-secondary',
+                    'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
                     !isMyEntity && '!mr-12',
                   )}
                 >
                   {t('Version: ')}
                   <span
-                    className="max-w-full overflow-hidden truncate whitespace-nowrap"
+                    className="mr-1 max-w-full overflow-hidden truncate whitespace-nowrap"
                     data-qa="version"
                   >
                     {entity.version}
                   </span>
+
+                  <MarketplaceEntityIndicator entity={entity} />
                 </div>
               )}
               <div className="flex whitespace-nowrap">
@@ -177,7 +179,6 @@ export const ApplicationCard = memo(
                   <span className="truncate" data-qa="entity-name">
                     {entity.name}
                   </span>
-                  <MarketplaceEntityIndicator entity={entity} />
                 </div>
               </div>
               <div

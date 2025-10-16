@@ -9,7 +9,7 @@ export abstract class AppEditorForm extends BaseElement {
     return this.fieldLabelHelper.getFieldRequiredIndicator(fieldName);
   }
 
-  protected constructor(page: Page, selector: string, parentLocator: Locator) {
+  protected constructor(page: Page, selector: string, parentLocator?: Locator) {
     super(page, selector, parentLocator);
     this.fieldLabelHelper = new FieldLabel(page, this.rootLocator);
   }
