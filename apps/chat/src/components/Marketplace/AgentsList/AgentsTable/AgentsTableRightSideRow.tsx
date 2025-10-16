@@ -18,6 +18,7 @@ import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
 import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
+import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface Props<T> {
@@ -70,8 +71,9 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
           isHovered && 'bg-layer-2',
         )}
       >
-        <div className="flex w-[100px] min-w-[100px] items-center">
-          <p className="truncate">{entity.version}</p>
+        <div className="flex w-[100px] min-w-[100px] flex-col justify-center gap-1">
+          <MarketplaceEntityIndicator entity={entity} />
+          <span className="truncate pl-[6px]">{entity.version}</span>
         </div>
         <div className="flex w-[161px] min-w-[161px] flex-col justify-center gap-2 overflow-hidden">
           {screenState === ScreenState.SM ? (

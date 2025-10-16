@@ -7,3 +7,9 @@ export enum ToolsetEditorQuery {
 }
 
 export const DRAFT_TOOLSET_ID = `${ApiKeys.Toolsets}/draft`;
+
+export enum ToolsetAuthAction {
+  LoginWithMyCreds = 'Login with my creds',
+  LogIn = 'Log in',
+  LogOut = 'Log out',
+}
