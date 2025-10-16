@@ -64,15 +64,15 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     selectedFilters[FilterTypes.TOPICS].length ||
     selectedFilters[FilterTypes.SOURCES].length;
   const isSomeToolsetsFilterNotEmpty =
-    searchTerm.length || selectedFilters[FilterTypes.TOPICS].length;
+    searchTerm.length ||
+    selectedFilters[FilterTypes.TOPICS].length ||
+    selectedFilters[FilterTypes.SOURCES].length;
   const isSomeFilterNotEmpty = isSelectedAgentsTab
     ? isSomeAgentsFilterNotEmpty
     : isSomeToolsetsFilterNotEmpty;
 
   const displayedEntities = useMemo(() => {
-    const filters = isSelectedAgentsTab
-      ? selectedFilters
-      : { [FilterTypes.TOPICS]: selectedFilters[FilterTypes.TOPICS] };
+    const filters = selectedFilters;
 
     const filteredEntities = searchedEntities.filter((entity) =>
       doesMarketplaceEntityMatchFilters(
@@ -133,7 +133,6 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     selectedTab,
     isSomeFilterNotEmpty,
     selectedViewType,
-    isSelectedAgentsTab,
     selectedFilters,
     applicationTypeSchemas,
     installedEntitiesIds,
