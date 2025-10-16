@@ -52,8 +52,8 @@ export interface CoreAIEntity<T = EntityType.Model> {
   function?: {
     status: ApplicationStatus;
   };
-  viewerUrl?: string;
-  editorUrl?: string;
+  viewer_url?: string;
+  editor_url?: string;
 }
 
 export interface DialAIEntityFeatures {
