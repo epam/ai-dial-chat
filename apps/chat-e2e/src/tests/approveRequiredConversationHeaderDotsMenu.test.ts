@@ -71,6 +71,7 @@ dialAdminTest(
       GeneratorUtil.randomPublicationRequestName();
     const publications: Publication[] = [];
     let expectedTodayConversationId: string;
+    let encodedExpectedTodayConversationId: string;
     let expectedPlaybackConversationId: string;
     let expectedEncodedPlaybackConversationId: string;
     let exportedData: UploadDownloadData;
@@ -155,6 +156,9 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Import the file and verify review conversation is created as a user conversation',
       async () => {
+        encodedExpectedTodayConversationId = ItemUtil.getEncodedItemId(
+          expectedTodayConversationId,
+        );
         await adminDialHomePage.waitForExpectedResponses(
           () =>
             adminDialHomePage.importFile(exportedData, () =>
@@ -163,11 +167,11 @@ dialAdminTest(
           [
             {
               apiMethod: 'POST',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
             {
               apiMethod: 'GET',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
           ],
         );
@@ -225,7 +229,7 @@ dialAdminTest(
           [
             {
               apiMethod: 'POST',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
             {
               apiMethod: 'POST',
@@ -233,7 +237,7 @@ dialAdminTest(
             },
             {
               apiMethod: 'GET',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
           ],
         );
