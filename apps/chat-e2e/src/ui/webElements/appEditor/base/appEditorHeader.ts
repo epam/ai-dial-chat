@@ -17,7 +17,7 @@ export enum AppEditSteps {
 }
 
 export class AppEditorHeader extends BaseElement {
-  constructor(page: Page, parentLocator: Locator) {
+  constructor(page: Page, parentLocator?: Locator) {
     super(page, ApplicationEditorHeader.header, parentLocator);
   }
 
@@ -47,7 +47,7 @@ export class AppEditorHeader extends BaseElement {
     );
   }
 
-  public selectedFilledDotCircleIcon(step: BaseElement) {
+  public selectedFilledPointIcon(step: BaseElement) {
     return step.getChildElementBySelector(
       `${ApplicationEditorHeader.selectedStepIcon}${IconSelectors.filledPointIcon}`,
     );
@@ -65,7 +65,7 @@ export class AppEditorHeader extends BaseElement {
     );
   }
 
-  public notSelectedDotCircleIcon(step: BaseElement) {
+  public notSelectedPointIcon(step: BaseElement) {
     return step.getChildElementBySelector(
       `${ApplicationEditorHeader.notSelectedStepIcon}${IconSelectors.filledPointIcon}`,
     );

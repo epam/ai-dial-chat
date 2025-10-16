@@ -2,6 +2,7 @@ import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
+  AppEditorAppTypes,
   ExpectedConstants,
   ExpectedMessages,
 } from '@/src/testData';
@@ -371,7 +372,7 @@ dialTest(
     applicationApiHelper,
     appEditorPage,
     appEditorGeneralForm,
-    appEditorViewForm,
+    customAppEditorViewForm,
     appEditorHeader,
     setTestIds,
     baseAssertion,
@@ -510,13 +511,13 @@ dialTest(
           await addAppDropdownMenu.selectMenuOption(
             AddAppMenuOptions.customApp,
           );
-          await appEditorPage.waitForPageLoaded();
+          await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
           await appEditorGeneralForm.fillInAppFields({
             name: addedAppNameVersion.name,
             version: addedAppNameVersion.version,
           });
           await appEditorGeneralForm.goNext();
-          await appEditorViewForm.fillInAppFields();
+          await customAppEditorViewForm.fillInAppFields();
           await appEditorHeader.focusOn();
           await appEditorHeader.saveAndExitButton.click();
           await marketplacePage.waitForPageLoaded();

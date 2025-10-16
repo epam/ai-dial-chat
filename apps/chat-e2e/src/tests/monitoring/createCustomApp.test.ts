@@ -2,6 +2,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AddAppMenuOptions,
+  AppEditorAppTypes,
   AppMenuActions,
   ExpectedConstants,
   ExpectedMessages,
@@ -19,7 +20,7 @@ dialTest(
     addAppDropdownMenu,
     appEditorPage,
     appEditorGeneralForm,
-    appEditorViewForm,
+    customAppEditorViewForm,
     appEditorHeader,
     marketplaceAgentsSection,
     agentDetailsModal,
@@ -31,7 +32,8 @@ dialTest(
     localStorageManager,
     agentInfoAssertion,
     agentDetailsModalAssertion,
-    appEditorAppSettingsAgentPreview,
+    customAppEditorAppSettingsPreview,
+    customAppEditorAppSettingsPreviewBody,
     navigationPanel,
   }) => {
     const shortDescription = GeneratorUtil.randomShortDescription();
@@ -64,7 +66,7 @@ dialTest(
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
+        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
 
         await appEditorHeaderAssertion.assertActionTitle(
           `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
@@ -117,11 +119,11 @@ dialTest(
         });
         await appEditorGeneralForm.goNext();
         await baseAssertion.assertElementState(
-          appEditorAppSettingsAgentPreview,
+          customAppEditorAppSettingsPreview,
           'visible',
         );
         await baseAssertion.assertElementState(
-          appEditorAppSettingsAgentPreview.previewSpinner,
+          customAppEditorAppSettingsPreviewBody.previewSpinner,
           'hidden',
         );
         await baseAssertion.assertElementState(
@@ -135,7 +137,10 @@ dialTest(
     await dialTest.step(
       'Wait for app settings step form to load and check the header changes',
       async () => {
-        await baseAssertion.assertElementState(appEditorViewForm, 'visible');
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
 
         const generalInfoStep = appEditorHeader.getGeneralInfoStep();
         const appSettingsStep = appEditorHeader.getAppSettingsStep();
@@ -163,10 +168,13 @@ dialTest(
     await dialTest.step(
       'Input Chat completion URL, click Save and Exit link, verify navigation panel is visible',
       async () => {
-        await appEditorViewForm.fillInAppFields();
+        await customAppEditorViewForm.fillInAppFields();
         await appEditorHeader.focusOn({ isHttpMethodTriggered: false });
         await appEditorHeader.saveAndExitButton.click();
-        await baseAssertion.assertElementState(appEditorViewForm, 'hidden');
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'hidden',
+        );
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(
           navigationPanel,
