@@ -548,7 +548,7 @@ export const PublicationHandlerFooter = ({
                 disabled={isApproveDisabled || isEditInvalid || isFormErrors}
                 type={publishModel ? 'submit' : 'button'}
                 onClick={publishModel ? undefined : handleApprovePublication}
-                data-qa="approve"
+                data-qa="submit"
               >
                 {getSubmitBtnText()}
               </button>

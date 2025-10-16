@@ -157,8 +157,8 @@ export const PublishingDialogSelectors = {
   publishPathLabel: '[data-qa="publish-label"]',
   publishPath: '[data-qa="publish-path"]',
   changePublishToPath: '[data-qa="change-button"]',
-  sendButton: '[data-qa="send-request"]',
-  noPublishingFilesMessage: '[data-qa="approve"]',
+  sendButton: '[data-qa="submit"]',
+  noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
   fieldErrorMessage: `[data-qa="error-message"]`,
   requestNameErrorMessage: () =>
     `${PublishingDialogSelectors.requestName} + ${PublishingDialogSelectors.fieldErrorMessage}`,
