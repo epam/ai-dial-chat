@@ -131,7 +131,8 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       // application link
       const detailsEntity = MarketplaceSelectors.selectDetailsEntity(state);
       const referenceQuery =
-        detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
+        detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS ||
+        isToolsetsTab
           ? MarketplaceQueryParams.toolset
           : MarketplaceQueryParams.model;
       addToQuery(query, referenceQuery, detailsEntity?.reference);
