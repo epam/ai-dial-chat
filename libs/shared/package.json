@@ -1,7 +1,7 @@
 {
   "name": "@epam/ai-dial-shared",
   "description": "Shared elements that support developing DIAL",
-  "homepage": "https://epam-rail.com",
+  "homepage": "https://dialx.ai",
   "version": "0.0.1",
   "dependencies": {},
   "type": "module",
