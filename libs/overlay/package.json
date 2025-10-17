@@ -1,7 +1,7 @@
 {
   "name": "@epam/ai-dial-overlay",
   "description": "Package for opening dial in overlay",
-  "homepage": "https://epam-rail.com",
+  "homepage": "https://dialx.ai",
   "version": "0.4.3",
   "dependencies": {
     "@epam/ai-dial-shared": "*"

@@ -1,7 +1,7 @@
 {
   "name": "@epam/ai-dial-chat-visualizer-connector",
   "description": "Package for custom visualizer to connect with DIAL Chat",
-  "homepage": "https://epam-rail.com",
+  "homepage": "https://dialx.ai",
   "version": "0.0.1",
   "dependencies": {
     "@epam/ai-dial-shared": "*"
