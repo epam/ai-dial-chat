@@ -13,7 +13,8 @@ import {
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 export interface MarketplaceState {
-  selectedFilters: MarketplaceFilters;
+  selectedAgentsFilters: MarketplaceFilters;
+  selectedToolsetsFilters: MarketplaceFilters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   selectedEntitiesTab: MarketplaceEntitiesTabs;

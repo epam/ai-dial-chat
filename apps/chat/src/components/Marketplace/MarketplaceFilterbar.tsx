@@ -144,8 +144,11 @@ export const MarketplaceFilterbar = memo(() => {
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
-  const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
+  const selectedAgentsFilters = useAppSelector(
+    MarketplaceSelectors.selectSelectedAgentsFilters,
+  );
+  const selectedToolsetsFilters = useAppSelector(
+    MarketplaceSelectors.selectSelectedToolsetsFilters,
   );
   const selectedTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
@@ -157,6 +160,11 @@ export const MarketplaceFilterbar = memo(() => {
   const toolsetSourceTypes = useAppSelector(
     MarketplaceSelectors.selectToolsetSourceTypes,
   );
+  const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
+
+  const selectedFilters = isAgentsTab
+    ? selectedAgentsFilters
+    : selectedToolsetsFilters;
 
   const [openedSections, setOpenedSections] = useState({
     [FilterTypes.ENTITY_TYPE]: true,
@@ -168,11 +176,23 @@ export const MarketplaceFilterbar = memo(() => {
 
   const handleApplyFilter = useCallback(
     (type: FilterTypes, value: string) => {
-      dispatch(
-        MarketplaceActions.setSelectedFilters({ filterType: type, value }),
-      );
+      if (isAgentsTab) {
+        dispatch(
+          MarketplaceActions.setSelectedAgentsFilters({
+            filterType: type,
+            value,
+          }),
+        );
+      } else {
+        dispatch(
+          MarketplaceActions.setSelectedToolsetsFilters({
+            filterType: type,
+            value,
+          }),
+        );
+      }
     },
-    [dispatch],
+    [dispatch, isAgentsTab],
   );
 
   const handleToggleFilterSection = useCallback(
@@ -188,8 +208,6 @@ export const MarketplaceFilterbar = memo(() => {
   const handleClose = useCallback(() => {
     dispatch(UIActions.setShowMarketplaceFilterbar(false));
   }, [dispatch]);
-
-  const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
   const noEntities = useMemo(() => {
     return (

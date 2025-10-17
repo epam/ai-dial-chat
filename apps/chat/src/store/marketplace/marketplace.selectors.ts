@@ -35,8 +35,11 @@ const selectTableSort = (state: RootState) => rootSelector(state).tableSort;
 const selectIsBannerVisible = (state: RootState) =>
   rootSelector(state).isBannerVisible;
 
-const selectSelectedFilters = (state: RootState) =>
-  rootSelector(state).selectedFilters;
+const selectSelectedAgentsFilters = (state: RootState) =>
+  rootSelector(state).selectedAgentsFilters;
+
+const selectSelectedToolsetsFilters = (state: RootState) =>
+  rootSelector(state).selectedToolsetsFilters;
 
 const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
@@ -149,7 +152,8 @@ export const MarketplaceSelectors = {
   selectSelectedViewType,
   selectTableSort,
   selectIsBannerVisible,
-  selectSelectedFilters,
+  selectSelectedAgentsFilters,
+  selectSelectedToolsetsFilters,
   selectSearchTerm,
   selectTrimmedSearchTerm,
   selectSelectedTab,

@@ -13,6 +13,7 @@ import { AppEpic } from '@/src/types/store';
 import {
   MarketplaceActions,
   ModelsActions,
+  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import {
@@ -94,7 +95,8 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedTab.type,
       MarketplaceActions.setSelectedEntitiesTab.type,
       MarketplaceActions.setDetailsEntity.type,
-      MarketplaceActions.setSelectedFilters.type,
+      MarketplaceActions.setSelectedAgentsFilters.type,
+      MarketplaceActions.setSelectedToolsetsFilters.type,
       MarketplaceActions.setState.type,
       MarketplaceActions.setSearchTerm.type,
       MarketplaceActions.setSelectedView.type,
@@ -117,12 +119,14 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       // entities tab
       const selectedEntitiesTab =
         MarketplaceSelectors.selectSelectedEntitiesTab(state);
+
+      const isToolsetsTab =
+        selectedEntitiesTab === MarketplaceEntitiesTabs.TOOLSETS;
+
       addToQuery(
         query,
         MarketplaceQueryParams.entitiesTab,
-        selectedEntitiesTab === MarketplaceEntitiesTabs.TOOLSETS
-          ? MarketplaceEntitiesTabs.TOOLSETS
-          : undefined,
+        isToolsetsTab ? MarketplaceEntitiesTabs.TOOLSETS : undefined,
       );
       // application link
       const detailsEntity = MarketplaceSelectors.selectDetailsEntity(state);
@@ -131,21 +135,34 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
           ? MarketplaceQueryParams.toolset
           : MarketplaceQueryParams.model;
       addToQuery(query, referenceQuery, detailsEntity?.reference);
+
       // filters
-      const filters = MarketplaceSelectors.selectSelectedFilters(state);
+      const agentsFilters =
+        MarketplaceSelectors.selectSelectedAgentsFilters(state);
+      const toolsetsFilters =
+        MarketplaceSelectors.selectSelectedToolsetsFilters(state);
+
+      const filters = isToolsetsTab ? toolsetsFilters : agentsFilters;
+
       addToQuery(
         query,
-        MarketplaceQueryParams.types,
+        isToolsetsTab
+          ? MarketplaceQueryParams.toolsetsTypes
+          : MarketplaceQueryParams.types,
         filters.Type.length ? filters.Type.join(',') : undefined,
       );
       addToQuery(
         query,
-        MarketplaceQueryParams.topics,
+        isToolsetsTab
+          ? MarketplaceQueryParams.toolsetsTopics
+          : MarketplaceQueryParams.topics,
         filters.Topics.length ? filters.Topics.join(',') : undefined,
       );
       addToQuery(
         query,
-        MarketplaceQueryParams.sources,
+        isToolsetsTab
+          ? MarketplaceQueryParams.toolsetsSources
+          : MarketplaceQueryParams.sources,
         filters.Sources.length ? filters.Sources.join(',') : undefined,
       );
       // search
@@ -238,12 +255,13 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         : MarketplaceEntitiesTabs.AGENTS;
 
       // filters
-      const existingTopics = ModelsSelectors.selectModelTopics(state);
-      const topics = parseCommaSeparatedList(
+      // agents filters
+      const existingAgentsTopics = ModelsSelectors.selectModelTopics(state);
+      const agentsTopics = parseCommaSeparatedList(
         query[MarketplaceQueryParams.topics] as string,
-      ).filter((topic) => topic && existingTopics.includes(topic));
+      ).filter((topic) => topic && existingAgentsTopics.includes(topic));
 
-      const types = parseCommaSeparatedList(
+      const agentsTypes = parseCommaSeparatedList(
         query[MarketplaceQueryParams.types] as string,
       ).filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
       const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
@@ -251,11 +269,33 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         query[MarketplaceQueryParams.sources] as string,
       ).filter((type) => type && sourceTypes.includes(type as SourceType));
 
-      updatedMarketplaceState.selectedFilters = {
-        [FilterTypes.ENTITY_TYPE]: types,
-        [FilterTypes.TOPICS]: topics,
+      updatedMarketplaceState.selectedAgentsFilters = {
+        [FilterTypes.ENTITY_TYPE]: agentsTypes,
+        [FilterTypes.TOPICS]: agentsTopics,
         [FilterTypes.SOURCES]: sources,
       };
+
+      // toolsets filters
+      const existingToolsetsTopics =
+        ToolsetSelectors.selectToolsetsTopics(state);
+      const toolsetsTopics = parseCommaSeparatedList(
+        query[MarketplaceQueryParams.toolsetsTopics] as string,
+      ).filter((topic) => topic && existingToolsetsTopics.includes(topic));
+
+      const toolsetSourceTypes =
+        MarketplaceSelectors.selectToolsetSourceTypes(state);
+      const toolsetSources = parseCommaSeparatedList(
+        query[MarketplaceQueryParams.toolsetsSources] as string,
+      ).filter(
+        (type) => type && toolsetSourceTypes.includes(type as SourceType),
+      );
+
+      updatedMarketplaceState.selectedToolsetsFilters = {
+        [FilterTypes.ENTITY_TYPE]: [], // no types filter for toolsets for now
+        [FilterTypes.TOPICS]: toolsetsTopics,
+        [FilterTypes.SOURCES]: toolsetSources,
+      };
+
       // search
       updatedMarketplaceState.searchTerm =
         (query[MarketplaceQueryParams.search] as string) ?? '';
@@ -291,7 +331,7 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const updateFiltersEpic: AppEpic = (action$, state$) =>
+const updateAgentsFiltersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ModelsActions.deleteModels.type, ModelsActions.updateModel.type),
     switchMap(() => {
@@ -299,7 +339,7 @@ const updateFiltersEpic: AppEpic = (action$, state$) =>
 
       const existingTopics = ModelsSelectors.selectModelTopics(state);
       const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
-      const filters = MarketplaceSelectors.selectSelectedFilters(state);
+      const filters = MarketplaceSelectors.selectSelectedAgentsFilters(state);
       const updatedFilters = { ...filters };
       updatedFilters.Topics = filters.Topics.filter((topic) =>
         existingTopics.includes(topic),
@@ -313,7 +353,41 @@ const updateFiltersEpic: AppEpic = (action$, state$) =>
       ) {
         return of(
           MarketplaceActions.setState({
-            selectedFilters: updatedFilters,
+            selectedAgentsFilters: updatedFilters,
+          }),
+        );
+      }
+
+      return EMPTY;
+    }),
+  );
+
+const updateToolsetsFiltersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(
+      ToolsetActions.deleteToolset.type,
+      ToolsetActions.updateToolset.type,
+    ),
+    switchMap(() => {
+      const state = state$.value;
+
+      const existingTopics = ToolsetSelectors.selectToolsetsTopics(state);
+      const sourceTypes = MarketplaceSelectors.selectToolsetSourceTypes(state);
+      const filters = MarketplaceSelectors.selectSelectedToolsetsFilters(state);
+      const updatedFilters = { ...filters };
+      updatedFilters.Topics = filters.Topics.filter((topic) =>
+        existingTopics.includes(topic),
+      );
+      updatedFilters.Sources = filters.Sources.filter((source) =>
+        sourceTypes.includes(source as SourceType),
+      );
+      if (
+        updatedFilters.Topics.length !== filters.Topics.length ||
+        updatedFilters.Sources.length !== filters.Sources.length
+      ) {
+        return of(
+          MarketplaceActions.setState({
+            selectedToolsetsFilters: updatedFilters,
           }),
         );
       }
@@ -326,5 +400,6 @@ export const MarketplaceEpics = combineEpics(
   initEpic,
   initQueryParamsEpic,
   setQueryParamsEpic,
-  updateFiltersEpic,
+  updateAgentsFiltersEpic,
+  updateToolsetsFiltersEpic,
 );

@@ -17,9 +17,12 @@ export enum MarketplaceQueryParams {
   tab = 'tab',
   entitiesTab = 'entitiesTab',
   types = 'types',
+  toolsetsTypes = 'toolsetsTypes',
   topics = 'topics',
+  toolsetsTopics = 'toolsetsTopics',
   search = 'search',
   sources = 'sources',
+  toolsetsSources = 'toolsetsSources',
   viewType = 'viewType',
   tableSort = 'tableSort',
 }
