@@ -194,20 +194,26 @@ export const ItemCardView = <T extends MarketplaceEntity>({
             )}
         </div>
         <div className="flex grow flex-col justify-center gap-1 overflow-hidden leading-4 md:gap-2">
-          {!!versionsToSelect.length && (
-            <div className="flex items-center">
-              <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
-              <ModelVersionSelect
-                readonly={conversation && isPlaybackConversation(conversation)}
-                className="h-max truncate text-xs"
-                triggerClassName="text-xs"
-                selectedBaseIdsSet={selectedBaseIdsSet}
-                entities={versionsToSelect}
-                onSelect={handleSelectVersion}
-                currentEntity={entity}
-              />
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {!!versionsToSelect.length && (
+              <div className="flex items-center">
+                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
+                <ModelVersionSelect
+                  readonly={
+                    conversation && isPlaybackConversation(conversation)
+                  }
+                  className="h-max truncate text-xs"
+                  triggerClassName="text-xs"
+                  selectedBaseIdsSet={selectedBaseIdsSet}
+                  entities={versionsToSelect}
+                  onSelect={handleSelectVersion}
+                  currentEntity={entity}
+                />
+              </div>
+            )}
+
+            <MarketplaceEntityIndicator entity={entity} />
+          </div>
           <div className="flex whitespace-nowrap">
             <div
               className={classNames(
@@ -219,7 +225,6 @@ export const ItemCardView = <T extends MarketplaceEntity>({
             >
               {entity.name}
             </div>
-            <MarketplaceEntityIndicator entity={entity} />
           </div>
           <EntityMarkdownDescription
             className={classNames(

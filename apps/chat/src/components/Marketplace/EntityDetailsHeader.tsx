@@ -94,6 +94,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
                 entity.topics?.length ? 'gap-2' : '',
               )}
             >
+              <MarketplaceEntityIndicator entity={entity} />
               {entity.topics && (
                 <TopicsList
                   topics={entity.topics}
@@ -107,7 +108,6 @@ export function EntityHeader<T extends MarketplaceEntity>({
                 >
                   {entity.name}
                 </div>
-                <MarketplaceEntityIndicator entity={entity} />
               </div>
             </div>
           </div>

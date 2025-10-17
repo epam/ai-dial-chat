@@ -3,11 +3,11 @@ import { AppEditorPage, DialHomePage, MarketplacePage } from '../ui/pages';
 import {
   AgentDetailsModal,
   AgentInfo,
-  AppEditorContainer,
+  AppEditorAppSettingsPreviewChat,
   AppEditorGeneralForm,
   AppEditorGeneralInfoAgentPreview,
   AppEditorHeader,
-  AppEditorViewForm,
+  AppEditorPreviewCard,
   AttachFilesModal,
   Chat,
   ChatBar,
@@ -16,6 +16,10 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  CustomAppEditorAppSettingsPreview,
+  CustomAppEditorAppSettingsPreviewBody,
+  CustomAppEditorContainer,
+  CustomAppEditorViewForm,
   DragFile,
   FileDropArea,
   FileModalSection,
@@ -102,7 +106,6 @@ import { DialErrorPage } from '@/src/ui/pages/DialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
-import { AppEditorAppSettingsAgentPreview } from '@/src/ui/webElements/appEditor/appEditorAppSettingsAgentPreview';
 import { Banner } from '@/src/ui/webElements/banner';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
@@ -170,9 +173,17 @@ const dialTest = test.extend<{
   dialErrorPage: DialErrorPage;
   marketplacePage: MarketplacePage;
   appEditorPage: AppEditorPage;
+  appEditorHeader: AppEditorHeader;
+  appEditorGeneralForm: AppEditorGeneralForm;
+  appEditorGeneralInfoPreview: AppEditorGeneralInfoAgentPreview;
+  appEditorPreviewCard: AppEditorPreviewCard;
   appContainer: AppContainer;
   marketplaceContainer: MarketplaceContainer;
-  appEditorContainer: AppEditorContainer;
+  customAppEditorContainer: CustomAppEditorContainer;
+  customAppEditorViewForm: CustomAppEditorViewForm;
+  customAppEditorAppSettingsPreview: CustomAppEditorAppSettingsPreview;
+  customAppEditorAppSettingsPreviewBody: CustomAppEditorAppSettingsPreviewBody;
+  customAppEditorAppSettingsPreviewChat: AppEditorAppSettingsPreviewChat;
   marketplaceSidebar: MarketplaceSidebar;
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
@@ -181,12 +192,7 @@ const dialTest = test.extend<{
   agentDetailsModal: AgentDetailsModal;
   marketplaceHeader: MarketplaceHeader;
   addAppDropdownMenu: DropdownMenu;
-  appEditorHeader: AppEditorHeader;
   appEditorHeaderAssertion: AppEditorHeaderAssertion;
-  appEditorGeneralForm: AppEditorGeneralForm;
-  appEditorGeneralInfoAgentPreview: AppEditorGeneralInfoAgentPreview;
-  appEditorAppSettingsAgentPreview: AppEditorAppSettingsAgentPreview;
-  appEditorViewForm: AppEditorViewForm;
   chatBar: ChatBar;
   navigationPanel: NavigationPanel;
   importExportLoader: ImportExportLoader;
@@ -478,9 +484,57 @@ const dialTest = test.extend<{
     const marketplaceContainer = marketplacePage.getMarketplaceContainer();
     await use(marketplaceContainer);
   },
-  appEditorContainer: async ({ appEditorPage }, use) => {
-    const appEditorContainer = appEditorPage.getAppEditorContainer();
-    await use(appEditorContainer);
+  customAppEditorContainer: async ({ appEditorPage }, use) => {
+    const customAppEditorContainer =
+      appEditorPage.getCustomAppEditorContainer();
+    await use(customAppEditorContainer);
+  },
+  appEditorGeneralForm: async ({ appEditorPage }, use) => {
+    const appEditorGeneralForm = appEditorPage.getAppEditorGeneralForm();
+    await use(appEditorGeneralForm);
+  },
+  appEditorHeader: async ({ appEditorPage }, use) => {
+    const appEditorHeader = appEditorPage.getAppEditorHeader();
+    await use(appEditorHeader);
+  },
+  appEditorGeneralInfoPreview: async ({ appEditorPage }, use) => {
+    const appEditorGeneralInfoPreview =
+      appEditorPage.getAppEditorGeneralInfoPreview();
+    await use(appEditorGeneralInfoPreview);
+  },
+  appEditorPreviewCard: async ({ appEditorGeneralInfoPreview }, use) => {
+    const appEditorPreviewCard =
+      appEditorGeneralInfoPreview.getAppEditorPreviewCard();
+    await use(appEditorPreviewCard);
+  },
+  customAppEditorViewForm: async ({ customAppEditorContainer }, use) => {
+    const customAppEditorViewForm =
+      customAppEditorContainer.getAppEditorViewForm();
+    await use(customAppEditorViewForm);
+  },
+  customAppEditorAppSettingsPreview: async (
+    { customAppEditorContainer },
+    use,
+  ) => {
+    const customAppEditorAppSettingsPreview =
+      customAppEditorContainer.getAppEditorAppSettingsPreview();
+    await use(customAppEditorAppSettingsPreview);
+  },
+  customAppEditorAppSettingsPreviewBody: async (
+    { customAppEditorAppSettingsPreview },
+    use,
+  ) => {
+    const customAppEditorAppSettingsPreviewBody =
+      customAppEditorAppSettingsPreview.getAppEditorAppSettingsPreviewBody();
+    await use(customAppEditorAppSettingsPreviewBody);
+  },
+  customAppEditorAppSettingsPreviewChat: async (
+    { customAppEditorAppSettingsPreviewBody },
+    use,
+  ) => {
+    const customAppEditorAppSettingsPreviewChat =
+      customAppEditorAppSettingsPreviewBody.getAppEditorAppSettingsPreviewChat();
+    await use(customAppEditorAppSettingsPreviewChat);
   },
   marketplaceSidebar: async ({ marketplaceContainer }, use) => {
     const marketplaceSidebar = marketplaceContainer.getMarketplaceSidebar();
@@ -513,28 +567,6 @@ const dialTest = test.extend<{
   addAppDropdownMenu: async ({ page }, use) => {
     const addAppDropdownMenu = new DropdownMenu(page);
     await use(addAppDropdownMenu);
-  },
-  appEditorHeader: async ({ appEditorContainer }, use) => {
-    const appEditorHeader = appEditorContainer.getAppEditorHeader();
-    await use(appEditorHeader);
-  },
-  appEditorGeneralForm: async ({ appEditorContainer }, use) => {
-    const appEditorGeneralForm = appEditorContainer.getAppEditorGeneralForm();
-    await use(appEditorGeneralForm);
-  },
-  appEditorGeneralInfoAgentPreview: async ({ appEditorContainer }, use) => {
-    const appEditorGeneralInfoPreview =
-      appEditorContainer.getAppEditorGeneralInfoPreview();
-    await use(appEditorGeneralInfoPreview);
-  },
-  appEditorAppSettingsAgentPreview: async ({ appEditorContainer }, use) => {
-    const appEditorAppSettingsPreview =
-      appEditorContainer.getAppEditorAppSettingsPreview();
-    await use(appEditorAppSettingsPreview);
-  },
-  appEditorViewForm: async ({ appEditorContainer }, use) => {
-    const appEditorViewForm = appEditorContainer.getAppEditorViewForm();
-    await use(appEditorViewForm);
   },
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();
