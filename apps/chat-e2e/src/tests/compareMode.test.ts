@@ -14,6 +14,7 @@ import {
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { Message, Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 let allModels: DialAIEntityModel[];
@@ -1603,6 +1604,8 @@ dialTest(
     const firstConversationRequests = ['1+2', '2+3', '3+4'];
     const secondConversationRequests = ['1+2', '4+5', '5+6'];
     let updatedRequestContent: string;
+    const expectedChatId = (modelId: string, name: string) =>
+      `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(name)}`;
 
     await dialTest.step(
       'Prepare two conversations for compare mode',
@@ -1644,7 +1647,22 @@ dialTest(
         );
         await compare.waitForComparedConversationsLoaded();
         await chatMessages.openDeleteCompareRowMessageDialog(Side.left, 1);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await dialHomePage.waitForExpectedResponses(
+          () => confirmationDialog.confirm(),
+          [
+            {
+              apiMethod: 'PUT',
+              urlPattern: expectedChatId(
+                defaultModel.id,
+                firstConversation.name,
+              ),
+            },
+            {
+              apiMethod: 'PUT',
+              urlPattern: expectedChatId(aModel.id, secondConversation.name),
+            },
+          ],
+        );
         await baseAssertion.assertElementState(
           chatMessages.compareChatMessageRows.getNthElement(
             firstConversationRequests.length + 2,
@@ -1683,8 +1701,12 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await page.keyboard.press(keys.ctrlPlusV);
-        const expectedChatId = (modelId: string, name: string) =>
-          `${ItemUtil.getEncodedItemId(modelId)}${ItemUtil.entityIdSeparator}${ItemUtil.getEncodedItemId(name)}`;
+        const copiedResponse = await dialHomePage.readTextFromClipboard();
+        const expectedMessage: Message = {
+          role: Role.User,
+          content: copiedResponse,
+        };
+        const expectedBody = JSON.stringify(expectedMessage).replace('}', '');
         await dialHomePage.waitForExpectedResponses(
           () => chatMessages.saveAndSubmit.click(),
           [
@@ -1694,10 +1716,12 @@ dialTest(
                 defaultModel.id,
                 firstConversation.name,
               ),
+              requestBodyPattern: expectedBody,
             },
             {
               apiMethod: 'PUT',
               urlPattern: expectedChatId(aModel.id, secondConversation.name),
+              requestBodyPattern: expectedBody,
             },
           ],
         );
