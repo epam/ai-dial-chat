@@ -189,6 +189,7 @@ dialTest(
     appEditorHeader,
     setTestIds,
     baseAssertion,
+    agentDetailsModal,
   }) => {
     setTestIds('EPMRTC-4441', 'EPMRTC-5353');
     const appName = GeneratorUtil.randomApplicationName();
@@ -224,6 +225,7 @@ dialTest(
             baseAssertion.assertValue(
               actualAgentModel.type,
               EntityType.Application,
+              `${actualAgentModel.name} is not an ${EntityType.Application}`,
             );
           }
         }
@@ -250,6 +252,7 @@ dialTest(
         await appEditorHeader.focusOn();
         await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
+        await agentDetailsModal.closeButton.click();
 
         addedAppElement = await marketplaceAgentsSection.findAgentElement(
           addedAppName,

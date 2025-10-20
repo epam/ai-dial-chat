@@ -13,9 +13,13 @@ const selectSchemasLoading = (state: RootState) =>
 const selectSchemaById = (state: RootState, id: string) =>
   selectAllSchemas(state).find((schema) => schema.id === id);
 
+const selectDetailedApplicationTypeSchemaLoading = (state: RootState) =>
+  rootSelector(state).detailedApplicationTypeSchemaLoading;
+
 export const ApplicationTypesSchemasSelectors = {
   selectAllSchemas,
   selectDetailedApplicationTypeSchema,
   selectSchemasLoading,
   selectSchemaById,
+  selectDetailedApplicationTypeSchemaLoading,
 };

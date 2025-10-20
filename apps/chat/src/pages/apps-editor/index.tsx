@@ -1,20 +1,25 @@
 import { getSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 
 import { useAppEditorValidation } from '@/src/hooks/useAppEditorValidation';
 
+import { isApplicationType } from '@/src/utils/app/application';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { canUserUseFeature } from '@/src/utils/session';
 
 import { ApplicationType } from '@/src/types/applications';
 
-import { ApplicationActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  ApplicationTypesSchemasActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
   ModelsSelectors,
   SettingsSelectors,
 } from '@/src/store/selectors';
@@ -39,12 +44,34 @@ function AppsEditorPage() {
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-
-  useAppEditorValidation();
+  const schemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
+  const allSchemasLoading = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectSchemasLoading,
+  );
+  const detailedSchemaLoading = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchemaLoading,
+  );
 
   const applicationId = router.query[AppsEditorQuery.Id]?.toString() ?? '';
+  const isDetailedSchemaLoaded = detailedSchemaLoading === UploadStatus.LOADED;
+
+  const schemaId = useMemo(() => {
+    const type = decodeURIComponent(
+      router.query[AppsEditorQuery.Schema]?.toString() ?? '',
+    );
+    const isSchemaApp = !isApplicationType(type);
+
+    if (!isSchemaApp) return undefined;
+
+    const sourceSchema = schemas.find((schema) => schema.id.endsWith(type));
+
+    return sourceSchema?.id;
+  }, [router.query, schemas]);
 
   const isLoading =
+    allSchemasLoading === UploadStatus.LOADING ||
     initialDataStatus === UploadStatus.LOADING ||
     !areModelsLoaded ||
     (!!applicationId && !appDetails);
@@ -52,6 +79,18 @@ function AppsEditorPage() {
   useEffect(() => {
     dispatch(ApplicationActions.initQueryParams());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (schemaId && !isDetailedSchemaLoaded) {
+      dispatch(
+        ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+          schemaId,
+        ),
+      );
+    }
+  }, [schemaId, dispatch, isDetailedSchemaLoaded]);
+
+  useAppEditorValidation();
 
   if (isLoading)
     return (

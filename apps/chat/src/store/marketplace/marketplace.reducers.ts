@@ -69,6 +69,7 @@ export const marketplaceSlice = createSlice({
         tableSort: state.tableSort,
         selectedEntitiesTab: state.selectedEntitiesTab,
         selectedTab: payload.selectedTab ?? state.selectedTab,
+        detailsEntity: state.detailsEntity,
       };
     },
     initQueryParams: (state) => state,

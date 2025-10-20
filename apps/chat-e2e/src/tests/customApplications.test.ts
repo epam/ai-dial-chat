@@ -1091,6 +1091,8 @@ dialTest(
       sendMessage,
       chatMessages,
       conversationAssertion,
+      agentDetailsModal,
+      agentDetailsModalAssertion,
     },
     testInfo,
   ) => {
@@ -1577,7 +1579,14 @@ dialTest(
 
     await dialTest.step('Click Save and Exit link', async () => {
       await appEditorHeader.saveAndExitButton.click();
-      await marketplacePage.waitForPageLoaded();
+      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
+      await agentDetailsModalAssertion.assertApplicationName(
+        updatedAppNameForStepperTest,
+      );
+      await agentDetailsModalAssertion.assertApplicationVersion(
+        appEntity.version!,
+      );
+      await agentDetailsModal.closeButton.click();
     });
 
     await dialTest.step(

@@ -241,7 +241,6 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 getRootFolderIdFromEntityId(r.reviewUrl),
               ),
             );
-
             return forkJoin({
               publication: of(publication),
               uploadedUnpublishIdsSet: from(rootFolderPaths).pipe(

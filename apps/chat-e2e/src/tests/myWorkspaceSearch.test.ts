@@ -521,6 +521,7 @@ dialTest(
           await appEditorHeader.focusOn();
           await appEditorHeader.saveAndExitButton.click();
           await marketplacePage.waitForPageLoaded();
+          await agentDetailsModal.closeButton.click();
         }
 
         const allAgents = await marketplaceAgentsSection.getAllAgents();

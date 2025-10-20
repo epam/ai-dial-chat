@@ -146,6 +146,7 @@ export const EditorHeader = <T extends string>({
             }))}
             active={activeTab}
             onChange={onTabClick}
+            className="hidden md:flex"
           />
         </div>
 

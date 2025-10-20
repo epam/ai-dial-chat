@@ -226,6 +226,7 @@ dialTest(
     confirmationDialog,
     setTestIds,
     baseAssertion,
+    agentDetailsModal,
   }) => {
     setTestIds('EPMRTC-5351', 'EPMRTC-5238');
     const firstAppName = GeneratorUtil.randomApplicationName();
@@ -287,6 +288,7 @@ dialTest(
     await dialTest.step(
       'Verify newly added app is displayed immediately',
       async () => {
+        await agentDetailsModal.closeButton.click();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
