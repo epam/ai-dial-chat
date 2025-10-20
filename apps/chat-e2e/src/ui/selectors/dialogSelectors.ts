@@ -316,7 +316,7 @@ export const AddApplicationAppSettingsFormSelector = {
 
 export const AddExternalAppSettingsFormSelector = {
   externalUrl: '#externalUrl',
-}
+};
 
 export const InformationModalSelectors = {
   container: '[data-qa="info-modal"]',
