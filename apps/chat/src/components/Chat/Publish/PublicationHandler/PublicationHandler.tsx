@@ -17,6 +17,7 @@ import {
   getIdWithoutFeatureType,
   isConversationId,
   isFileId,
+  isMyBucket,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
@@ -307,6 +308,16 @@ export function PublicationHandler({ publication }: Props) {
     userName,
   ]);
 
+  const doesIncludeApplication = publication.resourceTypes.includes(
+    BackendResourceType.APPLICATION,
+  );
+  const doesIncludeToolset = publication.resourceTypes.includes(
+    BackendResourceType.TOOLSET,
+  );
+  const doesIncludeConversation = publication.resourceTypes.includes(
+    BackendResourceType.CONVERSATION,
+  );
+
   const handleUpdateRequest = useCallback(
     (data: PublicationRequestFormData) => {
       const mappedResources = publication.resources.map(
@@ -379,8 +390,14 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           PublicationActions.publish({
             name: data.publishRequestName.trim(),
-            resources: mappedResources.filter((resource) =>
-              selectedPublicationItems.includes(resource.reviewUrl),
+            resources: mappedResources.filter(
+              ({ reviewUrl }) =>
+                selectedPublicationItems.includes(reviewUrl) &&
+                !(
+                  isFileId(reviewUrl) &&
+                  doesIncludeApplication &&
+                  !isMyBucket(reviewUrl)
+                ),
             ),
             targetFolder: editedPublishToUrl,
             displayAuthor: displayAuthorEditState.trim(),
@@ -417,6 +434,7 @@ export function PublicationHandler({ publication }: Props) {
       displayAuthorEditState,
       rulesOnEdit,
       selectedPublicationItems,
+      doesIncludeApplication,
     ],
   );
 
@@ -716,19 +734,12 @@ export function PublicationHandler({ publication }: Props) {
                         const isConversationSectionAndNoFiles =
                           !isReview &&
                           featureType === FeatureType.File &&
-                          publication.resourceTypes.includes(
-                            BackendResourceType.CONVERSATION,
-                          ) &&
+                          doesIncludeConversation &&
                           !doesPublicationContainFiles;
                         const doesInvalidPublishApplicationIconExist =
                           !isReview &&
                           firstNotMyFileEntity &&
-                          (publication.resourceTypes.includes(
-                            BackendResourceType.APPLICATION,
-                          ) ||
-                            publication.resourceTypes.includes(
-                              BackendResourceType.TOOLSET,
-                            )) &&
+                          (doesIncludeApplication || doesIncludeToolset) &&
                           featureType === FeatureType.File;
                         const shouldRenderSection =
                           publication.resourceTypes.includes(
