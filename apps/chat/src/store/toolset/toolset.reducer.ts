@@ -107,6 +107,7 @@ export const toolsetSlice = createSlice({
         newToolset: ToolsetModel;
         tabToOpen?: ToolsetEditorSteps;
         redirectUrl?: string;
+        shouldSelectToolset?: boolean;
         auth?: {
           apiKey?: string;
           authLevel?: ToolsetCredentialsLevel;

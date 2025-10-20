@@ -157,7 +157,7 @@ export const PublishingDialogSelectors = {
   publishPathLabel: '[data-qa="publish-label"]',
   publishPath: '[data-qa="publish-path"]',
   changePublishToPath: '[data-qa="change-button"]',
-  sendButton: '[data-qa="send-request"]',
+  sendButton: '[data-qa="submit"]',
   noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
   fieldErrorMessage: `[data-qa="error-message"]`,
   requestNameErrorMessage: () =>
@@ -183,7 +183,7 @@ export const PublishingApprovalModalSelectors = {
   requestCreatedLabel: '[data-qa="creation-date-label"]',
   goToReviewButton: '[data-qa="go-to-review"]',
   rejectButton: '[data-qa="reject"]',
-  approveButton: '[data-qa="approve"]',
+  approveButton: '[data-qa="submit"]',
   duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
 };
 
