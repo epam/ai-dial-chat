@@ -2,7 +2,6 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isToolsetId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -236,22 +235,6 @@ export const publicationSlice = createSlice({
       }>,
     ) => {
       state.selectedPublicationItems[payload.publicationUrl] = payload.ids;
-
-      const publishCredentials = state.publishModel?.publishCredentials;
-      const publishCredentialsResources = state.publications
-        .find((publication) => publication.url === payload.publicationUrl)
-        ?.resources?.filter(
-          ({ publishCredentials, reviewUrl }) =>
-            publishCredentials && payload.ids.includes(reviewUrl),
-        );
-
-      if (publishCredentials) {
-        state.selectedCredentialsItems[payload.publicationUrl] =
-          payload.ids.filter(isToolsetId);
-      } else if (publishCredentialsResources) {
-        state.selectedCredentialsItems[payload.publicationUrl] =
-          publishCredentialsResources.map(({ reviewUrl }) => reviewUrl);
-      }
     },
     selectPublicationItems: (
       state,

@@ -17,7 +17,11 @@ import {
   MarketplaceEntity,
 } from '@/src/types/marketplace';
 
-import { ApplicationActions, ShareActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  MarketplaceActions,
+  ShareActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -84,8 +88,10 @@ export const AppsEditor = () => {
   const {
     [AppsEditorQuery.Schema]: typeQuery = '',
     [AppsEditorQuery.PublicationUrl]: publicationUrl = '',
+    [AppsEditorQuery.Id]: id,
   } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
+  const isCreateRef = useRef(!id);
 
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
@@ -193,6 +199,7 @@ export const AppsEditor = () => {
               : undefined,
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: saveAndExitRef.current ?? undefined,
+            shouldSelectApplication: isCreateRef.current,
           }),
         );
       }
@@ -259,13 +266,24 @@ export const AppsEditor = () => {
 
       if ((!isDirty && appDetails) || !appDetails || isAppPublic) {
         void router.push(chatUrl || marketplaceRoute);
+        dispatch(
+          MarketplaceActions.setDetailsEntity(
+            isCreateRef.current && appDetails?.reference
+              ? {
+                  reference: appDetails?.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
+                  isSuggested: false,
+                }
+              : undefined,
+          ),
+        );
         return;
       }
 
       saveAndExitRef.current = chatUrl || Routes.Marketplace;
       handleSubmit(undefined, saveDraft);
     },
-    [isDirty, appDetails, isAppPublic, handleSubmit, router],
+    [router, isDirty, appDetails, isAppPublic, handleSubmit, dispatch],
   );
 
   const handleTabClick = useCallback(
