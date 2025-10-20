@@ -107,6 +107,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       const pathname = window.location.pathname;
       // workspace tab
       const selectedTab = MarketplaceSelectors.selectSelectedTab(state);
+
       addToQuery(
         query,
         MarketplaceQueryParams.tab,
@@ -117,6 +118,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       // entities tab
       const selectedEntitiesTab =
         MarketplaceSelectors.selectSelectedEntitiesTab(state);
+
       addToQuery(
         query,
         MarketplaceQueryParams.entitiesTab,
@@ -127,7 +129,8 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       // application link
       const detailsEntity = MarketplaceSelectors.selectDetailsEntity(state);
       const referenceQuery =
-        detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
+        detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS ||
+        selectedEntitiesTab === MarketplaceEntitiesTabs.TOOLSETS
           ? MarketplaceQueryParams.toolset
           : MarketplaceQueryParams.model;
       addToQuery(query, referenceQuery, detailsEntity?.reference);
