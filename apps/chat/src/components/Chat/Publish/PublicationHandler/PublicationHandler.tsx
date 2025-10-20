@@ -395,7 +395,7 @@ export function PublicationHandler({ publication }: Props) {
                 selectedPublicationItems.includes(reviewUrl) &&
                 !(
                   isFileId(reviewUrl) &&
-                  doesIncludeApplication &&
+                  (doesIncludeApplication || doesIncludeToolset) &&
                   !isMyBucket(reviewUrl)
                 ),
             ),
@@ -435,6 +435,7 @@ export function PublicationHandler({ publication }: Props) {
       rulesOnEdit,
       selectedPublicationItems,
       doesIncludeApplication,
+      doesIncludeToolset,
     ],
   );
 
