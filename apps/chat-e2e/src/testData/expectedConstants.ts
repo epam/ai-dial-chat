@@ -330,6 +330,7 @@ export const ExpectedConstants = {
   exportedArchiveImageRootFolder: 'res',
   replayConversationById: (conversationId: string) =>
     `${conversationId.substring(0, conversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversationId.substring(conversationId.indexOf(ItemUtil.entityIdSeparator) + ItemUtil.entityIdSeparator.length)}`,
+  externalAppTooltip: 'External application',
 };
 
 export enum Types {

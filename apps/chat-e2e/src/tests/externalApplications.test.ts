@@ -6,18 +6,21 @@ import {
   AppEditorGeneralFormFields,
   AppEditorViewFormFields,
   AppMenuActions,
+  ExpectedConstants,
   ExpectedMessages,
   MarketplaceFilterTypes,
   SourcesFilterOptions,
 } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { Attributes, StyleValues } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 
 dialTest(
   '[External app] By owner create.\n' +
+    '[External app] Long description without spaces and long URL (the card on preview and the card from approve required).\n' +
     "[External app] By owner use 'My External apps' filter.\n" +
     '[External app] By owner open the link though the button.\n' +
+    '[External app] By owner check the icon and tooltip.\n' +
     "[External app] External app doesn't appear on the first screen (after the creation)",
   async (
     {
@@ -44,15 +47,26 @@ dialTest(
       navigationPanel,
       externalAppEditorAppSettingsPreviewCard,
       page,
+      tooltip,
+      tooltipAssertion,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6579', 'EPMRTC-6581', 'EPMRTC-6580', 'EPMRTC-6591');
+    setTestIds(
+      'EPMRTC-6579',
+      'EPMRTC-6701',
+      'EPMRTC-6581',
+      'EPMRTC-6580',
+      'EPMRTC-6582',
+      'EPMRTC-6591',
+    );
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomApplicationVersion(),
+      description: GeneratorUtil.randomShortDescription(),
     } as DialAIEntityModel;
     let agentElement: BaseElement;
+    let externalIcon: BaseElement;
     let generalInfoStep: BaseElement;
     let appSettingsStep: BaseElement;
     const currentUsername = UserUtil.getE2EUsername(testInfo.parallelIndex);
@@ -124,6 +138,7 @@ dialTest(
         await appEditorGeneralForm.fillInAppFields({
           name: appEntity.name,
           version: appEntity.version,
+          description: appEntity.description,
         });
         await baseAssertion.assertElementState(appEditorPreviewCard, 'visible');
         await baseAssertion.assertElementText(
@@ -144,6 +159,10 @@ dialTest(
         await baseAssertion.assertElementState(
           appEditorPreviewCard.externalAppIcon,
           'visible',
+        );
+        await baseAssertion.assertElementDisplayStyle(
+          appEditorPreviewCard.descriptionParagraphs,
+          StyleValues.block,
         );
       },
     );
@@ -213,7 +232,11 @@ dialTest(
           externalAppEditorViewForm,
           'hidden',
         );
-        await marketplacePage.waitForPageLoaded();
+        await agentDetailsModalAssertion.assertElementState(
+          agentDetailsModal,
+          'visible',
+        );
+        await agentDetailsModal.closeButton.click();
       },
     );
 
@@ -240,9 +263,21 @@ dialTest(
         await marketplaceAgentsAssertion.assertEntityIcon(
           await marketplaceAgents.getAgentIcon(agentElement),
         );
+        externalIcon = marketplaceAgents.getAgentExternalIcon(agentElement);
         await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentExternalIcon(agentElement),
+          externalIcon,
           'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Hover over external icon and verify tooltip is displayed',
+      async () => {
+        await externalIcon.hoverOver();
+        await tooltipAssertion.assertElementText(
+          tooltip,
+          ExpectedConstants.externalAppTooltip,
         );
       },
     );
