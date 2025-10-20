@@ -1706,7 +1706,7 @@ dialTest(
           role: Role.User,
           content: copiedResponse,
         };
-        const expectedBody = JSON.stringify(expectedMessage).replace('}', '');
+        const expectedBody = JSON.stringify(expectedMessage).replace(/}/g, '');
         await dialHomePage.waitForExpectedResponses(
           () => chatMessages.saveAndSubmit.click(),
           [
