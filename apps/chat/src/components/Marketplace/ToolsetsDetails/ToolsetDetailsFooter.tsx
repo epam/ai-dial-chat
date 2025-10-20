@@ -119,7 +119,7 @@ export function ToolsetDetailsFooter({
             showVersionPrefix
             onSelect={onChangeVersion}
           />
-          {!withAuth && (
+          {withAuth && (
             <button
               onClick={handleLogin}
               className={classNames('button flex items-center gap-2', {
