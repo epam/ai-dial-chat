@@ -126,16 +126,21 @@ describe('MultipleComboBox', () => {
   });
 
   it('displays not found placeholder when no available items', async () => {
+    const customPlaceholder = 'Custom not found message';
+
     render(
       <MultipleComboBox
         items={items}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
         onChangeSelectedItems={onChangeSelectedItems}
+        notFoundPlaceholder={customPlaceholder}
       />,
     );
 
-    await userEvent.type(screen.getByRole('combobox'), 'test');
-    expect(screen.getByText('No available items')).toBeInTheDocument();
+    const input = screen.getByRole('combobox');
+    await userEvent.type(input, 'test');
+
+    expect(screen.getByText(customPlaceholder)).toBeInTheDocument();
   });
 });
