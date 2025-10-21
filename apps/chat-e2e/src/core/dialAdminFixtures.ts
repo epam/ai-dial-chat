@@ -144,7 +144,6 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderDropdownMenu: DropdownMenu;
   adminApproveRequiredConversationDropdownMenu: DropdownMenu;
   adminApproveRequiredPromptDropdownMenu: DropdownMenu;
-  adminChatHeaderDropdownMenu: DropdownMenu;
   adminTooltip: Tooltip;
   adminOrganizationConversations: OrganizationConversationsTree;
   adminVariableModal: VariableModalDialog;
