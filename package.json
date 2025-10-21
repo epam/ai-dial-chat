@@ -159,7 +159,9 @@
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
     "vite": "^6.3.6",
-    "vitest": "^3.0.9"
+    "vitest": "^3.0.9",
+    "react-router-dom": "7.5.2",
+    "react-router": "7.5.2"
   },
   "optionalDependencies": {
     "@nx/playwright": "21.4.0",
