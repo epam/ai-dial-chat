@@ -13,7 +13,7 @@ import {
 } from '@/src/testData';
 import { Attributes, StyleValues } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
+import { GeneratorUtil, UserUtil } from '@/src/utils';
 
 dialTest(
   '[External app] By owner create.\n' +
@@ -21,6 +21,7 @@ dialTest(
     "[External app] By owner use 'My External apps' filter.\n" +
     '[External app] By owner open the link though the button.\n' +
     '[External app] By owner check the icon and tooltip.\n' +
+    "[External app] External app doesn't appear on the first screen (after the creation).\n" +
     "[External app] External app doesn't appear on the first screen (after the creation)",
   async (
     {
@@ -41,7 +42,9 @@ dialTest(
       appEditorHeaderAssertion,
       dialHomePage,
       localStorageManager,
-      agentInfoAssertion,
+      chat,
+      talkToAgentDialog,
+      talkToAgentDialogAssertion,
       agentDetailsModalAssertion,
       appEditorPreviewCard,
       navigationPanel,
@@ -59,6 +62,7 @@ dialTest(
       'EPMRTC-6580',
       'EPMRTC-6582',
       'EPMRTC-6591',
+      'EPMRTC-6590',
     );
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
@@ -326,14 +330,22 @@ dialTest(
       await agentDetailsModal.closeButton.click();
     });
 
-    //TODO: enable the step when fixed https://github.com/epam/ai-dial-chat/issues/4881
-    await dialTest.step.skip(
+    await dialTest.step(
       'Back to chat and verify created app is not used for a new conversation',
       async () => {
         await navigationPanel.backToChat();
         await dialHomePage.waitForPageLoaded();
-        await agentInfoAssertion.assertAgentName(
-          ModelsUtil.getDefaultAgent()!.name,
+        //TODO: enable the step when fixed https://github.com/epam/ai-dial-chat/issues/4881
+        // await agentInfoAssertion.assertAgentName(
+        //   ModelsUtil.getDefaultAgent()!.name,
+        // );
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(appEntity, {
+          isAgentVisible: false,
+        });
+        await talkToAgentDialogAssertion.assertElementState(
+          talkToAgentDialog.noResultFound,
+          'visible',
         );
       },
     );
