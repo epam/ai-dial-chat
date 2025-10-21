@@ -72,7 +72,11 @@ export function ShareIcon({
     !isMyEntity &&
     !isExternal
   ) {
-    return <div className={containerClass} data-qa="icon-container">{children}</div>;
+    return (
+      <div className={containerClass} data-qa="icon-container">
+        {children}
+      </div>
+    );
   }
 
   return (
