@@ -179,7 +179,6 @@
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
     "@monaco-editor/loader": "1.4.0",
-    "react-router-dom": "7.5.2",
     "react-router": "7.5.2"
   },
   "engines": {
