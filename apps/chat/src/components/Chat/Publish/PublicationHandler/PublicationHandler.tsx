@@ -17,7 +17,6 @@ import {
   getIdWithoutFeatureType,
   isConversationId,
   isFileId,
-  isMyBucket,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
@@ -317,6 +316,8 @@ export function PublicationHandler({ publication }: Props) {
   const doesIncludeConversation = publication.resourceTypes.includes(
     BackendResourceType.CONVERSATION,
   );
+  const doesIncludeMarketplaceEntity =
+    doesIncludeApplication || doesIncludeToolset;
 
   const handleUpdateRequest = useCallback(
     (data: PublicationRequestFormData) => {
@@ -395,8 +396,8 @@ export function PublicationHandler({ publication }: Props) {
                 selectedPublicationItems.includes(reviewUrl) &&
                 !(
                   isFileId(reviewUrl) &&
-                  (doesIncludeApplication || doesIncludeToolset) &&
-                  !isMyBucket(reviewUrl)
+                  doesIncludeMarketplaceEntity &&
+                  !isMyEntity({ id: reviewUrl })
                 ),
             ),
             targetFolder: editedPublishToUrl,
@@ -434,8 +435,7 @@ export function PublicationHandler({ publication }: Props) {
       displayAuthorEditState,
       rulesOnEdit,
       selectedPublicationItems,
-      doesIncludeApplication,
-      doesIncludeToolset,
+      doesIncludeMarketplaceEntity,
     ],
   );
 
@@ -740,7 +740,7 @@ export function PublicationHandler({ publication }: Props) {
                         const doesInvalidPublishApplicationIconExist =
                           !isReview &&
                           firstNotMyFileEntity &&
-                          (doesIncludeApplication || doesIncludeToolset) &&
+                          doesIncludeMarketplaceEntity &&
                           featureType === FeatureType.File;
                         const shouldRenderSection =
                           publication.resourceTypes.includes(
