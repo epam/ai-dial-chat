@@ -177,7 +177,8 @@
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
     "@monaco-editor/loader": "1.4.0",
-    "@module-federation/node": "2.7.14"
+    "@module-federation/node": "2.7.14",
+    "nwsapi": "2.2.13"
   },
   "engines": {
     "node": ">=22.2.0",
