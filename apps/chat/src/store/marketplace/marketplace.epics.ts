@@ -109,6 +109,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       const pathname = window.location.pathname;
       // workspace tab
       const selectedTab = MarketplaceSelectors.selectSelectedTab(state);
+
       addToQuery(
         query,
         MarketplaceQueryParams.tab,
