@@ -176,7 +176,8 @@
     "esbuild": "0.25.10",
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
-    "@monaco-editor/loader": "1.4.0"
+    "@monaco-editor/loader": "1.4.0",
+    "react-router": "7.5.2"
   },
   "engines": {
     "node": ">=22.2.0",
