@@ -38,11 +38,13 @@ export const AttachmentTypesSchema = zodValidation
     'Please match the MIME format',
   );
 
-export const MaxInputAttachmentsSchema = zodValidation.number().refine((v) => {
-  if (!v) return true;
-  const reg = /^[0-9]+$/;
-  return reg.test(String(v));
-}, 'Max attachments must be a number');
+export const MaxInputAttachmentsSchema = zodValidation.coerce
+  .number<number>()
+  .refine((v) => {
+    if (!v) return true;
+    const reg = /^[0-9]+$/;
+    return reg.test(String(v));
+  }, 'Max attachments must be a number');
 
 export const DynamicFieldSchema = zodValidation.object({
   label: zodValidation
