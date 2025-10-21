@@ -159,9 +159,7 @@
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
     "vite": "^6.3.6",
-    "vitest": "^3.0.9",
-    "react-router-dom": "7.5.2",
-    "react-router": "7.5.2"
+    "vitest": "^3.0.9"
   },
   "optionalDependencies": {
     "@nx/playwright": "21.4.0",
@@ -179,7 +177,7 @@
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
     "@monaco-editor/loader": "1.4.0",
-    "react-router": "7.5.2"
+    "@module-federation/node": "2.7.14"
   },
   "engines": {
     "node": ">=22.2.0",
