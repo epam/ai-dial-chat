@@ -21,6 +21,7 @@ import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import {
   getToolsetAuthAction,
   getToolsetAuthActionLabel,
+  isToolsetWithAuth,
 } from '@/src/utils/app/toolsets';
 
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -33,7 +34,6 @@ import { AuthSelectors } from '@/src/store/selectors';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ToolsetModel;
@@ -81,8 +81,7 @@ export const useToolsetMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
-  const isWithAuth =
-    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
+  const isWithAuth = isToolsetWithAuth(entity);
   const authAction = getToolsetAuthAction(entity, isAdmin);
 
   const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;

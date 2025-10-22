@@ -10,10 +10,12 @@ import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { PageType } from '@/src/types/common';
 import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   ApplicationTypeToSourceType,
   FilterTypes,
+  MarketplaceEntitiesTabs,
   MarketplaceQueryParams,
   SourceType,
 } from '@/src/constants/marketplace';
@@ -99,6 +101,10 @@ export const doesMarketplaceEntityMatchFilters = (
 
 export const getApplicationLink = (entity: DialAIEntityModel) => {
   return `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`;
+};
+
+export const getToolsetLink = (entity: ToolsetModel) => {
+  return `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.toolset}=${entity.reference}&${MarketplaceQueryParams.entitiesTab}=${MarketplaceEntitiesTabs.TOOLSETS}`;
 };
 
 export const isInstalledEntity = (
