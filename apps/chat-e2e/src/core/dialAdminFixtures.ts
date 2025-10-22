@@ -432,10 +432,6 @@ const dialAdminTest = dialTest.extend<{
       adminApproveRequiredPrompts.getDropdownMenu();
     await use(adminApproveRequiredPromptDropdownMenu);
   },
-  adminChatHeaderDropdownMenu: async ({ adminPage }, use) => {
-    const adminChatHeaderDropdownMenu = new DropdownMenu(adminPage);
-    await use(adminChatHeaderDropdownMenu);
-  },
   adminTooltip: async ({ adminPage }, use) => {
     const adminTooltip = new Tooltip(adminPage);
     await use(adminTooltip);

@@ -188,13 +188,11 @@ const dialTest = test.extend<{
   customAppEditorAppSettingsPreview: CustomAppEditorAppSettingsPreview;
   customAppEditorAppSettingsPreviewBody: CustomAppEditorAppSettingsPreviewBody;
   customAppEditorAppSettingsPreviewChat: AppEditorAppSettingsPreviewChat;
-
   externalAppEditorContainer: ExternalAppEditorContainer;
   externalAppEditorViewForm: ExternalAppEditorViewForm;
   externalAppEditorAppSettingsPreview: ExternalAppEditorAppSettingsPreview;
   externalAppEditorAppSettingsPreviewBody: ExternalAppEditorAppSettingsPreviewBody;
   externalAppEditorAppSettingsPreviewCard: AppEditorPreviewCard;
-
   marketplaceSidebar: MarketplaceSidebar;
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;

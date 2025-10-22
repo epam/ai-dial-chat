@@ -223,6 +223,10 @@ dialTest(
           externalAppEditorAppSettingsPreviewCard.externalAppIcon,
           'visible',
         );
+        await baseAssertion.assertElementDisplayStyle(
+          externalAppEditorAppSettingsPreviewCard.descriptionParagraphs,
+          StyleValues.block,
+        );
       },
     );
 
