@@ -256,7 +256,7 @@ export const AppsEditorHeader = ({
   const getMobileLabelText = useCallback(
     (tabKey: MarketplaceEditorSteps) => {
       const capitalizedAppType = capitalize(applicationTypeDisplayName);
-      let labelText = tabKeysInfo[tabKey].label.toUpperCase();
+      let labelText = tabKeysInfo[tabKey].label.toLowerCase();
       if (tabKey === MarketplaceEditorSteps.Settings) {
         labelText = labelText.replace(/^app\s+/i, '');
       }
