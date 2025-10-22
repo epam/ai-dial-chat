@@ -316,6 +316,18 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       ),
                       EMPTY,
                     ),
+                    of(
+                      MarketplaceActions.setDetailsEntity(
+                        payload.redirectUrl === Routes.Marketplace &&
+                          !!payload.shouldSelectToolset
+                          ? {
+                              reference: savedUpdatedToolset.reference,
+                              type: MarketplaceEntitiesTabs.TOOLSETS,
+                              isSuggested: false,
+                            }
+                          : undefined,
+                      ),
+                    ),
                   );
                 }),
               ),
@@ -670,7 +682,7 @@ const startSignInProcessEpic: AppEpic = (action$) =>
     }),
   );
 
-const logInToolsetEpic: AppEpic = (action$, state$) =>
+const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ToolsetActions.logInToolset.type),
     switchMap(({ payload }) => {
@@ -701,7 +713,8 @@ const logInToolsetEpic: AppEpic = (action$, state$) =>
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
-            window.location.href = callbackUrl;
+            void router.push(new URL(callbackUrl));
+
             return EMPTY;
           }
 
@@ -710,19 +723,20 @@ const logInToolsetEpic: AppEpic = (action$, state$) =>
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
           if (payload.authType === ToolsetAuthTypes.OAUTH) {
-            window.location.href = callbackUrl;
+            void router.push(new URL(callbackUrl));
           }
-          return concat(
-            of(ToolsetActions.logInToolsetFail()),
-            of(
-              UIActions.showErrorToast(
-                translate(errorsMessages.toolsetSignInFailed),
-              ),
-            ),
-          );
+          return concat(of(ToolsetActions.logInToolsetFail()));
         }),
       );
     }),
+  );
+
+const loginToolsetFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.logInToolsetFail.type),
+    map(() =>
+      UIActions.showErrorToast(translate(errorsMessages.toolsetSignInFailed)),
+    ),
   );
 
 const logOutToolsetEpic: AppEpic = (action$, state$) =>
@@ -829,6 +843,7 @@ export const ToolsetEpics = combineEpics(
   //Signin
   startSignInProcessEpic,
   logInToolsetEpic,
+  loginToolsetFailEpic,
   logOutToolsetEpic,
   logOutToolsetFailEpic,
 );
