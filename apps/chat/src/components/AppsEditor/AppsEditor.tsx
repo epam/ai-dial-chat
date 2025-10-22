@@ -17,11 +17,7 @@ import {
   MarketplaceEntity,
 } from '@/src/types/marketplace';
 
-import {
-  ApplicationActions,
-  MarketplaceActions,
-  ShareActions,
-} from '@/src/store/actions';
+import { ApplicationActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -32,11 +28,6 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
-import {
-  MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
@@ -50,14 +41,6 @@ import {
 
 import { FeatureType } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-const marketplaceRoute = {
-  pathname: Routes.Marketplace,
-  query: {
-    [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
-    [MarketplaceQueryParams.entitiesTab]: MarketplaceEntitiesTabs.AGENTS,
-  },
-};
 
 const checkShouldRevokeAccess = ({
   newApp,
@@ -265,17 +248,11 @@ export const AppsEditor = () => {
         (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
 
       if ((!isDirty && appDetails) || !appDetails || isAppPublic) {
-        void router.push(chatUrl || marketplaceRoute);
         dispatch(
-          MarketplaceActions.setDetailsEntity(
-            isCreateRef.current && appDetails?.reference
-              ? {
-                  reference: appDetails?.reference,
-                  type: MarketplaceEntitiesTabs.AGENTS,
-                  isSuggested: false,
-                }
-              : undefined,
-          ),
+          ApplicationActions.exitEditor({
+            redirectUrl: chatUrl || Routes.Marketplace,
+            shouldSelectApplication: isCreateRef.current,
+          }),
         );
         return;
       }
