@@ -11,6 +11,7 @@ import {
   PublicVersionOption,
   Publication,
   PublicationInfo,
+  PublicationModel,
   PublicationRequestModel,
   PublicationRule,
   ResourceToReview,
@@ -30,8 +31,6 @@ import {
   FolderInterface,
   Message,
   Prompt,
-  PublishActions,
-  ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
@@ -376,20 +375,7 @@ export const publicationSlice = createSlice({
     },
     setPublishModel(
       state,
-      {
-        payload,
-      }: PayloadAction<
-        | {
-            entity: Omit<ShareEntity, 'folderId'> & {
-              iconUrl?: string;
-              folderId?: string;
-            };
-            isFolder?: boolean;
-            action: PublishActions;
-            publishCredentials?: boolean;
-          }
-        | undefined
-      >,
+      { payload }: PayloadAction<PublicationModel | undefined>,
     ) {
       if (payload) {
         state.publishModel = {

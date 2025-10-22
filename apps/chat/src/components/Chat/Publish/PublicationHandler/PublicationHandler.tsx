@@ -8,7 +8,6 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   extractNameFromEmail,
   formatDate,
-  prepareEntityName,
   replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -24,7 +23,6 @@ import {
   getPublicationDefaultName,
   getPublicationId,
   isEntityIdPublic,
-  regenerateApiKeyNameAndVersionParts,
 } from '@/src/utils/app/publications';
 import {
   constructPath,
@@ -32,16 +30,16 @@ import {
   splitEntityId,
 } from '@/src/utils/app/shared-utils';
 
-import { ApiKeys, BackendResourceType, FeatureType } from '@/src/types/common';
-import { Publication, PublicationRule } from '@/src/types/publication';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
+import {
+  Publication,
+  PublicationResource,
+  PublicationRule,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  EDITED_FOLDER_NAME_KEY,
-  FolderNode,
-} from '@/src/store/publication/publication.types';
 import {
   AuthSelectors,
   ConversationsSelectors,
@@ -81,6 +79,11 @@ import isEqual from 'lodash-es/isEqual';
 
 interface Props {
   publication: Publication;
+  rules: Record<string, PublicationRule[]>;
+  onSubmit: (
+    resources: PublicationResource[],
+    formData?: PublicationRequestFormData,
+  ) => void;
 }
 
 const LEADING_SLASH_REGEX = /^\/+/;
@@ -105,20 +108,20 @@ const sections = [
     ItemComponent: PublicationApplicationRow,
   },
   {
-    featureType: FeatureType.File,
-    sectionName: 'Files',
-    dataQa: 'files-tree',
-    ItemComponent: PublicationFileRow,
-  },
-  {
     featureType: FeatureType.Toolset,
     sectionName: 'Toolsets',
     dataQa: 'toolsets-tree',
     ItemComponent: PublicationToolsetRow,
   },
+  {
+    featureType: FeatureType.File,
+    sectionName: 'Files',
+    dataQa: 'files-tree',
+    ItemComponent: PublicationFileRow,
+  },
 ];
 
-export function PublicationHandler({ publication }: Props) {
+export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -129,12 +132,6 @@ export function PublicationHandler({ publication }: Props) {
   const isReview = !publicationModel;
   const editedPublishToUrl = useAppSelector(
     PublicationSelectors.selectPublishToUrl,
-  );
-  const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(
-      state,
-      !isReview ? editedPublishToUrl : publication.targetFolder,
-    ),
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -162,12 +159,6 @@ export function PublicationHandler({ publication }: Props) {
   const userName = useAppSelector(AuthSelectors.selectUserName);
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
-  );
-  const selectedPublicationItems = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationItems,
-  );
-  const selectedCredentialsItems = useAppSelector(
-    PublicationSelectors.selectSelectedCredentialsItems,
   );
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
@@ -209,38 +200,6 @@ export function PublicationHandler({ publication }: Props) {
       );
     }
   }, [isEditMode, isReview, publication.displayAuthor]);
-
-  useEffect(() => {
-    if (publication.targetFolder !== PUBLIC_URL_PREFIX && isReview) {
-      dispatch(
-        PublicationActions.uploadRules({
-          path: getIdWithoutFeatureType(publication.targetFolder),
-        }),
-      );
-    }
-  }, [dispatch, isReview, publication.targetFolder]);
-
-  useEffect(() => {
-    if (
-      editedPublishToUrl &&
-      editedPublishToUrl !== PUBLIC_URL_PREFIX &&
-      !isReview
-    ) {
-      dispatch(
-        PublicationActions.uploadRules({
-          path: getIdWithoutFeatureType(editedPublishToUrl),
-        }),
-      );
-    }
-  }, [dispatch, editedPublishToUrl, isReview]);
-
-  useEffect(() => {
-    if (!isReview) {
-      dispatch(
-        PublicationActions.setRulesOnEdit(rules[editedPublishToUrl] ?? []),
-      );
-    }
-  }, [rules, isReview, dispatch, publication.rules, editedPublishToUrl]);
 
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
@@ -309,115 +268,9 @@ export function PublicationHandler({ publication }: Props) {
 
   const handleUpdateRequest = useCallback(
     (data: PublicationRequestFormData) => {
-      const mappedResources = publication.resources.map(
-        ({ sourceUrl, reviewUrl, action, publishCredentials, targetUrl }) => {
-          const { name, version } = entitiesEditState[reviewUrl];
-
-          // calculate new folderId
-          const folderSegments = getFolderIdFromEntityId(reviewUrl).split('/');
-          const newFolderSegments: string[] = [];
-          let currentFolder = foldersEditState as FolderNode;
-          folderSegments.forEach((segment, i) => {
-            currentFolder = currentFolder[segment] as FolderNode;
-            newFolderSegments.push(
-              // prepare name if it's not root path segments
-              i > 1
-                ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
-                : currentFolder[EDITED_FOLDER_NAME_KEY],
-            );
-          });
-
-          if (action !== PublishActions.DELETE) {
-            newFolderSegments[1] = publication.targetFolder;
-          }
-
-          let newFolderId = newFolderSegments.join('/');
-          newFolderId = newFolderId.replace(
-            publication.targetFolder,
-            editedPublishToUrl,
-          );
-
-          // get new api key
-          const newApiKey = regenerateApiKeyNameAndVersionParts(
-            reviewUrl,
-            name,
-            version.trim(),
-          );
-
-          let newTargetUrl = '';
-
-          if (!isReview && publicationModel.action === PublishActions.DELETE) {
-            newTargetUrl = targetUrl;
-          } else if (!isReview && isFileId(reviewUrl)) {
-            // files is a flat list in publication request, strictly dependent on entity it bounds to.
-            // We need to construct the targetUrl using the original targetUrl, which depends on the entity and add new publishFolder.
-            newTargetUrl = constructPath(
-              ApiKeys.Files,
-              editedPublishToUrl,
-              ...targetUrl.split('/').slice(2),
-            );
-          } else {
-            newTargetUrl = constructPath(newFolderId, newApiKey);
-          }
-
-          const shouldPublishCredentials =
-            (publishCredentials &&
-              selectedCredentialsItems.includes(reviewUrl)) ||
-            (isReview && publishCredentials);
-
-          return {
-            action,
-            sourceUrl: sourceUrl ?? '',
-            targetUrl: newTargetUrl,
-            reviewUrl,
-            ...(shouldPublishCredentials ? { publishCredentials } : {}),
-          };
-        },
-      );
-
-      if (!isReview) {
-        dispatch(
-          PublicationActions.publish({
-            name: data.publishRequestName.trim(),
-            resources: mappedResources.filter((resource) =>
-              selectedPublicationItems.includes(resource.reviewUrl),
-            ),
-            targetFolder: editedPublishToUrl,
-            displayAuthor: displayAuthorEditState.trim(),
-            rules: rulesOnEdit,
-          }),
-        );
-        dispatch(PublicationActions.setPublishModel());
-      } else {
-        dispatch(
-          PublicationActions.updatePublicationRequest({
-            url: publication.url,
-            dataToUpdate: {
-              targetFolder: editedPublishToUrl,
-              rules: rulesOnEdit,
-              displayAuthor: displayAuthorEditState.trim(),
-              resources: mappedResources,
-            },
-          }),
-        );
-        dispatch(PublicationActions.setIsEditMode(false));
-      }
+      onSubmit(publication.resources, data);
     },
-    [
-      publication.resources,
-      publication.targetFolder,
-      publication.url,
-      isReview,
-      entitiesEditState,
-      foldersEditState,
-      editedPublishToUrl,
-      selectedCredentialsItems,
-      publicationModel?.action,
-      dispatch,
-      displayAuthorEditState,
-      rulesOnEdit,
-      selectedPublicationItems,
-    ],
+    [publication.resources, onSubmit],
   );
 
   const handleSelectPublishToFolder = useCallback(

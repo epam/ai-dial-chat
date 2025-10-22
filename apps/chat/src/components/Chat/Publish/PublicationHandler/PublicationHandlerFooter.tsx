@@ -122,9 +122,6 @@ export const PublicationHandlerFooter = ({
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,
   );
-  const selectedCredentialsItems = useAppSelector(
-    PublicationSelectors.selectSelectedCredentialsItems,
-  );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
@@ -160,7 +157,6 @@ export const PublicationHandlerFooter = ({
     publication.targetFolder,
     userName,
     publicVersionGroups,
-    publishModel,
     initialState,
   ]);
 
@@ -337,25 +333,6 @@ export const PublicationHandlerFooter = ({
     );
   }, [dispatch, invalidEntities]);
 
-  const handleApprovePublication = () => {
-    const itemsWithCredentials = publication.resources.filter(
-      (resource) => resource.publishCredentials,
-    );
-
-    if (
-      selectedPublicationItems.length !== publication.resources.length ||
-      selectedCredentialsItems.length !== itemsWithCredentials.length
-    ) {
-      dispatch(PublicationActions.updateAndApprovePublicationRequest());
-    } else {
-      dispatch(
-        PublicationActions.approvePublication({
-          url: publication.url,
-        }),
-      );
-    }
-  };
-
   const isOnlyFilesPublication = publication.resources.every((resource) =>
     isFileId(resource.reviewUrl),
   );
@@ -412,33 +389,28 @@ export const PublicationHandlerFooter = ({
 
   const getSubmitTooltipText = useCallback(() => {
     if (publishModel) {
-      return t(
-        isFormErrors
-          ? 'Enter a valid name for the publish request'
-          : isDisplayAuthorInvalid
-            ? 'Enter a valid name for the author'
-            : !selectedPublicationItems.length
+      return isFormErrors
+        ? 'Enter a valid name for the publish request'
+        : isDisplayAuthorInvalid
+          ? 'Enter a valid name for the author'
+          : !selectedPublicationItems.length
+            ? 'Nothing is selected and rules have not changed'
+            : areNoChanges
               ? 'Nothing is selected and rules have not changed'
-              : areNoChanges
-                ? 'Nothing is selected and rules have not changed'
-                : "Request can't be published as some items are invalid",
-      );
+              : "Request can't be published as some items are invalid";
     }
 
-    return t(
-      selectedInvalidEntities.length
-        ? "Request can't be approved as some items are unpublished"
-        : someReviewedConversationHasNoMessages
-          ? "Request can't be approved as some conversations have no messages"
-          : isPublicationUpdating
-            ? 'Request is updating'
-            : areNoChanges
-              ? 'There are no changes to approve'
-              : "It's required to review all resources",
-    );
+    return selectedInvalidEntities.length
+      ? "Request can't be approved as some items are unpublished"
+      : someReviewedConversationHasNoMessages
+        ? "Request can't be approved as some conversations have no messages"
+        : isPublicationUpdating
+          ? 'Request is updating'
+          : areNoChanges
+            ? 'There are no changes to approve'
+            : "It's required to review all resources";
   }, [
     publishModel,
-    t,
     selectedInvalidEntities.length,
     someReviewedConversationHasNoMessages,
     isPublicationUpdating,
@@ -450,15 +422,13 @@ export const PublicationHandlerFooter = ({
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {
-      return t('Send request');
+      return 'Send request';
     }
 
-    return t(
-      !publication.resources.length || isSmallScreen
-        ? 'Approve'
-        : 'Approve selected',
-    );
-  }, [publishModel, t, publication.resources.length, isSmallScreen]);
+    return !publication.resources.length || isSmallScreen
+      ? 'Approve'
+      : 'Approve selected';
+  }, [publishModel, publication.resources.length, isSmallScreen]);
 
   return (
     <div
@@ -541,16 +511,15 @@ export const PublicationHandlerFooter = ({
               hideTooltip={
                 !isApproveDisabled && !isEditInvalid && !isFormErrors
               }
-              tooltip={getSubmitTooltipText()}
+              tooltip={t(getSubmitTooltipText())}
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={isApproveDisabled || isEditInvalid || isFormErrors}
-                type={publishModel ? 'submit' : 'button'}
-                onClick={publishModel ? undefined : handleApprovePublication}
+                type="submit"
                 data-qa="submit"
               >
-                {getSubmitBtnText()}
+                {t(getSubmitBtnText())}
               </button>
             </Tooltip>
           </>

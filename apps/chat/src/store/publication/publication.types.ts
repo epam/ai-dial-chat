@@ -3,11 +3,10 @@ import {
   PublicVersionGroups,
   Publication,
   PublicationInfo,
+  PublicationModel,
   PublicationRule,
   ResourceToReview,
 } from '@/src/types/publication';
-
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 // key/editedName is a special key for the folder node, because it handles collisions with children node keys, since folder name can't contain '/'
 export const EDITED_FOLDER_NAME_KEY = 'key/editedName';
@@ -30,14 +29,7 @@ export interface PublicationState {
   isApplicationReview: boolean;
   isToolsetReview: boolean;
   publicVersionGroups: PublicVersionGroups;
-  publishModel:
-    | {
-        entity: ShareEntity & { iconUrl?: string };
-        action: PublishActions;
-        isFolder?: boolean;
-        publishCredentials?: boolean;
-      }
-    | undefined;
+  publishModel: PublicationModel | undefined;
   selectedPublicationItems: Record<string, string[]>;
   selectedCredentialsItems: Record<string, string[]>;
 

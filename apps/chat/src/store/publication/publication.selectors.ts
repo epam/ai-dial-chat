@@ -267,7 +267,8 @@ const selectIsApproveRequiredEntitySelected = createSelector(
     );
   },
 );
-const selectIsEditMode = (state: RootState) => rootSelector(state).isEditMode;
+const selectIsEditMode = (state: RootState) =>
+  rootSelector(state).isEditMode || !!rootSelector(state).publishModel;
 
 const selectEntitiesEditState = (state: RootState) =>
   rootSelector(state).entitiesEditState;
