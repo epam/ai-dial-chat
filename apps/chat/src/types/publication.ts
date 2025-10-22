@@ -158,7 +158,10 @@ export interface PublicationHandlerState {
 }
 
 export interface PublicationModel {
-  entity: ShareEntity & { iconUrl?: string };
+  entity: Omit<ShareEntity, 'folderId'> & {
+    iconUrl?: string;
+    folderId?: string;
+  };
   action: PublishActions;
   isFolder?: boolean;
   publishCredentials?: boolean;
