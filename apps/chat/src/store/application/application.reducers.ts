@@ -159,6 +159,7 @@ export const applicationSlice = createSlice({
     ) => {
       if (state.appDetails?.id === payload.id && state.appDetails?.function) {
         state.appDetails.function.status = payload.status;
+        state.appDetails.functionStatus = payload.status;
       }
     },
     updateFunctionStatusFail: (
