@@ -235,6 +235,20 @@ export const publicationSlice = createSlice({
       }>,
     ) => {
       state.selectedPublicationItems[payload.publicationUrl] = payload.ids;
+
+      const publishCredentialsResources = state.publications
+        .find((publication) => publication.url === payload.publicationUrl)
+        ?.resources?.filter(
+          ({ publishCredentials, reviewUrl }) =>
+            publishCredentials && payload.ids.includes(reviewUrl),
+        );
+
+      if (!payload.publicationUrl) {
+        state.selectedCredentialsItems[payload.publicationUrl] = [];
+      } else if (publishCredentialsResources) {
+        state.selectedCredentialsItems[payload.publicationUrl] =
+          publishCredentialsResources.map(({ reviewUrl }) => reviewUrl);
+      }
     },
     selectPublicationItems: (
       state,
