@@ -3,8 +3,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import {
   getQuickAppDocumentUrl,
+  isApplicationDeployed,
   isApplicationType,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
@@ -16,11 +19,13 @@ import {
   MarketplaceEditorSteps,
   MarketplaceEntity,
 } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
   MarketplaceActions,
   ShareActions,
+  UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -84,6 +89,7 @@ const checkShouldRevokeAccess = ({
 export const AppsEditor = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { t } = useTranslation(Translation.Marketplace);
 
   const {
     [AppsEditorQuery.Schema]: typeQuery = '',
@@ -148,6 +154,7 @@ export const AppsEditor = () => {
   );
   const modelFromState = appDetails ? modelsMap[appDetails.reference] : null;
   const isShared = modelFromState?.isShared ?? false;
+  const isAppDeployed = modelFromState && isApplicationDeployed(modelFromState);
 
   const submitHandler = useCallback(
     (data: AppsEditorFormType) => {
@@ -183,6 +190,13 @@ export const AppsEditor = () => {
             }),
           );
         }
+        if (isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
         dispatch(
           ApplicationActions.update({
             oldApplication: appDetails,
@@ -216,11 +230,13 @@ export const AppsEditor = () => {
       appDetails,
       dispatch,
       formMethods,
+      isAppDeployed,
       isSchemaApplicationType,
       isShared,
       marketplaceEntities,
       publicationUrl,
       schema,
+      t,
     ],
   );
 
