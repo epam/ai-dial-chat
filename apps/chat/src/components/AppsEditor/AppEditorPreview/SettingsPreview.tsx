@@ -43,8 +43,12 @@ const ChatPreview = () => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
-  const { [AppsEditorQuery.Schema]: typeQuery = '' } = router.query;
+  const {
+    [AppsEditorQuery.Schema]: typeQuery = '',
+    [AppsEditorQuery.Id]: referenceQuery,
+  } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
+  const appReference = decodeURIComponent(referenceQuery?.toString() ?? '');
 
   const { formState } = useFormContext();
   const isApplicationValid = formState.isValid;
@@ -65,7 +69,7 @@ const ChatPreview = () => {
   );
 
   const applicationId = appDetails?.id;
-  const modelFromState = appDetails ? modelsMap[appDetails.reference] : null;
+  const modelFromState = appReference ? modelsMap[appReference] : null;
   const isAppDeployed = useMemo(
     () => !!modelFromState && isApplicationDeployed(modelFromState),
     [modelFromState],
