@@ -177,7 +177,8 @@
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
     "@monaco-editor/loader": "1.4.0",
-    "koa": "3.0.3"
+    "koa": "3.0.3",
+    "@module-federation/node": "2.7.14"
   },
   "engines": {
     "node": ">=22.2.0",
