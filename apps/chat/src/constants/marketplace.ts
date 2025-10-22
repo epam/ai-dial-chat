@@ -59,6 +59,7 @@ export enum SourceType {
   SharedWithMe = 'Shared with me',
   MyCustomApps = 'My Custom apps',
   MyCodeApps = 'My Code apps',
+  MyToolsets = 'My Toolsets',
 }
 
 export const ApplicationTypeToSourceType = {

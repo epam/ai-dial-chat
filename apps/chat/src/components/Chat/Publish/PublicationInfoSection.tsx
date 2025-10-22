@@ -69,6 +69,7 @@ export function PublicationInfoSection({
               inputClassName,
             )}
             value={editValue}
+            id="publicationAuthor"
             onChange={(e) => onChangeValue?.(e.target.value)}
           />
 

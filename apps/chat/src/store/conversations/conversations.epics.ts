@@ -3130,9 +3130,6 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
                 showLoader: true,
               }),
             ),
-            of(
-              ConversationsActions.uploadConversationsWithContentRecursiveSuccess(),
-            ),
           );
         }),
         catchError((err) => {

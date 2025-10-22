@@ -132,7 +132,7 @@ dialOverlayTest(
     overlayPromptBar,
     overlayConversations,
     overlayConversationDropdownMenu,
-    overlayPublishingRequestModal,
+    overlayPublishingRequestDialog,
     overlayPrompts,
     overlayPromptDropdownMenu,
     overlaySettingsModal,
@@ -268,10 +268,10 @@ dialOverlayTest(
           MenuOptions.publish,
         );
         await overlayBaseAssertion.assertElementState(
-          overlayPublishingRequestModal,
+          overlayPublishingRequestDialog,
           'visible',
         );
-        await overlayPublishingRequestModal.cancelButton.click();
+        await overlayPublishingRequestDialog.cancelButton.click();
       },
     );
 
@@ -335,10 +335,10 @@ dialOverlayTest(
         await overlayPrompts.entityDotsMenu(prompt.name).click();
         await overlayPromptDropdownMenu.selectMenuOption(MenuOptions.publish);
         await overlayBaseAssertion.assertElementState(
-          overlayPublishingRequestModal,
+          overlayPublishingRequestDialog,
           'visible',
         );
-        await overlayPublishingRequestModal.cancelButton.click();
+        await overlayPublishingRequestDialog.cancelButton.click();
         await overlayPromptBar.closeButton.click();
       },
     );

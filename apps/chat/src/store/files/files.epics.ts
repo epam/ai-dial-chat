@@ -403,12 +403,19 @@ const setChosenFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const { folderId } = payload;
       const folders = FilesSelectors.selectFolders(state$.value);
+      const selectedEmptyFolders = FilesSelectors.selectChosenEmptyFolderIds(
+        state$.value,
+      );
       const targetFolder = folders.find(
         ({ id }) =>
           addTrailingSlashIfAbsent(id) === addTrailingSlashIfAbsent(folderId),
       );
 
-      if (targetFolder && targetFolder.status !== UploadStatus.LOADED) {
+      if (
+        targetFolder &&
+        targetFolder.status !== UploadStatus.LOADED &&
+        selectedEmptyFolders.includes(folderId)
+      ) {
         return of(
           FilesActions.getFilesWithFolders({
             id: folderId.endsWith('/') ? folderId.slice(0, -1) : folderId,

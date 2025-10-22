@@ -26,10 +26,10 @@ import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
+import { ReplaceSelector } from './ReplaceSelector';
 
 export function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);
