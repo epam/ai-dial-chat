@@ -15,8 +15,10 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
 import {
   getIdWithoutFeatureType,
+  isApplicationId,
   isConversationId,
   isFileId,
+  isToolsetId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
@@ -307,6 +309,18 @@ export function PublicationHandler({ publication }: Props) {
     userName,
   ]);
 
+  const doesIncludeApplication = publication.resourceTypes.includes(
+    BackendResourceType.APPLICATION,
+  );
+  const doesIncludeToolset = publication.resourceTypes.includes(
+    BackendResourceType.TOOLSET,
+  );
+  const doesIncludeConversation = publication.resourceTypes.includes(
+    BackendResourceType.CONVERSATION,
+  );
+  const doesIncludeMarketplaceEntity =
+    doesIncludeApplication || doesIncludeToolset;
+
   const handleUpdateRequest = useCallback(
     (data: PublicationRequestFormData) => {
       const mappedResources = publication.resources.map(
@@ -379,8 +393,14 @@ export function PublicationHandler({ publication }: Props) {
         dispatch(
           PublicationActions.publish({
             name: data.publishRequestName.trim(),
-            resources: mappedResources.filter((resource) =>
-              selectedPublicationItems.includes(resource.reviewUrl),
+            resources: mappedResources.filter(
+              ({ reviewUrl }) =>
+                selectedPublicationItems.includes(reviewUrl) &&
+                !(
+                  isFileId(reviewUrl) &&
+                  doesIncludeMarketplaceEntity &&
+                  !isMyEntity({ id: reviewUrl })
+                ),
             ),
             targetFolder: editedPublishToUrl,
             displayAuthor: displayAuthorEditState.trim(),
@@ -417,6 +437,7 @@ export function PublicationHandler({ publication }: Props) {
       displayAuthorEditState,
       rulesOnEdit,
       selectedPublicationItems,
+      doesIncludeMarketplaceEntity,
     ],
   );
 
@@ -525,6 +546,18 @@ export function PublicationHandler({ publication }: Props) {
       return Math.max(max, cleanTargetUrlPathLength);
     }, 0);
   }, [publication.resources, publication.targetFolder]);
+
+  const errorMessageEntityType = useMemo(() => {
+    if (!publicationModel) return '';
+    if (isApplicationId(publicationModel.entity.id)) {
+      return FeatureType.Application;
+    }
+
+    if (isToolsetId(publicationModel.entity.id)) {
+      return FeatureType.Toolset;
+    }
+    return '';
+  }, [publicationModel]);
 
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
@@ -716,19 +749,12 @@ export function PublicationHandler({ publication }: Props) {
                         const isConversationSectionAndNoFiles =
                           !isReview &&
                           featureType === FeatureType.File &&
-                          publication.resourceTypes.includes(
-                            BackendResourceType.CONVERSATION,
-                          ) &&
+                          doesIncludeConversation &&
                           !doesPublicationContainFiles;
                         const doesInvalidPublishApplicationIconExist =
                           !isReview &&
                           firstNotMyFileEntity &&
-                          (publication.resourceTypes.includes(
-                            BackendResourceType.APPLICATION,
-                          ) ||
-                            publication.resourceTypes.includes(
-                              BackendResourceType.TOOLSET,
-                            )) &&
+                          doesIncludeMarketplaceEntity &&
                           featureType === FeatureType.File;
                         const shouldRenderSection =
                           publication.resourceTypes.includes(
@@ -787,7 +813,7 @@ export function PublicationHandler({ publication }: Props) {
                                 <ErrorMessage
                                   type="warning"
                                   error={t(
-                                    `The icon used for this ${featureType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${featureType} will be published with the default one.`,
+                                    `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
                                   )}
                                 />
                               )}
