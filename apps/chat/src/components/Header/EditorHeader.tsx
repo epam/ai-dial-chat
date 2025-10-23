@@ -102,7 +102,7 @@ export const EditorHeader = <T extends string>({
             </button>
 
             {menuOpen && (
-              <div className="absolute left-0 top-7 z-10 ml-3 mt-2 w-[168px] overflow-hidden rounded-md bg-layer-3">
+              <div className="absolute left-3 top-10 z-10 w-[calc(100%-1.4rem)] overflow-hidden rounded bg-layer-3">
                 {tabs.map((tab) => {
                   const isDisabled = tab.disabled;
                   const isActive = activeTab === tab.key;
