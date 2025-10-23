@@ -199,21 +199,18 @@ const PublishDialogContainer = ({
             };
           });
 
-    const decodedIconUrl = entity.iconUrl
-      ? ApiUtils.decodeApiUrl(entity.iconUrl)
-      : '';
-    const targetIconUrl = transformIdToRootEntityId(decodedIconUrl);
-    const iconResource =
-      decodedIconUrl && !isFolder && action !== PublishActions.DELETE
-        ? [
-            {
-              action: PublishActions.ADD_IF_ABSENT,
-              sourceUrl: decodedIconUrl,
-              reviewUrl: decodedIconUrl,
-              targetUrl: replaceIdWithBucket(targetIconUrl, PUBLIC_URL_PREFIX),
-            },
-          ]
-        : [];
+    const iconResource = [];
+    if (entity.iconUrl && action !== PublishActions.DELETE) {
+      const decodedIconUrl = ApiUtils.decodeApiUrl(entity.iconUrl);
+      const targetIconUrl = transformIdToRootEntityId(decodedIconUrl);
+
+      iconResource.push({
+        action: PublishActions.ADD_IF_ABSENT,
+        sourceUrl: decodedIconUrl,
+        reviewUrl: decodedIconUrl,
+        targetUrl: replaceIdWithBucket(targetIconUrl, PUBLIC_URL_PREFIX),
+      });
+    }
 
     const resourceTypes = [
       resourceType,
