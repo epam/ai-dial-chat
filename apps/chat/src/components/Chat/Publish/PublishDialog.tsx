@@ -241,6 +241,7 @@ const PublishDialogContainer = ({
 
   useEffect(() => {
     if (publication.resources.length) {
+      dispatch(PublicationActions.selectPublication(null));
       dispatch(
         PublicationActions.setPublicationItems({
           publicationUrl: '',

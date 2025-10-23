@@ -242,11 +242,13 @@ export const publicationSlice = createSlice({
             publishCredentials && payload.ids.includes(reviewUrl),
         );
 
-      if (!payload.publicationUrl) {
-        state.selectedCredentialsItems[payload.publicationUrl] = [];
-      } else if (publishCredentialsResources) {
-        state.selectedCredentialsItems[payload.publicationUrl] =
-          publishCredentialsResources.map(({ reviewUrl }) => reviewUrl);
+      if (publishCredentialsResources?.length) {
+        if (!payload.publicationUrl) {
+          state.selectedCredentialsItems[payload.publicationUrl] = [];
+        } else if (publishCredentialsResources) {
+          state.selectedCredentialsItems[payload.publicationUrl] =
+            publishCredentialsResources.map(({ reviewUrl }) => reviewUrl);
+        }
       }
     },
     selectPublicationItems: (
