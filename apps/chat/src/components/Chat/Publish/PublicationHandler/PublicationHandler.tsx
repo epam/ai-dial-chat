@@ -11,7 +11,6 @@ import {
   replaceSpacesFromString,
 } from '@/src/utils/app/common';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getStringValidationErrors } from '@/src/utils/app/forms';
 import {
   getIdWithoutFeatureType,
   isConversationId,
@@ -46,7 +45,6 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
@@ -151,10 +149,6 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
-  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
-  const displayAuthorEditState = useAppSelector(
-    PublicationSelectors.selectDisplayAuthorEditState,
-  );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const userName = useAppSelector(AuthSelectors.selectUserName);
   const publicVersionGroups = useAppSelector(
@@ -165,41 +159,38 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   );
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
   const [isFormChanged, setIsFormChanged] = useState(false);
 
+  const publicationAuthor = useMemo(() => {
+    return extractNameFromEmail(publication.author) ?? t('Unknown');
+  }, [publication.author, t]);
   const {
     register,
     formState: { errors: formErrors },
     trigger,
+    watch,
     handleSubmit: submitWrapper,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
       ),
+      rules: rules[publication.targetFolder] ?? [],
+      publicationAuthor: publication.displayAuthor ?? publicationAuthor,
     },
     mode: 'onChange',
   });
 
-  const publicationAuthor = useMemo(() => {
-    return extractNameFromEmail(publication.author) ?? t('Unknown');
-  }, [publication.author, t]);
+  const rulesOnEdit = watch(PublishRequestFieldsNames.RULES);
+  const displayAuthorEditState = watch(
+    PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+  );
+
+  console.log(displayAuthorEditState);
 
   useEffect(() => {
     trigger();
   }, [trigger]);
-
-  useEffect(() => {
-    if (isEditMode || isReview) {
-      setErrors(() =>
-        getStringValidationErrors({
-          value: replaceSpacesFromString(publication.displayAuthor),
-          label: 'Author',
-        }),
-      );
-    }
-  }, [isEditMode, isReview, publication.displayAuthor]);
 
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
@@ -293,25 +284,6 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     [dispatch],
   );
 
-  const handleChangeDisplayAuthor = useCallback(
-    (value: string) => {
-      const cleanedValue = replaceSpacesFromString(value);
-      setErrors(() =>
-        getStringValidationErrors({
-          value: cleanedValue,
-          label: 'Author',
-        }),
-      );
-      if (
-        value.length <= MAX_ENTITY_LENGTH ||
-        value.length < displayAuthorEditState.length
-      ) {
-        dispatch(PublicationActions.setDisplayAuthorEditState(cleanedValue));
-      }
-    },
-    [dispatch, displayAuthorEditState.length],
-  );
-
   const handleCloseCompareModal = useCallback(() => {
     setIsCompareModalOpened(false);
   }, []);
@@ -395,6 +367,9 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   const doesPublicationContainFiles = publication.resources.some(
     ({ reviewUrl }) => isFileId(reviewUrl),
   );
+  const showPublicDisplayAuthor =
+    !isPublicationHasOnlyUnpublishEntities ||
+    (publicationModel && publicationModel.action !== PublishActions.DELETE);
 
   return (
     <form
@@ -489,27 +464,29 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                     />
                   )}
 
-                  {(!isPublicationHasOnlyUnpublishEntities ||
-                    (publicationModel &&
-                      publicationModel.action !== PublishActions.DELETE)) && (
-                    <PublicationInfoSection
-                      labelDataQa="publication-display-author-label"
-                      label={t("Author's public name")}
-                      valueDataQa="publication-display-author"
-                      valueToDisplay={publication.displayAuthor ?? ''}
-                      infoTooltip={
-                        isReview
-                          ? t(
-                              "This name will be displayed instead of the author's name for this publication.",
-                            )
-                          : undefined
-                      }
-                      editValue={displayAuthorEditState}
-                      onChangeValue={handleChangeDisplayAuthor}
-                      isEditMode={isEditMode || !isReview}
-                      errors={errors}
-                    />
-                  )}
+                  {showPublicDisplayAuthor &&
+                    (isEditMode || !isReview ? (
+                      <Field
+                        label={t("Author's public name")}
+                        {...register(
+                          PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+                          validators.publicationAuthor,
+                        )}
+                        id={PublishRequestFieldsNames.PUBLICATION_AUTHOR}
+                        error={formErrors.publicationAuthor?.message}
+                        className="h-6 w-full rounded-none border-0 border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
+                      />
+                    ) : (
+                      <PublicationInfoSection
+                        labelDataQa="publication-display-author-label"
+                        label={t("Author's public name")}
+                        valueDataQa="publication-display-author"
+                        valueToDisplay={publication.displayAuthor ?? ''}
+                        infoTooltip={t(
+                          "This name will be displayed instead of the author's name for this publication.",
+                        )}
+                      />
+                    ))}
 
                   {isReview && (
                     <PublicationInfoSection

@@ -2,14 +2,19 @@ import { Path, RegisterOptions } from 'react-hook-form';
 
 import { createFormValidationRules } from '@/src/utils/app/forms';
 
+import { PublicationRule } from '@/src/types/publication';
+
 import '@/src/constants/default-ui-settings';
 
 export enum PublishRequestFieldsNames {
   PUBLISH_REQUEST_NAME = 'publishRequestName',
   PUBLICATION_AUTHOR = 'publicationAuthor',
+  RULES = 'rules',
 }
 export interface PublicationRequestFormData {
   [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: string;
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: string;
+  [PublishRequestFieldsNames.RULES]: PublicationRule[];
 }
 
 type Options<T extends Path<PublicationRequestFormData>> = Omit<
@@ -30,6 +35,10 @@ export const publishRequestFields = {
   [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: {
     name: PublishRequestFieldsNames.PUBLICATION_AUTHOR,
     label: 'Author',
+  },
+  [PublishRequestFieldsNames.RULES]: {
+    name: PublishRequestFieldsNames.RULES,
+    label: 'Rules',
   },
 };
 
