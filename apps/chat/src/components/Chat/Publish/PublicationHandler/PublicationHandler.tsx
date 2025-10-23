@@ -266,6 +266,13 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     userName,
   ]);
 
+  const doesIncludeConversation = publication.resourceTypes.includes(
+    BackendResourceType.CONVERSATION,
+  );
+  const doesIncludeMarketplaceEntity =
+    publication.resourceTypes.includes(BackendResourceType.APPLICATION) ||
+    publication.resourceTypes.includes(BackendResourceType.TOOLSET);
+
   const handleSendRequest = useCallback(
     (data: PublicationRequestFormData) => {
       onSubmit(publication.resources, data);
@@ -569,19 +576,12 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                         const isConversationSectionAndNoFiles =
                           !isReview &&
                           featureType === FeatureType.File &&
-                          publication.resourceTypes.includes(
-                            BackendResourceType.CONVERSATION,
-                          ) &&
+                          doesIncludeConversation &&
                           !doesPublicationContainFiles;
                         const doesInvalidPublishApplicationIconExist =
                           !isReview &&
                           firstNotMyFileEntity &&
-                          (publication.resourceTypes.includes(
-                            BackendResourceType.APPLICATION,
-                          ) ||
-                            publication.resourceTypes.includes(
-                              BackendResourceType.TOOLSET,
-                            )) &&
+                          doesIncludeMarketplaceEntity &&
                           featureType === FeatureType.File;
                         const shouldRenderSection =
                           publication.resourceTypes.includes(
