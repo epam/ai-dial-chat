@@ -2228,10 +2228,6 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.selectPublication.type),
     switchMap(({ payload }) => {
-      if (!payload) {
-        return EMPTY;
-      }
-
       const publication = PublicationSelectors.selectSelectedPublication(
         state$.value,
       );
