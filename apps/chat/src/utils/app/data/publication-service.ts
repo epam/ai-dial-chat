@@ -9,6 +9,7 @@ import {
   Publication,
   PublicationInfo,
   PublicationRequestModel,
+  PublicationResource,
   PublicationRule,
   PublicationsListModel,
   PublishedFileItem,
@@ -82,14 +83,21 @@ export class PublicationService {
       map((publication: Publication) => {
         return {
           ...publication,
-          resources: publication.resources.map((resource) => ({
-            ...resource,
-            targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
-            reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl),
-            sourceUrl: resource.sourceUrl
-              ? ApiUtils.decodeApiUrl(resource.sourceUrl)
-              : null,
-          })),
+          resources: publication.resources.map((resource) => {
+            const resourceData = publicationData.resources.find(
+              (r) => ApiUtils.encodeApiUrl(r.targetUrl) === resource.targetUrl,
+            );
+            return {
+              ...resource,
+              targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
+              reviewUrl: resource.reviewUrl
+                ? ApiUtils.decodeApiUrl(resource.reviewUrl)
+                : ((resourceData as PublicationResource)?.reviewUrl ?? ''),
+              sourceUrl: resource.sourceUrl
+                ? ApiUtils.decodeApiUrl(resource.sourceUrl)
+                : null,
+            };
+          }),
         };
       }),
     );
