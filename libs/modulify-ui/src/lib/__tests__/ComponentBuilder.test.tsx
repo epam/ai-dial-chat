@@ -38,11 +38,11 @@ describe('ComponentBuilder', () => {
     const Component = ComponentBuilder.use(MockComponent)
       .updateStyles((styles) => ({
         ...styles,
-        component: { color: 'red' },
+        component: { color: 'rgb(255, 0, 0)' },
       }))
       .build();
     const { container } = render(<Component text="Hello" />);
-    expect(container.firstChild).toHaveStyle('color: red');
+    expect(container.firstChild).toHaveStyle({ color: 'rgb(255, 0, 0)' });
   });
 
   it('should update state using state function', () => {
