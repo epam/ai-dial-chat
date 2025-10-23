@@ -266,7 +266,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     userName,
   ]);
 
-  const handleUpdateRequest = useCallback(
+  const handleSendRequest = useCallback(
     (data: PublicationRequestFormData) => {
       onSubmit(publication.resources, data);
     },
@@ -391,7 +391,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
 
   return (
     <form
-      onSubmit={submitWrapper(handleUpdateRequest)}
+      onSubmit={submitWrapper(handleSendRequest)}
       className={classNames(
         'flex w-full justify-center overflow-y-auto',
         isReview ? 'p-3 md:px-5 md:pt-5' : 'h-full',

@@ -122,6 +122,9 @@ export const PublicationHandlerFooter = ({
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,
   );
+  const selectedCredentialsItems = useAppSelector(
+    PublicationSelectors.selectSelectedCredentialsItems,
+  );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
@@ -333,6 +336,25 @@ export const PublicationHandlerFooter = ({
     );
   }, [dispatch, invalidEntities]);
 
+  const handleApprovePublication = () => {
+    const itemsWithCredentials = publication.resources.filter(
+      (resource) => resource.publishCredentials,
+    );
+
+    if (
+      selectedPublicationItems.length !== publication.resources.length ||
+      selectedCredentialsItems.length !== itemsWithCredentials.length
+    ) {
+      dispatch(PublicationActions.updateAndApprovePublicationRequest());
+    } else {
+      dispatch(
+        PublicationActions.approvePublication({
+          url: publication.url,
+        }),
+      );
+    }
+  };
+
   const isOnlyFilesPublication = publication.resources.every((resource) =>
     isFileId(resource.reviewUrl),
   );
@@ -516,7 +538,8 @@ export const PublicationHandlerFooter = ({
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={isApproveDisabled || isEditInvalid || isFormErrors}
-                type="submit"
+                type={publishModel ? 'submit' : 'button'}
+                onClick={publishModel ? undefined : handleApprovePublication}
                 data-qa="submit"
               >
                 {t(getSubmitBtnText())}
