@@ -24,8 +24,8 @@ dialTest(
       await adminPublicationApiHelper.listPublicationRequests();
     const e2ePublicationRequests = publicationRequests.publications.filter(
       (p) =>
-        p.name?.trim().startsWith(unpublishRequestPrefix) ||
-        p.name?.trim().startsWith(publicationRequestPrefix),
+        p.name?.trim().includes(unpublishRequestPrefix) ||
+        p.name?.trim().includes(publicationRequestPrefix),
     );
 
     for (const publicationRequest of e2ePublicationRequests) {

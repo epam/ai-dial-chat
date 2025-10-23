@@ -10,7 +10,6 @@ export enum PublishRequestFieldsNames {
 }
 export interface PublicationRequestFormData {
   [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: string;
-  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: string;
 }
 
 type Options<T extends Path<PublicationRequestFormData>> = Omit<

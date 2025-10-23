@@ -3,6 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ModalState } from '@/src/types/modal';
@@ -11,7 +12,7 @@ import { Translation } from '@/src/types/translation';
 
 import { MarketplaceActions, ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/selectors';
+import { AuthSelectors, MarketplaceSelectors } from '@/src/store/selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
@@ -31,6 +32,7 @@ export const ToolsetLoginDialogView = () => {
   const entity = useAppSelector(
     MarketplaceSelectors.selectLoginEntity,
   ) as ToolsetModel;
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const formMethods = useForm<ToolsetLoginFormType>({
     defaultValues: getDefaultLoginFormData(
@@ -42,7 +44,13 @@ export const ToolsetLoginDialogView = () => {
     resolver: zodResolver(ToolsetLoginFormSchema),
   });
 
-  const isSignedIn = isToolsetSignedIn(entity);
+  const isPublic = isEntityIdPublic(entity);
+  const authLevel =
+    isAdmin || !isPublic
+      ? ToolsetCredentialsLevel.GLOBAL
+      : ToolsetCredentialsLevel.USER;
+
+  const isSignedIn = isToolsetSignedIn(entity, authLevel);
 
   const handleClose = useCallback(() => {
     dispatch(MarketplaceActions.setLoginEntity());
@@ -52,20 +60,20 @@ export const ToolsetLoginDialogView = () => {
     (data: ToolsetLoginFormType) => {
       dispatch(
         ToolsetActions.startSignInProcess({
-          authLevel: ToolsetCredentialsLevel.GLOBAL,
+          authLevel,
           apiKey: data.apiKey,
           toolset: entity,
         }),
       );
       handleClose();
     },
-    [dispatch, entity, handleClose],
+    [dispatch, entity, handleClose, authLevel],
   );
 
   const handleLogout = useCallback(() => {
     dispatch(
       ToolsetActions.logOutToolset({
-        authLevel: ToolsetCredentialsLevel.GLOBAL,
+        authLevel,
         authType: entity.authSettings.authenticationType,
         toolsetId: entity.id,
       }),
@@ -76,6 +84,7 @@ export const ToolsetLoginDialogView = () => {
     entity.authSettings.authenticationType,
     entity.id,
     handleClose,
+    authLevel,
   ]);
 
   return (
@@ -98,6 +107,7 @@ export const ToolsetLoginDialogView = () => {
 
       <FormProvider {...formMethods}>
         <ToolsetLoginForm
+          credentialsLevel={authLevel}
           type={entity.authSettings.authenticationType}
           toolset={entity}
           buttonClassName="ml-auto"

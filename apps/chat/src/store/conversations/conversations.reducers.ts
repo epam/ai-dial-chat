@@ -288,6 +288,7 @@ export const conversationsSlice = createSlice({
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
       }
+      state.areConversationsWithContentUploading = false;
     },
     createNewReplayConversation: (
       state,
@@ -649,9 +650,6 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{ path: string }>,
     ) => {
       state.areConversationsWithContentUploading = true;
-    },
-    uploadConversationsWithContentRecursiveSuccess: (state) => {
-      state.areConversationsWithContentUploading = false;
     },
     uploadConversationsWithFoldersRecursiveSuccess: (state) => {
       state.conversationsLoaded = true;

@@ -43,7 +43,7 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     additionalShareUserConversations,
     additionalShareUserConversationDropdownMenu,
-    additionalShareUserPublishingRequestModal,
+    additionalShareUserPublishingRequestDialog,
     additionalShareUserToast,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserRequestContext,
@@ -248,10 +248,10 @@ dialSharedWithMeTest(
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.publish,
         );
-        await additionalShareUserPublishingRequestModal.requestName.fillInInput(
+        await additionalShareUserPublishingRequestDialog.requestName.fillInInput(
           GeneratorUtil.randomPublicationRequestName(),
         );
-        await additionalShareUserPublishingRequestModal.sendRequestButton.click();
+        await additionalShareUserPublishingRequestDialog.sendRequestButton.click();
         await baseAssertion.assertElementState(
           additionalShareUserToast,
           'visible',
@@ -261,7 +261,7 @@ dialSharedWithMeTest(
           ExpectedConstants.attachmentPublishErrorMessage,
         );
         await baseAssertion.assertElementState(
-          additionalShareUserPublishingRequestModal,
+          additionalShareUserPublishingRequestDialog,
           'hidden',
         );
       },

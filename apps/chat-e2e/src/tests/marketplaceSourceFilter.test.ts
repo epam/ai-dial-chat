@@ -5,6 +5,7 @@ import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   AddAppMenuOptions,
+  AppEditorAppTypes,
   ApplicationTypes,
   Attachment,
   CheckboxState,
@@ -220,11 +221,12 @@ dialTest(
     marketplaceAgents,
     appEditorPage,
     appEditorGeneralForm,
-    appEditorViewForm,
+    customAppEditorViewForm,
     appEditorHeader,
     confirmationDialog,
     setTestIds,
     baseAssertion,
+    agentDetailsModal,
   }) => {
     setTestIds('EPMRTC-5351', 'EPMRTC-5238');
     const firstAppName = GeneratorUtil.randomApplicationName();
@@ -271,12 +273,12 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded();
+        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
         await appEditorGeneralForm.fillInAppFields({
           name: secondAppName,
         });
         await appEditorGeneralForm.goNext();
-        await appEditorViewForm.fillInAppFields();
+        await customAppEditorViewForm.fillInAppFields();
         await appEditorHeader.focusOn();
         await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
@@ -286,6 +288,7 @@ dialTest(
     await dialTest.step(
       'Verify newly added app is displayed immediately',
       async () => {
+        await agentDetailsModal.closeButton.click();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),

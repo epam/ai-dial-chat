@@ -3,20 +3,13 @@ import { IconBulb } from '@tabler/icons-react';
 import { BackendResourceTypeName } from '@/src/types/common';
 
 import { PublicationItemRow } from './PublicationItemRow';
+import { PublicationItemProps } from './view-props';
 
-import { PromptInfo } from '@epam/ai-dial-shared';
-
-interface Props {
-  item: PromptInfo;
-  level: number;
-}
-
-export const PublicationPromptRow: React.FC<Props> = ({ item, level }) => {
+export const PublicationPromptRow: React.FC<PublicationItemProps> = (props) => {
   return (
     <PublicationItemRow
-      level={level}
+      {...props}
       Icon={<IconBulb size={18} className="text-secondary" />}
-      item={item}
       itemTypeName={BackendResourceTypeName.PROMPT}
       dataQa="prompt"
     />

@@ -101,7 +101,7 @@ export const DynamicFormFields = <
       <div className="flex flex-col gap-2">
         {fields.map((field, i) => (
           <div
-            key={field.label}
+            key={field.label + i}
             className="flex w-full flex-wrap items-center gap-3 rounded border border-tertiary bg-layer-3 p-[11px] md:flex-nowrap md:py-[7px]"
           >
             <div className="flex grow flex-col gap-2 md:flex-row md:items-center md:gap-3">

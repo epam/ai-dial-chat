@@ -9,6 +9,7 @@ import { getToolsetPayload } from '@/src/utils/app/toolsets';
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -18,6 +19,7 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ToolsetEditorHeader } from '@/src/components/ToolsetEditor/ToolsetEditorHeader';
 import { ToolsetEditorView } from '@/src/components/ToolsetEditor/ToolsetEditorView';
@@ -41,6 +43,9 @@ export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
+
+  const { [ToolsetEditorQuery.Id]: idQuery } = router.query;
+  const isCreateRef = useRef(!idQuery);
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
@@ -92,6 +97,7 @@ export const ToolsetEditor = () => {
             newToolset: payloadToolset,
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: saveAndExitRef.current ?? undefined,
+            shouldSelectToolset: isCreateRef.current,
           }),
         );
       } else {
@@ -150,14 +156,24 @@ export const ToolsetEditor = () => {
 
       if ((!isDirty && toolsetDetails) || !toolsetDetails) {
         void router.push(chatUrl || marketplaceRoute);
-
+        dispatch(
+          MarketplaceActions.setDetailsEntity(
+            isCreateRef.current && toolsetDetails?.reference
+              ? {
+                  reference: toolsetDetails?.reference,
+                  type: MarketplaceEntitiesTabs.TOOLSETS,
+                  isSuggested: false,
+                }
+              : undefined,
+          ),
+        );
         return;
       }
 
       saveAndExitRef.current = chatUrl || Routes.Marketplace;
       handleSubmit(undefined, saveDraft);
     },
-    [handleSubmit, isDirty, router, toolsetDetails],
+    [dispatch, handleSubmit, isDirty, router, toolsetDetails],
   );
 
   const handleTabClick = useCallback(
@@ -182,7 +198,7 @@ export const ToolsetEditor = () => {
         );
       } else {
         changeEditorTabRef.current = ToolsetEditorSteps.Settings;
-        handleSubmit();
+        handleSubmit(undefined, !!toolsetDetails);
       }
     },
     [dispatch, handleSubmit, isDirty, toolsetDetails],

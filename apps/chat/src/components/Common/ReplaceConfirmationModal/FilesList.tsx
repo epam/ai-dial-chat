@@ -7,7 +7,7 @@ import { OnItemEvent } from '@/src/types/modal';
 
 import { Folder } from '@/src/components/Folder/Folder';
 
-import { FilesRow } from './Components';
+import { FilesRow } from './ReplaceFileRow';
 
 interface Props {
   folders: FolderInterface[];

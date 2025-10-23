@@ -80,7 +80,7 @@ export const errorsMessages = {
 
   // Toolsets
   // params: {{name}}
-  toolsetGetFailed: 'Filed to get toolset: {{name}}',
+  toolsetGetFailed: 'Failed to get toolset: {{name}}',
   toolsetsGetFailed: 'Failed to get toolsets',
   toolsetUpdateFailed: 'Failed to update toolset',
   toolsetOAuthNotSupported: 'MCP server does not support OAuth authentication',

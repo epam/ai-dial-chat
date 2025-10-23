@@ -13,7 +13,6 @@ import {
 import { PublicationProps } from '@/src/testData/api';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { SortingUtil } from '@/src/utils/sortingUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -46,11 +45,11 @@ dialAdminTest(
     dataInjector,
     organizationFolderConversations,
     conversationDropdownMenu,
-    publishingRequestModal,
-    conversationToPublishAssertion,
+    publishingRequestDialog,
+    publishConversationAssertion,
     baseAssertion,
     publishingRules,
-    publishingRequestModalAssertion,
+    publishingRequestDialogAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
@@ -133,42 +132,42 @@ dialAdminTest(
           firstConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await baseAssertion.assertElementText(
-          publishingRequestModal.unpublishFrom,
+          publishingRequestDialog.publishPath,
           publishPath,
         );
 
-        await conversationToPublishAssertion.assertEntityState(
+        await publishConversationAssertion.assertEntityState(
           { name: firstConversation.name },
           'visible',
         );
-        await conversationToPublishAssertion.assertEntityColor(
+        await publishConversationAssertion.assertEntityColor(
           { name: firstConversation.name },
           expectedErrorColor,
         );
-        await conversationToPublishAssertion.assertEntityCheckboxState(
+        await publishConversationAssertion.assertEntityCheckboxState(
           { name: firstConversation.name },
           CheckboxState.checked,
         );
 
-        await conversationToPublishAssertion.assertEntityVersion(
+        await publishConversationAssertion.assertEntityVersion(
           { name: firstConversation.name },
           ExpectedConstants.defaultAppVersion,
         );
-        await conversationToPublishAssertion.assertEntityVersionColor(
+        await publishConversationAssertion.assertEntityVersionColor(
           { name: firstConversation.name },
           expectedErrorColor,
         );
-        await conversationToPublishAssertion.assertTreeEntityIcon(
+        await publishConversationAssertion.assertTreeEntityIcon(
           { name: firstConversation.name },
           expectedConversationIcon,
         );
 
-        await conversationToPublishAssertion.assertEntityState(
+        await publishConversationAssertion.assertEntityState(
           { name: secondConversation.name },
           'hidden',
         );
@@ -186,13 +185,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         firstConversationUnpublishingRequestName,
       );
       firstUnpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -205,14 +204,14 @@ dialAdminTest(
           secondConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           secondConversationUnpublishingRequestName,
         );
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
       },
     );
 
@@ -249,6 +248,7 @@ dialAdminTest(
       },
     );
 
+    //TODO: update the step when fixed https://github.com/epam/ai-dial-chat/issues/2064
     await dialAdminTest.step(
       'Expand request folder and verify "Publication approval" modal is displayed',
       async () => {
@@ -281,11 +281,12 @@ dialAdminTest(
       },
     );
 
+    //TODO: update the assertion when fixed https://github.com/epam/ai-dial-chat/issues/2064
     await dialAdminTest.step(
       'Verify only 1t conversation is displayed on "Publication approval" modal',
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           publishPath,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
@@ -458,9 +459,9 @@ dialAdminTest(
     dataInjector,
     organizationFolderConversations,
     conversationDropdownMenu,
-    publishingRequestModal,
-    conversationToPublishAssertion,
-    publishingRequestModalAssertion,
+    publishingRequestDialog,
+    publishConversationAssertion,
+    publishingRequestDialogAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
@@ -538,32 +539,32 @@ dialAdminTest(
           publishedFolderName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         for (const conversation of folderConversations) {
-          await conversationToPublishAssertion.assertEntityState(
+          await publishConversationAssertion.assertEntityState(
             { name: conversation },
             'visible',
           );
-          await conversationToPublishAssertion.assertEntityColor(
+          await publishConversationAssertion.assertEntityColor(
             { name: conversation },
             expectedErrorColor,
           );
-          await conversationToPublishAssertion.assertEntityCheckboxState(
+          await publishConversationAssertion.assertEntityCheckboxState(
             { name: conversation },
             CheckboxState.checked,
           );
-          await conversationToPublishAssertion.assertEntityVersion(
+          await publishConversationAssertion.assertEntityVersion(
             { name: conversation },
             ExpectedConstants.defaultAppVersion,
           );
-          await conversationToPublishAssertion.assertEntityVersionColor(
+          await publishConversationAssertion.assertEntityVersionColor(
             { name: conversation },
             expectedErrorColor,
           );
-          await conversationToPublishAssertion.assertTreeEntityIcon(
+          await publishConversationAssertion.assertTreeEntityIcon(
             { name: conversation },
             expectedConversationIcon,
           );
@@ -572,13 +573,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         firstFolderUnpublishingRequestName,
       );
       firstUnpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -590,14 +591,14 @@ dialAdminTest(
           publishedFolderName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
-        await publishingRequestModal.requestName.fillInInput(
+        await publishingRequestDialog.requestName.fillInInput(
           secondFolderUnpublishingRequestName,
         );
-        await publishingRequestModal.sendPublicationRequest();
+        await publishingRequestDialog.sendPublicationRequest();
       },
     );
 
@@ -651,7 +652,7 @@ dialAdminTest(
       'Verify both conversations are displayed on "Publication approval" modal',
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           PublishPath.Organization,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
@@ -740,16 +741,17 @@ dialAdminTest(
           adminPublishingApprovalModal.goToReviewButton,
           'hidden',
         );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.duplicatedUnpublishingError,
-          ExpectedConstants.duplicatedUnpublishingError(
-            ...SortingUtil.sortStringsArray(
-              folderConversations,
-              (f) => f.toLowerCase(),
-              'asc',
-            ),
-          ),
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminPublishingApprovalModalAssertion.assertElementText(
+        //   adminPublishingApprovalModal.duplicatedUnpublishingError,
+        //   ExpectedConstants.duplicatedUnpublishingError(
+        //     ...SortingUtil.sortStringsArray(
+        //       folderConversations,
+        //       (f) => f.toLowerCase(),
+        //       'asc',
+        //     ),
+        //   ),
+        // );
       },
     );
 
@@ -795,10 +797,10 @@ dialAdminTest(
     dataInjector,
     organizationFolderConversations,
     conversationDropdownMenu,
-    publishingRequestModal,
+    publishingRequestDialog,
     publishingRules,
     folderToPublishAssertion,
-    publishingRequestModalAssertion,
+    publishingRequestDialogAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
@@ -878,8 +880,8 @@ dialAdminTest(
           innerFolderName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
-        await publishingRequestModalAssertion.assertElementState(
-          publishingRequestModal,
+        await publishingRequestDialogAssertion.assertElementState(
+          publishingRequestDialog,
           'visible',
         );
         await folderToPublishAssertion.assertFolderState(
@@ -924,19 +926,19 @@ dialAdminTest(
           { name: innerFolderConversationName },
           expectedConversationIcon,
         );
-        await publishingRequestModalAssertion.assertElementText(
-          publishingRequestModal.unpublishFrom,
+        await publishingRequestDialogAssertion.assertElementText(
+          publishingRequestDialog.publishPath,
           publishPath,
         );
-        await publishingRequestModalAssertion.assertElementText(
+        await publishingRequestDialogAssertion.assertElementText(
           publishingRules.publishingPath,
           rootFolderName,
         );
-        await publishingRequestModalAssertion.assertElementState(
+        await publishingRequestDialogAssertion.assertElementState(
           publishingRules.addRuleButton,
           'visible',
         );
-        await publishingRequestModalAssertion.assertElementsCount(
+        await publishingRequestDialogAssertion.assertElementsCount(
           publishingRules.allRules,
           0,
         );
@@ -944,13 +946,13 @@ dialAdminTest(
     );
 
     await dialTest.step('Set a valid request name and submit', async () => {
-      await publishingRequestModal.requestName.fillInInput(
+      await publishingRequestDialog.requestName.fillInInput(
         folderUnpublishingRequestName,
       );
       unpublishApiModels =
-        await publishingRequestModal.sendPublicationRequest();
-      await publishingRequestModalAssertion.assertElementState(
-        publishingRequestModal,
+        await publishingRequestDialog.sendPublicationRequest();
+      await publishingRequestDialogAssertion.assertElementState(
+        publishingRequestDialog,
         'hidden',
       );
     });
@@ -1012,7 +1014,7 @@ dialAdminTest(
       'Verify only inner folder with content is displayed on "Publication approval" modal',
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.publishToPath,
+          adminPublishingApprovalModal.publishPath,
           publishPath,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(

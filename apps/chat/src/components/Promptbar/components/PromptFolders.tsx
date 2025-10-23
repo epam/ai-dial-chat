@@ -4,13 +4,8 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { getFoldersDepth, sortByName } from '@/src/utils/app/folders';
-import {
-  getIdWithoutRootPathSegments,
-  getPromptRootId,
-  isEntityIdExternal,
-  isRootId,
-} from '@/src/utils/app/id';
+import { sortByName } from '@/src/utils/app/folders';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -22,7 +17,6 @@ import {
   FolderInterface,
   FolderSectionProps,
 } from '@/src/types/folder';
-import { PublicationFolderPayload } from '@/src/types/modal';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -44,14 +38,11 @@ import {
 } from '@/src/constants/sections';
 
 import { ApproveRequiredSection } from '@/src/components/Chat/Publish/ApproveRequiredSection';
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { Folder } from '@/src/components/Folder/Folder';
 import { BetweenFoldersLine } from '@/src/components/Sidebar/BetweenFoldersLine';
 
 import { PromptComponent } from './Prompt';
-
-import { PublishActions } from '@epam/ai-dial-shared';
 
 interface promptFolderProps {
   folder: FolderInterface;
@@ -77,8 +68,6 @@ const PromptFolderTemplate = ({
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
-
-  const [publication, setPublication] = useState<PublicationFolderPayload>();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const highlightedFolders = useAppSelector(
@@ -275,10 +264,6 @@ const PromptFolderTemplate = ({
     ],
   );
 
-  const handlePublicationClose = useCallback(() => {
-    setPublication(undefined);
-  }, []);
-
   const isExternal = isEntityIdExternal(folder);
 
   return (
@@ -290,8 +275,6 @@ const PromptFolderTemplate = ({
         denyDrop={isExternal || isSelectMode}
       />
       <Folder
-        isUnpublishing={publication?.action === PublishActions.DELETE}
-        onPublication={setPublication}
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
         searchTerm={searchTerm}
         currentFolder={folder}
@@ -319,23 +302,6 @@ const PromptFolderTemplate = ({
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Prompt}
           denyDrop={isExternal || isSelectMode}
-        />
-      )}
-      {!!publication && (
-        <PublishModal
-          entity={publication.entity}
-          entities={publication.entities}
-          type={publication.type}
-          isOpen={!!publication}
-          onClose={handlePublicationClose}
-          publishAction={publication.action}
-          depth={getFoldersDepth(publication.entity, allFolders)}
-          defaultPath={
-            publication.action === PublishActions.DELETE &&
-            !isRootId(publication.entity.folderId)
-              ? getIdWithoutRootPathSegments(publication.entity.folderId)
-              : undefined
-          }
         />
       )}
     </>
@@ -497,12 +463,15 @@ export function PromptFolders() {
 
   const publicationItems = useAppSelector(publicationItemsSelector);
 
-  const toApproveFolderItem = {
-    hidden: !publicationItems.length,
-    name: APPROVE_REQUIRED_SECTION_NAME,
-    displayRootFiles: true,
-    dataQa: 'approve-required',
-  };
+  const toApproveFolderItem = useMemo(
+    () => ({
+      hidden: !publicationItems.length,
+      name: APPROVE_REQUIRED_SECTION_NAME,
+      displayRootFiles: true,
+      dataQa: 'approve-required',
+    }),
+    [publicationItems.length],
+  );
 
   const folderItems: FolderSectionProps[] = useMemo(
     () =>
