@@ -162,7 +162,7 @@
     "vitest": "^3.2.4"
   },
   "optionalDependencies": {
-    "@nx/playwright": "21.4.0",
+    "@nx/playwright": "21.6.5",
     "@playwright/test": "^1.55.1",
     "@types/adm-zip": "^0.5.7",
     "@types/he": "^1.2.3",
