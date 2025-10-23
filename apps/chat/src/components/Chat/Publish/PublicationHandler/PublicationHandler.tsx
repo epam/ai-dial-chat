@@ -15,8 +15,10 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getStringValidationErrors } from '@/src/utils/app/forms';
 import {
   getIdWithoutFeatureType,
+  isApplicationId,
   isConversationId,
   isFileId,
+  isToolsetId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
@@ -545,6 +547,18 @@ export function PublicationHandler({ publication }: Props) {
     }, 0);
   }, [publication.resources, publication.targetFolder]);
 
+  const errorMessageEntityType = useMemo(() => {
+    if (!publicationModel) return '';
+    if (isApplicationId(publicationModel.entity.id)) {
+      return FeatureType.Application;
+    }
+
+    if (isToolsetId(publicationModel.entity.id)) {
+      return FeatureType.Toolset;
+    }
+    return '';
+  }, [publicationModel]);
+
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
@@ -799,7 +813,7 @@ export function PublicationHandler({ publication }: Props) {
                                 <ErrorMessage
                                   type="warning"
                                   error={t(
-                                    `The icon used for this ${featureType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${featureType} will be published with the default one.`,
+                                    `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
                                   )}
                                 />
                               )}
