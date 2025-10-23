@@ -245,9 +245,6 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     [item.id, selectedPublicationItems],
   );
 
-  console.log(isSelected);
-  console.log(selectedPublicationItems);
-
   const [inputName, setInputName] = useState(item.name);
   const [isFocused, setIsFocused] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
