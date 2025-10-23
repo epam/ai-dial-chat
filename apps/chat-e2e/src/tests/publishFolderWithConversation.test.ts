@@ -383,7 +383,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   'Published folder became available in Change path form for publish request.\n' +
     'Publish chat: Change path: context menu for existing folders.\n' +
     'Publish folder into nested folder structure with depth 4.\n' +
