@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.39.0-rc",
+  "version": "0.40.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -65,7 +65,7 @@
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
     "nanoid": "^5.1.5",
-    "next": "15.5.2",
+    "next": "15.5.6",
     "next-auth": "4.24.10",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
@@ -176,7 +176,8 @@
     "esbuild": "0.25.10",
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
-    "@monaco-editor/loader": "1.4.0"
+    "@monaco-editor/loader": "1.4.0",
+    "koa": "3.0.3"
   },
   "engines": {
     "node": ">=22.2.0",
