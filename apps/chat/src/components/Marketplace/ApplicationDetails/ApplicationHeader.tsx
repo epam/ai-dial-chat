@@ -14,7 +14,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
 import { EntityHeader } from '../EntityDetailsHeader';
-import { ApplicationCopyLink } from './ApplicationCopyLink';
+import { MarketplaceCopyLink } from '../MarketplaceCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -52,7 +52,7 @@ export const ApplicationDetailsHeader = ({ entity, isPreview }: Props) => {
   const copyLinkAction = useMemo(
     () => ({
       isPublic: isPublicApp,
-      Component: ApplicationCopyLink,
+      Component: MarketplaceCopyLink,
     }),
     [isPublicApp],
   );

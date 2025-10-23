@@ -578,6 +578,14 @@ const ChatView = memo(() => {
 
     if (!model) return;
 
+    if (model.viewerUrl) {
+      return {
+        viewerUrl: model.viewerUrl,
+        title: model.name,
+        applicationId: model.id,
+      };
+    }
+
     if (
       model.applicationTypeSchemaId &&
       applicationTypeSchemas.some(
@@ -1145,7 +1153,9 @@ export function Chat({ isPreview }: ChatProps) {
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
       <>
-        <PublicationHandler publication={selectedPublication} />
+        <div className="w-full grow">
+          <PublicationHandler publication={selectedPublication} />
+        </div>
         <ChatInputFooter />
       </>
     );

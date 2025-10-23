@@ -3,8 +3,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import {
   getQuickAppDocumentUrl,
+  isApplicationDeployed,
   isApplicationType,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
@@ -16,8 +19,14 @@ import {
   MarketplaceEditorSteps,
   MarketplaceEntity,
 } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, ShareActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  MarketplaceActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -80,12 +89,15 @@ const checkShouldRevokeAccess = ({
 export const AppsEditor = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { t } = useTranslation(Translation.Marketplace);
 
   const {
     [AppsEditorQuery.Schema]: typeQuery = '',
     [AppsEditorQuery.PublicationUrl]: publicationUrl = '',
+    [AppsEditorQuery.Id]: id,
   } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
+  const isCreateRef = useRef(!id);
 
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
@@ -142,6 +154,7 @@ export const AppsEditor = () => {
   );
   const modelFromState = appDetails ? modelsMap[appDetails.reference] : null;
   const isShared = modelFromState?.isShared ?? false;
+  const isAppDeployed = modelFromState && isApplicationDeployed(modelFromState);
 
   const submitHandler = useCallback(
     (data: AppsEditorFormType) => {
@@ -177,6 +190,13 @@ export const AppsEditor = () => {
             }),
           );
         }
+        if (isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
         dispatch(
           ApplicationActions.update({
             oldApplication: appDetails,
@@ -193,6 +213,7 @@ export const AppsEditor = () => {
               : undefined,
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: saveAndExitRef.current ?? undefined,
+            shouldSelectApplication: isCreateRef.current,
           }),
         );
       }
@@ -209,11 +230,13 @@ export const AppsEditor = () => {
       appDetails,
       dispatch,
       formMethods,
+      isAppDeployed,
       isSchemaApplicationType,
       isShared,
       marketplaceEntities,
       publicationUrl,
       schema,
+      t,
     ],
   );
 
@@ -259,13 +282,24 @@ export const AppsEditor = () => {
 
       if ((!isDirty && appDetails) || !appDetails || isAppPublic) {
         void router.push(chatUrl || marketplaceRoute);
+        dispatch(
+          MarketplaceActions.setDetailsEntity(
+            isCreateRef.current && appDetails?.reference
+              ? {
+                  reference: appDetails?.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
+                  isSuggested: false,
+                }
+              : undefined,
+          ),
+        );
         return;
       }
 
       saveAndExitRef.current = chatUrl || Routes.Marketplace;
       handleSubmit(undefined, saveDraft);
     },
-    [isDirty, appDetails, isAppPublic, handleSubmit, router],
+    [router, isDirty, appDetails, isAppPublic, handleSubmit, dispatch],
   );
 
   const handleTabClick = useCallback(
@@ -303,7 +337,7 @@ export const AppsEditor = () => {
       );
     } else {
       changeEditorTabRef.current = MarketplaceEditorSteps.Settings;
-      handleSubmit();
+      handleSubmit(undefined, !!appDetails);
     }
   }, [isAppPublic, isDirty, appDetails, dispatch, handleSubmit]);
 

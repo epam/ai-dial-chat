@@ -76,8 +76,8 @@ import { DialFile } from '@/src/types/files';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PromptInfo } from '@/src/types/prompt';
 import {
+  PublicationRequestModel,
   PublicationResource,
-  PublicationUpdateRequestModel,
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -162,7 +162,13 @@ const publishEpic: AppEpic = (action$) =>
       return PublicationService.createPublicationRequest({
         ...publicationData,
       }).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() =>
+          of(
+            UIActions.showSuccessToast(
+              translate('Publication request created successfully'),
+            ),
+          ),
+        ),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.publishFail(err.message));
@@ -235,7 +241,6 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 getRootFolderIdFromEntityId(r.reviewUrl),
               ),
             );
-
             return forkJoin({
               publication: of(publication),
               uploadedUnpublishIdsSet: from(rootFolderPaths).pipe(
@@ -1285,7 +1290,7 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationUpdateRequestModel = {
+      const publicationData: PublicationRequestModel = {
         ...publication,
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl === payload.resourceToUpdateUrl) {
@@ -1364,8 +1369,8 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
                 }),
           );
 
-          const itemsToApprove =
-            PublicationSelectors.selectSelectedItemsToApprove(state);
+          const selectedPublicationItems =
+            PublicationSelectors.selectSelectedPublicationItems(state);
 
           return concat(
             updateEntityAction$,
@@ -1376,9 +1381,9 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
               }),
             ),
             of(
-              PublicationActions.setItemsToApprove({
+              PublicationActions.setPublicationItems({
                 publicationUrl: payload.publicationUrl,
-                ids: itemsToApprove.map((id) =>
+                ids: selectedPublicationItems.map((id) =>
                   id === payload.resourceToUpdateUrl
                     ? payload.newEntity.id
                     : id,
@@ -1435,8 +1440,8 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
         switchMap((response) => {
           const state = state$.value;
 
-          const itemsToApprove =
-            PublicationSelectors.selectSelectedItemsToApprove(state);
+          const selectedPublicationItems =
+            PublicationSelectors.selectSelectedPublicationItems(state);
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
@@ -1445,9 +1450,9 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
               newApplication,
             ),
             of(
-              PublicationActions.setItemsToApprove({
+              PublicationActions.setPublicationItems({
                 publicationUrl: response.url,
-                ids: itemsToApprove.map((id) =>
+                ids: selectedPublicationItems.map((id) =>
                   id === oldApplication.id ? newApplication.id : id,
                 ),
               }),
@@ -1492,7 +1497,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
         );
       }
 
-      const resources: PublicationUpdateRequestModel['resources'] =
+      const resources: PublicationRequestModel['resources'] =
         publication.resources?.map((resource) => ({
           ...resource,
           sourceUrl: resource.sourceUrl ?? '',
@@ -1531,8 +1536,8 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
             iconUrl: newIconUrl,
           };
 
-          const itemsToApprove =
-            PublicationSelectors.selectSelectedItemsToApprove(state);
+          const selectedPublicationItems =
+            PublicationSelectors.selectSelectedPublicationItems(state);
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
@@ -1540,9 +1545,9 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
               newApplicationWithMappedIconUrl,
             ),
             of(
-              PublicationActions.setItemsToApprove({
+              PublicationActions.setPublicationItems({
                 publicationUrl: payload.publicationUrl,
-                ids: [...itemsToApprove, newIconUrl],
+                ids: [...selectedPublicationItems, newIconUrl],
               }),
             ),
             of(
@@ -1586,7 +1591,7 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const publicationData: PublicationUpdateRequestModel = {
+      const publicationData: PublicationRequestModel = {
         ...publication,
         resources: publication.resources.map((resource) => {
           if (resource.reviewUrl.startsWith(`${payload.folderIdToUpdate}/`)) {
@@ -2008,12 +2013,17 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
         return of(PublicationActions.approvePublicationFail());
       }
 
-      const resourcesToApproveIds =
-        PublicationSelectors.selectSelectedItemsToApprove(state);
+      const selectedPublicationItems =
+        PublicationSelectors.selectSelectedPublicationItems(state);
+      const selectedCredentialsItems =
+        PublicationSelectors.selectSelectedCredentialsItems(state);
       const filteredResources = selectedPublication.resources
-        .filter(({ reviewUrl }) => resourcesToApproveIds.includes(reviewUrl))
+        .filter(({ reviewUrl }) => selectedPublicationItems.includes(reviewUrl))
         .map((resource) => ({
           ...resource,
+          publishCredentials:
+            resource.publishCredentials &&
+            selectedCredentialsItems.includes(resource.reviewUrl),
           sourceUrl: resource.sourceUrl ?? '',
         }));
 
@@ -2129,7 +2139,7 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
               }),
             ),
             of(
-              PublicationActions.setItemsToApprove({
+              PublicationActions.setPublicationItems({
                 publicationUrl: updatedPublication.url,
                 ids: newItemsToSelect,
               }),
@@ -2199,7 +2209,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
             ),
             of(PublicationActions.uploadPublication({ url: publicationUrl })),
             of(
-              PublicationActions.setItemsToApprove({
+              PublicationActions.setPublicationItems({
                 publicationUrl,
                 ids: newItemsToSelect,
               }),
@@ -2228,15 +2238,15 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      const selectedItemsToApprove =
-        PublicationSelectors.selectAllSelectedItemsToApprove(state$.value);
+      const selectedPublicationItems =
+        PublicationSelectors.selectAllSelectedPublicationItems(state$.value);
 
-      if (selectedItemsToApprove[publication.url] !== undefined) {
+      if (selectedPublicationItems[publication.url] !== undefined) {
         return EMPTY;
       }
 
       return of(
-        PublicationActions.setItemsToApprove({
+        PublicationActions.setPublicationItems({
           publicationUrl: publication?.url ?? '',
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),

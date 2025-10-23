@@ -93,13 +93,21 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
 
       if (savedConfigurationSchema) {
         return of(
-          ChatActions.getConfigurationSchemaSuccess(savedConfigurationSchema),
+          ChatActions.getConfigurationSchemaSuccess({
+            modelId: payload.modelId,
+            schema: savedConfigurationSchema,
+          }),
         );
       }
 
       return ApplicationService.getConfigurationSchema(payload.modelId).pipe(
         switchMap((schema) => {
-          return of(ChatActions.getConfigurationSchemaSuccess(schema));
+          return of(
+            ChatActions.getConfigurationSchemaSuccess({
+              modelId: payload.modelId,
+              schema,
+            }),
+          );
         }),
         catchError(() => {
           return of(ChatActions.getConfigurationSchemaFailed());

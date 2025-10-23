@@ -23,7 +23,7 @@ import {
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
-  PublishingRequestModal,
+  PublishingRequestDialog,
   SelectFolderModal,
   SendMessage,
   TalkToAgentDialog,
@@ -134,7 +134,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
-  additionalShareUserPublishingRequestModal: PublishingRequestModal;
+  additionalShareUserPublishingRequestDialog: PublishingRequestDialog;
   additionalShareUserInformationModal: InformationModal;
   additionalShareUserInformationModalAssertion: InformationModalAssertion;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
@@ -495,13 +495,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserConversations.getDropdownMenu();
     await use(additionalShareUserConversationDropdownMenu);
   },
-  additionalShareUserPublishingRequestModal: async (
+  additionalShareUserPublishingRequestDialog: async (
     { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserPublishingRequestModal =
-      new PublishingRequestModal(additionalShareUserPage);
-    await use(additionalShareUserPublishingRequestModal);
+    const additionalShareUserPublishingRequestDialog =
+      new PublishingRequestDialog(additionalShareUserPage);
+    await use(additionalShareUserPublishingRequestDialog);
   },
   additionalShareUserInformationModal: async (
     { additionalShareUserPage },

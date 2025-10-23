@@ -13,6 +13,7 @@ export class Toast extends BaseElement {
   public async closeToast() {
     if (await this.isVisible()) {
       await this.closeButton.click();
+      await this.waitForState({ state: 'hidden' });
     }
   }
 }

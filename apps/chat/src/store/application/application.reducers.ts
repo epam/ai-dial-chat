@@ -108,6 +108,7 @@ export const applicationSlice = createSlice({
         publicationUrl?: string;
         tabToOpen?: MarketplaceEditorSteps;
         isSaveAndExit?: boolean;
+        shouldSelectApplication?: boolean;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;
@@ -158,6 +159,7 @@ export const applicationSlice = createSlice({
     ) => {
       if (state.appDetails?.id === payload.id && state.appDetails?.function) {
         state.appDetails.function.status = payload.status;
+        state.appDetails.functionStatus = payload.status;
       }
     },
     updateFunctionStatusFail: (
@@ -214,6 +216,7 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         redirectUrl?: string;
+        shouldSelectApplication?: boolean;
       }>,
     ) => state,
     enterEditModeComplete: (state) => {

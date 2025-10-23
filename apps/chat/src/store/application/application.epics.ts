@@ -55,6 +55,7 @@ import {
   ApplicationActions,
   ApplicationTypesSchemasActions,
   ConversationsActions,
+  MarketplaceActions,
   ModelsActions,
   PublicationActions,
   ShareActions,
@@ -71,7 +72,11 @@ import {
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { DeleteType, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { parse } from 'querystring';
@@ -335,6 +340,8 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     of(
                       ApplicationActions.exitEditor({
                         redirectUrl: payload.redirectUrl,
+                        shouldSelectApplication:
+                          payload.shouldSelectApplication,
                       }),
                     ),
                     EMPTY,
@@ -738,6 +745,7 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
     switchMap(({ payload }) => {
       const query = parse(window.location.search.slice(1));
       const publicationUrl = query[AppsEditorQuery.PublicationUrl];
+      const reference = query[AppsEditorQuery.Id];
 
       if (payload.redirectUrl) {
         router.push({
@@ -760,6 +768,19 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
             }),
           ),
           of(PublicationActions.setIsApplicationReview(true)),
+          of(
+            MarketplaceActions.setDetailsEntity(
+              payload.redirectUrl === Routes.Marketplace &&
+                !!payload.shouldSelectApplication &&
+                reference
+                ? {
+                    reference: reference.toString(),
+                    type: MarketplaceEntitiesTabs.AGENTS,
+                    isSuggested: false,
+                  }
+                : undefined,
+            ),
+          ),
         );
       } else {
         router.push({

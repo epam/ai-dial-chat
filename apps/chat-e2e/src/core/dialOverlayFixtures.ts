@@ -18,7 +18,7 @@ import {
   MarketplaceSidebar,
   ModelInfoTooltip,
   PromptBar,
-  PublishingRequestModal,
+  PublishingRequestDialog,
   SendMessage,
   TalkToAgentDialog,
   Toast,
@@ -118,7 +118,7 @@ const dialOverlayTest = test.extend<{
   overlayAppsDropdownMenu: DropdownMenu;
   overlayAppsDropdownMenuAssertion: MenuAssertion;
   overlayShareModal: ShareModal;
-  overlayPublishingRequestModal: PublishingRequestModal;
+  overlayPublishingRequestDialog: PublishingRequestDialog;
   overlayAccountSettings: AccountSettings;
   overlayProfilePanel: ProfilePanel;
   overlaySettingsModal: SettingsModal;
@@ -344,12 +344,12 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayShareModal);
   },
-  overlayPublishingRequestModal: async ({ page, overlayHomePage }, use) => {
-    const publishingModal = new PublishingRequestModal(
+  overlayPublishingRequestDialog: async ({ page, overlayHomePage }, use) => {
+    const overlayPublishingRequestDialog = new PublishingRequestDialog(
       page,
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
-    await use(publishingModal);
+    await use(overlayPublishingRequestDialog);
   },
   overlayAccountSettings: async ({ overlayHeader }, use) => {
     const overlayAccountSettings = overlayHeader.getAccountSettings();

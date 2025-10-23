@@ -18,7 +18,7 @@ export * from './promptListAssertion';
 export * from './promptModalAssertion';
 export * from '@/src/assertions/publishing/trees/publishEntityAssertion';
 export * from './publishing/publishingApprovalModalAssertion';
-export * from './publishing/publishingRequestModalAssertion';
+export * from './publishing/publishingRequestDialogAssertion';
 export * from './talkToAgentDialogAssertion';
 export * from './sendMessageAssertion';
 export * from './sharedWithMePromptsAssertion';
