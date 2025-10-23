@@ -147,7 +147,7 @@
     "eslint-plugin-tailwindcss": "^3.13.0",
     "eslint-plugin-testing-library": "^6.1.2",
     "gpt-3-encoder": "^1.1.4",
-    "jsdom": "^21.1.1",
+    "jsdom": "^27.0.1",
     "minimist": "^1.2.8",
     "nx": "21.6.5",
     "patch-package": "^8.0.0",
@@ -162,7 +162,7 @@
     "vitest": "^3.2.4"
   },
   "optionalDependencies": {
-    "@nx/playwright": "21.4.0",
+    "@nx/playwright": "21.6.5",
     "@playwright/test": "^1.55.1",
     "@types/adm-zip": "^0.5.7",
     "@types/he": "^1.2.3",
@@ -177,7 +177,8 @@
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
     "@monaco-editor/loader": "1.4.0",
-    "koa": "3.0.3"
+    "koa": "3.0.3",
+    "@module-federation/node": "2.7.14"
   },
   "engines": {
     "node": ">=22.2.0",
