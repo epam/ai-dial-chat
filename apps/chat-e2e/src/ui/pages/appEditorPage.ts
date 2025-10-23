@@ -5,6 +5,7 @@ import {
   AppEditorGeneralInfoAgentPreview,
   AppEditorHeader,
   CustomAppEditorContainer,
+  ExternalAppEditorContainer,
 } from '@/src/ui/webElements';
 
 export class AppEditorPage extends BasePage {
@@ -15,6 +16,7 @@ export class AppEditorPage extends BasePage {
 
   //declare specific app containers
   private customAppEditorContainer!: CustomAppEditorContainer;
+  private externalAppEditorContainer!: ExternalAppEditorContainer;
 
   getAppEditorHeader(): AppEditorHeader {
     if (!this.appEditorHeader) {
@@ -52,11 +54,25 @@ export class AppEditorPage extends BasePage {
     return this.customAppEditorContainer;
   }
 
+  getExternalAppEditorContainer(): ExternalAppEditorContainer {
+    if (!this.externalAppEditorContainer) {
+      this.externalAppEditorContainer = new ExternalAppEditorContainer(
+        this.page,
+        this.getAppEditorHeader(),
+        this.getAppEditorGeneralForm(),
+        this.getAppEditorGeneralInfoPreview(),
+      );
+    }
+    return this.externalAppEditorContainer;
+  }
+
   //get generic container based on app type
   getAppEditorContainer(appType: AppEditorAppTypes) {
     switch (appType) {
       case AppEditorAppTypes.CustomApp:
         return this.getCustomAppEditorContainer();
+      case AppEditorAppTypes.ExternalApp:
+        return this.getExternalAppEditorContainer();
       default:
         throw new Error(`Unsupported app type: ${appType}`);
     }

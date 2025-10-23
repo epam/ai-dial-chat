@@ -100,7 +100,22 @@ export class AgentDetailsModal extends BaseElement {
     this.applicationInformation.getChildElementBySelector(
       MarketplaceDetailsModal.agentReleaseDate,
     );
-  public icon = this.getElementIcon(this.rootLocator);
+  public iconContainer = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.iconContainer,
+  );
+  public icon = this.getElementIcon(this.iconContainer);
+  public externalAppIcon = this.iconContainer.getChildElementBySelector(
+    IconSelectors.externalAppIcon,
+  );
+  public openInNewTabButton = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.openInNewTab,
+  );
+  public openInNewTabButtonTitle =
+    this.openInNewTabButton.getChildElementBySelector(Tags.span);
+  public openInNewTabButtonIcon =
+    this.openInNewTabButton.getChildElementBySelector(
+      IconSelectors.externalAppIcon,
+    );
 
   public async clickUseButton({
     isInstalledDeploymentsUpdated = false,
