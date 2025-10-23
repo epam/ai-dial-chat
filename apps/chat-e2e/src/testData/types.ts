@@ -60,6 +60,7 @@ export enum SourcesFilterOptions {
   public = 'Public',
   sharedWithMe = 'Shared with me',
   myCustomApps = 'My Custom apps',
+  myExternalApps = 'My External apps',
   myQuickApps = 'My Quick apps',
   myCodeApps = 'My Code apps',
 }

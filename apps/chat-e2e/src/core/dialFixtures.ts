@@ -21,6 +21,10 @@ import {
   CustomAppEditorContainer,
   CustomAppEditorViewForm,
   DragFile,
+  ExternalAppEditorAppSettingsPreview,
+  ExternalAppEditorAppSettingsPreviewBody,
+  ExternalAppEditorContainer,
+  ExternalAppEditorViewForm,
   FileDropArea,
   FileModalSection,
   InformationModal,
@@ -184,6 +188,11 @@ const dialTest = test.extend<{
   customAppEditorAppSettingsPreview: CustomAppEditorAppSettingsPreview;
   customAppEditorAppSettingsPreviewBody: CustomAppEditorAppSettingsPreviewBody;
   customAppEditorAppSettingsPreviewChat: AppEditorAppSettingsPreviewChat;
+  externalAppEditorContainer: ExternalAppEditorContainer;
+  externalAppEditorViewForm: ExternalAppEditorViewForm;
+  externalAppEditorAppSettingsPreview: ExternalAppEditorAppSettingsPreview;
+  externalAppEditorAppSettingsPreviewBody: ExternalAppEditorAppSettingsPreviewBody;
+  externalAppEditorAppSettingsPreviewCard: AppEditorPreviewCard;
   marketplaceSidebar: MarketplaceSidebar;
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
@@ -364,6 +373,7 @@ const dialTest = test.extend<{
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
   agentVersionsDropdownMenuAssertion: MenuAssertion;
+  addAppDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
   promptPreviewModal: PromptPreviewModalWindow;
@@ -535,6 +545,40 @@ const dialTest = test.extend<{
     const customAppEditorAppSettingsPreviewChat =
       customAppEditorAppSettingsPreviewBody.getAppEditorAppSettingsPreviewChat();
     await use(customAppEditorAppSettingsPreviewChat);
+  },
+  externalAppEditorContainer: async ({ appEditorPage }, use) => {
+    const externalAppEditorContainer =
+      appEditorPage.getExternalAppEditorContainer();
+    await use(externalAppEditorContainer);
+  },
+  externalAppEditorViewForm: async ({ externalAppEditorContainer }, use) => {
+    const externalAppEditorViewForm =
+      externalAppEditorContainer.getAppEditorViewForm();
+    await use(externalAppEditorViewForm);
+  },
+  externalAppEditorAppSettingsPreview: async (
+    { externalAppEditorContainer },
+    use,
+  ) => {
+    const externalAppEditorAppSettingsPreview =
+      externalAppEditorContainer.getAppEditorAppSettingsPreview();
+    await use(externalAppEditorAppSettingsPreview);
+  },
+  externalAppEditorAppSettingsPreviewBody: async (
+    { externalAppEditorAppSettingsPreview },
+    use,
+  ) => {
+    const externalAppEditorAppSettingsPreviewBody =
+      externalAppEditorAppSettingsPreview.getAppEditorAppSettingsPreviewBody();
+    await use(externalAppEditorAppSettingsPreviewBody);
+  },
+  externalAppEditorAppSettingsPreviewCard: async (
+    { externalAppEditorAppSettingsPreviewBody },
+    use,
+  ) => {
+    const externalAppEditorAppSettingsPreviewCard =
+      externalAppEditorAppSettingsPreviewBody.getAppEditorPreviewCard();
+    await use(externalAppEditorAppSettingsPreviewCard);
   },
   marketplaceSidebar: async ({ marketplaceContainer }, use) => {
     const marketplaceSidebar = marketplaceContainer.getMarketplaceSidebar();
@@ -1412,6 +1456,10 @@ const dialTest = test.extend<{
       agentDetailsModal.getVersionDropdownMenu(),
     );
     await use(agentVersionsDropdownMenuAssertion);
+  },
+  addAppDropdownMenuAssertion: async ({ addAppDropdownMenu }, use) => {
+    const addAppDropdownMenuAssertion = new MenuAssertion(addAppDropdownMenu);
+    await use(addAppDropdownMenuAssertion);
   },
   promptPreviewModal: async ({ page }, use) => {
     const promptPreviewModalWindow = new PromptPreviewModalWindow(page);
