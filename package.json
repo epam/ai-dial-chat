@@ -176,7 +176,8 @@
     "monaco-editor": "0.43.0",
     "@monaco-editor/loader": "1.4.0",
     "koa": "3.0.3",
-    "@module-federation/node": "2.7.14"
+    "@module-federation/node": "2.7.14",
+    "prismjs": "1.30.0"
   },
   "engines": {
     "node": ">=22.2.0",
