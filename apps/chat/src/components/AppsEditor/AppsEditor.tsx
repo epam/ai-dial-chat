@@ -21,7 +21,11 @@ import {
 } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, ShareActions, UIActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
