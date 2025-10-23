@@ -477,6 +477,17 @@ export class BaseAssertion {
     ).toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
   }
 
+  public async assertElementDisplayStyle(
+    element: BaseElement | Locator,
+    expectedDisplay: Overflow | StyleValues,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await expect(
+      elementLocator,
+      ExpectedMessages.elementTextWrapIsValid,
+    ).toHaveCSS(Styles.display, expectedDisplay);
+  }
+
   public assertBooleanCondition(
     predicate: boolean,
     expectedResult: boolean,

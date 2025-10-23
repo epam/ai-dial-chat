@@ -1,7 +1,7 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
-import { MenuSelectors } from '@/src/ui/selectors';
+import { IconSelectors, MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement, DropdownMenu } from '@/src/ui/webElements';
 import { AgentDetailsModal } from '@/src/ui/webElements/marketplace/agentDetailsModal';
@@ -45,6 +45,10 @@ export class MarketplaceAgents extends BaseElement {
 
   public agentNames = this.getChildElementBySelector(
     MarketplaceAgentSelectors.agentName,
+  );
+
+  public iconContainer = this.getChildElementBySelector(
+    MarketplaceAgentSelectors.iconContainer,
   );
 
   public agentName = (name: string) =>
@@ -191,6 +195,12 @@ export class MarketplaceAgents extends BaseElement {
       .getChildElementBySelector(Tags.svg);
   }
 
+  public getAgentExternalIcon(agentElement: BaseElement) {
+    return agentElement
+      .getChildElementBySelector(MarketplaceAgentSelectors.iconContainer)
+      .getChildElementBySelector(IconSelectors.externalAppIcon);
+  }
+
   public getNotAvailableAgentElement = (reference: string) => {
     const agent = this.rootLocator.filter({ has: this.agentName(reference) });
     return this.createElementFromLocator(agent);
@@ -205,7 +215,7 @@ export class MarketplaceAgents extends BaseElement {
   }
 
   public async getAgentIcon(agentElement: BaseElement) {
-    return this.getElementIcon(agentElement.getElementLocator());
+    return this.iconContainer.getElementIcon(agentElement.getElementLocator());
   }
 
   public async addAgentToWorkspace(agentElement: BaseElement) {
