@@ -2227,10 +2227,9 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
 const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.selectPublication.type),
-    switchMap(({ payload }) => {
-      const publication = PublicationSelectors.selectSelectedPublication(
-        state$.value,
-      );
+    switchMap(() => {
+      const state = state$.value;
+      const publication = PublicationSelectors.selectSelectedPublication(state);
       const resources = publication?.resources;
 
       if (!publication) {
@@ -2239,7 +2238,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       }
 
       const selectedPublicationItems =
-        PublicationSelectors.selectAllSelectedPublicationItems(state$.value);
+        PublicationSelectors.selectAllSelectedPublicationItems(state);
 
       if (selectedPublicationItems[publication.url] !== undefined) {
         return EMPTY;
@@ -2247,7 +2246,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
 
       return of(
         PublicationActions.setPublicationItems({
-          publicationUrl: publication?.url ?? '',
+          publicationUrl: publication.url,
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),
       );
