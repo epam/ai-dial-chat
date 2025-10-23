@@ -2227,7 +2227,11 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
 const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.selectPublication.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
+      if (!payload) {
+        return EMPTY;
+      }
+
       const publication = PublicationSelectors.selectSelectedPublication(
         state$.value,
       );
