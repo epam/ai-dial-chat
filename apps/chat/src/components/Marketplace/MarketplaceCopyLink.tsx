@@ -5,15 +5,16 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getApplicationLink } from '@/src/utils/marketplace';
+import { getApplicationLink, getToolsetLink } from '@/src/utils/marketplace';
 
 import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-interface ApplicationCopyLinkProps {
-  entity: DialAIEntityModel;
+interface MarketplaceCopyLinkProps {
+  entity: DialAIEntityModel | ToolsetModel;
   size?: number;
   withText?: boolean;
   hasTooltip?: boolean;
@@ -23,20 +24,23 @@ interface ApplicationCopyLinkProps {
 const TRIGGER_CLASS =
   'flex items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-accent-primary outline-none';
 
-export function ApplicationCopyLink({
+export function MarketplaceCopyLink({
   entity,
   size = 20,
   withText,
   hasTooltip,
   className,
-}: ApplicationCopyLinkProps) {
+}: MarketplaceCopyLinkProps) {
   const { t } = useTranslation(Translation.Marketplace);
 
   const [urlCopied, setUrlCopied] = useState(false);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const link = getApplicationLink(entity);
+  const link =
+    'authSettings' in entity
+      ? getToolsetLink(entity)
+      : getApplicationLink(entity);
 
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {

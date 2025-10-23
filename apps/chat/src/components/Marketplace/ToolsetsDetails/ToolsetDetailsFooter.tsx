@@ -12,6 +12,7 @@ import { useToolsetMenuItems } from '@/src/hooks/useToolsetMenuItems';
 import {
   getToolsetAuthAction,
   getToolsetAuthActionLabel,
+  isToolsetWithAuth,
 } from '@/src/utils/app/toolsets';
 
 import { ScreenState } from '@/src/types/common';
@@ -52,6 +53,7 @@ export function ToolsetDetailsFooter({
     entity.reference !== entity.id && screenState === ScreenState.SM;
 
   const authAction = getToolsetAuthAction(entity, isAdmin);
+  const withAuth = isToolsetWithAuth(entity);
 
   const toolsetMenuItemsParams = useMemo(
     () => ({
@@ -117,19 +119,20 @@ export function ToolsetDetailsFooter({
             showVersionPrefix
             onSelect={onChangeVersion}
           />
-
-          <button
-            onClick={handleLogin}
-            className={classNames('button flex items-center gap-2', {
-              'button-primary text-primary':
-                authAction === ToolsetAuthAction.LogIn ||
-                authAction === ToolsetAuthAction.LoginWithMyCreds,
-              'button-secondary': authAction === ToolsetAuthAction.LogOut,
-            })}
-          >
-            <LoginIcon size={18} />
-            {t(getToolsetAuthActionLabel(authAction, screenState))}
-          </button>
+          {withAuth && (
+            <button
+              onClick={handleLogin}
+              className={classNames('button flex items-center gap-2', {
+                'button-primary text-primary':
+                  authAction === ToolsetAuthAction.LogIn ||
+                  authAction === ToolsetAuthAction.LoginWithMyCreds,
+                'button-secondary': authAction === ToolsetAuthAction.LogOut,
+              })}
+            >
+              <LoginIcon size={18} />
+              {t(getToolsetAuthActionLabel(authAction, screenState))}
+            </button>
+          )}
         </div>
       </div>
     </section>
