@@ -48,4 +48,5 @@ export enum AppsEditorQuery {
   Step = 'step',
   Schema = 'schema',
   PublicationUrl = 'publicationUrl',
+  ReturnUrl = 'returnUrl',
 }

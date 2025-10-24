@@ -4,6 +4,7 @@ export enum ToolsetEditorQuery {
   Id = 'id',
   PublicationUrl = 'publicationUrl',
   Step = 'step',
+  ReturnUrl = 'returnUrl',
 }
 
 export const DRAFT_TOOLSET_ID = `${ApiKeys.Toolsets}/draft`;
