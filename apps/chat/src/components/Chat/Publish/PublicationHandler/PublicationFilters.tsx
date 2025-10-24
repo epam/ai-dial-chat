@@ -11,8 +11,7 @@ import {
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
@@ -27,6 +26,8 @@ interface FilterComponentProps {
   newRules: PublicationRule[];
   publication: Publication;
   isRulesLoading: boolean;
+  rulesOnEdit: PublicationRule[];
+  onRulesChange: (rules: PublicationRule[]) => void;
 }
 
 const showNoRulesLabel = (
@@ -50,16 +51,15 @@ export function PublicationFilters({
   newRules,
   publication,
   isRulesLoading,
+  rulesOnEdit,
+  onRulesChange,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
-
-  const dispatch = useAppDispatch();
 
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
   const editedPublishToUrl = useAppSelector(
     PublicationSelectors.selectPublishToUrl,
   );
@@ -73,11 +73,9 @@ export function PublicationFilters({
 
   const handleFilterUpdate = useCallback(
     (newFilters: TargetAudienceFilter[]) => {
-      dispatch(
-        PublicationActions.setRulesOnEdit(newFilters.map(mapFilterToRule)),
-      );
+      onRulesChange(newFilters.map(mapFilterToRule));
     },
-    [dispatch],
+    [onRulesChange],
   );
 
   const targetFolder = publicationModel

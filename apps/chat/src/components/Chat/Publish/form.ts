@@ -10,11 +10,13 @@ export enum PublishRequestFieldsNames {
   PUBLISH_REQUEST_NAME = 'publishRequestName',
   PUBLICATION_AUTHOR = 'publicationAuthor',
   RULES = 'rules',
+  PUBLISH_TO_URL = 'publishToUrl',
 }
 export interface PublicationRequestFormData {
   [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: string;
   [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: string;
   [PublishRequestFieldsNames.RULES]: PublicationRule[];
+  [PublishRequestFieldsNames.PUBLISH_TO_URL]: string;
 }
 
 type Options<T extends Path<PublicationRequestFormData>> = Omit<

@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
-import { getIdWithoutFeatureType, isFileId } from '@/src/utils/app/id';
+import { isFileId } from '@/src/utils/app/id';
 import { getNewTargetUrlFromEditState } from '@/src/utils/app/publications';
 import { constructPath } from '@/src/utils/app/shared-utils';
 
@@ -14,8 +14,6 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { PublicationRequestFormData } from '../form';
 import { PublicationHandler } from './PublicationHandler';
@@ -33,15 +31,8 @@ export function CreatePublicationHandler({
 }: Props) {
   const dispatch = useAppDispatch();
 
-  const editedPublishToUrl = useAppSelector(
-    PublicationSelectors.selectPublishToUrl,
-  );
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,
-  );
-  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
-  const displayAuthorEditState = useAppSelector(
-    PublicationSelectors.selectDisplayAuthorEditState,
   );
   const entitiesEditState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
@@ -50,24 +41,8 @@ export function CreatePublicationHandler({
     PublicationSelectors.selectFoldersEditState,
   );
   const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, editedPublishToUrl),
+    PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
-
-  useEffect(() => {
-    if (editedPublishToUrl && editedPublishToUrl !== PUBLIC_URL_PREFIX) {
-      dispatch(
-        PublicationActions.uploadRules({
-          path: getIdWithoutFeatureType(editedPublishToUrl),
-        }),
-      );
-    }
-  }, [dispatch, editedPublishToUrl]);
-
-  useEffect(() => {
-    dispatch(
-      PublicationActions.setRulesOnEdit(rules[editedPublishToUrl] ?? []),
-    );
-  }, [dispatch, editedPublishToUrl, rules]);
 
   const handleSubmit = useCallback(
     (
@@ -85,7 +60,7 @@ export function CreatePublicationHandler({
             sourceUrl: resource.sourceUrl ?? '',
             targetUrl: constructPath(
               ApiKeys.Files,
-              editedPublishToUrl,
+              formData?.publishToUrl ?? '',
               ...resource.targetUrl.split('/').slice(2),
             ),
           };
@@ -99,7 +74,7 @@ export function CreatePublicationHandler({
             entitiesEditState[resource.reviewUrl],
             foldersEditState,
             publication.targetFolder,
-            editedPublishToUrl,
+            formData?.publishToUrl ?? '',
             publicationModel.action,
           ),
         };
@@ -111,22 +86,19 @@ export function CreatePublicationHandler({
           resources: mappedResources.filter((resource) =>
             selectedPublicationItems.includes(resource.reviewUrl),
           ),
-          targetFolder: editedPublishToUrl,
-          displayAuthor: displayAuthorEditState.trim(),
-          rules: rulesOnEdit,
+          targetFolder: formData?.publishToUrl ?? '',
+          displayAuthor: formData?.publicationAuthor?.trim() ?? '',
+          rules: formData?.rules ?? [],
         }),
       );
       dispatch(PublicationActions.setPublishModel());
     },
     [
       dispatch,
-      displayAuthorEditState,
-      editedPublishToUrl,
       entitiesEditState,
       foldersEditState,
       publication.targetFolder,
       publicationModel.action,
-      rulesOnEdit,
       selectedPublicationItems,
     ],
   );

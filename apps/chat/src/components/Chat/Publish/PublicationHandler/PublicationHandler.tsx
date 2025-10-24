@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -128,9 +128,6 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     PublicationSelectors.selectPublishModel,
   );
   const isReview = !publicationModel;
-  const editedPublishToUrl = useAppSelector(
-    PublicationSelectors.selectPublishToUrl,
-  );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
   );
@@ -169,14 +166,18 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     formState: { errors: formErrors },
     trigger,
     watch,
+    reset,
+    control,
     handleSubmit: submitWrapper,
   } = useForm<PublicationRequestFormData>({
     defaultValues: {
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
       ),
-      rules: rules[publication.targetFolder] ?? [],
+      rules:
+        (isReview ? publication.rules : rules[publication.targetFolder]) ?? [],
       publicationAuthor: publication.displayAuthor ?? publicationAuthor,
+      publishToUrl: publication.targetFolder,
     },
     mode: 'onChange',
   });
@@ -185,12 +186,27 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   const displayAuthorEditState = watch(
     PublishRequestFieldsNames.PUBLICATION_AUTHOR,
   );
+  const editedPublishToUrl = watch(PublishRequestFieldsNames.PUBLISH_TO_URL);
 
-  console.log(displayAuthorEditState);
+  useEffect(() => {
+    if (!isEditMode) {
+      reset();
+    }
+  }, [reset, isEditMode]);
 
   useEffect(() => {
     trigger();
   }, [trigger]);
+
+  useEffect(() => {
+    if (!isReview && editedPublishToUrl !== PUBLIC_URL_PREFIX) {
+      dispatch(
+        PublicationActions.uploadRules({
+          path: getIdWithoutFeatureType(editedPublishToUrl),
+        }),
+      );
+    }
+  }, [dispatch, editedPublishToUrl, isReview]);
 
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
@@ -269,19 +285,6 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
       onSubmit(publication.resources, data);
     },
     [publication.resources, onSubmit],
-  );
-
-  const handleSelectPublishToFolder = useCallback(
-    (folderId?: string) => {
-      if (typeof folderId === 'string') {
-        dispatch(
-          PublicationActions.setPublishToUrl(
-            constructPath(PUBLIC_URL_PREFIX, folderId),
-          ),
-        );
-      }
-    },
-    [dispatch],
   );
 
   const handleCloseCompareModal = useCallback(() => {
@@ -405,9 +408,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                 validators.publishRequestName,
               )}
               placeholder={t(
-                t(
-                  `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
-                ),
+                `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
               )}
               id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
               error={formErrors.publishRequestName?.message}
@@ -433,10 +434,20 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                   {(publicationModel &&
                     publicationModel.action !== PublishActions.DELETE) ||
                   (isEditMode && !isSomeResourceIsUnpublish) ? (
-                    <PublishToSection
-                      path={publishToUrl}
-                      maxDepth={maxPublishToDepth}
-                      onSelect={handleSelectPublishToFolder}
+                    <Controller
+                      name={PublishRequestFieldsNames.PUBLISH_TO_URL}
+                      control={control}
+                      render={({ field }) => (
+                        <PublishToSection
+                          path={field.value}
+                          maxDepth={maxPublishToDepth}
+                          onSelect={(folderId) =>
+                            field.onChange(
+                              constructPath(PUBLIC_URL_PREFIX, folderId),
+                            )
+                          }
+                        />
+                      )}
                     />
                   ) : (
                     <PublicationInfoSection
@@ -528,11 +539,19 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                       )}
                     </div>
                   </h2>
-                  <PublicationFilters
-                    isRulesLoading={isRulesLoading}
-                    filteredRuleEntries={filteredRuleEntries}
-                    newRules={newRules}
-                    publication={publication}
+                  <Controller
+                    name={PublishRequestFieldsNames.RULES}
+                    control={control}
+                    render={({ field }) => (
+                      <PublicationFilters
+                        isRulesLoading={isRulesLoading}
+                        filteredRuleEntries={filteredRuleEntries}
+                        newRules={newRules}
+                        publication={publication}
+                        rulesOnEdit={rulesOnEdit}
+                        onRulesChange={(rules) => field.onChange(rules)}
+                      />
+                    )}
                   />
                 </section>
               </div>
@@ -636,6 +655,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
           )}
         </div>
         <PublicationHandlerFooter
+          displayAuthorEditState={displayAuthorEditState}
           publication={publication}
           isFormChanged={isFormChanged}
           areRulesChanged={hasUserChangedRules}

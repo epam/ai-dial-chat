@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { extractNameFromEmail } from '@/src/utils/app/common';
 import {
   isConversationInfoEntity,
   isLoadedConversationEntity,
@@ -25,12 +26,17 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { BackendResourceType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
-import { PublicationModel, PublicationStatus } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationModel,
+  PublicationStatus,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  AuthSelectors,
   ConversationsSelectors,
   PromptsSelectors,
   PublicationSelectors,
@@ -99,6 +105,7 @@ const PublishDialogContainer = ({
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
+  const userName = useAppSelector(AuthSelectors.selectUserEmail);
   const entities = useAppSelector((state) => {
     if (!isFolder) return memoizedEntityArray;
 
@@ -141,7 +148,7 @@ const PublishDialogContainer = ({
     t,
   ]);
 
-  const publication = useMemo(() => {
+  const publication: Publication = useMemo(() => {
     const baseResources = filteredEntities.map(({ id }) => {
       const url = isFolder
         ? constructPath(
@@ -222,6 +229,7 @@ const PublishDialogContainer = ({
       resourceTypes,
       createdAt: entity.createdAt ?? 0,
       publicationStatus: PublicationStatus.PENDING,
+      displayAuthor: extractNameFromEmail(userName),
     };
   }, [
     filteredEntities,
@@ -231,8 +239,9 @@ const PublishDialogContainer = ({
     entity.createdAt,
     action,
     filteredConversationFiles,
-    isFolder,
     resourceType,
+    userName,
+    isFolder,
     publishCredentials,
   ]);
 

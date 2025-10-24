@@ -11,6 +11,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
+import { PublicationRequestFormData } from '../form';
 import { PublicationHandler } from './PublicationHandler';
 
 interface Props {
@@ -20,13 +21,6 @@ interface Props {
 export function ReviewPublicationHandler({ publication }: Props) {
   const dispatch = useAppDispatch();
 
-  const editedPublishToUrl = useAppSelector(
-    PublicationSelectors.selectPublishToUrl,
-  );
-  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
-  const displayAuthorEditState = useAppSelector(
-    PublicationSelectors.selectDisplayAuthorEditState,
-  );
   const entitiesEditState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
   );
@@ -48,7 +42,10 @@ export function ReviewPublicationHandler({ publication }: Props) {
   }, [dispatch, publication.targetFolder]);
 
   const handleSubmit = useCallback(
-    (resources: PublicationResource[]) => {
+    (
+      resources: PublicationResource[],
+      formData?: PublicationRequestFormData,
+    ) => {
       const mappedResources = resources.map((resource) => ({
         ...resource,
         sourceUrl: resource.sourceUrl ?? '',
@@ -57,7 +54,7 @@ export function ReviewPublicationHandler({ publication }: Props) {
           entitiesEditState[resource.reviewUrl],
           foldersEditState,
           publication.targetFolder,
-          editedPublishToUrl,
+          formData?.publishToUrl ?? '',
           resource.action,
         ),
       }));
@@ -66,9 +63,9 @@ export function ReviewPublicationHandler({ publication }: Props) {
         PublicationActions.updatePublicationRequest({
           url: publication.url,
           dataToUpdate: {
-            targetFolder: editedPublishToUrl,
-            rules: rulesOnEdit,
-            displayAuthor: displayAuthorEditState.trim(),
+            targetFolder: formData?.publishToUrl ?? '',
+            rules: formData?.rules ?? [],
+            displayAuthor: formData?.publicationAuthor?.trim() ?? '',
             resources: mappedResources,
           },
         }),
@@ -77,13 +74,10 @@ export function ReviewPublicationHandler({ publication }: Props) {
     },
     [
       dispatch,
-      displayAuthorEditState,
-      editedPublishToUrl,
       entitiesEditState,
       foldersEditState,
       publication.targetFolder,
       publication.url,
-      rulesOnEdit,
     ],
   );
 

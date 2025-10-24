@@ -76,6 +76,7 @@ interface Props {
   isFormChanged: boolean;
   areRulesChanged: boolean;
   isFormErrors: boolean;
+  displayAuthorEditState: string;
 }
 
 export const PublicationHandlerFooter = ({
@@ -84,6 +85,7 @@ export const PublicationHandlerFooter = ({
   isFormChanged,
   areRulesChanged,
   isFormErrors,
+  displayAuthorEditState,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -115,9 +117,6 @@ export const PublicationHandlerFooter = ({
   );
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
-  );
-  const displayAuthorEditState = useAppSelector(
-    PublicationSelectors.selectDisplayAuthorEditState,
   );
   const selectedPublicationItems = useAppSelector(
     PublicationSelectors.selectSelectedPublicationItems,

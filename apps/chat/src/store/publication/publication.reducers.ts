@@ -62,9 +62,7 @@ const initialState: PublicationState = {
   isEditMode: false,
   entitiesEditState: {},
   foldersEditState: {},
-  rulesOnEdit: [],
   isPublicationUpdating: false,
-  displayAuthorEditState: '',
   publishToUrl: '',
   currentPublicationInvalidEntities: [],
 };
@@ -461,8 +459,6 @@ export const publicationSlice = createSlice({
     ) => {
       state.entitiesEditState = payload.editState.entities;
       state.foldersEditState = payload.editState.folders;
-      state.rulesOnEdit = payload.rules;
-      state.displayAuthorEditState = payload.displayAuthor;
       state.publishToUrl = payload.publishToUrl;
     },
     setEntityEditStateByReviewUrl: (
@@ -517,12 +513,6 @@ export const publicationSlice = createSlice({
         message: Message;
       }>,
     ) => state,
-    setRulesOnEdit: (state, { payload }: PayloadAction<PublicationRule[]>) => {
-      state.rulesOnEdit = payload;
-    },
-    setDisplayAuthorEditState: (state, { payload }: PayloadAction<string>) => {
-      state.displayAuthorEditState = payload;
-    },
     setPublishToUrl: (state, { payload }: PayloadAction<string>) => {
       state.publishToUrl = payload;
     },
