@@ -167,7 +167,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
       (isReview ? publication.rules : rules[publication.targetFolder]) ?? [];
     const initialDisplayAuthor = isReview
       ? (publication.displayAuthor ?? '')
-      : publicationAuthor;
+      : userName;
 
     return {
       entities,
@@ -183,8 +183,8 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     publication.resources,
     publication.rules,
     publication.targetFolder,
-    publicationAuthor,
     rules,
+    userName,
   ]);
 
   const formMethods = useForm<PublicationRequestFormData>({
