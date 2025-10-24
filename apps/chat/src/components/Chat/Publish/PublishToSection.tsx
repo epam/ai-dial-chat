@@ -14,9 +14,10 @@ import { PublicationRequestFormData, PublishRequestFieldsNames } from './form';
 
 interface Props {
   maxDepth: number;
+  displayPublishToUrl: string;
 }
 
-export const PublishToSection = ({ maxDepth }: Props) => {
+export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
   const { t } = useTranslation();
 
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
@@ -56,12 +57,12 @@ export const PublishToSection = ({ maxDepth }: Props) => {
       >
         <div className="flex w-full justify-between truncate whitespace-pre break-all">
           <Tooltip
-            tooltip={path}
+            tooltip={displayPublishToUrl}
             triggerClassName="truncate whitespace-pre"
             contentClassName="break-all"
             dataQa="path"
           >
-            {path}
+            {displayPublishToUrl}
           </Tooltip>
 
           <button

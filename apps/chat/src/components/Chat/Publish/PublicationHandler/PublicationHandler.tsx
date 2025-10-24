@@ -277,7 +277,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     setIsCompareModalOpened(false);
   }, []);
 
-  const publishToUrl = editedPublishToUrl
+  const displayPublishToUrl = editedPublishToUrl
     ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
@@ -421,7 +421,10 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                     {(publicationModel &&
                       publicationModel.action !== PublishActions.DELETE) ||
                     (isEditMode && !isSomeResourceIsUnpublish) ? (
-                      <PublishToSection maxDepth={maxPublishToDepth} />
+                      <PublishToSection
+                        displayPublishToUrl={displayPublishToUrl}
+                        maxDepth={maxPublishToDepth}
+                      />
                     ) : (
                       <PublicationInfoSection
                         labelDataQa="publish-label"
@@ -432,9 +435,11 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                             : 'Publish to',
                         )}
                         valueDataQa="publish-path"
-                        valueToDisplay={publishToUrl}
+                        valueToDisplay={displayPublishToUrl}
                         tooltip={
-                          <div className="flex break-words">{publishToUrl}</div>
+                          <div className="flex break-words">
+                            {displayPublishToUrl}
+                          </div>
                         }
                       />
                     )}
