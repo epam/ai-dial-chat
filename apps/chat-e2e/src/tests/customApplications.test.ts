@@ -442,6 +442,7 @@ dialTest(
         await customAppEditorViewForm.fillInAppFields();
         await appEditorHeader.focusOn({ isHttpMethodTriggered: false });
         await appEditorHeader.saveAndExitButton.click();
+        await agentDetailsModal.closeButton.click();
         await baseAssertion.assertElementState(
           customAppEditorViewForm,
           'hidden',
@@ -1876,6 +1877,7 @@ dialTest(
         await customAppEditorViewForm.maxAttachmentsInput.typeInInput('');
         await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
+        await agentDetailsModal.closeButton.click();
       },
     );
 
@@ -2239,6 +2241,7 @@ dialTest(
         });
         await appEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
+        await agentDetailsModal.closeButton.click();
       },
     );
 
