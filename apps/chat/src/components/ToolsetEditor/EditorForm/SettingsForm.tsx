@@ -63,7 +63,11 @@ const FormSection = ({
   );
 };
 
-export const SettingsForm = () => {
+interface SettingsFormProps {
+  isToolsetPublic: boolean;
+}
+
+export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
   const {
@@ -95,6 +99,7 @@ export const SettingsForm = () => {
           placeholder={t('Enter endpoint')}
           id="endpoint"
           error={errors.endpoint?.message}
+          disabled={isToolsetPublic}
         />
         <Controller
           name="protocol"
@@ -114,6 +119,7 @@ export const SettingsForm = () => {
               id="protocol"
               options={protocolOptions}
               closeMenuOnSelect
+              isDisabled={isToolsetPublic}
             />
           )}
         />
@@ -147,7 +153,11 @@ export const SettingsForm = () => {
               onChangeSelectedItems={field.onChange}
               placeholder={t('Enter one or more tools')}
               id="allowedTools"
-              className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+              disabled={isToolsetPublic}
+              className={classNames(
+                'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
+                isToolsetPublic && 'hover:border-primary',
+              )}
               hasDeleteAll
               hideSuggestions
               itemHeightClassName="h-[31px]"
