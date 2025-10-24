@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -20,14 +21,14 @@ import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { RuleListItem } from '../RuleListItem';
+import { PublicationRequestFormData, PublishRequestFieldsNames } from '../form';
 
 interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
   newRules: PublicationRule[];
   publication: Publication;
   isRulesLoading: boolean;
-  rulesOnEdit: PublicationRule[];
-  onRulesChange: (rules: PublicationRule[]) => void;
+  editedPublishToUrl: string;
 }
 
 const showNoRulesLabel = (
@@ -51,8 +52,7 @@ export function PublicationFilters({
   newRules,
   publication,
   isRulesLoading,
-  rulesOnEdit,
-  onRulesChange,
+  editedPublishToUrl,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -60,11 +60,12 @@ export function PublicationFilters({
     PublicationSelectors.selectPublishModel,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const editedPublishToUrl = useAppSelector(
-    PublicationSelectors.selectPublishToUrl,
-  );
 
   const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
+
+  const { setValue, watch } = useFormContext<PublicationRequestFormData>();
+
+  const rulesOnEdit = watch(PublishRequestFieldsNames.RULES);
 
   const filters = useMemo(
     () => rulesOnEdit?.map(mapRuleToFilter) ?? [],
@@ -73,9 +74,12 @@ export function PublicationFilters({
 
   const handleFilterUpdate = useCallback(
     (newFilters: TargetAudienceFilter[]) => {
-      onRulesChange(newFilters.map(mapFilterToRule));
+      setValue(
+        PublishRequestFieldsNames.RULES,
+        newFilters.map(mapFilterToRule),
+      );
     },
-    [onRulesChange],
+    [setValue],
   );
 
   const targetFolder = publicationModel

@@ -285,9 +285,6 @@ const selectEntityEditStateByReviewUrl = createSelector(
 const selectIsPublicationUpdating = (state: RootState) =>
   rootSelector(state).isPublicationUpdating;
 
-const selectPublishToUrl = (state: RootState) =>
-  rootSelector(state).publishToUrl;
-
 const selectIsResourceUnpublishing = createSelector(
   [
     (state: RootState, publicationUrl: string) =>
@@ -339,7 +336,6 @@ export const PublicationSelectors = {
   selectFoldersEditState,
   selectEntityEditStateByReviewUrl,
   selectIsPublicationUpdating,
-  selectPublishToUrl,
   selectIsResourceUnpublishing,
   selectCurrentPublicationInvalidEntities,
 };

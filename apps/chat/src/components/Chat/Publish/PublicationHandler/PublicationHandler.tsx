@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -23,11 +23,7 @@ import {
   getPublicationId,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
-import {
-  constructPath,
-  isMyEntity,
-  splitEntityId,
-} from '@/src/utils/app/shared-utils';
+import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { BackendResourceType, FeatureType } from '@/src/types/common';
 import {
@@ -161,15 +157,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
   }, [publication.author, t]);
-  const {
-    register,
-    formState: { errors: formErrors },
-    trigger,
-    watch,
-    reset,
-    control,
-    handleSubmit: submitWrapper,
-  } = useForm<PublicationRequestFormData>({
+  const formMethods = useForm<PublicationRequestFormData>({
     defaultValues: {
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
@@ -182,21 +170,19 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     mode: 'onChange',
   });
 
-  const rulesOnEdit = watch(PublishRequestFieldsNames.RULES);
-  const displayAuthorEditState = watch(
+  const rulesOnEdit = formMethods.watch(PublishRequestFieldsNames.RULES);
+  const displayAuthorEditState = formMethods.watch(
     PublishRequestFieldsNames.PUBLICATION_AUTHOR,
   );
-  const editedPublishToUrl = watch(PublishRequestFieldsNames.PUBLISH_TO_URL);
+  const editedPublishToUrl = formMethods.watch(
+    PublishRequestFieldsNames.PUBLISH_TO_URL,
+  );
 
   useEffect(() => {
     if (!isEditMode) {
-      reset();
+      formMethods.reset();
     }
-  }, [reset, isEditMode]);
-
-  useEffect(() => {
-    trigger();
-  }, [trigger]);
+  }, [formMethods, isEditMode]);
 
   useEffect(() => {
     if (!isReview && editedPublishToUrl !== PUBLIC_URL_PREFIX) {
@@ -375,305 +361,295 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     (publicationModel && publicationModel.action !== PublishActions.DELETE);
 
   return (
-    <form
-      onSubmit={submitWrapper(handleSendRequest)}
-      className={classNames(
-        'flex w-full justify-center overflow-y-auto',
-        isReview ? 'p-3 md:px-5 md:pt-5' : 'h-full',
-      )}
-    >
-      <div
-        className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
-        data-qa="publish-approval-modal"
+    <FormProvider {...formMethods}>
+      <form
+        onSubmit={formMethods.handleSubmit(handleSendRequest)}
+        className={classNames(
+          'flex w-full justify-center overflow-y-auto',
+          isReview ? 'p-3 md:px-5 md:pt-5' : 'h-full',
+        )}
       >
-        <div className="flex w-full flex-col justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
-          {isReview ? (
-            <Tooltip
-              tooltip={publicationName}
-              contentClassName="break-all"
-              triggerClassName="truncate"
-            >
-              <h4
-                data-qa="publish-name"
-                className="truncate whitespace-pre break-all text-base font-semibold"
+        <div
+          className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
+          data-qa="publish-approval-modal"
+        >
+          <div className="flex w-full flex-col justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
+            {isReview ? (
+              <Tooltip
+                tooltip={publicationName}
+                contentClassName="break-all"
+                triggerClassName="truncate"
               >
-                {publicationName}
-              </h4>
-            </Tooltip>
-          ) : (
-            <Field
-              className="border-none p-0 text-base font-semibold"
-              {...register(
-                PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
-                validators.publishRequestName,
-              )}
-              placeholder={t(
-                `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
-              )}
-              id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
-              error={formErrors.publishRequestName?.message}
-              dataQa="request-name"
-            />
-          )}
-        </div>
-        <div className="flex size-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
-          {isPublicationUpdating || areConversationsWithContentUploading ? (
-            <div
-              className={classNames(
-                'flex w-full items-center justify-center bg-layer-2 py-10',
-                isReview ? 'h-[300px]' : 'h-full',
-              )}
-            >
-              <Spinner size={32} />
-            </div>
-          ) : (
-            <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
-              <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
-                <div className="flex flex-col px-3 pb-4 md:px-5">
-                  <h2 className="mb-4 font-semibold">{t('General info')}</h2>
-                  {(publicationModel &&
-                    publicationModel.action !== PublishActions.DELETE) ||
-                  (isEditMode && !isSomeResourceIsUnpublish) ? (
-                    <Controller
-                      name={PublishRequestFieldsNames.PUBLISH_TO_URL}
-                      control={control}
-                      render={({ field }) => (
-                        <PublishToSection
-                          path={field.value}
-                          maxDepth={maxPublishToDepth}
-                          onSelect={(folderId) =>
-                            field.onChange(
-                              constructPath(PUBLIC_URL_PREFIX, folderId),
-                            )
-                          }
-                        />
-                      )}
-                    />
-                  ) : (
-                    <PublicationInfoSection
-                      labelDataQa="publish-label"
-                      label={t(
-                        publicationModel &&
-                          publicationModel.action === PublishActions.DELETE
-                          ? 'Unpublish from'
-                          : 'Publish to',
-                      )}
-                      valueDataQa="publish-path"
-                      valueToDisplay={publishToUrl}
-                      tooltip={
-                        <div className="flex break-words">{publishToUrl}</div>
-                      }
-                    />
-                  )}
-
-                  {isReview && (
-                    <PublicationInfoSection
-                      labelDataQa="publication-author-label"
-                      label={t('Author')}
-                      valueDataQa="publication-author"
-                      valueToDisplay={publicationAuthor}
-                    />
-                  )}
-
-                  {showPublicDisplayAuthor &&
-                    (isEditMode || !isReview ? (
-                      <Field
-                        label={t("Author's public name")}
-                        {...register(
-                          PublishRequestFieldsNames.PUBLICATION_AUTHOR,
-                          validators.publicationAuthor,
-                        )}
-                        id={PublishRequestFieldsNames.PUBLICATION_AUTHOR}
-                        error={formErrors.publicationAuthor?.message}
-                        className="h-6 w-full rounded-none border-0 border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
-                      />
+                <h4
+                  data-qa="publish-name"
+                  className="truncate whitespace-pre break-all text-base font-semibold"
+                >
+                  {publicationName}
+                </h4>
+              </Tooltip>
+            ) : (
+              <Field
+                className="border-none p-0 text-base font-semibold"
+                {...formMethods.register(
+                  PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+                  validators.publishRequestName,
+                )}
+                placeholder={t(
+                  `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
+                )}
+                id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
+                error={formMethods.formState.errors.publishRequestName?.message}
+                dataQa="request-name"
+              />
+            )}
+          </div>
+          <div className="flex size-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
+            {isPublicationUpdating || areConversationsWithContentUploading ? (
+              <div
+                className={classNames(
+                  'flex w-full items-center justify-center bg-layer-2 py-10',
+                  isReview ? 'h-[300px]' : 'h-full',
+                )}
+              >
+                <Spinner size={32} />
+              </div>
+            ) : (
+              <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
+                <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
+                  <div className="flex flex-col px-3 pb-4 md:px-5">
+                    <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+                    {(publicationModel &&
+                      publicationModel.action !== PublishActions.DELETE) ||
+                    (isEditMode && !isSomeResourceIsUnpublish) ? (
+                      <PublishToSection maxDepth={maxPublishToDepth} />
                     ) : (
                       <PublicationInfoSection
-                        labelDataQa="publication-display-author-label"
-                        label={t("Author's public name")}
-                        valueDataQa="publication-display-author"
-                        valueToDisplay={publication.displayAuthor ?? ''}
-                        infoTooltip={t(
-                          "This name will be displayed instead of the author's name for this publication.",
+                        labelDataQa="publish-label"
+                        label={t(
+                          publicationModel &&
+                            publicationModel.action === PublishActions.DELETE
+                            ? 'Unpublish from'
+                            : 'Publish to',
                         )}
+                        valueDataQa="publish-path"
+                        valueToDisplay={publishToUrl}
+                        tooltip={
+                          <div className="flex break-words">{publishToUrl}</div>
+                        }
                       />
-                    ))}
+                    )}
 
-                  {isReview && (
-                    <PublicationInfoSection
-                      labelDataQa="creation-date-label"
-                      label={t('Request created')}
-                      valueDataQa="creation-date"
-                      valueToDisplay={formatDate(publication.createdAt)}
+                    {isReview && (
+                      <PublicationInfoSection
+                        labelDataQa="publication-author-label"
+                        label={t('Author')}
+                        valueDataQa="publication-author"
+                        valueToDisplay={publicationAuthor}
+                      />
+                    )}
+
+                    {showPublicDisplayAuthor &&
+                      (isEditMode || !isReview ? (
+                        <Field
+                          label={t("Author's public name")}
+                          {...formMethods.register(
+                            PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+                            validators.publicationAuthor,
+                          )}
+                          id={PublishRequestFieldsNames.PUBLICATION_AUTHOR}
+                          error={
+                            formMethods.formState.errors.publicationAuthor
+                              ?.message
+                          }
+                          className="h-6 w-full rounded-none border-0 border-b border-primary bg-layer-2 px-1 py-[2px] text-sm text-primary placeholder:text-secondary focus:border-accent-primary focus:outline-none"
+                        />
+                      ) : (
+                        <PublicationInfoSection
+                          labelDataQa="publication-display-author-label"
+                          label={t("Author's public name")}
+                          valueDataQa="publication-display-author"
+                          valueToDisplay={publication.displayAuthor ?? ''}
+                          infoTooltip={t(
+                            "This name will be displayed instead of the author's name for this publication.",
+                          )}
+                        />
+                      ))}
+
+                    {isReview && (
+                      <PublicationInfoSection
+                        labelDataQa="creation-date-label"
+                        label={t('Request created')}
+                        valueDataQa="creation-date"
+                        valueToDisplay={formatDate(publication.createdAt)}
+                      />
+                    )}
+                  </div>
+                  <section
+                    className="px-3 py-4 md:px-5"
+                    data-qa="rules-container"
+                  >
+                    <h2 className="mb-4 flex items-center gap-2 text-sm">
+                      <div className="flex w-full justify-between">
+                        <p data-qa="allow-access-label">
+                          {t('Allow access if all match')}
+                        </p>
+                        {isReview && (
+                          <>
+                            {hasUserChangedRules ? (
+                              <span
+                                onClick={() => setIsCompareModalOpened(true)}
+                                className="cursor-pointer text-accent-primary"
+                                data-qa="see-changes"
+                              >
+                                {t('See changes')}
+                              </span>
+                            ) : (
+                              <span
+                                className="text-secondary"
+                                data-qa="no-changes-label"
+                              >
+                                {t('No changes')}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </h2>
+                    <PublicationFilters
+                      isRulesLoading={isRulesLoading}
+                      filteredRuleEntries={filteredRuleEntries}
+                      newRules={newRules}
+                      publication={publication}
+                      editedPublishToUrl={editedPublishToUrl}
                     />
+                  </section>
+                </div>
+                <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
+                  {publication.resources.length ? (
+                    <>
+                      {sections.map(
+                        ({
+                          dataQa,
+                          sectionName,
+                          ItemComponent,
+                          featureType,
+                        }) => {
+                          const filteredResources =
+                            publication.resources.filter(({ reviewUrl }) => {
+                              const { apiKey } = splitEntityId(reviewUrl);
+                              const itemFeatureType =
+                                EnumMapper.getFeatureTypeByApiKey(apiKey);
+                              return itemFeatureType === featureType;
+                            });
+
+                          const isConversationSectionAndNoFiles =
+                            !isReview &&
+                            featureType === FeatureType.File &&
+                            doesIncludeConversation &&
+                            !doesPublicationContainFiles;
+                          const doesInvalidPublishApplicationIconExist =
+                            !isReview &&
+                            firstNotMyFileEntity &&
+                            doesIncludeMarketplaceEntity &&
+                            featureType === FeatureType.File;
+                          const shouldRenderSection =
+                            publication.resourceTypes.includes(
+                              EnumMapper.getBackendResourceTypeByFeatureType(
+                                featureType,
+                              ),
+                            ) || doesInvalidPublishApplicationIconExist;
+
+                          if (!shouldRenderSection) {
+                            return null;
+                          }
+
+                          return (
+                            <CollapsibleSection
+                              key={featureType}
+                              name={t(sectionName)}
+                              openByDefault
+                              dataQa={dataQa}
+                              togglerClassName="!text-sm !text-primary"
+                              sectionTooltip={
+                                isReview && (
+                                  <>
+                                    {t('Publish')},
+                                    <span className="text-error">
+                                      {' '}
+                                      {t('Unpublish')}
+                                    </span>
+                                  </>
+                                )
+                              }
+                            >
+                              {!!filteredResources.length &&
+                                !doesInvalidPublishApplicationIconExist && (
+                                  <BasePublicationResources
+                                    resources={filteredResources}
+                                    ItemComponent={ItemComponent}
+                                  />
+                                )}
+                              {isConversationSectionAndNoFiles && (
+                                <p
+                                  className="pl-3.5 text-secondary"
+                                  data-qa="no-publishing-files"
+                                >
+                                  {t(
+                                    publication.resources.filter(
+                                      ({ reviewUrl }) =>
+                                        isConversationId(reviewUrl),
+                                    ).length < 2
+                                      ? "This conversation doesn't contain any files"
+                                      : "These conversations don't contain any files",
+                                  )}
+                                </p>
+                              )}
+                              {doesInvalidPublishApplicationIconExist &&
+                                featureType === FeatureType.File && (
+                                  <ErrorMessage
+                                    type="warning"
+                                    error={t(
+                                      `The icon used for this ${featureType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${featureType} will be published with the default one.`,
+                                    )}
+                                  />
+                                )}
+                            </CollapsibleSection>
+                          );
+                        },
+                      )}
+                    </>
+                  ) : (
+                    <p className="my-3">
+                      {t('This publication has no resources')}
+                    </p>
                   )}
                 </div>
-                <section
-                  className="px-3 py-4 md:px-5"
-                  data-qa="rules-container"
-                >
-                  <h2 className="mb-4 flex items-center gap-2 text-sm">
-                    <div className="flex w-full justify-between">
-                      <p data-qa="allow-access-label">
-                        {t('Allow access if all match')}
-                      </p>
-                      {isReview && (
-                        <>
-                          {hasUserChangedRules ? (
-                            <span
-                              onClick={() => setIsCompareModalOpened(true)}
-                              className="cursor-pointer text-accent-primary"
-                              data-qa="see-changes"
-                            >
-                              {t('See changes')}
-                            </span>
-                          ) : (
-                            <span
-                              className="text-secondary"
-                              data-qa="no-changes-label"
-                            >
-                              {t('No changes')}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </h2>
-                  <Controller
-                    name={PublishRequestFieldsNames.RULES}
-                    control={control}
-                    render={({ field }) => (
-                      <PublicationFilters
-                        isRulesLoading={isRulesLoading}
-                        filteredRuleEntries={filteredRuleEntries}
-                        newRules={newRules}
-                        publication={publication}
-                        rulesOnEdit={rulesOnEdit}
-                        onRulesChange={(rules) => field.onChange(rules)}
-                      />
-                    )}
-                  />
-                </section>
               </div>
-              <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
-                {publication.resources.length ? (
-                  <>
-                    {sections.map(
-                      ({ dataQa, sectionName, ItemComponent, featureType }) => {
-                        const filteredResources = publication.resources.filter(
-                          ({ reviewUrl }) => {
-                            const { apiKey } = splitEntityId(reviewUrl);
-                            const itemFeatureType =
-                              EnumMapper.getFeatureTypeByApiKey(apiKey);
-                            return itemFeatureType === featureType;
-                          },
-                        );
-
-                        const isConversationSectionAndNoFiles =
-                          !isReview &&
-                          featureType === FeatureType.File &&
-                          doesIncludeConversation &&
-                          !doesPublicationContainFiles;
-                        const doesInvalidPublishApplicationIconExist =
-                          !isReview &&
-                          firstNotMyFileEntity &&
-                          doesIncludeMarketplaceEntity &&
-                          featureType === FeatureType.File;
-                        const shouldRenderSection =
-                          publication.resourceTypes.includes(
-                            EnumMapper.getBackendResourceTypeByFeatureType(
-                              featureType,
-                            ),
-                          ) || doesInvalidPublishApplicationIconExist;
-
-                        if (!shouldRenderSection) {
-                          return null;
-                        }
-
-                        return (
-                          <CollapsibleSection
-                            key={featureType}
-                            name={t(sectionName)}
-                            openByDefault
-                            dataQa={dataQa}
-                            togglerClassName="!text-sm !text-primary"
-                            sectionTooltip={
-                              isReview && (
-                                <>
-                                  {t('Publish')},
-                                  <span className="text-error">
-                                    {' '}
-                                    {t('Unpublish')}
-                                  </span>
-                                </>
-                              )
-                            }
-                          >
-                            {!!filteredResources.length &&
-                              !doesInvalidPublishApplicationIconExist && (
-                                <BasePublicationResources
-                                  resources={filteredResources}
-                                  ItemComponent={ItemComponent}
-                                />
-                              )}
-                            {isConversationSectionAndNoFiles && (
-                              <p
-                                className="pl-3.5 text-secondary"
-                                data-qa="no-publishing-files"
-                              >
-                                {t(
-                                  publication.resources.filter(
-                                    ({ reviewUrl }) =>
-                                      isConversationId(reviewUrl),
-                                  ).length < 2
-                                    ? "This conversation doesn't contain any files"
-                                    : "These conversations don't contain any files",
-                                )}
-                              </p>
-                            )}
-                            {doesInvalidPublishApplicationIconExist &&
-                              featureType === FeatureType.File && (
-                                <ErrorMessage
-                                  type="warning"
-                                  error={t(
-                                    `The icon used for this ${featureType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${featureType} will be published with the default one.`,
-                                  )}
-                                />
-                              )}
-                          </CollapsibleSection>
-                        );
-                      },
-                    )}
-                  </>
-                ) : (
-                  <p className="my-3">
-                    {t('This publication has no resources')}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
+          <PublicationHandlerFooter
+            displayAuthorEditState={displayAuthorEditState}
+            publication={publication}
+            isFormChanged={isFormChanged}
+            areRulesChanged={hasUserChangedRules}
+            initialState={initialState}
+            isFormErrors={
+              Object.values(formMethods.formState.errors).length > 0
+            }
+          />
         </div>
-        <PublicationHandlerFooter
-          displayAuthorEditState={displayAuthorEditState}
-          publication={publication}
-          isFormChanged={isFormChanged}
-          areRulesChanged={hasUserChangedRules}
-          initialState={initialState}
-          isFormErrors={Object.values(formErrors).length > 0}
-        />
-      </div>
-      {isCompareModalOpened && publication.targetFolder && (
-        <CompareRulesModal
-          allRuleEntries={filteredRuleEntries}
-          newRulesToCompare={newRules}
-          oldRulesToCompare={rules[publication.targetFolder]}
-          onClose={handleCloseCompareModal}
-          newRulesPath={publication.targetFolder}
-        />
-      )}
-      {isApplicationReview && <ReviewApplicationDialog />}
-      {isToolsetReview && <ReviewToolsetDialog />}
-    </form>
+        {isCompareModalOpened && publication.targetFolder && (
+          <CompareRulesModal
+            allRuleEntries={filteredRuleEntries}
+            newRulesToCompare={newRules}
+            oldRulesToCompare={rules[publication.targetFolder]}
+            onClose={handleCloseCompareModal}
+            newRulesPath={publication.targetFolder}
+          />
+        )}
+        {isApplicationReview && <ReviewApplicationDialog />}
+        {isToolsetReview && <ReviewToolsetDialog />}
+      </form>
+    </FormProvider>
   );
 }

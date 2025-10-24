@@ -63,7 +63,6 @@ const initialState: PublicationState = {
   entitiesEditState: {},
   foldersEditState: {},
   isPublicationUpdating: false,
-  publishToUrl: '',
   currentPublicationInvalidEntities: [],
 };
 
@@ -459,7 +458,6 @@ export const publicationSlice = createSlice({
     ) => {
       state.entitiesEditState = payload.editState.entities;
       state.foldersEditState = payload.editState.folders;
-      state.publishToUrl = payload.publishToUrl;
     },
     setEntityEditStateByReviewUrl: (
       state,
@@ -513,9 +511,6 @@ export const publicationSlice = createSlice({
         message: Message;
       }>,
     ) => state,
-    setPublishToUrl: (state, { payload }: PayloadAction<string>) => {
-      state.publishToUrl = payload;
-    },
     setCurrentPublicationInvalidEntities: (
       state,
       { payload }: PayloadAction<string[]>,

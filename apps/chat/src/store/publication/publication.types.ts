@@ -38,6 +38,5 @@ export interface PublicationState {
   entitiesEditState: Record<string, { name: string; version: string }>;
   foldersEditState: FolderEditTree;
   isPublicationUpdating: boolean;
-  publishToUrl: string;
   currentPublicationInvalidEntities: string[];
 }

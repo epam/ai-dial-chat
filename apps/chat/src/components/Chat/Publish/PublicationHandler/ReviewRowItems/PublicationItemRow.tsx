@@ -1,5 +1,6 @@
 import { IconDownload } from '@tabler/icons-react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -30,6 +31,10 @@ import { PublicationSelectors } from '@/src/store/selectors';
 import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+} from '@/src/components/Chat/Publish/form';
 import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
@@ -56,7 +61,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
-  const publishToUrl = useAppSelector(PublicationSelectors.selectPublishToUrl);
+
+  const { watch } = useFormContext<PublicationRequestFormData>();
+  const publishToUrl = watch(PublishRequestFieldsNames.PUBLISH_TO_URL);
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
