@@ -442,7 +442,8 @@ export const PublicationHandlerFooter = ({
   ]);
   const isApproveOrSendDisabled =
     (isApproveDisabled && !publishModel) ||
-    (publishModel && (isEditInvalid || isFormErrors));
+    (publishModel &&
+      (isEditInvalid || isFormErrors || !selectedPublicationItems.length));
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {
@@ -537,7 +538,7 @@ export const PublicationHandlerFooter = ({
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={isApproveOrSendDisabled}
+                disabled={isApproveDisabled || isEditInvalid || isFormErrors}
                 type={publishModel ? 'submit' : 'button'}
                 onClick={publishModel ? undefined : handleApprovePublication}
                 data-qa="submit"
