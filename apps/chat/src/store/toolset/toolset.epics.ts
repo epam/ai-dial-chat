@@ -828,6 +828,8 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
               pathname: Routes.Marketplace,
               query: {
                 [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
+                [MarketplaceQueryParams.entitiesTab]:
+                  MarketplaceEntitiesTabs.TOOLSETS,
               },
             });
 
