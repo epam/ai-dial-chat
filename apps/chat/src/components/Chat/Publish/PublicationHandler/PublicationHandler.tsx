@@ -107,16 +107,16 @@ const sections = [
     ItemComponent: PublicationApplicationRow,
   },
   {
-    featureType: FeatureType.File,
-    sectionName: 'Files',
-    dataQa: 'files-tree',
-    ItemComponent: PublicationFileRow,
-  },
-  {
     featureType: FeatureType.Toolset,
     sectionName: 'Toolsets',
     dataQa: 'toolsets-tree',
     ItemComponent: PublicationToolsetRow,
+  },
+  {
+    featureType: FeatureType.File,
+    sectionName: 'Files',
+    dataQa: 'files-tree',
+    ItemComponent: PublicationFileRow,
   },
 ];
 
