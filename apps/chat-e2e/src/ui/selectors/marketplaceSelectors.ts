@@ -24,11 +24,13 @@ export const MarketplaceAgentSelectors = {
   hiddenTopics: '[data-qa="hidden-topics"]',
   copyLink: '[data-qa="copy-link"]',
   copyLinkText: '[data-qa="copy-link-text"]',
+  iconContainer: '[data-qa="icon-container"]',
   copyIcon: '[data-qa="copy-icon"]',
   copiedLink: '[data-qa="copied-link"]',
   copiedIcon: '[data-qa="copied-icon"]',
   pencilIcon: '[data-qa="pencil-icon"]',
   arrowIcon: '[data-qa="arrow-icon"]',
+  openInNewTab: '[data-qa="external-link"]',
 };
 
 export const MarketplaceDetailsModal = {

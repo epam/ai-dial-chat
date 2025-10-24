@@ -1,6 +1,10 @@
 import { Publication } from '@/chat/types/publication';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ExpectedMessages, PublishingExpectedMessages } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  PublishingExpectedMessages,
+} from '@/src/testData';
 import { AgentDetailsModal } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
 
@@ -73,9 +77,11 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
     );
   }
 
-  public async assertApplicationReleaseDate(actualDate: Publication | number) {
+  public async assertApplicationReleaseDate(
+    expectedDate: Publication | number,
+  ) {
     const date =
-      typeof actualDate === 'number' ? actualDate : actualDate.createdAt;
+      typeof expectedDate === 'number' ? expectedDate : expectedDate.createdAt;
     await this.assertElementText(
       this.agentDetailsModal.agentReleaseDate,
       DateUtil.convertUnixTimestampToLocalDate(date),
@@ -89,5 +95,19 @@ export class AgentDetailsModalAssertion extends BaseAssertion {
       expectedTopics,
       PublishingExpectedMessages.publicationTopicsAreValid,
     );
+  }
+
+  public async assertOpenInNewTabButtonTitle(
+    viewportSize: null | { width: number; height: number },
+  ) {
+    viewportSize && viewportSize.width >= 768
+      ? await this.assertElementText(
+          this.agentDetailsModal.openInNewTabButtonTitle.getNthElement(1),
+          ExpectedConstants.openInNewTabButtonTitle,
+        )
+      : await this.assertElementText(
+          this.agentDetailsModal.openInNewTabButtonTitle.getNthElement(2),
+          ExpectedConstants.openInNewTabButtonTitle.split(' ')[0],
+        );
   }
 }
