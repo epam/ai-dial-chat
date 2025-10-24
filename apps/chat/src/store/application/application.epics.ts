@@ -768,19 +768,6 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
             }),
           ),
           of(PublicationActions.setIsApplicationReview(true)),
-          of(
-            MarketplaceActions.setDetailsEntity(
-              payload.redirectUrl === Routes.Marketplace &&
-                !!payload.shouldSelectApplication &&
-                reference
-                ? {
-                    reference: reference.toString(),
-                    type: MarketplaceEntitiesTabs.AGENTS,
-                    isSuggested: false,
-                  }
-                : undefined,
-            ),
-          ),
         );
       } else {
         router.push({
@@ -790,20 +777,34 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       }
       const returnConversationIds =
         ApplicationSelectors.selectReturnConversationIds(state$.value);
-      if (returnConversationIds?.length) {
-        return concat(
+      return concat(
+        iif(
+          () => !!returnConversationIds?.length,
           of(
             ConversationsActions.selectConversations({
-              conversationIds: returnConversationIds,
+              conversationIds: returnConversationIds as string[],
             }),
           ),
-          of(ApplicationActions.setReturnConversationIds(undefined)),
-        );
-      }
-      return of(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+        ),
+        of(ApplicationActions.setReturnConversationIds(undefined)),
+        of(
+          MarketplaceActions.setDetailsEntity(
+            payload.redirectUrl === Routes.Marketplace &&
+              !!payload.shouldSelectApplication &&
+              reference
+              ? {
+                  reference: reference.toString(),
+                  type: MarketplaceEntitiesTabs.AGENTS,
+                  isSuggested: false,
+                }
+              : undefined,
+          ),
+        ),
       );
     }),
   );
