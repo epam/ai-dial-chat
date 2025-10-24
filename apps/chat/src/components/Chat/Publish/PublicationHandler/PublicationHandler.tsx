@@ -157,15 +157,44 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   const publicationAuthor = useMemo(() => {
     return extractNameFromEmail(publication.author) ?? t('Unknown');
   }, [publication.author, t]);
+  const initialState = useMemo(() => {
+    const { entities, folders } = getDefaultAllEditEntities(
+      publication.resources,
+      publicVersionGroups,
+      { isReview },
+    );
+    const initialRules =
+      (isReview ? publication.rules : rules[publication.targetFolder]) ?? [];
+    const initialDisplayAuthor = isReview
+      ? (publication.displayAuthor ?? '')
+      : publicationAuthor;
+
+    return {
+      entities,
+      folders,
+      rules: initialRules,
+      displayAuthor: initialDisplayAuthor,
+      publishToUrl: publication.targetFolder,
+    };
+  }, [
+    isReview,
+    publicVersionGroups,
+    publication.displayAuthor,
+    publication.resources,
+    publication.rules,
+    publication.targetFolder,
+    publicationAuthor,
+    rules,
+  ]);
+
   const formMethods = useForm<PublicationRequestFormData>({
     defaultValues: {
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
       ),
-      rules:
-        (isReview ? publication.rules : rules[publication.targetFolder]) ?? [],
-      publicationAuthor: publication.displayAuthor ?? publicationAuthor,
-      publishToUrl: publication.targetFolder,
+      rules: initialState.rules,
+      publicationAuthor: initialState.displayAuthor,
+      publishToUrl: initialState.publishToUrl,
     },
     mode: 'onChange',
   });
@@ -230,35 +259,6 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
       ),
     [publication.resources],
   );
-
-  const initialState = useMemo(() => {
-    const { entities, folders } = getDefaultAllEditEntities(
-      publication.resources,
-      publicVersionGroups,
-      { isReview },
-    );
-    const initialRules = publication.rules ?? [];
-    const initialDisplayAuthor = isReview
-      ? (publication.displayAuthor ?? '')
-      : userName;
-
-    return {
-      entities,
-      folders,
-      rules: initialRules,
-      displayAuthor: initialDisplayAuthor,
-      publishToUrl: publication.targetFolder,
-    };
-  }, [
-    isReview,
-    publicVersionGroups,
-    publication.displayAuthor,
-    publication.resources,
-    publication.rules,
-    publication.targetFolder,
-    userName,
-  ]);
-
   const doesIncludeConversation = publication.resourceTypes.includes(
     BackendResourceType.CONVERSATION,
   );

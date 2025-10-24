@@ -440,6 +440,9 @@ export const PublicationHandlerFooter = ({
     isDisplayAuthorInvalid,
     selectedPublicationItems.length,
   ]);
+  const isApproveOrSendDisabled =
+    (isApproveDisabled && !publishModel) ||
+    (publishModel && (isEditInvalid || isFormErrors));
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {
@@ -529,14 +532,12 @@ export const PublicationHandlerFooter = ({
               </>
             )}
             <Tooltip
-              hideTooltip={
-                !isApproveDisabled && !isEditInvalid && !isFormErrors
-              }
+              hideTooltip={isApproveOrSendDisabled}
               tooltip={t(getSubmitTooltipText())}
             >
               <button
                 className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={isApproveDisabled || isEditInvalid || isFormErrors}
+                disabled={isApproveOrSendDisabled}
                 type={publishModel ? 'submit' : 'button'}
                 onClick={publishModel ? undefined : handleApprovePublication}
                 data-qa="submit"
