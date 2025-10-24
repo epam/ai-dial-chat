@@ -77,7 +77,7 @@ export const ReviewApplicationDialog = {
   completionUrlLabel: '[data-qa="app-completion-url-label"]',
   completionUrl: '[data-qa="app-completion-url"]',
   externalUrlLabel: '[data-qa="app-external-url-label"]',
-  externalUrl: '[data-qa="app-external-url"]'
+  externalUrl: '[data-qa="app-external-url"]',
 };
 
 export const ModelTooltip = {
