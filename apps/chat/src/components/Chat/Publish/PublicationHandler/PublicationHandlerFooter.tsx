@@ -532,7 +532,7 @@ export const PublicationHandlerFooter = ({
               </>
             )}
             <Tooltip
-              hideTooltip={isApproveOrSendDisabled}
+              hideTooltip={!isApproveOrSendDisabled}
               tooltip={t(getSubmitTooltipText())}
             >
               <button
