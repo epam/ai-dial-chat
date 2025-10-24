@@ -74,7 +74,10 @@ export const ReviewApplicationDialog = {
   featuresData: '[data-qa="app-feature"]',
   attachmentTypes: '[data-qa="app-attach-type"]',
   maxAttachmentsNumber: '[data-qa="app-max-attach"]',
+  completionUrlLabel: '[data-qa="app-completion-url-label"]',
   completionUrl: '[data-qa="app-completion-url"]',
+  externalUrlLabel: '[data-qa="app-external-url-label"]',
+  externalUrl: '[data-qa="app-external-url"]'
 };
 
 export const ModelTooltip = {

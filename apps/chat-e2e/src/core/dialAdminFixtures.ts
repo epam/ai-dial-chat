@@ -47,6 +47,7 @@ import {
   PublishedPromptPreviewModalAssertion,
   PublishingApprovalModalAssertion,
   PublishingRequestDialogAssertion,
+  TalkToAgentDialogAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
@@ -193,6 +194,7 @@ const dialAdminTest = dialTest.extend<{
   adminModelInfoTooltip: ModelInfoTooltip;
   adminChatSettingsTooltip: ChatSettingsTooltip;
   adminConversationDropdownMenuAssertion: MenuAssertion;
+  adminTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
 }>({
   adminChatSettingsTooltip: async ({ adminPage }, use) => {
     const chatSettingsTooltip = new ChatSettingsTooltip(adminPage);
@@ -791,6 +793,12 @@ const dialAdminTest = dialTest.extend<{
       adminConversationDropdownMenu,
     );
     await use(adminConversationDropdownMenuAssertion);
+  },
+  adminTalkToAgentDialogAssertion: async ({ adminTalkToAgentDialog }, use) => {
+    const adminTalkToAgentDialogAssertion = new TalkToAgentDialogAssertion(
+      adminTalkToAgentDialog,
+    );
+    await use(adminTalkToAgentDialogAssertion);
   },
 });
 
