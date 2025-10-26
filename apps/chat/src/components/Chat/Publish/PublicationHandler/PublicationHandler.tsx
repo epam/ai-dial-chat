@@ -13,8 +13,10 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getIdWithoutFeatureType,
+  isApplicationId,
   isConversationId,
   isFileId,
+  isToolsetId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
@@ -346,6 +348,18 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
       return Math.max(max, cleanTargetUrlPathLength);
     }, 0);
   }, [publication.resources, publication.targetFolder]);
+
+  const errorMessageEntityType = useMemo(() => {
+    if (!publicationModel) return '';
+    if (isApplicationId(publicationModel.entity.id)) {
+      return FeatureType.Application;
+    }
+
+    if (isToolsetId(publicationModel.entity.id)) {
+      return FeatureType.Toolset;
+    }
+    return '';
+  }, [publicationModel]);
 
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,

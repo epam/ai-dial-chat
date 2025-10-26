@@ -15,10 +15,12 @@ export enum Attributes {
   rotated180 = 'rotate-180',
   download = 'download',
   href = 'href',
+  target = 'target',
   dataQA = 'data-qa',
   ariaSelected = 'aria-selected',
   id = 'id',
   ariaExpanded = 'aria-expanded',
   ariaDetails = 'aria-details',
   ariaColcount = 'aria-colcount',
+  blank = '_blank',
 }
