@@ -53,7 +53,7 @@ const getMDComponents = (
 ): Components => {
   return {
     code({ inline, className, children, ...props }) {
-      if (children.length) {
+      if (children?.length) {
         if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
@@ -101,12 +101,12 @@ const getMDComponents = (
       );
     },
     p({ children, className }) {
-      if (children.length) {
+      if (children?.length) {
         if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
       }
-      if (children[0] == modelCursorSignWithBackquote) {
+      if (children?.[0] == modelCursorSignWithBackquote) {
         children[0] = replaceCursor(children[0] as string);
       }
       return (
