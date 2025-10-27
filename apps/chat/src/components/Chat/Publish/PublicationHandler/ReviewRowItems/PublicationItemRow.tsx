@@ -297,7 +297,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       }),
     );
 
-    if (isToolsetId(item.id)) {
+    if (isToolsetId(item.id) && item.publicationInfo?.publishCredentials) {
       if (
         (!selectedCredentialsItems.includes(item.id) &&
           !selectedPublicationItems.includes(item.id)) ||
@@ -315,6 +315,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   }, [
     dispatch,
     item.id,
+    item.publicationInfo?.publishCredentials,
     selectedCredentialsItems,
     selectedPublication?.url,
     selectedPublicationItems,
