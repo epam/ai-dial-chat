@@ -40,9 +40,6 @@ export function CreatePublicationHandler({
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
-  const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
-  );
 
   const handleSubmit = useCallback(
     (
@@ -104,10 +101,6 @@ export function CreatePublicationHandler({
   );
 
   return (
-    <PublicationHandler
-      onSubmit={handleSubmit}
-      rules={rules}
-      publication={publication}
-    />
+    <PublicationHandler onSubmit={handleSubmit} publication={publication} />
   );
 }

@@ -27,9 +27,6 @@ export function ReviewPublicationHandler({ publication }: Props) {
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
-  const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
-  );
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -82,10 +79,6 @@ export function ReviewPublicationHandler({ publication }: Props) {
   );
 
   return (
-    <PublicationHandler
-      onSubmit={handleSubmit}
-      rules={rules}
-      publication={publication}
-    />
+    <PublicationHandler onSubmit={handleSubmit} publication={publication} />
   );
 }

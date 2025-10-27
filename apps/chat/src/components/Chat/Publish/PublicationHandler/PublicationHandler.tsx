@@ -75,7 +75,6 @@ import isEqual from 'lodash-es/isEqual';
 
 interface Props {
   publication: Publication;
-  rules: Record<string, PublicationRule[]>;
   onSubmit: (
     resources: PublicationResource[],
     formData?: PublicationRequestFormData,
@@ -117,7 +116,7 @@ const sections = [
   },
 ];
 
-export function PublicationHandler({ publication, rules, onSubmit }: Props) {
+export function PublicationHandler({ publication, onSubmit }: Props) {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -165,8 +164,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
       publicVersionGroups,
       { isReview },
     );
-    const initialRules =
-      (isReview ? publication.rules : rules[publication.targetFolder]) ?? [];
+    const initialRules = publication.rules ?? [];
     const initialDisplayAuthor = isReview
       ? (publication.displayAuthor ?? '')
       : userName;
@@ -185,7 +183,6 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
     publication.resources,
     publication.rules,
     publication.targetFolder,
-    rules,
     userName,
   ]);
 
@@ -207,6 +204,13 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
   );
   const editedPublishToUrl = formMethods.watch(
     PublishRequestFieldsNames.PUBLISH_TO_URL,
+  );
+
+  const rules = useAppSelector((state) =>
+    PublicationSelectors.selectRulesByPath(
+      state,
+      !isReview ? editedPublishToUrl : publication.targetFolder,
+    ),
   );
 
   useEffect(() => {
