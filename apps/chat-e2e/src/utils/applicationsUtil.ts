@@ -1,15 +1,16 @@
 import {
-  ApiDetailedApplicationTypeSchema,
+  ApiApplicationTypeSchema,
   ApplicationTypeSchemaProperties,
 } from '@/chat/types/application-type-schema';
 import { AppEditorAppTypes } from '@/src/testData';
 
 export class ApplicationsUtil {
-  private static readonly appSchemas: ApiDetailedApplicationTypeSchema[] =
-    process.env.APP_SCHEMAS ? JSON.parse(process.env.APP_SCHEMAS) : [];
+  public static getApplicationSchemas() {
+    return JSON.parse(process.env.APP_SCHEMAS!) as ApiApplicationTypeSchema[];
+  }
 
   public static getAppSchemaByName(appName: AppEditorAppTypes): string {
-    const app = ApplicationsUtil.appSchemas.find(
+    const app = ApplicationsUtil.getApplicationSchemas().find(
       (app) =>
         app[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ===
         appName,
