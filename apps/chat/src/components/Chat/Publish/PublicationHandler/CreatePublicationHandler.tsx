@@ -31,8 +31,8 @@ export function CreatePublicationHandler({
 }: Props) {
   const dispatch = useAppDispatch();
 
-  const selectedPublicationItems = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationItems,
+  const selectedPublicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publication.url),
   );
   const entitiesEditState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,

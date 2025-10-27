@@ -118,11 +118,11 @@ export const PublicationHandlerFooter = ({
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
-  const selectedPublicationItems = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationItems,
+  const selectedPublicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publication.url),
   );
-  const selectedCredentialsItems = useAppSelector(
-    PublicationSelectors.selectSelectedCredentialsItems,
+  const selectedCredentialsItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedCredentialsItems(state, publication.url),
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,

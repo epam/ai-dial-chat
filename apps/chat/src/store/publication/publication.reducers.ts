@@ -405,7 +405,7 @@ export const publicationSlice = createSlice({
     updateApplicationPublicationUrls: (
       state,
       _action: PayloadAction<{
-        publicationUrl?: string;
+        publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
       }>,

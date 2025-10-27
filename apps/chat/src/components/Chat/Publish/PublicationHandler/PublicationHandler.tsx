@@ -604,6 +604,7 @@ export function PublicationHandler({ publication, rules, onSubmit }: Props) {
                               {!!filteredResources.length &&
                                 !doesInvalidPublishApplicationIconExist && (
                                   <BasePublicationResources
+                                    publicationUrl={publication.url}
                                     resources={filteredResources}
                                     ItemComponent={ItemComponent}
                                   />

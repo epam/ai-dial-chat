@@ -216,6 +216,7 @@ interface PublicationRowProps {
   item: ShareEntity;
   dataQa: string;
   itemTypeName: BackendResourceTypeName;
+  publicationUrl: string;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -224,6 +225,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   item,
   dataQa,
   itemTypeName,
+  publicationUrl,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -231,17 +233,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     PublicationSelectors.selectPublishModel,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
   const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
-  const selectedPublicationItems = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationItems,
+  const selectedPublicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
   );
-  const selectedCredentialsItems = useAppSelector(
-    PublicationSelectors.selectSelectedCredentialsItems,
+  const selectedCredentialsItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedCredentialsItems(state, publicationUrl),
   );
   const editState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
@@ -299,7 +298,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const handleSelect = useCallback(() => {
     dispatch(
       PublicationActions.selectPublicationItems({
-        publicationUrl: selectedPublication?.url ?? '',
+        publicationUrl,
         ids: [item.id],
       }),
     );
@@ -313,7 +312,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       ) {
         dispatch(
           PublicationActions.selectCredentialsItems({
-            publicationUrl: selectedPublication?.url ?? '',
+            publicationUrl,
             ids: [item.id],
           }),
         );
@@ -323,7 +322,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     dispatch,
     item.id,
     selectedCredentialsItems,
-    selectedPublication?.url,
+    publicationUrl,
     selectedPublicationItems,
   ]);
 
