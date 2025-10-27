@@ -204,11 +204,7 @@ export const getLinkErrorMessage = (
   reference: string | undefined,
   detailsEntity: DetailsEntity | undefined,
 ) => {
-  if (!detailsEntity) {
-    if (reference) {
-      return isAgentsTab
-        ? 'Agent by this link not found'
-        : 'Toolset by this link not found';
-    }
+  if (!detailsEntity && reference) {
+    return `${isAgentsTab ? 'Agent' : 'Toolset'} by this link not found`;
   }
 };

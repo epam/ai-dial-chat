@@ -247,25 +247,52 @@ export const MarketplaceFilterbar = memo(() => {
     [FilterTypes.SOURCES]: true,
   });
 
+  const {
+    topicsFilters,
+    sourcesFilters,
+    selectedFilters,
+    showLoader,
+    setFilters,
+  } = useMemo(() => {
+    if (isAgentsTab) {
+      return {
+        topicsFilters: topics,
+        sourcesFilters: sourceTypes,
+        selectedFilters: selectedAgentsFilters,
+        showLoader: !areModelsLoaded || !!isMarketplaceLoading,
+        setFilters: MarketplaceActions.setSelectedAgentsFilters,
+      };
+    }
+    return {
+      topicsFilters: toolsetsTopics,
+      sourcesFilters: toolsetSourceTypes,
+      selectedFilters: selectedToolsetsFilters,
+      showLoader: !areToolsetsLoaded || !!isMarketplaceLoading,
+      setFilters: MarketplaceActions.setSelectedToolsetsFilters,
+    };
+  }, [
+    areModelsLoaded,
+    areToolsetsLoaded,
+    isAgentsTab,
+    isMarketplaceLoading,
+    selectedAgentsFilters,
+    selectedToolsetsFilters,
+    sourceTypes,
+    toolsetSourceTypes,
+    toolsetsTopics,
+    topics,
+  ]);
+
   const handleApplyFilter = useCallback(
     (type: FilterTypes, value: string) => {
-      if (isAgentsTab) {
-        dispatch(
-          MarketplaceActions.setSelectedAgentsFilters({
-            filterType: type,
-            value,
-          }),
-        );
-      } else {
-        dispatch(
-          MarketplaceActions.setSelectedToolsetsFilters({
-            filterType: type,
-            value,
-          }),
-        );
-      }
+      dispatch(
+        setFilters({
+          filterType: type,
+          value,
+        }),
+      );
     },
-    [dispatch, isAgentsTab],
+    [dispatch, setFilters],
   );
 
   const handleToggleFilterSection = useCallback(
@@ -289,22 +316,6 @@ export const MarketplaceFilterbar = memo(() => {
       areToolsetsLoaded
     );
   }, [areModelsLoaded, areToolsetsLoaded, isAgentsTab, modelsMap, toolsetsMap]);
-
-  const selectedFilters = useMemo(() => {
-    return isAgentsTab ? selectedAgentsFilters : selectedToolsetsFilters;
-  }, [isAgentsTab, selectedAgentsFilters, selectedToolsetsFilters]);
-
-  const topicsFilters = useMemo(() => {
-    return isAgentsTab ? topics : toolsetsTopics;
-  }, [isAgentsTab, toolsetsTopics, topics]);
-
-  const sourcesFilters = useMemo(() => {
-    return isAgentsTab ? sourceTypes : toolsetSourceTypes;
-  }, [isAgentsTab, sourceTypes, toolsetSourceTypes]);
-
-  const showLoader =
-    (isAgentsTab ? !areModelsLoaded : !areToolsetsLoaded) ||
-    !!isMarketplaceLoading;
 
   return (
     <nav
