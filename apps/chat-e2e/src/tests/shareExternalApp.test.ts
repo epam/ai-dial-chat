@@ -139,7 +139,9 @@ dialSharedWithMeTest(
       'Back to chat and verify shared app is not available for a new conversation',
       async () => {
         await additionalShareUserNavigationPanel.backToChat();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          skipSidebars: true,
+        });
         await additionalShareUserChat.changeAgentButton.click();
         await additionalShareUserTalkToAgentDialog.selectAgent(appEntity, {
           isAgentVisible: false,
