@@ -1370,7 +1370,10 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
           );
 
           const selectedPublicationItems =
-            PublicationSelectors.selectSelectedPublicationItems(state);
+            PublicationSelectors.selectSelectedPublicationItems(
+              state,
+              payload.publicationUrl,
+            );
 
           return concat(
             updateEntityAction$,
@@ -1405,7 +1408,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const publication = PublicationSelectors.selectPublicationByUrl(
         state$.value,
-        payload.publicationUrl as string,
+        payload.publicationUrl,
       );
 
       if (!publication || !publication?.resources || !payload.publicationUrl) {
@@ -1441,7 +1444,10 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           const state = state$.value;
 
           const selectedPublicationItems =
-            PublicationSelectors.selectSelectedPublicationItems(state);
+            PublicationSelectors.selectSelectedPublicationItems(
+              state,
+              payload.publicationUrl,
+            );
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
@@ -1537,7 +1543,10 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           };
 
           const selectedPublicationItems =
-            PublicationSelectors.selectSelectedPublicationItems(state);
+            PublicationSelectors.selectSelectedPublicationItems(
+              state,
+              payload.publicationUrl,
+            );
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
@@ -2014,9 +2023,15 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
       }
 
       const selectedPublicationItems =
-        PublicationSelectors.selectSelectedPublicationItems(state);
+        PublicationSelectors.selectSelectedPublicationItems(
+          state,
+          selectedPublication.url,
+        );
       const selectedCredentialsItems =
-        PublicationSelectors.selectSelectedCredentialsItems(state);
+        PublicationSelectors.selectSelectedCredentialsItems(
+          state,
+          selectedPublication.url,
+        );
       const filteredResources = selectedPublication.resources
         .filter(({ reviewUrl }) => selectedPublicationItems.includes(reviewUrl))
         .map((resource) => ({
@@ -2228,9 +2243,8 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.selectPublication.type),
     switchMap(() => {
-      const publication = PublicationSelectors.selectSelectedPublication(
-        state$.value,
-      );
+      const state = state$.value;
+      const publication = PublicationSelectors.selectSelectedPublication(state);
       const resources = publication?.resources;
 
       if (!publication) {
@@ -2239,7 +2253,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       }
 
       const selectedPublicationItems =
-        PublicationSelectors.selectAllSelectedPublicationItems(state$.value);
+        PublicationSelectors.selectAllSelectedPublicationItems(state);
 
       if (selectedPublicationItems[publication.url] !== undefined) {
         return EMPTY;
@@ -2247,7 +2261,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
 
       return of(
         PublicationActions.setPublicationItems({
-          publicationUrl: publication?.url ?? '',
+          publicationUrl: publication.url,
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),
       );

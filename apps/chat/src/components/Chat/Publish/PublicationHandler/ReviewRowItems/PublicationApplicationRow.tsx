@@ -15,6 +15,7 @@ import { PublicationItemProps } from './view-props';
 export const PublicationApplicationRow: React.FC<PublicationItemProps> = ({
   item,
   level,
+  publicationUrl,
 }) => {
   const models = useAppSelector(ModelsSelectors.selectModels);
   const publishRequestModels = useAppSelector(
@@ -44,6 +45,7 @@ export const PublicationApplicationRow: React.FC<PublicationItemProps> = ({
       item={item}
       itemTypeName={BackendResourceTypeName.APPLICATION}
       dataQa="application"
+      publicationUrl={publicationUrl}
     />
   );
 };

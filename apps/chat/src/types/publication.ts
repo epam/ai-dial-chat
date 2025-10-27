@@ -2,7 +2,12 @@ import { FolderEditTree } from '@/src/store/publication/publication.types';
 
 import { BackendDataNodeType, BackendResourceType } from './common';
 
-import { MIMEType, PublishActions, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  MIMEType,
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -150,4 +155,11 @@ export interface PublicationHandlerState {
   rules: PublicationRule[];
   displayAuthor: string;
   publishToUrl: string;
+}
+
+export interface PublicationModel {
+  entity: ShareEntity & { iconUrl?: string };
+  action: PublishActions;
+  isFolder?: boolean;
+  publishCredentials?: boolean;
 }
