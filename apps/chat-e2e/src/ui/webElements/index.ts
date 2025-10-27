@@ -61,7 +61,6 @@ export * from './informationModal';
 export * from './listboxMenu';
 export * from './publishingFilter';
 export * from './marketplace/shareAppModal';
-
 export * from './appEditor/base/appEditorForm';
 export * from './appEditor/base/appEditorHeader';
 export * from './appEditor/base/general/appEditorGeneralForm';
@@ -74,8 +73,11 @@ export * from './appEditor/base/appSettings/appEditorAppSettingsPreviewChat';
 export * from './appEditor/base/appEditorContainer';
 export * from './appEditor/base/general/appEditorPreviewToggle';
 export * from './appEditor/base/general/appEditorPreviewCard';
-
 export * from './appEditor/customApp/customAppEditorViewForm';
 export * from './appEditor/customApp/customAppEditorAppSettingsPreviewBody';
 export * from './appEditor/customApp/customAppEditorAppSettingsPreview';
 export * from './appEditor/customApp/customAppEditorContainer';
+export * from './appEditor/externalApp/externalAppEditorViewForm';
+export * from './appEditor/externalApp/externalAppEditorAppSettingsPreviewBody';
+export * from './appEditor/externalApp/externalAppEditorAppSettingsPreview';
+export * from './appEditor/externalApp/externalAppEditorContainer';
