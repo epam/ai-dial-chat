@@ -11,8 +11,10 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+import { expect } from '@playwright/test';
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -688,7 +690,8 @@ dialAdminTest(
 );
 
 dialAdminTest(
-  '[Admin view][Edit chat] Generated file by agent appears in review',
+  '[Admin view][Edit chat] Generated file by agent appears in review.\n' +
+    'Organization: The chat with a generated file is published',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -704,8 +707,16 @@ dialAdminTest(
     adminPublishFilesAssertion,
     adminFileApiHelper,
     adminChat,
+    dialHomePage,
+    organizationConversations,
+    localStorageManager,
+    chatMessagesAssertion,
+    chatBar,
+    fileApiHelper,
+    manageAttachmentsAssertion,
+    page,
   }) => {
-    setTestIds('EPMRTC-6605');
+    setTestIds('EPMRTC-6605', 'EPMRTC-6608');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
@@ -713,31 +724,46 @@ dialAdminTest(
     );
     const newPrompt = 'generate a picture';
     let publicationBucket: string;
+    let publication: Publication;
 
     await dialTest.step(
       'Prepare conversation with attachment-supported model and publication request',
       async () => {
-        conversation = conversationData.prepareDefaultConversation(model!);
-        await dataInjector.createConversations([conversation]);
-
-        const publishRequest = publishRequestBuilder
-          .withName(requestName)
-          .withConversationInFolderResource(conversation, PublishActions.ADD)
-          .build();
-        const publication =
-          await publicationApiHelper.createPublishRequest(publishRequest);
-        publicationBucket =
-          publicationApiHelper.getPublicationBucket(publication);
-        const imageUrl = await adminFileApiHelper.putFile(
+        const imageUrl1 = await fileApiHelper.putFile(
+          Attachment.cloudImageName,
+          {
+            parentPath: API.modelFilePath(model.id),
+          },
+        );
+        const imageUrl2 = await adminFileApiHelper.putFile(
           Attachment.sunImageName,
           {
             parentPath: API.modelFilePath(model.id),
           },
         );
+
+        conversation =
+          conversationData.prepareConversationWithAttachmentInResponse(
+            imageUrl1,
+            model!,
+          );
+        await dataInjector.createConversations([conversation]);
+
+        const publishRequest = publishRequestBuilder
+          .withName(requestName)
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .withFileResource(imageUrl1, PublishActions.ADD_IF_ABSENT)
+          .build();
+        publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        publicationBucket =
+          publicationApiHelper.getPublicationBucket(publication);
+
         await adminFileApiHelper.putFileToPublicationBucket(
           publication,
-          imageUrl,
+          imageUrl2,
         );
+
         await adminLocalStorageManager.setShowSideBarPanels();
       },
     );
@@ -765,6 +791,10 @@ dialAdminTest(
         );
         await adminChat.sendRequestWithButton(newPrompt);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
+          2,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.cloudImageName}`,
+        );
+        await adminChatMessagesAssertion.assertMessageDownloadUrl(
           4,
           `${API.filesHostSegment}/${publicationBucket}/${Attachment.sunImageName}`,
         );
@@ -772,11 +802,56 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Click on "Back to publication request" and verify generated file is displayed in request',
+      'Click on "Back to publication request" and verify generated file and the previous file are displayed in request',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishFilesAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
+          'visible',
+        );
+        await adminPublishFilesAssertion.assertEntityState(
           { name: Attachment.sunImageName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step('Approve the request', async () => {
+      await adminPublishingApprovalModal.approveRequest();
+    });
+
+    await dialTest.step(
+      'As a user, check that the chat is available in the organization and attachments are visible',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationConversations.selectEntity(conversation.name);
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          2,
+          Attachment.cloudImageName,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          4,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open "Manage attachments" and verify both files are in the organization file tree',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.Organization,
+          'visible',
+        );
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
+          FileModalSection.Organization,
           'visible',
         );
       },
