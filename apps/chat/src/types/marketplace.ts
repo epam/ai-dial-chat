@@ -1,4 +1,7 @@
-import { FilterTypes } from '@/src/constants/marketplace';
+import {
+  FilterTypes,
+  MarketplaceEntitiesTabs,
+} from '@/src/constants/marketplace';
 
 import { DialAIEntityModel } from './models';
 import { ToolsetModel } from './toolsets';
@@ -27,4 +30,10 @@ export interface EntitiesGroup<T extends MarketplaceEntity> {
 export enum MarketplaceEditorSteps {
   General = 'General',
   Settings = 'Settings',
+}
+
+export interface DetailsEntity {
+  reference: string;
+  isSuggested: boolean;
+  type: MarketplaceEntitiesTabs;
 }

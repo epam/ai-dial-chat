@@ -148,6 +148,8 @@ const selectDeleteEntity = (state: RootState) =>
 
 const selectLoginEntity = (state: RootState) => rootSelector(state).loginEntity;
 
+const selectShowLoader = (state: RootState) => rootSelector(state).showLoader;
+
 export const MarketplaceSelectors = {
   selectSelectedViewType,
   selectTableSort,
@@ -167,4 +169,5 @@ export const MarketplaceSelectors = {
   selectDetailsEntity,
   selectDetailsToolset,
   selectLoginEntity,
+  selectShowLoader,
 };

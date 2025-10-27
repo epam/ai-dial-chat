@@ -22,9 +22,11 @@ import {
   ENTITY_TYPES,
   FilterTypes,
   MarketplaceEntitiesTabs,
+  SourceType,
 } from '@/src/constants/marketplace';
 
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
+import { Loader } from '@/src/components/Common/Loader';
 
 import { capitalize } from 'lodash';
 
@@ -127,6 +129,77 @@ const FilterSection = ({
   );
 };
 
+interface OpenedSections {
+  [FilterTypes.ENTITY_TYPE]: boolean;
+  // [FilterTypes.CAPABILITIES]: boolean;
+  // [FilterTypes.ENVIRONMENT]: boolean;
+  [FilterTypes.TOPICS]: boolean;
+  [FilterTypes.SOURCES]: boolean;
+}
+interface FiltersRendererProps {
+  showEntityTypesSection: boolean;
+  showLoader: boolean;
+  openedSections: OpenedSections;
+  selectedFilters: MarketplaceFilters;
+  topics: string[];
+  sourceTypes: SourceType[];
+  handleToggleFilterSection: (filterType: FilterTypes) => void;
+  handleApplyFilter: (type: FilterTypes, value: string) => void;
+}
+function FiltersRenderer({
+  showLoader,
+  showEntityTypesSection,
+  openedSections,
+  selectedFilters,
+  topics,
+  sourceTypes,
+  handleToggleFilterSection,
+  handleApplyFilter,
+}: FiltersRendererProps) {
+  const { t } = useTranslation(Translation.SideBar);
+
+  if (showLoader) {
+    return <Loader />;
+  }
+
+  return (
+    <>
+      {showEntityTypesSection && (
+        <FilterSection
+          sectionName={t('Type')}
+          filterValues={ENTITY_TYPES}
+          openedSections={openedSections}
+          selectedFilters={selectedFilters}
+          filterType={FilterTypes.ENTITY_TYPE}
+          onToggleFilterSection={handleToggleFilterSection}
+          onApplyFilter={handleApplyFilter}
+          getDisplayLabel={getTypeLabel}
+        />
+      )}
+      <FilterSection
+        sectionName={t('Topics')}
+        filterValues={topics}
+        openedSections={openedSections}
+        selectedFilters={selectedFilters}
+        filterType={FilterTypes.TOPICS}
+        onToggleFilterSection={handleToggleFilterSection}
+        onApplyFilter={handleApplyFilter}
+      />
+      {sourceTypes.length > 1 && (
+        <FilterSection
+          sectionName={t('Sources')}
+          filterValues={sourceTypes}
+          openedSections={openedSections}
+          selectedFilters={selectedFilters}
+          filterType={FilterTypes.SOURCES}
+          onToggleFilterSection={handleToggleFilterSection}
+          onApplyFilter={handleApplyFilter}
+        />
+      )}
+    </>
+  );
+}
+
 const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
 export const MarketplaceFilterbar = memo(() => {
@@ -160,13 +233,13 @@ export const MarketplaceFilterbar = memo(() => {
   const toolsetSourceTypes = useAppSelector(
     MarketplaceSelectors.selectToolsetSourceTypes,
   );
+  const isMarketplaceLoading = useAppSelector(
+    MarketplaceSelectors.selectShowLoader,
+  );
+
   const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
-  const selectedFilters = isAgentsTab
-    ? selectedAgentsFilters
-    : selectedToolsetsFilters;
-
-  const [openedSections, setOpenedSections] = useState({
+  const [openedSections, setOpenedSections] = useState<OpenedSections>({
     [FilterTypes.ENTITY_TYPE]: true,
     // [FilterTypes.CAPABILITIES]: false,
     // [FilterTypes.ENVIRONMENT]: false,
@@ -217,6 +290,22 @@ export const MarketplaceFilterbar = memo(() => {
     );
   }, [areModelsLoaded, areToolsetsLoaded, isAgentsTab, modelsMap, toolsetsMap]);
 
+  const selectedFilters = useMemo(() => {
+    return isAgentsTab ? selectedAgentsFilters : selectedToolsetsFilters;
+  }, [isAgentsTab, selectedAgentsFilters, selectedToolsetsFilters]);
+
+  const topicsFilters = useMemo(() => {
+    return isAgentsTab ? topics : toolsetsTopics;
+  }, [isAgentsTab, toolsetsTopics, topics]);
+
+  const sourcesFilters = useMemo(() => {
+    return isAgentsTab ? sourceTypes : toolsetSourceTypes;
+  }, [isAgentsTab, sourceTypes, toolsetSourceTypes]);
+
+  const showLoader =
+    (isAgentsTab ? !areModelsLoaded : !areToolsetsLoaded) ||
+    !!isMarketplaceLoading;
+
   return (
     <nav
       className={classNames(
@@ -251,42 +340,16 @@ export const MarketplaceFilterbar = memo(() => {
               </p>
             </div>
           ) : (
-            <>
-              {isAgentsTab && (
-                <FilterSection
-                  sectionName={t('Type')}
-                  filterValues={ENTITY_TYPES}
-                  openedSections={openedSections}
-                  selectedFilters={selectedFilters}
-                  filterType={FilterTypes.ENTITY_TYPE}
-                  onToggleFilterSection={handleToggleFilterSection}
-                  onApplyFilter={handleApplyFilter}
-                  getDisplayLabel={getTypeLabel}
-                />
-              )}
-              <FilterSection
-                sectionName={t('Topics')}
-                filterValues={isAgentsTab ? topics : toolsetsTopics}
-                openedSections={openedSections}
-                selectedFilters={selectedFilters}
-                filterType={FilterTypes.TOPICS}
-                onToggleFilterSection={handleToggleFilterSection}
-                onApplyFilter={handleApplyFilter}
-              />
-              {(isAgentsTab
-                ? sourceTypes.length > 1
-                : toolsetSourceTypes.length > 1) && (
-                <FilterSection
-                  sectionName={t('Sources')}
-                  filterValues={isAgentsTab ? sourceTypes : toolsetSourceTypes}
-                  openedSections={openedSections}
-                  selectedFilters={selectedFilters}
-                  filterType={FilterTypes.SOURCES}
-                  onToggleFilterSection={handleToggleFilterSection}
-                  onApplyFilter={handleApplyFilter}
-                />
-              )}
-            </>
+            <FiltersRenderer
+              showEntityTypesSection={isAgentsTab}
+              showLoader={showLoader}
+              openedSections={openedSections}
+              selectedFilters={selectedFilters}
+              topics={topicsFilters}
+              sourceTypes={sourcesFilters}
+              handleToggleFilterSection={handleToggleFilterSection}
+              handleApplyFilter={handleApplyFilter}
+            />
           )}
         </div>
       )}

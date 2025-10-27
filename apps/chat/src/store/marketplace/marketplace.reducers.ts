@@ -170,6 +170,9 @@ export const marketplaceSlice = createSlice({
     ) => {
       state.loginEntity = payload;
     },
+    setShowLoader: (state, { payload }: PayloadAction<boolean>) => {
+      state.showLoader = payload;
+    },
   },
 });
 
