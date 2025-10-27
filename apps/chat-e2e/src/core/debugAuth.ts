@@ -93,4 +93,35 @@ export class DebugAuth {
     fs.writeFileSync(statePath, JSON.stringify(storageState, null, 2));
     return authTokens;
   }
+
+  /**
+   * Authenticates multiple users in parallel and saves their storage states
+   */
+  static async authenticateAllUsersInParallel(
+    userCredentials: { username: string; password: string; statePath: string; index: number }[],
+    baseUrl: string,
+  ): Promise<{ index: number; authTokens: AuthTokens }[]> {
+    // Import request module dynamically to create new contexts
+    const { request } = await import('@playwright/test');
+
+    const authPromises = userCredentials.map(async ({ username, password, statePath, index }) => {
+      // Create a new request context for each user to avoid conflicts
+      const requestContext = await request.newContext({
+        baseURL: baseUrl,
+      });
+
+      const debugAuth = new DebugAuth(requestContext, baseUrl);
+
+      try {
+        const authTokens = await debugAuth.authenticateAndSaveState(username, password, statePath);
+        await requestContext.dispose();
+        return { index, authTokens };
+      } catch (error) {
+        await requestContext.dispose();
+        throw new Error(`Authentication failed for user ${username} (index ${index}): ${error}`);
+      }
+    });
+
+    return Promise.all(authPromises);
+  }
 }
