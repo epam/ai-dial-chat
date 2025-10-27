@@ -11,27 +11,22 @@ import { PublicationSelectors } from '@/src/store/selectors';
 
 import { Checkbox } from '@/src/components/Common/Checkbox';
 
-interface Props {
-  itemId: string;
-  level: number;
-}
+import { PublicationItemProps } from './view-props';
 
-export const PublicationCredentialsRow: React.FC<Props> = ({
+export const PublicationCredentialsRow: React.FC<PublicationItemProps> = ({
   level,
-  itemId,
+  item: { id: itemId },
+  publicationUrl,
 }) => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
 
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
+  const selectedPublicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
   );
-  const selectedPublicationItems = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationItems,
-  );
-  const selectedCredentialsItems = useAppSelector(
-    PublicationSelectors.selectSelectedCredentialsItems,
+  const selectedCredentialsItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedCredentialsItems(state, publicationUrl),
   );
 
   const isSelected = useMemo(
@@ -44,7 +39,7 @@ export const PublicationCredentialsRow: React.FC<Props> = ({
   const handleSelect = useCallback(() => {
     dispatch(
       PublicationActions.selectCredentialsItems({
-        publicationUrl: selectedPublication?.url ?? '',
+        publicationUrl,
         ids: [itemId],
       }),
     );
@@ -55,14 +50,14 @@ export const PublicationCredentialsRow: React.FC<Props> = ({
     ) {
       dispatch(
         PublicationActions.selectPublicationItems({
-          publicationUrl: selectedPublication?.url ?? '',
+          publicationUrl,
           ids: [itemId],
         }),
       );
     }
   }, [
     dispatch,
-    selectedPublication?.url,
+    publicationUrl,
     itemId,
     selectedCredentialsItems,
     selectedPublicationItems,
