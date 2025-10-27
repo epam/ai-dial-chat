@@ -124,21 +124,20 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       const selectedEntitiesTab =
         MarketplaceSelectors.selectSelectedEntitiesTab(state);
 
-      const isToolsetsTab =
-        selectedEntitiesTab === MarketplaceEntitiesTabs.TOOLSETS;
+      const isAgentsTab =
+        selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
       addToQuery(
         query,
         MarketplaceQueryParams.entitiesTab,
-        isToolsetsTab ? MarketplaceEntitiesTabs.TOOLSETS : undefined,
+        isAgentsTab ? undefined : MarketplaceEntitiesTabs.TOOLSETS,
       );
       // application link
       const detailsEntity = MarketplaceSelectors.selectDetailsEntity(state);
       const referenceQuery =
-        detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS ||
-        isToolsetsTab
-          ? MarketplaceQueryParams.toolset
-          : MarketplaceQueryParams.model;
+        detailsEntity?.type === MarketplaceEntitiesTabs.AGENTS || isAgentsTab
+          ? MarketplaceQueryParams.model
+          : MarketplaceQueryParams.toolset;
       addToQuery(query, referenceQuery, detailsEntity?.reference);
 
       // filters
@@ -147,7 +146,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       const toolsetsFilters =
         MarketplaceSelectors.selectSelectedToolsetsFilters(state);
 
-      const filters = isToolsetsTab ? toolsetsFilters : agentsFilters;
+      const filters = isAgentsTab ? agentsFilters : toolsetsFilters;
 
       addToQuery(
         query,

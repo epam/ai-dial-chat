@@ -31,6 +31,7 @@ import {
 
 import { pluralizeDisplayName } from './app/application-type-schema';
 import { parseCommaSeparatedList } from './app/common';
+import { translate } from './app/translation';
 
 import intersection from 'lodash-es/intersection';
 import { ParsedUrlQuery } from 'querystring';
@@ -205,6 +206,8 @@ export const getLinkErrorMessage = (
   detailsEntity: DetailsEntity | undefined,
 ) => {
   if (!detailsEntity && reference) {
-    return `${isAgentsTab ? 'Agent' : 'Toolset'} by this link not found`;
+    return translate(
+      `${isAgentsTab ? 'Agent' : 'Toolset'} by this link not found`,
+    );
   }
 };
