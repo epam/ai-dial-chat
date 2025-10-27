@@ -228,8 +228,8 @@ export class BaseElement {
     return allIcons;
   }
 
-  public getElementIcon(elementLocator: Locator) {
-    const iconLocator = elementLocator
+  public getElementIcon(elementLocator: Locator | BaseElement) {
+    const iconLocator = BaseElement.getElementLocator(elementLocator)
       .locator(ChatSelectors.iconSelector)
       .first();
     return iconLocator.locator(`${Tags.img}:visible`);

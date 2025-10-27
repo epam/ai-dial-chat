@@ -23,9 +23,7 @@ export class AppEditorPreviewCard extends BaseElement {
     IconSelectors.externalAppIcon,
   );
 
-  public previewIcon = this.previewIconContainer.getChildElementBySelector(
-    Tags.img,
-  );
+  public previewIcon = this.getElementIcon(this.previewIconContainer);
 
   public previewName = this.getChildElementBySelector(
     AppEditorGeneralInfoPreviewSelectors.previewAgentName,

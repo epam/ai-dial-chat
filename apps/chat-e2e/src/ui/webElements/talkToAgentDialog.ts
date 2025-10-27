@@ -3,6 +3,7 @@ import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
+  ErrorLabelSelectors,
   IconSelectors,
   MarketplaceAgentSelectors,
   MenuSelectors,
@@ -43,6 +44,9 @@ export class TalkToAgentDialog extends BaseElement {
   );
   public previousArrowButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.previousArrowButton,
+  );
+  public noResultFound = this.getChildElementBySelector(
+    ErrorLabelSelectors.noResultFound,
   );
 
   getAgents(): MarketplaceAgents {
@@ -96,7 +100,12 @@ export class TalkToAgentDialog extends BaseElement {
     options: {
       isHttpMethodTriggered?: boolean;
       triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
-    } = { isHttpMethodTriggered: true, triggeredHttpMethod: 'PUT' },
+      isAgentVisible?: boolean;
+    } = {
+      isHttpMethodTriggered: true,
+      triggeredHttpMethod: 'PUT',
+      isAgentVisible: true,
+    },
   ) {
     //check if agent is among recent ones
     const isRecentAgentUsed = await this.useAgent(entity, options);
@@ -104,7 +113,7 @@ export class TalkToAgentDialog extends BaseElement {
     if (!isRecentAgentUsed) {
       await this.allAgentsTab.click();
       const isMarketplaceAgentUsed = await this.useAgent(entity, options);
-      if (!isMarketplaceAgentUsed) {
+      if (!isMarketplaceAgentUsed && options.isAgentVisible) {
         throw new Error(
           `Agent with name: ${entity} and version: ${typeof entity !== 'string' ? (entity.version ?? 'N/A') : 'N/A'} is not found!`,
         );
