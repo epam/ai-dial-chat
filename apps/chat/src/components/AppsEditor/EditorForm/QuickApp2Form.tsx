@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -6,6 +6,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { DialAIEntityModel } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -27,6 +30,10 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
+import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/ApplicationDetails/SimpleApplicationDetailsFooter';
+import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
+import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import uniq from 'lodash-es/uniq';
 
@@ -38,6 +45,16 @@ const AgentAndToolsetSelectorField = withErrorMessage(
 );
 const ToggleSwitchField = withLabel(ToggleSwitch);
 
+function isApplicationOrModel(
+  entity: MarketplaceEntity,
+): entity is DialAIEntityModel {
+  return entity.type === 'application' || entity.type === 'model';
+}
+
+function isToolset(entity: MarketplaceEntity): entity is ToolsetModel {
+  return entity.type === 'toolset';
+}
+
 export const QuickApp2Form = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -46,6 +63,9 @@ export const QuickApp2Form = () => {
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+
+  const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
 
   const allEntitiesMap = useMemo(
     () => ({
@@ -60,6 +80,38 @@ export const QuickApp2Form = () => {
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
+
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
+
+  const detailedViewEntity = useMemo(
+    () => (selectedEntityId ? allEntitiesMap[selectedEntityId] : null),
+    [selectedEntityId, allEntitiesMap],
+  );
+
+  const handleOpenDetails = useCallback((entity: MarketplaceEntity) => {
+    setSelectedEntityId(entity.id);
+  }, []);
+
+  const handleCloseDetails = useCallback(() => {
+    setSelectedEntityId(null);
+  }, []);
+
+  const handleChangeVersionInDetails = useCallback(
+    (entity: MarketplaceEntity) => {
+      setSelectedEntityId(entity.id);
+    },
+    [],
+  );
+
+  const handleItemClick = useCallback(
+    (id: string) => {
+      const entity = allEntitiesMap[id];
+      if (entity) {
+        handleOpenDetails(entity);
+      }
+    },
+    [allEntitiesMap, handleOpenDetails],
+  );
 
   return (
     <div
@@ -112,16 +164,54 @@ export const QuickApp2Form = () => {
       <Controller
         name="agentsAndToolsets"
         control={control}
-        render={({ field }) => (
-          <AgentAndToolsetSelectorField
-            value={field.value}
-            onChange={field.onChange}
-            allItemsMap={allEntitiesMap}
-            label={t('Agents & Toolsets')}
-            readonly={isAppPublic}
-            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-          />
-        )}
+        render={({ field }) => {
+          const handleRemoveFromDetails = (
+            entityToRemove: MarketplaceEntity,
+          ) => {
+            const currentIds = field.value || [];
+            const newIds = currentIds.filter((id) => id !== entityToRemove.id);
+            field.onChange(newIds);
+            handleCloseDetails();
+          };
+
+          return (
+            <>
+              <AgentAndToolsetSelectorField
+                value={field.value}
+                onChange={field.onChange}
+                allItemsMap={allEntitiesMap}
+                label={t('Agents & Toolsets')}
+                readonly={isAppPublic}
+                tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+                onItemClick={handleItemClick}
+              />
+              {detailedViewEntity &&
+                isApplicationOrModel(detailedViewEntity) && (
+                  <ApplicationDetails
+                    entity={detailedViewEntity}
+                    allEntities={allModels}
+                    onClose={handleCloseDetails}
+                    onChangeVersion={handleChangeVersionInDetails}
+                    FooterComponent={SimpleApplicationDetailsFooter}
+                    onRemove={handleRemoveFromDetails}
+                    isPreview
+                  />
+                )}
+
+              {detailedViewEntity && isToolset(detailedViewEntity) && (
+                <ToolsetDetails
+                  entity={detailedViewEntity}
+                  allEntities={allToolsets}
+                  onClose={handleCloseDetails}
+                  onChangeVersion={handleChangeVersionInDetails}
+                  FooterComponent={SimpleToolsetDetailsFooter}
+                  onRemove={handleRemoveFromDetails}
+                  isPreview
+                />
+              )}
+            </>
+          );
+        }}
       />
 
       <FieldTextArea

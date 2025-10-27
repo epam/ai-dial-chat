@@ -7,10 +7,10 @@ import {
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { EntityType, PageType } from '@/src/types/common';
+import { PageType } from '@/src/types/common';
 import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
 import {
   ApplicationTypeToSourceType,
@@ -21,7 +21,10 @@ import {
 } from '@/src/constants/marketplace';
 
 import { pluralizeDisplayName } from './app/application-type-schema';
+import { isEntityIdPublic } from './app/publications';
+import { isToolsetEntityModel, isToolsetSignedIn } from './app/toolsets';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
 
 export interface EntityStatus {
@@ -31,23 +34,35 @@ export interface EntityStatus {
 }
 
 export const getEntityStatus = (
-  item: MarketplaceEntity | undefined,
+  entity: MarketplaceEntity | undefined,
 ): EntityStatus => {
-  const isInvalid = !item;
+  const isInvalid = !entity;
 
-  const isLoggedOut =
-    !!item &&
-    item.type === EntityType.Toolset &&
-    'authSettings' in item &&
-    !!item?.authSettings?.authenticationType;
+  if (isInvalid) {
+    return { isInvalid: true, isLoggedOut: false, isError: true };
+  }
 
-  const isError = isInvalid || isLoggedOut;
+  if (
+    isToolsetEntityModel(entity) &&
+    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE
+  ) {
+    const isPublic = isEntityIdPublic(entity);
 
-  return {
-    isInvalid,
-    isLoggedOut,
-    isError,
-  };
+    const authLevel = !isPublic
+      ? ToolsetCredentialsLevel.GLOBAL
+      : ToolsetCredentialsLevel.USER;
+
+    const isSignedIn = isToolsetSignedIn(entity, authLevel);
+    const isLoggedOut = !isSignedIn;
+
+    return {
+      isInvalid: false,
+      isLoggedOut: isLoggedOut,
+      isError: isLoggedOut,
+    };
+  }
+
+  return { isInvalid: false, isLoggedOut: false, isError: false };
 };
 
 // Filter checkers

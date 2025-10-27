@@ -2,7 +2,6 @@ import React from 'react';
 
 import { getEntityBaseId } from '@/src/utils/app/common';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
-import { getEntityStatus } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
@@ -20,17 +19,14 @@ export const AgentAndToolsetSelectItem: React.FC<
   const currentBaseId = getEntityBaseId(groupItem.id);
   const isSelected = selectedBaseIdsSet.has(currentBaseId);
 
-  const { isLoggedOut } = getEntityStatus(groupItem);
-
   return (
     <ItemCardView
       entity={groupItem}
       isSelected={isSelected}
       onClick={onToggleSelectItem}
-      isLoggedOut={isLoggedOut}
       hasContextMenu={isToolsetEntityModel(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}
-      className="bg-layer-2 hover:bg-layer-3 active:border-accent-primary"
+      className="bg-layer-2 hover:bg-layer-3"
     />
   );
 };

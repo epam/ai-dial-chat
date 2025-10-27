@@ -35,7 +35,6 @@ import {
   SliderGrid,
   SliderGridRef,
 } from '@/src/components/Common/SliderGrid/SliderGrid';
-import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { TalkToNotFound } from '../TalkToNotFound';
 import {
@@ -332,7 +331,6 @@ const AgentAndToolsetModalView = ({
         />
       </div>
 
-      <ToolsetLoginDialog />
       <AgentDialogs />
 
       <div
