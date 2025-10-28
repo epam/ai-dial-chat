@@ -102,28 +102,6 @@ export const hardLimitMessages = (messages: Message[]) => {
     }, [] as Message[]);
 };
 
-export function getMessageCustomContent(
-  message: Message,
-): Partial<Message> | undefined {
-  return message.custom_content?.state ||
-    message.custom_content?.attachments?.length ||
-    message.custom_content?.form_value ||
-    message.custom_content?.form_schema
-    ? {
-        custom_content: {
-          attachments:
-            message.role !== Role.Assistant &&
-            message.custom_content?.attachments?.length
-              ? message.custom_content?.attachments
-              : undefined,
-          state: message.custom_content?.state,
-          form_value: message.custom_content?.form_value,
-          form_schema: message.custom_content?.form_schema,
-        },
-      }
-    : undefined;
-}
-
 export function getUserMessageCustomContent(
   message: Message,
 ): Partial<Message> | undefined {
