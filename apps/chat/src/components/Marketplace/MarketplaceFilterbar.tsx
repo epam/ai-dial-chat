@@ -8,7 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceActions, UIActions } from '@/src/store/actions';
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
@@ -217,25 +217,19 @@ export const MarketplaceFilterbar = memo(() => {
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
-  const selectedAgentsFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedAgentsFilters,
-  );
-  const selectedToolsetsFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedToolsetsFilters,
-  );
+
   const selectedTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const topics = useAppSelector(ModelsSelectors.selectModelTopics);
-  const toolsetsTopics = useAppSelector(ToolsetSelectors.selectToolsetsTopics);
-  const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
-  const toolsetSourceTypes = useAppSelector(
-    MarketplaceSelectors.selectToolsetSourceTypes,
-  );
-  const isMarketplaceLoading = useAppSelector(
-    MarketplaceSelectors.selectShowLoader,
-  );
+
+  const {
+    topicsFilters,
+    sourcesFilters,
+    selectedFilters,
+    showLoader,
+    setFilters,
+  } = useAppSelector(MarketplaceSelectors.selectFiltersContent);
 
   const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
@@ -246,42 +240,6 @@ export const MarketplaceFilterbar = memo(() => {
     [FilterTypes.TOPICS]: true,
     [FilterTypes.SOURCES]: true,
   });
-
-  const {
-    topicsFilters,
-    sourcesFilters,
-    selectedFilters,
-    showLoader,
-    setFilters,
-  } = useMemo(() => {
-    if (isAgentsTab) {
-      return {
-        topicsFilters: topics,
-        sourcesFilters: sourceTypes,
-        selectedFilters: selectedAgentsFilters,
-        showLoader: !areModelsLoaded || !!isMarketplaceLoading,
-        setFilters: MarketplaceActions.setSelectedAgentsFilters,
-      };
-    }
-    return {
-      topicsFilters: toolsetsTopics,
-      sourcesFilters: toolsetSourceTypes,
-      selectedFilters: selectedToolsetsFilters,
-      showLoader: !areToolsetsLoaded || !!isMarketplaceLoading,
-      setFilters: MarketplaceActions.setSelectedToolsetsFilters,
-    };
-  }, [
-    areModelsLoaded,
-    areToolsetsLoaded,
-    isAgentsTab,
-    isMarketplaceLoading,
-    selectedAgentsFilters,
-    selectedToolsetsFilters,
-    sourceTypes,
-    toolsetSourceTypes,
-    toolsetsTopics,
-    topics,
-  ]);
 
   const handleApplyFilter = useCallback(
     (type: FilterTypes, value: string) => {
