@@ -72,7 +72,7 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { ChatPublicationControls } from './Publish/PublicationControls/ChatPublicationControls';
-import { PublicationHandler } from './Publish/PublicationHandler/PublicationHandler';
+import { ReviewPublicationHandler } from './Publish/PublicationHandler/ReviewPublicationHandler';
 import { TalkToModal } from './TalkTo/TalkToModal';
 
 import {
@@ -1154,7 +1154,7 @@ export function Chat({ isPreview }: ChatProps) {
     return (
       <>
         <div className="w-full grow">
-          <PublicationHandler publication={selectedPublication} />
+          <ReviewPublicationHandler publication={selectedPublication} />
         </div>
         <ChatInputFooter />
       </>

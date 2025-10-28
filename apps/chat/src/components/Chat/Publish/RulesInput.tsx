@@ -37,6 +37,10 @@ export const RulesInput = ({
     setFilters([]);
   }, [setFilters]);
 
+  const handleCloseFilter = useCallback(() => {
+    onSwitchRulesSetter(false);
+  }, [onSwitchRulesSetter]);
+
   const handleSaveFilter = useCallback(
     (targetFilter: TargetAudienceFilter) => {
       setFilters(
@@ -112,7 +116,7 @@ export const RulesInput = ({
       </div>
       {isOpen && (
         <TargetAudienceFilterComponent
-          onCloseFilter={() => onSwitchRulesSetter(false)}
+          onCloseFilter={handleCloseFilter}
           onSaveFilter={handleSaveFilter}
         />
       )}
