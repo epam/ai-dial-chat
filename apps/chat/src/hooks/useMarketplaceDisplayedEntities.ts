@@ -6,7 +6,7 @@ import {
   isInstalledEntity,
 } from '@/src/utils/marketplace';
 
-import { MarketplaceEntity } from '@/src/types/marketplace';
+import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
 
 import { useAppSelector } from '@/src/store/hooks';
 import {
@@ -16,7 +16,6 @@ import {
 
 import {
   FilterTypes,
-  MarketplaceEntitiesTabs,
   MarketplaceTabs,
   ViewTypes,
 } from '@/src/constants/marketplace';
@@ -29,17 +28,13 @@ import uniqBy from 'lodash-es/uniqBy';
 export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
   allEntities: T[],
   installedEntitiesIds: Set<string>,
+  selectedFilters: MarketplaceFilters,
 ) => {
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
-  const selectedEntitiesTab = useAppSelector(
-    MarketplaceSelectors.selectSelectedEntitiesTab,
-  );
-  const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
-  );
+
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
@@ -49,27 +44,17 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
 
   const [suggestedResults, setSuggestedResults] = useState<T[]>([]);
 
-  const isSelectedAgentsTab =
-    selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
-
   const searchedEntities = useFuseSearch<T>(
     allEntities,
     searchTerm,
     MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
-  const isSomeAgentsFilterNotEmpty =
-    searchTerm.length ||
-    selectedFilters[FilterTypes.ENTITY_TYPE].length ||
-    selectedFilters[FilterTypes.TOPICS].length ||
-    selectedFilters[FilterTypes.SOURCES].length;
-  const isSomeToolsetsFilterNotEmpty =
-    searchTerm.length ||
-    selectedFilters[FilterTypes.TOPICS].length ||
-    selectedFilters[FilterTypes.SOURCES].length;
-  const isSomeFilterNotEmpty = isSelectedAgentsTab
-    ? isSomeAgentsFilterNotEmpty
-    : isSomeToolsetsFilterNotEmpty;
+  const isSomeFilterNotEmpty =
+    !!searchTerm.length ||
+    !!selectedFilters[FilterTypes.ENTITY_TYPE].length ||
+    !!selectedFilters[FilterTypes.TOPICS].length ||
+    !!selectedFilters[FilterTypes.SOURCES].length;
 
   const displayedEntities = useMemo(() => {
     const filters = selectedFilters;

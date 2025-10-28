@@ -521,3 +521,45 @@ export function isFolderNameNotUniq(
     })
   );
 }
+
+export const getNewTargetUrlFromEditState = (
+  reviewUrl: string,
+  resourceEditState: {
+    name: string;
+    version: string;
+  },
+  foldersEditState: FolderEditTree,
+  targetFolder: string,
+  editedPublishToUrl: string,
+  action: PublishActions,
+) => {
+  // calculate new folderId
+  const folderSegments = getFolderIdFromEntityId(reviewUrl).split('/');
+  const newFolderSegments: string[] = [];
+  let currentFolder = foldersEditState as FolderNode;
+  folderSegments.forEach((segment, i) => {
+    currentFolder = currentFolder[segment] as FolderNode;
+    newFolderSegments.push(
+      // prepare name if it's not root path segments
+      i > 1
+        ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
+        : currentFolder[EDITED_FOLDER_NAME_KEY],
+    );
+  });
+
+  if (action !== PublishActions.DELETE) {
+    newFolderSegments[1] = targetFolder;
+  }
+
+  let newFolderId = newFolderSegments.join('/');
+  newFolderId = newFolderId.replace(targetFolder, editedPublishToUrl);
+
+  // get new api key
+  const newApiKey = regenerateApiKeyNameAndVersionParts(
+    reviewUrl,
+    resourceEditState.name.trim(),
+    resourceEditState.version.trim(),
+  );
+
+  return constructPath(newFolderId, newApiKey);
+};

@@ -42,7 +42,7 @@ export function ToolsTabRenderer() {
   );
 
   const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
+    MarketplaceSelectors.selectSelectedToolsetsFilters,
   );
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
@@ -55,7 +55,11 @@ export function ToolsTabRenderer() {
     : undefined;
 
   const { displayedEntities: displayedToolsets, suggestedResults } =
-    useMarketplaceDisplayedEntities(allToolsets, installedToolsetsSet);
+    useMarketplaceDisplayedEntities(
+      allToolsets,
+      installedToolsetsSet,
+      selectedFilters,
+    );
 
   const handleSetDetailsToolset = useCallback(
     (toolset: ToolsetModel) => {

@@ -1,4 +1,4 @@
-import { EMPTY, catchError, concat, map, of, switchMap, takeUntil } from 'rxjs';
+import { EMPTY, catchError, concat, map, mergeMap, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -41,9 +41,11 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
       const formValue = ChatSelectors.selectChatFormValue(state$.value);
-      const configurationSchema = ChatSelectors.selectConfigurationSchema(
-        state$.value,
-      );
+      const configurationSchema =
+        ChatSelectors.selectConfigurationSchemaByModelId(
+          state$.value,
+          payload.modelId,
+        );
       const content = ChatSelectors.selectInputContent(state$.value);
 
       const isFirstMessage = !selectedConversations[0].messages.length;
@@ -84,19 +86,36 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
 const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatActions.getConfigurationSchema.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
+      const uploadedConfigurationSchema =
+        ChatSelectors.selectConfigurationSchemaByModelId(
+          state$.value,
+          payload.modelId,
+        );
+
+      if (uploadedConfigurationSchema) {
+        return EMPTY;
+      }
+
       const selectedConversations =
         ConversationsSelectors.selectSelectedConversations(state$.value);
-      const savedConfigurationSchema =
-        selectedConversations[0]?.messages?.[0]?.custom_content
-          ?.configuration_schema;
+      const savedConfigurationSchemas = selectedConversations
+        .map(
+          (conversation) =>
+            conversation.messages?.[0]?.custom_content?.configuration_schema,
+        )
+        .filter((schema) => schema !== undefined);
 
-      if (savedConfigurationSchema) {
-        return of(
-          ChatActions.getConfigurationSchemaSuccess({
-            modelId: payload.modelId,
-            schema: savedConfigurationSchema,
-          }),
+      if (savedConfigurationSchemas.length) {
+        return concat(
+          ...savedConfigurationSchemas.map((schema) =>
+            of(
+              ChatActions.getConfigurationSchemaSuccess({
+                modelId: payload.modelId,
+                schema,
+              }),
+            ),
+          ),
         );
       }
 
@@ -110,11 +129,12 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError(() => {
-          return of(ChatActions.getConfigurationSchemaFailed());
+          return of(
+            ChatActions.getConfigurationSchemaFailed({
+              modelId: payload.modelId,
+            }),
+          );
         }),
-        takeUntil(
-          action$.pipe(ofType(ConversationsActions.selectConversations.type)),
-        ),
       );
     }),
   );

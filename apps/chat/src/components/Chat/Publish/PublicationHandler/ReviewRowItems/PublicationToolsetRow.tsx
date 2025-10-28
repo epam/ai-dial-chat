@@ -16,6 +16,7 @@ import { PublicationItemProps } from './view-props';
 export const PublicationToolsetRow: React.FC<PublicationItemProps> = ({
   item,
   level,
+  publicationUrl,
 }) => {
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const publishRequestToolsets = useAppSelector(
@@ -44,11 +45,16 @@ export const PublicationToolsetRow: React.FC<PublicationItemProps> = ({
         level={level}
         Icon={<ModelIcon entity={entity} entityId={item.id} size={18} />}
         item={item}
+        publicationUrl={publicationUrl}
         itemTypeName={BackendResourceTypeName.TOOLSET}
         dataQa="toolset"
       />
       {item.publicationInfo?.publishCredentials && (
-        <PublicationCredentialsRow level={level + 1} itemId={item.id} />
+        <PublicationCredentialsRow
+          level={level + 1}
+          item={item}
+          publicationUrl={publicationUrl}
+        />
       )}
     </>
   );
