@@ -434,6 +434,7 @@ export const Chronology = {
 
 export const API = {
   api: '/api',
+  public: 'public',
   modelsHost: '/api/models',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
@@ -488,6 +489,7 @@ export const API = {
   pagePropsHost: '/en.json',
   appSchemasHost: 'api/application-type-schemas/schemas',
   themeStylesHost: '/api/themes/styles',
+  publicFilesHost: () => `${API.api}/${API.filesHostSegment}/${API.public}`,
 };
 
 export const Import = {

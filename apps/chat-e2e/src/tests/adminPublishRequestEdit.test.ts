@@ -10,11 +10,11 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
+  responseIdPrefix,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { PublishActions } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
+import { PublishActions, Role } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -689,9 +689,10 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   '[Admin view][Edit chat] Generated file by agent appears in review.\n' +
-    'Organization: The chat with a generated file is published',
+    'Organization: The chat with a generated file is published\n' +
+    'Organization: the chat with added by user file is published',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -714,15 +715,18 @@ dialAdminTest(
     chatBar,
     fileApiHelper,
     manageAttachmentsAssertion,
-    page,
+    adminChatMessages,
+    adminAttachmentDropdownMenu,
+    adminAttachFilesModal,
+    adminSendMessage,
   }) => {
-    setTestIds('EPMRTC-6605', 'EPMRTC-6608');
+    setTestIds('EPMRTC-6605', 'EPMRTC-6608', 'EPMRTC-6609');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment(true, ['*/*']),
     );
-    const newPrompt = 'generate a picture';
+    const requestPrompt = 'generate a picture';
     let publicationBucket: string;
     let publication: Publication;
 
@@ -741,12 +745,28 @@ dialAdminTest(
             parentPath: API.modelFilePath(model.id),
           },
         );
+        await adminFileApiHelper.putFile(Attachment.flowerImageName);
+        await adminFileApiHelper.putFile(Attachment.longImageName);
 
         conversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl1,
             model!,
           );
+
+        conversation.messages.push(
+          {
+            role: Role.User,
+            content: 'Now, give me a simple text response.',
+            model: { id: conversation.model.id },
+          },
+          {
+            role: Role.Assistant,
+            content: 'A simple text response',
+            model: { id: conversation.model.id },
+            responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
+          },
+        );
         await dataInjector.createConversations([conversation]);
 
         const publishRequest = publishRequestBuilder
@@ -779,24 +799,77 @@ dialAdminTest(
         await adminPublishingApprovalModal.goToEntityReview();
       },
     );
+    await dialAdminTest.step('Toggle edit mode', async () => {
+      await adminPublicationReviewControl.editButton.click();
+      await adminDialHomePage.mockChatImageResponse(
+        model.id,
+        Attachment.heartImageName,
+        { customPath: `${API.filesHostSegment}/${publicationBucket}` },
+      );
+    });
 
     await dialAdminTest.step(
-      'Click on Edit button, send new message and verify response is received',
+      'By administrator update user-message with new file',
       async () => {
-        await adminPublicationReviewControl.editButton.click();
-        await adminDialHomePage.mockChatImageResponse(
-          model.id,
-          Attachment.sunImageName,
-          { customPath: `${API.filesHostSegment}/${publicationBucket}` },
+        await adminChatMessages.openEditMessageMode(3);
+        await adminChatMessages.getChatMessageClipIcon(3).click();
+        await adminAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
         );
-        await adminChat.sendRequestWithButton(newPrompt);
+        await adminAttachFilesModal.checkAttachedFile(
+          Attachment.flowerImageName,
+          FileModalSection.AllFiles,
+        );
+        await adminAttachFilesModal.attachFiles();
+        await adminChat.saveAndSubmitRequest(true);
+        await adminChatMessagesAssertion.assertMessageDownloadUrl(
+          3,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.flowerImageName}`,
+        );
+        await adminChatMessagesAssertion.assertMessageDownloadUrl(
+          4,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Send new message and verify response is received',
+      async () => {
+        await adminChat.sendRequestWithButton(requestPrompt);
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
           2,
           `${API.filesHostSegment}/${publicationBucket}/${Attachment.cloudImageName}`,
         );
         await adminChatMessagesAssertion.assertMessageDownloadUrl(
-          4,
-          `${API.filesHostSegment}/${publicationBucket}/${Attachment.sunImageName}`,
+          6,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Send new message with attachment and verify response is received',
+      async () => {
+        await adminSendMessage.attachmentMenuTrigger.click();
+        await adminAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+
+        await adminAttachFilesModal.checkAttachedFile(
+          Attachment.longImageName,
+          FileModalSection.AllFiles,
+        );
+
+        await adminAttachFilesModal.attachFiles();
+        await adminChat.sendRequestWithButton(requestPrompt);
+        await adminChatMessagesAssertion.assertMessageDownloadUrl(
+          7,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.longImageName}`,
+        );
+        await adminChatMessagesAssertion.assertMessageDownloadUrl(
+          8,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
         );
       },
     );
@@ -805,14 +878,17 @@ dialAdminTest(
       'Click on "Back to publication request" and verify generated file and the previous file are displayed in request',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        await adminPublishFilesAssertion.assertEntityState(
-          { name: Attachment.cloudImageName },
-          'visible',
-        );
-        await adminPublishFilesAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          'visible',
-        );
+        for (const attach of [
+          Attachment.cloudImageName,
+          Attachment.sunImageName,
+          Attachment.flowerImageName,
+          Attachment.longImageName,
+        ]) {
+          await adminPublishFilesAssertion.assertEntityState(
+            { name: attach },
+            'visible',
+          );
+        }
       },
     );
 
@@ -829,31 +905,49 @@ dialAdminTest(
         await organizationConversations.selectEntity(conversation.name);
         await chatMessagesAssertion.assertMessageDownloadUrl(
           2,
-          Attachment.cloudImageName,
+          `${API.publicFilesHost()}/${Attachment.cloudImageName}`,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          3,
+          `${API.publicFilesHost()}/${Attachment.flowerImageName}`,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           4,
-          Attachment.sunImageName,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          6,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          7,
+          `${API.publicFilesHost()}/${Attachment.longImageName}`,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          8,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
         );
       },
     );
 
     await dialTest.step(
-      'Open "Manage attachments" and verify both files are in the organization file tree',
+      'Open "Manage attachments" and verify all files are in the organization file tree',
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.Organization,
-          'visible',
-        );
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.cloudImageName },
-          FileModalSection.Organization,
-          'visible',
-        );
+        for (const attach of [
+          Attachment.cloudImageName,
+          Attachment.sunImageName,
+          Attachment.flowerImageName,
+          Attachment.longImageName,
+        ]) {
+          await manageAttachmentsAssertion.assertEntityState(
+            { name: attach },
+            FileModalSection.Organization,
+            'visible',
+          );
+        }
       },
     );
   },
