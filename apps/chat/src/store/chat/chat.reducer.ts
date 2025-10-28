@@ -17,6 +17,8 @@ const initialState: ChatState = {
   configurationSchemas: [],
 };
 
+const MAX_CONFIGURATION_SCHEMAS_AMOUNT = 10;
+
 export const chatSlice = createSlice({
   name: 'chat',
   initialState,
@@ -68,7 +70,9 @@ export const chatSlice = createSlice({
       ) {
         state.configurationSchemas.push(payload);
 
-        if (state.configurationSchemas.length > 10) {
+        if (
+          state.configurationSchemas.length > MAX_CONFIGURATION_SCHEMAS_AMOUNT
+        ) {
           state.configurationSchemas.shift();
         }
       }
