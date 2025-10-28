@@ -12,17 +12,40 @@ const selectInputContent = (state: RootState) =>
 
 const selectChatFormValue = (state: RootState) => rootSelector(state).formValue;
 
-const selectConfigurationSchema = (state: RootState) =>
-  rootSelector(state).configurationSchema;
+const selectConfigurationSchemaByModelId = (
+  state: RootState,
+  modelId: string,
+) =>
+  rootSelector(state).configurationSchemas.find(
+    (schema) => schema.modelId === modelId,
+  )?.schema;
 
-const selectIsConfigurationSchemaLoading = (state: RootState) =>
-  rootSelector(state).isConfigurationSchemaLoading;
+const selectConfigurationSchemaByModelIds = (
+  state: RootState,
+  modelIds: string[],
+) =>
+  rootSelector(state)
+    .configurationSchemas.filter((schema) => modelIds.includes(schema.modelId))
+    .map((schema) => schema.schema);
+
+const selectUploadedConfigurationSchemasIds = (state: RootState) =>
+  rootSelector(state).configurationSchemas;
+
+const selectIsConfigurationSchemaLoading = (
+  state: RootState,
+  modelId: string,
+) => rootSelector(state).configurationSchemasLoadingIds.includes(modelId);
+
+const selectLoadingConfigurationSchemas = (state: RootState) =>
+  rootSelector(state).configurationSchemasLoadingIds;
 
 const selectIsConfigurationBlocksInput = createSelector(
-  [selectConfigurationSchema],
-  (configurationSchema) =>
-    configurationSchema?.[DialSchemaProperties.DialChatMessageInputDisabled] ??
-    false,
+  [selectConfigurationSchemaByModelIds],
+  (configurationSchemas) =>
+    configurationSchemas.some(
+      (schema) =>
+        schema?.[DialSchemaProperties.DialChatMessageInputDisabled] ?? false,
+    ),
 );
 
 const selectShouldFocusAndScroll = (state: RootState) =>
@@ -40,13 +63,13 @@ const selectInfoModalOpened = (state: RootState) =>
 const selectSelectedEntityInfo = (state: RootState) =>
   rootSelector(state).selectedEntityInfo;
 
-const selectLastLoadedConfigurationSchemaModelId = (state: RootState) =>
-  rootSelector(state).lastLoadedConfigurationSchemaModelId;
-
 export const ChatSelectors = {
   selectInputContent,
   selectChatFormValue,
-  selectConfigurationSchema,
+  selectUploadedConfigurationSchemasIds,
+  selectConfigurationSchemaByModelId,
+  selectConfigurationSchemaByModelIds,
+  selectLoadingConfigurationSchemas,
   selectIsConfigurationSchemaLoading,
   selectIsConfigurationBlocksInput,
   selectShouldFocusAndScroll,
@@ -54,5 +77,4 @@ export const ChatSelectors = {
   selectNotAvailableEntityType,
   selectInfoModalOpened,
   selectSelectedEntityInfo,
-  selectLastLoadedConfigurationSchemaModelId,
 };

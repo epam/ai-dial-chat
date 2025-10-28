@@ -5,6 +5,9 @@ export enum VisualizerConnectorEvents {
   ready = 'READY',
   readyToInteract = 'READY_TO_INTERACT',
   sendMessage = 'SEND_MESSAGE',
+  createdConversationSuccess = 'CREATED_CONVERSATION_SUCCESS',
+  updatedConversationSuccess = 'UPDATED_CONVERSATION_SUCCESS',
+  updatedApplicationSuccess = 'UPDATED_APPLICATION_SUCCESS',
 }
 
 export enum VisualizerConnectorRequests {
