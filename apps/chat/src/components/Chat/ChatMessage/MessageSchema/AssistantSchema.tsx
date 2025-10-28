@@ -31,9 +31,10 @@ import {
 
 interface AssistantSchemaViewProps {
   schema: MessageFormSchema;
+  modelId: string | undefined;
 }
 
-const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
+const AssistantSchemaView = ({ schema, modelId }: AssistantSchemaViewProps) => {
   const dispatch = useAppDispatch();
 
   const selectedConversations = useAppSelector(
@@ -71,10 +72,11 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
           content: populateText,
           value,
           submit,
+          modelId: modelId ?? '',
         }),
       );
     },
-    [dispatch, schema],
+    [dispatch, modelId, schema.properties],
   );
 
   return (
@@ -129,5 +131,5 @@ export const AssistantSchema = memo(function AssistantSchema({
 
   if (!isLastMessage) return null;
 
-  return <AssistantSchemaView schema={schema} />;
+  return <AssistantSchemaView schema={schema} modelId={message.model?.id} />;
 });
