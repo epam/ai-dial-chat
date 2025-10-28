@@ -131,8 +131,16 @@ export const PlaybackControls = ({
       getMessageFormValue(currentMessage) ??
       getConfigurationValue(currentMessage);
     const message = attachments.length
-      ? { content, custom_content: { attachments, form_value } }
-      : { content, custom_content: { form_value } };
+      ? {
+          content,
+          custom_content: { attachments, form_value },
+          modelId: currentMessage?.model?.id,
+        }
+      : {
+          content,
+          custom_content: { form_value },
+          modelId: currentMessage?.model?.id,
+        };
     return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
 
@@ -265,6 +273,7 @@ export const PlaybackControls = ({
             ChatActions.setFormValue({
               property,
               value: value as MessageFormValueType,
+              modelId: activeMessage?.modelId ?? '',
             }),
           );
         },
@@ -272,7 +281,12 @@ export const PlaybackControls = ({
     } else if (phase === PlaybackPhases.EMPTY) {
       dispatch(ChatActions.resetFormValue());
     }
-  }, [activeMessage?.custom_content?.form_value, dispatch, phase]);
+  }, [
+    activeMessage?.custom_content.form_value,
+    activeMessage?.modelId,
+    dispatch,
+    phase,
+  ]);
 
   return (
     <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
