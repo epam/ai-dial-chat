@@ -41,6 +41,7 @@ import {
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
+import { mergeFeatures } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -80,7 +81,6 @@ import {
 import { Routes } from '@/src/constants/routes';
 
 import { parse } from 'querystring';
-import { mergeFeatures } from '@/src/utils/app/models';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -124,7 +124,10 @@ const createApplicationEpic: AppEpic = (action$) =>
             switchMap((application) => {
               if (application) {
                 application.features = mergeFeatures(
-                  application.features as unknown as Record<string, boolean | undefined>,
+                  application.features as unknown as Record<
+                    string,
+                    boolean | undefined
+                  >,
                 );
                 return concat(
                   of(
