@@ -14,7 +14,10 @@ import { Routes } from '@/src/constants/routes';
 
 import { IframeRenderer } from '@/src/components/IframeRenderer';
 
-import { VisualizerConnectorRequest } from '@epam/ai-dial-shared';
+import {
+  VisualizerConnectorEvents,
+  VisualizerConnectorRequest,
+} from '@epam/ai-dial-shared';
 
 interface Props {
   id: string;
@@ -60,7 +63,10 @@ export const CustomChatViewer: React.FC<Props> = ({
   const onMessage = useCallback(
     (event: MessageEvent<VisualizerConnectorRequest>) => {
       if (event.data?.type?.split('/')[0] !== title) return;
-      if (event.data.type === `${title}/CREATED_CONVERSATION_SUCCESS`) {
+      if (
+        event.data.type ===
+        `${title}/${VisualizerConnectorEvents.createdConversationSuccess}`
+      ) {
         const { conversation } = event.data.payload as unknown as {
           conversation?: Conversation;
         };
@@ -89,7 +95,10 @@ export const CustomChatViewer: React.FC<Props> = ({
         }
       }
 
-      if (event.data.type === `${title}/UPDATED_CONVERSATION_SUCCESS`) {
+      if (
+        event.data.type ===
+        `${title}/${VisualizerConnectorEvents.updatedConversationSuccess}`
+      ) {
         const { conversation } = event.data.payload as unknown as {
           conversation?: Conversation;
         };
