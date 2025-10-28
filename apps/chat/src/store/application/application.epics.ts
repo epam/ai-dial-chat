@@ -80,6 +80,7 @@ import {
 import { Routes } from '@/src/constants/routes';
 
 import { parse } from 'querystring';
+import { mergeFeatures } from '@/src/utils/app/models';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -122,6 +123,9 @@ const createApplicationEpic: AppEpic = (action$) =>
           ApplicationService.get(application.id).pipe(
             switchMap((application) => {
               if (application) {
+                application.features = mergeFeatures(
+                  application.features as unknown as Record<string, boolean | undefined>,
+                );
                 return concat(
                   of(
                     ApplicationActions.setEditorStep(

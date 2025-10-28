@@ -1,6 +1,11 @@
 import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntity, DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import {
+  DialAIEntity,
+  DialAIEntityFeatures,
+  DialAIEntityModel,
+  ModelsMap,
+} from '@/src/types/models';
 
 import { Conversation, Role } from '@epam/ai-dial-shared';
 
@@ -63,4 +68,29 @@ export const checkIsNotAllowedModelUtil = (
   }
 
   return false;
+};
+
+export const mergeFeatures = (
+  features: Record<string, boolean | undefined>,
+): DialAIEntityFeatures => {
+  const {
+    system_prompt: systemPrompt = true,
+    temperature = true,
+    truncate_prompt: truncatePrompt = false,
+    url_attachments: urlAttachments = false,
+    folder_attachments: folderAttachments = false,
+    allow_resume: allowResume = true,
+    configuration = false,
+    ...otherFeatures
+  } = features || {};
+  return {
+    systemPrompt,
+    temperature,
+    truncatePrompt,
+    urlAttachments,
+    folderAttachments,
+    allowResume,
+    configuration,
+    ...otherFeatures,
+  };
 };

@@ -1,6 +1,7 @@
 import { JWT } from 'next-auth/jwt';
 
 import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { mergeFeatures } from '@/src/utils/app/models';
 
 import { EntityType } from '@/src/types/common';
 import {
@@ -164,15 +165,7 @@ export const getSortedEntities = async (token: JWT | null) => {
                 typeof entity.limits?.max_prompt_tokens === 'undefined',
             }
           : undefined,
-      features: entity.features && {
-        systemPrompt: entity.features.system_prompt ?? true,
-        temperature: entity.features.temperature ?? true,
-        truncatePrompt: entity.features.truncate_prompt ?? false,
-        urlAttachments: entity.features.url_attachments ?? false,
-        folderAttachments: entity.features.folder_attachments ?? false,
-        allowResume: entity.features.allow_resume ?? true,
-        configuration: entity.features.configuration ?? false,
-      },
+      features: entity.features && mergeFeatures(entity.features),
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
       tokenizer: entity.tokenizer_model && {
