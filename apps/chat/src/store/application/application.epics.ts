@@ -80,7 +80,6 @@ import {
 } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
-import { features } from 'process';
 import { parse } from 'querystring';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -336,13 +335,22 @@ const updateApplicationEpic: AppEpic = (action$) =>
               payload.schema,
             ).pipe(
               switchMap(() => {
+                const cloneApplication = {
+                  ...updatedCustomApplication,
+                  features: mergeFeatures(
+                    updatedCustomApplication.features as unknown as Record<
+                      string,
+                      boolean | undefined
+                    >,
+                  ),
+                };
                 return concat(
                   of(
                     ApplicationActions.updateSuccess(updatedCustomApplication),
                   ),
                   of(
                     ModelsActions.updateModel({
-                      model: updatedCustomApplication,
+                      model: cloneApplication,
                       oldApplicationId: payload.oldApplication.id,
                     }),
                   ),
