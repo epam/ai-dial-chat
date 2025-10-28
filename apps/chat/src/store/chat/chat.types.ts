@@ -6,11 +6,10 @@ import { MessageFormSchema, MessageFormValue } from '@epam/ai-dial-shared';
 export interface ChatState {
   inputContent: string;
   formValue?: MessageFormValue;
-  configurationSchema?: MessageFormSchema;
-  isConfigurationSchemaLoading: boolean;
+  configurationSchemas: { modelId: string; schema: MessageFormSchema }[];
+  configurationSchemasLoadingIds: string[];
   shouldFocusAndScroll?: boolean;
   notAvailableEntityType?: EntityType;
   infoModalState: ModalState;
   selectedEntityInfo?: EntityInfo;
-  lastLoadedConfigurationSchemaModelId: null | string;
 }

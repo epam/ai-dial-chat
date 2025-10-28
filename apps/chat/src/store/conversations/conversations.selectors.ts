@@ -748,19 +748,24 @@ const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
     PublicationSelectors.selectResourcesToReview,
-    ChatSelectors.selectIsConfigurationBlocksInput,
     selectIsNotAllowed,
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
+    (state: RootState) => state,
   ],
   (
     conversations,
     resourcesToReview,
-    isConfigurationBlocksInput,
     isNotAllowedModels,
     areReadOnly,
     isAdmin,
+    state,
   ) => {
+    const isConfigurationBlocksInput =
+      ChatSelectors.selectIsConfigurationBlocksInput(
+        state,
+        conversations.map((conversation) => conversation.model.id),
+      );
     const isReviewEntity = conversations.some((conversation) =>
       resourcesToReview.some(
         (resource) => resource.reviewUrl === conversation.id,

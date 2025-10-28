@@ -32,7 +32,7 @@ export function AgentsTabRenderer() {
   );
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
   const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
+    MarketplaceSelectors.selectSelectedAgentsFilters,
   );
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
@@ -51,7 +51,11 @@ export function AgentsTabRenderer() {
     !selectedFilters[FilterTypes.SOURCES].length;
 
   const { displayedEntities, suggestedResults } =
-    useMarketplaceDisplayedEntities(allModels, installedModelIds);
+    useMarketplaceDisplayedEntities(
+      allModels,
+      installedModelIds,
+      selectedFilters,
+    );
 
   const handleSetDetailsModel = useCallback(
     (model: DialAIEntityModel) => {
