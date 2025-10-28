@@ -6,6 +6,7 @@ import {
   getApplicationNextStatus,
   getApplicationType,
 } from '@/src/utils/app/application';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getApplicationLink } from '@/src/utils/marketplace';
 
 import { FeatureType } from '@/src/types/common';
@@ -112,7 +113,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity,
+          entity: { ...entity, folderId: getFolderIdFromEntityId(entity.id) },
           action: PublishActions.ADD,
         }),
       );
@@ -126,7 +127,7 @@ export const useAgentMenuActions = (entity: DialAIEntityModel) => {
       e.stopPropagation();
       dispatch(
         PublicationActions.setPublishModel({
-          entity,
+          entity: { ...entity, folderId: getFolderIdFromEntityId(entity.id) },
           action: PublishActions.DELETE,
         }),
       );
