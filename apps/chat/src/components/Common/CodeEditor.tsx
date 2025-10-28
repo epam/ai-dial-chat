@@ -475,7 +475,7 @@ export const CodeEditor = ({
   }
 
   return (
-    <div className="z-10 w-full max-w-full">
+    <div className="z-20 w-full max-w-full">
       <div
         className={classNames(
           'grid min-h-[400px] w-full max-w-full grid-rows-[100%]',
