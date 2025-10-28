@@ -20,6 +20,14 @@ const selectConfigurationSchemaByModelId = (
     (schema) => schema.modelId === modelId,
   )?.schema;
 
+const selectConfigurationSchemaByModelIds = (
+  state: RootState,
+  modelIds: string[],
+) =>
+  rootSelector(state)
+    .configurationSchemas.filter((schema) => modelIds.includes(schema.modelId))
+    .map((schema) => schema.schema);
+
 const selectUploadedConfigurationSchemasIds = (state: RootState) =>
   rootSelector(state).configurationSchemas;
 
@@ -32,10 +40,12 @@ const selectLoadingConfigurationSchemas = (state: RootState) =>
   rootSelector(state).configurationSchemasLoadingIds;
 
 const selectIsConfigurationBlocksInput = createSelector(
-  [selectConfigurationSchemaByModelId],
-  (configurationSchema) =>
-    configurationSchema?.[DialSchemaProperties.DialChatMessageInputDisabled] ??
-    false,
+  [selectConfigurationSchemaByModelIds],
+  (configurationSchemas) =>
+    configurationSchemas.some(
+      (schema) =>
+        schema?.[DialSchemaProperties.DialChatMessageInputDisabled] ?? false,
+    ),
 );
 
 const selectShouldFocusAndScroll = (state: RootState) =>
@@ -58,6 +68,7 @@ export const ChatSelectors = {
   selectChatFormValue,
   selectUploadedConfigurationSchemasIds,
   selectConfigurationSchemaByModelId,
+  selectConfigurationSchemaByModelIds,
   selectLoadingConfigurationSchemas,
   selectIsConfigurationSchemaLoading,
   selectIsConfigurationBlocksInput,

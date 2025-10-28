@@ -141,11 +141,8 @@ export const ChatInputMessage = Inversify.register(
     const selectedModels = useAppSelector(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
-    const isChatInputDisabled = useAppSelector((state) =>
-      ConversationsSelectors.selectIsSelectedConversationBlocksInput(
-        state,
-        selectedConversations[0]?.model.id,
-      ),
+    const isChatInputDisabled = useAppSelector(
+      ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
 
     const configurationSchema = useAppSelector((state) =>
