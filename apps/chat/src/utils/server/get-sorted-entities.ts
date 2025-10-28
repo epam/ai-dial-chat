@@ -165,7 +165,7 @@ export const getSortedEntities = async (token: JWT | null) => {
                 typeof entity.limits?.max_prompt_tokens === 'undefined',
             }
           : undefined,
-      features: entity.features && mergeFeatures(entity.features),
+      features: mergeFeatures(entity.features),
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
       tokenizer: entity.tokenizer_model && {

@@ -71,7 +71,7 @@ export const checkIsNotAllowedModelUtil = (
 };
 
 export const mergeFeatures = (
-  features: Record<string, boolean | undefined>,
+  features: Record<string, boolean | undefined> | undefined,
 ): DialAIEntityFeatures => {
   const {
     system_prompt: systemPrompt = true,
