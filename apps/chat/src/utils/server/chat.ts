@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { getMessageCustomContent } from '@/src/utils/app/conversation';
+
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
 
