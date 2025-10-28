@@ -689,10 +689,11 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   '[Admin view][Edit chat] Generated file by agent appears in review.\n' +
     'Organization: The chat with a generated file is published\n' +
-    'Organization: the chat with added by user file is published',
+    'Organization: the chat with added by user file is published\n' +
+    '[Admin view][Edit chat] Re-generated file by agent appears in review. Initial file stays',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -720,7 +721,7 @@ dialAdminTest.only(
     adminAttachFilesModal,
     adminSendMessage,
   }) => {
-    setTestIds('EPMRTC-6605', 'EPMRTC-6608', 'EPMRTC-6609');
+    setTestIds('EPMRTC-6605', 'EPMRTC-6608', 'EPMRTC-6609', 'EPMRTC-6606');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
@@ -739,14 +740,11 @@ dialAdminTest.only(
             parentPath: API.modelFilePath(model.id),
           },
         );
-        const imageUrl2 = await adminFileApiHelper.putFile(
-          Attachment.sunImageName,
-          {
-            parentPath: API.modelFilePath(model.id),
-          },
-        );
         await adminFileApiHelper.putFile(Attachment.flowerImageName);
         await adminFileApiHelper.putFile(Attachment.longImageName);
+        const mockResponseImageUrl = await adminFileApiHelper.putFile(
+          Attachment.heartImageName,
+        );
 
         conversation =
           conversationData.prepareConversationWithAttachmentInResponse(
@@ -778,11 +776,13 @@ dialAdminTest.only(
           await publicationApiHelper.createPublishRequest(publishRequest);
         publicationBucket =
           publicationApiHelper.getPublicationBucket(publication);
-
         await adminFileApiHelper.putFileToPublicationBucket(
           publication,
-          imageUrl2,
+          mockResponseImageUrl,
         );
+        // await adminFileApiHelper.deleteFromAllFiles(
+        //   mockResponseImageUrl,
+        // );
 
         await adminLocalStorageManager.setShowSideBarPanels();
       },
@@ -807,6 +807,24 @@ dialAdminTest.only(
         { customPath: `${API.filesHostSegment}/${publicationBucket}` },
       );
     });
+
+    await dialAdminTest.step(
+      'By administrator regenerate the last message and check that re-generated file appears in the publication request',
+      async () => {
+        await adminChatMessages.regenerateResponse();
+        await adminChatMessagesAssertion.assertMessageDownloadUrl(
+          4,
+          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+        );
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishFilesAssertion.assertEntityState(
+          { name: Attachment.heartImageName },
+          'visible',
+        );
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublicationReviewControl.editButton.click();
+      },
+    );
 
     await dialAdminTest.step(
       'By administrator update user-message with new file',
@@ -880,7 +898,7 @@ dialAdminTest.only(
         await adminPublicationReviewControl.backToPublicationRequest();
         for (const attach of [
           Attachment.cloudImageName,
-          Attachment.sunImageName,
+          Attachment.heartImageName,
           Attachment.flowerImageName,
           Attachment.longImageName,
         ]) {
@@ -933,12 +951,10 @@ dialAdminTest.only(
     await dialTest.step(
       'Open "Manage attachments" and verify all files are in the organization file tree',
       async () => {
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         for (const attach of [
           Attachment.cloudImageName,
-          Attachment.sunImageName,
+          Attachment.heartImageName,
           Attachment.flowerImageName,
           Attachment.longImageName,
         ]) {
