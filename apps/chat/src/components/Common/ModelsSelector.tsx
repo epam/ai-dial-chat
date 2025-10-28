@@ -92,7 +92,12 @@ export const ModelsSelector = memo(function ModelsSelector({
 }: ModelsSelectorProps) {
   const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const displayedModels = models ?? modelTypeAgents;
+  const sourceModels = models ?? modelTypeAgents;
+
+  const displayedModels = useMemo(
+    () => sourceModels.filter((model) => model.features?.toolsSupported),
+    [sourceModels],
+  );
 
   const model = useMemo(
     () => modelsMap[value] || additionalModelsMap?.[value],
