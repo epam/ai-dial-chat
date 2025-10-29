@@ -1,21 +1,12 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
-import {
-  isApplicationId,
-  isConversationId,
-  isFileId,
-  isPromptId,
-  isToolsetId,
-} from '@/src/utils/app/id';
+import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { orderByType } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
-import {
-  Publication,
-  PublicationResource,
-  ResourceToReview,
-} from '@/src/types/publication';
+import { Publication, PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
 import {
@@ -159,14 +150,6 @@ const selectSelectedCredentialsItems = createSelector(
   },
 );
 
-const orderByType = (resource: ResourceToReview) => {
-  if (isConversationId(resource.reviewUrl)) return 1;
-  if (isPromptId(resource.reviewUrl)) return 2;
-  if (isApplicationId(resource.reviewUrl)) return 3;
-  if (isToolsetId(resource.reviewUrl)) return 4;
-  return 5;
-};
-
 const selectResourcesToReviewByPublicationUrl = createSelector(
   [
     selectResourcesToReview,
@@ -181,7 +164,7 @@ const selectResourcesToReviewByPublicationUrl = createSelector(
         (itemsToPublish.has(r.reviewUrl) || itemsToPublish.has(r.sourceUrl)),
     );
     return sortBy(resources, [
-      orderByType,
+      (r) => orderByType(r.reviewUrl),
       (r) => (r.sourceUrl ?? r.reviewUrl).toLowerCase(),
     ]);
   },

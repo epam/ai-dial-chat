@@ -29,6 +29,7 @@ import {
   allEditedFoldersAreValid,
   getFirstReviewUrl,
   getReviewItems,
+  orderByType,
 } from '@/src/utils/app/publications';
 
 import { ScreenState } from '@/src/types/common';
@@ -80,14 +81,6 @@ interface Props {
   isFormErrors: boolean;
   displayAuthorEditState: string;
 }
-
-const orderByType = (entity: ShareEntity) => {
-  if (isConversationId(entity.id)) return 1;
-  if (isPromptId(entity.id)) return 2;
-  if (isApplicationId(entity.id)) return 3;
-  if (isToolsetId(entity.id)) return 4;
-  return 5;
-};
 
 export const PublicationHandlerFooter = ({
   initialState,
@@ -409,7 +402,7 @@ export const PublicationHandlerFooter = ({
     () =>
       sortBy(
         invalidEntities.filter((e) => selectedPublicationItems.includes(e.id)),
-        [orderByType, (e) => e.id.toLowerCase()],
+        [(e) => orderByType(e.id), (e) => e.id.toLowerCase()],
       ),
     [invalidEntities, selectedPublicationItems],
   );

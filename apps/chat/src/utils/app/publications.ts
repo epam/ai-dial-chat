@@ -48,6 +48,7 @@ import {
   isApplicationId,
   isConversationId,
   isFileId,
+  isPromptId,
   isRootId,
   isToolsetId,
 } from './id';
@@ -561,4 +562,12 @@ export const getNewTargetUrlFromEditState = (
   );
 
   return constructPath(newFolderId, newApiKey);
+};
+
+export const orderByType = (id: string) => {
+  if (isConversationId(id)) return 1;
+  if (isPromptId(id)) return 2;
+  if (isApplicationId(id)) return 3;
+  if (isToolsetId(id)) return 4;
+  return 5;
 };
