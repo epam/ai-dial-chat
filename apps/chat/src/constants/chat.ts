@@ -50,6 +50,26 @@ export const IMAGE_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
   IMAGE_TYPES,
 );
 
+export const VIDEO_TYPES: ImageMIMEType[] = [
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+];
+
+export const VIDEO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
+  VIDEO_TYPES,
+);
+
+export const AUDIO_TYPES: ImageMIMEType[] = [
+  'audio/mpeg',
+  'audio/ogg',
+  'audio/wav',
+];
+
+export const AUDIO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
+  AUDIO_TYPES,
+);
+
 export const LOCAL_BUCKET = 'local';
 
 export const DEFAULT_AGENT = 'default-agent';
