@@ -931,11 +931,11 @@ dialAdminTest(
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           4,
-          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+          `${API.publicFilesHost()}/${Attachment.heartImageName}`,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           6,
-          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+          `${API.publicFilesHost()}/${Attachment.heartImageName}`,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           7,
@@ -943,7 +943,7 @@ dialAdminTest(
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           8,
-          `${API.filesHostSegment}/${publicationBucket}/${Attachment.heartImageName}`,
+          `${API.publicFilesHost()}/${Attachment.heartImageName}`,
         );
       },
     );
