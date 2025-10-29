@@ -6,10 +6,10 @@ Custom Viewers provide the capability to implement and configure specialized vie
 
 ## Custom Viewer Configuration
 
-Custom Viewers can be configured for applications through two methods:
+There are two methods you can use to configure Custom Viewers for applications:
 
-- **Application Type Schema Configuration**: Applications utilizing an application type schema reference the schema through the `application_type_schema_id` field, which contains a `dial:applicationTypeViewerUrl` field
-- **Direct URL Configuration**: Applications specify a viewer URL directly through the `viewer_url` field
+- **Application Type Schema Configuration**: Applications utilizing an application type schema reference the schema through the `application_type_schema_id` field, which contains a `dial:applicationTypeViewerUrl` field. Refer to [DIAL Docs](https://github.com/epam/ai-dial/blob/main/docs/platform/3.core/7.apps.md#schema-rich-applications) to learn more about schema-rich applications.
+- **Direct URL Configuration**: Applications that do not utilize an application type schema specify a viewer URL directly through the `viewer_url` field. Refer to [DIAL Core documentation](https://github.com/epam/ai-dial-core/blob/development/docs/dynamic-settings/applications.md) and [DIAL Core API reference](https://dialx.ai/dial_api#tag/Applications/operation/saveCustomApplication) to learn more and see examples.
 
 ## Custom Viewer Implementation
 
