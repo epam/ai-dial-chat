@@ -1,11 +1,21 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
-import { isFileId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isConversationId,
+  isFileId,
+  isPromptId,
+  isToolsetId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { FeatureType } from '@/src/types/common';
-import { Publication, PublicationResource } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationResource,
+  ResourceToReview,
+} from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 
 import {
@@ -14,6 +24,7 @@ import {
   ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 
 const rootSelector = (state: RootState) => state.publication;
 
@@ -148,6 +159,14 @@ const selectSelectedCredentialsItems = createSelector(
   },
 );
 
+const orderByType = (resource: ResourceToReview) => {
+  if (isConversationId(resource.reviewUrl)) return 1;
+  if (isPromptId(resource.reviewUrl)) return 2;
+  if (isApplicationId(resource.reviewUrl)) return 3;
+  if (isToolsetId(resource.reviewUrl)) return 4;
+  return 5;
+};
+
 const selectResourcesToReviewByPublicationUrl = createSelector(
   [
     selectResourcesToReview,
@@ -156,11 +175,15 @@ const selectResourcesToReviewByPublicationUrl = createSelector(
   ],
   (resourcesToReview, selectedItems, id) => {
     const itemsToPublish = new Set(selectedItems);
-    return resourcesToReview.filter(
+    const resources = resourcesToReview.filter(
       (r) =>
         r.publicationUrl === id &&
         (itemsToPublish.has(r.reviewUrl) || itemsToPublish.has(r.sourceUrl)),
     );
+    return sortBy(resources, [
+      orderByType,
+      (r) => (r.sourceUrl ?? r.reviewUrl).toLowerCase(),
+    ]);
   },
 );
 

@@ -53,6 +53,7 @@ import {
 } from './id';
 
 import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -296,15 +297,13 @@ export const getReviewItems = (
   resourcesToReview: ResourceToReview[],
   isItemId: (id: string) => boolean,
 ) => {
-  const toReview = resourcesToReview.filter(
-    (r) =>
-      !r.reviewed &&
-      r.publicationUrl === publication.url &&
-      isItemId(r.reviewUrl),
+  const reviewed = sortBy(
+    resourcesToReview.filter(
+      (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
+    ),
+    (r) => r.sourceUrl.toLowerCase(),
   );
-  const reviewed = resourcesToReview.filter(
-    (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
-  );
+  const toReview = reviewed.filter((r) => !r.reviewed);
 
   return { toReview, reviewed };
 };
