@@ -18,8 +18,10 @@ import {
 } from '@/src/store/selectors';
 
 import {
+  AUDIO_TYPES_SET,
   IMAGE_TYPES_SET,
   PLOTLY_CONTENT_TYPE,
+  VIDEO_TYPES_SET,
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
@@ -45,6 +47,27 @@ const AttachmentDataRenderer = ({
   attachment,
   isInner,
 }: AttachmentDataRendererProps) => {
+  if (AUDIO_TYPES_SET.has(attachment.type)) {
+    return (
+      <audio controls>
+        <source
+          src={getMappedAttachmentUrl(attachment.url)}
+          type={attachment.type}
+        />
+      </audio>
+    );
+  }
+  if (VIDEO_TYPES_SET.has(attachment.type)) {
+    return (
+      <video width="100%" controls>
+        <source
+          src={getMappedAttachmentUrl(attachment.url)}
+          type={attachment.type}
+        />
+      </video>
+    );
+  }
+
   if (!attachment.data) {
     return null;
   }
@@ -265,6 +288,8 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     attachment.data ||
     (attachment.url && IMAGE_TYPES_SET.has(attachment.type)) ||
     attachment.type === PLOTLY_CONTENT_TYPE ||
+    (attachment.url && VIDEO_TYPES_SET.has(attachment.type)) ||
+    (attachment.url && AUDIO_TYPES_SET.has(attachment.type)) ||
     isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
@@ -274,6 +299,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     () => getMappedAttachmentUrl(attachment.reference_url),
     [attachment.reference_url],
   );
+
+  const isDownloadable =
+    IMAGE_TYPES_SET.has(attachment.type) ||
+    VIDEO_TYPES_SET.has(attachment.type) ||
+    AUDIO_TYPES_SET.has(attachment.type);
 
   return (
     <div
@@ -333,7 +363,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           </span>
           {isOpenable && !isFolder ? (
             <div className="flex gap-2">
-              {IMAGE_TYPES_SET.has(attachment.type) && (
+              {isDownloadable && (
                 <a
                   download={attachment.title}
                   href={mappedAttachmentUrl}
@@ -373,9 +403,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
           ref={anchorRef}
         >
-          {attachment.data && (
-            <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
-          )}
+          <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           {mappedAttachmentUrl && (
             <AttachmentUrlRendererComponent
               attachmentType={attachment.type}
