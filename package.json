@@ -162,15 +162,15 @@
     "vitest": "^3.2.4"
   },
   "optionalDependencies": {
-    "@nx/playwright": "21.6.5",
-    "@playwright/test": "^1.55.1",
+    "@nx/playwright": "^22.0.2",
+    "@playwright/test": "^1.56.1",
     "@types/adm-zip": "^0.5.7",
     "@types/he": "^1.2.3",
     "@types/tinycolor2": "^1.4.6",
-    "allure-playwright": "^3.3.2",
-    "eslint-plugin-playwright": "^2.2.0",
+    "allure-playwright": "^3.4.2",
+    "eslint-plugin-playwright": "^2.2.2",
     "file-type": "^21.0.0",
-    "playwright-chromium": "^1.55.1"
+    "playwright-chromium": "^1.56.1"
   },
   "overrides": {
     "esbuild": "0.25.10",
