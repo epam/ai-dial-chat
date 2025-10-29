@@ -7,4 +7,4 @@ Before starting apps, need to specify the `NEXT_PUBLIC_VIEWER_HOST` env variable
 Run the following command to start sandbox: `nx run custom-viewer-test:serve`. The Custom Viewer page will be hosted on <http://localhost:5500> and you can configure your application to use it (see [Custom Viewer Configuration](../../docs/CUSTOM-VIEWERS.md)) i.e.
 
 - `"dial:applicationTypeViewerUrl": "http://localhost:5500/"` for `Application Type Schema Configuration`
-- `"viewerUrl": "http://localhost:5500/"` for `Direct URL Configuration`
+- `"viewer_url": "http://localhost:5500/"` for `Direct URL Configuration`
