@@ -9,6 +9,7 @@ import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { RootState } from '@/src/types/store';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -23,6 +24,8 @@ import {
   SourceType,
 } from '@/src/constants/marketplace';
 
+import { MarketplaceActions } from './marketplace.reducers';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.marketplace;
@@ -35,8 +38,11 @@ const selectTableSort = (state: RootState) => rootSelector(state).tableSort;
 const selectIsBannerVisible = (state: RootState) =>
   rootSelector(state).isBannerVisible;
 
-const selectSelectedFilters = (state: RootState) =>
-  rootSelector(state).selectedFilters;
+const selectSelectedAgentsFilters = (state: RootState) =>
+  rootSelector(state).selectedAgentsFilters;
+
+const selectSelectedToolsetsFilters = (state: RootState) =>
+  rootSelector(state).selectedToolsetsFilters;
 
 const selectSearchTerm = (state: RootState) => rootSelector(state).searchTerm;
 
@@ -145,11 +151,60 @@ const selectDeleteEntity = (state: RootState) =>
 
 const selectLoginEntity = (state: RootState) => rootSelector(state).loginEntity;
 
+const selectShowLoader = (state: RootState) => rootSelector(state).showLoader;
+
+const selectFiltersContent = createSelector(
+  [
+    selectSelectedEntitiesTab,
+    ModelsSelectors.selectModelTopics,
+    selectSourceTypes,
+    selectSelectedAgentsFilters,
+    ModelsSelectors.selectAreModelsLoaded,
+    selectShowLoader,
+    ToolsetSelectors.selectToolsetsTopics,
+    selectToolsetSourceTypes,
+    selectSelectedToolsetsFilters,
+    ToolsetSelectors.selectAreToolsetsLoaded,
+  ],
+  (
+    selectedTab: MarketplaceEntitiesTabs,
+    topics: string[],
+    sourceTypes: SourceType[],
+    selectedAgentsFilters: MarketplaceFilters,
+    areModelsLoaded: boolean,
+    isMarketplaceLoading: boolean | undefined,
+    toolsetsTopics: string[],
+    toolsetSourceTypes: SourceType[],
+    selectedToolsetsFilters: MarketplaceFilters,
+    areToolsetsLoaded: boolean,
+  ) => {
+    const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
+
+    if (isAgentsTab) {
+      return {
+        topicsFilters: topics,
+        sourcesFilters: sourceTypes,
+        selectedFilters: selectedAgentsFilters,
+        showLoader: !areModelsLoaded || !!isMarketplaceLoading,
+        setFilters: MarketplaceActions.setSelectedAgentsFilters,
+      };
+    }
+    return {
+      topicsFilters: toolsetsTopics,
+      sourcesFilters: toolsetSourceTypes,
+      selectedFilters: selectedToolsetsFilters,
+      showLoader: !areToolsetsLoaded || !!isMarketplaceLoading,
+      setFilters: MarketplaceActions.setSelectedToolsetsFilters,
+    };
+  },
+);
+
 export const MarketplaceSelectors = {
   selectSelectedViewType,
   selectTableSort,
   selectIsBannerVisible,
-  selectSelectedFilters,
+  selectSelectedAgentsFilters,
+  selectSelectedToolsetsFilters,
   selectSearchTerm,
   selectTrimmedSearchTerm,
   selectSelectedTab,
@@ -163,4 +218,6 @@ export const MarketplaceSelectors = {
   selectDetailsEntity,
   selectDetailsToolset,
   selectLoginEntity,
+  selectShowLoader,
+  selectFiltersContent,
 };
