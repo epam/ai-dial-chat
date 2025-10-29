@@ -67,7 +67,9 @@ import {
   Conversation,
   FeatureType,
   PublishActions,
+  ShareEntity,
 } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -78,6 +80,14 @@ interface Props {
   isFormErrors: boolean;
   displayAuthorEditState: string;
 }
+
+const orderByType = (entity: ShareEntity) => {
+  if (isConversationId(entity.id)) return 1;
+  if (isPromptId(entity.id)) return 2;
+  if (isApplicationId(entity.id)) return 3;
+  if (isToolsetId(entity.id)) return 4;
+  return 5;
+};
 
 export const PublicationHandlerFooter = ({
   initialState,
@@ -162,7 +172,7 @@ export const PublicationHandlerFooter = ({
     initialState,
   ]);
 
-  const notExistEntities = useMemo(
+  const notExistEntities: ShareEntity[] = useMemo(
     () =>
       [
         ...files,
@@ -317,7 +327,7 @@ export const PublicationHandlerFooter = ({
     dispatch(PublicationActions.setIsEditMode(!isEditMode));
   }, [dispatch, isEditMode]);
 
-  const invalidEntities = useMemo(
+  const invalidEntities: ShareEntity[] = useMemo(
     () =>
       notExistEntities.filter((entity) =>
         publication.resources.some(
@@ -397,7 +407,10 @@ export const PublicationHandlerFooter = ({
     (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
   const selectedInvalidEntities = useMemo(
     () =>
-      invalidEntities.filter((e) => selectedPublicationItems.includes(e.id)),
+      sortBy(
+        invalidEntities.filter((e) => selectedPublicationItems.includes(e.id)),
+        [orderByType, (e) => e.id.toLowerCase()],
+      ),
     [invalidEntities, selectedPublicationItems],
   );
   const isApproveDisabled =
