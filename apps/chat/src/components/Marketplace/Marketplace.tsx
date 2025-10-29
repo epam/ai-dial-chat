@@ -65,6 +65,10 @@ export const Marketplace = () => {
     MarketplaceSelectors.selectSelectedEntitiesTab,
   );
 
+  const isMarketplaceLoading = useAppSelector(
+    MarketplaceSelectors.selectShowLoader,
+  );
+
   const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
   const isLoading = useMemo(() => {
@@ -77,11 +81,12 @@ export const Marketplace = () => {
       ? isToolsetsEntitiesLoading || !isInstalledToolsetsInitialized
       : isToolsetsEntitiesLoading;
     const showLoader = isAgentsTab ? isAgentsLoading : isToolsetsLoading;
-    return showLoader;
+    return showLoader || isMarketplaceLoading;
   }, [
     isAgentsTab,
     isInstalledModelsInitialized,
     isInstalledToolsetsInitialized,
+    isMarketplaceLoading,
     isModelsLoading,
     isToolsetsEntitiesLoading,
     selectedTab,

@@ -38,7 +38,7 @@ export const getSetUpdatedItemsToApproveAction$ = (
   publicationUrl: string,
 ) => {
   const selectedItemsToApprove =
-    PublicationSelectors.selectSelectedPublicationItems(state);
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl);
 
   const previousSourceUrlsPublicationItems = oldPublicationResources
     .filter(({ reviewUrl }) => selectedItemsToApprove.includes(reviewUrl))
@@ -124,7 +124,10 @@ export const addMessageAttachmentsToPublication$ = (
         )
         .map(({ reviewUrl }) => ApiUtils.decodeApiUrl(reviewUrl));
       const selectedPublicationItems =
-        PublicationSelectors.selectSelectedPublicationItems(state);
+        PublicationSelectors.selectSelectedPublicationItems(
+          state,
+          publicationUrl,
+        );
 
       return {
         updatedPublication: response,

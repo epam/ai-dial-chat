@@ -18,6 +18,7 @@ import { PublicationItemProps } from './view-props';
 export const PublicationConversationRow: React.FC<PublicationItemProps> = ({
   item,
   level,
+  publicationUrl,
 }) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
@@ -55,6 +56,7 @@ export const PublicationConversationRow: React.FC<PublicationItemProps> = ({
     <PublicationItemRow
       level={level}
       Icon={Icon}
+      publicationUrl={publicationUrl}
       item={entity}
       itemTypeName={BackendResourceTypeName.CONVERSATION}
       dataQa="conversation"

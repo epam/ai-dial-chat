@@ -72,7 +72,7 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { ChatPublicationControls } from './Publish/PublicationControls/ChatPublicationControls';
-import { PublicationHandler } from './Publish/PublicationHandler/PublicationHandler';
+import { ReviewPublicationHandler } from './Publish/PublicationHandler/ReviewPublicationHandler';
 import { TalkToModal } from './TalkTo/TalkToModal';
 
 import {
@@ -157,11 +157,9 @@ const ChatView = memo(() => {
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
   );
-  const isConfigurationSchemaLoading = useAppSelector(
-    ChatSelectors.selectIsConfigurationSchemaLoading,
-  );
-  const configurationSchema = useAppSelector(
-    ChatSelectors.selectConfigurationSchema,
+
+  const configurationSchemas = useAppSelector(
+    ChatSelectors.selectUploadedConfigurationSchemasIds,
   );
   const isApproveRequiredEntity = useAppSelector((state) =>
     PublicationSelectors.selectIsApproveRequiredEntity(
@@ -547,11 +545,23 @@ const ChatView = memo(() => {
     (conv) => !conv.messages.length,
   );
 
-  const isConversationWithSchema = selectedConversations.some(
+  const selectedConversationSchemas = useMemo(
+    () =>
+      selectedConversations
+        .map((conversation) =>
+          configurationSchemas.find(
+            (schema) => schema.modelId === conversation.model.id,
+          ),
+        )
+        .filter((schema) => schema !== undefined),
+    [configurationSchemas, selectedConversations],
+  );
+  const isSomeConversationWithSchema = selectedConversations.some(
     (conv) =>
-      (!isConfigurationSchemaLoading &&
-        configurationSchema &&
-        isFormSchemaValid(configurationSchema)) ||
+      (selectedConversationSchemas.length &&
+        selectedConversationSchemas
+          .map(({ schema }) => schema)
+          .some(isFormSchemaValid)) ||
       isConversationWithFormSchema(conv),
   );
 
@@ -566,7 +576,7 @@ const ChatView = memo(() => {
       !isReadOnly &&
       !isApproveRequiredEntity &&
       (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
-      !(isConversationWithSchema && selectedConversations.length > 1)) ||
+      !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
   const applicationTypeSchemas = useAppSelector(
@@ -919,8 +929,8 @@ const ChatView = memo(() => {
                               isNotEmptyConversations={isNotEmptyConversations}
                               showReplayControls={showReplayControls}
                               isChatReadyForInput={isChatReadyForInput}
-                              isConversationWithSchema={
-                                isConversationWithSchema
+                              isSomeConversationWithSchema={
+                                isSomeConversationWithSchema
                               }
                               showScrollDownButton={isScrollDownButton}
                               onScrollDown={handleScrollDown}
@@ -1107,14 +1117,15 @@ export function Chat({ isPreview }: ChatProps) {
   const isInstalledModelsInitialized = useAppSelector(
     ModelsSelectors.selectIsInstalledModelsInitialized,
   );
-  const isConfigurationSchemaLoading = useAppSelector(
-    ChatSelectors.selectIsConfigurationSchemaLoading,
+  const loadingConfigurationSchemas = useAppSelector(
+    ChatSelectors.selectLoadingConfigurationSchemas,
+  );
+  const uploadedConfigurationSchemasIds = useAppSelector(
+    ChatSelectors.selectUploadedConfigurationSchemasIds,
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
-
-  const configurationLoadedRef = useRef(false);
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1125,36 +1136,38 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
-    configurationLoadedRef.current = false;
-  }, [selectedConversationsIds]);
-
-  useEffect(() => {
-    if (configurationLoadedRef.current) return;
-
-    const configurationAppReference = selectedConversations.find((conv) =>
+    const configurationAppReference = selectedConversations.filter((conv) =>
       doesModelHaveConfiguration(modelsMap[conv.model.id]),
-    )?.model?.id;
-    const configurationAppId = configurationAppReference
-      ? modelsMap[configurationAppReference]?.id
-      : undefined;
-
-    if (configurationAppId && isNoMessages) {
-      if (!configurationLoadedRef.current) {
-        configurationLoadedRef.current = true;
-        dispatch(
-          ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
-        );
-      }
-    } else {
-      dispatch(ChatActions.resetConfigurationSchema());
+    );
+    const configurationAppIds = configurationAppReference.map(
+      (conv) => conv.model.id,
+    );
+    if (configurationAppIds.length && isNoMessages) {
+      configurationAppIds.forEach((modelId) => {
+        if (
+          !loadingConfigurationSchemas.includes(modelId) &&
+          !uploadedConfigurationSchemasIds.some(
+            (schema) => schema.modelId === modelId,
+          )
+        ) {
+          dispatch(ChatActions.getConfigurationSchema({ modelId }));
+        }
+      });
     }
-  }, [dispatch, isNoMessages, modelsMap, selectedConversations]);
+  }, [
+    dispatch,
+    isNoMessages,
+    modelsMap,
+    selectedConversations,
+    loadingConfigurationSchemas,
+    uploadedConfigurationSchemasIds,
+  ]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
       <>
         <div className="w-full grow">
-          <PublicationHandler publication={selectedPublication} />
+          <ReviewPublicationHandler publication={selectedPublication} />
         </div>
         <ChatInputFooter />
       </>
@@ -1175,7 +1188,7 @@ export function Chat({ isPreview }: ChatProps) {
   if (
     !areSelectedConversationsLoaded ||
     !isInstalledModelsInitialized ||
-    isConfigurationSchemaLoading ||
+    loadingConfigurationSchemas.length ||
     isPublicationUpdating
   ) {
     return <Loader />;

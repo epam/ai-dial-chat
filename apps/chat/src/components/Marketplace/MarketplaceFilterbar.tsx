@@ -8,7 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceFilters } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { MarketplaceActions, UIActions } from '@/src/store/actions';
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
@@ -22,9 +22,11 @@ import {
   ENTITY_TYPES,
   FilterTypes,
   MarketplaceEntitiesTabs,
+  SourceType,
 } from '@/src/constants/marketplace';
 
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
+import { Loader } from '@/src/components/Common/Loader';
 
 import { capitalize } from 'lodash';
 
@@ -127,6 +129,77 @@ const FilterSection = ({
   );
 };
 
+interface OpenedSections {
+  [FilterTypes.ENTITY_TYPE]: boolean;
+  // [FilterTypes.CAPABILITIES]: boolean;
+  // [FilterTypes.ENVIRONMENT]: boolean;
+  [FilterTypes.TOPICS]: boolean;
+  [FilterTypes.SOURCES]: boolean;
+}
+interface FiltersRendererProps {
+  showEntityTypesSection: boolean;
+  showLoader: boolean;
+  openedSections: OpenedSections;
+  selectedFilters: MarketplaceFilters;
+  topics: string[];
+  sourceTypes: SourceType[];
+  handleToggleFilterSection: (filterType: FilterTypes) => void;
+  handleApplyFilter: (type: FilterTypes, value: string) => void;
+}
+function FiltersRenderer({
+  showLoader,
+  showEntityTypesSection,
+  openedSections,
+  selectedFilters,
+  topics,
+  sourceTypes,
+  handleToggleFilterSection,
+  handleApplyFilter,
+}: FiltersRendererProps) {
+  const { t } = useTranslation(Translation.SideBar);
+
+  if (showLoader) {
+    return <Loader />;
+  }
+
+  return (
+    <>
+      {showEntityTypesSection && (
+        <FilterSection
+          sectionName={t('Type')}
+          filterValues={ENTITY_TYPES}
+          openedSections={openedSections}
+          selectedFilters={selectedFilters}
+          filterType={FilterTypes.ENTITY_TYPE}
+          onToggleFilterSection={handleToggleFilterSection}
+          onApplyFilter={handleApplyFilter}
+          getDisplayLabel={getTypeLabel}
+        />
+      )}
+      <FilterSection
+        sectionName={t('Topics')}
+        filterValues={topics}
+        openedSections={openedSections}
+        selectedFilters={selectedFilters}
+        filterType={FilterTypes.TOPICS}
+        onToggleFilterSection={handleToggleFilterSection}
+        onApplyFilter={handleApplyFilter}
+      />
+      {sourceTypes.length > 1 && (
+        <FilterSection
+          sectionName={t('Sources')}
+          filterValues={sourceTypes}
+          openedSections={openedSections}
+          selectedFilters={selectedFilters}
+          filterType={FilterTypes.SOURCES}
+          onToggleFilterSection={handleToggleFilterSection}
+          onApplyFilter={handleApplyFilter}
+        />
+      )}
+    </>
+  );
+}
+
 const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
 export const MarketplaceFilterbar = memo(() => {
@@ -144,21 +217,23 @@ export const MarketplaceFilterbar = memo(() => {
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
-  const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
-  );
+
   const selectedTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const topics = useAppSelector(ModelsSelectors.selectModelTopics);
-  const toolsetsTopics = useAppSelector(ToolsetSelectors.selectToolsetsTopics);
-  const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
-  const toolsetSourceTypes = useAppSelector(
-    MarketplaceSelectors.selectToolsetSourceTypes,
-  );
 
-  const [openedSections, setOpenedSections] = useState({
+  const {
+    topicsFilters,
+    sourcesFilters,
+    selectedFilters,
+    showLoader,
+    setFilters,
+  } = useAppSelector(MarketplaceSelectors.selectFiltersContent);
+
+  const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
+
+  const [openedSections, setOpenedSections] = useState<OpenedSections>({
     [FilterTypes.ENTITY_TYPE]: true,
     // [FilterTypes.CAPABILITIES]: false,
     // [FilterTypes.ENVIRONMENT]: false,
@@ -169,10 +244,13 @@ export const MarketplaceFilterbar = memo(() => {
   const handleApplyFilter = useCallback(
     (type: FilterTypes, value: string) => {
       dispatch(
-        MarketplaceActions.setSelectedFilters({ filterType: type, value }),
+        setFilters({
+          filterType: type,
+          value,
+        }),
       );
     },
-    [dispatch],
+    [dispatch, setFilters],
   );
 
   const handleToggleFilterSection = useCallback(
@@ -188,8 +266,6 @@ export const MarketplaceFilterbar = memo(() => {
   const handleClose = useCallback(() => {
     dispatch(UIActions.setShowMarketplaceFilterbar(false));
   }, [dispatch]);
-
-  const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
   const noEntities = useMemo(() => {
     return (
@@ -233,42 +309,16 @@ export const MarketplaceFilterbar = memo(() => {
               </p>
             </div>
           ) : (
-            <>
-              {isAgentsTab && (
-                <FilterSection
-                  sectionName={t('Type')}
-                  filterValues={ENTITY_TYPES}
-                  openedSections={openedSections}
-                  selectedFilters={selectedFilters}
-                  filterType={FilterTypes.ENTITY_TYPE}
-                  onToggleFilterSection={handleToggleFilterSection}
-                  onApplyFilter={handleApplyFilter}
-                  getDisplayLabel={getTypeLabel}
-                />
-              )}
-              <FilterSection
-                sectionName={t('Topics')}
-                filterValues={isAgentsTab ? topics : toolsetsTopics}
-                openedSections={openedSections}
-                selectedFilters={selectedFilters}
-                filterType={FilterTypes.TOPICS}
-                onToggleFilterSection={handleToggleFilterSection}
-                onApplyFilter={handleApplyFilter}
-              />
-              {(isAgentsTab
-                ? sourceTypes.length > 1
-                : toolsetSourceTypes.length > 1) && (
-                <FilterSection
-                  sectionName={t('Sources')}
-                  filterValues={isAgentsTab ? sourceTypes : toolsetSourceTypes}
-                  openedSections={openedSections}
-                  selectedFilters={selectedFilters}
-                  filterType={FilterTypes.SOURCES}
-                  onToggleFilterSection={handleToggleFilterSection}
-                  onApplyFilter={handleApplyFilter}
-                />
-              )}
-            </>
+            <FiltersRenderer
+              showEntityTypesSection={isAgentsTab}
+              showLoader={showLoader}
+              openedSections={openedSections}
+              selectedFilters={selectedFilters}
+              topics={topicsFilters}
+              sourceTypes={sourcesFilters}
+              handleToggleFilterSection={handleToggleFilterSection}
+              handleApplyFilter={handleApplyFilter}
+            />
           )}
         </div>
       )}

@@ -22,6 +22,8 @@ import { PublicationSelectors } from '@/src/store/publication/publication.select
 import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
+import { PublicationItemProps } from './view-props';
+
 import {
   FeatureType,
   FolderInterface,
@@ -34,10 +36,8 @@ interface Props {
   allFolders: FolderInterface[];
   allItems: ShareEntity[];
   level: number;
-  ItemComponent: React.FC<{
-    item: ShareEntity;
-    level: number;
-  }>;
+  ItemComponent: React.FC<PublicationItemProps>;
+  publicationUrl: string;
 }
 
 const filteredItems = <T extends ShareEntity>(
@@ -51,6 +51,7 @@ export const PublicationFolderRow = ({
   allItems,
   level,
   ItemComponent,
+  publicationUrl,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -65,24 +66,22 @@ export const PublicationFolderRow = ({
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
-
   const chosenFoldersSelector = useMemo(
     () =>
       PublicationSelectors.selectChosenPublicationFolderIds(
+        publicationUrl,
         allFolders,
         allItems,
       ),
-    [allFolders, allItems],
+    [allFolders, allItems, publicationUrl],
   );
   const {
     fullyChosenFolderIds: selectedFolderIds,
     partialChosenFolderIds: partialSelectedFolderIds,
   } = useAppSelector(chosenFoldersSelector);
-
-  const chosenItemsIds = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationItems,
+  const chosenItemsIds = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
   );
-
   const folderEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
@@ -139,7 +138,7 @@ export const PublicationFolderRow = ({
 
     dispatch(
       PublicationActions.selectPublicationItems({
-        publicationUrl: selectedPublication?.url ?? '',
+        publicationUrl,
         ids: entitiesToSelect,
       }),
     );
@@ -149,7 +148,7 @@ export const PublicationFolderRow = ({
     currentFolder.id,
     dispatch,
     partialSelectedFolderIds,
-    selectedPublication?.url,
+    publicationUrl,
   ]);
 
   useEffect(() => {
@@ -227,6 +226,7 @@ export const PublicationFolderRow = ({
         <div className="flex flex-col">
           {folders.map((item) => (
             <PublicationFolderRow
+              publicationUrl={publicationUrl}
               key={item.id}
               level={level + 1}
               currentFolder={item}
@@ -238,7 +238,11 @@ export const PublicationFolderRow = ({
         </div>
         {items.map((item) => (
           <div key={item.id}>
-            <ItemComponent item={item} level={level + 1} />
+            <ItemComponent
+              item={item}
+              level={level + 1}
+              publicationUrl={publicationUrl}
+            />
           </div>
         ))}
       </div>

@@ -1,5 +1,9 @@
 import { SortOrder } from '@/src/types/common';
-import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
+import {
+  DetailsEntity,
+  MarketplaceEntity,
+  MarketplaceFilters,
+} from '@/src/types/marketplace';
 import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
@@ -13,7 +17,8 @@ import {
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 export interface MarketplaceState {
-  selectedFilters: MarketplaceFilters;
+  selectedAgentsFilters: MarketplaceFilters;
+  selectedToolsetsFilters: MarketplaceFilters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   selectedEntitiesTab: MarketplaceEntitiesTabs;
@@ -26,9 +31,8 @@ export interface MarketplaceState {
   };
   isBannerVisible: boolean;
 
-  detailsEntity:
-    | { reference: string; isSuggested: boolean; type: MarketplaceEntitiesTabs }
-    | undefined;
+  detailsEntity: DetailsEntity | undefined;
   deleteEntity: { entity: MarketplaceEntity; action: DeleteType } | undefined;
   loginEntity: ToolsetModel | undefined;
+  showLoader?: boolean;
 }

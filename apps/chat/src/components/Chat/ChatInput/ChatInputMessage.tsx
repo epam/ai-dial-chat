@@ -145,8 +145,11 @@ export const ChatInputMessage = Inversify.register(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
 
-    const configurationSchema = useAppSelector(
-      ChatSelectors.selectConfigurationSchema,
+    const configurationSchema = useAppSelector((state) =>
+      ChatSelectors.selectConfigurationSchemaByModelId(
+        state,
+        selectedConversations[0]?.model.id,
+      ),
     );
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
