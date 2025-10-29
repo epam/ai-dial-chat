@@ -1120,9 +1120,6 @@ export function Chat({ isPreview }: ChatProps) {
   const loadingConfigurationSchemas = useAppSelector(
     ChatSelectors.selectLoadingConfigurationSchemas,
   );
-  const uploadedConfigurationSchemasIds = useAppSelector(
-    ChatSelectors.selectUploadedConfigurationSchemasIds,
-  );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
@@ -1136,32 +1133,18 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
-    const configurationAppReference = selectedConversations.filter((conv) =>
-      doesModelHaveConfiguration(modelsMap[conv.model.id]),
-    );
-    const configurationAppIds = configurationAppReference.map(
-      (conv) => conv.model.id,
-    );
+    const configurationAppReference = selectedConversations
+      .filter((conv) => doesModelHaveConfiguration(modelsMap[conv.model.id]))
+      .map((conv) => conv.model.id);
+    const configurationAppIds = configurationAppReference
+      .map((reference) => modelsMap[reference]?.id)
+      .filter((id) => id !== undefined);
     if (configurationAppIds.length && isNoMessages) {
       configurationAppIds.forEach((modelId) => {
-        if (
-          !loadingConfigurationSchemas.includes(modelId) &&
-          !uploadedConfigurationSchemasIds.some(
-            (schema) => schema.modelId === modelId,
-          )
-        ) {
-          dispatch(ChatActions.getConfigurationSchema({ modelId }));
-        }
+        dispatch(ChatActions.getConfigurationSchema({ modelId }));
       });
     }
-  }, [
-    dispatch,
-    isNoMessages,
-    modelsMap,
-    selectedConversations,
-    loadingConfigurationSchemas,
-    uploadedConfigurationSchemasIds,
-  ]);
+  }, [dispatch, isNoMessages, modelsMap, selectedConversations]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
