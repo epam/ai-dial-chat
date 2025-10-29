@@ -750,10 +750,11 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
         ApplicationSelectors.selectReturnConversationIds(state$.value);
       const query = parse(window.location.search.slice(1));
       const publicationUrl = query[AppsEditorQuery.PublicationUrl]?.toString();
+      const returnUrlQuery = query[AppsEditorQuery.ReturnUrl]?.toString();
       const reference = query[AppsEditorQuery.Id]?.toString();
-      const returnUrl = getSafeRedirectUrl(
-        decodeURIComponent(query[AppsEditorQuery.ReturnUrl]?.toString() ?? ''),
-      );
+      const returnUrl = returnUrlQuery
+        ? getSafeRedirectUrl(decodeURIComponent(returnUrlQuery))
+        : undefined;
       const redirectUrl = payload.redirectUrl
         ? getSafeRedirectUrl(payload.redirectUrl.toString())
         : undefined;

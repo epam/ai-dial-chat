@@ -807,12 +807,11 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
       const query = parse(window.location.search.slice(1));
       const publicationUrl =
         query[ToolsetEditorQuery.PublicationUrl]?.toString();
+      const returnUrlQuery = query[ToolsetEditorQuery.ReturnUrl]?.toString();
       const reference = query[ToolsetEditorQuery.Id]?.toString();
-      const returnUrl = getSafeRedirectUrl(
-        decodeURIComponent(
-          query[ToolsetEditorQuery.ReturnUrl]?.toString() ?? '',
-        ),
-      );
+      const returnUrl = returnUrlQuery
+        ? getSafeRedirectUrl(decodeURIComponent(returnUrlQuery))
+        : undefined;
       const redirectUrl = payload.redirectUrl
         ? getSafeRedirectUrl(payload.redirectUrl.toString())
         : undefined;
