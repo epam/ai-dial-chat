@@ -43,6 +43,19 @@ interface AttachmentDataRendererProps {
   isInner?: boolean;
 }
 
+const getSourcedataUrl = (attachment: Attachment): string | undefined => {
+  if (attachment.data) {
+    return `data:${attachment.type};base64,${attachment.data}`;
+  }
+  return getMappedAttachmentUrl(attachment.url);
+};
+
+const AttachmentSourceRenderer = ({
+  attachment,
+}: AttachmentDataRendererProps) => {
+  return <source src={getSourcedataUrl(attachment)} type={attachment.type} />;
+};
+
 const AttachmentDataRenderer = ({
   attachment,
   isInner,
@@ -50,20 +63,14 @@ const AttachmentDataRenderer = ({
   if (AUDIO_TYPES_SET.has(attachment.type)) {
     return (
       <audio controls>
-        <source
-          src={getMappedAttachmentUrl(attachment.url)}
-          type={attachment.type}
-        />
+        <AttachmentSourceRenderer attachment={attachment} />
       </audio>
     );
   }
   if (VIDEO_TYPES_SET.has(attachment.type)) {
     return (
       <video width="100%" controls>
-        <source
-          src={getMappedAttachmentUrl(attachment.url)}
-          type={attachment.type}
-        />
+        <AttachmentSourceRenderer attachment={attachment} />
       </video>
     );
   }
@@ -75,7 +82,7 @@ const AttachmentDataRenderer = ({
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
       <img
-        src={`data:${attachment.type};base64,${attachment.data}`}
+        src={getSourcedataUrl(attachment)}
         className="m-0 aspect-auto w-full"
         alt="Attachment image"
       />
