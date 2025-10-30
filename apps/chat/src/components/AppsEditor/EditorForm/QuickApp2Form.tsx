@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -21,14 +23,20 @@ import {
 import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
 
-import { QuickApp2Form as QuickApp2FormType } from '@/src/components/AppsEditor/form';
+import {
+  QuickApp2Form as QuickApp2FormType,
+  getAttachmentTypeErrorHandlers,
+} from '@/src/components/AppsEditor/form';
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { AgentAndToolsetSelector } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetSelector';
 import { FilesSelector } from '@/src/components/Common/FilesSelector/FilesSelector';
+import { withController } from '@/src/components/Common/Forms/ControlledFormField';
+import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/ApplicationDetails/SimpleApplicationDetailsFooter';
@@ -44,6 +52,10 @@ const AgentAndToolsetSelectorField = withErrorMessage(
   withLabel(AgentAndToolsetSelector),
 );
 const ToggleSwitchField = withLabel(ToggleSwitch);
+const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
+const ControlledField = withController(Field);
+
+const getItemLabel = (item: unknown): string => item as string;
 
 function isApplicationOrModel(
   entity: MarketplaceEntity,
@@ -75,8 +87,19 @@ export const QuickApp2Form = () => {
     [modelsMap, toolsetsMap],
   );
 
-  const { control, formState, register } = useFormContext<QuickApp2FormType>();
+  const { control, formState, register, setError, clearErrors } =
+    useFormContext<QuickApp2FormType>();
   const errors = formState.errors;
+
+  const modelId = useWatch({
+    control,
+    name: 'model',
+  });
+
+  const showTemperatureSlider = useMemo(() => {
+    const selectedModel = modelsMap[modelId];
+    return selectedModel?.features?.temperature !== false;
+  }, [modelId, modelsMap]);
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
@@ -226,6 +249,49 @@ export const QuickApp2Form = () => {
       />
 
       <Controller
+        name="inputAttachmentTypes"
+        control={control}
+        render={({ field }) => (
+          <ComboBoxField
+            label={t('Attachment types')}
+            info={t("Input the MIME type and press 'Enter' to add")}
+            initialSelectedItems={field.value}
+            getItemLabel={getItemLabel}
+            getItemValue={getItemLabel}
+            onChangeSelectedItems={field.onChange}
+            placeholder={t('Enter one or more attachment types')}
+            id="attachmentTypes"
+            className={classNames(
+              'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
+              isAppPublic && 'hover:border-primary',
+            )}
+            hasDeleteAll
+            hideSuggestions
+            itemHeightClassName="h-[31px]"
+            error={errors.inputAttachmentTypes?.message}
+            disabled={isAppPublic}
+            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+            dataQa={'attachment-types-field'}
+            {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
+          />
+        )}
+      />
+
+      <ControlledField
+        label={t('Max. attachments number')}
+        placeholder={t('Enter the maximum number of attachments')}
+        id="maxInputAttachments"
+        type="number"
+        min="0"
+        error={errors.maxInputAttachments?.message}
+        control={control}
+        name="maxInputAttachments"
+        disabled={isAppPublic}
+        tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+        dataQa={'max-attachment-number-field'}
+      />
+
+      <Controller
         name="codeInterpreter"
         control={control}
         render={({ field }) => (
@@ -242,19 +308,21 @@ export const QuickApp2Form = () => {
         )}
       />
 
-      <Controller
-        name="temperature"
-        control={control}
-        render={({ field }) => (
-          <Slider
-            label={t('Temperature')}
-            temperature={field.value}
-            disabled={isAppPublic}
-            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-            onChangeTemperature={field.onChange}
-          />
-        )}
-      />
+      {showTemperatureSlider && (
+        <Controller
+          name="temperature"
+          control={control}
+          render={({ field }) => (
+            <Slider
+              label={t('Temperature')}
+              temperature={field.value}
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+              onChangeTemperature={field.onChange}
+            />
+          )}
+        />
+      )}
     </div>
   );
 };
