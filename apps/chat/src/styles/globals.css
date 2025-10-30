@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+@import '@epam/ai-dial-ui-kit/styles.css';
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
