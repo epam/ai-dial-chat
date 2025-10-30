@@ -486,7 +486,7 @@ export const API = {
   publishedApplicationsHost: () =>
     `${API.publishedApplications}?recursive=true`,
   pagePropsHost: '/en.json',
-  appSchemasHost: 'api/application-type-schemas/schemas',
+  appSchemasHost: '/api/application-type-schemas/schemas',
   themeStylesHost: '/api/themes/styles',
 };
 

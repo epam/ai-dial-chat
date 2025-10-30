@@ -7,3 +7,4 @@ export * from './itemUtil';
 export * from './regexUtil';
 export * from './sortingUtil';
 export * from './userUtil';
+export * from './applicationsUtil';

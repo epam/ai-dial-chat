@@ -191,7 +191,10 @@ export function ReviewApplicationDialogView({
         {application.completionUrl &&
           isEmpty(application.function?.mapping) && (
             <div className="flex gap-4">
-              <span className="w-[122px] text-secondary">
+              <span
+                className="w-[122px] text-secondary"
+                data-qa="app-completion-url-label"
+              >
                 {t('Completion URL:')}
               </span>
               <span

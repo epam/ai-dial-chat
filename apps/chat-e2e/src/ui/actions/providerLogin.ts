@@ -74,6 +74,7 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     if (options?.setEntitiesEnvVars) {
       process.env.MODELS = retrievedResponses.get(API.modelsHost);
       process.env.THEMES = retrievedResponses.get(API.themesListingHost);
+      process.env.APP_SCHEMAS = retrievedResponses.get(API.appSchemasHost);
       process.env.RECENT_MODELS =
         await this.localStorageManager.getRecentModels();
     }
