@@ -3,6 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { getPartialAndFullyChosenFolders } from '@/src/utils/app/folders';
 import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { orderByType } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationResource } from '@/src/types/publication';
@@ -14,6 +15,7 @@ import {
   ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 
 const rootSelector = (state: RootState) => state.publication;
 
@@ -156,11 +158,15 @@ const selectResourcesToReviewByPublicationUrl = createSelector(
   ],
   (resourcesToReview, selectedItems, id) => {
     const itemsToPublish = new Set(selectedItems);
-    return resourcesToReview.filter(
+    const resources = resourcesToReview.filter(
       (r) =>
         r.publicationUrl === id &&
         (itemsToPublish.has(r.reviewUrl) || itemsToPublish.has(r.sourceUrl)),
     );
+    return sortBy(resources, [
+      (r) => orderByType(r.reviewUrl),
+      (r) => (r.sourceUrl ?? r.reviewUrl).toLowerCase(),
+    ]);
   },
 );
 
