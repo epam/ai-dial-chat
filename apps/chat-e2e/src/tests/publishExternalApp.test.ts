@@ -183,7 +183,9 @@ dialAdminTest(
         await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
           .backToPublicationRequest();
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: publishRequestName },
           'hidden',
@@ -333,7 +335,9 @@ dialAdminTest(
         await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
           .backToPublicationRequest();
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: unpublishRequestName },
           'hidden',
