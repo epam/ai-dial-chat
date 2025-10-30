@@ -75,10 +75,6 @@ const AttachmentDataRenderer = ({
     );
   }
 
-  if (!attachment.data) {
-    return null;
-  }
-
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
       <img
@@ -87,6 +83,10 @@ const AttachmentDataRenderer = ({
         alt="Attachment image"
       />
     );
+  }
+
+  if (!attachment.data) {
+    return null;
   }
 
   if (attachment.type === 'text/html') {
