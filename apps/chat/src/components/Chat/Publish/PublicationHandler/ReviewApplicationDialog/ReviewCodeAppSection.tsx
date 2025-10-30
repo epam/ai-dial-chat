@@ -62,7 +62,7 @@ const ReviewCodeAppSectionView = ({
               <Spinner size={30} />
             </div>
           ) : (
-            <CodeEditor sourcesFolderId={`${config.sourceFolder}`} readOnly />
+            <CodeEditor sourcesFolderId={config.sourceFolder} readOnly />
           )}
         </div>
       </div>
