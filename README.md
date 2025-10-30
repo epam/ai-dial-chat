@@ -17,6 +17,7 @@ This repository is managed as monorepo by [NX](https://nx.dev/) tools.
 - `DIAL Overlay` documentation is placed [here](./libs/overlay/README.md).
 - `DIAL Chat Visualizer Connector` documentation is placed [here](./libs/chat-visualizer-connector/README.md).
 - `DIAL Visualizer Connector` documentation is placed [here](./libs/visualizer-connector/README.md).
+- `DIAL Custom Viewers` documentation is placed [here](./docs/CUSTOM-VIEWERS.md).
 
 > In [AI DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/tutorials/0.user-guide.md), you can find a user guide for the AI DIAL Chat application.
 

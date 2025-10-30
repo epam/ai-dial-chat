@@ -64,6 +64,8 @@ export interface QuickApp2Config {
   };
   contexts: FileContext[];
   tool_sets: AnyToolset[];
+  input_attachment_types?: string[];
+  max_input_attachments?: number;
 }
 
 export function isDialDeploymentToolset(
