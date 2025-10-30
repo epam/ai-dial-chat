@@ -3,7 +3,7 @@ import { AuthUtils } from '../utils/authUtils';
 
 import { BucketApiHelper } from '@/src/testData/api/bucketApiHelper';
 import { DataApiHelper } from '@/src/testData/api/dataApiHelper';
-import { APIRequestContext } from '@playwright/test';
+import { APIRequestContext, request } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -107,9 +107,6 @@ export class DebugAuth {
     }[],
     baseUrl: string,
   ): Promise<{ index: number; authTokens: AuthTokens }[]> {
-    // Import request module dynamically to create new contexts
-    const { request } = await import('@playwright/test');
-
     const authPromises = userCredentials.map(
       async ({ username, password, statePath, index }) => {
         // Create a new request context for each user to avoid conflicts

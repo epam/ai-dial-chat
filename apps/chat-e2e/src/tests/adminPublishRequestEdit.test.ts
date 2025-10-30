@@ -746,24 +746,18 @@ dialAdminTest(
           Attachment.heartImageName,
         );
 
-        conversation =
+        const attachmentConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl1,
             model!,
           );
-
-        conversation.messages.push(
-          {
-            role: Role.User,
-            content: 'Now, give me a simple text response.',
-            model: { id: conversation.model.id },
-          },
-          {
-            role: Role.Assistant,
-            content: 'A simple text response',
-            model: { id: conversation.model.id },
-            responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
-          },
+        conversationData.resetData();
+        const textConversation =
+          conversationData.prepareDefaultConversation(model);
+        conversationData.resetData();
+        conversation = conversationData.prepareHistoryConversation(
+          attachmentConversation,
+          textConversation,
         );
         await dataInjector.createConversations([conversation]);
 
@@ -780,9 +774,6 @@ dialAdminTest(
           publication,
           mockResponseImageUrl,
         );
-        // await adminFileApiHelper.deleteFromAllFiles(
-        //   mockResponseImageUrl,
-        // );
 
         await adminLocalStorageManager.setShowSideBarPanels();
       },
@@ -799,6 +790,7 @@ dialAdminTest(
         await adminPublishingApprovalModal.goToEntityReview();
       },
     );
+
     await dialAdminTest.step('Toggle edit mode', async () => {
       await adminPublicationReviewControl.editButton.click();
       await adminDialHomePage.mockChatImageResponse(
@@ -833,6 +825,7 @@ dialAdminTest(
         await adminChatMessages.getChatMessageClipIcon(3).click();
         await adminAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
         );
         await adminAttachFilesModal.checkAttachedFile(
           Attachment.flowerImageName,
@@ -872,6 +865,7 @@ dialAdminTest(
         await adminSendMessage.attachmentMenuTrigger.click();
         await adminAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
+          { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
         );
 
         await adminAttachFilesModal.checkAttachedFile(
@@ -921,30 +915,24 @@ dialAdminTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await organizationConversations.selectEntity(conversation.name);
-        await chatMessagesAssertion.assertMessageDownloadUrl(
-          2,
-          `${API.publicFilesHost()}/${Attachment.cloudImageName}`,
-        );
-        await chatMessagesAssertion.assertMessageDownloadUrl(
-          3,
-          `${API.publicFilesHost()}/${Attachment.flowerImageName}`,
-        );
-        await chatMessagesAssertion.assertMessageDownloadUrl(
-          4,
-          `${API.publicFilesHost()}/${Attachment.heartImageName}`,
-        );
-        await chatMessagesAssertion.assertMessageDownloadUrl(
-          6,
-          `${API.publicFilesHost()}/${Attachment.heartImageName}`,
-        );
-        await chatMessagesAssertion.assertMessageDownloadUrl(
-          7,
-          `${API.publicFilesHost()}/${Attachment.longImageName}`,
-        );
-        await chatMessagesAssertion.assertMessageDownloadUrl(
-          8,
-          `${API.publicFilesHost()}/${Attachment.heartImageName}`,
-        );
+
+        const expectedAttachments: Record<number, string> = {
+          2: Attachment.cloudImageName,
+          3: Attachment.flowerImageName,
+          4: Attachment.heartImageName,
+          6: Attachment.heartImageName,
+          7: Attachment.longImageName,
+          8: Attachment.heartImageName,
+        };
+
+        for (const [messageIndex, attachmentName] of Object.entries(
+          expectedAttachments,
+        )) {
+          await chatMessagesAssertion.assertMessageDownloadUrl(
+            Number(messageIndex),
+            `${API.publicFilesHost()}/${attachmentName}`,
+          );
+        }
       },
     );
 
