@@ -68,6 +68,7 @@ enum WithLogin {
 interface AuthTypeSectionProps {
   type: ToolsetAuthTypes;
   isSelected: boolean;
+  isDisabled?: boolean;
   onClick: (type: ToolsetAuthTypes) => void;
   onWithLoginChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onLogout?: () => void;
@@ -78,6 +79,7 @@ interface AuthTypeSectionProps {
 const AuthTypeSection = ({
   type,
   isSelected,
+  isDisabled,
   onClick,
   onWithLoginChange,
   onLogout,
@@ -96,20 +98,23 @@ const AuthTypeSection = ({
     if (!isSignedIn) onClick(type);
   }, [isSignedIn, onClick, type]);
 
+  const isSectionDisabled = isSelected || isDisabled || isSignedIn;
+
   return (
     <Tooltip
-      hideTooltip={!isSignedIn || isSelected}
+      hideTooltip={!isSignedIn || isSelected || isSectionDisabled}
       tooltip={t('Log out before changing authentication type')}
       triggerClassName="w-full"
     >
       <div className="overflow-hidden rounded bg-layer-3">
-        <div
+        <button
           onClick={handleOnClick}
           className={classNames(
-            'flex gap-3 border-l p-4',
+            'flex w-full gap-3 border-l p-4',
             isSelected ? 'border-accent-primary' : 'border-transparent',
-            !isSelected && !isSignedIn && 'cursor-pointer',
+            isSectionDisabled && 'cursor-not-allowed',
           )}
+          disabled={isSectionDisabled}
         >
           <Icon
             size={18}
@@ -126,7 +131,7 @@ const AuthTypeSection = ({
           >
             {name}
           </span>
-        </div>
+        </button>
 
         {isSelected && type !== ToolsetAuthTypes.NONE && (
           <div className="flex flex-col gap-4 border-t border-tertiary p-4">
@@ -138,6 +143,7 @@ const AuthTypeSection = ({
                 onChange={onWithLoginChange}
                 value={WithLogin.WithLogin}
                 checked={withLogin === WithLogin.WithLogin}
+                disabled={isDisabled}
               />
 
               {type === ToolsetAuthTypes.OAUTH && (
@@ -148,7 +154,7 @@ const AuthTypeSection = ({
                   onChange={onWithLoginChange}
                   value={WithLogin.WithConfig}
                   checked={withLogin === WithLogin.WithConfig}
-                  disabled={isSignedIn}
+                  disabled={isSignedIn || isDisabled}
                 />
               )}
 
@@ -159,7 +165,7 @@ const AuthTypeSection = ({
                 onChange={onWithLoginChange}
                 value={WithLogin.WithoutLogin}
                 checked={withLogin === WithLogin.WithoutLogin}
-                disabled={isSignedIn}
+                disabled={isSignedIn || isDisabled}
               />
             </div>
 
@@ -169,6 +175,7 @@ const AuthTypeSection = ({
                 type={type}
                 toolset={toolsetDetails}
                 onLogout={onLogout}
+                disabled={isDisabled}
               />
             )}
           </div>
@@ -188,7 +195,11 @@ const getWithLoginInitialValue = (formData: ToolsetEditorForm) => {
   return WithLogin.WithLogin;
 };
 
-export const AuthField = () => {
+interface AuthFieldProps {
+  isDisabled?: boolean;
+}
+
+export const AuthField = ({ isDisabled }: AuthFieldProps) => {
   const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
 
@@ -300,6 +311,7 @@ export const AuthField = () => {
         render={({ field }) => (
           <>
             <AuthTypeSection
+              isDisabled={isDisabled}
               type={ToolsetAuthTypes.OAUTH}
               isSelected={field.value === ToolsetAuthTypes.OAUTH}
               onClick={handleSelectAuthType}
@@ -309,6 +321,7 @@ export const AuthField = () => {
               withLogin={withLogin}
             />
             <AuthTypeSection
+              isDisabled={isDisabled}
               type={ToolsetAuthTypes.API_KEY}
               isSelected={field.value === ToolsetAuthTypes.API_KEY}
               onClick={handleSelectAuthType}
@@ -318,6 +331,7 @@ export const AuthField = () => {
               withLogin={withLogin}
             />
             <AuthTypeSection
+              isDisabled={isDisabled}
               type={ToolsetAuthTypes.NONE}
               isSelected={field.value === ToolsetAuthTypes.NONE}
               onClick={handleSelectAuthType}
