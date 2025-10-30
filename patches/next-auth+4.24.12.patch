@@ -12,7 +12,7 @@ index 52c51eb..6842b60 100644
    const provider = options.provider;
 -  if (provider.httpOptions) _openidClient.custom.setHttpOptionsDefaults(provider.httpOptions);
 +  let httpOptions = {};
-+  if (provider.httpOptions){ 
++  if (provider.httpOptions){
 +    httpOptions = { ...provider.httpOptions };
 +  if (process.env.http_proxy) {
 +    httpOptions.agent = new HttpsProxyAgent(process.env.http_proxy);
