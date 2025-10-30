@@ -144,10 +144,6 @@ dialAdminTest(
       async () => {
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
-        await adminApproveRequiredPromptsAssertion.assertFolderState(
-          { name: publishRequestName },
-          'visible',
-        );
         await adminApproveRequiredPrompts.selectRequest(publishRequestName);
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: publishRequestName,
@@ -212,7 +208,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Find published app on the "Marketplace" and verify external icon is displayed on the card and has tooltip',
+      'Find published app on the "Marketplace" and verify external app sign is displayed on the card and has tooltip',
       async () => {
         await adminMarketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
@@ -238,7 +234,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Open the card and verify the external link is displayed',
+      'Open the card and verify "Open in new tab" button is displayed',
       async () => {
         await agentElement.click();
         await baseAssertion.assertElementState(
@@ -302,15 +298,21 @@ dialAdminTest(
       async () => {
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
-        await adminApproveRequiredPromptsAssertion.assertFolderState(
-          { name: unpublishRequestName },
-          'visible',
-        );
         await adminApproveRequiredPrompts.selectRequest(unpublishRequestName);
         await adminPublishingApprovalModalAssertion.assertElementState(
           adminPublishingApprovalModal,
           'visible',
         );
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          requestName: unpublishRequestName,
+          publishToLabel: 'visible',
+          publishTo: PublishPath.Organization,
+          authorLabel: 'visible',
+          author: defaultAuthor,
+          publicAuthorLabel: 'hidden',
+          requestCreatedLabel: 'visible',
+          requestCreated: publishApiModels.response,
+        });
         await adminAppToApproveAssertion.assertEntityToPublish(
           { name: appEntity.name },
           {

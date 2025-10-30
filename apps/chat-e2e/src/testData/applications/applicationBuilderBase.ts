@@ -1,16 +1,28 @@
 import { ApiApplicationModelBase } from '@/chat/types/applications';
 import { QuickAppConfig } from '@/chat/types/quick-apps';
+import { ExpectedConstants } from '@/src/testData';
+import { GeneratorUtil } from '@/src/utils';
+import { webcrypto } from 'node:crypto';
 
-export abstract class ApplicationBuilderBase<
-  T extends ApiApplicationModelBase,
-> {
+export class ApplicationBuilderBase<T extends ApiApplicationModelBase> {
   protected application: T;
 
   constructor() {
     this.application = this.reset();
   }
 
-  protected abstract reset(): T;
+  protected reset(): T {
+    this.application = {
+      display_name: GeneratorUtil.randomString(7),
+      display_version: ExpectedConstants.defaultAppVersion,
+      icon_url: '',
+      description: '',
+      input_attachment_types: [],
+      description_keywords: [],
+      reference: webcrypto.randomUUID(),
+    } as unknown as T;
+    return this.application;
+  }
 
   withDisplayName(displayName: string): this {
     this.application.display_name = displayName;
