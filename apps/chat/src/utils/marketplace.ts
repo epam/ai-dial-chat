@@ -51,7 +51,7 @@ export const getEntityStatus = (
   const isInvalid = !entity;
 
   if (isInvalid) {
-    return { isInvalid: true, isLoggedOut: false, isError: true };
+    return { isInvalid, isLoggedOut: false, isError: true };
   }
 
   if (
@@ -68,13 +68,13 @@ export const getEntityStatus = (
     const isLoggedOut = !isSignedIn;
 
     return {
-      isInvalid: false,
-      isLoggedOut: isLoggedOut,
+      isInvalid,
+      isLoggedOut,
       isError: isLoggedOut,
     };
   }
 
-  return { isInvalid: false, isLoggedOut: false, isError: false };
+  return { isInvalid, isLoggedOut: false, isError: false };
 };
 
 // Filter checkers
