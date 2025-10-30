@@ -15,6 +15,7 @@ export interface AuthTokens {
   models?: string;
   themes?: string;
   recentModels?: string;
+  appSchemas?: string;
 }
 
 export class DebugAuth {

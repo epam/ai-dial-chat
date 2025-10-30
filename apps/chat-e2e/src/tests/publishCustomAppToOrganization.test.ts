@@ -198,7 +198,9 @@ dialAdminTest(
       await adminPublishedApplicationReviewModal
         .getPublicationReviewControl()
         .backToPublicationRequest();
-      await adminPublishingApprovalModal.approveRequest();
+      await adminPublishingApprovalModal.approveRequest({
+        isModelsListRetrieved: true,
+      });
       await adminApproveRequiredConversationsAssertion.assertFolderState(
         { name: requestName },
         'hidden',

@@ -44,9 +44,10 @@ test('Debug authenticate all users in parallel', async () => {
 
       // Store additional data for first worker only
       if (index < numWorkers) {
-        process.env.MODELS = authTokens.models ?? '[]';
-        process.env.THEMES = authTokens.themes ?? '[]';
-        process.env.RECENT_MODELS = authTokens.recentModels ?? '[]';
+        process.env.MODELS = authData.models ?? '[]';
+        process.env.THEMES = authData.themes ?? '[]';
+        process.env.APP_SCHEMAS = authData.appSchemas ?? '[]';
+        process.env.RECENT_MODELS = authData.recentModels ?? '[]';
       }
     });
   } catch (error) {
