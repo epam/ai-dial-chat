@@ -322,16 +322,11 @@ export const CodeEditorView = ({
 interface Props {
   sourcesFolderId: string | undefined;
   readOnly?: boolean;
-  sidebarDefaultOpen?: boolean;
 }
 
 const ALLOWED_PRE_UPLOAD_DIALOG_TYPES = ['*/*'];
 
-export const CodeEditor = ({
-  sourcesFolderId,
-  readOnly,
-  sidebarDefaultOpen = true,
-}: Props) => {
+export const CodeEditor = ({ sourcesFolderId, readOnly }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -353,7 +348,7 @@ export const CodeEditor = ({
   const [uploadFolderId, setUploadFolderId] = useState<string>();
   const [deletingFileId, setDeletingFileId] = useState<string>();
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(sidebarDefaultOpen);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const { rootFiles, rootFolders } = useMemo(() => {
     if (sourcesFolderId) {
