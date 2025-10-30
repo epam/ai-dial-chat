@@ -36,7 +36,7 @@ export const PromptsView: FC<Props> = ({ prompts }) => {
   );
 
   const promptsToDisplay = useMemo(() => {
-    return prompts.reverse().slice(0, visibleSidebarItemsCount);
+    return [...prompts].reverse().slice(0, visibleSidebarItemsCount);
   }, [prompts, visibleSidebarItemsCount]);
 
   if (!promptsToDisplay.length) {
