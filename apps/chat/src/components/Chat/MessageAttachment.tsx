@@ -43,7 +43,7 @@ interface AttachmentDataRendererProps {
   isInner?: boolean;
 }
 
-const getSourcedataUrl = (attachment: Attachment): string | undefined => {
+const getSourceDataUrl = (attachment: Attachment): string | undefined => {
   if (attachment.data) {
     return `data:${attachment.type};base64,${attachment.data}`;
   }
@@ -53,7 +53,7 @@ const getSourcedataUrl = (attachment: Attachment): string | undefined => {
 const AttachmentSourceRenderer = ({
   attachment,
 }: AttachmentDataRendererProps) => {
-  return <source src={getSourcedataUrl(attachment)} type={attachment.type} />;
+  return <source src={getSourceDataUrl(attachment)} type={attachment.type} />;
 };
 
 const AttachmentDataRenderer = ({
@@ -82,7 +82,7 @@ const AttachmentDataRenderer = ({
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
       <img
-        src={getSourcedataUrl(attachment)}
+        src={getSourceDataUrl(attachment)}
         className="m-0 aspect-auto w-full"
         alt="Attachment image"
       />
