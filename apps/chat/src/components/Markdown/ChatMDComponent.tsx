@@ -27,7 +27,8 @@ import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
-import { isObject, partition } from 'lodash-es';
+import isObject from 'lodash-es/isObject';
+import partition from 'lodash-es/partition';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';

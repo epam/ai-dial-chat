@@ -14,7 +14,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getMessageCustomContent } from '@/src/utils/server/chat';
+import { getMessageCustomContent } from '@/src/utils/app/conversation';
 
 import { Translation } from '@/src/types/translation';
 
