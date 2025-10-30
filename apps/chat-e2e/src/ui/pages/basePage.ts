@@ -93,6 +93,7 @@ export class BasePage {
         { apiMethod: 'GET', urlPattern: API.modelsHost },
         { apiMethod: 'GET', urlPattern: API.bucketHost },
         { apiMethod: 'GET', urlPattern: API.themesListingHost },
+        { apiMethod: 'GET', urlPattern: API.appSchemasHost },
       ];
     } else {
       expectedApiResponses = [

@@ -13,6 +13,7 @@ export class DataApiHelper extends BaseApiHelper {
     const endpoints = [
       { key: 'models', url: API.modelsHost },
       { key: 'themes', url: API.themesListingHost },
+      { key: 'appSchemas', url: API.appSchemasHost },
     ];
 
     const data: Partial<AuthTokens> = {};

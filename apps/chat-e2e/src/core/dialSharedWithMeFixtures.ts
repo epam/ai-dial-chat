@@ -42,6 +42,7 @@ import {
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
+  TooltipAssertion,
 } from '@/src/assertions';
 import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
@@ -80,6 +81,7 @@ import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marke
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
+import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
@@ -173,6 +175,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAgentDetailsModalAssertion: AgentDetailsModalAssertion;
   additionalShareUserMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
+  additionalShareUserTooltip: Tooltip;
+  additionalShareUserTooltipAssertion: TooltipAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -922,6 +926,19 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserConversationDropdownMenuAssertion =
       new MenuAssertion(additionalShareUserConversationDropdownMenu);
     await use(additionalShareUserConversationDropdownMenuAssertion);
+  },
+  additionalShareUserTooltip: async ({ additionalShareUserPage }, use) => {
+    const additionalShareUserTooltip = new Tooltip(additionalShareUserPage);
+    await use(additionalShareUserTooltip);
+  },
+  additionalShareUserTooltipAssertion: async (
+    { additionalShareUserTooltip },
+    use,
+  ) => {
+    const additionalShareUserTooltipAssertion = new TooltipAssertion(
+      additionalShareUserTooltip,
+    );
+    await use(additionalShareUserTooltipAssertion);
   },
 });
 

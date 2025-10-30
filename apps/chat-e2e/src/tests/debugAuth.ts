@@ -34,6 +34,7 @@ usernames.forEach((username, index) => {
       if (index < numWorkers) {
         process.env.MODELS = authData.models ?? '[]';
         process.env.THEMES = authData.themes ?? '[]';
+        process.env.APP_SCHEMAS = authData.appSchemas ?? '[]';
         process.env.RECENT_MODELS = authData.recentModels ?? '[]';
       }
     } catch (error) {

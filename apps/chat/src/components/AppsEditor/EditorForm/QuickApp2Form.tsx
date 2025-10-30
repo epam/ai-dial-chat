@@ -281,8 +281,6 @@ export const QuickApp2Form = () => {
         label={t('Max. attachments number')}
         placeholder={t('Enter the maximum number of attachments')}
         id="maxInputAttachments"
-        type="number"
-        min="0"
         error={errors.maxInputAttachments?.message}
         control={control}
         name="maxInputAttachments"
