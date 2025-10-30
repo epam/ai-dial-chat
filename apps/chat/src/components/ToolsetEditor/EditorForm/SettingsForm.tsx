@@ -132,7 +132,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         )}
         className="pt-4"
       >
-        <AuthField />
+        <AuthField isDisabled={isToolsetPublic} />
       </FormSection>
 
       <FormSection
