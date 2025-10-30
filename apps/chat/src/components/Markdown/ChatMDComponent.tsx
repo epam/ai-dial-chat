@@ -27,7 +27,8 @@ import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
-import { isObject, partition } from 'lodash-es';
+import isObject from 'lodash-es/isObject';
+import partition from 'lodash-es/partition';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -53,7 +54,7 @@ const getMDComponents = (
 ): Components => {
   return {
     code({ inline, className, children, ...props }) {
-      if (children.length) {
+      if (children?.length) {
         if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
@@ -101,12 +102,12 @@ const getMDComponents = (
       );
     },
     p({ children, className }) {
-      if (children.length) {
+      if (children?.length) {
         if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
       }
-      if (children[0] == modelCursorSignWithBackquote) {
+      if (children?.[0] == modelCursorSignWithBackquote) {
         children[0] = replaceCursor(children[0] as string);
       }
       return (

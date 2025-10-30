@@ -48,11 +48,13 @@ import {
   isApplicationId,
   isConversationId,
   isFileId,
+  isPromptId,
   isRootId,
   isToolsetId,
 } from './id';
 
 import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 
 export const isEntityIdPublic = (
   entity: { id: string },
@@ -296,15 +298,13 @@ export const getReviewItems = (
   resourcesToReview: ResourceToReview[],
   isItemId: (id: string) => boolean,
 ) => {
-  const toReview = resourcesToReview.filter(
-    (r) =>
-      !r.reviewed &&
-      r.publicationUrl === publication.url &&
-      isItemId(r.reviewUrl),
+  const reviewed = sortBy(
+    resourcesToReview.filter(
+      (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
+    ),
+    (r) => r.sourceUrl.toLowerCase(),
   );
-  const reviewed = resourcesToReview.filter(
-    (r) => r.publicationUrl === publication.url && isItemId(r.reviewUrl),
-  );
+  const toReview = reviewed.filter((r) => !r.reviewed);
 
   return { toReview, reviewed };
 };
@@ -521,3 +521,53 @@ export function isFolderNameNotUniq(
     })
   );
 }
+
+export const getNewTargetUrlFromEditState = (
+  reviewUrl: string,
+  resourceEditState: {
+    name: string;
+    version: string;
+  },
+  foldersEditState: FolderEditTree,
+  targetFolder: string,
+  editedPublishToUrl: string,
+  action: PublishActions,
+) => {
+  // calculate new folderId
+  const folderSegments = getFolderIdFromEntityId(reviewUrl).split('/');
+  const newFolderSegments: string[] = [];
+  let currentFolder = foldersEditState as FolderNode;
+  folderSegments.forEach((segment, i) => {
+    currentFolder = currentFolder[segment] as FolderNode;
+    newFolderSegments.push(
+      // prepare name if it's not root path segments
+      i > 1
+        ? prepareEntityName(currentFolder[EDITED_FOLDER_NAME_KEY])
+        : currentFolder[EDITED_FOLDER_NAME_KEY],
+    );
+  });
+
+  if (action !== PublishActions.DELETE) {
+    newFolderSegments[1] = targetFolder;
+  }
+
+  let newFolderId = newFolderSegments.join('/');
+  newFolderId = newFolderId.replace(targetFolder, editedPublishToUrl);
+
+  // get new api key
+  const newApiKey = regenerateApiKeyNameAndVersionParts(
+    reviewUrl,
+    resourceEditState.name.trim(),
+    resourceEditState.version.trim(),
+  );
+
+  return constructPath(newFolderId, newApiKey);
+};
+
+export const orderByType = (id: string) => {
+  if (isConversationId(id)) return 1;
+  if (isPromptId(id)) return 2;
+  if (isApplicationId(id)) return 3;
+  if (isToolsetId(id)) return 4;
+  return 5;
+};
