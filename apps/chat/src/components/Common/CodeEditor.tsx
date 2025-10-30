@@ -325,6 +325,8 @@ interface Props {
   sidebarDefaultOpen?: boolean;
 }
 
+const ALLOWED_PRE_UPLOAD_DIALOG_TYPES = ['*/*'];
+
 export const CodeEditor = ({
   sourcesFolderId,
   readOnly,
@@ -520,6 +522,17 @@ export const CodeEditor = ({
     [],
   );
 
+  const handleUploadFilesClose = useCallback(() => {
+    setUploadFolderId(undefined);
+  }, []);
+
+  const handleSelectFile = useCallback(
+    (file: DialFile) => {
+      dispatch(CodeEditorActions.setSelectedFileId(file.id));
+    },
+    [dispatch],
+  );
+
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
     [isFullScreen],
@@ -555,7 +568,7 @@ export const CodeEditor = ({
                 <Folder
                   maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                   key={folder.id}
-                  searchTerm={''}
+                  searchTerm=""
                   onFileUpload={handleUploadFile}
                   currentFolder={folder}
                   allFolders={folders}
@@ -568,10 +581,8 @@ export const CodeEditor = ({
                     <CodeEditorFile
                       isModified={modifiedFileIds.includes(props.item.id)}
                       level={props.level}
-                      file={props.item as DialFile}
-                      onSelectFile={(file) =>
-                        dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                      }
+                      file={props.item}
+                      onSelectFile={handleSelectFile}
                       isHighlighted={selectedFileId === props.item.id}
                       onDeleteFile={setDeletingFileId}
                       onSave={handleSaveFiles}
@@ -588,9 +599,7 @@ export const CodeEditor = ({
                 isModified={modifiedFileIds.includes(file.id)}
                 key={file.id}
                 file={file}
-                onSelectFile={(file) =>
-                  dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                }
+                onSelectFile={handleSelectFile}
                 isHighlighted={selectedFileId === file.id}
                 onDeleteFile={setDeletingFileId}
                 onSave={handleSaveFiles}
@@ -737,10 +746,10 @@ export const CodeEditor = ({
           <PreUploadDialog
             uploadFolderId={uploadFolderId}
             isOpen
-            allowedTypes={['*/*']}
+            allowedTypes={ALLOWED_PRE_UPLOAD_DIALOG_TYPES}
             initialFilesSelect
             onUploadFiles={handleUploadFiles}
-            onClose={() => setUploadFolderId(undefined)}
+            onClose={handleUploadFilesClose}
             maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
             rootFolderId={sourcesFolderId}
           />
