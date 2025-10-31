@@ -9,5 +9,5 @@ export * from './folders/folderData';
 export * from './types';
 export * from './publishing/publishRequestBuilder';
 export * from './overlay/overlaySandboxUrls';
-export * from './customApplications/customApplicationBuilder';
+export * from './applications/customApplicationBuilder';
 export * from './marketplace/marketplaceUrlBuilder';
