@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -53,6 +53,8 @@ export const ToolsetEditor = () => {
 
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
   const saveAndExitRef = useRef<Routes.Chat | Routes.Marketplace | null>(null);
+
+  const [isExiting, setIsExiting] = useState(false);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -154,6 +156,8 @@ export const ToolsetEditor = () => {
       const chatUrl =
         (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
 
+      setIsExiting(true);
+
       if ((!isDirty && toolsetDetails) || !toolsetDetails) {
         const marketplaceWithToolsetRoute = {
           ...marketplaceRoute,
@@ -236,6 +240,7 @@ export const ToolsetEditor = () => {
           currentStep={editorStep}
           onNextClick={handleNextClick}
           currentToolset={toolsetDetails}
+          disableLoader={isExiting}
         />
       </div>
     </FormProvider>
