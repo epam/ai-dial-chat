@@ -188,6 +188,8 @@ export const QuickApp2Schema = zodValidation.object({
   model: zodValidation.string(),
   agentsAndToolsets: zodValidation.array(zodValidation.string()),
   codeInterpreter: zodValidation.boolean(),
+  inputAttachmentTypes: AttachmentTypesSchema,
+  maxInputAttachments: MaxInputAttachmentsSchema.optional(),
 });
 export type QuickApp2Form = zodValidation.infer<typeof QuickApp2Schema>;
 
@@ -336,6 +338,8 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
       appProperties?.tool_sets?.some(
         (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
       ) ?? false,
+    inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
+    maxInputAttachments: app?.maxInputAttachments ?? undefined,
   };
 };
 
@@ -647,6 +651,10 @@ export const getApplicationPayload = ({
     case AppsEditorSchemaTypes.QuickApp2:
       return {
         ...generalData,
+        inputAttachmentTypes: data.inputAttachmentTypes,
+        maxInputAttachments: data.maxInputAttachments
+          ? Number(data.maxInputAttachments)
+          : undefined,
         applicationProperties: {
           orchestrator: {
             deployment: {

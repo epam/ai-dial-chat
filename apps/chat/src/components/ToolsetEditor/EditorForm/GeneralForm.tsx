@@ -1,8 +1,6 @@
 import { FormEvent, useCallback, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { useRouter } from 'next/router';
-
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -10,6 +8,7 @@ import { topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
 
 import { ScreenState } from '@/src/types/common';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { FilesSelectors } from '@/src/store/files/files.selectors';
@@ -19,7 +18,6 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
-import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -35,12 +33,16 @@ const TopicsSelector = withLabel(DropdownSelector);
 
 interface GeneralFormProps {
   onNextClick: (e: React.FormEvent<HTMLFormElement>) => void;
+  toolset: ToolsetModel | undefined;
+  isToolsetPublic: boolean;
 }
 
-export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
+export const GeneralForm = ({
+  onNextClick,
+  toolset,
+  isToolsetPublic,
+}: GeneralFormProps) => {
   const { t } = useTranslation(Translation.Common);
-  const router = useRouter();
-  const { [ToolsetEditorQuery.Id]: id } = router.query;
 
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -50,7 +52,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
 
   const screenState = useScreenState();
   const isMobileView = screenState === ScreenState.SM;
-  const isEditing = !!id?.toString();
+  const isEditing = !!toolset;
 
   const {
     register,
@@ -82,6 +84,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           mandatory
           placeholder={t('Type name')}
           id="name"
+          disabled={isToolsetPublic}
           error={errors.name?.message}
         />
         <Field
@@ -91,6 +94,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           mandatory
           placeholder={DEFAULT_VERSION}
           id="version"
+          disabled={isToolsetPublic}
           error={errors.version?.message}
           name="version"
         />
@@ -109,6 +113,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               fileManagerModalTitle="Select toolset icon"
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
+              disabled={isToolsetPublic}
             />
           )}
         />
@@ -122,6 +127,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           rows={3}
           className="resize-none"
           id="description"
+          disabled={isToolsetPublic}
         />
         <Controller
           name="topics"
@@ -138,6 +144,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               isMulti
               isClearable
               menuPlacement={isMobileView ? 'top' : 'auto'}
+              isDisabled={isToolsetPublic}
             />
           )}
         />

@@ -8,7 +8,9 @@ import {
 
 import { constructPath } from './shared-utils';
 
-import { groupBy, omit, uniqBy } from 'lodash-es';
+import groupBy from 'lodash-es/groupBy';
+import omit from 'lodash-es/omit';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
   if (entity.id === entity.reference) {
