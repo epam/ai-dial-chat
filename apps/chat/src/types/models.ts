@@ -44,7 +44,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
     folder_attachments?: boolean;
     allow_resume?: boolean;
     configuration?: boolean;
-    toolsSupported?: boolean;
+    tools?: boolean;
   };
   application_type_schema_id?: string;
   tokenizer_model?: TokenizerModel;
@@ -65,7 +65,7 @@ export interface DialAIEntityFeatures {
   folderAttachments: boolean;
   allowResume: boolean;
   configuration: boolean;
-  toolsSupported: boolean;
+  tools: boolean;
 }
 
 export interface DialAIEntity {
