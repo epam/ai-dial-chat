@@ -173,7 +173,7 @@
     "playwright-chromium": "^1.55.1"
   },
   "overrides": {
-    "esbuild": "0.25.10",
+    "esbuild": "0.25.11",
     "tmp": "0.2.5",
     "koa": "3.0.3",
     "@module-federation/node": "2.7.14",
