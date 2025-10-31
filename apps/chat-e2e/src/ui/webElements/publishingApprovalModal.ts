@@ -141,12 +141,25 @@ export class PublishingApprovalModal extends BaseElement {
     PublishingApprovalModalSelectors.duplicatedPublishing,
   );
 
-  public async approveRequest() {
+  public async approveRequest({
+    isModelsListRetrieved = false,
+  }: { isModelsListRetrieved?: boolean } = {}) {
+    const respPromises = [];
     const responsePromise = this.page.waitForResponse((r) =>
       r.request().url().includes(API.publicationRequestApproval),
     );
+    respPromises.push(responsePromise);
+    if (isModelsListRetrieved) {
+      const responsePromise = this.page.waitForResponse(
+        (r) =>
+          r.request().method() === 'GET' &&
+          r.url().includes(API.modelsHost) &&
+          r.ok(),
+      );
+      respPromises.push(responsePromise);
+    }
     await this.approveButton.click();
-    await responsePromise;
+    await Promise.all(respPromises);
   }
 
   public async goToEntityReview({

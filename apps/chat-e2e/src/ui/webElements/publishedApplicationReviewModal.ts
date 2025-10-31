@@ -1,4 +1,4 @@
-import { ReviewApplicationDialog } from '@/src/ui/selectors';
+import { IconSelectors, ReviewApplicationDialog } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator } from '@playwright/test';
@@ -41,7 +41,19 @@ export class PublishedApplicationReviewModal extends BaseElement {
   public maxAttachmentsNumber = this.getChildElementBySelector(
     ReviewApplicationDialog.maxAttachmentsNumber,
   );
+  public completionUrlLabel = this.getChildElementBySelector(
+    ReviewApplicationDialog.completionUrlLabel,
+  );
   public completionUrl = this.getChildElementBySelector(
     ReviewApplicationDialog.completionUrl,
+  );
+  public externalUrlLabel = this.getChildElementBySelector(
+    ReviewApplicationDialog.externalUrlLabel,
+  );
+  public externalUrl = this.getChildElementBySelector(
+    ReviewApplicationDialog.externalUrl,
+  );
+  public externalUrlIcon = this.externalUrl.getChildElementBySelector(
+    IconSelectors.externalAppIcon,
   );
 }
