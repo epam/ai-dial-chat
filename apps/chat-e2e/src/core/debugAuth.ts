@@ -3,7 +3,7 @@ import { AuthUtils } from '../utils/authUtils';
 
 import { BucketApiHelper } from '@/src/testData/api/bucketApiHelper';
 import { DataApiHelper } from '@/src/testData/api/dataApiHelper';
-import { APIRequestContext } from '@playwright/test';
+import { APIRequestContext, request } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -93,5 +93,46 @@ export class DebugAuth {
 
     fs.writeFileSync(statePath, JSON.stringify(storageState, null, 2));
     return authTokens;
+  }
+
+  /**
+   * Authenticates multiple users in parallel and saves their storage states
+   */
+  static async authenticateAllUsersInParallel(
+    userCredentials: {
+      username: string;
+      password: string;
+      statePath: string;
+      index: number;
+    }[],
+    baseUrl: string,
+  ): Promise<{ index: number; authTokens: AuthTokens }[]> {
+    const authPromises = userCredentials.map(
+      async ({ username, password, statePath, index }) => {
+        // Create a new request context for each user to avoid conflicts
+        const requestContext = await request.newContext({
+          baseURL: baseUrl,
+        });
+
+        const debugAuth = new DebugAuth(requestContext, baseUrl);
+
+        try {
+          const authTokens = await debugAuth.authenticateAndSaveState(
+            username,
+            password,
+            statePath,
+          );
+          await requestContext.dispose();
+          return { index, authTokens };
+        } catch (error) {
+          await requestContext.dispose();
+          throw new Error(
+            `Authentication failed for user ${username} (index ${index}): ${error}`,
+          );
+        }
+      },
+    );
+
+    return Promise.all(authPromises);
   }
 }
