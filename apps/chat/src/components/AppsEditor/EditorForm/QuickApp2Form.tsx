@@ -59,6 +59,13 @@ export const QuickApp2Form = () => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
 
+  const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
+
+  const toolSupportingModels = useMemo(
+    () => modelTypeAgents.filter((model) => model.features?.toolsSupported),
+    [modelTypeAgents],
+  );
+
   const allEntitiesMap = useMemo(
     () => ({
       ...modelsMap,
@@ -128,6 +135,7 @@ export const QuickApp2Form = () => {
             error={errors.model?.message}
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+            models={toolSupportingModels}
           />
         )}
       />
@@ -191,8 +199,6 @@ export const QuickApp2Form = () => {
         label={t('Max. attachments number')}
         placeholder={t('Enter the maximum number of attachments')}
         id="maxInputAttachments"
-        type="number"
-        min="0"
         error={errors.maxInputAttachments?.message}
         control={control}
         name="maxInputAttachments"
