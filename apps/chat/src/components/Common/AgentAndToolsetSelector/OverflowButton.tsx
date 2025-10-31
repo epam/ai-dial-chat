@@ -86,14 +86,13 @@ export const OverflowButton = <T,>({
         className={classNames(
           'box-border flex h-[34px] shrink-0 cursor-pointer items-center rounded border px-3 py-1.5 transition-colors',
           {
-            'bg-error text-error': hasErrorInHiddenItems,
+            'bg-error text-error hover:border-error': hasErrorInHiddenItems,
             'border-error': hasErrorInHiddenItems && isOpen,
-            'hover:border-error': hasErrorInHiddenItems,
             'border-transparent': !isOpen,
 
-            'bg-accent-primary-alpha text-primary': !hasErrorInHiddenItems,
+            'bg-accent-primary-alpha text-primary hover:border-accent-primary':
+              !hasErrorInHiddenItems,
             'border-accent-primary': !hasErrorInHiddenItems && isOpen,
-            'hover:border-accent-primary': !hasErrorInHiddenItems,
             'border-secondary': !hasErrorInHiddenItems && !isOpen,
           },
         )}
