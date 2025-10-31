@@ -114,12 +114,24 @@ export class ModelsUtil {
     );
   }
 
-  public static getLatestModelsWithAttachment(excludeSlowModels = true) {
-    return ModelsUtil.getLatestModels(excludeSlowModels).filter(
-      (m) =>
-        m.inputAttachmentTypes !== undefined &&
-        m.inputAttachmentTypes.length > 0,
-    );
+  public static getLatestModelsWithAttachment(
+    excludeSlowModels = true,
+    attachmentTypes?: string[],
+  ): DialAIEntityModel[] {
+    return ModelsUtil.getLatestModels(excludeSlowModels).filter((model) => {
+      // Early return if model doesn't support attachments
+      if (!model.inputAttachmentTypes?.length) {
+        return false;
+      }
+      // If no specific types requested, any attachment support is sufficient
+      if (!attachmentTypes?.length) {
+        return true;
+      }
+      // Check if model supports any of the requested attachment types
+      return model.inputAttachmentTypes.some((supportedType) =>
+        attachmentTypes.includes(supportedType),
+      );
+    });
   }
 
   public static getApplication(appId: string) {
