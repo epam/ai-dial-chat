@@ -10,11 +10,10 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
-  responseIdPrefix,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { PublishActions, Role } from '@epam/ai-dial-shared';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
