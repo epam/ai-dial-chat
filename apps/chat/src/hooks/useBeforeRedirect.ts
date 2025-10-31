@@ -21,8 +21,8 @@ export const useBeforeRedirect = (
       }
     };
 
-    router.events.on('routeChangeStart', redirectHandler);
+    router.events.on('routeChangeComplete', redirectHandler);
 
-    return () => router.events.off('routeChangeStart', redirectHandler);
+    return () => router.events.off('routeChangeComplete', redirectHandler);
   }, [callback, match, router.events]);
 };

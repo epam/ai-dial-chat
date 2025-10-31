@@ -28,6 +28,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import {
   isApplicationType,
+  navigateAndThen,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
@@ -75,6 +76,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
@@ -336,19 +338,22 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   iif(
-                    () => !!payload.isSaveAndExit || !!payload.redirectUrl,
-                    of(
-                      ApplicationActions.exitEditor({
-                        redirectUrl: payload.redirectUrl,
-                        shouldSelectApplication:
-                          payload.shouldSelectApplication,
-                      }),
-                    ),
+                    () => !!payload.tabToOpen,
+                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
                     EMPTY,
                   ),
                   iif(
-                    () => !!payload.tabToOpen,
-                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
+                    () => !!payload.isSaveAndExit || !!payload.redirectUrl,
+                    concat(
+                      of(MarketplaceActions.setShowLoader(true)),
+                      of(
+                        ApplicationActions.exitEditor({
+                          redirectUrl: payload.redirectUrl,
+                          shouldSelectApplication:
+                            payload.shouldSelectApplication,
+                        }),
+                      ),
+                    ),
                     EMPTY,
                   ),
                 );
@@ -747,37 +752,11 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       const publicationUrl = query[AppsEditorQuery.PublicationUrl];
       const reference = query[AppsEditorQuery.Id];
 
-      if (payload.redirectUrl) {
-        router.push({
-          pathname: payload.redirectUrl,
-          query:
-            payload.redirectUrl === Routes.Marketplace
-              ? {
-                  tab: MarketplaceTabs.MY_WORKSPACE,
-                }
-              : undefined,
-        });
-      } else if (publicationUrl) {
-        router.push({
-          pathname: Routes.Chat,
-        });
-        return concat(
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: [],
-            }),
-          ),
-          of(PublicationActions.setIsApplicationReview(true)),
-        );
-      } else {
-        router.push({
-          pathname: Routes.Marketplace,
-          query: { tab: MarketplaceTabs.MY_WORKSPACE },
-        });
-      }
       const returnConversationIds =
         ApplicationSelectors.selectReturnConversationIds(state$.value);
-      return concat(
+
+      // Shared post-navigation actions for marketplace
+      const marketplaceAfter$ = concat(
         iif(
           () => !!returnConversationIds?.length,
           of(
@@ -805,6 +784,49 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               : undefined,
           ),
         ),
+        of(MarketplaceActions.setShowLoader(false)),
+      );
+
+      if (payload.redirectUrl) {
+        return navigateAndThen(
+          router,
+          {
+            pathname: payload.redirectUrl,
+            query:
+              payload.redirectUrl === Routes.Marketplace
+                ? {
+                    tab: MarketplaceTabs.MY_WORKSPACE,
+                    ...(!!payload.shouldSelectApplication &&
+                      reference && {
+                        [MarketplaceQueryParams.model]: reference,
+                      }),
+                  }
+                : undefined,
+          },
+          marketplaceAfter$,
+        );
+      }
+
+      if (publicationUrl) {
+        return navigateAndThen(
+          router,
+          { pathname: Routes.Chat },
+          concat(
+            of(
+              ConversationsActions.selectConversations({ conversationIds: [] }),
+            ),
+            of(PublicationActions.setIsApplicationReview(true)),
+          ),
+        );
+      }
+
+      return navigateAndThen(
+        router,
+        {
+          pathname: Routes.Marketplace,
+          query: { tab: MarketplaceTabs.MY_WORKSPACE },
+        },
+        marketplaceAfter$,
       );
     }),
   );

@@ -8,8 +8,8 @@ import { getToolsetPayload } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -155,16 +155,27 @@ export const ToolsetEditor = () => {
         (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
 
       if ((!isDirty && toolsetDetails) || !toolsetDetails) {
-        void router.push(chatUrl || marketplaceRoute);
-        dispatch(
-          MarketplaceActions.setDetailsEntity(
-            isCreateRef.current && toolsetDetails?.reference
-              ? {
-                  reference: toolsetDetails?.reference,
-                  type: MarketplaceEntitiesTabs.TOOLSETS,
-                  isSuggested: false,
-                }
-              : undefined,
+        const marketplaceWithToolsetRoute = {
+          ...marketplaceRoute,
+          query: {
+            ...marketplaceRoute.query,
+            ...(isCreateRef.current &&
+              toolsetDetails?.reference && {
+                [MarketplaceQueryParams.toolset]: toolsetDetails.reference,
+              }),
+          },
+        };
+        void router.push(chatUrl || marketplaceWithToolsetRoute).then(() =>
+          dispatch(
+            MarketplaceActions.setDetailsEntity(
+              isCreateRef.current && toolsetDetails?.reference
+                ? {
+                    reference: toolsetDetails?.reference,
+                    type: MarketplaceEntitiesTabs.TOOLSETS,
+                    isSuggested: false,
+                  }
+                : undefined,
+            ),
           ),
         );
         return;

@@ -3,8 +3,10 @@ import {
   Observable,
   catchError,
   concat,
+  concatMap,
   filter,
   forkJoin,
+  from,
   iif,
   map,
   of,
@@ -270,21 +272,8 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       ),
                     );
                   }
-                  if (payload.redirectUrl) {
-                    void router.push({
-                      pathname: payload.redirectUrl,
-                      ...(payload.redirectUrl === Routes.Marketplace && {
-                        query: {
-                          [MarketplaceQueryParams.tab]:
-                            MarketplaceTabs.MY_WORKSPACE,
-                          [MarketplaceQueryParams.entitiesTab]:
-                            MarketplaceEntitiesTabs.TOOLSETS,
-                        },
-                      }),
-                    });
-                  }
 
-                  return concat(
+                  const marketplaceAfter$ = concat(
                     of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
@@ -329,6 +318,24 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       ),
                     ),
                   );
+
+                  if (payload.redirectUrl) {
+                    return from(
+                      router.push({
+                        pathname: payload.redirectUrl,
+                        ...(payload.redirectUrl === Routes.Marketplace && {
+                          query: {
+                            [MarketplaceQueryParams.tab]:
+                              MarketplaceTabs.MY_WORKSPACE,
+                            [MarketplaceQueryParams.entitiesTab]:
+                              MarketplaceEntitiesTabs.TOOLSETS,
+                          },
+                        }),
+                      }),
+                    ).pipe(concatMap(() => marketplaceAfter$));
+                  }
+
+                  return marketplaceAfter$;
                 }),
               ),
             ),
