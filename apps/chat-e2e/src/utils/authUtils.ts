@@ -43,6 +43,9 @@ export class AuthUtils {
       ...(authTokens.recentModels
         ? [{ name: 'recentModels', value: authTokens.recentModels }]
         : []),
+      ...(authTokens.appSchemas
+        ? [{ name: 'appSchemas', value: authTokens.appSchemas }]
+        : []),
     ];
 
     return {

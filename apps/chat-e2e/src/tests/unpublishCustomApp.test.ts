@@ -333,7 +333,9 @@ dialAdminTest(
           reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
           approveButtonState: 'enabled',
         });
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         //TODO: enable when rollback the temp solution https://github.com/epam/ai-dial-chat/pull/2649
         // await adminApproveRequiredConversationsAssertion.assertFolderState(
         //   { name: requestName },
@@ -580,7 +582,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Approve the request and then find the app in the "Marketplace"',
       async () => {
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: requestName },
           'hidden',
@@ -786,7 +790,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Approve the request and then find the app in the "Marketplace"',
       async () => {
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: requestName },
           'hidden',
