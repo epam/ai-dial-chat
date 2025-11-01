@@ -81,7 +81,7 @@ export const QuickApp2Form = () => {
   const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
 
   const toolSupportingModels = useMemo(
-    () => modelTypeAgents.filter((model) => model.features?.toolsSupported),
+    () => modelTypeAgents.filter((model) => model.features?.tools),
     [modelTypeAgents],
   );
 
