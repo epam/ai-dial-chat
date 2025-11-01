@@ -220,7 +220,7 @@ export const QuickApp2Form = () => {
             handleSwitch={field.onChange}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
-            className="flex w-fit items-center gap-2"
+            className="mt-1 flex w-fit items-center gap-2"
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
           />
