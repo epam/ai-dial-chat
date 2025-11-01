@@ -81,7 +81,7 @@ export const mergeFeatures = (
     folder_attachments: folderAttachments = false,
     allow_resume: allowResume = true,
     configuration = false,
-    toolsSupported = true,
+    tools = true,
     ...otherFeatures
   } = features || {};
   return {
@@ -92,7 +92,7 @@ export const mergeFeatures = (
     folderAttachments,
     allowResume,
     configuration,
-    toolsSupported,
+    tools,
     ...otherFeatures,
   };
 };
