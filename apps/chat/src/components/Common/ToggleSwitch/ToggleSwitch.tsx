@@ -1,5 +1,9 @@
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { Translation } from '@/src/types/translation';
+
 import { Tooltip } from '../Tooltip';
 import { ToggleSwitchProps } from './view-props';
 
@@ -28,6 +32,7 @@ export function ToggleSwitch({
   disabled,
   handleSwitch,
 }: ToggleSwitchProps) {
+  const { t } = useTranslation(Translation.Marketplace);
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
     'flex min-w-[50px] shrink-0 items-center gap-1 rounded-full p-1.5 transition-all duration-200',
@@ -53,6 +58,7 @@ export function ToggleSwitch({
           <span className="size-3 rounded-full bg-controls-permanent"></span>
         </label>
       </div>
+      <span>{t('Use to execute custom Python code')}</span>
     </Tooltip>
   );
 }
