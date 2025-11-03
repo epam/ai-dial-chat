@@ -173,7 +173,7 @@
     "playwright-chromium": "^1.55.1"
   },
   "overrides": {
-    "esbuild": "0.25.11",
+    "esbuild": "0.25.12",
     "tmp": "0.2.5",
     "monaco-editor": "0.43.0",
     "@monaco-editor/loader": "1.4.0",
