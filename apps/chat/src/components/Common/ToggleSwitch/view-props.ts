@@ -1,9 +1,9 @@
 export interface ToggleSwitchProps {
   isOn: boolean;
   handleSwitch: () => void;
-  switchOnText?: string | null;
-  switchOFFText?: string | null;
-  additionalText?: string | null;
+  switchOnText?: string;
+  switchOFFText?: string;
+  additionalText?: string;
   className?: string;
   disabled?: boolean;
   tooltip?: string;
