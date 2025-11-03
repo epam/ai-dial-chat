@@ -29,6 +29,7 @@ import {
   allEditedFoldersAreValid,
   getFirstReviewUrl,
   getReviewItems,
+  orderByType,
 } from '@/src/utils/app/publications';
 
 import { ScreenState } from '@/src/types/common';
@@ -67,7 +68,9 @@ import {
   Conversation,
   FeatureType,
   PublishActions,
+  ShareEntity,
 } from '@epam/ai-dial-shared';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -162,7 +165,7 @@ export const PublicationHandlerFooter = ({
     initialState,
   ]);
 
-  const notExistEntities = useMemo(
+  const notExistEntities: ShareEntity[] = useMemo(
     () =>
       [
         ...files,
@@ -317,7 +320,7 @@ export const PublicationHandlerFooter = ({
     dispatch(PublicationActions.setIsEditMode(!isEditMode));
   }, [dispatch, isEditMode]);
 
-  const invalidEntities = useMemo(
+  const invalidEntities: ShareEntity[] = useMemo(
     () =>
       notExistEntities.filter((entity) =>
         publication.resources.some(
@@ -397,7 +400,10 @@ export const PublicationHandlerFooter = ({
     (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);
   const selectedInvalidEntities = useMemo(
     () =>
-      invalidEntities.filter((e) => selectedPublicationItems.includes(e.id)),
+      sortBy(
+        invalidEntities.filter((e) => selectedPublicationItems.includes(e.id)),
+        [(e) => orderByType(e.id), (e) => e.id.toLowerCase()],
+      ),
     [invalidEntities, selectedPublicationItems],
   );
   const isApproveDisabled =

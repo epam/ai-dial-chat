@@ -53,6 +53,10 @@ export const chatSlice = createSlice({
 
     getConfigurationSchema: (
       state,
+      _action: PayloadAction<{ modelId: string }>,
+    ) => state,
+    startConfigurationSchemaUploading: (
+      state,
       { payload }: PayloadAction<{ modelId: string }>,
     ) => {
       state.configurationSchemasLoadingIds.push(payload.modelId);

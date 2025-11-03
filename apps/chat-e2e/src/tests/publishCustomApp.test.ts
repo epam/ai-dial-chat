@@ -346,7 +346,9 @@ dialAdminTest(
           reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
           approveButtonState: 'enabled',
         });
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredConversationsAssertion.assertFolderState(
           { name: requestName },
           'hidden',
