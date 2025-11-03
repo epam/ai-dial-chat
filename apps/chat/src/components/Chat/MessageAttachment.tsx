@@ -44,10 +44,12 @@ interface AttachmentDataRendererProps {
 }
 
 const getSourceDataUrl = (attachment: Attachment): string | undefined => {
+  if (attachment.url) {
+    getMappedAttachmentUrl(attachment.url);
+  }
   if (attachment.data) {
     return `data:${attachment.type};base64,${attachment.data}`;
   }
-  return getMappedAttachmentUrl(attachment.url);
 };
 
 const AttachmentSourceRenderer = ({
@@ -198,7 +200,12 @@ const AttachmentRendererComponent = ({
     selectIsCustomAttachmentTypeSelector,
   );
 
-  if (mappedVisualizers && isCustomAttachmentType && mappedAttachmentUrl) {
+  if (
+    mappedVisualizers &&
+    isCustomAttachmentType &&
+    attachment.url &&
+    mappedAttachmentUrl
+  ) {
     return (
       <VisualizerRenderer
         attachmentUrl={mappedAttachmentUrl}
@@ -208,7 +215,11 @@ const AttachmentRendererComponent = ({
     );
   }
 
-  if (attachmentType === PLOTLY_CONTENT_TYPE && mappedAttachmentUrl) {
+  if (
+    attachmentType === PLOTLY_CONTENT_TYPE &&
+    attachment.url &&
+    mappedAttachmentUrl
+  ) {
     return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
   }
 
