@@ -213,11 +213,14 @@ export const QuickApp2Form = () => {
         render={({ field }) => (
           <ToggleSwitchField
             label={t('Code Interpreter')}
+            info={t(
+              'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
+            )}
             isOn={field.value}
             handleSwitch={field.onChange}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
-            className="flex w-fit"
+            className="mt-1 flex w-fit items-center gap-2"
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
           />

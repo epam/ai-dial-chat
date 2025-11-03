@@ -55,7 +55,7 @@ export const useMarketplaceBannerVisibility = (
 
     if (dataContainer) {
       dataContainer.addEventListener('scroll', handleScroll);
-      resizeObserver.observe(document.body);
+      resizeObserver.observe(dataContainer);
     }
 
     return () => {
