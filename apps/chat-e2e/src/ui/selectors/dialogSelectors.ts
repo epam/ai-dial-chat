@@ -188,6 +188,8 @@ export const PublishingApprovalModalSelectors = {
   rejectButton: '[data-qa="reject"]',
   approveButton: '[data-qa="submit"]',
   duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
+  editButton: '[data-qa="edit"]',
+  updateRequestButton: '[data-qa="update"]',
 };
 
 export const PublishingTreeSelectors = {

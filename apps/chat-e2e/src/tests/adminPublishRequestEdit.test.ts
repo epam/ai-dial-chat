@@ -2,18 +2,11 @@ import { Conversation } from '@/chat/types/chat';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  API,
-  Attachment,
-  ExpectedConstants,
-  ExpectedMessages,
-  MenuOptions,
-  MockedChatApiResponseBodies,
-  UploadMenuOptions,
-} from '@/src/testData';
+import { API, Attachment, ExpectedConstants, ExpectedMessages, MenuOptions, MockedChatApiResponseBodies, UploadMenuOptions } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -951,6 +944,79 @@ dialAdminTest(
             'visible',
           );
         }
+      },
+    );
+  },
+);
+
+dialAdminTest.only(
+  '[Admin view][Edit request]: Rename the chat while edit the request',
+  async ({
+    conversationData,
+    publishRequestBuilder,
+    publicationApiHelper,
+    dataInjector,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    setTestIds,
+    adminLocalStorageManager,
+    adminChatHeaderAssertion,
+           testInfo,
+  }) => {
+    setTestIds('EPMRTC-6474');
+    let conversation: Conversation;
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const updatedChatName = `${GeneratorUtil.randomString(7)}_updated`;
+
+    await dialTest.step(
+      'Create a default publication request for chat via API',
+      async () => {
+        conversation = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations([conversation]);
+
+        const publishRequest = publishRequestBuilder
+          .withName(requestName)
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0])
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminLocalStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialAdminTest.step(
+      'By admin open publication request and click Edit button',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModal.editButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Update chat\'s name to %chatname%_updated and click Update request button',
+      async () => {
+        await adminPublishingApprovalModal.renameConversationToApprove(conversation.name, updatedChatName);
+        await adminPublishingApprovalModal.updateRequestButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify updated chat\'s name is displayed in the request form in Conversations section',
+      async () => {
+        //TODO
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Go to a review" link and view chat\'s name on chat\'s details screen',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedChatName);
       },
     );
   },

@@ -1,4 +1,5 @@
 import { API } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import {
   IconSelectors,
   PublishingApprovalModalSelectors,
@@ -140,6 +141,12 @@ export class PublishingApprovalModal extends BaseElement {
   public duplicatedUnpublishingError = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.duplicatedPublishing,
   );
+  public editButton = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.editButton,
+  );
+  public updateRequestButton = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.updateRequestButton,
+  );
 
   public async approveRequest({
     isModelsListRetrieved = false,
@@ -182,5 +189,15 @@ export class PublishingApprovalModal extends BaseElement {
     );
     await this.rejectButton.click();
     await responsePromise;
+  }
+
+  public async renameConversationToApprove(conversationName: string, newName: string) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+    const conversationInput = this.getConversationsToApproveTree().getChildElementBySelector(`${Tags.input}[value="${conversationName}"]`).getElementLocator();
+
+    await conversationInput.click();
+    await conversationInput.fill(newName);
   }
 }
