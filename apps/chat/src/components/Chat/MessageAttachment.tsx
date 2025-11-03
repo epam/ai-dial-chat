@@ -26,14 +26,13 @@ import {
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
+import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 import { PlotlyStringDataRenderer } from '@/src/components/Plotly/PlotlyStringDataRenderer';
 import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/VisualizerRenderer';
-
-import { withErrorBoundary } from '../Common/ErrorBoundary';
 
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
