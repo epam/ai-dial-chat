@@ -962,8 +962,9 @@ dialAdminTest.only(
     setTestIds,
     adminLocalStorageManager,
     adminChatHeaderAssertion,
-           testInfo,
-  }) => {
+    baseAssertion,
+  },
+   testInfo,) => {
     setTestIds('EPMRTC-6474');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -1008,7 +1009,12 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Verify updated chat\'s name is displayed in the request form in Conversations section',
       async () => {
-        //TODO
+        const conversationsTree = adminPublishingApprovalModal.getConversationsToApproveTree();
+        const updatedConversationEntity = conversationsTree.getEntityByName(updatedChatName);
+        await baseAssertion.assertElementState(
+          updatedConversationEntity,
+          'visible',
+        );
       },
     );
 
