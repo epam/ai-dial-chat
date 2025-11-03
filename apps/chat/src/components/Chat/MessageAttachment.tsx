@@ -126,32 +126,6 @@ const AttachmentDataRenderer = ({
   return null;
 };
 
-interface AttachmentUrlRendererProps {
-  attachmentUrl: string | undefined;
-  attachmentType: MIMEType;
-}
-
-const AttachmentUrlRenderer = ({
-  attachmentUrl,
-  attachmentType,
-}: AttachmentUrlRendererProps) => {
-  if (!attachmentUrl) {
-    return null;
-  }
-
-  if (IMAGE_TYPES_SET.has(attachmentType)) {
-    return (
-      <img
-        src={attachmentUrl}
-        className="m-0 aspect-auto w-full"
-        alt="Attachment image"
-      />
-    );
-  }
-
-  return null;
-};
-
 interface ChartAttachmentUrlRendererProps {
   attachmentUrl: string | undefined;
 }
@@ -204,15 +178,15 @@ interface Props {
   isInner?: boolean;
 }
 
-interface AttachmentUrlRendererComponentProps {
-  mappedAttachmentUrl: string;
-  attachmentType: string;
-}
-
-const AttachmentUrlRendererComponent = ({
-  mappedAttachmentUrl,
-  attachmentType,
-}: AttachmentUrlRendererComponentProps) => {
+const AttachmentRendererComponent = ({
+  attachment,
+  isInner,
+}: AttachmentDataRendererProps) => {
+  const attachmentType: MIMEType = attachment.type;
+  const mappedAttachmentUrl = useMemo(
+    () => getSourceDataUrl(attachment),
+    [attachment],
+  );
   const mappedVisualizers = useAppSelector(
     SettingsSelectors.selectMappedVisualizers,
   );
@@ -224,7 +198,7 @@ const AttachmentUrlRendererComponent = ({
     selectIsCustomAttachmentTypeSelector,
   );
 
-  if (mappedVisualizers && isCustomAttachmentType) {
+  if (mappedVisualizers && isCustomAttachmentType && mappedAttachmentUrl) {
     return (
       <VisualizerRenderer
         attachmentUrl={mappedAttachmentUrl}
@@ -234,16 +208,11 @@ const AttachmentUrlRendererComponent = ({
     );
   }
 
-  if (attachmentType === PLOTLY_CONTENT_TYPE) {
+  if (attachmentType === PLOTLY_CONTENT_TYPE && mappedAttachmentUrl) {
     return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
   }
 
-  return (
-    <AttachmentUrlRenderer
-      attachmentUrl={mappedAttachmentUrl}
-      attachmentType={attachmentType}
-    />
-  );
+  return <AttachmentDataRenderer attachment={attachment} isInner={isInner} />;
 };
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
@@ -299,8 +268,8 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     (attachment.url && AUDIO_TYPES_SET.has(attachment.type)) ||
     isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
-    () => getMappedAttachmentUrl(attachment.url),
-    [attachment.url],
+    () => getSourceDataUrl(attachment),
+    [attachment],
   );
   const mappedAttachmentReferenceUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.reference_url),
@@ -410,13 +379,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
           ref={anchorRef}
         >
-          <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
-          {mappedAttachmentUrl && (
-            <AttachmentUrlRendererComponent
-              attachmentType={attachment.type}
-              mappedAttachmentUrl={mappedAttachmentUrl}
-            />
-          )}
+          <AttachmentRendererComponent
+            attachment={attachment}
+            isInner={isInner}
+          />
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}
