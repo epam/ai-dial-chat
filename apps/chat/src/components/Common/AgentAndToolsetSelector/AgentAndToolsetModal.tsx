@@ -1,6 +1,8 @@
 import { IconSearch } from '@tabler/icons-react';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -22,10 +24,12 @@ import {
   WidgetsSelectors,
 } from '@/src/store/selectors';
 
+import { AppsEditorQuery } from '@/src/constants/applications';
 import {
   ChangeMarketplaceTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
 import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
@@ -86,10 +90,16 @@ const AgentAndToolsetModalView = ({
   allItemsMap,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const router = useRouter();
+
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
   const sliderGridRef = useRef<SliderGridRef>(null);
+  const currentAppReference =
+    router.route === Routes.AppsEditor
+      ? router.query[AppsEditorQuery.Id]?.toString()
+      : undefined;
 
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -200,7 +210,8 @@ const AgentAndToolsetModalView = ({
       searchedAgents.filter(
         (entity) =>
           !isExternalApp(entity) &&
-          !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string),
+          !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
+          entity.reference !== currentAppReference,
       ),
     ).map(({ entities }) => getSelectedItemFromGroup(entities));
 
@@ -221,6 +232,7 @@ const AgentAndToolsetModalView = ({
       isInstalledEntity(item, installedSet),
     );
   }, [
+    currentAppReference,
     searchedAgents,
     searchedToolsets,
     isMyWorkspace,
