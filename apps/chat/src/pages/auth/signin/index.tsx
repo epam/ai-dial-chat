@@ -122,13 +122,13 @@ export default function Signin({
           {Object.values(providers).map((provider: Provider) => (
             <button
               key={provider.id + provider.name}
-              className="button button-secondary flex h-16 content-center justify-center gap-4 px-4 py-3"
+              className="button button-secondary flex h-16 place-content-center gap-4 px-4 py-3"
               onClick={() => {
                 handleSignIn(provider);
               }}
               data-qa={provider.id}
             >
-              <span className="flex shrink-0 flex-wrap content-center justify-center">
+              <span className="flex shrink-0 flex-wrap place-content-center">
                 <Image
                   className="h-6"
                   src={`https://authjs.dev/img/providers/${provider.id}.svg`}
