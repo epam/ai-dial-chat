@@ -12,11 +12,11 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { CONFIRM_SOURCE_FOLDER_VALUES } from '@/src/constants/applications';
 import {
-  CODE_APPS_ENDPOINTS,
+  CONFIRM_SOURCE_FOLDER_VALUES,
   PUBLIC_APP_TOOLTIP,
-} from '@/src/constants/code-apps';
+} from '@/src/constants/applications';
+import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 
 import {
   CodeAppForm as CodeAppFormType,

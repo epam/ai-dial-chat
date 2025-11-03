@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
+import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 
 import {
   ExternalAppForm as ExternalAppFormType,

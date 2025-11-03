@@ -13,8 +13,10 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
-import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
+import {
+  CONFIRM_DOCUMENT_VALUES,
+  PUBLIC_APP_TOOLTIP,
+} from '@/src/constants/applications';
 
 import { QuickAppForm as QuickAppFormType } from '@/src/components/AppsEditor/form';
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
