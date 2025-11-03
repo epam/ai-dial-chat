@@ -17,8 +17,10 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
-import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
+import {
+  CONFIRM_DOCUMENT_VALUES,
+  PUBLIC_APP_TOOLTIP,
+} from '@/src/constants/applications';
 
 import {
   QuickApp2Form as QuickApp2FormType,

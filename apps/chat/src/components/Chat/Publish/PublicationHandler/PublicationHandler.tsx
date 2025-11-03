@@ -368,15 +368,17 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
-  const firstNotMyFileEntity = publication.resources.find(
-    ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }) && isFileId(reviewUrl),
-  );
   const doesPublicationContainFiles = publication.resources.some(
     ({ reviewUrl }) => isFileId(reviewUrl),
   );
   const showPublicDisplayAuthor =
     !isPublicationHasOnlyUnpublishEntities ||
     (publicationModel && publicationModel.action !== PublishActions.DELETE);
+  const doesInvalidPublishApplicationIconExist =
+    !isReview &&
+    doesIncludeMarketplaceEntity &&
+    isFileId(publicationModel.entity.iconUrl) &&
+    !isMyEntity({ id: publicationModel.entity.iconUrl ?? '' });
 
   return (
     <FormProvider {...formMethods}>
@@ -564,23 +566,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 EnumMapper.getFeatureTypeByApiKey(apiKey);
                               return itemFeatureType === featureType;
                             });
-
                           const isConversationSectionAndNoFiles =
                             !isReview &&
                             featureType === FeatureType.File &&
                             doesIncludeConversation &&
                             !doesPublicationContainFiles;
-                          const doesInvalidPublishApplicationIconExist =
-                            !isReview &&
-                            firstNotMyFileEntity &&
-                            doesIncludeMarketplaceEntity &&
-                            featureType === FeatureType.File;
                           const shouldRenderSection =
                             publication.resourceTypes.includes(
                               EnumMapper.getBackendResourceTypeByFeatureType(
                                 featureType,
                               ),
-                            ) || doesInvalidPublishApplicationIconExist;
+                            ) ||
+                            (doesInvalidPublishApplicationIconExist &&
+                              featureType === FeatureType.File);
 
                           if (!shouldRenderSection) {
                             return null;
@@ -605,14 +603,13 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 )
                               }
                             >
-                              {!!filteredResources.length &&
-                                !doesInvalidPublishApplicationIconExist && (
-                                  <BasePublicationResources
-                                    publicationUrl={publication.url}
-                                    resources={filteredResources}
-                                    ItemComponent={ItemComponent}
-                                  />
-                                )}
+                              {!!filteredResources.length && (
+                                <BasePublicationResources
+                                  publicationUrl={publication.url}
+                                  resources={filteredResources}
+                                  ItemComponent={ItemComponent}
+                                />
+                              )}
                               {isConversationSectionAndNoFiles && (
                                 <p
                                   className="pl-3.5 text-secondary"
@@ -633,7 +630,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                   <ErrorMessage
                                     type="warning"
                                     error={t(
-                                      `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
+                                      `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: publicationModel.entity.iconUrl ?? '' }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
                                     )}
                                   />
                                 )}
