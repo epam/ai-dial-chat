@@ -63,19 +63,17 @@ export class PublishRequestBuilder {
     action: PublishActions,
     entityType: ApiKeys,
     targetResource: string,
-    sourceUrl?: string,
+    sourceUrl: string,
     version?: string,
   ): PublishRequestBuilder {
     const versionSuffix = version
       ? `${ItemUtil.entityIdSeparator}${version}`
       : '';
     const targetUrl = `${entityType}/${this.getPublishRequest().targetFolder}${targetResource}${versionSuffix}`;
-    const resource: PublicationResource = {
+    const resource = {
       action,
       targetUrl,
-      ...(action === 'ADD' || (action === 'ADD_IF_ABSENT' && sourceUrl)
-        ? { sourceUrl }
-        : {}),
+      sourceUrl,
     };
     this.publishRequest.resources.push(resource);
     return this;
@@ -166,7 +164,7 @@ export class PublishRequestBuilder {
         ? attachment.substring(attachment.lastIndexOf('/') + 1)
         : attachment.title;
     const sourceUrl =
-      typeof attachment === 'string' ? attachment : attachment.url;
+      typeof attachment === 'string' ? attachment : attachment.url!;
     return this.withEntityResource(action, ApiKeys.Files, title, sourceUrl);
   }
 

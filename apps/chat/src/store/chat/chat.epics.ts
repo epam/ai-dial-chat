@@ -92,8 +92,13 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
           state$.value,
           payload.modelId,
         );
+      const loadingConfigurationSchemas =
+        ChatSelectors.selectLoadingConfigurationSchemas(state$.value);
 
-      if (uploadedConfigurationSchema) {
+      if (
+        uploadedConfigurationSchema ||
+        loadingConfigurationSchemas.includes(payload.modelId)
+      ) {
         return EMPTY;
       }
 
@@ -119,6 +124,18 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      return of(
+        ChatActions.startConfigurationSchemaUploading({
+          modelId: payload.modelId,
+        }),
+      );
+    }),
+  );
+
+const startConfigurationSchemaUploadingEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ChatActions.startConfigurationSchemaUploading.type),
+    mergeMap(({ payload }) => {
       return ApplicationService.getConfigurationSchema(payload.modelId).pipe(
         switchMap((schema) => {
           return of(
@@ -213,6 +230,7 @@ const getEntityInfoFailEpic: AppEpic = (action$) =>
 export const ChatEpics = combineEpics(
   setFormValueEpic,
   getConfigurationSchemaEpic,
+  startConfigurationSchemaUploadingEpic,
   getConfigurationSchemaFailedEpic,
   appendInputContentEpic,
   getEntityInfoEpic,

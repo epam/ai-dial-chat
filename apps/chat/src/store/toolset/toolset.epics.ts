@@ -54,7 +54,7 @@ import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import { uniq } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 import { parse } from 'querystring';
 
 const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {

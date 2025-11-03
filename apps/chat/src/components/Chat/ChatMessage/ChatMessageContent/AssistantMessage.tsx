@@ -36,7 +36,7 @@ import {
   Message,
   MessageFormValue,
 } from '@epam/ai-dial-shared';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 interface AssistantMessageProps {
   messageIndex: number;

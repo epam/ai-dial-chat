@@ -41,6 +41,7 @@ import {
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
+import { mergeFeatures } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -121,8 +122,16 @@ const createApplicationEpic: AppEpic = (action$) =>
       ).pipe(
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(
-            switchMap((application) => {
-              if (application) {
+            switchMap((retrievedApplication) => {
+              if (retrievedApplication) {
+                const featuresRecord: Record<string, boolean | undefined> = {
+                  ...(retrievedApplication.features || {}),
+                };
+
+                const modelData = {
+                  ...retrievedApplication,
+                  features: mergeFeatures(featuresRecord),
+                };
                 return concat(
                   of(
                     ApplicationActions.setEditorStep(
@@ -131,17 +140,17 @@ const createApplicationEpic: AppEpic = (action$) =>
                   ),
                   of(
                     ModelsActions.addModels({
-                      models: [application],
+                      models: [modelData],
                     }),
                   ),
                   of(
                     ModelsActions.addInstalledModels({
-                      references: [application.reference],
+                      references: [retrievedApplication.reference],
                     }),
                   ),
                   of(
                     ApplicationActions.createSuccess({
-                      applicationData: application,
+                      applicationData: retrievedApplication,
                     }),
                   ),
                 );
@@ -326,13 +335,22 @@ const updateApplicationEpic: AppEpic = (action$) =>
               payload.schema,
             ).pipe(
               switchMap(() => {
+                const featuresRecord: Record<string, boolean | undefined> = {
+                  ...(updatedCustomApplication.features || {}),
+                };
+
+                const modelData = {
+                  ...updatedCustomApplication,
+                  features: mergeFeatures(featuresRecord),
+                };
+
                 return concat(
                   of(
                     ApplicationActions.updateSuccess(updatedCustomApplication),
                   ),
                   of(
                     ModelsActions.updateModel({
-                      model: updatedCustomApplication,
+                      model: modelData,
                       oldApplicationId: payload.oldApplication.id,
                     }),
                   ),
@@ -385,15 +403,24 @@ const editApplicationEpic: AppEpic = (action$) =>
         payload.updatedApplication,
         payload.schema,
       ).pipe(
-        switchMap(() =>
-          of(
+        switchMap(() => {
+          const featuresRecord: Record<string, boolean | undefined> = {
+            ...(payload.updatedApplication.features || {}),
+          };
+
+          const modelData = {
+            ...payload.updatedApplication,
+            features: mergeFeatures(featuresRecord),
+          };
+
+          return of(
             ApplicationActions.editSuccess(),
             ModelsActions.updateModel({
-              model: payload.updatedApplication,
+              model: modelData,
               oldApplicationId: payload.updatedApplication.id,
             }),
-          ),
-        ),
+          );
+        }),
         tap(() => {
           if (payload.redirectUrl) {
             Router.push({
