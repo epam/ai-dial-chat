@@ -32,7 +32,7 @@ export function middleware(request: NextRequest) {
     object-src 'none';
     base-uri 'self';
     script-src 'self' ${allowedScriptsSrc}
-     https://cdn.jsdelivr.net/npm/monaco-editor@0.43.0/
+     https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/
      'nonce-${nonce}' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ''};
      worker-src 'self' blob:;
     ${frameDirectives}

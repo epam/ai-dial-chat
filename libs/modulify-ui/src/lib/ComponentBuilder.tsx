@@ -293,9 +293,9 @@ export class ComponentBuilder<
       }
 
       const customizeId = child.props[DATA_CUSTOMIZE_ID];
-
-      if (customizeId && this.htmlReplacements[customizeId as BlockIds]) {
-        const replacedContent = this.htmlReplacements[customizeId as BlockIds]!(
+      const htmlReplacements = this.htmlReplacements[customizeId as BlockIds];
+      if (customizeId && htmlReplacements) {
+        const replacedContent = htmlReplacements(
           cloneElement(child, {
             [DATA_CUSTOMIZE_ID]: undefined,
           } as HTMLAttributes<HTMLElement>),
