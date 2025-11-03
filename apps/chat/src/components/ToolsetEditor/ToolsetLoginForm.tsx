@@ -26,24 +26,24 @@ const fields = [
 
 interface ToolsetLoginFormProps {
   type: ToolsetAuthTypes;
-  onLogout?: () => void;
-  onLogin?: (data: ToolsetLoginFormType) => void;
   toolset?: ToolsetModel;
   credentialsLevel?: ToolsetCredentialsLevel;
   disabled?: boolean;
   className?: string;
   buttonClassName?: string;
+  onLogout?: () => void;
+  onLogin?: (data: ToolsetLoginFormType) => void;
 }
 
 export const ToolsetLoginForm = ({
   type,
-  onLogout,
-  onLogin,
   toolset,
   credentialsLevel = ToolsetCredentialsLevel.GLOBAL,
   disabled = false,
   className,
   buttonClassName,
+  onLogout,
+  onLogin,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 

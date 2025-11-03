@@ -357,8 +357,11 @@ describe('Marketplace epic utils', () => {
       });
     });
 
-    it('returns undefined if no tableSort query', () => {
-      expect(getTableSort({})).toBeUndefined();
+    it('returns defaults if no tableSort query', () => {
+      expect(getTableSort({})).toEqual({
+        column: TableColumnSortKeys.NAME,
+        order: 'asc',
+      });
     });
   });
 

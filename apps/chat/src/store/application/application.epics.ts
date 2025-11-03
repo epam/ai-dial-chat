@@ -121,16 +121,15 @@ const createApplicationEpic: AppEpic = (action$) =>
       ).pipe(
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(
-            switchMap((application) => {
-              if (application) {
-                const cloneApplication = {
-                  ...application,
-                  features: mergeFeatures(
-                    application.features as unknown as Record<
-                      string,
-                      boolean | undefined
-                    >,
-                  ),
+            switchMap((retrievedApplication) => {
+              if (retrievedApplication) {
+                const featuresRecord: Record<string, boolean | undefined> = {
+                  ...(retrievedApplication.features || {}),
+                };
+
+                const modelData = {
+                  ...retrievedApplication,
+                  features: mergeFeatures(featuresRecord),
                 };
                 return concat(
                   of(
@@ -140,17 +139,17 @@ const createApplicationEpic: AppEpic = (action$) =>
                   ),
                   of(
                     ModelsActions.addModels({
-                      models: [cloneApplication],
+                      models: [modelData],
                     }),
                   ),
                   of(
                     ModelsActions.addInstalledModels({
-                      references: [application.reference],
+                      references: [retrievedApplication.reference],
                     }),
                   ),
                   of(
                     ApplicationActions.createSuccess({
-                      applicationData: application,
+                      applicationData: retrievedApplication,
                     }),
                   ),
                 );
@@ -335,22 +334,22 @@ const updateApplicationEpic: AppEpic = (action$) =>
               payload.schema,
             ).pipe(
               switchMap(() => {
-                const cloneApplication = {
-                  ...updatedCustomApplication,
-                  features: mergeFeatures(
-                    updatedCustomApplication.features as unknown as Record<
-                      string,
-                      boolean | undefined
-                    >,
-                  ),
+                const featuresRecord: Record<string, boolean | undefined> = {
+                  ...(updatedCustomApplication.features || {}),
                 };
+
+                const modelData = {
+                  ...updatedCustomApplication,
+                  features: mergeFeatures(featuresRecord),
+                };
+
                 return concat(
                   of(
                     ApplicationActions.updateSuccess(updatedCustomApplication),
                   ),
                   of(
                     ModelsActions.updateModel({
-                      model: cloneApplication,
+                      model: modelData,
                       oldApplicationId: payload.oldApplication.id,
                     }),
                   ),
@@ -403,15 +402,24 @@ const editApplicationEpic: AppEpic = (action$) =>
         payload.updatedApplication,
         payload.schema,
       ).pipe(
-        switchMap(() =>
-          of(
+        switchMap(() => {
+          const featuresRecord: Record<string, boolean | undefined> = {
+            ...(payload.updatedApplication.features || {}),
+          };
+
+          const modelData = {
+            ...payload.updatedApplication,
+            features: mergeFeatures(featuresRecord),
+          };
+
+          return of(
             ApplicationActions.editSuccess(),
             ModelsActions.updateModel({
-              model: payload.updatedApplication,
+              model: modelData,
               oldApplicationId: payload.updatedApplication.id,
             }),
-          ),
-        ),
+          );
+        }),
         tap(() => {
           if (payload.redirectUrl) {
             Router.push({

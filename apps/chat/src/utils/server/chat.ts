@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { getMessageCustomContent } from '@/src/utils/app/conversation';
+
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -88,7 +90,7 @@ export function limitMessagesByTokens({
 
 export const hardLimitMessages = (messages: Message[]) => {
   let userMessageFound = false;
-  return messages
+  return [...messages]
     .reverse()
     .filter((message) => message.role !== Role.Assistant)
     .reduce((acc, current) => {
@@ -101,28 +103,6 @@ export const hardLimitMessages = (messages: Message[]) => {
       return acc;
     }, [] as Message[]);
 };
-
-export function getMessageCustomContent(
-  message: Message,
-): Partial<Message> | undefined {
-  return message.custom_content?.state ||
-    message.custom_content?.attachments?.length ||
-    message.custom_content?.form_value ||
-    message.custom_content?.form_schema
-    ? {
-        custom_content: {
-          attachments:
-            message.role !== Role.Assistant &&
-            message.custom_content?.attachments?.length
-              ? message.custom_content?.attachments
-              : undefined,
-          state: message.custom_content?.state,
-          form_value: message.custom_content?.form_value,
-          form_schema: message.custom_content?.form_schema,
-        },
-      }
-    : undefined;
-}
 
 export function getUserMessageCustomContent(
   message: Message,
