@@ -45,7 +45,7 @@ interface AttachmentDataRendererProps {
 
 const getSourceDataUrl = (attachment: Attachment): string | undefined => {
   if (attachment.url) {
-    getMappedAttachmentUrl(attachment.url);
+    return getMappedAttachmentUrl(attachment.url);
   }
   if (attachment.data) {
     return `data:${attachment.type};base64,${attachment.data}`;
