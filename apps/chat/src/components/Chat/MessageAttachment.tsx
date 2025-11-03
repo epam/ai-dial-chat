@@ -33,6 +33,8 @@ import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 import { PlotlyStringDataRenderer } from '@/src/components/Plotly/PlotlyStringDataRenderer';
 import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/VisualizerRenderer';
 
+import { withErrorBoundary } from '../Common/ErrorBoundary';
+
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType } from '@epam/ai-dial-shared';
@@ -180,51 +182,50 @@ interface Props {
   isInner?: boolean;
 }
 
-const AttachmentRendererComponent = ({
-  attachment,
-  isInner,
-}: AttachmentDataRendererProps) => {
-  const attachmentType: MIMEType = attachment.type;
-  const mappedAttachmentUrl = useMemo(
-    () => getSourceDataUrl(attachment),
-    [attachment],
-  );
-  const mappedVisualizers = useAppSelector(
-    SettingsSelectors.selectMappedVisualizers,
-  );
-  const selectIsCustomAttachmentTypeSelector = useMemo(
-    () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
-    [attachmentType],
-  );
-  const isCustomAttachmentType = useAppSelector(
-    selectIsCustomAttachmentTypeSelector,
-  );
-
-  if (
-    mappedVisualizers &&
-    isCustomAttachmentType &&
-    attachment.url &&
-    mappedAttachmentUrl
-  ) {
-    return (
-      <VisualizerRenderer
-        attachmentUrl={mappedAttachmentUrl}
-        renderer={mappedVisualizers[attachmentType][0]}
-        mimeType={attachmentType}
-      />
+const AttachmentRendererComponent = withErrorBoundary(
+  ({ attachment, isInner }: AttachmentDataRendererProps) => {
+    const attachmentType: MIMEType = attachment.type;
+    const mappedAttachmentUrl = useMemo(
+      () => getSourceDataUrl(attachment),
+      [attachment],
     );
-  }
+    const mappedVisualizers = useAppSelector(
+      SettingsSelectors.selectMappedVisualizers,
+    );
+    const selectIsCustomAttachmentTypeSelector = useMemo(
+      () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
+      [attachmentType],
+    );
+    const isCustomAttachmentType = useAppSelector(
+      selectIsCustomAttachmentTypeSelector,
+    );
 
-  if (
-    attachmentType === PLOTLY_CONTENT_TYPE &&
-    attachment.url &&
-    mappedAttachmentUrl
-  ) {
-    return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
-  }
+    if (
+      mappedVisualizers &&
+      isCustomAttachmentType &&
+      attachment.url &&
+      mappedAttachmentUrl
+    ) {
+      return (
+        <VisualizerRenderer
+          attachmentUrl={mappedAttachmentUrl}
+          renderer={mappedVisualizers[attachmentType][0]}
+          mimeType={attachmentType}
+        />
+      );
+    }
 
-  return <AttachmentDataRenderer attachment={attachment} isInner={isInner} />;
-};
+    if (
+      attachmentType === PLOTLY_CONTENT_TYPE &&
+      attachment.url &&
+      mappedAttachmentUrl
+    ) {
+      return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+    }
+
+    return <AttachmentDataRenderer attachment={attachment} isInner={isInner} />;
+  },
+);
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
