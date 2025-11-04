@@ -90,6 +90,8 @@ import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromp
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 
 const dialAdminTest = dialTest.extend<{
   adminLocalStorageManager: LocalStorageManager;
@@ -195,7 +197,21 @@ const dialAdminTest = dialTest.extend<{
   adminChatSettingsTooltip: ChatSettingsTooltip;
   adminConversationDropdownMenuAssertion: MenuAssertion;
   adminTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  adminRenameConversationModal: RenameConversationModal;
+  adminRenameConversationModalAssertion: RenameConversationModalAssertion;
 }>({
+  adminRenameConversationModal: async ({ adminPage }, use) => {
+    const adminRenameConversationModal = new RenameConversationModal(adminPage);
+    await use(adminRenameConversationModal);
+  },
+  adminRenameConversationModalAssertion: async (
+    { adminRenameConversationModal },
+    use,
+  ) => {
+    const adminRenameConversationModalAssertion =
+      new RenameConversationModalAssertion(adminRenameConversationModal);
+    await use(adminRenameConversationModalAssertion);
+  },
   adminChatSettingsTooltip: async ({ adminPage }, use) => {
     const chatSettingsTooltip = new ChatSettingsTooltip(adminPage);
     await use(chatSettingsTooltip);
