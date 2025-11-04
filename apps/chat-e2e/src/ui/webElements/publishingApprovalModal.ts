@@ -191,11 +191,16 @@ export class PublishingApprovalModal extends BaseElement {
     await responsePromise;
   }
 
-  public async renameConversationToApprove(conversationName: string, newName: string) {
+  public async renameConversationToApprove(
+    conversationName: string,
+    newName: string,
+  ) {
     if (await this.editButton.isVisible()) {
       await this.editButton.click();
     }
-    const conversationInput = this.getConversationsToApproveTree().getChildElementBySelector(`${Tags.input}[value="${conversationName}"]`).getElementLocator();
+    const conversationInput = this.getConversationsToApproveTree()
+      .getChildElementBySelector(`${Tags.input}[value="${conversationName}"]`)
+      .getElementLocator();
 
     await conversationInput.click();
     await conversationInput.fill(newName);

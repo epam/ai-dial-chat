@@ -2,11 +2,18 @@ import { Conversation } from '@/chat/types/chat';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment, ExpectedConstants, ExpectedMessages, MenuOptions, MockedChatApiResponseBodies, UploadMenuOptions } from '@/src/testData';
+import {
+  API,
+  Attachment,
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+  UploadMenuOptions,
+} from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -952,28 +959,30 @@ dialAdminTest(
 dialAdminTest.only(
   '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
     '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
-    '[Admin view][Edit request]: Rename the chat through the context menu on the \'Conversations\' panel',
-  async ({
-    conversationData,
-    publishRequestBuilder,
-    publicationApiHelper,
-    dataInjector,
-    adminDialHomePage,
-    adminApproveRequiredConversations,
-    adminPublishingApprovalModal,
-    setTestIds,
-    adminLocalStorageManager,
-    adminChatHeaderAssertion,
-    baseAssertion,
-    adminChatHeader,
-    adminChatHeaderDropdownMenu,
-    adminRenameConversationModal,
-    adminPublicationReviewControl,
-    adminApproveRequiredConversationDropdownMenu,
-           adminConversations,
-           adminApproveRequiredConversationsAssertion,
-  },
-   testInfo,) => {
+    "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel",
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      setTestIds,
+      adminLocalStorageManager,
+      adminChatHeaderAssertion,
+      baseAssertion,
+      adminChatHeader,
+      adminChatHeaderDropdownMenu,
+      adminRenameConversationModal,
+      adminPublicationReviewControl,
+      adminApproveRequiredConversationDropdownMenu,
+      adminConversations,
+      adminApproveRequiredConversationsAssertion,
+    },
+    testInfo,
+  ) => {
     setTestIds('EPMRTC-6474', 'EPMRTC-6493', 'EPMRTC-6658');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -993,7 +1002,9 @@ dialAdminTest.only(
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
-          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0])
+          .withDisplayAuthor(
+            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
+          )
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -1014,9 +1025,12 @@ dialAdminTest.only(
     );
 
     await dialAdminTest.step(
-      'Update chat\'s name, click Update request button and verify updated chat\'s name is displayed in the sidebar',
+      "Update chat's name, click Update request button and verify updated chat's name is displayed in the sidebar",
       async () => {
-        await adminPublishingApprovalModal.renameConversationToApprove(conversation.name, firstUpdatedName);
+        await adminPublishingApprovalModal.renameConversationToApprove(
+          conversation.name,
+          firstUpdatedName,
+        );
         await adminPublishingApprovalModal.updateRequestButton.click();
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
           { name: requestName },
@@ -1029,17 +1043,21 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Click "Go to a review" link and view chat\'s name on chat\'s details screen',
       async () => {
-        await adminPublishingApprovalModal.goToEntityReview( {isHttpMethodTriggered: false} );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
         await adminChatHeaderAssertion.assertHeaderTitle(firstUpdatedName);
       },
     );
 
     await dialAdminTest.step(
-      'In chat\'s header update chat\'s name and verify the updated name is displayed in chat\'s header and sidebar',
+      "In chat's header update chat's name and verify the updated name is displayed in chat's header and sidebar",
       async () => {
         await adminChatHeader.dotsMenu.click();
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await adminRenameConversationModal.editConversationNameWithSaveButton(secondUpdatedName);
+        await adminRenameConversationModal.editConversationNameWithSaveButton(
+          secondUpdatedName,
+        );
         await adminChatHeaderAssertion.assertHeaderTitle(secondUpdatedName);
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
           { name: requestName },
@@ -1053,8 +1071,10 @@ dialAdminTest.only(
       'Click "Back to publication request" button - updated name is displayed on request form in Conversations section',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        const conversationsTree = adminPublishingApprovalModal.getConversationsToApproveTree();
-        const conversationToApprove = conversationsTree.getEntityByName(secondUpdatedName);
+        const conversationsTree =
+          adminPublishingApprovalModal.getConversationsToApproveTree();
+        const conversationToApprove =
+          conversationsTree.getEntityByName(secondUpdatedName);
         await baseAssertion.assertElementState(
           conversationToApprove,
           'visible',
@@ -1063,20 +1083,26 @@ dialAdminTest.only(
     );
 
     await dialAdminTest.step(
-      'Go to review conversation again, Hover over chat\'s name in side panel and select Rename option',
+      "Go to review conversation again, Hover over chat's name in side panel and select Rename option",
       async () => {
-        await adminPublishingApprovalModal.goToEntityReview( {isHttpMethodTriggered: false});
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
         await adminApproveRequiredConversations.openFolderEntityDropdownMenu(
           requestName,
           secondUpdatedName,
         );
-        await adminApproveRequiredConversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await adminRenameConversationModal.editConversationNameWithSaveButton(thirdUpdatedName);
+        await adminApproveRequiredConversationDropdownMenu.selectMenuOption(
+          MenuOptions.rename,
+        );
+        await adminRenameConversationModal.editConversationNameWithSaveButton(
+          thirdUpdatedName,
+        );
       },
     );
 
     await dialAdminTest.step(
-      'View chat\'s name in chat\'s header and in side panel - name was updated in side panel and in chat\'s header',
+      "View chat's name in chat's header and in side panel - name was updated in side panel and in chat's header",
       async () => {
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
           { name: requestName },
@@ -1091,8 +1117,10 @@ dialAdminTest.only(
       'Click "Back to publication request" button - chat\'s name was updated on request form in Conversations section',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        const conversationsTree = adminPublishingApprovalModal.getConversationsToApproveTree();
-        const conversationToApprove = conversationsTree.getEntityByName(thirdUpdatedName);
+        const conversationsTree =
+          adminPublishingApprovalModal.getConversationsToApproveTree();
+        const conversationToApprove =
+          conversationsTree.getEntityByName(thirdUpdatedName);
         await baseAssertion.assertElementState(
           conversationToApprove,
           'visible',

@@ -56,6 +56,7 @@ import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAs
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
@@ -87,11 +88,10 @@ import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marke
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
 import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromptPreviewModal';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
-import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
-import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 
 const dialAdminTest = dialTest.extend<{
   adminLocalStorageManager: LocalStorageManager;
