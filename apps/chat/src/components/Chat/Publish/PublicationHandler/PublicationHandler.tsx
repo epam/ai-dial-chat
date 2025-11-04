@@ -186,17 +186,26 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     userName,
   ]);
 
-  const formMethods = useForm<PublicationRequestFormData>({
-    defaultValues: {
+  const getDefaultValues = useCallback(
+    () => ({
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
       ),
       rules: initialState.rules,
       publicationAuthor: initialState.displayAuthor,
       publishToUrl: initialState.publishToUrl,
-    },
+    }),
+    [initialState, userName],
+  );
+
+  const formMethods = useForm<PublicationRequestFormData>({
+    defaultValues: getDefaultValues(),
     mode: 'onChange',
   });
+
+  useEffect(() => {
+    formMethods.reset(getDefaultValues());
+  }, [getDefaultValues, formMethods]);
 
   const rulesOnEdit = formMethods.watch(PublishRequestFieldsNames.RULES);
   const displayAuthorEditState = formMethods.watch(

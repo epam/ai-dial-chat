@@ -82,7 +82,7 @@ export function PublicationFilters({
     [setValue],
   );
 
-  const targetFolder = publicationModel
+  const targetFolder = isEditMode
     ? editedPublishToUrl
     : publication.targetFolder;
   const isRootTarget = targetFolder.split('/').length === 1;
@@ -107,7 +107,7 @@ export function PublicationFilters({
       {showNoRulesLabel(
         rulesOnEdit.length,
         isNoRulesToDisplay,
-        publicationModel ? editedPublishToUrl : undefined,
+        isEditMode ? editedPublishToUrl : undefined,
       ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
           {t(
