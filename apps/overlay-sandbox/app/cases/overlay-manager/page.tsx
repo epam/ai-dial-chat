@@ -6,7 +6,7 @@ import { ChatOverlayManagerOptions, Feature } from '@epam/ai-dial-overlay';
 const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
   id: 'test',
   ...commonOverlayProps,
-  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
+  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST ?? '',
   theme: 'light',
   enabledFeatures: [
     Feature.ConversationsSection,

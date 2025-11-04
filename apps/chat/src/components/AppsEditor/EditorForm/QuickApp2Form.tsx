@@ -222,6 +222,7 @@ export const QuickApp2Form = () => {
             handleSwitch={field.onChange}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
+            additionalText={t('Use to execute custom Python code')}
             className="mt-1 flex w-fit items-center gap-2"
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
