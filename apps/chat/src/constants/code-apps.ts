@@ -1,5 +1,3 @@
-import { translate } from '@/src/utils/app/translation';
-
 import {
   CODEAPPS_REQUIRED_FILES,
   FEATURES_ENDPOINTS,
@@ -313,7 +311,3 @@ export const CODE_APPS_ENDPOINTS = [
       FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.configuration],
   },
 ];
-
-export const PUBLIC_APP_TOOLTIP = translate(
-  'This application is public and cannot be edited',
-);

@@ -23,6 +23,7 @@ export function ToggleSwitch({
   isOn,
   switchOnText,
   switchOFFText,
+  additionalText,
   className,
   tooltip,
   disabled,
@@ -53,6 +54,7 @@ export function ToggleSwitch({
           <span className="size-3 rounded-full bg-controls-permanent"></span>
         </label>
       </div>
+      {additionalText && <span>{additionalText}</span>}
     </Tooltip>
   );
 }

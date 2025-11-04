@@ -1,3 +1,5 @@
+import { translate } from '@/src/utils/app/translation';
+
 import { ApiKeys, ConfirmDialogValueTypes } from '@/src/types/common';
 
 export const FEATURES_ENDPOINTS = {
@@ -49,3 +51,7 @@ export enum AppsEditorQuery {
   Schema = 'schema',
   PublicationUrl = 'publicationUrl',
 }
+
+export const PUBLIC_APP_TOOLTIP = translate(
+  'This application is public and cannot be edited',
+);

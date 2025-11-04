@@ -188,11 +188,12 @@ export const ChatOverlayManagerWrapper: React.FC<
       '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
       async (info) => {
         console.info('Conversation selected - ');
-        const { messages } = await overlayManager.current!.getMessages(
-          overlayManagerOptions.id,
-        );
-        console.info('messages', messages);
-
+        if (overlayManager.current) {
+          const { messages } = await overlayManager.current.getMessages(
+            overlayManagerOptions.id,
+          );
+          console.info('messages', messages);
+        }
         console.info(JSON.stringify(info, null, 2));
       },
     );
@@ -523,9 +524,7 @@ export const ChatOverlayManagerWrapper: React.FC<
                 <select
                   className="max-w-[70%] shrink"
                   value={conversationIdInputValue}
-                  onChange={(e) =>
-                    setConversationIdInputValue((e.target as any).value)
-                  }
+                  onChange={(e) => setConversationIdInputValue(e.target.value)}
                 >
                   {conversations.map((conv) => (
                     <option className="truncate" key={conv.id} value={conv.id}>

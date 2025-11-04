@@ -8,12 +8,14 @@ import { ReporterDescription } from '@playwright/test';
 /**
  * Config used for overlay local run
  */
-config.use!.headless = false;
 config.retries = 0;
 config.timeout = 300000;
-config.use!.video = 'on';
-config.use!.trace = 'on';
-config.use!.navigationTimeout = 100000;
+if (config.use) {
+  config.use.headless = false;
+  config.use.video = 'on';
+  config.use.trace = 'on';
+  config.use.navigationTimeout = 100000;
+}
 (config.reporter as ReporterDescription[]).push([
   'html',
   { outputFolder: `../${ResultFolder.overlayHtmlReport}`, open: 'never' },
