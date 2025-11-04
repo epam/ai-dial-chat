@@ -17,9 +17,11 @@ dotenv.config({ path: './.env.local' });
  */
 config.retries = 0;
 config.timeout = 3000000;
-config.use!.headless = false;
-config.use!.video = 'on';
-config.use!.trace = 'on';
+if (config.use) {
+  config.use.headless = false;
+  config.use.video = 'on';
+  config.use.trace = 'on';
+}
 (config.reporter as ReporterDescription[]).push([
   'html',
   { outputFolder: `../${ResultFolder.chatHtmlReport}`, open: 'never' },
