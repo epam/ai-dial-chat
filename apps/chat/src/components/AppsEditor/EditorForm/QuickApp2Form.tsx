@@ -17,8 +17,10 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
-import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
+import {
+  CONFIRM_DOCUMENT_VALUES,
+  PUBLIC_APP_TOOLTIP,
+} from '@/src/constants/applications';
 
 import {
   QuickApp2Form as QuickApp2FormType,
@@ -220,6 +222,7 @@ export const QuickApp2Form = () => {
             handleSwitch={field.onChange}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
+            additionalText={t('Use to execute custom Python code')}
             className="mt-1 flex w-fit items-center gap-2"
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
