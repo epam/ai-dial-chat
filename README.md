@@ -8,7 +8,7 @@
         </a>
     </p>
 <h4 align="center">
-    <a href="https://discord.gg/TMMwWkEYzS">
+    <a href="https://discord.gg/ukzj9U9tEe">
         <img src="https://img.shields.io/static/v1?label=AI%20DIALX%20Community%20in&message=Discord&color=blue&logo=Discord&style=flat-square" alt="Discord">
     </a>
 </h4>
@@ -27,7 +27,7 @@
 
 ## Overview
 
-**DIAL Chat** is a default UI for [AI DIAL](https://dialx.ai). AI DIAL can be used as headless system, but UI is recommended to learn the capability.
+**DIAL Chat** is a default UI for [DIAL](https://dialx.ai). AI DIAL can be used as headless system, but UI is recommended to learn the capability.
 
 Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as various IDP support, model side-by-side compare, [DIAL extensions](https://dialx.ai/extension-framework) support, conversation replays, branding and many more.
 
