@@ -950,7 +950,8 @@ dialAdminTest(
 );
 
 dialAdminTest.only(
-  '[Admin view][Edit request]: Rename the chat while edit the request',
+  '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
+    '[Admin view][Edit request]: Rename the chat though the menu in chat header',
   async ({
     conversationData,
     publishRequestBuilder,
@@ -963,18 +964,27 @@ dialAdminTest.only(
     adminLocalStorageManager,
     adminChatHeaderAssertion,
     baseAssertion,
+    adminChatHeader,
+    adminChatHeaderDropdownMenu,
+    adminRenameConversationModal,
+    adminPublicationReviewControl,
   },
    testInfo,) => {
-    setTestIds('EPMRTC-6474');
+    setTestIds('EPMRTC-6474', 'EPMRTC-6493');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const updatedChatName = `${GeneratorUtil.randomString(7)}_updated`;
+    let firstUpdatedName: string;
+    let secondUpdatedName: string;
 
     await dialTest.step(
       'Create a default publication request for chat via API',
       async () => {
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
+
+        // Generate names based on the conversation name to maintain structure
+        firstUpdatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}`;
+        secondUpdatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}`;
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
@@ -1001,7 +1011,7 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Update chat\'s name to %chatname%_updated and click Update request button',
       async () => {
-        await adminPublishingApprovalModal.renameConversationToApprove(conversation.name, updatedChatName);
+        await adminPublishingApprovalModal.renameConversationToApprove(conversation.name, firstUpdatedName);
         await adminPublishingApprovalModal.updateRequestButton.click();
       },
     );
@@ -1010,7 +1020,7 @@ dialAdminTest.only(
       'Verify updated chat\'s name is displayed in the request form in Conversations section',
       async () => {
         const conversationsTree = adminPublishingApprovalModal.getConversationsToApproveTree();
-        const updatedConversationEntity = conversationsTree.getEntityByName(updatedChatName);
+        const updatedConversationEntity = conversationsTree.getEntityByName(firstUpdatedName);
         await baseAssertion.assertElementState(
           updatedConversationEntity,
           'visible',
@@ -1022,7 +1032,30 @@ dialAdminTest.only(
       'Click "Go to a review" link and view chat\'s name on chat\'s details screen',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview();
-        await adminChatHeaderAssertion.assertHeaderTitle(updatedChatName);
+        await adminChatHeaderAssertion.assertHeaderTitle(firstUpdatedName);
+      },
+    );
+
+    await dialAdminTest.step(
+      'In chat\'s header update chat\'s name and verify the updated name is displayed in chat\'s header',
+      async () => {
+        await adminChatHeader.dotsMenu.click();
+        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await adminRenameConversationModal.editConversationNameWithSaveButton(secondUpdatedName);
+        await adminChatHeaderAssertion.assertHeaderTitle(secondUpdatedName);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Back to publication request" button - updated name is displayed on request form in Conversations section',
+      async () => {
+        await adminPublicationReviewControl.backToPublicationRequest();
+        const conversationsTree = adminPublishingApprovalModal.getConversationsToApproveTree();
+        const finalConversationEntity = conversationsTree.getEntityByName(secondUpdatedName);
+        await baseAssertion.assertElementState(
+          finalConversationEntity,
+          'visible',
+        );
       },
     );
   },
