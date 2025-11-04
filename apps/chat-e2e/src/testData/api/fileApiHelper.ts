@@ -98,7 +98,7 @@ export class FileApiHelper extends BaseApiHelper {
       url: publication.url,
       resources: resources,
       targetFolder: ExpectedConstants.rootPublicationFolder,
-      displayAuthor: '',
+      displayAuthor: publication.displayAuthor ? publication.displayAuthor : '',
       rules: [],
     };
 

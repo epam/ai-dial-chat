@@ -692,35 +692,45 @@ dialAdminTest(
   '[Admin view][Edit chat] Generated file by agent appears in review.\n' +
     'Organization: The chat with a generated file is published\n' +
     'Organization: the chat with added by user file is published\n' +
-    '[Admin view][Edit chat] Re-generated file by agent appears in review. Initial file stays',
-  async ({
-    conversationData,
-    publishRequestBuilder,
-    publicationApiHelper,
-    dataInjector,
-    adminDialHomePage,
-    adminApproveRequiredConversations,
-    adminPublishingApprovalModal,
-    setTestIds,
-    adminLocalStorageManager,
-    adminChatMessagesAssertion,
-    adminPublicationReviewControl,
-    adminPublishFilesAssertion,
-    adminFileApiHelper,
-    adminChat,
-    dialHomePage,
-    organizationConversations,
-    localStorageManager,
-    chatMessagesAssertion,
-    chatBar,
-    fileApiHelper,
-    manageAttachmentsAssertion,
-    adminChatMessages,
-    adminAttachmentDropdownMenu,
-    adminAttachFilesModal,
-    adminSendMessage,
-  }) => {
-    setTestIds('EPMRTC-6605', 'EPMRTC-6608', 'EPMRTC-6609', 'EPMRTC-6606');
+    '[Admin view][Edit chat] Re-generated file by agent appears in review. Initial file stays\n' +
+    "Edit file's name attached to chat",
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      setTestIds,
+      adminLocalStorageManager,
+      adminChatMessagesAssertion,
+      adminPublicationReviewControl,
+      adminPublishFilesAssertion,
+      adminFileApiHelper,
+      adminChat,
+      dialHomePage,
+      organizationConversations,
+      localStorageManager,
+      chatMessagesAssertion,
+      chatBar,
+      fileApiHelper,
+      manageAttachmentsAssertion,
+      adminChatMessages,
+      adminAttachmentDropdownMenu,
+      adminAttachFilesModal,
+      adminSendMessage,
+    },
+    testInfo,
+  ) => {
+    setTestIds(
+      'EPMRTC-6605',
+      'EPMRTC-6608',
+      'EPMRTC-6609',
+      'EPMRTC-6606',
+      'EPMRTC-6464',
+    );
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
@@ -729,6 +739,7 @@ dialAdminTest(
     const requestPrompt = 'generate a picture';
     let publicationBucket: string;
     let publication: Publication;
+    let updatedCloudImageName: string;
 
     await dialTest.step(
       'Prepare conversation with attachment-supported model and publication request',
@@ -762,6 +773,9 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
+          .withDisplayAuthor(
+            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0], //TODO doesn't work!?
+          )
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .withFileResource(imageUrl1, PublishActions.ADD_IF_ABSENT)
           .build();
@@ -903,6 +917,23 @@ dialAdminTest(
       },
     );
 
+    await dialAdminTest.step(
+      'Click edit request, update filename, click update request button and verify updated filename is displayed',
+      async () => {
+        updatedCloudImageName = Attachment.cloudImageName.split('.')[0] + '_updated.' + Attachment.cloudImageName.split('.')[1];
+        await adminPublishingApprovalModal.editButton.click();
+        await adminPublishingApprovalModal.renameFileToApprove(
+          Attachment.cloudImageName,
+          updatedCloudImageName,
+        );
+        await adminPublishingApprovalModal.updateRequestButton.click(); //TODO wait for request?
+        await adminPublishFilesAssertion.assertEntityState(
+          { name: updatedCloudImageName },
+          'visible',
+        );
+      },
+    );
+
     await dialAdminTest.step('Approve the request', async () => {
       await adminPublishingApprovalModal.approveRequest();
     });
@@ -916,7 +947,7 @@ dialAdminTest(
         await organizationConversations.selectEntity(conversation.name);
 
         const expectedAttachments: Record<number, string> = {
-          2: Attachment.cloudImageName,
+          2: updatedCloudImageName,
           3: Attachment.flowerImageName,
           4: Attachment.heartImageName,
           6: Attachment.heartImageName,
@@ -940,7 +971,7 @@ dialAdminTest(
       async () => {
         await chatBar.openManageAttachmentsModal();
         for (const attach of [
-          Attachment.cloudImageName,
+          updatedCloudImageName,
           Attachment.heartImageName,
           Attachment.flowerImageName,
           Attachment.longImageName,
@@ -956,7 +987,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.only(
+dialAdminTest(
   '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
     '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
     "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel.\n" +
@@ -1142,7 +1173,9 @@ dialAdminTest.only(
       async () => {
         await adminPublishingApprovalModal.editButton.click();
         publicAuthorName = publishRequest.displayAuthor + '_updated';
-        await adminPublishingApprovalModal.publicAuthorInputEditMode.fillInInput(publicAuthorName);
+        await adminPublishingApprovalModal.publicAuthorInputEditMode.fillInInput(
+          publicAuthorName,
+        );
         await adminPublishingApprovalModal.updateRequestButton.click();
       },
     );
@@ -1161,10 +1194,13 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Find published chat in Organization section',
       async () => {
-        await dialHomePage.openHomePage(); await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await localStorageManager.setShowSideBarPanels();
         await dialHomePage.waitForPageLoaded();
 
-        await organizationConversations.openEntityDropdownMenu(thirdUpdatedName);
+        await organizationConversations.openEntityDropdownMenu(
+          thirdUpdatedName,
+        );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });

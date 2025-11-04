@@ -147,8 +147,11 @@ export class PublishingApprovalModal extends BaseElement {
   public updateRequestButton = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.updateRequestButton,
   );
-  public publicAuthorContainerEditMode = this.getChildElementBySelector(PublishingApprovalModalSelectors.publicAuthorContainerEditMode);
-  public publicAuthorInputEditMode = this.publicAuthorContainerEditMode.getChildElementBySelector(Tags.input);
+  public publicAuthorContainerEditMode = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publicAuthorContainerEditMode,
+  );
+  public publicAuthorInputEditMode =
+    this.publicAuthorContainerEditMode.getChildElementBySelector(Tags.input);
 
   public async approveRequest({
     isModelsListRetrieved = false,
@@ -206,5 +209,17 @@ export class PublishingApprovalModal extends BaseElement {
 
     await conversationInput.click();
     await conversationInput.fill(newName);
+  }
+
+  public async renameFileToApprove(fileName: string, newName: string) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+    const fileInput = this.getFilesToApproveTree()
+      .getChildElementBySelector(`${Tags.input}[value="${fileName}"]`)
+      .getElementLocator();
+
+    await fileInput.click();
+    await fileInput.fill(newName);
   }
 }
