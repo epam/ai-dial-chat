@@ -1,5 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
-import { Publication } from '@/chat/types/publication';
+import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -12,7 +12,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 dialAdminTest(
@@ -959,7 +959,8 @@ dialAdminTest(
 dialAdminTest.only(
   '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
     '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
-    "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel",
+    "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel.\n" +
+    'Edit author public name. Updated name displayed in Info only after request approved',
   async (
     {
       conversationData,
@@ -979,15 +980,24 @@ dialAdminTest.only(
       adminPublicationReviewControl,
       adminApproveRequiredConversationDropdownMenu,
       adminApproveRequiredConversationsAssertion,
+      dialHomePage,
+      organizationConversations,
+      conversationDropdownMenu,
+      informationModalAssertion,
+      informationModal,
+      localStorageManager,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6474', 'EPMRTC-6493', 'EPMRTC-6658');
+    setTestIds('EPMRTC-6474', 'EPMRTC-6493', 'EPMRTC-6658', 'EPMRTC-6456');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     let firstUpdatedName: string;
     let secondUpdatedName: string;
     let thirdUpdatedName: string;
+    let publishRequest: PublicationRequestModel;
+    let publicAuthorName: string;
+    const currentDate = DateUtil.getCurrentLocalDate();
 
     await dialTest.step(
       'Create a default publication request for chat via API',
@@ -999,7 +1009,7 @@ dialAdminTest.only(
         secondUpdatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}`;
         thirdUpdatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}`;
 
-        const publishRequest = publishRequestBuilder
+        publishRequest = publishRequestBuilder
           .withName(requestName)
           .withDisplayAuthor(
             UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
@@ -1124,6 +1134,45 @@ dialAdminTest.only(
           conversationToApprove,
           'visible',
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Edit button and add "_updated" to author\'s public name',
+      async () => {
+        await adminPublishingApprovalModal.editButton.click();
+        publicAuthorName = publishRequest.displayAuthor + '_updated';
+        await adminPublishingApprovalModal.publicAuthorInputEditMode.fillInInput(publicAuthorName);
+        await adminPublishingApprovalModal.updateRequestButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Go to a review" and then "Back to publication request" and approve request',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModal.approveRequest();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Find published chat in Organization section',
+      async () => {
+        await dialHomePage.openHomePage(); await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.waitForPageLoaded();
+
+        await organizationConversations.openEntityDropdownMenu(thirdUpdatedName);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: publicAuthorName,
+        });
+        await informationModal.cancelButton.click();
       },
     );
   },
