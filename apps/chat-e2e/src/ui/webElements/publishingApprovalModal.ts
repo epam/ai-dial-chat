@@ -147,6 +147,8 @@ export class PublishingApprovalModal extends BaseElement {
   public updateRequestButton = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.updateRequestButton,
   );
+  public publicAuthorContainerEditMode = this.getChildElementBySelector(PublishingApprovalModalSelectors.publicAuthorContainerEditMode);
+  public publicAuthorInputEditMode = this.publicAuthorContainerEditMode.getChildElementBySelector(Tags.input);
 
   public async approveRequest({
     isModelsListRetrieved = false,
