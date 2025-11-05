@@ -11,3 +11,4 @@ export * from './publishing/publishRequestBuilder';
 export * from './overlay/overlaySandboxUrls';
 export * from './applications/customApplicationBuilder';
 export * from './marketplace/marketplaceUrlBuilder';
+export * from './toolsets/toolsetBuilder';

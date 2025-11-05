@@ -58,7 +58,7 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
   return (
     <div
       className="flex h-full flex-col px-5 py-4 xl:p-6"
-      data-qa={dataQA ?? 'app-preview-general-info-full-container'}
+      data-qa={dataQA ?? 'entity-preview-general-info-full-container'}
     >
       <div
         className="hidden max-w-full items-center justify-between md:flex xl:justify-end"
@@ -85,7 +85,7 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
       <div className="flex flex-1 items-center justify-center">
         <div
           className="w-full max-w-[700px] xl:max-w-[720px]"
-          data-qa="app-preview-general-info"
+          data-qa="entity-preview-general-info"
         >
           {isDetailed ? (
             <div className="flex w-full flex-col divide-y divide-tertiary rounded bg-layer-3">

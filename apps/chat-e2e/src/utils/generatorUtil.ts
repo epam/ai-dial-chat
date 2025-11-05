@@ -4,6 +4,7 @@ import { webcrypto } from 'node:crypto';
 export const publicationRequestPrefix = 'E2EPublish';
 export const unpublishRequestPrefix = 'E2EUnpublish';
 export const applicationNamePrefix = 'E2EApp';
+export const toolsetNamePrefix = 'E2EToolset';
 
 export const conversationNamePrefix = 'E2EConversation';
 export const promptNamePrefix = 'E2EPrompt';
@@ -63,6 +64,10 @@ export class GeneratorUtil {
     return applicationNamePrefix + GeneratorUtil.randomString(10);
   }
 
+  static randomToolsetName() {
+    return toolsetNamePrefix + GeneratorUtil.randomString(10);
+  }
+
   static randomConversationName() {
     return conversationNamePrefix + GeneratorUtil.randomString(10);
   }
@@ -79,17 +84,17 @@ export class GeneratorUtil {
     return `${GeneratorUtil.randomString(7)}${Import.importAttachmentExtension}`;
   }
 
-  static randomApplicationVersion(stringsToExclude?: string[]) {
+  static randomEntityVersion(stringsToExclude?: string[]) {
     const major = GeneratorUtil.randomIntegerNumber();
     const minor = GeneratorUtil.randomIntegerNumber();
     const patch = GeneratorUtil.randomIntegerNumber();
     let version = `${major}.${minor}.${patch}`;
     stringsToExclude = stringsToExclude ?? [];
-    if (!stringsToExclude.includes(ExpectedConstants.defaultAppVersion)) {
+    if (!stringsToExclude.includes(ExpectedConstants.defaultEntityVersion)) {
       stringsToExclude.push();
     }
     while (stringsToExclude.some((s) => s.includes(version))) {
-      version = GeneratorUtil.randomApplicationVersion(stringsToExclude);
+      version = GeneratorUtil.randomEntityVersion(stringsToExclude);
     }
     return version;
   }

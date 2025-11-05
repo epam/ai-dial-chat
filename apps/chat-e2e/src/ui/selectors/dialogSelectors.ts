@@ -244,11 +244,11 @@ export const ReportAnIssueModalSelectors = {
   reportAnIssueContainer: '[data-qa="report-issue-dialog"]',
 };
 
-export const ApplicationEditorHeader = {
-  header: '[data-qa="app-editor-header"]',
+export const EntityEditorHeaderSelectors = {
+  header: '[data-qa="entity-editor-header"]',
   saveAndExitButton: '[data-qa="save-and-exit"]',
   exitLink: '[data-qa="save-and-exit"]',
-  actionAndApplicationTypeTitle: '[data-qa="action-application-type-title"]',
+  actionAndEntityTypeTitle: '[data-qa="action-entity-type-title"]',
   stepsContainer: '[data-qa="steps-container"]',
   singleStepLink: '[data-qa="single-step-link"]',
   singleStepTitle: '[data-qa="single-step-title"]',
@@ -256,38 +256,38 @@ export const ApplicationEditorHeader = {
   notSelectedStepIcon: '[data-qa="not-selected-step-icon"]',
 };
 
-export const AppEditorPreviewToggleSelectors = {
+export const EntityEditorPreviewToggleSelectors = {
   toggleContainer: '[data-qa="preview-toggle-container"]',
   detailedSwitch: '[data-qa="toggle-switch"]',
 };
 
-export const AppEditorGeneralInfoPreviewSelectors = {
-  fullContainer: '[data-qa="app-preview-general-info-full-container"]',
-  appPreviewGeneralInfoContainer: '[data-qa="app-preview-general-info"]',
+export const EntityEditorGeneralInfoPreviewSelectors = {
+  fullContainer: '[data-qa="entity-preview-general-info-full-container"]',
+  entityPreviewGeneralInfoContainer: '[data-qa="entity-preview-general-info"]',
   previewIconContainer: '[data-qa="icon-container"]',
-  previewAgentName: '[data-qa="entity-name"]',
-  previewTopicsContainer: '[data-qa="app-topics"]',
-  previewInformationSection: '[data-qa="application-information"]',
+  previewEntityName: '[data-qa="entity-name"]',
+  previewTopicsContainer: '[data-qa="entity-topics"]',
+  previewInformationSection: '[data-qa="entity-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
   previewAuthorValue: '[data-qa="author"]',
-  description: '[data-qa="application-description"]',
+  description: '[data-qa="entity-description"]',
   version: '[data-qa="version"]',
   releaseDate: '[data-qa="created-at"]',
 };
 
-export const AppEditorAppSettingsPreviewSelectors = {
-  container: '[data-qa="app-preview-settings"]',
+export const EntityEditorEntitySettingsPreviewSelectors = {
+  container: '[data-qa="entity-preview-settings"]',
   header: '[data-qa="preview-header"]',
   body: '[data-qa="preview-body"]',
-  appSettingsChatModeContainer: '[data-qa="app-settings-chat-mode"]',
+  entitySettingsChatModeContainer: '[data-qa="entity-settings-chat-mode"]',
   previewIcon: '[data-qa="entity-icon"]',
-  agentInfoContainer: '[data-qa="agent-info-container"]',
-  agentInfo: '[data-qa="agent-info"]',
-  agentName: '[data-qa="entity-name"]',
+  entityInfoContainer: '[data-qa="entity-info-container"]',
+  entityInfo: '[data-qa="entity-info"]',
+  entityName: '[data-qa="entity-name"]',
 };
 
-export const AddApplicationGeneralInfoFormSelector = {
-  appGeneralFormContainer: '[data-qa="app-general-form"]',
+export const AddEntityGeneralInfoFormSelector = {
+  entityGeneralFormContainer: '[data-qa="entity-general-form"]',
   name: '#name',
   version: '#version',
   icon: '[data-qa="icon"]',
@@ -296,7 +296,7 @@ export const AddApplicationGeneralInfoFormSelector = {
   descriptionInput: '#description',
   descriptionLabel: '[for="description"]',
   topicsDropdownContainer: '#topics-dropdown',
-  nextButton: '[data-qa="save-application-general-info"]',
+  nextButton: '[data-qa="save-entity-general-info"]',
   topicsDropdownToggle: '[class*="-indicatorContainer"]', // Selector for the dropdown arrow within the container
   selectedTopicPills: '[class*="-multiValue"]', // Selector for the selected topic pills within the container
   selectedTopicPillRemoveIcon: (topicName: string) =>
@@ -304,21 +304,42 @@ export const AddApplicationGeneralInfoFormSelector = {
   clearAllTopicsButton: '[data-qa="clear-dropdown-selection"]', // Selector for the main clear button within the container
 };
 
-export const AddApplicationAppSettingsFormSelector = {
+export const AddEntitySettingsFormSelector = {
   featuresLabel: '[for="features"]',
   attachmentsTypesLabel: '[for="attachmentTypes"]',
-  attachmentTypesContainer: '[data-qa="attachment-types-field"]',
   chatCompletionUrl: '#completionUrl',
-  addButton: '[data-qa="add-application"]',
-  appViewFormContainer: '[data-qa="app-view-form"]',
+  entityViewFormContainer: '[data-qa="entity-view-form"]',
   maxAttachmentNumberField: '[data-qa="max-attachment-number-field"]',
-  selectedAttachmentTypePills: '[data-qa="combobox-pill"]',
-  unselectAttachmentTypePillButton: (type: string) =>
-    `button[data-qa="unselect-item-${type}"]`,
+};
+
+export const ComboboxSelectors = {
+  comboboxContainer: '[data-qa="combobox"]',
+  selectedPills: '[data-qa="combobox-pill"]',
+  unselectPillButton: (value: string) =>
+    `button[data-qa="unselect-item-${value}"]`,
 };
 
 export const AddExternalAppSettingsFormSelector = {
   externalUrl: '#externalUrl',
+};
+
+export const AddToolsetSettingsFormSelector = {
+  definitionLabel: '[data-qa="definition-label"]',
+  endpointLabel: '[for="endpoint"]',
+  endpoint: '#endpoint',
+  protocolLabel: '[for="protocol"]',
+  transportProtocol: '#protocol',
+  authenticationLabel: '[data-qa="authentication-label"]',
+  authenticationLabelSubtitle: '[data-qa="authentication-subtitle"]',
+  authContainer: '[data-qa="auth-container"]',
+  oauthContainer: '[data-qa="oauth"]',
+  oauthLabel: '[data-qa="oauth-label"]',
+  apiKeyContainer: '[data-qa="api_key"]',
+  apiKeyLabel: '[data-qa="api_key-label"]',
+  withoutAuthContainer: '[data-qa="none"]',
+  withoutAuthLabel: '[data-qa="none-label"]',
+  allowedToolsLabel: '[data-qa="allowed-tools-label"]',
+  allowedToolsLabelSubtitle: '[data-qa="allowed-tools-subtitle"]',
 };
 
 export const InformationModalSelectors = {

@@ -15,7 +15,7 @@ import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 const conversationName = 'overlayConversationName';
-const expectedConversationId = `conversations/public/playback__${ExpectedConstants.playbackConversation}${conversationName}__${ExpectedConstants.defaultAppVersion}`;
+const expectedConversationId = `conversations/public/playback__${ExpectedConstants.playbackConversation}${conversationName}__${ExpectedConstants.defaultEntityVersion}`;
 
 dialOverlayTest(
   '[Overlay] Exact conversation is set in Overlay. Playback chat with Plotly graph',

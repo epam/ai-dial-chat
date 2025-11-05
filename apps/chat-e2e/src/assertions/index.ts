@@ -42,3 +42,4 @@ export * from './publishing/publishedPromptPreviewModalAssertion';
 export * from './publishing/publishedAppReviewModalAssertion';
 export * from './publishing/publicationReviewControlAssertion';
 export * from './api/apiAssertion';
+export * from './entityEditorPreviewCardAssertion';

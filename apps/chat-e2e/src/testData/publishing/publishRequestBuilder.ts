@@ -92,7 +92,7 @@ export class PublishRequestBuilder {
       ApiKeys.Conversations,
       targetResource,
       conversation.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 
@@ -109,7 +109,7 @@ export class PublishRequestBuilder {
       ApiKeys.Conversations,
       targetResource,
       conversation.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 
@@ -124,7 +124,7 @@ export class PublishRequestBuilder {
       ApiKeys.Prompts,
       targetResource,
       prompt.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 
@@ -139,7 +139,7 @@ export class PublishRequestBuilder {
       ApiKeys.Prompts,
       targetResource,
       prompt.id,
-      version ?? ExpectedConstants.defaultAppVersion,
+      version ?? ExpectedConstants.defaultEntityVersion,
     );
   }
 

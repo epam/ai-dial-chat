@@ -1,6 +1,5 @@
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
-  AgentDetailsModal,
   AttachFilesModal,
   Chat,
   ChatBar,
@@ -9,6 +8,7 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   DropdownMenu,
+  EntityDetailsModal,
   FileDropArea,
   InformationModal,
   Marketplace,
@@ -52,7 +52,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
-import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
+import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
@@ -168,13 +168,13 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
-  adminAgentDetailsModal: AgentDetailsModal;
+  adminEntityDetailsModal: EntityDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
   adminAppsToPublishTree: PublishApplicationsTree;
   adminPublishingRules: PublishingRules;
   adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
   adminMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
-  adminAgentDetailsModalAssertion: AgentDetailsModalAssertion;
+  adminEntityDetailsModalAssertion: EntityDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
   adminPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
   adminAppToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
@@ -676,10 +676,10 @@ const dialAdminTest = dialTest.extend<{
     const adminAttachFilesModal = new AttachFilesModal(adminPage);
     await use(adminAttachFilesModal);
   },
-  adminAgentDetailsModal: async ({ adminMarketplaceAgents }, use) => {
-    const adminAgentDetailsModal =
-      adminMarketplaceAgents.getAgentDetailsModal();
-    await use(adminAgentDetailsModal);
+  adminEntityDetailsModal: async ({ adminMarketplaceAgents }, use) => {
+    const adminEntityDetailsModal =
+      adminMarketplaceAgents.getEntityDetailsModal();
+    await use(adminEntityDetailsModal);
   },
   adminAppsToPublishTree: async ({ adminPublishingRequestDialog }, use) => {
     const adminAppsToPublishTree =
@@ -707,11 +707,14 @@ const dialAdminTest = dialTest.extend<{
     );
     await use(adminMarketplaceAgentsAssertion);
   },
-  adminAgentDetailsModalAssertion: async ({ adminAgentDetailsModal }, use) => {
-    const adminAgentDetailsModalAssertion = new AgentDetailsModalAssertion(
-      adminAgentDetailsModal,
+  adminEntityDetailsModalAssertion: async (
+    { adminEntityDetailsModal },
+    use,
+  ) => {
+    const adminEntityDetailsModalAssertion = new EntityDetailsModalAssertion(
+      adminEntityDetailsModal,
     );
-    await use(adminAgentDetailsModalAssertion);
+    await use(adminEntityDetailsModalAssertion);
   },
   adminSelectFoldersAssertion: async ({ adminSelectFolderModal }, use) => {
     const adminSelectFoldersAssertion = new FolderAssertion(

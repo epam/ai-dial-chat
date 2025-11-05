@@ -10,7 +10,7 @@ export class CustomApplicationBuilder extends ApplicationBuilderBase<ApiApplicat
 
   protected reset(): ApiApplicationModelRegular {
     this.application = super.reset();
-    this.application.endpoint = ExpectedConstants.appDefaultCompletionUrl;
+    this.application.endpoint = ExpectedConstants.defaultEntityUrl;
     return this.application;
   }
 }

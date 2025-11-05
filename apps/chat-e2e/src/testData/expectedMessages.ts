@@ -402,9 +402,10 @@ export const ExpectedMessages = {
   attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
   navigationPanelShouldBeVisible: 'Navigation panel should be visible',
   navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
-  defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
-  defaultAppNameShouldBeFilled:
-    'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+  defaultEntityVersionShouldBeFilled:
+    'Default entity version should be pre-filled',
+  defaultEntityNameShouldBeFilled:
+    'Default entity name should be pre-filled and match pattern "Untitled app/toolset <number>"',
   releaseDateIsValid: 'Release date is valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,
