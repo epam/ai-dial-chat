@@ -79,7 +79,7 @@ export const EditorHeader = <T extends string>({
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-secondary bg-layer-1',
+        'z-10 flex w-full border-b border-secondary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
       data-qa={dataQa}

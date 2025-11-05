@@ -49,5 +49,7 @@ export const getAppEditorRoute = (type: string) => ({
   query: {
     [AppsEditorQuery.Step]: MarketplaceEditorSteps.General,
     [AppsEditorQuery.Schema]: cleanSchemaId(type),
+    [AppsEditorQuery.ReturnUrl]:
+      window.location.pathname + window.location.search,
   },
 });

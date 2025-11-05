@@ -42,6 +42,9 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
         constructPath(PUBLIC_URL_PREFIX, folderId),
       );
       setIsChangeFolderModalOpened(false);
+      if (!folderId) {
+        setValue(PublishRequestFieldsNames.RULES, []);
+      }
     },
     [setValue],
   );

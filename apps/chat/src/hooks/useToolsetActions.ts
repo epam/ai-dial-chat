@@ -70,6 +70,8 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         query: {
           [ToolsetEditorQuery.Id]: toolset.reference,
           [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
+          [ToolsetEditorQuery.ReturnUrl]:
+            window.location.pathname + window.location.search,
         },
       });
     },
