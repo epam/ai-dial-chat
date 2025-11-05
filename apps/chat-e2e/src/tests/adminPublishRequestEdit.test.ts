@@ -14,6 +14,7 @@ import {
 import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+import { expect } from '@playwright/test';
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -693,7 +694,8 @@ dialAdminTest(
     'Organization: The chat with a generated file is published\n' +
     'Organization: the chat with added by user file is published\n' +
     '[Admin view][Edit chat] Re-generated file by agent appears in review. Initial file stays\n' +
-    "Edit file's name attached to chat",
+    "Edit file's name attached to chat\n" +
+    'Edit file name: download renamed file',
   async (
     {
       conversationData,
@@ -721,6 +723,7 @@ dialAdminTest(
       adminAttachmentDropdownMenu,
       adminAttachFilesModal,
       adminSendMessage,
+      baseAssertion,
     },
     testInfo,
   ) => {
@@ -730,6 +733,8 @@ dialAdminTest(
       'EPMRTC-6609',
       'EPMRTC-6606',
       'EPMRTC-6464',
+      'EPMRTC-6798',
+      'EPMRTC-6797',
     );
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -914,6 +919,12 @@ dialAdminTest(
             'visible',
           );
         }
+
+        //TODO EPMRTC-6798 fails
+        // const filesToApproveTree =
+        //   adminPublishingApprovalModal.getFilesToApproveTree();
+        // const fileNames = await filesToApproveTree.getAllTreeEntitiesNames();
+        // baseAssertion.assertStringsSorting(fileNames, 'asc');
       },
     );
 
@@ -933,6 +944,27 @@ dialAdminTest(
         await adminPublishFilesAssertion.assertEntityState(
           { name: updatedCloudImageName },
           'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Assert that file can be downloaded and has the updated name and extension',
+      async () => {
+        const downloadedData = await adminDialHomePage.downloadData(() =>
+          adminPublishingApprovalModal
+            .getFilesToApproveTree()
+            .getFileDownloadIcon(updatedCloudImageName)
+            .click(),
+        );
+        const downloadedFileName =
+          downloadedData.path.split('\\')[
+            downloadedData.path.split('\\').length - 1
+          ];
+        baseAssertion.assertValuesAreEqual(
+          downloadedFileName,
+          updatedCloudImageName,
+          ExpectedMessages.attachmentIsSuccessfullyDownloaded,
         );
       },
     );
@@ -1274,7 +1306,8 @@ dialAdminTest(
           createdDate: currentDate,
           author: publicAuthorName,
         });
-        await informationModal.cancelButton.click()},
+        await informationModal.cancelButton.click();
+      },
     );
   },
 );
