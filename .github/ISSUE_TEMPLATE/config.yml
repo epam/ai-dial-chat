@@ -3,7 +3,7 @@ blank_issues_enabled: false
 contact_links:
   - name: ✏️ Ask a question or get support
     url: https://github.com/epam/ai-dial-chat/discussions
-    about: Ask a question or request support for using EPAM AI DIAL chat
+    about: Ask a question or request support for using EPAM DIAL chat
   - name: 📝 Talk in Discord
     url: https://discord.gg/jvTCQv4E4q
     about: Discuss your question in Discord

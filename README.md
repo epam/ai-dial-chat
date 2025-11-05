@@ -1,6 +1,6 @@
 # DIAL Chat
 
-DIAL Chat is a default UI for [AI DIAL](https://dialx.ai). AI DIAL can be used as headless system, but UI is recommended to learn the capability.
+DIAL Chat is a default UI for [DIAL](https://dialx.ai). DIAL can be used as headless system, but UI is recommended to learn the capability.
 
 Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as various IDP support, model side-by-side compare, [DIAL extensions](https://dialx.ai/extension-framework) support, conversation replays, branding and many more.
 
@@ -19,7 +19,7 @@ This repository is managed as monorepo by [NX](https://nx.dev/) tools.
 - `DIAL Visualizer Connector` documentation is placed [here](./libs/visualizer-connector/README.md).
 - `DIAL Custom Viewers` documentation is placed [here](./docs/CUSTOM-VIEWERS.md).
 
-> In [AI DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/tutorials/0.user-guide.md), you can find a user guide for the AI DIAL Chat application.
+> In [DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/tutorials/0.user-guide.md), you can find a user guide for the DIAL Chat application.
 
 ## Development
 
