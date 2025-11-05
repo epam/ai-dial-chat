@@ -2,7 +2,7 @@ import { BackendEntity } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { AppEditorAppTypes, ExpectedConstants } from '@/src/testData';
+import { EntityEditorAppTypes, ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationsUtil, GeneratorUtil } from '@/src/utils';
@@ -30,8 +30,8 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     additionalShareUserTalkToAgentDialog,
     additionalShareUserTalkToAgentDialogAssertion,
-    additionalShareUserAgentDetailsModal,
-    additionalShareUserAgentDetailsModalAssertion,
+    additionalShareUserEntityDetailsModal,
+    additionalShareUserEntityDetailsModalAssertion,
     additionalShareUserConfirmationDialog,
     additionalShareUserConfirmationDialogAssertion,
     additionalUserShareApiHelper,
@@ -40,7 +40,7 @@ dialSharedWithMeTest(
     setTestIds('EPMRTC-6583', 'EPMRTC-6586', 'EPMRTC-6590', 'EPMRTC-6588');
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: GeneratorUtil.randomEntityVersion(),
     } as DialAIEntityModel;
     const externalUrl = `http://${GeneratorUtil.randomString(6)}.com`;
     let backendEntity: BackendEntity;
@@ -56,7 +56,9 @@ dialSharedWithMeTest(
           .withDisplayVersion(appEntity.version!)
           .withExternalUrl(externalUrl)
           .withApplicationTypeSchemaId(
-            ApplicationsUtil.getAppSchemaByName(AppEditorAppTypes.ExternalApp),
+            ApplicationsUtil.getAppSchemaByName(
+              EntityEditorAppTypes.ExternalApp,
+            ),
           )
           .build();
         backendEntity =
@@ -89,35 +91,35 @@ dialSharedWithMeTest(
         await additionalShareUserMarketplacePage.navigateToUrl(
           ExpectedConstants.sharedAppUrl(shareLinkResponse.invitationLink),
         );
-        await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-          additionalShareUserAgentDetailsModal,
+        await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+          additionalShareUserEntityDetailsModal,
           'visible',
         );
       },
     );
 
     await dialSharedWithMeTest.step('Verify application details', async () => {
-      await additionalShareUserAgentDetailsModalAssertion.assertApplicationName(
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityName(
         appEntity.name,
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertApplicationVersion(
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityVersion(
         appEntity.version!,
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertEntityIcon(
-        additionalShareUserAgentDetailsModal.icon,
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityIcon(
+        additionalShareUserEntityDetailsModal.icon,
       );
-      externalIcon = additionalShareUserAgentDetailsModal.externalAppIcon;
-      await additionalShareUserAgentDetailsModalAssertion.assertElementState(
+      externalIcon = additionalShareUserEntityDetailsModal.externalAppIcon;
+      await additionalShareUserEntityDetailsModalAssertion.assertElementState(
         externalIcon,
         'visible',
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertElementAttribute(
-        additionalShareUserAgentDetailsModal.openInNewTabButton,
+      await additionalShareUserEntityDetailsModalAssertion.assertElementAttribute(
+        additionalShareUserEntityDetailsModal.openInNewTabButton,
         Attributes.href,
         externalUrl,
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertElementAttribute(
-        additionalShareUserAgentDetailsModal.openInNewTabButton,
+      await additionalShareUserEntityDetailsModalAssertion.assertElementAttribute(
+        additionalShareUserEntityDetailsModal.openInNewTabButton,
         Attributes.target,
         Attributes.blank,
       );
@@ -131,7 +133,7 @@ dialSharedWithMeTest(
           additionalShareUserTooltip,
           ExpectedConstants.externalAppTooltip,
         );
-        await additionalShareUserAgentDetailsModal.closeButton.click();
+        await additionalShareUserEntityDetailsModal.closeButton.click();
       },
     );
 
@@ -168,7 +170,7 @@ dialSharedWithMeTest(
             { isWorkspaceAgent: true, isEditable: false },
           );
         await agentElement.click();
-        await additionalShareUserAgentDetailsModal.unshareButton.click();
+        await additionalShareUserEntityDetailsModal.unshareButton.click();
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });

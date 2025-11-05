@@ -2,14 +2,14 @@ import {
   ApiApplicationTypeSchema,
   ApplicationTypeSchemaProperties,
 } from '@/chat/types/application-type-schema';
-import { AppEditorAppTypes } from '@/src/testData';
+import { EntityEditorAppTypes } from '@/src/testData';
 
 export class ApplicationsUtil {
   public static getApplicationSchemas() {
     return JSON.parse(process.env.APP_SCHEMAS!) as ApiApplicationTypeSchema[];
   }
 
-  public static getAppSchemaByName(appName: AppEditorAppTypes): string {
+  public static getAppSchemaByName(appName: EntityEditorAppTypes): string {
     const app = ApplicationsUtil.getApplicationSchemas().find(
       (app) =>
         app[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ===

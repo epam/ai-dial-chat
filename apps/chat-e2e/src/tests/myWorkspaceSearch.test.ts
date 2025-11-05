@@ -1,8 +1,9 @@
 import { Publication } from '@/chat/types/publication';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
-  AppEditorAppTypes,
+  EntityEditorAppTypes,
   ExpectedConstants,
   ExpectedMessages,
 } from '@/src/testData';
@@ -31,7 +32,7 @@ dialTest(
     marketplaceAgentsSection,
     marketplaceAgents,
     marketplace,
-    agentDetailsModal,
+    entityDetailsModal,
     localStorageManager,
     setTestIds,
     baseAssertion,
@@ -65,7 +66,7 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        installedAppVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
@@ -75,12 +76,12 @@ dialTest(
           .withDisplayVersion(installedAppVersion)
           .build();
 
-        nonInstalledAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+        nonInstalledAppFirstVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppVersion,
         ]);
-        nonInstalledAppSecondVersion = GeneratorUtil.randomApplicationVersion([
+        nonInstalledAppSecondVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppVersion,
@@ -267,18 +268,18 @@ dialTest(
           await marketplaceAgentsSection.findAgentElement(installedAppName);
         await foundAgent.click();
         await baseAssertion.assertElementState(
-          agentDetailsModal.versionMenuTrigger,
+          entityDetailsModal.versionMenuTrigger,
           'hidden',
         );
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           installedAppVersion,
         );
         await baseAssertion.assertElementState(
-          agentDetailsModal.copyLink,
+          entityDetailsModal.copyLink,
           'hidden',
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -342,10 +343,10 @@ dialTest(
       async () => {
         await foundSuggestedAgentElement.click();
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           nonInstalledAppSecondVersion,
         );
-        await agentDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal.versionMenuTrigger.click();
         await agentVersionsDropdownMenuAssertion.assertMenuOptions(
           SortingUtil.sortVersionsArray([
             nonInstalledAppFirstVersion,
@@ -367,13 +368,13 @@ dialTest(
     addAppDropdownMenu,
     localStorageManager,
     marketplaceAgents,
-    agentDetailsModal,
+    entityDetailsModal,
     customApplicationBuilder,
     applicationApiHelper,
-    appEditorPage,
-    appEditorGeneralForm,
+    entityEditorPage,
+    entityEditorGeneralForm,
     customAppEditorViewForm,
-    appEditorHeader,
+    entityEditorHeader,
     setTestIds,
     baseAssertion,
     agentVersionsDropdownMenuAssertion,
@@ -397,11 +398,11 @@ dialTest(
         recentNames = ModelsUtil.getRecentAgentsNames(recentModelIds);
         recentVersions = ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        installedAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppFirstVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
-        installedAppSecondVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppSecondVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppFirstVersion,
@@ -464,14 +465,14 @@ dialTest(
         const agentElement =
           await marketplaceAgentsSection.findAgentElement(installedAppName);
         await agentElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal.versionMenuTrigger.click();
         await agentVersionsDropdownMenuAssertion.assertMenuOptions(
           SortingUtil.sortVersionsArray([
             installedAppFirstVersion,
             installedAppSecondVersion,
           ]),
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -486,7 +487,7 @@ dialTest(
       'Add custom app with the name including/excluding searched app name and verify the search term is preserved, first added app is displayed in the results',
       async () => {
         firstAddedAppName = GeneratorUtil.randomString(5) + installedAppName;
-        firstAddedAppVersion = GeneratorUtil.randomApplicationVersion([
+        firstAddedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppFirstVersion,
@@ -494,7 +495,7 @@ dialTest(
         ]);
 
         secondAddedAppName = GeneratorUtil.randomApplicationName();
-        secondAddedAppVersion = GeneratorUtil.randomApplicationVersion([
+        secondAddedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppFirstVersion,
@@ -511,17 +512,26 @@ dialTest(
           await addAppDropdownMenu.selectMenuOption(
             AddAppMenuOptions.customApp,
           );
-          await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
-          await appEditorGeneralForm.fillInAppFields({
+          await entityEditorPage.waitForPageLoaded(
+            EntityEditorAppTypes.CustomApp,
+          );
+          await entityEditorGeneralForm.fillInEntityFields({
             name: addedAppNameVersion.name,
             version: addedAppNameVersion.version,
           });
-          await appEditorGeneralForm.goNext();
+          await entityEditorGeneralForm.goNext({
+            hostsArray: [
+              API.applicationCreateHost,
+              API.installedDeploymentsHost(),
+            ],
+          });
           await customAppEditorViewForm.fillInAppFields();
-          await appEditorHeader.focusOn();
-          await appEditorHeader.saveAndExitButton.click();
+          await entityEditorHeader.focusOn({
+            triggeredHost: API.applicationCreateHost,
+          });
+          await entityEditorHeader.saveAndExitButton.click();
           await marketplacePage.waitForPageLoaded();
-          await agentDetailsModal.closeButton.click();
+          await entityDetailsModal.closeButton.click();
         }
 
         const allAgents = await marketplaceAgentsSection.getAllAgents();
@@ -587,7 +597,7 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        appVersion = GeneratorUtil.randomApplicationVersion([
+        appVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);

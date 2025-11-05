@@ -477,7 +477,7 @@ dialTest(
     localStorageManager,
     talkToAgentDialog,
     navigationPanel,
-    agentDetailsModal,
+    entityDetailsModal,
     confirmationDialog,
     chatHeader,
     marketplaceAgentsSection,
@@ -539,7 +539,7 @@ dialTest(
         const agentElement =
           await marketplaceAgentsSection.findAgentElement(initialModel);
         await agentElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },

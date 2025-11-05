@@ -63,8 +63,8 @@ dialAdminTest(
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
-      adminAgentDetailsModal,
-      adminAgentDetailsModalAssertion,
+      adminEntityDetailsModal,
+      adminEntityDetailsModalAssertion,
     },
     testInfo,
   ) => {
@@ -79,7 +79,7 @@ dialAdminTest(
       'EPMRTC-5342',
     );
     const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const appDescription = GeneratorUtil.randomString(10);
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);
@@ -387,26 +387,26 @@ dialAdminTest(
       'Click on the found card and verify the details',
       async () => {
         await appElement.click();
-        await adminAgentDetailsModalAssertion.assertElementState(
-          adminAgentDetailsModal,
+        await adminEntityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal,
           'visible',
         );
-        await adminAgentDetailsModalAssertion.assertApplicationName(appName);
-        await adminAgentDetailsModalAssertion.assertDescription(appDescription);
-        await adminAgentDetailsModalAssertion.assertApplicationVersion(
-          appVersion,
+        await adminEntityDetailsModalAssertion.assertEntityName(appName);
+        await adminEntityDetailsModalAssertion.assertDescription(
+          appDescription,
         );
-        await adminAgentDetailsModalAssertion.assertEntityIcon(
-          adminAgentDetailsModal.icon,
+        await adminEntityDetailsModalAssertion.assertEntityVersion(appVersion);
+        await adminEntityDetailsModalAssertion.assertEntityIcon(
+          adminEntityDetailsModal.icon,
           expectedPublishedIconUrl,
         );
-        await adminAgentDetailsModalAssertion.assertApplicationAuthor(
+        await adminEntityDetailsModalAssertion.assertEntityAuthor(
           updatedAuthor,
         );
-        await adminAgentDetailsModalAssertion.assertApplicationReleaseDate(
+        await adminEntityDetailsModalAssertion.assertEntityReleaseDate(
           publishApiModels.response,
         );
-        await adminAgentDetailsModalAssertion.assertApplicationTopics([
+        await adminEntityDetailsModalAssertion.assertEntityTopics([
           firstTopic,
           secondTopic,
         ]);

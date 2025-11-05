@@ -72,8 +72,8 @@ dialTest(
       'EPMRTC-1056',
     );
 
-    const appFirstVersion = GeneratorUtil.randomApplicationVersion();
-    const appSecondVersion = GeneratorUtil.randomApplicationVersion([
+    const appFirstVersion = GeneratorUtil.randomEntityVersion();
+    const appSecondVersion = GeneratorUtil.randomEntityVersion([
       appFirstVersion,
     ]);
     const appName = GeneratorUtil.randomApplicationName();
@@ -361,7 +361,7 @@ dialTest(
       'EPMRTC-5218',
     );
 
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const appName = GeneratorUtil.randomApplicationName();
     const topics = [
       GeneratorUtil.randomString(15),
@@ -1041,7 +1041,7 @@ dialTest(
     marketplaceAgentsSection,
     setTestIds,
     marketplaceAgents,
-    agentDetailsModal,
+    entityDetailsModal,
     marketplaceAgentsAssertion,
     agentVersionsDropdownMenuAssertion,
     marketplacePage,
@@ -1228,7 +1228,7 @@ dialTest(
         );
 
         await agentElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal.versionMenuTrigger.click();
         await agentVersionsDropdownMenuAssertion.assertMenuOptions(
           sortedVersions,
         );

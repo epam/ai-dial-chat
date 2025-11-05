@@ -42,6 +42,7 @@ export function EntitiesTabsHeader() {
           selected={selectedEntitiesTab === key}
           onClick={handleSelectTab}
           className="flex-1 text-center md:flex-auto md:text-left"
+          dataQA={key.concat('-tab')}
         >
           {t(label)}
         </TabButton>

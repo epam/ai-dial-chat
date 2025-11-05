@@ -42,13 +42,13 @@ export class MarketplaceAgentsSection extends BaseElement {
     const agentElement = await this.findAgentElement(agent, options);
     //open agent's details card
     await agentElement.click();
-    const agentDetailsModal = this.getAgents().getAgentDetailsModal();
+    const agentDetailsModal = this.getAgents().getEntityDetailsModal();
 
     //if agent has more than one version in the config
     if (agent.version) {
       //check if current version match expected
       const currentVersion =
-        await agentDetailsModal.agentVersion.getElementInnerContent();
+        await agentDetailsModal.entityVersion.getElementInnerContent();
       //select version from dropdown menu if it does not match the current one
       if (currentVersion !== agent.version) {
         const menuTrigger = agentDetailsModal.versionMenuTrigger;

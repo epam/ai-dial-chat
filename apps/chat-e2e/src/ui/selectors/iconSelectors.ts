@@ -18,4 +18,8 @@ export const IconSelectors = {
   externalAppIcon: '.tabler-icon-external-link',
   arrowsMaximizeIcon: '.tabler-icon-arrows-maximize',
   arrowsMinimizeIcon: '.tabler-icon-arrows-minimize',
+  plusIcon: '.tabler-icon-plus',
+  oauthIcon: '.tabler-icon-brand-oauth',
+  keyIcon: '.tabler-icon-key',
+  lockOffIcon: '.tabler-icon-lock-off',
 };
