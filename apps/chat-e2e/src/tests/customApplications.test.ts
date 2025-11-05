@@ -1789,7 +1789,7 @@ dialTest(
     await dialTest.step(
       'Verify the updated icon is displayed on the app card in My workspace',
       async () => {
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
         agentElement =
           await marketplaceAgentsSection.findAgentElement(appEntity);
         const cardIconElement = agentElement.getElementIcon(
