@@ -51,29 +51,28 @@ export const ToolsetPreview = ({ currentToolset }: ToolsetPreviewProps) => {
     ],
   });
 
-  const cardEntity = useMemo(
-    () =>
-      ({
-        type: EntityType.Toolset,
-        isDefault: false,
-        name,
-        description,
-        iconUrl,
-        topics,
-        version,
-        allowedTools,
-        transport,
-        createdAt: currentToolset?.createdAt,
-        updatedAt: currentToolset?.updatedAt,
-        owner: currentToolset?.author,
-        folderId: currentToolset?.folderId ?? 'folder-id-placeholder',
-        reference: currentToolset?.reference ?? 'reference-placeholder',
-        id: currentToolset?.id ?? DRAFT_TOOLSET_ID,
-        authSettings: {
-          ...(currentToolset?.authSettings && currentToolset.authSettings),
-          authenticationType,
-        },
-      }) as ToolsetModel,
+  const cardEntity: ToolsetModel = useMemo(
+    () => ({
+      type: EntityType.Toolset,
+      isDefault: false,
+      name,
+      description,
+      iconUrl,
+      topics,
+      version,
+      allowedTools,
+      transport,
+      createdAt: currentToolset?.createdAt,
+      updatedAt: currentToolset?.updatedAt,
+      owner: currentToolset?.author,
+      folderId: currentToolset?.folderId ?? 'folder-id-placeholder',
+      reference: currentToolset?.reference ?? 'reference-placeholder',
+      id: currentToolset?.id ?? DRAFT_TOOLSET_ID,
+      authSettings: {
+        ...(currentToolset?.authSettings && currentToolset.authSettings),
+        authenticationType,
+      },
+    }),
     [
       allowedTools,
       authenticationType,

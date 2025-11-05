@@ -58,14 +58,20 @@ export const AgentAndToolsetSelector: React.FC<
     setSelectModalOpen(false);
   }, []);
 
-  const handleRemoveItem = (idToRemove: string) => {
-    onChange(value.filter((id) => id !== idToRemove));
-  };
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      onChange(value.filter((id) => id !== idToRemove));
+    },
+    [onChange, value],
+  );
 
-  const handleConfirmSelection = (newIds: string[]) => {
-    onChange(newIds);
-    setSelectModalOpen(false);
-  };
+  const handleConfirmSelection = useCallback(
+    (newIds: string[]) => {
+      onChange(newIds);
+      setSelectModalOpen(false);
+    },
+    [onChange],
+  );
 
   return (
     <Tooltip tooltip={tooltip}>

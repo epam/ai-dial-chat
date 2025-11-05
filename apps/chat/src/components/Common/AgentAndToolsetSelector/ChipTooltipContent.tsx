@@ -8,6 +8,63 @@ import { Translation } from '@/src/types/translation';
 
 import { EntityMarkdownDescription } from '../MarkdownDescription';
 
+interface StatusMessageProps {
+  id: string;
+  item?: MarketplaceEntity;
+  isInvalid: boolean;
+  isLoggedOut: boolean;
+}
+
+const StatusMessage: React.FC<StatusMessageProps> = ({
+  id,
+  item,
+  isInvalid,
+  isLoggedOut,
+}) => {
+  const { t } = useTranslation(Translation.Common);
+
+  if (isInvalid) {
+    const isToolset = isToolsetId(id);
+    const isApplication = isApplicationId(id);
+
+    let entityTypeKey: 'entity' | 'toolset' | 'agent' = 'entity';
+    if (isToolset) {
+      entityTypeKey = 'toolset';
+    } else if (isApplication) {
+      entityTypeKey = 'agent';
+    }
+
+    return (
+      <div className="text-sm text-error">
+        {t(
+          'Not available {{entityType}}. Please, change or remove {{entityType}} to proceed.',
+          { entityType: t(entityTypeKey) },
+        )}
+      </div>
+    );
+  }
+  if (isLoggedOut) {
+    return (
+      <div className="text-sm text-error">
+        {t('Logged out toolset. Click on the toolset to log in.')}
+      </div>
+    );
+  }
+
+  if (
+    item?.type === EntityType.Model ||
+    item?.type === EntityType.Application
+  ) {
+    return (
+      <div className="text-sm text-secondary">
+        {t('Click on the agent to see details.')}
+      </div>
+    );
+  }
+
+  return null;
+};
+
 interface ChipTooltipContentProps {
   id: string;
   item?: MarketplaceEntity;
@@ -26,45 +83,15 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
   isLoggedOut,
 }) => {
   const { t } = useTranslation(Translation.Common);
-  const isToolset = isToolsetId(id);
-  const isApplication = isApplicationId(id);
-
-  const StatusMessage = () => {
-    if (isInvalid) {
-      let entityType = 'entity';
-      if (isToolset) {
-        entityType = 'toolset';
-      } else if (isApplication) {
-        entityType = 'agent';
-      }
-
-      const message = `Not available ${entityType}. Please, change or remove ${entityType} to proceed.`;
-
-      return <div className="text-sm text-error">{t(message)}</div>;
-    }
-    if (isLoggedOut) {
-      return (
-        <div className="text-sm text-error">
-          {t('Logged out toolset. Click on the toolset to log in.')}
-        </div>
-      );
-    }
-    if (
-      item?.type === EntityType.Model ||
-      item?.type === EntityType.Application
-    ) {
-      return (
-        <div className="text-sm text-secondary">
-          {t('Click on the agent to see details.')}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="flex max-w-[440px] flex-col px-2 py-1">
-      <StatusMessage />
+      <StatusMessage
+        id={id}
+        item={item}
+        isInvalid={isInvalid}
+        isLoggedOut={isLoggedOut}
+      />
 
       <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 flex-col text-sm">

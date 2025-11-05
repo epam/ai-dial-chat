@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -15,45 +15,28 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTooltipContent } from './ChipTooltipContent';
 
-interface OverflowListItemProps {
+interface ListItemContentProps {
   id: string;
   item?: MarketplaceEntity;
-  onRemove: (id: string) => void;
-  onItemClick?: (id: string) => void;
+  name: string;
+  version?: string;
+  isInvalid: boolean;
+  isError: boolean;
+  handleClick: (e: React.MouseEvent) => void;
+  handleRemove: (e: React.MouseEvent) => void;
 }
 
-export const OverflowListItem: React.FC<OverflowListItemProps> = ({
+const ListItemContent: React.FC<ListItemContentProps> = ({
   id,
   item,
-  onRemove,
-  onItemClick,
+  name,
+  version,
+  isInvalid,
+  isError,
+  handleClick,
+  handleRemove,
 }) => {
-  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
-
-  const isMobileView = isSmallScreen();
-
-  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
-
-  const name = !item
-    ? getEntityNameFromId(id, { removeVersion: true })
-    : item.name;
-  const version = !item ? getVersionFromId(id) : item.version;
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (isInvalid) {
-      if (isMobileView) {
-        e.stopPropagation();
-        setIsTooltipOpen(true);
-      }
-      return;
-    }
-
-    onItemClick?.(id);
-  };
-
-  const shouldShowTooltip = !isMobileView || (isMobileView && isInvalid);
-
-  const ListItemContent = (
+  return (
     <div
       className={classNames(
         'flex w-full items-center justify-between gap-3 px-3 py-2 transition-colors',
@@ -84,14 +67,60 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
       </div>
       <button
         className="shrink-0 text-secondary hover:text-primary"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(id);
-        }}
+        onClick={handleRemove}
       >
         <IconX size={18} />
       </button>
     </div>
+  );
+};
+
+interface OverflowListItemProps {
+  id: string;
+  item?: MarketplaceEntity;
+  onRemove: (id: string) => void;
+  onItemClick?: (id: string) => void;
+}
+
+export const OverflowListItem: React.FC<OverflowListItemProps> = ({
+  id,
+  item,
+  onRemove,
+  onItemClick,
+}) => {
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+
+  const isMobileView = isSmallScreen();
+
+  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
+
+  const shouldShowTooltip = !isMobileView || (isMobileView && isInvalid);
+  const name = !item
+    ? getEntityNameFromId(id, { removeVersion: true })
+    : item.name;
+  const version = !item ? getVersionFromId(id) : item.version;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (isInvalid) {
+        if (isMobileView) {
+          e.stopPropagation();
+          setIsTooltipOpen(true);
+        }
+        return;
+      }
+
+      onItemClick?.(id);
+    },
+    [id, isInvalid, isMobileView, onItemClick],
+  );
+
+  const handleRemove = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onRemove(id);
+    },
+    [id, onRemove],
   );
 
   return (
@@ -112,7 +141,16 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
         />
       }
     >
-      {ListItemContent}
+      <ListItemContent
+        id={id}
+        item={item}
+        name={name}
+        version={version}
+        isInvalid={isInvalid}
+        isError={isError}
+        handleClick={handleClick}
+        handleRemove={handleRemove}
+      />
     </Tooltip>
   );
 };

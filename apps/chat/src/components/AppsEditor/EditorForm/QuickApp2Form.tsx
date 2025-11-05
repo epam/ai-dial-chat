@@ -5,12 +5,14 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getSharedTooltip } from '@/src/utils/app/application';
+import {
+  getSharedTooltip,
+  isDialAiEntityModel,
+} from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -59,16 +61,6 @@ const ControlledField = withController(Field);
 
 const getItemLabel = (item: unknown): string => item as string;
 
-function isApplicationOrModel(
-  entity: MarketplaceEntity,
-): entity is DialAIEntityModel {
-  return entity.type === 'application' || entity.type === 'model';
-}
-
-function isToolset(entity: MarketplaceEntity): entity is ToolsetModel {
-  return entity.type === 'toolset';
-}
-
 export const QuickApp2Form = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -95,8 +87,15 @@ export const QuickApp2Form = () => {
     [modelsMap, toolsetsMap],
   );
 
-  const { control, formState, register, setError, clearErrors } =
-    useFormContext<QuickApp2FormType>();
+  const {
+    control,
+    formState,
+    register,
+    setError,
+    clearErrors,
+    getValues,
+    setValue,
+  } = useFormContext<QuickApp2FormType>();
   const errors = formState.errors;
 
   const modelId = useWatch({
@@ -143,6 +142,26 @@ export const QuickApp2Form = () => {
     },
     [allEntitiesMap, handleOpenDetails],
   );
+
+  const handleRemoveFromDetails = useCallback(
+    (entityToRemove: MarketplaceEntity) => {
+      const currentValue = getValues('agentsAndToolsets') || [];
+      setValue(
+        'agentsAndToolsets',
+        currentValue.filter((id) => id !== entityToRemove.id),
+        { shouldTouch: true, shouldDirty: true },
+      );
+      handleCloseDetails();
+    },
+    [getValues, setValue, handleCloseDetails],
+  );
+
+  const commonDetailsProps = {
+    onClose: handleCloseDetails,
+    onChangeVersion: handleChangeVersionInDetails,
+    onRemove: handleRemoveFromDetails,
+    isPreview: true,
+  };
 
   return (
     <div
@@ -197,15 +216,6 @@ export const QuickApp2Form = () => {
         name="agentsAndToolsets"
         control={control}
         render={({ field }) => {
-          const handleRemoveFromDetails = (
-            entityToRemove: MarketplaceEntity,
-          ) => {
-            const currentIds = field.value || [];
-            const newIds = currentIds.filter((id) => id !== entityToRemove.id);
-            field.onChange(newIds);
-            handleCloseDetails();
-          };
-
           return (
             <>
               <AgentAndToolsetSelectorField
@@ -218,29 +228,24 @@ export const QuickApp2Form = () => {
                 onItemClick={handleItemClick}
               />
               {detailedViewEntity &&
-                isApplicationOrModel(detailedViewEntity) && (
+                isDialAiEntityModel(detailedViewEntity) && (
                   <ApplicationDetails
                     entity={detailedViewEntity}
                     allEntities={allModels}
-                    onClose={handleCloseDetails}
-                    onChangeVersion={handleChangeVersionInDetails}
                     FooterComponent={SimpleApplicationDetailsFooter}
-                    onRemove={handleRemoveFromDetails}
-                    isPreview
+                    {...commonDetailsProps}
                   />
                 )}
 
-              {detailedViewEntity && isToolset(detailedViewEntity) && (
-                <ToolsetDetails
-                  entity={detailedViewEntity}
-                  allEntities={allToolsets}
-                  onClose={handleCloseDetails}
-                  onChangeVersion={handleChangeVersionInDetails}
-                  FooterComponent={SimpleToolsetDetailsFooter}
-                  onRemove={handleRemoveFromDetails}
-                  isPreview
-                />
-              )}
+              {detailedViewEntity &&
+                isToolsetEntityModel(detailedViewEntity) && (
+                  <ToolsetDetails
+                    entity={detailedViewEntity}
+                    allEntities={allToolsets}
+                    FooterComponent={SimpleToolsetDetailsFooter}
+                    {...commonDetailsProps}
+                  />
+                )}
             </>
           );
         }}
