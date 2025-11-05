@@ -920,7 +920,10 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click edit request, update filename, click update request button and verify updated filename is displayed',
       async () => {
-        updatedCloudImageName = Attachment.cloudImageName.split('.')[0] + '_updated.' + Attachment.cloudImageName.split('.')[1];
+        updatedCloudImageName =
+          Attachment.cloudImageName.split('.')[0] +
+          '_updated.' +
+          Attachment.cloudImageName.split('.')[1];
         await adminPublishingApprovalModal.editButton.click();
         await adminPublishingApprovalModal.renameFileToApprove(
           Attachment.cloudImageName,
@@ -1024,8 +1027,7 @@ dialAdminTest(
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     let firstUpdatedName: string;
-    let secondUpdatedName: string;
-    let thirdUpdatedName: string;
+    let updatedName: string;
     let publishRequest: PublicationRequestModel;
     let publicAuthorName: string;
     const currentDate = DateUtil.getCurrentLocalDate();
@@ -1036,9 +1038,7 @@ dialAdminTest(
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
 
-        firstUpdatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}`;
-        secondUpdatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}`;
-        thirdUpdatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}`;
+        updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_1`;
 
         publishRequest = publishRequestBuilder
           .withName(requestName)
@@ -1069,12 +1069,12 @@ dialAdminTest(
       async () => {
         await adminPublishingApprovalModal.renameConversationToApprove(
           conversation.name,
-          firstUpdatedName,
+          updatedName,
         );
         await adminPublishingApprovalModal.updateRequestButton.click();
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
           { name: requestName },
-          { name: firstUpdatedName },
+          { name: updatedName },
           'visible',
         );
       },
@@ -1086,7 +1086,7 @@ dialAdminTest(
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
         });
-        await adminChatHeaderAssertion.assertHeaderTitle(firstUpdatedName);
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
       },
     );
 
@@ -1095,13 +1095,14 @@ dialAdminTest(
       async () => {
         await adminChatHeader.dotsMenu.click();
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_2`;
         await adminRenameConversationModal.editConversationNameWithSaveButton(
-          secondUpdatedName,
+          updatedName,
         );
-        await adminChatHeaderAssertion.assertHeaderTitle(secondUpdatedName);
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
           { name: requestName },
-          { name: secondUpdatedName },
+          { name: updatedName },
           'visible',
         );
       },
@@ -1114,7 +1115,7 @@ dialAdminTest(
         const conversationsTree =
           adminPublishingApprovalModal.getConversationsToApproveTree();
         const conversationToApprove =
-          conversationsTree.getEntityByName(secondUpdatedName);
+          conversationsTree.getEntityByName(updatedName);
         await baseAssertion.assertElementState(
           conversationToApprove,
           'visible',
@@ -1130,13 +1131,14 @@ dialAdminTest(
         });
         await adminApproveRequiredConversations.openFolderEntityDropdownMenu(
           requestName,
-          secondUpdatedName,
+          updatedName,
         );
         await adminApproveRequiredConversationDropdownMenu.selectMenuOption(
           MenuOptions.rename,
         );
+        updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_3`;
         await adminRenameConversationModal.editConversationNameWithSaveButton(
-          thirdUpdatedName,
+          updatedName,
         );
       },
     );
@@ -1146,10 +1148,10 @@ dialAdminTest(
       async () => {
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
           { name: requestName },
-          { name: thirdUpdatedName },
+          { name: updatedName },
           'visible',
         );
-        await adminChatHeaderAssertion.assertHeaderTitle(thirdUpdatedName);
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
       },
     );
 
@@ -1160,7 +1162,7 @@ dialAdminTest(
         const conversationsTree =
           adminPublishingApprovalModal.getConversationsToApproveTree();
         const conversationToApprove =
-          conversationsTree.getEntityByName(thirdUpdatedName);
+          conversationsTree.getEntityByName(updatedName);
         await baseAssertion.assertElementState(
           conversationToApprove,
           'visible',
@@ -1194,13 +1196,11 @@ dialAdminTest(
     await dialAdminTest.step(
       'Find published chat in Organization section',
       async () => {
-        await dialHomePage.openHomePage();
         await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
 
-        await organizationConversations.openEntityDropdownMenu(
-          thirdUpdatedName,
-        );
+        await organizationConversations.openEntityDropdownMenu(updatedName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
