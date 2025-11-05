@@ -115,7 +115,12 @@ export const getDefaultLoginFormData = (
         authorizationEndpoint:
           toolset?.authSettings?.authorizationEndpoint ?? '',
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
-        includeOAuthFields: prevData?.includeOAuthFields ?? false,
+        includeOAuthFields:
+          !prevData &&
+          toolset?.authSettings?.clientSecret &&
+          toolset?.authSettings?.clientId
+            ? true
+            : (prevData?.includeOAuthFields ?? false),
       };
     case ToolsetAuthTypes.NONE:
     default:
