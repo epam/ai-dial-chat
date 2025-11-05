@@ -82,7 +82,7 @@ export const ReviewApplicationDialog = {
 
 export const ModelTooltip = {
   modelTooltip: '[data-qa="chat-model-tooltip"]',
-  modelInfo: '[data-qa="agent-info"]',
+  modelInfo: '[data-qa="entity-info"]',
   versionInfo: '[data-qa="version-info"]',
   title: '[data-qa="tooltip-title"]',
 };
