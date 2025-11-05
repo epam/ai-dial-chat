@@ -67,6 +67,7 @@ export const ToolsetEditorFormSchema = zodValidation
   .object({
     endpoint: zodValidation
       .string()
+      .trim()
       .nonempty(formErrors.required)
       .regex(/^(https?|sse):\/\//, {
         error: urlErrors.notValidProtocol,
