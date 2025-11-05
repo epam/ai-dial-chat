@@ -73,6 +73,9 @@ import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 
+const AUTHOR_PUBLIC_NAME_TOOLTIP =
+  "This name will be displayed instead of the author's name for this publication.";
+
 interface Props {
   publication: Publication;
   onSubmit: (
@@ -485,6 +488,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     {showPublicDisplayAuthor &&
                       (isEditMode || !isReview ? (
                         <Field
+                          info={t(AUTHOR_PUBLIC_NAME_TOOLTIP)}
                           label={t("Author's public name")}
                           {...formMethods.register(
                             PublishRequestFieldsNames.PUBLICATION_AUTHOR,
@@ -503,9 +507,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           label={t("Author's public name")}
                           valueDataQa="publication-display-author"
                           valueToDisplay={publication.displayAuthor ?? ''}
-                          infoTooltip={t(
-                            "This name will be displayed instead of the author's name for this publication.",
-                          )}
+                          infoTooltip={t(AUTHOR_PUBLIC_NAME_TOOLTIP)}
                         />
                       ))}
 
