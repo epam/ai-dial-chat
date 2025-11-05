@@ -232,14 +232,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   }, [formMethods, isEditMode]);
 
   useEffect(() => {
-    if (!isReview && editedPublishToUrl !== PUBLIC_URL_PREFIX) {
+    if (editedPublishToUrl !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
           path: getIdWithoutFeatureType(editedPublishToUrl),
         }),
       );
     }
-  }, [dispatch, editedPublishToUrl, isReview]);
+  }, [dispatch, editedPublishToUrl]);
 
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
