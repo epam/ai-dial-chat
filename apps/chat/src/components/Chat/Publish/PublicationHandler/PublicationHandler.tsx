@@ -189,17 +189,26 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     userName,
   ]);
 
-  const formMethods = useForm<PublicationRequestFormData>({
-    defaultValues: {
+  const getDefaultValues = useCallback(
+    () => ({
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
       ),
       rules: initialState.rules,
       publicationAuthor: initialState.displayAuthor,
       publishToUrl: initialState.publishToUrl,
-    },
+    }),
+    [initialState, userName],
+  );
+
+  const formMethods = useForm<PublicationRequestFormData>({
+    defaultValues: getDefaultValues(),
     mode: 'onChange',
   });
+
+  useEffect(() => {
+    formMethods.reset(getDefaultValues());
+  }, [getDefaultValues, formMethods]);
 
   const rulesOnEdit = formMethods.watch(PublishRequestFieldsNames.RULES);
   const displayAuthorEditState = formMethods.watch(
@@ -223,14 +232,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   }, [formMethods, isEditMode]);
 
   useEffect(() => {
-    if (!isReview && editedPublishToUrl !== PUBLIC_URL_PREFIX) {
+    if (editedPublishToUrl !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
           path: getIdWithoutFeatureType(editedPublishToUrl),
         }),
       );
     }
-  }, [dispatch, editedPublishToUrl, isReview]);
+  }, [dispatch, editedPublishToUrl]);
 
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
