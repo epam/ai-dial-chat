@@ -32,14 +32,12 @@ dialTest(
       baseAssertion,
       toolsetEditorViewForm,
       entityEditorHeaderAssertion,
-      localStorageManager,
       entityDetailsModalAssertion,
       customAppEditorAppSettingsPreviewBody,
       entityEditorGeneralForm,
       toolsetEditorViewFormAssertion,
       listboxMenu,
       attachFilesModal,
-      entityEditorGeneralInfoPreview,
       entityEditorGeneralInfoPreviewCardAssertion,
       toolsetEditorSettingsPreviewCardAssertion,
       entityEditorGeneralInfoPreviewCard,
@@ -69,7 +67,6 @@ dialTest(
     let topicsToSelect: string[];
     let generalInfoStep: BaseElement;
     let toolsetSettingsStep: BaseElement;
-    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
       'Precondition: Create toolset via API to avoid inconsistent naming. Issue 4236',
@@ -221,10 +218,6 @@ dialTest(
     await dialTest.step(
       'Verify toolset preview on the right side of General Info screen',
       async () => {
-        //TODO: remove view switching when fixed https://github.com/epam/ai-dial-chat/issues/4576
-        await entityEditorGeneralInfoPreview
-          .getEntityEditorPreviewToggle()
-          .detailedSwitch.click();
         await entityEditorGeneralInfoPreviewCardAssertion.assertPreviewCardAttributes(
           {
             expectedName: toolsetEntity.name,
