@@ -233,6 +233,7 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
       }
       setValue('includeOAuthFields', value === WithLogin.WithConfig, {
         shouldDirty: false,
+        shouldValidate: true,
       });
     },
     [clearErrors, setValue],

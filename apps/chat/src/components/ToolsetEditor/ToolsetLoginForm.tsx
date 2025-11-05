@@ -2,20 +2,35 @@ import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { useCallback } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+
+
 import classNames from 'classnames';
+
+
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+
+
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+
+
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+
+
 import { Field } from '@/src/components/Common/Forms/Field';
+
+
 
 import { ToolsetLoginFormType } from './form';
 
+
+
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+
 
 const fields = [
   'keyHeader',
@@ -54,6 +69,7 @@ export const ToolsetLoginForm = ({
   const { register, formState, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
   const errors = formState.errors;
+  const isValid = formState.isValid;
 
   const includeOAuthFields = useWatch({
     name: 'includeOAuthFields',
@@ -146,7 +162,7 @@ export const ToolsetLoginForm = ({
           buttonClassName,
           isSignedIn ? 'button-secondary' : 'button-primary',
         )}
-        disabled={disabled}
+        disabled={disabled || !isValid}
         onClick={handleSubmit}
       >
         {isSignedIn ? (
