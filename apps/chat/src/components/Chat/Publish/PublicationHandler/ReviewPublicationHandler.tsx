@@ -1,6 +1,5 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
-import { getIdWithoutFeatureType } from '@/src/utils/app/id';
 import { getNewTargetUrlFromEditState } from '@/src/utils/app/publications';
 
 import { Publication, PublicationResource } from '@/src/types/publication';
@@ -8,8 +7,6 @@ import { Publication, PublicationResource } from '@/src/types/publication';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { PublicationRequestFormData } from '../form';
 import { PublicationHandler } from './PublicationHandler';
@@ -27,16 +24,6 @@ export function ReviewPublicationHandler({ publication }: Props) {
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
-
-  useEffect(() => {
-    if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
-      dispatch(
-        PublicationActions.uploadRules({
-          path: getIdWithoutFeatureType(publication.targetFolder),
-        }),
-      );
-    }
-  }, [dispatch, publication.targetFolder]);
 
   const handleSubmit = useCallback(
     (
