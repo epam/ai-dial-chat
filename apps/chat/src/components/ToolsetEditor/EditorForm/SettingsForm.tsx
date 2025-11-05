@@ -8,6 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
+
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -99,6 +101,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
           placeholder={t('Enter endpoint')}
           id="endpoint"
           error={errors.endpoint?.message}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
           disabled={isToolsetPublic}
         />
         <Controller
@@ -119,6 +122,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               id="protocol"
               options={protocolOptions}
               closeMenuOnSelect
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
               isDisabled={isToolsetPublic}
             />
           )}
@@ -132,7 +136,10 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         )}
         className="pt-4"
       >
-        <AuthField isDisabled={isToolsetPublic} />
+        <AuthField
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
+          isDisabled={isToolsetPublic}
+        />
       </FormSection>
 
       <FormSection
@@ -161,6 +168,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               hasDeleteAll
               hideSuggestions
               itemHeightClassName="h-[31px]"
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
         />

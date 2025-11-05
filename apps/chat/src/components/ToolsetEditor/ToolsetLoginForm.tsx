@@ -31,6 +31,7 @@ interface ToolsetLoginFormProps {
   disabled?: boolean;
   className?: string;
   buttonClassName?: string;
+  fieldsTooltip?: string;
   onLogout?: () => void;
   onLogin?: (data: ToolsetLoginFormType) => void;
 }
@@ -42,6 +43,7 @@ export const ToolsetLoginForm = ({
   disabled = false,
   className,
   buttonClassName,
+  fieldsTooltip,
   onLogout,
   onLogin,
 }: ToolsetLoginFormProps) => {
@@ -82,6 +84,7 @@ export const ToolsetLoginForm = ({
             id="keyHeader"
             error={errors.keyHeader?.message}
             disabled={disabled}
+            tooltip={fieldsTooltip}
           />
           <Field
             {...register('apiKey')}
@@ -91,6 +94,7 @@ export const ToolsetLoginForm = ({
             id="apiKey"
             error={errors.apiKey?.message}
             disabled={disabled}
+            tooltip={fieldsTooltip}
           />
         </>
       )}
@@ -115,6 +119,7 @@ export const ToolsetLoginForm = ({
             error={errors.clientSecret?.message}
             mandatory
             type="password"
+            tooltip={fieldsTooltip}
           />
           <Field
             {...register('authorizationEndpoint')}
@@ -122,6 +127,7 @@ export const ToolsetLoginForm = ({
             placeholder={t('Enter authorization endpoint')}
             id="authorizationEndpoint"
             disabled={disabled}
+            tooltip={fieldsTooltip}
           />
           <Field
             {...register('tokenEndpoint')}
@@ -129,6 +135,7 @@ export const ToolsetLoginForm = ({
             placeholder={t('Enter token endpoint')}
             id="tokenEndpoint"
             disabled={disabled}
+            tooltip={fieldsTooltip}
           />
         </>
       )}

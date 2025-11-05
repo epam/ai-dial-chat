@@ -31,7 +31,7 @@ import {
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
-import { getLastPathSegment } from '@/src/utils/app/common';
+import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -76,6 +76,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
@@ -236,7 +237,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
             ApplicationActions.edit({
               oldApplication: payload.oldApplication,
               updatedApplication: payload.applicationData,
-              redirectUrl: payload.redirectUrl,
+              redirectUrl: payload.redirectUrl?.toString(),
               schema: payload.schema,
             }),
           ),
@@ -354,7 +355,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   iif(
-                    () => !!payload.isSaveAndExit || !!payload.redirectUrl,
+                    () => !!payload.isSaveAndExit,
                     of(
                       ApplicationActions.exitEditor({
                         redirectUrl: payload.redirectUrl,
@@ -749,6 +750,8 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
               ),
               [AppsEditorQuery.PublicationUrl]: payload.publicationUrl,
               [AppsEditorQuery.Step]: MarketplaceEditorSteps.Settings,
+              [AppsEditorQuery.ReturnUrl]:
+                window.location.pathname + window.location.search,
             },
           });
         }),
@@ -770,67 +773,85 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
     switchMap(({ payload }) => {
-      const query = parse(window.location.search.slice(1));
-      const publicationUrl = query[AppsEditorQuery.PublicationUrl];
-      const reference = query[AppsEditorQuery.Id];
-
-      if (payload.redirectUrl) {
-        router.push({
-          pathname: payload.redirectUrl,
-          query:
-            payload.redirectUrl === Routes.Marketplace
-              ? {
-                  tab: MarketplaceTabs.MY_WORKSPACE,
-                }
-              : undefined,
-        });
-      } else if (publicationUrl) {
-        router.push({
-          pathname: Routes.Chat,
-        });
-        return concat(
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: [],
-            }),
-          ),
-          of(PublicationActions.setIsApplicationReview(true)),
-        );
-      } else {
-        router.push({
-          pathname: Routes.Marketplace,
-          query: { tab: MarketplaceTabs.MY_WORKSPACE },
-        });
-      }
       const returnConversationIds =
         ApplicationSelectors.selectReturnConversationIds(state$.value);
+      const query = parse(window.location.search.slice(1));
+      const publicationUrl = query[AppsEditorQuery.PublicationUrl]?.toString();
+      const returnUrlQuery = query[AppsEditorQuery.ReturnUrl]?.toString();
+      const reference = query[AppsEditorQuery.Id]?.toString();
+      const returnUrl = returnUrlQuery
+        ? getSafeRedirectUrl(decodeURIComponent(returnUrlQuery))
+        : undefined;
+      const redirectUrl = payload.redirectUrl
+        ? getSafeRedirectUrl(payload.redirectUrl.toString())
+        : undefined;
+
+      const route =
+        redirectUrl ??
+        returnUrl ??
+        (publicationUrl
+          ? { pathname: Routes.Chat }
+          : {
+              pathname: Routes.Marketplace,
+              query: {
+                [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
+                [MarketplaceQueryParams.entitiesTab]:
+                  MarketplaceEntitiesTabs.AGENTS,
+              },
+            });
+
+      router.push(route).then(() => {
+        if (route.pathname === Routes.Marketplace) {
+          of(MarketplaceActions.initQueryParams());
+        }
+      });
+
       return concat(
         iif(
-          () => !!returnConversationIds?.length,
+          () =>
+            !!payload.shouldSelectApplication &&
+            route.pathname === Routes.Marketplace &&
+            !!reference,
           of(
-            ConversationsActions.selectConversations({
-              conversationIds: returnConversationIds as string[],
+            MarketplaceActions.setDetailsEntity({
+              reference: reference as string,
+              type: MarketplaceEntitiesTabs.AGENTS,
+              isSuggested: false,
             }),
           ),
+          EMPTY,
+        ),
+        iif(
+          () =>
+            route.pathname === Routes.Chat &&
+            !publicationUrl &&
+            !returnConversationIds?.length,
           of(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
             }),
           ),
+          EMPTY,
         ),
-        of(ApplicationActions.setReturnConversationIds(undefined)),
-        of(
-          MarketplaceActions.setDetailsEntity(
-            payload.redirectUrl === Routes.Marketplace &&
-              !!payload.shouldSelectApplication &&
-              reference
-              ? {
-                  reference: reference.toString(),
-                  type: MarketplaceEntitiesTabs.AGENTS,
-                  isSuggested: false,
-                }
-              : undefined,
+        iif(
+          () =>
+            route.pathname === Routes.Chat &&
+            !publicationUrl &&
+            !!returnConversationIds?.length,
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: returnConversationIds as string[],
+            }),
           ),
+          EMPTY,
+        ),
+        iif(
+          () => route.pathname === Routes.Chat && !!publicationUrl,
+          of(
+            ConversationsActions.selectConversations({ conversationIds: [] }),
+            PublicationActions.setIsApplicationReview(true),
+          ),
+          EMPTY,
         ),
       );
     }),

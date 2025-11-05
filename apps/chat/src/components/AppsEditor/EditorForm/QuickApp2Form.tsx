@@ -17,8 +17,10 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
-import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
+import {
+  CONFIRM_DOCUMENT_VALUES,
+  PUBLIC_APP_TOOLTIP,
+} from '@/src/constants/applications';
 
 import {
   QuickApp2Form as QuickApp2FormType,
@@ -62,7 +64,7 @@ export const QuickApp2Form = () => {
   const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
 
   const toolSupportingModels = useMemo(
-    () => modelTypeAgents.filter((model) => model.features?.toolsSupported),
+    () => modelTypeAgents.filter((model) => model.features?.tools),
     [modelTypeAgents],
   );
 
@@ -213,11 +215,15 @@ export const QuickApp2Form = () => {
         render={({ field }) => (
           <ToggleSwitchField
             label={t('Code Interpreter')}
+            info={t(
+              'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
+            )}
             isOn={field.value}
             handleSwitch={field.onChange}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
-            className="flex w-fit"
+            additionalText={t('Use to execute custom Python code')}
+            className="mt-1 flex w-fit items-center gap-2"
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
           />
