@@ -209,6 +209,7 @@ export class PublishingApprovalModal extends BaseElement {
 
     await conversationInput.click();
     await conversationInput.fill(newName);
+    return newName;
   }
 
   public async renameFileToApprove(fileName: string, newName: string) {

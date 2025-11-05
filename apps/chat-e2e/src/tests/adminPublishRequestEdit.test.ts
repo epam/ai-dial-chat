@@ -994,7 +994,9 @@ dialAdminTest(
   '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
     '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
     "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel.\n" +
-    'Edit author public name. Updated name displayed in Info only after request approved',
+    'Edit author public name. Updated name displayed in Info only after request approved\n + ' +
+    '[Admin view][Edit request]: Rename the chat. Special symbols are allowed ( not restricted)\n' +
+    '[Admin view][Edit request] Rename the chat several times in a row',
   async (
     {
       conversationData,
@@ -1023,10 +1025,16 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6474', 'EPMRTC-6493', 'EPMRTC-6658', 'EPMRTC-6456');
+    setTestIds(
+      'EPMRTC-6474',
+      'EPMRTC-6493',
+      'EPMRTC-6658',
+      'EPMRTC-6456',
+      'EPMRTC-6787',
+      'EPMRTC-6550',
+    );
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    let firstUpdatedName: string;
     let updatedName: string;
     let publishRequest: PublicationRequestModel;
     let publicAuthorName: string;
@@ -1171,6 +1179,64 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Rename chat multiple times with special symbols',
+      async () => {
+        for (let i = 1; i <= 2; i++) {
+          updatedName =
+            await adminPublishingApprovalModal.renameConversationToApprove(
+              updatedName,
+              `${conversation.name}_${ExpectedConstants.allowedSpecialChars}_${i}`,
+            );
+          await adminPublishingApprovalModal.updateRequestButton.click();
+        }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify updated name with special symbols is displayed in the request',
+      async () => {
+        const conversationsTree =
+          adminPublishingApprovalModal.getConversationsToApproveTree();
+        const conversationToApprove =
+          conversationsTree.getEntityByName(updatedName);
+        await baseAssertion.assertElementState(
+          conversationToApprove,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Go to a review" link and verify chat name with special symbols is displayed correctly in header and in the sidebar',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: requestName },
+          { name: updatedName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Back to publication request" button and verify final name is displayed',
+      async () => {
+        await adminPublicationReviewControl.backToPublicationRequest();
+        const conversationsTree =
+          adminPublishingApprovalModal.getConversationsToApproveTree();
+        const conversationToApprove =
+          conversationsTree.getEntityByName(updatedName);
+        await baseAssertion.assertElementState(
+          conversationToApprove,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
       'Click Edit button and add "_updated" to author\'s public name',
       async () => {
         await adminPublishingApprovalModal.editButton.click();
@@ -1208,8 +1274,7 @@ dialAdminTest(
           createdDate: currentDate,
           author: publicAuthorName,
         });
-        await informationModal.cancelButton.click();
-      },
+        await informationModal.cancelButton.click()},
     );
   },
 );
