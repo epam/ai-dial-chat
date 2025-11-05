@@ -104,8 +104,8 @@ export function ChatMessageContent({
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
-        if (!conversation.isMessageStreaming) {
-          onClick?.(e, messageRef);
+        if (!conversation.isMessageStreaming && !!messageRef.current) {
+          onClick?.(e, messageRef as RefObject<HTMLDivElement>);
         }
       }}
     >

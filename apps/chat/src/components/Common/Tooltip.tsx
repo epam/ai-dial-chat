@@ -139,16 +139,17 @@ export const TooltipTrigger = forwardRef<
 >(function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
   const context = useTooltipContext();
 
-  const typedChildren = children as ReactNode;
+  // const typedChildren = children;
 
   const isRefInChildren =
-    typedChildren &&
-    typeof typedChildren === 'object' &&
-    'ref' in typedChildren &&
-    typedChildren.ref !== undefined;
+    children &&
+    typeof children === 'object' &&
+    children !== null &&
+    'ref' in children &&
+    children.ref !== undefined;
 
   const childrenRef = isRefInChildren
-    ? (typedChildren.ref as Ref<unknown>)
+    ? (children.ref as Ref<unknown>)
     : undefined;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
@@ -159,9 +160,11 @@ export const TooltipTrigger = forwardRef<
       context.getReferenceProps({
         ref,
         ...props,
-        ...children.props,
+        ...(typeof children.props === 'object' &&
+          children.props !== null &&
+          children.props),
         'data-state': context.open ? 'open' : 'closed',
-      }),
+      } as HTMLProps<HTMLElement>),
     );
   }
 

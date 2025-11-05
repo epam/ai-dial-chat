@@ -1,3 +1,5 @@
+import { JSX } from 'react';
+
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';

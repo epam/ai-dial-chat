@@ -137,7 +137,7 @@ export const CodeEditorView = ({
   const debouncedChangeHandlerRef = useRef<DebouncedFunc<
     (content: string) => void
   > | null>(null);
-  const fileContentRef = useRef<typeof fileContent>();
+  const fileContentRef = useRef<typeof fileContent | undefined>(fileContent);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monaco | null>(null);
   const modelCacheRef = useRef<

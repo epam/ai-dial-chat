@@ -39,10 +39,12 @@ export const EntityMarkdownDescription = ({
         className,
         'prose-sm text-xs prose-a:break-all prose-a:underline',
       )}
-      linkTarget="_blank"
-      remarkPlugins={[remarkGfm]}
+      // TODO specify different type
+      // linkTarget="_blank"
+      remarkPlugins={[remarkGfm as any]}
       rehypePlugins={[
-        rehypeRaw,
+        // TODO specify different type
+        rehypeRaw as any,
         [
           rehypeSanitize,
           {

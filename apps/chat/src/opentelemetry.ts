@@ -34,7 +34,7 @@ const logExporter = new OTLPLogExporterHTTP();
 const logRecordProcessor = new logs.BatchLogRecordProcessor(logExporter);
 
 const sdk = new NodeSDK({
-  metricReader: metricReader,
+  metricReader: metricReader as any,
   resource: Resource.default().merge(
     new Resource({
       [ATTR_SERVICE_NAME]:
@@ -43,7 +43,7 @@ const sdk = new NodeSDK({
     }),
   ),
   instrumentations: [httpInstrumentation, pinoInstrumentation],
-  spanProcessors: [defaultSpanProcessor],
+  spanProcessors: [defaultSpanProcessor as any],
   logRecordProcessor: logRecordProcessor,
 });
 sdk.start();

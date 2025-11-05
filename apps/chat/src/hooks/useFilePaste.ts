@@ -3,16 +3,16 @@ import { RefObject, useEffect } from 'react';
 import { getFilesFromDataTransferItems } from '@/src/utils/app/file';
 
 export function useFilePaste<T extends HTMLElement = HTMLElement>(
-  container: RefObject<T>,
+  container: RefObject<T | null>,
   onPaste: (
     files: File[],
     textContent?: string,
     selection?: { start: number; end: number },
   ) => void,
 ) {
-  const element = container.current;
-
   useEffect(() => {
+    const element = container.current;
+
     if (!element) return;
 
     const pasteHandler = (e: ClipboardEvent) => {
@@ -48,5 +48,5 @@ export function useFilePaste<T extends HTMLElement = HTMLElement>(
     element.addEventListener('paste', pasteHandler);
 
     return () => element?.removeEventListener('paste', pasteHandler);
-  }, [element, onPaste]);
+  }, [container, onPaste]);
 }

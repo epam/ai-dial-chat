@@ -24,11 +24,13 @@ export const OverflowIndicator = ({
   dataQA = 'hidden-topics',
 }: OverflowIndicatorProps) => {
   const [open, setOpen] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleDelayShow = useCallback(
     (show: boolean) => {
-      clearTimeout(timeoutRef.current);
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
       timeoutRef.current = setTimeout(() => setOpen(show), displayDelay);
     },
     [displayDelay],
