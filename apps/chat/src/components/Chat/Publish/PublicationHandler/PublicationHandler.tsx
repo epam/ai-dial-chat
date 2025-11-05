@@ -479,8 +479,12 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     {showPublicDisplayAuthor &&
                       (isEditMode || !isReview ? (
                         <Field
-                          info={t(AUTHOR_PUBLIC_NAME_TOOLTIP)}
-                          label={t("Author's public name")}
+                          info={
+                            isReview ? t(AUTHOR_PUBLIC_NAME_TOOLTIP) : undefined
+                          }
+                          label={t(
+                            isReview ? "Author's public name" : 'Author',
+                          )}
                           {...formMethods.register(
                             PublishRequestFieldsNames.PUBLICATION_AUTHOR,
                             validators.publicationAuthor,
