@@ -5,7 +5,7 @@ import tinycolor from 'tinycolor2';
 
 export class ThemesUtil {
   public static getThemes() {
-    return JSON.parse(process.env.THEMES!).themes as Theme[];
+    return JSON.parse(process.env.THEMES!) as Theme[];
   }
 
   public static getRgbColorByKey(key: ThemeColorAttributes, themeId?: ThemeId) {
