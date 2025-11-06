@@ -87,17 +87,24 @@ interface SliderProps<T, P> {
   saveSliderStateInURL?: boolean;
 }
 
-export const SliderGrid = <T extends { id: string }, P>({
-  items,
-  SliderItem,
-  notFound,
-  itemProps,
-  sliderResetDependencies,
-  modalHeaderHeight = 0,
-  modalFooterHeight = 0,
-  sliderDotsClassName,
-  saveSliderStateInURL = false,
-}: SliderProps<T, P>) => {
+export interface SliderGridRef {
+  scrollToItem: (itemId: string) => void;
+}
+
+export const SliderGridInner = <T extends { id: string }, P>(
+  {
+    items,
+    SliderItem,
+    notFound,
+    itemProps,
+    sliderResetDependencies,
+    modalHeaderHeight = 0,
+    modalFooterHeight = 0,
+    sliderDotsClassName,
+    saveSliderStateInURL = false,
+  }: SliderProps<T, P>,
+  ref: React.Ref<SliderGridRef>,
+) => {
   const searchParams = useSearchParams();
 
   const containerRef = useRef<HTMLDivElement>(null);
