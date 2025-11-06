@@ -26,7 +26,6 @@ import {
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-
 export const ToolsetLoginDialogView = () => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
