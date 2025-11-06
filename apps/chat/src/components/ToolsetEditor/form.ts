@@ -98,7 +98,7 @@ export type ToolsetEditorForm = zodValidation.infer<
 export const getDefaultLoginFormData = (
   authenticationType: ToolsetAuthTypes,
   toolset?: ToolsetModel,
-  prevData?: ToolsetLoginFormType,
+  prevData?: Partial<ToolsetLoginFormType>,
 ): ToolsetLoginFormType => {
   switch (authenticationType) {
     case ToolsetAuthTypes.API_KEY:
