@@ -1,5 +1,5 @@
 import { Children, ReactNode, memo } from 'react';
-import { Components } from 'react-markdown';
+import { Components, Options } from 'react-markdown';
 
 import classnames from 'classnames';
 
@@ -28,6 +28,7 @@ import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
 import isObject from 'lodash-es/isObject';
 import partition from 'lodash-es/partition';
+import rehypeExternalLinks from 'rehype-external-links';
 // import { PluggableList } from 'react-markdown/lib/index';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
@@ -53,88 +54,73 @@ const getMDComponents = (
   isInner: boolean,
 ): Components => {
   return {
-    code({ className, children, ...props }) {
-      const typedChildren = children as ReactNode[] | undefined;
+    code({ className, children, node, ...props }) {
+      let childrenAsString = String(children);
 
-      if (typedChildren?.length) {
-        if (typedChildren[0] == modelCursorSign) {
+      if (childrenAsString?.length) {
+        if (childrenAsString[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
 
-        typedChildren[0] = (typedChildren[0] as string).replace(
+        childrenAsString = `${childrenAsString[0].replace(
           modelCursorSignWithBackquote,
           modelCursorSign,
-        );
+        )}${childrenAsString.slice(1)}`;
       }
 
       const match = /language-(\w+)/.exec(className || '');
-      return (
+      const isPlaintextCodeBlock =
+        node?.tagName === 'code' &&
+        node.position?.end.line !== node.position?.start.line;
+
+      return (match && match[1]) || isPlaintextCodeBlock ? (
         <CodeBlock
           key={Math.random()}
           language={(match && match[1]) || ''}
-          value={String(typedChildren).replace(/\n$/, '')}
+          value={childrenAsString.replace(/\n$/, '')}
           isInner={isInner}
           isLastMessageStreaming={isShowResponseLoader}
           {...props}
         />
+      ) : (
+        <code className={className} {...props}>
+          {childrenAsString}
+        </code>
       );
-
-      // return !inline ? (
-      //   <CodeBlock
-      //     key={Math.random()}
-      //     language={(match && match[1]) || ''}
-      //     value={String(children).replace(/\n$/, '')}
-      //     isInner={isInner}
-      //     isLastMessageStreaming={isShowResponseLoader}
-      //     {...props}
-      //   />
-      // ) : (
-      //   <code className={className} {...props}>
-      //     {children}
-      //   </code>
-      // );
     },
     table({ children }) {
-      const typedChildren = children as ReactNode[];
       return (
-        <Table isLastMessageStreaming={isShowResponseLoader}>
-          {typedChildren}
-        </Table>
+        <Table isLastMessageStreaming={isShowResponseLoader}>{children}</Table>
       );
     },
-    th({ children, ...props }: any) {
+    th({ children }) {
       return (
-        <th
-          {...props}
-          className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary"
-        >
+        <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">
           {children}
         </th>
       );
     },
-    td({ children, ...props }: any) {
+    td({ children }) {
       return (
-        <td
-          {...props}
-          className="break-words border border-tertiary bg-layer-3 px-3 py-1 text-sm"
-        >
+        <td className="break-words border border-tertiary bg-layer-3 px-3 py-1 text-sm">
           {children}
         </td>
       );
     },
-    p({ children }) {
-      const typedChildren = children as ReactNode[] | undefined;
-
-      if (typedChildren?.length) {
-        if (typedChildren[0] == modelCursorSign) {
+    p({ children, className }) {
+      if (typeof children === 'string' && children?.length) {
+        if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
+        if (children?.[0] == modelCursorSignWithBackquote) {
+          children = `${replaceCursor(children[0])}${children.slice(1)}`;
+        }
       }
-      if (typedChildren?.[0] == modelCursorSignWithBackquote) {
-        typedChildren[0] = replaceCursor(typedChildren[0] as string);
-      }
+
       return (
-        <p className={classnames({ 'text-sm': isInner })}>{typedChildren}</p>
+        <p className={classnames(className, { 'text-sm': isInner })}>
+          {children}
+        </p>
       );
     },
     details({ children, ...props }) {
@@ -181,8 +167,11 @@ const getMDComponents = (
   };
 };
 
-const remarkPlugins = [remarkGfm, [remarkMath, { singleDollarTextMath: true }]];
-const rehypePlugins = [
+const remarkPlugins: Options['remarkPlugins'] = [
+  remarkGfm,
+  [remarkMath, { singleDollarTextMath: true }],
+];
+const rehypePlugins: Options['rehypePlugins'] = [
   rehypeRaw,
   [rehypeKatex, { output: 'mathml', strict: false }],
   [
@@ -199,6 +188,7 @@ const rehypePlugins = [
       },
     },
   ],
+  [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
 ];
 
 export const ChatMDComponent = memo(
@@ -224,15 +214,11 @@ export const ChatMDComponent = memo(
     return (
       <MemoizedReactMarkdown
         className={mdClassNames}
-        // TODO specify different types instead of any
-        remarkPlugins={remarkPlugins as any}
-        rehypePlugins={rehypePlugins as any}
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
         //TODO check if it possible to set linkTarget
         // linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
-        // TODO check if urlTransform={transformUri} works same as following props
-        // transformImageUri={transformUri}
-        // transformLinkUri={transformUri}
         urlTransform={transformUri}
       >
         {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
