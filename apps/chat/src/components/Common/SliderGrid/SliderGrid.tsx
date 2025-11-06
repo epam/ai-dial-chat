@@ -1,8 +1,10 @@
 import {
   FC,
   ReactNode,
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -154,9 +156,12 @@ export const SliderGrid = <T extends { id: string }, P>({
   const maxChunksCountConfig = getSliderChunksConfig(screenState);
   const gridGap = getGridGap(screenState);
 
+  const itemsPerPage = sliderRowsCount * maxChunksCountConfig.cols;
+
   const sliderGroups = useMemo(() => {
-    return chunk(items, sliderRowsCount * maxChunksCountConfig.cols);
-  }, [items, maxChunksCountConfig.cols, sliderRowsCount]);
+    if (itemsPerPage <= 0) return [];
+    return chunk(items, itemsPerPage);
+  }, [items, itemsPerPage]);
 
   const handleSetActiveSlide = useCallback(
     (slide: number) => {
@@ -176,6 +181,19 @@ export const SliderGrid = <T extends { id: string }, P>({
     },
     [activeSlide, saveSliderStateInURL],
   );
+
+  useImperativeHandle(ref, () => ({
+    scrollToItem: (itemId: string) => {
+      if (itemsPerPage <= 0) return;
+      const itemIndex = items.findIndex((item) => item.id === itemId);
+
+      if (itemIndex !== -1) {
+        const targetPage = Math.floor(itemIndex / itemsPerPage);
+
+        handleSetActiveSlide(targetPage);
+      }
+    },
+  }));
 
   const handleSwipedRight = useCallback(() => {
     handleSetActiveSlide(
@@ -305,3 +323,9 @@ export const SliderGrid = <T extends { id: string }, P>({
     </div>
   );
 };
+
+const ForwardedSliderGrid = forwardRef(SliderGridInner);
+
+export const SliderGrid = ForwardedSliderGrid as <T extends { id: string }, P>(
+  props: SliderProps<T, P> & { ref?: React.Ref<SliderGridRef> },
+) => React.ReactElement;
