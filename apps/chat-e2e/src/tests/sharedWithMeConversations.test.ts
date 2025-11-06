@@ -528,7 +528,6 @@ dialSharedWithMeTest(
         await folderConversations.selectFolderEntity(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
-          { isHttpMethodTriggered: true },
         );
         await folderConversations
           .getSelectedFolderEntity(

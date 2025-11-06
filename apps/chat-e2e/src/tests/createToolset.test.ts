@@ -18,7 +18,9 @@ import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
 let toolsetForCleanup: BackendEntity | undefined;
 
 dialTest(
-  'Create toolset - basic scenario',
+  'Create toolset - basic scenario.\n' +
+    `[Toolset]: toolset's card is open on My Workspace page when create toolset and click "save and exit" (without login).\n` +
+    `Icon is shown on the toolset's card if the svg contains some special chars`,
   async (
     {
       marketplacePage,
@@ -47,7 +49,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6877');
+    setTestIds('EPMRTC-6877', 'EPMRTC-6873', 'EPMRTC-6888');
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
     const toolsetEntity = {
@@ -62,8 +64,14 @@ dialTest(
       releaseDate: DateUtil.getCurrentLocalDate(),
       author: UserUtil.getE2EUsername(testInfo.parallelIndex),
     };
-    const imageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
-    const expectedImageUrl = `${API.api}/${imageUrl}`;
+
+    const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const iconUrl = await fileApiHelper.putFileWithCustomName(
+      filename,
+      Attachment.appIconSvg,
+    );
+    const expectedIconUrl = `${API.api}/${iconUrl.substring(0, iconUrl.lastIndexOf('/') + 1)}${encodeURIComponent(filename)}`;
+
     let topicsToSelect: string[];
     let generalInfoStep: BaseElement;
     let toolsetSettingsStep: BaseElement;
@@ -209,7 +217,7 @@ dialTest(
 
       await entityEditorGeneralForm.addIconButton.click();
       await attachFilesModal.checkAttachedFile(
-        Attachment.sunImageName,
+        filename,
         FileModalSection.AllFiles,
       );
       await attachFilesModal.attachFiles();
@@ -221,7 +229,7 @@ dialTest(
         await entityEditorGeneralInfoPreviewCardAssertion.assertPreviewCardAttributes(
           {
             expectedName: toolsetEntity.name,
-            expectedIcon: expectedImageUrl,
+            expectedIcon: expectedIconUrl,
             expectedShortDescription: shortDescription,
             expectedLongDescription: longDescription,
             expectedTopics: topicsToSelect,
@@ -327,7 +335,7 @@ dialTest(
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
           {
             expectedName: toolsetEntity.name,
-            expectedIcon: expectedImageUrl,
+            expectedIcon: expectedIconUrl,
             expectedShortDescription: shortDescription,
             expectedLongDescription: longDescription,
             expectedTopics: topicsToSelect,
@@ -362,7 +370,7 @@ dialTest(
         //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5012
         // expectedAuthor: toolsetEntity.author,
         expectedTopics: topicsToSelect,
-        expectedIcon: '',
+        expectedIcon: expectedIconUrl,
       });
       for (const element of [
         entityDetailsModal.editButton,
