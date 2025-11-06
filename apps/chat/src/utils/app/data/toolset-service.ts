@@ -1,0 +1,60 @@
+import { Observable, catchError, map, of } from 'rxjs';
+
+import { convertToolsetFromApi } from '@/src/utils/app/toolsets';
+import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
+
+import { HTTPMethod } from '@/src/types/http';
+import { ServerSlugs } from '@/src/types/slugs-types';
+import {
+  ToolsetAuthPayload,
+  ToolsetAuthPayloadBase,
+  ToolsetInfo,
+  ToolsetModel,
+} from '@/src/types/toolsets';
+
+import { DataService } from './data-service';
+
+export class ToolsetService {
+  public static getToolsets(): Observable<ToolsetModel[]> {
+    return ApiUtils.request('/api/toolsets-listing', {
+      method: HTTPMethod.GET,
+    }).pipe(
+      map((res) => res.data.map(convertToolsetFromApi)),
+      catchError(() => of([])),
+    );
+  }
+
+  public static getToolsetById(id: string): Observable<ToolsetModel | null> {
+    return DataService.getDataStorage().getToolsetById(id);
+  }
+
+  public static getToolsetsByPath(path: string): Observable<ToolsetInfo[]> {
+    return DataService.getDataStorage().getToolsetsByPath(path);
+  }
+
+  public static deleteToolset(id: string): Observable<void> {
+    return DataService.getDataStorage().deleteToolset(id);
+  }
+
+  public static saveToolset(data: ToolsetModel): Observable<ToolsetInfo> {
+    return DataService.getDataStorage().createToolset(data);
+  }
+
+  public static updateToolset(data: ToolsetModel): Observable<ToolsetInfo> {
+    return DataService.getDataStorage().updateToolset(data);
+  }
+
+  public static signIn(data: ToolsetAuthPayload): Observable<void> {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.TOOLSET_SIGN_IN), {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+
+  public static signOut(data: ToolsetAuthPayloadBase): Observable<void> {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.TOOLSET_SIGN_OUT), {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+}

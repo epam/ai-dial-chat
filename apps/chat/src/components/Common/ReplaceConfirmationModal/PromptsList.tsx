@@ -1,20 +1,20 @@
 import { isRootId } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { MappedReplaceActions } from '@/src/types/import-export';
+import { OnItemEvent } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 
-import Folder from '../../Folder/Folder';
-import { PromptsRow } from './Components';
-import { OnItemEvent } from './ReplaceConfirmationModal';
+import { Folder } from '@/src/components/Folder/Folder';
+
+import { PromptsRow } from './ReplacePromptRow';
 
 interface Props {
   folders: FolderInterface[];
-  mappedActions: MappedReplaceActions;
+  mappedActions?: MappedReplaceActions;
   openedFoldersIds: string[];
   promptsToReplace: Prompt[];
-  handleToggleFolder: (folderId: string) => void;
+  handleToggleFolder?: (folderId: string) => void;
   onItemEvent: OnItemEvent;
 }
 export const PromptsList = ({

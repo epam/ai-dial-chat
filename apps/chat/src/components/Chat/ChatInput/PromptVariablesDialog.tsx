@@ -2,6 +2,7 @@ import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   FormEvent,
   KeyboardEvent,
   useCallback,
@@ -11,28 +12,35 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
+
+import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
   onClose: () => void;
+  ignoreOutsideClicks?: string;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
   prompt,
   onSubmit,
   onClose,
+  ignoreOutsideClicks,
 }) => {
   const variables = useMemo(
     () => parseVariablesFromContent(prompt.content),
@@ -42,7 +50,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     { key: string; value: string }[]
   >(
     variables
-      .map((variable) => ({ key: variable, value: '' }))
+      .map((variable) => ({ key: variable.name, value: variable.defaultValue }))
       .filter(
         (item, index, array) =>
           array.findIndex((t) => t.key === item.key) === index,
@@ -59,7 +67,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       setUpdatedVariables((prev) => {
         const updated = [...prev];
         updated[index].value = e.target.value;
-        return [...updated];
+        return updated;
       });
     },
     [],
@@ -74,14 +82,30 @@ export const PromptVariablesDialog: FC<Props> = ({
       }
       const content = prompt.content as string;
 
-      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
-        return updatedVariables.find((v) => v.key === variable)?.value ?? '';
-      });
+      const newContent = content.replace(
+        PROMPT_VARIABLE_REGEX_GLOBAL,
+        (_, variable) => {
+          return updatedVariables.find((v) => v.key === variable)?.value ?? '';
+        },
+      );
 
       onSubmit(newContent);
       onClose();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
+  );
+
+  const handleOnBlur = useCallback(
+    (index: number, e: FocusEvent<HTMLTextAreaElement>) => {
+      e.target.value = e.target.value.trim();
+      setUpdatedVariables((prev) => {
+        const updated = [...prev];
+        updated[index].value = e.target.value;
+        return updated;
+      });
+      onBlur(e);
+    },
+    [],
   );
 
   const handleKeyDown = useCallback(
@@ -98,6 +122,12 @@ export const PromptVariablesDialog: FC<Props> = ({
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        ignoreOutsideClicks &&
+        hasParentWithAttribute(e.target as Element, ignoreOutsideClicks)
+      ) {
+        return;
+      }
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -108,7 +138,11 @@ export const PromptVariablesDialog: FC<Props> = ({
     return () => {
       window.removeEventListener('click', handleOutsideClick);
     };
-  }, [onClose]);
+  }, [ignoreOutsideClicks, onClose]);
+
+  useEffect(() => {
+    inputsRefs.current?.[0]?.focus?.();
+  }, []);
 
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
@@ -128,16 +162,21 @@ export const PromptVariablesDialog: FC<Props> = ({
         data-qa="variable-modal"
         onSubmit={handleSubmit}
       >
-        <div
-          className="mb-4 whitespace-pre text-base font-bold"
-          data-qa="variable-prompt-name"
+        <Tooltip
+          tooltip={prompt.name}
+          triggerClassName="mb-4 truncate whitespace-pre text-base font-bold block"
+          contentClassName="break-all"
+          dataQa="variable-prompt-name"
         >
           {prompt.name}
-        </div>
+        </Tooltip>
 
         {prompt.description && (
-          <div className="mb-5 italic" data-qa="variable-prompt-descr">
-            {prompt.description}
+          <div
+            className="mb-5 whitespace-pre-wrap italic"
+            data-qa="variable-prompt-descr"
+          >
+            <TemplateRenderer template={prompt.description} />
           </div>
         )}
 
@@ -149,10 +188,17 @@ export const PromptVariablesDialog: FC<Props> = ({
         </button>
 
         {updatedVariables.map((variable, index) => (
-          <div className="mb-4" key={variable.key}>
+          <div className="mb-4" key={variable.key} data-qa="variable">
             <div className="mb-1 flex text-xs text-secondary">
-              {variable.key}
-              <span className="ml-1 inline text-accent-primary">*</span>
+              <span className="break-all" data-qa="variable-label">
+                {variable.key}
+              </span>
+              <span
+                className="ml-1 inline text-accent-primary"
+                data-qa="variable-asterisk"
+              >
+                *
+              </span>
             </div>
 
             <textarea
@@ -161,13 +207,13 @@ export const PromptVariablesDialog: FC<Props> = ({
               style={{ resize: 'none' }}
               required
               title=""
-              placeholder={
-                t('Enter a value for {{key}}...', {
-                  key: variable.key,
-                }) as string
-              }
+              placeholder={t('Enter a value for {{key}}...', {
+                key: variable.key,
+              })}
               value={variable.value}
-              onBlur={onBlur}
+              onBlur={(e) => {
+                handleOnBlur(index, e);
+              }}
               onChange={(e) => {
                 handleChange(index, e);
               }}

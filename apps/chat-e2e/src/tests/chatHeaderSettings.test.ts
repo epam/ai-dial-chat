@@ -1,14 +1,12 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  defaultModel = ModelsUtil.getDefaultAgent()!;
 });
 
 dialTest(
@@ -16,14 +14,13 @@ dialTest(
   async ({
     dialHomePage,
     chatHeader,
-    entitySettings,
-    temperatureSlider,
-    addons,
-    talkToSelector,
+    agentSettingAssertion,
+    talkToAgentDialog,
     setTestIds,
     conversationData,
     localStorageManager,
     dataInjector,
+    conversations,
   }) => {
     setTestIds('EPMRTC-449');
     let conversation: Conversation;
@@ -37,7 +34,10 @@ dialTest(
       async () => {
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          randomModel,
+        );
+        await localStorageManager.setShowSideBarPanels();
       },
     );
 
@@ -46,29 +46,27 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(randomModel);
+        await conversations.selectEntity(conversation.name);
+        await chatHeader.chatAgent.click();
+        await talkToAgentDialog.selectAgent(randomModel);
+        await talkToAgentDialog.waitForState({ state: 'hidden' });
       },
     );
 
     await dialTest.step(
       'Verify conversation settings are the same as for initial model',
       async () => {
-        if (randomModel.features?.systemPrompt) {
-          const systemPrompt = await entitySettings.getSystemPrompt();
-          expect
-            .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
-            .toBe(conversation.prompt);
+        await chatHeader.openConversationSettingsPopup();
+        if (ModelsUtil.doesModelAllowSystemPrompt(randomModel)) {
+          await agentSettingAssertion.assertSystemPromptValue(
+            conversation.prompt,
+          );
         }
-        const temperature = await temperatureSlider.getTemperature();
-        expect
-          .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
-          .toBe(conversation.temperature.toString());
-        const modelAddons = defaultModel.selectedAddons ?? [];
-        const selectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-          .toEqual(modelAddons);
+        if (ModelsUtil.doesModelAllowTemperature(randomModel)) {
+          await agentSettingAssertion.assertTemperature(
+            conversation.temperature.toString(),
+          );
+        }
       },
     );
   },

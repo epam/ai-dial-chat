@@ -1,41 +1,47 @@
-import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
-import { MoveType } from '@/src/utils/app/move';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
-import { PromptInfo } from '@/src/types/prompt';
+import {
+  DraggedInterface,
+  FolderInterface,
+  FolderSectionProps,
+} from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
+import { PromptsActions, ShareActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  PromptsActions,
   PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {
-  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
-  PUBLISHING_FOLDER_NAME,
-} from '@/src/constants/folders';
+  APPROVE_REQUIRED_SECTION_NAME,
+  ORGANIZATION_SECTION_NAME,
+  PINNED_PROMPTS_SECTION_NAME,
+  SHARED_WITH_ME_SECTION_NAME,
+} from '@/src/constants/sections';
 
-import Folder from '@/src/components/Folder/Folder';
+import { ApproveRequiredSection } from '@/src/components/Chat/Publish/ApproveRequiredSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+import { Folder } from '@/src/components/Folder/Folder';
+import { BetweenFoldersLine } from '@/src/components/Sidebar/BetweenFoldersLine';
 
-import CollapsableSection from '../../Common/CollapsableSection';
-import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
 interface promptFolderProps {
@@ -43,13 +49,21 @@ interface promptFolderProps {
   isLast: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
+  allowHighlight?: boolean;
 }
+
+const publicationFeatureTypes = [
+  FeatureType.Prompt,
+  FeatureType.Application,
+  FeatureType.Toolset,
+];
 
 const PromptFolderTemplate = ({
   folder,
   isLast,
   filters,
   includeEmpty = false,
+  allowHighlight = true,
 }: promptFolderProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -60,59 +74,75 @@ const PromptFolderTemplate = ({
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
-  );
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
-  const promptFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      includeEmpty,
-    ),
+  const loadingFolderIds = useAppSelector(
+    PromptsSelectors.selectLoadingFolderIds,
   );
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
-  );
-  const loadingFolderIds = useAppSelector((state) =>
-    PromptsSelectors.selectLoadingFolderIds(state),
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
+  const emptyFoldersIds = useAppSelector(PromptsSelectors.selectEmptyFolderIds);
+  const isFolderEmpty = useAppSelector((state) =>
+    PromptsSelectors.selectIsFolderEmpty(state, folder.id),
   );
 
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
+    [filters, searchTerm],
+  );
+  const prompts = useAppSelector(filteredPromptsSelector);
+
+  const chosenFolderIdsSelector = useMemo(
+    () => PromptsSelectors.selectChosenFolderIds(prompts),
+    [prompts],
+  );
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    chosenFolderIdsSelector,
+  );
+
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(filters, searchTerm, includeEmpty),
+    [filters, searchTerm, includeEmpty],
+  );
+  const promptFolders = useAppSelector(filteredFoldersSelector);
+
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.Prompt),
+    [],
+  );
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
+
+  const additionalFolderData = useMemo(
+    () => ({
+      selectedFolderIds: fullyChosenFolderIds,
+      partialSelectedFolderIds: partialChosenFolderIds,
+      isSidePanelItem: true,
+    }),
+    [fullyChosenFolderIds, partialChosenFolderIds],
   );
 
   const handleDrop = useCallback(
-    (e: DragEvent, folder: FolderInterface) => {
-      if (e.dataTransfer) {
-        const promptData = e.dataTransfer.getData(MoveType.Prompt);
-        const folderData = e.dataTransfer.getData(MoveType.PromptFolder);
-
-        if (promptData) {
-          const prompt: PromptInfo = JSON.parse(promptData);
+    (currentFolder: FolderInterface, draggedData: DraggedInterface) => {
+      const { entity, isFolder } = draggedData;
+      if (isFolder) {
+        if (
+          entity.id !== currentFolder.id &&
+          entity.folderId !== currentFolder.id
+        ) {
           dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: {
-                folderId: folder.id,
-              },
+            PromptsActions.updateFolder({
+              folderId: entity.id,
+              values: { folderId: currentFolder.id, isShared: false },
             }),
           );
-        } else if (folderData) {
-          const movedFolder: FolderInterface = JSON.parse(folderData);
-          if (
-            movedFolder.id !== folder.id &&
-            movedFolder.folderId !== folder.id
-          ) {
-            dispatch(
-              PromptsActions.updateFolder({
-                folderId: movedFolder.id,
-                values: { folderId: folder.id },
-              }),
-            );
-          }
         }
+      } else if (entity) {
+        dispatch(
+          PromptsActions.updatePrompt({
+            id: entity.id,
+            values: { folderId: currentFolder.id },
+          }),
+        );
       }
     },
     [dispatch],
@@ -132,7 +162,7 @@ const PromptFolderTemplate = ({
         dispatch(
           UIActions.showErrorToast(
             t('Folder with name "{{name}}" already exists at the root.', {
-              ns: 'folder',
+              ns: Translation.Chat,
               name: folder.name,
             }),
           ),
@@ -162,13 +192,87 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
+  const handleFolderRename = useCallback(
+    (name: string, folderId: string) => {
+      dispatch(
+        PromptsActions.updateFolder({
+          folderId,
+          values: { name, isShared: false },
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleFolderDelete = useCallback(
+    (folderId: string) => {
+      if (folder.sharedWithMe) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: [folder.id],
+            isFolder: true,
+            featureType: FeatureType.Prompt,
+          }),
+        );
+      } else if (folder.isShared) {
+        dispatch(
+          PromptsActions.deleteFolder({
+            folderId,
+          }),
+        );
+      } else {
+        dispatch(PromptsActions.deleteFolder({ folderId }));
+      }
+    },
+    [dispatch, folder.id, folder.isShared, folder.sharedWithMe],
+  );
+
+  const handleFolderSelect = useCallback(
+    (folderId: string) => {
+      if (isFolderEmpty) {
+        dispatch(PromptsActions.addToChosenEmptyFolders({ ids: [folderId] }));
+      } else {
+        dispatch(
+          PromptsActions.setChosenPrompts({
+            ids: prompts
+              .filter(
+                (p) =>
+                  p.id.startsWith(folderId) &&
+                  (!partialChosenFolderIds.includes(folderId) ||
+                    !selectedPrompts.includes(p.id)),
+              )
+              .map((e) => e.id),
+          }),
+        );
+
+        dispatch(
+          PromptsActions.addToChosenEmptyFolders({
+            ids: emptyFoldersIds
+              .filter((id) => `${id}/`.startsWith(folderId))
+              .map((id) => `${id}/`),
+          }),
+        );
+      }
+    },
+    [
+      dispatch,
+      emptyFoldersIds,
+      isFolderEmpty,
+      partialChosenFolderIds,
+      prompts,
+      selectedPrompts,
+    ],
+  );
+
+  const isExternal = isEntityIdExternal(folder);
+
   return (
     <>
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Prompt}
-        denyDrop={isExternal}
+        denyDrop={isExternal || isSelectMode}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -180,84 +284,96 @@ const PromptFolderTemplate = ({
         allFolders={promptFolders}
         allFoldersWithoutFilters={allFolders}
         loadingFolderIds={loadingFolderIds}
-        highlightedFolders={highlightedFolders}
+        highlightedFolders={allowHighlight ? highlightedFolders : []}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
-        onRenameFolder={(name, folderId) => {
-          dispatch(
-            PromptsActions.updateFolder({
-              folderId,
-              values: { name },
-            }),
-          );
-        }}
-        onDeleteFolder={(folderId: string) => {
-          if (folder.sharedWithMe) {
-            dispatch(
-              ShareActions.discardSharedWithMe({
-                resourceId: folder.id,
-                isFolder: true,
-                featureType: FeatureType.Prompt,
-              }),
-            );
-          } else {
-            dispatch(PromptsActions.deleteFolder({ folderId }));
-          }
-        }}
+        onRenameFolder={handleFolderRename}
+        onDeleteFolder={handleFolderDelete}
+        onUnshareFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
+        canSelectFolders={isSelectMode}
+        additionalItemData={additionalFolderData}
+        onSelectFolder={handleFolderSelect}
       />
       {isLast && (
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Prompt}
-          denyDrop={isExternal}
+          denyDrop={isExternal || isSelectMode}
         />
       )}
     </>
   );
 };
 
-export const PromptSection = ({
+const PromptSectionView = ({
   name,
   filters,
   hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
-  openByDefault = false,
+  openByDefault,
   dataQa,
 }: FolderSectionProps) => {
-  const { t } = useTranslation(Translation.PromptBar);
-  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
-  const rootFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      showEmptyFolders,
-    ),
+
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
   );
-  const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
+
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
+    [filters, searchTerm],
+  );
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(
+        filters,
+        searchTerm,
+        showEmptyFolders,
+      ),
+    [filters, searchTerm, showEmptyFolders],
+  );
+
+  const rootFolders = useAppSelector(filteredFoldersSelector);
+  const prompts = useAppSelector(filteredPromptsSelector);
+  const selectedFoldersIds = useAppSelector(
+    PromptsSelectors.selectSelectedPromptFoldersIds,
+  );
+  const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
+    useAppSelector(PromptsSelectors.selectSelectedPromptId);
+
+  const { handleToggle, isExpanded } = useSectionToggle(
+    name,
+    FeatureType.Prompt,
+  );
+
+  const additionalPromptData = useMemo(
+    () => ({
+      isSidePanelItem: true,
+    }),
+    [],
   );
 
   const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
 
-  const selectedFoldersIds = useAppSelector(
-    PromptsSelectors.selectSelectedPromptFoldersIds,
-  );
-
-  const selectSelectedPromptId = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
+  const folderTemplateFilters = useMemo(
+    () => ({
+      searchFilter: filters.searchFilter,
+      versionFilter: filters.versionFilter,
+    }),
+    [filters.searchFilter, filters.versionFilter],
   );
 
   useEffect(() => {
     const shouldBeHighlighted =
-      rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
-      (!!displayRootFiles &&
-        rootPrompts.some(({ id }) => selectSelectedPromptId === id));
+      !isSelectedPromptApproveRequiredResource &&
+      (rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+        (!!displayRootFiles &&
+          rootPrompts.some(({ id }) => selectedPromptId === id)));
     if (isSectionHighlighted !== shouldBeHighlighted) {
       setIsSectionHighlighted(shouldBeHighlighted);
     }
@@ -265,9 +381,10 @@ export const PromptSection = ({
     displayRootFiles,
     rootFolders,
     isSectionHighlighted,
-    selectSelectedPromptId,
+    selectedPromptId,
     selectedFoldersIds,
     rootPrompts,
+    isSelectedPromptApproveRequiredResource,
   ]);
 
   if (
@@ -278,12 +395,19 @@ export const PromptSection = ({
     return null;
   }
 
+  const isOrganizationAndPublicationSelected =
+    name === ORGANIZATION_SECTION_NAME && selectedPublication;
+
   return (
-    <CollapsableSection
-      name={t(name)}
-      openByDefault={openByDefault}
+    <CollapsibleSection
+      onToggle={handleToggle}
+      name={name}
+      openByDefault={openByDefault ?? isExpanded}
+      isExpanded={isExpanded}
       dataQa={dataQa}
-      isHighlighted={isSectionHighlighted}
+      isHighlighted={
+        isOrganizationAndPublicationSelected ? false : isSectionHighlighted
+      }
     >
       <div>
         {rootFolders.map((folder, index, arr) => (
@@ -291,24 +415,30 @@ export const PromptSection = ({
             key={folder.id}
             folder={folder}
             isLast={index === arr.length - 1}
-            filters={{ searchFilter: filters.searchFilter }}
+            filters={folderTemplateFilters}
             includeEmpty={showEmptyFolders}
+            allowHighlight={!isSelectedPromptApproveRequiredResource}
           />
         ))}
       </div>
       {displayRootFiles && (
         <div className="flex flex-col gap-1">
-          {rootPrompts.map((item) => (
-            <PromptComponent key={item.id} item={item} />
+          {prompts.map((item) => (
+            <PromptComponent
+              additionalItemData={additionalPromptData}
+              key={item.id}
+              item={item}
+            />
           ))}
         </div>
       )}
-    </CollapsableSection>
+    </CollapsibleSection>
   );
 };
 
+export const PromptSection = memo(PromptSectionView);
+
 export function PromptFolders() {
-  const { t } = useTranslation(Translation.PromptBar);
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
   );
@@ -318,9 +448,29 @@ export function PromptFolders() {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
-
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
+  );
+
+  const publicationItemsSelector = useMemo(
+    () =>
+      PublicationSelectors.selectFilteredPublications(
+        publicationFeatureTypes,
+        true,
+      ),
+    [],
+  );
+
+  const publicationItems = useAppSelector(publicationItemsSelector);
+
+  const toApproveFolderItem = useMemo(
+    () => ({
+      hidden: !publicationItems.length,
+      name: APPROVE_REQUIRED_SECTION_NAME,
+      displayRootFiles: true,
+      dataQa: 'approve-required',
+    }),
+    [publicationItems.length],
   );
 
   const folderItems: FolderSectionProps[] = useMemo(
@@ -328,36 +478,27 @@ export function PromptFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: t(PUBLISHING_FOLDER_NAME),
+          name: ORGANIZATION_SECTION_NAME,
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
-          openByDefault: true,
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared with me'),
+          name: SHARED_WITH_ME_SECTION_NAME,
           filters: SharedWithMeFilters,
           ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
-          openByDefault: true,
         },
         {
-          name: t('Pinned prompts'),
+          name: PINNED_PROMPTS_SECTION_NAME,
           filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
-          openByDefault: true,
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hidden }) => !hidden),
-    [
-      commonSearchFilter,
-      isFilterEmpty,
-      isPublishingEnabled,
-      isSharingEnabled,
-      t,
-    ],
+    [commonSearchFilter, isFilterEmpty, isPublishingEnabled, isSharingEnabled],
   );
 
   return (
@@ -365,6 +506,14 @@ export function PromptFolders() {
       className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="prompt-folders"
     >
+      {!toApproveFolderItem.hidden && (
+        <ApproveRequiredSection
+          featureTypes={publicationFeatureTypes}
+          publicationItems={publicationItems}
+          includeEmptyResourceTypesEmpty
+          {...toApproveFolderItem}
+        />
+      )}
       {folderItems.map((itemProps) => (
         <PromptSection key={itemProps.name} {...itemProps} />
       ))}

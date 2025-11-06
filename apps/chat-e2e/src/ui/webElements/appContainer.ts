@@ -1,71 +1,58 @@
-import { appContainer } from '@/src/ui/selectors';
+import { Header } from './header';
+
 import { Banner } from '@/src/ui/webElements/banner';
-import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Chat } from '@/src/ui/webElements/chat';
+import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
-import { ConversationSettings } from '@/src/ui/webElements/conversationSettings';
-import { ErrorToast } from '@/src/ui/webElements/errorToast';
-import { Header } from '@/src/ui/webElements/header';
+import { FileDropArea } from '@/src/ui/webElements/fileDropArea';
+import { Footer } from '@/src/ui/webElements/footer';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
-import { Page } from '@playwright/test';
+import { Toast } from '@/src/ui/webElements/toast';
 
-export class AppContainer extends BaseElement {
-  constructor(page: Page) {
-    super(page, appContainer);
-  }
-
-  private header!: Header;
+export class AppContainer extends BaseLayoutContainer<Header> {
   private banner!: Banner;
-  private chat!: Chat;
+  private fileDropArea!: FileDropArea;
   private chatBar!: ChatBar;
   private promptBar!: PromptBar;
-  private conversationSettings!: ConversationSettings;
   private chatLoader!: ChatLoader;
   private importExportLoader!: ImportExportLoader;
-  private errorToast!: ErrorToast;
+  private toast!: Toast;
+  private footer!: Footer;
 
   getHeader(): Header {
     if (!this.header) {
-      this.header = new Header(this.page);
+      this.header = new Header(this.page, this.rootLocator);
     }
     return this.header;
   }
 
   getBanner(): Banner {
     if (!this.banner) {
-      this.banner = new Banner(this.page);
+      this.banner = new Banner(this.page, this.rootLocator);
     }
     return this.banner;
   }
 
-  getChat(): Chat {
-    if (!this.chat) {
-      this.chat = new Chat(this.page);
+  getFileDropArea(): FileDropArea {
+    if (!this.fileDropArea) {
+      this.fileDropArea = new FileDropArea(this.page, this.rootLocator);
     }
-    return this.chat;
+    return this.fileDropArea;
   }
 
   getChatBar(): ChatBar {
     if (!this.chatBar) {
-      this.chatBar = new ChatBar(this.page);
+      this.chatBar = new ChatBar(this.page, this.rootLocator);
     }
     return this.chatBar;
   }
 
   getPromptBar(): PromptBar {
     if (!this.promptBar) {
-      this.promptBar = new PromptBar(this.page);
+      this.promptBar = new PromptBar(this.page, this.rootLocator);
     }
     return this.promptBar;
-  }
-
-  getConversationSettings(): ConversationSettings {
-    if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
-    }
-    return this.conversationSettings;
   }
 
   getChatLoader(): ChatLoader {
@@ -85,10 +72,27 @@ export class AppContainer extends BaseElement {
     return this.importExportLoader;
   }
 
-  getErrorToast(): ErrorToast {
-    if (!this.errorToast) {
-      this.errorToast = new ErrorToast(this.page);
+  getToast(): Toast {
+    if (!this.toast) {
+      this.toast = new Toast(this.page);
     }
-    return this.errorToast;
+    return this.toast;
+  }
+
+  getFooter(): Footer {
+    if (!this.footer) {
+      this.footer = new Footer(this.page, this.rootLocator);
+    }
+    return this.footer;
+  }
+
+  public async waitForAppLoaded(timeout?: number) {
+    const loaders = this.getChatLoader();
+    const loadersCount = await loaders.getElementsCount();
+    for (let i = 1; i <= loadersCount; i++) {
+      await loaders
+        .getNthElement(i)
+        .waitFor({ state: 'hidden', timeout: timeout });
+    }
   }
 }

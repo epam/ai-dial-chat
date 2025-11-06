@@ -2,13 +2,12 @@ import { useState } from 'react';
 
 import classNames from 'classnames';
 
-import { Stage } from '@/src/types/chat';
-
 import { MessageStage } from './MessageStage';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
+import { Stage } from '@epam/ai-dial-shared';
 
-export interface Props {
+interface Props {
   stages: Stage[];
 }
 
@@ -31,6 +30,7 @@ export const MessageStages = ({ stages }: Props) => {
         <button
           onClick={() => setShowMore(!showMore)}
           className="mt-2 flex leading-[18px] text-accent-primary"
+          data-qa={showMore ? 'show-less' : 'show-more'}
         >
           {showMore ? 'Show less' : 'Show more'}
           <ChevronDown

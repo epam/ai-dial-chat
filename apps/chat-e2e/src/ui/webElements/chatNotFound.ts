@@ -1,10 +1,10 @@
-import { ChatSelectors } from '@/src/ui/selectors';
+import { ToastSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class ChatNotFound extends BaseElement {
   constructor(page: Page) {
-    super(page, ChatSelectors.conversationNotFound);
+    super(page, ToastSelectors.conversationNotFound);
   }
 
   public async getChatNotFoundContent() {

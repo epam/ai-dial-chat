@@ -1,57 +1,57 @@
 import {
-  IconClockShare,
   IconCopy,
   IconDots,
   IconEye,
   IconFileArrowRight,
-  IconFolderPlus,
   IconFolderShare,
+  IconInfoCircle,
   IconPencilMinus,
   IconPlayerPlay,
   IconRefreshDot,
   IconScale,
+  IconSquareCheck,
   IconTrashX,
   IconUserShare,
-  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId } from '@/src/utils/app/id';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
+import { isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
+import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
-import ContextMenu from './ContextMenu';
+import { ContextMenu } from './ContextMenu';
 
+import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface ItemContextMenuProps {
   entity: ShareEntity;
-  folders: FolderInterface[];
   featureType: FeatureType;
   isEmptyConversation?: boolean;
   className?: string;
   isOpen?: boolean;
+  useStandardColor?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
-  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
-  onRename: MouseEventHandler<unknown>;
+  onRename?: MouseEventHandler<unknown>;
   onExport: (args?: unknown) => void;
   onReplay?: MouseEventHandler<unknown>;
   onCompare?: MouseEventHandler<unknown>;
@@ -60,20 +60,25 @@ interface ItemContextMenuProps {
   onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
-  onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
+  onSelect?: MouseEventHandler<unknown>;
+  disableUse?: boolean;
+  onUse?: MouseEventHandler<unknown>;
   isLoading?: boolean;
+  TriggerIcon?: ContextMenuProps['TriggerIcon'];
+  onShowInfo?: () => void;
+  hideTriggerIcon?: boolean;
 }
 
-export default function ItemContextMenu({
+export function ItemContextMenu({
   entity,
   featureType,
   isEmptyConversation,
   className,
-  folders,
   isOpen,
+  useStandardColor,
   onDelete,
   onRename,
   onExport,
@@ -81,38 +86,73 @@ export default function ItemContextMenu({
   onReplay,
   onCompare,
   onPlayback,
-  onMoveToFolder,
   onOpenMoveToModal,
   onShare,
   onUnshare,
   onPublish,
   onUnpublish,
-  onPublishUpdate,
   onOpenChange,
   onDuplicate,
   onView,
   isLoading,
+  onSelect,
+  disableUse,
+  onUse,
+  onShowInfo,
+  TriggerIcon,
+  hideTriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
+
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, featureType),
+    SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, entity, featureType),
+  const isApproveRequiredEntity = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntity(state, entity.id),
   );
 
+  const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
   const isInvalidPath = hasInvalidNameInPath(entity.folderId);
   const disableAll = isNameInvalid || isInvalidPath;
 
+  const isFormSchemaConversation =
+    featureType === FeatureType.Chat &&
+    isConversationWithFormSchema(entity as Conversation);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: t('Use'),
+        display: !!onUse,
+        disabled: disableUse,
+        dataQa: 'use',
+        Icon: InsertPromptIcon,
+        onClick: onUse,
+      },
+      {
+        name: t('View'),
+        display: !!onView,
+        dataQa: 'view',
+        Icon: IconEye,
+        onClick: onView,
+      },
+      {
+        name: t('Select'),
+        display: !isExternal && !!onSelect,
+        dataQa: 'select',
+        Icon: IconSquareCheck,
+        onClick: onSelect,
+      },
+      {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: !isExternal,
+        display:
+          (!isExternal || isApproveRequiredEntity) &&
+          entity.publicationInfo?.action !== PublishActions.DELETE &&
+          !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -120,7 +160,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Compare'),
-        display: !!onCompare,
+        display: !!onCompare && !isFormSchemaConversation,
         dataQa: 'compare',
         Icon: IconScale,
         onClick: onCompare,
@@ -135,15 +175,9 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('View'),
-        display: !!onView && isExternal,
-        dataQa: 'view',
-        Icon: IconEye,
-        onClick: onView,
-      },
-      {
         name: t('Replay'),
-        display: !isEmptyConversation && !!onReplay,
+        display:
+          !isEmptyConversation && !!onReplay && !isFormSchemaConversation,
         dataQa: 'replay',
         Icon: IconRefreshDot,
         onClick: onReplay,
@@ -200,39 +234,10 @@ export default function ItemContextMenu({
       {
         name: t('Move to'),
         display: !isExternal,
-        dataQa: 'move-to-mobile',
+        dataQa: 'move-to-modal',
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
-        className: 'md:hidden',
         disabled: disableAll,
-      },
-      {
-        name: t('Move to'),
-        display: !isExternal,
-        dataQa: 'move-to',
-        Icon: IconFolderShare,
-        className: 'max-md:hidden',
-        disabled: disableAll,
-        childMenuItems: [
-          {
-            name: t('New folder'),
-            dataQa: 'new-folder',
-            Icon: IconFolderPlus,
-            onClick: () => {
-              onMoveToFolder({ isNewFolder: true });
-            },
-            className: classNames('invisible md:visible', {
-              'border-b border-primary': folders?.length > 0,
-            }),
-          },
-          ...folders.map((folder) => ({
-            name: folder.name,
-            dataQa: `folder-${folder.id}`,
-            onClick: () => {
-              onMoveToFolder({ folderId: folder.id });
-            },
-          })),
-        ],
       },
       {
         name: t('Share'),
@@ -246,12 +251,8 @@ export default function ItemContextMenu({
       {
         name: t('Unshare'),
         dataQa: 'unshare',
-        display:
-          !isEmptyConversation &&
-          isSharingEnabled &&
-          !!onUnshare &&
-          !!entity.isShared,
-        Icon: IconUserX,
+        display: !!entity.sharedWithMe,
+        Icon: IconUserUnshare,
         onClick: onUnshare,
         disabled: disableAll,
       },
@@ -269,72 +270,59 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Update'),
-        dataQa: 'update-publishing',
-        display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onPublishUpdate,
-        Icon: IconClockShare,
-        onClick: onPublishUpdate,
-        disabled: disableAll,
-      },
-      {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onUnpublish,
+          isPublishingEnabled && !!onUnpublish && isEntityIdPublic(entity),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
       },
       {
+        name: t('Info'),
+        display: !!onShowInfo,
+        dataQa: 'info',
+        Icon: IconInfoCircle,
+        onClick: onShowInfo,
+      },
+      {
         name: t('Delete'),
         dataQa: 'delete',
-        display:
-          entity.id.startsWith(
-            getRootId({
-              featureType,
-            }),
-          ) || entity.sharedWithMe,
+        display: !isExternal,
         Icon: IconTrashX,
         onClick: onDelete,
       },
     ],
     [
-      disableAll,
-      entity.id,
-      entity.isPublished,
-      entity.isShared,
-      entity.sharedWithMe,
-      featureType,
-      folders,
-      isEmptyConversation,
+      t,
+      onUse,
+      disableUse,
+      onView,
       isExternal,
+      onSelect,
+      featureType,
+      isApproveRequiredEntity,
+      entity,
+      onRename,
+      disableAll,
       isNameInvalid,
-      isPublishingEnabled,
-      isSharingEnabled,
       onCompare,
-      onDelete,
+      isFormSchemaConversation,
+      isEmptyConversation,
       onDuplicate,
+      onReplay,
+      onPlayback,
       onExport,
-      onMoveToFolder,
       onOpenExportModal,
       onOpenMoveToModal,
-      onPlayback,
-      onPublish,
-      onPublishUpdate,
-      onRename,
-      onReplay,
+      isSharingEnabled,
       onShare,
-      onUnpublish,
       onUnshare,
-      onView,
-      t,
+      isPublishingEnabled,
+      onPublish,
+      onUnpublish,
+      onShowInfo,
+      onDelete,
     ],
   );
 
@@ -342,12 +330,14 @@ export default function ItemContextMenu({
     <ContextMenu
       menuItems={menuItems}
       isLoading={isLoading}
-      TriggerIcon={IconDots}
+      TriggerIcon={TriggerIcon ?? IconDots}
+      hideTriggerIcon={hideTriggerIcon}
       triggerIconSize={18}
       className={className}
       featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      useStandardColor={useStandardColor}
     />
   );
 }

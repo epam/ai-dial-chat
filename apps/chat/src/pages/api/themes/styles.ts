@@ -1,10 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
+import { HTTPMethod } from '@/src/types/http';
 import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
+
+import { inconsolata, inter } from '@/src/pages/_app';
 
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
@@ -44,10 +49,29 @@ function generateUrlsCssVariables(
       return;
     }
     let compiledValue = value;
-    if (!value.startsWith('http') && !value.startsWith('//')) {
-      compiledValue = `${process.env.THEMES_CONFIG_HOST}/${value}`;
+    if (!isAbsoluteUrl(value)) {
+      compiledValue = getThemeIconUrl(value);
     }
     cssContent += `--${cssEscape(variable)}: url('${compiledValue}');\n`;
+  });
+  return cssContent;
+}
+
+function generateFontCssVariables(
+  variables: Record<string, string | undefined> | undefined,
+) {
+  if (!variables) {
+    return `${inter.variable}:${inter.style.fontFamily};\n`;
+  }
+
+  let cssContent = '';
+  Object.entries(variables).forEach(([variable, value]) => {
+    let compiledValue = value;
+    if (!value || !value.length) {
+      compiledValue = inter.style.fontFamily;
+    }
+
+    cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
   });
   return cssContent;
 }
@@ -76,9 +100,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const response = await fetch(
     `${process.env.THEMES_CONFIG_HOST}/config.json`,
     {
-      method: 'GET',
+      method: HTTPMethod.GET,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
       },
       signal: controller.signal,
     },
@@ -102,7 +127,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       ...json.themes.map((theme) =>
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
+          generateColorsCssVariables(theme.topicColors),
+          generateColorsCssVariables(theme.authColors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateUrlsCssVariables(theme.banners),
+          generateFontCssVariables({
+            'theme-font': theme['font-family'],
+            'codeblock-font':
+              theme['font-codeblock'] ?? inconsolata.style.fontFamily,
+          }),
         ]),
       ),
       generateUrlsCssVariables({

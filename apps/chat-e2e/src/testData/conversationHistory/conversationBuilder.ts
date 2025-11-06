@@ -1,32 +1,28 @@
+import { DEFAULT_SYSTEM_PROMPT } from '@/chat/constants/default-server-settings';
 import {
   DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/chat/constants/default-ui-settings';
 import { defaultReplay } from '@/chat/constants/replay';
-import {
-  Conversation,
-  ConversationEntityModel,
-  Message,
-  Replay,
-} from '@/chat/types/chat';
+import { Conversation } from '@/chat/types/chat';
 import { ItemUtil, ModelsUtil } from '@/src/utils';
+import { ConversationEntityModel, Message, Replay } from '@epam/ai-dial-shared';
 
 export class ConversationBuilder {
   private conversation: Conversation;
 
   constructor() {
-    const model = ModelsUtil.getDefaultModel()!;
+    const model = ModelsUtil.getDefaultAgent()!;
     this.conversation = {
-      id: `${model.id}${ItemUtil.conversationIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
+      id: `${model.reference}${ItemUtil.entityIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
-      model: { id: model.id },
+      model: { id: model.reference },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
-      selectedAddons: model.selectedAddons ?? [],
-      lastActivityDate: Date.now(),
+      selectedAddons: [],
+      updatedAt: Date.now(),
       folderId: '',
     };
   }
@@ -80,13 +76,8 @@ export class ConversationBuilder {
     return this;
   }
 
-  withAddons(addons: string[]): ConversationBuilder {
-    this.conversation.selectedAddons = addons;
-    return this;
-  }
-
-  withLastActivityDate(lastActivityDate: number): ConversationBuilder {
-    this.conversation.lastActivityDate = lastActivityDate;
+  withUpdatedAt(updatedAt: number): ConversationBuilder {
+    this.conversation.updatedAt = updatedAt;
     return this;
   }
 

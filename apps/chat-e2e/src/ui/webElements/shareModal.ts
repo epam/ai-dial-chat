@@ -1,33 +1,45 @@
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
-import { ChatSelectors } from '@/src/ui/selectors';
+import { ChatSelectors, ShareModalSelectors } from '@/src/ui/selectors';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
-import { ModalSelectors } from '@/src/ui/selectors/modalSelectors';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ShareModal extends BaseElement {
-  constructor(page: Page) {
-    super(page, ModalSelectors.modalContainer);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, ShareModalSelectors.modalContainer, parentLocator);
   }
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
   public copyLinkButton = this.getChildElementBySelector(
-    `${ModalSelectors.copyLink} > ${Tags.svg}`,
+    `${ShareModalSelectors.copyLink} > ${Tags.svg}`,
   );
   public shareLinkInput = this.getChildElementBySelector(
-    ModalSelectors.shareLink,
+    ShareModalSelectors.shareLink,
   );
-  public entityName = this.getChildElementBySelector(ModalSelectors.entityName);
+  public entityName = this.getChildElementBySelector(
+    ShareModalSelectors.entityName,
+  );
+  public shareQrCodeContainer = this.getChildElementBySelector(
+    ShareModalSelectors.qrCode,
+  );
+  public shareQrCodeImage = this.shareQrCodeContainer.getChildElementBySelector(
+    Tags.svg,
+  );
 
   public linkInputLoader = this.getChildElementBySelector(
-    ChatSelectors.messageSpinner,
+    ChatSelectors.entitySpinner,
   );
 
-  public shareText = this.getChildElementBySelector(ModalSelectors.shareText);
+  public shareText = this.getChildElementBySelector(
+    ShareModalSelectors.shareText,
+  );
 
-  public async getShareTextContent() {
-    const allContent = await this.shareText.getElementsInnerContent();
-    return allContent.join(' ').replaceAll(/\u00a0/g, ' ');
-  }
+  public removeAccessBtn = this.getChildElementBySelector(
+    ShareModalSelectors.removeAccessBtn,
+  );
+
+  public notSharedEntityLabel = this.getChildElementBySelector(
+    ShareModalSelectors.notSharedEntityLabel,
+  );
 }

@@ -1,0 +1,700 @@
+import dialTest from '@/src/core/dialFixtures';
+import {
+  API,
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+} from '@/src/testData';
+import {
+  Colors,
+  Overflow,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
+import { GeneratorUtil, RegexUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
+import { expect } from '@playwright/test';
+
+dialTest(
+  '[Select folder] Create new folder on the root level.\n' +
+    '[Select folder] Rename new folder just after its creation on Enter.\n' +
+    '[Select folder] Allowed special characters.\n' +
+    '[Select folder] Spaces in the middle of folder name stay.\n' +
+    '[Upload from device] Change upload to folder with long name which is cut at the end with three dots.\n' +
+    '[Upload from device] Change upload to root folder',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    selectFolders,
+    localStorageManager,
+    baseAssertion,
+    selectFoldersAssertion,
+  }) => {
+    setTestIds(
+      'EPMRTC-3253',
+      'EPMRTC-3268',
+      'EPMRTC-3247',
+      'EPMRTC-3250',
+      'EPMRTC-3237',
+      'EPMRTC-3238',
+    );
+    const updatedFolderName = `New folder 1    ${ExpectedConstants.allowedSpecialChars}`;
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.bgAccentPrimaryAlpha,
+    );
+    const expectedBorderColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
+
+    await dialTest.step(
+      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDeviceButton.click();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" icon and verify new folder is created in the root in edit mode, folder background is blue',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFoldersAssertion.assertFolderEditInputState('visible');
+        await selectFoldersAssertion.assertElementBackgroundColors(
+          selectFolders.getFolderInEditMode(
+            ExpectedConstants.newFolderWithIndexTitle(1),
+          ),
+          expectedColor,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Set new name, hit Enter and verify name is updated, edit mode is closed',
+      async () => {
+        await selectFolders.renameEmptyFolderWithEnter(updatedFolderName);
+        await selectFoldersAssertion.assertFolderEditInputState('hidden');
+        await selectFoldersAssertion.assertFolderState(
+          { name: updatedFolderName },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select created folder and verify correct path is displayed in "Upload to" field, the field is highlighted and has text_overflow=ellipsis property',
+      async () => {
+        await selectFolderModal.selectFolder(updatedFolderName, 1, {
+          triggeredApiHost: API.listingHost,
+        });
+        await selectFolderModal.selectFolderButton.click();
+        const uploadToPathElement =
+          uploadFromDeviceModal.getChangeUploadToPath();
+        await baseAssertion.assertElementBorderColors(
+          uploadToPathElement,
+          expectedBorderColor,
+        );
+        await baseAssertion.assertElementText(
+          uploadToPathElement.path,
+          new RegExp(
+            RegexUtil.escapeRegexChars(
+              `${ExpectedConstants.allFilesRoot}/${updatedFolderName}`,
+            ),
+          ),
+          ExpectedMessages.uploadToPathIsValid,
+        );
+        const uploadPathOverflow =
+          await uploadToPathElement.path.getComputedStyleProperty(
+            Styles.text_overflow,
+          );
+        expect
+          .soft(uploadPathOverflow[0], ExpectedMessages.uploadToPathIsTruncated)
+          .toBe(Overflow.ellipsis);
+      },
+    );
+
+    await dialTest.step(
+      'Click on Change link, select "All files" and verify root is displayed in "Upload to" field',
+      async () => {
+        await uploadFromDeviceModal.changeUploadToLocation();
+        await selectFolderModal.selectRootFoldersSection({
+          triggeredApiHost: API.listingHost,
+        });
+        await selectFolderModal.selectFolderButton.click();
+        await baseAssertion.assertElementText(
+          uploadFromDeviceModal.getChangeUploadToPath().path,
+          ExpectedConstants.allFilesRoot,
+          ExpectedMessages.uploadToPathIsValid,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Select folder] Restricted special characters are not entered.\n' +
+    '[Select folder] Restricted special characters are removed if to copy-paste',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    selectFolders,
+    selectFoldersAssertion,
+    page,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3248', 'EPMRTC-3249');
+    const nameWithRestrictedChars = `Folder${ExpectedConstants.restrictedNameChars}name`;
+
+    await dialTest.step(
+      'Copy restricted symbols into buffer, open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.copyTextToClipboard(nameWithRestrictedChars);
+
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDevice();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" icon, type one by one restricted symbols and verify nothing is displayed in the input field',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.editFolderName(
+          ExpectedConstants.restrictedNameChars,
+        );
+        await selectFoldersAssertion.assertFolderEditInputValue('');
+      },
+    );
+
+    await dialTest.step(
+      'Paste restricted symbols from buffer and verify nothing is displayed in the input field',
+      async () => {
+        await page.keyboard.press(keys.ctrlPlusA);
+        await page.keyboard.press(keys.ctrlPlusV);
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+        await selectFoldersAssertion.assertFolderState(
+          {
+            name: nameWithRestrictedChars.replace(
+              ExpectedConstants.restrictedNameChars,
+              '',
+            ),
+          },
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Select folder] Long folder name is cut with three dots at the end.\n' +
+    '[Select folder] Create new nested folder.\n' +
+    '[Select folder] Folder names can be equal on different levels.\n' +
+    '[Select folder] Rename new nested folder just after its creation on Tick button.\n' +
+    '[Select folder] Folder name is blue highlighted if to click on it',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    selectFolders,
+    folderDropdownMenu,
+    localStorageManager,
+  }) => {
+    setTestIds(
+      'EPMRTC-3271',
+      'EPMRTC-1801',
+      'EPMRTC-3245',
+      'EPMRTC-3255',
+      'EPMRTC-3272',
+    );
+    const longFolderName = GeneratorUtil.randomString(150);
+
+    await dialTest.step(
+      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDeviceButton.click();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" icon, set long folder name and verify it is truncated with dots',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.renameEmptyFolderWithTick(longFolderName);
+        const folderNameOverflowProp = await selectFolders
+          .getFolderName(longFolderName)
+          .getComputedStyleProperty(Styles.text_overflow);
+        expect
+          .soft(
+            folderNameOverflowProp[0],
+            ExpectedMessages.folderNameIsTruncated,
+          )
+          .toBe(Overflow.ellipsis);
+      },
+    );
+
+    await dialTest.step(
+      'Select create folder and verify folder name and background colors are blue',
+      async () => {
+        await selectFolders.getFolderByName(longFolderName).click();
+        const folderBackgroundColor =
+          await selectFolders.getFolderBackgroundColor(longFolderName);
+        expect
+          .soft(
+            folderBackgroundColor[0],
+            ExpectedMessages.folderBackgroundColorIsValid,
+          )
+          .toBe(Colors.backgroundAccentPrimaryAlpha);
+
+        const folderTextColor =
+          await selectFolders.getFolderNameColor(longFolderName);
+        expect
+          .soft(folderTextColor[0], ExpectedMessages.folderTextColorIsValid)
+          .toBe(Colors.controlsBackgroundAccent);
+      },
+    );
+
+    await dialTest.step(
+      'Create child folder with the same name and verify folder with same name is created and truncated with dots',
+      async () => {
+        await selectFolders.openFolderDropdownMenu(longFolderName);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
+        await selectFolders.renameEmptyFolderWithTick(longFolderName);
+        const childFolderNameOverflowProp = await selectFolders
+          .getFolderName(longFolderName, 2)
+          .getComputedStyleProperty(Styles.text_overflow);
+        expect
+          .soft(
+            childFolderNameOverflowProp[0],
+            ExpectedMessages.folderNameIsTruncated,
+          )
+          .toBe(Overflow.ellipsis);
+      },
+    );
+
+    await dialTest.step(
+      'Close "Select folder" modal, open it again and verify folders are displayed',
+      async () => {
+        await selectFolderModal.closeModal.click();
+        await uploadFromDeviceModal.changeUploadToLocation();
+        await expect
+          .soft(
+            selectFolders.getFolderByName(longFolderName, 1),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            selectFolders.getNestedFolder(longFolderName, longFolderName, 1),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Select folder] Default numeration on root level',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    selectFolders,
+    localStorageManager,
+    selectFoldersAssertion,
+  }) => {
+    setTestIds('EPMRTC-3244');
+    const updateFoldeNameIndex = 999;
+
+    await dialTest.step(
+      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDevice();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" and verify "New folder 1" is created in edit mode',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFoldersAssertion.assertFolderEditInputState('visible');
+        await selectFoldersAssertion.assertFolderEditInputValue(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" again and edit name to "New folder 999"',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.renameEmptyFolderWithTick(
+          ExpectedConstants.newFolderWithIndexTitle(updateFoldeNameIndex),
+        );
+        await selectFoldersAssertion.assertFolderState(
+          {
+            name: ExpectedConstants.newFolderWithIndexTitle(
+              updateFoldeNameIndex,
+            ),
+          },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" again, confirm creation and verify "New folder 1000" folder is created',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+        await selectFoldersAssertion.assertFolderState(
+          {
+            name: ExpectedConstants.newFolderWithIndexTitle(
+              updateFoldeNameIndex + 1,
+            ),
+          },
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `[Select folder] Window changes it's height and Scroll appears`,
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    page,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3269');
+
+    await dialTest.step(
+      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDeviceButton.click();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" may times and verify "Select folder" modal height is growing until equal browser window height',
+      async () => {
+        for (let i = 1; i <= 20; i++) {
+          await selectFolderModal.newFolderButton.click();
+        }
+        const selectFolderBounding =
+          await selectFolderModal.getElementBoundingBox();
+        const selectFolderHeight = selectFolderBounding!.height!;
+        const browserHeight = page.viewportSize()!.height!;
+        expect
+          .soft(
+            selectFolderHeight < browserHeight,
+            ExpectedMessages.elementAttributeValueIsValid,
+          )
+          .toBeTruthy();
+        expect
+          .soft(
+            await selectFolderModal.allFoldersSection.isElementScrollableVertically(),
+            ExpectedMessages.selectFolderAreaIsScrollable,
+          )
+          .toBeTruthy();
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Select folder] Cancel renaming of new nested folder just after its creation.\n' +
+    '[Select folder] Rename nested folder through context menu.\n' +
+    '[Select folder] Rename a folder on root level through context menu',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    selectFolders,
+    folderDropdownMenu,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3256', 'EPMRTC-3258', 'EPMRTC-3257');
+    const newChildFolderName = GeneratorUtil.randomString(10);
+    const newParentFolderName = GeneratorUtil.randomString(10);
+
+    await dialTest.step(
+      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDeviceButton.click();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" and confirm default folder name',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+      },
+    );
+
+    await dialTest.step(
+      'Select "Add new folder" option from parent folder dropdown menu, set new child folder name, click cancel edit icon and verify default child folder name is applied',
+      async () => {
+        await selectFolders.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
+        await selectFolders.editFolderName(newChildFolderName);
+        await selectFolders.getEditFolderInputActions().clickCancelButton();
+        await expect
+          .soft(
+            selectFolders.getNestedFolder(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+              ExpectedConstants.newFolderWithIndexTitle(1),
+              1,
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Open child folder dropdown menu, select "Rename" option, set new name, confirm and verify new child folder name is applied',
+      async () => {
+        await selectFolders.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          2,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await selectFolders.renameEmptyFolderWithTick(newChildFolderName);
+        await expect
+          .soft(
+            selectFolders.getNestedFolder(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+              newChildFolderName,
+            ),
+            ExpectedMessages.folderNameUpdated,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Open parent folder dropdown menu, select "Rename" option, set new name, confirm and verify new child folder is visible',
+      async () => {
+        await selectFolders.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await selectFolders.renameEmptyFolderWithTick(newParentFolderName);
+        await expect
+          .soft(
+            selectFolders.getNestedFolder(
+              newParentFolderName,
+              newChildFolderName,
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Select folder] Error message appears if to add a dot to the end of folder name.\n' +
+    '[Select folder] Error message appears if to rename chat folder to already existed name in the root.\n' +
+    '[Select folder] Error message appears if to add a dot to the beginning of folder name',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    baseAssertion,
+    selectFolders,
+    selectFoldersAssertion,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3017', 'EPMRTC-3246', 'EPMRTC-6718');
+
+    await dialTest.step(
+      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDeviceButton.click();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" and confirm default folder name',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Create new folder" again, set new folder name with end dot, confirm and verify error toast is shown',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.renameEmptyFolderWithTick(
+          `${GeneratorUtil.randomString(10)}.`,
+        );
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.nameWithDotErrorMessage,
+          ExpectedMessages.errorMessageContentIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create new folder, set name to already existing one, confirm and verify error message is shown',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.renameEmptyFolderWithTick(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.notAllowedDuplicatedFolderNameErrorMessage,
+          ExpectedMessages.errorMessageContentIsValid,
+        );
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(3) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create new folder, set name with leading dot and verify error message is shown, folder edit mode is closed',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.renameEmptyFolderWithTick(
+          `.${GeneratorUtil.randomString(5)}`,
+        );
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.leadingDotErrorToast,
+          ExpectedMessages.errorMessageContentIsValid,
+        );
+        await selectFoldersAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(4) },
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Select folder] Folder name can not be blank or with spaces only',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    uploadFromDeviceModal,
+    attachFilesModal,
+    selectFolderModal,
+    selectFolders,
+    localStorageManager,
+  }) => {
+    setTestIds('EPMRTC-3251');
+
+    await dialTest.step(
+      'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+        await attachFilesModal.uploadFromDeviceButton.click();
+        await uploadFromDeviceModal.changeUploadToLocation();
+      },
+    );
+
+    await dialTest.step(
+      'Set new folder name empty or to spaces, confirm and verify default name is applied',
+      async () => {
+        const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.renameEmptyFolderWithTick(nameWithSpaces);
+        await expect
+          .soft(
+            selectFolders.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+      },
+    );
+  },
+);

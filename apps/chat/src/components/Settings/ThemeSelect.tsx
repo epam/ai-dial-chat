@@ -1,13 +1,13 @@
-import { MouseEvent, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import { MouseEvent, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/selectors';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -27,6 +27,14 @@ export const ThemeSelect = ({
   const { t } = useTranslation(Translation.Settings);
   const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
 
+  const themeName = useMemo(() => {
+    const name = availableThemes.find(
+      ({ id }) => id === localTheme,
+    )?.displayName;
+
+    return name ?? localTheme;
+  }, [availableThemes, localTheme]);
+
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onThemeChangeHandler(e.currentTarget.value);
     setIsOpen(false);
@@ -39,13 +47,16 @@ export const ThemeSelect = ({
   return (
     <div className="flex items-center gap-5">
       <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
-      <div className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary">
+      <div
+        className="h-[38px] grow basis-2/3 rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4"
+        data-qa="theme"
+      >
         <Menu
-          className="w-full px-3"
+          className="flex w-full items-center px-3"
           onOpenChange={setIsOpen}
           trigger={
-            <div className="flex w-full min-w-[120px] items-center justify-between gap-2 capitalize">
-              {localTheme}
+            <div className="flex w-full min-w-[120px] cursor-pointer items-center justify-between gap-2 capitalize">
+              {themeName}
               <ChevronDownIcon
                 className={classNames(
                   'shrink-0 text-primary transition-all',

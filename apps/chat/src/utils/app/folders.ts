@@ -1,27 +1,43 @@
+import { Observable, of } from 'rxjs';
+
 import {
   constructPath,
   getDialFilesFromAttachments,
+  getRelativePath,
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
+import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import {
-  Entity,
-  PartialBy,
-  ShareEntity,
-  UploadStatus,
-} from '@/src/types/common';
+import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
+import { AppAction } from '@/src/types/store';
+
+import { ConversationsActions, UIActions } from '@/src/store/actions';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
-import { isRootId } from './id';
+import {
+  addTrailingSlashIfAbsent,
+  doesHaveDotsInTheEnd,
+  prepareEntityName,
+} from './common';
+import { isRootEntity } from './id';
+import { hasWritePermission } from './share';
+import { isReplayConversation, splitEntityId } from './shared-utils';
 
+import {
+  Attachment,
+  ConversationInfo,
+  Entity,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
@@ -67,11 +83,17 @@ export const getParentAndCurrentFoldersById = (
   return parentFolders;
 };
 
-export const getParentAndCurrentFolderIdsById = (
-  folders: FolderInterface[],
-  folderId: string | undefined,
-) =>
-  getParentAndCurrentFoldersById(folders, folderId).map((folder) => folder.id);
+export const getParentAndCurrentFolderIdsById = (folderId: string) => {
+  const parts = folderId.split('/');
+  const parentFolders = [];
+
+  for (let i = parts.length - 1; i > 2; i--) {
+    const parentPath = parts.slice(0, i).join('/');
+    parentFolders.push(parentPath);
+  }
+
+  return [folderId, ...parentFolders];
+};
 
 export const getChildAndCurrentFoldersById = (
   folderId: string | undefined,
@@ -109,9 +131,9 @@ export const getNextDefaultName = (
   parentFolderId?: string,
 ): string => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
+  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d{1,7})$`);
 
-  if (!entities.length) {
+  if (!entities.length && !index) {
     return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
   }
 
@@ -158,37 +180,12 @@ export const generateNextName = (
   entities: ShareEntity[],
   index = 0,
 ) => {
-  const regex = new RegExp(`^${defaultName} (\\d+)$`);
+  const regex = new RegExp(`^${defaultName} (\\d{1,7})$`);
   return currentName.match(regex)
     ? getNextDefaultName(defaultName, entities, index)
     : getNextDefaultName(currentName, entities, index, true);
 };
 
-export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
-  if (!path.trim()) return undefined;
-
-  const parts = path.split('/');
-
-  if (!parts.length) return undefined;
-
-  const childFolderName = parts[parts.length - 1];
-
-  const childFolderId = folders.find((f) => f.name === childFolderName)?.id;
-
-  if (!childFolderId) return undefined;
-
-  const parentFolders = getParentAndCurrentFoldersById(folders, childFolderId);
-  const pathPartSet = new Set(parts);
-
-  if (
-    parentFolders.length === parts.length &&
-    parentFolders.every((f) => pathPartSet.has(f.name))
-  ) {
-    return childFolderId;
-  }
-
-  return undefined;
-};
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
@@ -217,15 +214,6 @@ export const getPathToFolderById = (
   return { path: constructPath(...path), pathDepth: path.length - 1 };
 };
 
-interface GetFilteredFoldersProps {
-  allFolders: FolderInterface[];
-  emptyFolderIds: string[];
-  filters: EntityFilters;
-  entities: Conversation[] | Prompt[];
-  searchTerm?: string;
-  includeEmptyFolders?: boolean;
-}
-
 export const getFilteredFolders = ({
   allFolders,
   emptyFolderIds,
@@ -233,11 +221,21 @@ export const getFilteredFolders = ({
   entities,
   searchTerm,
   includeEmptyFolders,
-}: GetFilteredFoldersProps) => {
+  includeHiddenFolders = false,
+}: {
+  allFolders: FolderInterface[];
+  emptyFolderIds: string[];
+  filters: EntityFilters;
+  entities: Conversation[] | Prompt[];
+  searchTerm?: string;
+  includeEmptyFolders?: boolean;
+  includeHiddenFolders?: boolean;
+}) => {
   // Get roots of section filtered items
   const sectionFilteredFolders = allFolders.filter(
     (folder) => filters.sectionFilter?.(folder) ?? true,
   );
+
   // Get full child tree
   const childAndCurrentSectionFilteredIds = new Set(
     sectionFilteredFolders.flatMap((folder) =>
@@ -245,8 +243,10 @@ export const getFilteredFolders = ({
     ),
   );
   // Map back to folders objects
-  const childAndCurrentSectionFilteredFolders = allFolders.filter((folder) =>
-    childAndCurrentSectionFilteredIds.has(folder.id),
+  const childAndCurrentSectionFilteredFolders = allFolders.filter(
+    (folder) =>
+      childAndCurrentSectionFilteredIds.has(folder.id) &&
+      (!isHiddenEntity(folder) || includeHiddenFolders),
   );
 
   // Apply search filters to section folders
@@ -272,12 +272,7 @@ export const getFilteredFolders = ({
   // Get roots again for merged array
   const filteredFolderIds = new Set(
     searchedFoldersByEntitiesAndFolders
-      .flatMap((fid) =>
-        getParentAndCurrentFolderIdsById(
-          childAndCurrentSectionFilteredFolders,
-          fid,
-        ),
-      )
+      .flatMap((fid) => getParentAndCurrentFolderIdsById(fid))
       .filter(
         (fid) =>
           fid && sectionFilteredFolders.map(({ id }) => id).includes(fid),
@@ -307,41 +302,6 @@ export const getParentAndChildFolders = (
   );
 };
 
-export const getTemporaryFoldersToPublish = (
-  folders: FolderInterface[],
-  folderId: string | undefined,
-  publishVersion: string,
-) => {
-  if (!folderId) {
-    return [];
-  }
-
-  const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-
-  return parentFolders
-    .filter((folder) => folder.temporary)
-    .map(({ temporary: _, ...folder }) => {
-      return {
-        ...folder,
-        isPublished: false,
-        isShared: false,
-        publishVersion,
-        publishedWithMe: true,
-      };
-    });
-};
-
-export const findRootFromItems = (
-  items: (FolderInterface | Conversation | Prompt)[],
-) => {
-  const parentIds = new Set(items.map((item) => item.id));
-
-  return items.find((item) => {
-    if (isRootId(item.folderId)) return true;
-    return !parentIds.has(item.folderId);
-  });
-};
-
 export const validateFolderRenaming = (
   folders: FolderInterface[],
   newName: string,
@@ -369,22 +329,53 @@ export const validateFolderRenaming = (
   if (doesHaveDotsInTheEnd(newName)) {
     return 'Using a dot at the end of a name is not permitted.';
   }
+
+  if (newName.startsWith('.')) {
+    return 'Using a dot at the start of a name is not permitted.';
+  }
 };
 
-export const getConversationAttachmentWithPath = (
-  conversation: Conversation,
+export const getConversationAttachmentWithPath = <
+  T extends Conversation | ConversationInfo,
+>(
+  conversation: T,
   folders: FolderInterface[],
 ): DialFile[] => {
   const { path } = getPathToFolderById(folders, conversation.folderId);
-  return getDialFilesFromAttachments(
-    conversation?.messages.flatMap(
-      (message) => message.custom_content?.attachments || [],
-    ) || [],
-  ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
+  const isReplay =
+    'replay' in conversation ? isReplayConversation(conversation) : false;
+  const attachments =
+    'messages' in conversation
+      ? (
+          conversation.playback?.messagesStack ||
+          (isReplay && conversation.replay?.replayUserMessagesStack
+            ? [
+                ...conversation.replay.replayUserMessagesStack,
+                ...conversation.messages,
+              ]
+            : conversation.messages)
+        ).flatMap((message) => {
+          const messageAttachments: Attachment[] =
+            message.custom_content?.attachments || [];
+          const stagesAttachments: Attachment[] =
+            message.custom_content?.stages?.flatMap(
+              ({ attachments }) => attachments ?? [],
+            ) || [];
+
+          return [...messageAttachments, ...stagesAttachments];
+        })
+      : [];
+
+  return getDialFilesFromAttachments(attachments || []).map((file) => ({
+    ...file,
+    relativePath: path,
+    contentLength: 0,
+  }));
 };
 
-const getGeneratedFolderId = (folder: PartialBy<FolderInterface, 'id'>) =>
-  constructPath(folder.folderId, folder.name);
+export const getGeneratedFolderId = (
+  folder: PartialBy<FolderInterface, 'id'>,
+) => constructPath(folder.folderId, folder.name);
 
 export const addGeneratedFolderId = (
   folder: PartialBy<FolderInterface, 'id'>,
@@ -397,29 +388,6 @@ export const addGeneratedFolderId = (
     };
   }
   return folder as FolderInterface;
-};
-
-// {apikey}/{bucket}/path.../name
-export const splitEntityId = (
-  id: string,
-): {
-  bucket: string;
-  name: string;
-  parentPath: string | undefined;
-  apiKey: string;
-} => {
-  const parts = id.split('/');
-  const parentPath =
-    parts.length > 3
-      ? constructPath(...parts.slice(2, parts.length - 1))
-      : undefined;
-
-  return {
-    apiKey: parts[0],
-    bucket: parts[1],
-    parentPath,
-    name: parts[parts.length - 1],
-  };
 };
 
 export const getParentFolderIdsFromFolderId = (path?: string): string[] => {
@@ -441,7 +409,7 @@ export const getParentFolderIdsFromEntityId = (id: string): string[] => {
 
 export const getFolderFromId = (
   id: string,
-  type: FolderType,
+  type: FeatureType,
   status?: UploadStatus,
 ): FolderInterface => {
   const { apiKey, bucket, name, parentPath } = splitEntityId(id);
@@ -456,12 +424,26 @@ export const getFolderFromId = (
 
 export const getFoldersFromIds = (
   ids: (string | undefined)[],
-  type: FolderType,
+  type: FeatureType,
   status?: UploadStatus,
 ): FolderInterface[] => {
   return (ids.filter(Boolean) as string[]).map((path) =>
     getFolderFromId(path, type, status),
   );
+};
+
+export const getEntitiesFoldersFromEntities = (
+  entities: Conversation[] | Prompt[] | DialFile[],
+  featureType: FeatureType,
+): FolderInterface[] => {
+  const foldersIds = uniq(entities.map((info) => info.folderId));
+  //calculate all folders;
+  const featuresFolders = getFoldersFromIds(
+    uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
+    featureType,
+  );
+
+  return featuresFolders;
 };
 
 export const sortByName = <T extends Entity>(entities: T[]): T[] =>
@@ -495,4 +477,248 @@ export const updateMovedEntityId = (
     return entityId.replace(old, newParentFolderId);
   }
   return entityId;
+};
+
+export const getFolderIdFromEntityId = (id: string) =>
+  id.split('/').slice(0, -1).join('/');
+
+export const getRootFolderIdFromEntityId = (id: string) => {
+  const splittedId = id.split('/');
+  return splittedId.slice(0, isRootEntity(id) ? 2 : 3).join('/');
+};
+
+export const isFolderEmpty = ({
+  id,
+  folders,
+  entities,
+}: {
+  id: string;
+  folders: FolderInterface[];
+  entities: ShareEntity[];
+}) => {
+  return (
+    !folders.some((folder) => folder.folderId === id) &&
+    !entities.some((entity) => entity.folderId === id)
+  );
+};
+
+export const canEditSharedFolderOrParent = (
+  folders: FolderInterface[],
+  folderId: string | undefined,
+): boolean => {
+  while (folderId) {
+    const folder = folders.find((folder) => folder.id === folderId);
+
+    if (folder?.sharedWithMe && hasWritePermission(folder.permissions)) {
+      return true;
+    }
+
+    folderId = folder?.folderId;
+  }
+
+  return false;
+};
+
+export const updateEntityFolder = <T extends Entity | BaseDialEntity>(
+  entity: T,
+  sourceFolderId: string,
+  targetFolderId: string,
+): T => {
+  if (entity.id.startsWith(`${sourceFolderId}/`)) {
+    const folderId =
+      entity.folderId === sourceFolderId
+        ? targetFolderId
+        : updateMovedFolderId(sourceFolderId, targetFolderId, entity.folderId);
+    return {
+      ...entity,
+      id: updateMovedEntityId(sourceFolderId, targetFolderId, entity.id),
+      folderId,
+      ...('absolutePath' in entity && {
+        absolutePath: folderId,
+      }),
+      ...('relativePath' in entity && {
+        relativePath: getRelativePath(folderId),
+      }),
+    };
+  }
+
+  return entity;
+};
+
+export const renameFolderAndMoveEntity = <T extends Entity | BaseDialEntity>(
+  entity: T,
+  sourceFolderId: string,
+  targetFolderId: string,
+) => {
+  if (entity.id === sourceFolderId) {
+    return {
+      ...entity,
+      name: splitEntityId(targetFolderId).name,
+      id: targetFolderId,
+    };
+  }
+
+  return updateEntityFolder(entity, sourceFolderId, targetFolderId);
+};
+
+export const updateChildAndCurrentFoldersIds = (
+  ids: string[],
+  oldFolderId: string,
+  newFolderId: string,
+) => {
+  return ids.map((id) => {
+    if (id.startsWith(`${oldFolderId}/`) || id === oldFolderId) {
+      return id !== oldFolderId
+        ? id.replace(`${oldFolderId}/`, `${newFolderId}/`)
+        : id.replace(oldFolderId, newFolderId);
+    }
+
+    return id;
+  });
+};
+
+export const updateChildFoldersIds = (
+  folders: FolderInterface[],
+  oldFolderId: string,
+  newFolderId: string,
+) => {
+  return folders
+    .filter((folder) => folder.id.startsWith(`${oldFolderId}/`))
+    .map((folder) => {
+      return {
+        oldId: folder.id,
+        newFolder: addGeneratedFolderId({
+          ...folder,
+          folderId: folder.folderId.replace(oldFolderId, newFolderId),
+        }),
+      };
+    });
+};
+
+export const getActionsAddFoldersFromFolderId = ({
+  folderId,
+  featureType,
+  shouldOpen,
+}: {
+  folderId: string;
+  featureType: FeatureType;
+  shouldOpen?: boolean;
+}): Observable<AppAction>[] => {
+  const actions: Observable<AppAction>[] = [];
+  const paths = uniq(getParentFolderIdsFromFolderId(folderId));
+
+  actions.push(
+    of(
+      ConversationsActions.addFolders({
+        folders: paths.map((path) => ({
+          ...getFolderFromId(path, featureType),
+          status: UploadStatus.LOADED,
+        })),
+      }),
+    ),
+  );
+
+  if (shouldOpen) {
+    actions.push(
+      of(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: paths,
+          featureType,
+        }),
+      ),
+    );
+  }
+
+  return actions;
+};
+
+export const isParentFolderSelected = ({
+  currentFolderId,
+  selectedFolderIds,
+}: {
+  currentFolderId: string;
+  selectedFolderIds: string[] | undefined;
+}) => {
+  const parentFolderIds = getParentFolderIdsFromFolderId(currentFolderId);
+
+  const isParentSelected = parentFolderIds.some((id) =>
+    (selectedFolderIds ?? []).includes(`${id}/`),
+  );
+  return isParentSelected;
+};
+
+export const isFolderPartialSelected = ({
+  currentFolderId,
+  partialSelectedFolderIds,
+  isSelected,
+}: {
+  currentFolderId: string;
+  partialSelectedFolderIds: string[] | undefined;
+  isSelected: boolean;
+}) => {
+  const currentId = `${currentFolderId}/`;
+  return !isSelected && (partialSelectedFolderIds ?? []).includes(currentId);
+};
+
+export const getSelectedEntitiesByFolderId = <
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+>({
+  entities,
+  folderId,
+  partialChosenFolderIds,
+  chosenItemsIds,
+}: {
+  entities: T[];
+  folderId: string;
+  partialChosenFolderIds: string[];
+  chosenItemsIds: string[];
+}) =>
+  entities
+    .filter(
+      (entity) =>
+        entity.id.startsWith(folderId) &&
+        (!partialChosenFolderIds.includes(folderId) ||
+          !chosenItemsIds.includes(entity.id)),
+    )
+    .map((entity) => entity.id);
+
+export const getPartialAndFullyChosenFolders = (
+  folders: FolderInterface[],
+  items: ShareEntity[],
+  selectedItems: string[],
+  emptyFolderIds: string[] = [],
+  selectedEmptyFolderIds: string[] = [],
+) => {
+  const fullyChosenFolderIds = folders
+    .map((folder) => addTrailingSlashIfAbsent(folder.id))
+    .filter(
+      (folderId) =>
+        items.some((item) => item.id.startsWith(folderId)) ||
+        selectedEmptyFolderIds.some((id) => id.startsWith(folderId)),
+    )
+    .filter(
+      (folderId) =>
+        items
+          .filter((item) => item.id.startsWith(folderId))
+          .every((item) => selectedItems.includes(item.id)) &&
+        emptyFolderIds
+          .filter((id) => id.startsWith(folderId))
+          .every((id) =>
+            selectedEmptyFolderIds.includes(addTrailingSlashIfAbsent(id)),
+          ),
+    );
+
+  const partialChosenFolderIds = folders
+    .map((folder) => addTrailingSlashIfAbsent(folder.id))
+    .filter(
+      (folderId) =>
+        !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+        (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+          fullyChosenFolderIds.some((entityId) =>
+            entityId.startsWith(folderId),
+          )) &&
+        !fullyChosenFolderIds.includes(folderId),
+    );
+
+  return { fullyChosenFolderIds, partialChosenFolderIds };
 };

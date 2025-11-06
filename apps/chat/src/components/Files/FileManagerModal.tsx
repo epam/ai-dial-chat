@@ -1,481 +1,965 @@
 import { useId } from '@floating-ui/react';
-import { IconDownload, IconTrash } from '@tabler/icons-react';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import { IconDownload, IconTrashX } from '@tabler/icons-react';
+import {
+  ChangeEvent,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getDialFilesWithInvalidFileType,
-  getExtensionsListForMimeTypes,
+  getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getFileRootId, isRootId } from '@/src/utils/app/id';
+import {
+  getParentFolderIdsFromFolderId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
+import { areEntitiesBucketsTheSame, getFileRootId } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import {
+  PublishedWithMeFilter,
+  SharedWithMeFilters,
+  defaultMyItemsFilters,
+} from '@/src/utils/app/search';
 
-import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { FilesActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsSelectors,
+  FilesSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
-import Modal from '@/src/components/Common/Modal';
-import Folder from '@/src/components/Folder/Folder';
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+import {
+  ORGANIZATION_SECTION_NAME,
+  SHARED_WITH_ME_SECTION_NAME,
+} from '@/src/constants/sections';
 
-import FolderPlus from '../../../public/images/icons/folder-plus.svg';
-import { ConfirmDialog } from '../Common/ConfirmDialog';
-import { ErrorMessage } from '../Common/ErrorMessage';
-import { Spinner } from '../Common/Spinner';
-import Tooltip from '../Common/Tooltip';
+import { HiddenItemsToggler } from '@/src/components/Buttons/HiddenItemsToggler';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
+import { Modal } from '@/src/components/Common/Modal';
+import { NoData } from '@/src/components/Common/NoData';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
+import { Spinner } from '@/src/components/Common/Spinner';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { Folder } from '@/src/components/Folder/Folder';
+
 import { FileItem, FileItemEventIds } from './FileItem';
+import { FilesSectionWrapper } from './FilesSectionWrapper';
 import { PreUploadDialog } from './PreUploadModal';
+import { ReviewBucketFilesSection } from './ReviewBucketFilesSection';
+
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import uniq from 'lodash-es/uniq';
+
+const sectionWrapperToggleClasses = 'sticky top-0 z-10 bg-layer-3';
 
 interface Props {
   isOpen: boolean;
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
-  allowedTypesLabel?: string;
+  allowedTypesLabel?: string | null;
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
   customUploadButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
+  forceShowSelectCheckBox?: boolean;
+  forceHideSelectFolders?: boolean;
+  showTooltip?: boolean;
+  sourceFilters?: Set<FileSourceType>;
+  warningMessage?: string;
 }
 
-export const FileManagerModal = ({
-  isOpen,
-  allowedTypes = [],
-  allowedTypesLabel,
-  initialSelectedFilesIds = [],
-  headerLabel,
-  customButtonLabel,
-  customUploadButtonLabel,
-  maximumAttachmentsAmount = 0,
-  onClose,
-}: Props) => {
-  const dispatch = useAppDispatch();
+export const FileManagerModal = memo(
+  ({
+    isOpen,
+    allowedTypes = [],
+    allowedTypesLabel,
+    initialSelectedFilesIds = [],
+    headerLabel,
+    customButtonLabel,
+    customUploadButtonLabel,
+    maximumAttachmentsAmount = 0,
+    forceShowSelectCheckBox,
+    forceHideSelectFolders,
+    onClose,
+    showTooltip,
+    sourceFilters,
+    warningMessage,
+  }: Props) => {
+    const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.Chat);
+    const { t } = useTranslation(Translation.Chat);
 
-  const headingId = useId();
-  const descriptionId = useId();
+    const headingId = useId();
+    const descriptionId = useId();
 
-  const folders = useAppSelector(FilesSelectors.selectFolders);
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const areFoldersLoading = useAppSelector(
-    FilesSelectors.selectAreFoldersLoading,
-  );
-  const loadingFolderIds = useAppSelector(
-    FilesSelectors.selectLoadingFolderIds,
-  );
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
-  const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
-  const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
-    getFileRootId(),
-  );
-  const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
-    useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilesIds, setSelectedFilesIds] = useState(
-    initialSelectedFilesIds,
-  );
-  const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
-
-  const {
-    handleRenameFolder,
-    handleAddFolder,
-    handleToggleFolder,
-    handleNewFolder,
-  } = useHandleFileFolders(
-    folders,
-    openedFoldersIds,
-    getFileRootId(),
-    setErrorMessage,
-    setOpenedFoldersIds,
-    setIsAllFilesOpened,
-  );
-
-  const filteredFiles = useMemo(() => {
-    return files.filter(({ name }) =>
-      name.toLowerCase().includes(searchQuery.toLowerCase()),
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isUnshare, setIsUnshare] = useState(false);
+    const [areHiddenItemsVisible, setAreHiddenItemsVisible] = useState(false);
+    const selectedPublication = useAppSelector(
+      PublicationSelectors.selectSelectedPublication,
     );
-  }, [files, searchQuery]);
-  const allowedExtensions = useMemo(() => {
-    if (allowedTypes.includes('*/*')) {
-      return [t('all')];
-    }
-    return getExtensionsListForMimeTypes(allowedTypes);
-  }, [allowedTypes, t]);
-  const showSpinner = folders.length === 0 && areFoldersLoading;
+    const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
+    const loadingFolderIds = useAppSelector(
+      FilesSelectors.selectLoadingFolderIds,
+    );
+    const folders = useAppSelector(FilesSelectors.selectFolders);
+    const files = useAppSelector(FilesSelectors.selectFiles);
 
-  useEffect(() => {
-    if (isOpen) {
-      dispatch(FilesActions.getFilesWithFolders({}));
-      dispatch(FilesActions.resetNewFolderId());
-    }
-  }, [dispatch, isOpen]);
+    const myRootFiles = useAppSelector((state) =>
+      FilesSelectors.selectFilteredFiles(
+        state,
+        defaultMyItemsFilters,
+        searchQuery,
+      ),
+    );
+    const organizationRootFiles = useAppSelector((state) =>
+      FilesSelectors.selectFilteredFiles(
+        state,
+        PublishedWithMeFilter,
+        searchQuery,
+      ),
+    );
+    const sharedWithMeRootFiles = useAppSelector((state) =>
+      FilesSelectors.selectFilteredFiles(
+        state,
+        SharedWithMeFilters,
+        searchQuery,
+      ),
+    );
 
-  const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
+    const myRootFolders = useAppSelector((state) =>
+      FilesSelectors.selectFilteredFolders(
+        state,
+        defaultMyItemsFilters,
+        searchQuery,
+        areHiddenItemsVisible,
+      ),
+    );
+    const organizationRootFolders = useAppSelector((state) =>
+      FilesSelectors.selectFilteredFolders(
+        state,
+        PublishedWithMeFilter,
+        searchQuery,
+        areHiddenItemsVisible,
+      ),
+    );
+    const sharedWithMeRootFolders = useAppSelector((state) =>
+      FilesSelectors.selectFilteredFolders(
+        state,
+        SharedWithMeFilters,
+        searchQuery,
+        areHiddenItemsVisible,
+      ),
+    );
+    const areFoldersLoading = useAppSelector(
+      FilesSelectors.selectAreFoldersLoading,
+    );
+    const canAttachFiles = useAppSelector(
+      ConversationsSelectors.selectCanAttachFile,
+    );
+    const canAttachFolders =
+      useAppSelector(ConversationsSelectors.selectCanAttachFolders) &&
+      !forceHideSelectFolders;
+    const lastRenamedParentFolder = useAppSelector(
+      FilesSelectors.selectLastRenamedParentFolder,
+    );
+    const {
+      partialChosenFolderIds: partiallySelectedFolderIds,
+      fullyChosenFolderIds: selectedFolderIds,
+    } = useAppSelector(FilesSelectors.selectChosenFolderIds);
+    const selectedFilesIds = useAppSelector(FilesSelectors.selectChosenItems);
 
-  const handleFolderSelect = useCallback(
-    (folderId: string) => {
-      handleToggleFolder(folderId);
-    },
-    [handleToggleFolder],
-  );
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
+    const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
+    const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
+      getFileRootId(),
+    );
+    const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
+      useState(false);
+    const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
+    const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
 
-  const handleUploadFile = useCallback(
-    (relativePath: string) => {
-      setUploadFolderId(relativePath);
-      setIsUploadFromDeviceOpened(true);
+    const handleSelectFiles = useCallback(
+      (ids: string[]) => {
+        dispatch(FilesActions.setChosenFiles({ ids }));
+      },
+      [dispatch],
+    );
 
-      if (!openedFoldersIds.includes(relativePath)) {
-        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
-        dispatch(FilesActions.getFolders({ id: relativePath }));
+    const handleSelectFolder = useCallback(
+      (folderId: string) => {
+        dispatch(FilesActions.setChosenFolder({ folderId }));
+      },
+      [dispatch],
+    );
+
+    useEffect(() => {
+      if (lastRenamedParentFolder?.newId) {
+        setOpenedFoldersIds((prev) =>
+          prev.map((id) => {
+            if (id === lastRenamedParentFolder.oldId)
+              return lastRenamedParentFolder.newId;
+            if (id.startsWith(`${lastRenamedParentFolder.oldId}/`))
+              return updateMovedFolderId(
+                lastRenamedParentFolder.oldId,
+                lastRenamedParentFolder.newId,
+                id,
+              );
+            return id;
+          }),
+        );
+        dispatch(FilesActions.resetLastRenamedParentFolder());
       }
-    },
-    [dispatch, openedFoldersIds],
-  );
+    }, [dispatch, lastRenamedParentFolder]);
 
-  const handleStartDeleteMultipleFiles = useCallback(() => {
-    if (!selectedFilesIds.length) {
-      return;
-    }
+    const highlightFolderIds = useMemo(() => {
+      return uniq(
+        selectedFolderIds
+          .flatMap((folderId) => getParentFolderIdsFromFolderId(folderId))
+          .concat(
+            selectedFilesIds.flatMap((f) => getParentFolderIdsFromFolderId(f)),
+          ),
+      );
+    }, [selectedFilesIds, selectedFolderIds]);
 
-    setDeletingFileIds(selectedFilesIds);
-  }, [selectedFilesIds]);
+    const {
+      handleRenameFolder,
+      handleAddFolder,
+      handleToggleFolder,
+      handleNewFolder,
+    } = useHandleFileFolders(
+      folders,
+      openedFoldersIds,
+      getFileRootId(),
+      setErrorMessage,
+      setOpenedFoldersIds,
+    );
 
-  const handleItemCallback = useCallback(
-    (eventId: string, data: unknown) => {
-      if (typeof data !== 'string') {
+    const allowedTypesArray = useMemo(
+      () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
+      [allowedTypes, canAttachFiles, canAttachFolders],
+    );
+
+    const allowedExtensions = useMemo(() => {
+      if (allowedTypesArray.includes('*/*')) {
+        return [t('all')];
+      }
+
+      return getShortExtensionsListFromMimeType(allowedTypesArray, t);
+    }, [allowedTypesArray, t]);
+
+    const typesLabel = useMemo(() => {
+      if (allowedTypesLabel) {
+        return allowedTypesLabel;
+      }
+      if (
+        allowedTypesArray.length === 1 &&
+        allowedTypesArray[0].endsWith('/*') &&
+        !allowedTypesArray[0].startsWith('*/')
+      ) {
+        return t(allowedTypesArray[0].replace('/*', 's'));
+      }
+    }, [allowedTypesArray, allowedTypesLabel, t]);
+
+    const showSpinner = folders.length === 0 && areFoldersLoading;
+
+    const isNothingExists =
+      !myRootFolders.length &&
+      !myRootFiles.length &&
+      !organizationRootFolders.length &&
+      !organizationRootFiles.length &&
+      !sharedWithMeRootFolders.length &&
+      !sharedWithMeRootFiles.length;
+
+    const showNoResult = searchQuery !== '' && isNothingExists;
+
+    const initialSelectedFilesIdsRef = useRef<string[]>(
+      initialSelectedFilesIds,
+    );
+
+    useEffect(() => {
+      if (isOpen) {
+        dispatch(FilesActions.resetAllFoldersStatus());
+        dispatch(FilesActions.getFilesWithFolders({}));
+        dispatch(FilesActions.resetNewFolderId());
+      }
+
+      return () => {
+        dispatch(FilesActions.resetChosenFiles());
+      };
+    }, [dispatch, isOpen]);
+
+    useEffect(() => {
+      initialSelectedFilesIdsRef.current = initialSelectedFilesIds;
+    }, [initialSelectedFilesIds]);
+
+    useEffect(() => {
+      if (isOpen && initialSelectedFilesIdsRef.current.length) {
+        dispatch(
+          FilesActions.setChosenFilesAndFolders({
+            ids: initialSelectedFilesIdsRef.current,
+          }),
+        );
+      }
+    }, [isOpen, dispatch]);
+
+    const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    }, []);
+
+    const handleFolderClick = useCallback(
+      (folderId: string) => {
+        handleToggleFolder(folderId);
+      },
+      [handleToggleFolder],
+    );
+
+    const handleUploadFile = useCallback(
+      (relativePath: string) => {
+        setUploadFolderId(relativePath);
+        setIsUploadFromDeviceOpened(true);
+
+        if (!openedFoldersIds.includes(relativePath)) {
+          setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
+          dispatch(FilesActions.getFolders({ id: relativePath }));
+        }
+      },
+      [dispatch, openedFoldersIds],
+    );
+
+    const handleStartDeleteMultipleFiles = useCallback(() => {
+      if (!selectedFilesIds.length && !selectedFolderIds.length) {
         return;
       }
 
-      switch (eventId) {
-        case FileItemEventIds.Retry:
-          dispatch(FilesActions.reuploadFile({ fileId: data }));
-          break;
-        case FileItemEventIds.Toggle:
-          setSelectedFilesIds((oldValues) => {
-            if (oldValues.includes(data)) {
-              return oldValues.filter((oldValue) => oldValue !== data);
-            }
+      setDeletingFileIds(selectedFilesIds);
+      setDeletingFolderIds(selectedFolderIds);
+    }, [selectedFilesIds, selectedFolderIds]);
 
-            return oldValues.concat(data);
-          });
-          break;
-        case FileItemEventIds.Cancel:
-          dispatch(FilesActions.deleteFile({ fileId: data }));
-          break;
-        case FileItemEventIds.Delete:
-          setDeletingFileIds([data]);
-          break;
-        default:
-          break;
-      }
-    },
-    [dispatch],
-  );
+    const handleItemCallback = useCallback(
+      (eventId: string, data: unknown) => {
+        if (typeof data !== 'string') {
+          return;
+        }
 
-  const handleAttachFiles = useCallback(() => {
-    if (selectedFilesIds.length > maximumAttachmentsAmount) {
-      setErrorMessage(
-        t(
-          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. You've selected {{selectedAttachmentsAmount}}`,
-          {
-            maxAttachmentsAmount: maximumAttachmentsAmount,
-            selectedAttachmentsAmount: selectedFilesIds.length,
-          },
-        ) as string,
-      );
-      return;
-    }
-
-    const selectedFiles = files.filter((file) =>
-      selectedFilesIds.includes(file.id),
+        switch (eventId) {
+          case FileItemEventIds.Toggle:
+            handleSelectFiles([data]);
+            break;
+          case FileItemEventIds.Retry:
+            dispatch(FilesActions.reuploadFile({ fileId: data }));
+            break;
+          case FileItemEventIds.Cancel:
+            dispatch(FilesActions.deleteFile({ fileId: data }));
+            break;
+          case FileItemEventIds.Delete:
+            setDeletingFileIds([data]);
+            break;
+          case FileItemEventIds.Unshare:
+            setDeletingFileIds([data]);
+            setIsUnshare(true);
+            break;
+          default:
+            break;
+        }
+      },
+      [dispatch, handleSelectFiles],
     );
-    const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
-      selectedFiles,
-      allowedTypes,
-    ).map((file) => file.name);
-    if (filesWithIncorrectTypes.length > 0) {
-      setErrorMessage(
-        t(
-          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
-          {
-            incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
-          },
-        ) as string,
+
+    const handleAttachFiles = useCallback(() => {
+      if (selectedFilesIds.length > maximumAttachmentsAmount) {
+        setErrorMessage(
+          t(
+            `Maximum allowed attachments number is {{maxAttachmentsAmount}}. You've selected {{selectedAttachmentsAmount}}`,
+            {
+              maxAttachmentsAmount: maximumAttachmentsAmount,
+              selectedAttachmentsAmount: selectedFilesIds.length,
+            },
+          ),
+        );
+        return;
+      }
+
+      const selectedFiles = files.filter((file) =>
+        selectedFilesIds.includes(file.id),
       );
-      return;
-    }
+      const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
+        selectedFiles,
+        allowedTypesArray,
+      ).map((file) => file.name);
+      if (filesWithIncorrectTypes.length > 0) {
+        setErrorMessage(
+          t(
+            `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+            {
+              incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
+            },
+          ),
+        );
+        return;
+      }
 
-    onClose(selectedFilesIds);
-  }, [
-    allowedTypes,
-    files,
-    maximumAttachmentsAmount,
-    onClose,
-    selectedFilesIds,
-    t,
-  ]);
+      const result: string[] = [];
 
-  const handleStartUploadFiles = useCallback(() => {
-    setUploadFolderId(undefined);
-    setIsUploadFromDeviceOpened(true);
-  }, []);
+      if (canAttachFolders) {
+        result.push(...selectedFolderIds);
+      }
+      result.push(
+        ...selectedFilesIds.filter((id) =>
+          canAttachFolders
+            ? !selectedFolderIds.some((folderId) => id.startsWith(folderId))
+            : true,
+        ),
+      );
 
-  const handleUploadFiles = useCallback(
-    (
-      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
-      folderPath: string | undefined,
-    ) => {
-      selectedFiles.forEach((file) => {
+      onClose(uniq(result));
+    }, [
+      allowedTypesArray,
+      canAttachFolders,
+      files,
+      maximumAttachmentsAmount,
+      onClose,
+      selectedFilesIds,
+      selectedFolderIds,
+      t,
+    ]);
+
+    const handleStartUploadFiles = useCallback(() => {
+      setUploadFolderId(undefined);
+      setIsUploadFromDeviceOpened(true);
+    }, []);
+
+    const handleUploadFiles = useCallback(
+      (
+        selectedFiles: Required<
+          Pick<DialFile, 'fileContent' | 'id' | 'name'>
+        >[],
+        folderPath: string | undefined,
+      ) => {
+        if (canAttachFiles || forceShowSelectCheckBox) {
+          handleSelectFiles(selectedFiles.map((f) => f.id));
+        }
+
+        selectedFiles.forEach((file) => {
+          dispatch(
+            FilesActions.uploadFile({
+              fileContent: file.fileContent,
+              id: file.id,
+              relativePath: folderPath,
+              name: file.name,
+            }),
+          );
+        });
+      },
+      [canAttachFiles, dispatch, handleSelectFiles, forceShowSelectCheckBox],
+    );
+
+    const handleDiscardSharedWithMeFolder = useCallback(
+      (folderId: string) => {
         dispatch(
-          FilesActions.uploadFile({
-            fileContent: file.fileContent,
-            id: file.id,
-            relativePath: folderPath,
-            name: file.name,
+          ShareActions.discardSharedWithMe({
+            resourceIds: [folderId],
+            featureType: FeatureType.File,
+            isFolder: true,
           }),
         );
-      });
-    },
-    [dispatch],
-  );
+      },
+      [dispatch],
+    );
 
-  const handleDeleteMultipleFiles = useCallback(() => {
-    if (!deletingFileIds.length) {
-      return;
-    }
+    const handleDeleteMultipleFiles = useCallback(() => {
+      if (!deletingFileIds.length && !deletingFolderIds.length) {
+        return;
+      }
+      if (deletingFileIds.length) {
+        const sharedWithMeFilesIds = sharedWithMeRootFiles
+          .filter(({ id }) => deletingFileIds.includes(id))
+          .map(({ id }) => id);
 
-    dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
-    if (selectedFilesIds === deletingFileIds) {
-      setSelectedFilesIds([]);
-    }
-  }, [deletingFileIds, dispatch, selectedFilesIds]);
+        if (sharedWithMeFilesIds.length) {
+          dispatch(
+            ShareActions.discardSharedWithMe({
+              resourceIds: sharedWithMeFilesIds,
+              featureType: FeatureType.File,
+            }),
+          );
+        }
+        dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
+        if (selectedFilesIds === deletingFileIds) {
+          dispatch(FilesActions.resetChosenFiles());
+        }
+      }
+      if (deletingFolderIds.length) {
+        // TODO: implement
+        // dispatch(FilesActions.deleteFolderList({ folderIds: deletingFolderIds }));
+        const sharedWithMeFoldersIds = sharedWithMeRootFolders
+          .filter(({ id }) => deletingFolderIds.includes(id))
+          .map(({ id }) => id);
+        if (sharedWithMeFoldersIds.length) {
+          dispatch(
+            ShareActions.discardSharedWithMe({
+              resourceIds: sharedWithMeFoldersIds,
+              featureType: FeatureType.File,
+            }),
+          );
+        }
+      }
+    }, [
+      deletingFileIds,
+      deletingFolderIds,
+      dispatch,
+      selectedFilesIds,
+      sharedWithMeRootFiles,
+      sharedWithMeRootFolders,
+    ]);
 
-  const handleDownloadMultipleFiles = useCallback(() => {
-    if (!selectedFilesIds.length) {
-      return;
-    }
+    const handleDownloadMultipleFiles = useCallback(() => {
+      if (!selectedFilesIds.length) {
+        return;
+      }
 
-    dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
-    setSelectedFilesIds([]);
-  }, [dispatch, selectedFilesIds]);
+      dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
+    }, [dispatch, selectedFilesIds]);
 
-  return (
-    <Modal
-      portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={() => onClose(false)}
-      dataQa="file-manager-modal"
-      containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
-    >
-      <div className="flex flex-col gap-2 overflow-auto p-6">
-        <div className="flex justify-between">
-          <h2 id={headingId} className="text-base font-semibold">
-            {headerLabel}
-          </h2>
-        </div>
-        <p id={descriptionId}>
-          {t(
-            'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
-            {
-              allowedExtensions:
-                allowedTypesLabel ||
-                allowedExtensions.join(', ') ||
-                'no available extensions',
-            },
-          )}
-          &nbsp;
-          {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
-            !!maximumAttachmentsAmount &&
-            t('Max selected files is {{maxAttachmentsAmount}}.', {
-              maxAttachmentsAmount: maximumAttachmentsAmount,
-            })}
-        </p>
+    const handleToggleHiddenItems = useCallback(
+      () => setAreHiddenItemsVisible((prev) => !prev),
+      [],
+    );
 
-        <ErrorMessage error={errorMessage} />
+    const additionalItemData: AdditionalItemData = useMemo(
+      () => ({
+        selectedFilesIds,
+        selectedFolderIds,
+        partialSelectedFolderIds: partiallySelectedFolderIds,
+        canAttachFiles: canAttachFiles || forceShowSelectCheckBox,
+      }),
+      [
+        canAttachFiles,
+        partiallySelectedFolderIds,
+        selectedFilesIds,
+        selectedFolderIds,
+        forceShowSelectCheckBox,
+      ],
+    );
 
-        {showSpinner ? (
-          <div className="flex min-h-[300px] items-center justify-center">
-            <Spinner />
+    const firstPublicationResourceReviewUrl =
+      selectedPublication?.resources.at(0)?.reviewUrl;
+    const someReviewBucketFileSelected =
+      !!firstPublicationResourceReviewUrl &&
+      selectedFilesIds.some((id) =>
+        areEntitiesBucketsTheSame(id, firstPublicationResourceReviewUrl),
+      );
+    const somePublicFileSelected = selectedFilesIds.some((id) =>
+      isEntityIdPublic({ id }),
+    );
+    const isDeleteDisabled =
+      somePublicFileSelected || someReviewBucketFileSelected;
+
+    return (
+      <Modal
+        portalId="theme-main"
+        state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+        onClose={() => onClose(false)}
+        dataQa="file-manager-modal"
+        containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
+        dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
+      >
+        <div className="flex flex-col gap-2 overflow-auto px-3 py-4 md:p-6">
+          <div className="flex justify-between">
+            <h2 id={headingId} className="text-base font-semibold">
+              {headerLabel}
+            </h2>
           </div>
-        ) : (
-          <div className="group/modal flex flex-col gap-2 overflow-auto">
-            <input
-              name="titleInput"
-              placeholder={t('Search files') || ''}
-              type="text"
-              onChange={handleSearch}
-              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-            ></input>
-            <div className="flex min-h-[350px] flex-col overflow-auto">
-              <button
-                className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
-                onClick={() => handleToggleFolder(getFileRootId())}
-              >
-                <CaretIconComponent isOpen={isAllFilesOpened} />
-                {t('All files')}
-              </button>
-              {isAllFilesOpened && (
-                <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
-                  {(folders.length !== 0 || filteredFiles.length !== 0) && (
-                    <div className="flex flex-col gap-1 overflow-auto">
-                      {folders.map((folder) => {
-                        if (!isRootId(folder.folderId)) {
-                          return null;
-                        }
-
-                        return (
-                          <div key={folder.id}>
-                            <Folder
-                              searchTerm={searchQuery}
-                              currentFolder={folder}
-                              allFolders={folders}
-                              highlightedFolders={[]}
-                              isInitialRenameEnabled
-                              newAddedFolderId={newFolderId}
-                              displayCaretAlways
-                              loadingFolderIds={loadingFolderIds}
-                              openedFoldersIds={openedFoldersIds}
-                              allItems={filteredFiles}
-                              additionalItemData={{
-                                selectedFilesIds,
-                              }}
-                              itemComponent={FileItem}
-                              onClickFolder={handleFolderSelect}
-                              onAddFolder={handleAddFolder}
-                              onFileUpload={handleUploadFile}
-                              onRenameFolder={handleRenameFolder}
-                              onItemEvent={handleItemCallback}
-                              withBorderHighlight={false}
-                              featureType={FeatureType.File}
-                            />
-                          </div>
-                        );
-                      })}
-                      {filteredFiles.map((file) => {
-                        if (!isRootId(file.folderId)) {
-                          return null;
-                        }
-
-                        return (
-                          <div key={file.id}>
-                            <FileItem
-                              item={file}
-                              level={0}
-                              additionalItemData={{
-                                selectedFilesIds,
-                              }}
-                              onEvent={handleItemCallback}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+          {(canAttachFiles || forceShowSelectCheckBox) && (
+            <p id={descriptionId} data-qa="supported-attributes">
+              {t(
+                'Maximum size: 512 MB. Supported types: {{allowedExtensions}}.',
+                {
+                  allowedExtensions:
+                    typesLabel ||
+                    allowedExtensions.join(', ') ||
+                    'no available extensions',
+                },
               )}
+              &nbsp;
+              {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
+                !!maximumAttachmentsAmount &&
+                t('Up to {{maxAttachmentsAmount}} files.', {
+                  maxAttachmentsAmount: maximumAttachmentsAmount,
+                })}
+            </p>
+          )}
+
+          <ErrorMessage
+            error={warningMessage || errorMessage}
+            type={warningMessage ? 'warning' : 'error'}
+          />
+
+          {showSpinner ? (
+            <div className="flex items-center justify-center py-10">
+              <Spinner size={30} />
             </div>
-          </div>
-        )}
-      </div>
-      <div className="flex items-center justify-between border-t border-primary px-6 py-4">
-        <div className="flex items-center justify-center gap-2">
-          {selectedFilesIds.length > 0 ? (
-            <>
+          ) : (
+            <div className="group/modal flex flex-col gap-2 overflow-auto">
+              <input
+                name="titleInput"
+                placeholder={t('Search files')}
+                type="text"
+                onChange={handleSearch}
+                className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+                data-qa="search"
+              ></input>
+              <div className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto">
+                {(isNothingExists || showNoResult) && (
+                  <div className="flex grow flex-col justify-center">
+                    {showNoResult ? <NoResultsFound /> : <NoData />}
+                  </div>
+                )}
+                <FilesSectionWrapper
+                  name={ORGANIZATION_SECTION_NAME}
+                  dataQa="organization-files"
+                  folders={organizationRootFolders}
+                  files={organizationRootFiles}
+                  sourceType={FileSourceType.PUBLIC}
+                  filters={sourceFilters}
+                  toggleClassName={sectionWrapperToggleClasses}
+                >
+                  <div className="flex flex-col gap-1 overflow-auto">
+                    {organizationRootFolders.map((folder) => {
+                      return (
+                        <Folder
+                          showTechnicalFolders={areHiddenItemsVisible}
+                          key={folder.id}
+                          searchTerm={searchQuery}
+                          currentFolder={folder}
+                          allFolders={folders}
+                          highlightedFolders={highlightFolderIds}
+                          isInitialRenameEnabled
+                          newAddedFolderId={newFolderId}
+                          loadingFolderIds={loadingFolderIds}
+                          openedFoldersIds={openedFoldersIds}
+                          allItems={files}
+                          additionalItemData={additionalItemData}
+                          itemComponent={(props) => (
+                            <FileItem {...props} onEvent={handleItemCallback} />
+                          )}
+                          onClickFolder={handleFolderClick}
+                          onAddFolder={handleAddFolder}
+                          onFileUpload={handleUploadFile}
+                          onRenameFolder={handleRenameFolder}
+                          skipFolderRenameValidation
+                          onItemEvent={handleItemCallback}
+                          withBorderHighlight={false}
+                          featureType={FeatureType.File}
+                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          showTooltip={showTooltip}
+                          onSelectFolder={handleSelectFolder}
+                          onShowError={setErrorMessage}
+                        />
+                      );
+                    })}
+                    {organizationRootFiles.map((file) => {
+                      return (
+                        <FileItem
+                          key={file.id}
+                          item={file}
+                          level={0}
+                          additionalItemData={additionalItemData}
+                          onEvent={handleItemCallback}
+                        />
+                      );
+                    })}
+                  </div>
+                </FilesSectionWrapper>
+
+                <FilesSectionWrapper
+                  name={SHARED_WITH_ME_SECTION_NAME}
+                  dataQa="shared-with-me-files"
+                  folders={sharedWithMeRootFolders}
+                  files={sharedWithMeRootFiles}
+                  sourceType={FileSourceType.SHARED_WITH_ME}
+                  filters={sourceFilters}
+                  toggleClassName={sectionWrapperToggleClasses}
+                >
+                  <div className="flex flex-col gap-1 overflow-auto">
+                    {sharedWithMeRootFolders.map((folder) => {
+                      return (
+                        <Folder
+                          showTechnicalFolders={areHiddenItemsVisible}
+                          key={folder.id}
+                          searchTerm={searchQuery}
+                          currentFolder={folder}
+                          allFolders={folders}
+                          highlightedFolders={highlightFolderIds}
+                          newAddedFolderId={newFolderId}
+                          loadingFolderIds={loadingFolderIds}
+                          openedFoldersIds={openedFoldersIds}
+                          allItems={files}
+                          additionalItemData={additionalItemData}
+                          itemComponent={FileItem}
+                          onClickFolder={handleFolderClick}
+                          onAddFolder={handleAddFolder}
+                          onFileUpload={handleUploadFile}
+                          onRenameFolder={handleRenameFolder}
+                          skipFolderRenameValidation
+                          onItemEvent={handleItemCallback}
+                          withBorderHighlight={false}
+                          featureType={FeatureType.File}
+                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          showTooltip={showTooltip}
+                          onSelectFolder={handleSelectFolder}
+                          onUnshareFolder={handleDiscardSharedWithMeFolder}
+                          onShowError={setErrorMessage}
+                        />
+                      );
+                    })}
+                    {sharedWithMeRootFiles.map((file) => {
+                      return (
+                        <FileItem
+                          key={file.id}
+                          item={file}
+                          level={0}
+                          additionalItemData={additionalItemData}
+                          onEvent={handleItemCallback}
+                        />
+                      );
+                    })}
+                  </div>
+                </FilesSectionWrapper>
+
+                <ReviewBucketFilesSection
+                  searchQuery={searchQuery}
+                  highlightFolderIds={highlightFolderIds}
+                  additionalItemData={{
+                    selectedFilesIds,
+                    selectedFolderIds,
+                    canAttachFiles: canAttachFiles || forceShowSelectCheckBox,
+                  }}
+                  openedFoldersIds={openedFoldersIds}
+                  onItemEvent={handleItemCallback}
+                  onClickFolder={handleFolderClick}
+                  canAttachFolders={canAttachFolders}
+                  onToggleFolder={handleSelectFolder}
+                />
+
+                <FilesSectionWrapper
+                  name={t('All files')}
+                  dataQa="all-files"
+                  folders={myRootFolders}
+                  files={myRootFiles}
+                  sourceType={FileSourceType.MY_FILES}
+                  filters={sourceFilters}
+                  toggleClassName={sectionWrapperToggleClasses}
+                >
+                  <div className="flex flex-col gap-1 overflow-auto">
+                    {myRootFolders.map((folder) => {
+                      return (
+                        <Folder
+                          showTechnicalFolders={areHiddenItemsVisible}
+                          key={folder.id}
+                          searchTerm={searchQuery}
+                          currentFolder={folder}
+                          allFolders={folders}
+                          highlightedFolders={highlightFolderIds}
+                          isInitialRenameEnabled
+                          newAddedFolderId={newFolderId}
+                          loadingFolderIds={loadingFolderIds}
+                          openedFoldersIds={openedFoldersIds}
+                          allItems={files}
+                          additionalItemData={additionalItemData}
+                          itemComponent={FileItem}
+                          onClickFolder={handleFolderClick}
+                          onAddFolder={handleAddFolder}
+                          onFileUpload={handleUploadFile}
+                          onRenameFolder={handleRenameFolder}
+                          skipFolderRenameValidation
+                          onItemEvent={handleItemCallback}
+                          withBorderHighlight={false}
+                          featureType={FeatureType.File}
+                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          showTooltip={showTooltip}
+                          onSelectFolder={handleSelectFolder}
+                          onShowError={setErrorMessage}
+                        />
+                      );
+                    })}
+                    {myRootFiles.map((file) => {
+                      return (
+                        <FileItem
+                          key={file.id}
+                          item={file}
+                          level={0}
+                          additionalItemData={additionalItemData}
+                          onEvent={handleItemCallback}
+                        />
+                      );
+                    })}
+                  </div>
+                </FilesSectionWrapper>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6 md:py-4">
+          <div className="flex items-center justify-center gap-2">
+            {selectedFilesIds.length > 0 && (
               <button
                 onClick={handleStartDeleteMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+                disabled={isDeleteDisabled}
+                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
+                data-qa="delete-files"
               >
-                <Tooltip tooltip="Delete files" isTriggerClickable>
-                  <IconTrash size={24} />
+                <Tooltip
+                  tooltip={t(
+                    somePublicFileSelected
+                      ? 'It is forbidden to delete files from Organization'
+                      : someReviewBucketFileSelected
+                        ? 'It is forbidden to delete files from the "Review files" section'
+                        : 'Delete files',
+                  )}
+                  isTriggerClickable
+                >
+                  <IconTrashX size={24} />
                 </Tooltip>
               </button>
+            )}
+            {selectedFilesIds.length > 0 && (
               <button
                 onClick={handleDownloadMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+                data-qa="download-files"
               >
-                <Tooltip tooltip="Download files" isTriggerClickable>
+                <Tooltip tooltip={t('Download files')} isTriggerClickable>
                   <IconDownload size={24} />
                 </Tooltip>
               </button>
-            </>
-          ) : (
-            <button
-              onClick={handleNewFolder}
-              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-            >
-              <FolderPlus height={24} width={24} />
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleStartUploadFiles}
-            className={classNames(
-              'button',
-              customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
-          >
-            {t('Upload from device')}
-          </button>
-          {customButtonLabel && (
+            {selectedFilesIds.length === 0 &&
+              selectedFolderIds.length === 0 && (
+                <button
+                  onClick={handleNewFolder}
+                  className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+                  data-qa="new-folder"
+                >
+                  <Tooltip tooltip={t('Create new folder')} isTriggerClickable>
+                    <FolderPlus height={24} width={24} />
+                  </Tooltip>
+                </button>
+              )}
+            <HiddenItemsToggler
+              onClick={handleToggleHiddenItems}
+              areItemsVisible={areHiddenItemsVisible}
+            />
+          </div>
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleAttachFiles}
-              className="button button-primary"
-              disabled={selectedFilesIds.length === 0}
+              onClick={handleStartUploadFiles}
+              className={classNames(
+                'button',
+                customButtonLabel ? 'button-secondary' : 'button-primary',
+              )}
+              data-qa="upload-from-device"
             >
-              {customButtonLabel}
+              {t('Upload from device')}
             </button>
-          )}
+            {customButtonLabel && (
+              <button
+                onClick={handleAttachFiles}
+                className="button button-primary"
+                disabled={
+                  selectedFilesIds.length === 0 &&
+                  selectedFolderIds.length === 0
+                }
+                data-qa="attach-files"
+              >
+                {customButtonLabel}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {isUploadFromDeviceOpened && (
-        <PreUploadDialog
-          uploadFolderId={uploadFolderId}
-          isOpen
-          allowedTypes={allowedTypes}
-          allowedTypesLabel={allowedTypesLabel}
-          initialFilesSelect
-          onUploadFiles={handleUploadFiles}
-          onClose={() => setIsUploadFromDeviceOpened(false)}
-          maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
-          customUploadButtonLabel={customUploadButtonLabel}
-        />
-      )}
-
-      <ConfirmDialog
-        isOpen={!!deletingFileIds.length}
-        heading={t(
-          `Confirm deleting file${deletingFileIds.length > 1 ? 's' : ''}`,
+        {isUploadFromDeviceOpened && (
+          <PreUploadDialog
+            uploadFolderId={uploadFolderId}
+            isOpen
+            allowedTypes={allowedTypesArray}
+            allowedTypesLabel={typesLabel}
+            initialFilesSelect
+            onUploadFiles={handleUploadFiles}
+            onClose={() => setIsUploadFromDeviceOpened(false)}
+            maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+            customUploadButtonLabel={customUploadButtonLabel}
+          />
         )}
-        description={
-          t(
-            `Are you sure that you want to delete ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
-          ) || ''
-        }
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          if (result) {
-            handleDeleteMultipleFiles();
-          }
-          setDeletingFileIds([]);
-        }}
-      />
-    </Modal>
-  );
-};
+
+        <ConfirmDialog
+          isOpen={!!deletingFileIds.length || !!deletingFolderIds.length}
+          heading={t(
+            [
+              'Confirm ',
+              isUnshare ? 'unsharing ' : 'deleting ',
+              deletingFolderIds.length > 0
+                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+                : '',
+              deletingFileIds.length > 0 && deletingFolderIds.length > 0
+                ? ' and '
+                : '',
+              deletingFileIds.length > 0
+                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+                : '',
+            ].join(''),
+          )}
+          description={t(
+            [
+              'Are you sure that you want to ',
+              isUnshare ? 'unshare ' : 'delete ',
+              deletingFileIds.length + deletingFolderIds.length > 1
+                ? 'these '
+                : 'this ',
+              deletingFolderIds.length > 0
+                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+                : '',
+              deletingFileIds.length > 0 && deletingFolderIds.length > 0
+                ? ' and '
+                : '',
+              deletingFileIds.length > 0
+                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+                : '',
+              '?',
+            ].join(''),
+          )}
+          confirmLabel={t(isUnshare ? 'Unshare' : 'Delete')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            if (result) {
+              handleDeleteMultipleFiles();
+            }
+            setDeletingFileIds([]);
+            setDeletingFolderIds([]);
+            setIsUnshare(false);
+          }}
+        />
+      </Modal>
+    );
+  },
+);
+FileManagerModal.displayName = 'FileManagerModal';

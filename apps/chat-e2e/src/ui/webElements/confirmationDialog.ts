@@ -1,21 +1,27 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ModalSelectors } from '@/src/ui/selectors';
-import { Dialog } from '@/src/ui/selectors/dialogSelectors';
+import { ShareModalSelectors } from '@/src/ui/selectors';
+import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
+import { Response } from 'playwright-core';
 
 export class ConfirmationDialog extends BaseElement {
-  constructor(page: Page) {
-    super(page, Dialog.confirmationDialog);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, ConfirmationDialogSelectors.container, parentLocator);
   }
 
-  public cancelButton = new BaseElement(this.page, Dialog.cancelDialog);
-  public confirmButton = new BaseElement(this.page, Dialog.confirm);
-  public confirmMessage = new BaseElement(
-    this.page,
-    Dialog.confirmationMessage,
+  public cancelButton = this.getChildElementBySelector(
+    ConfirmationDialogSelectors.cancelDialog,
   );
-  public entityName = this.getChildElementBySelector(ModalSelectors.entityName);
+  public confirmButton = this.getChildElementBySelector(
+    ConfirmationDialogSelectors.confirm,
+  );
+  public confirmMessage = this.getChildElementBySelector(
+    ConfirmationDialogSelectors.confirmationMessage,
+  );
+  public entityName = this.getChildElementBySelector(
+    ShareModalSelectors.entityName,
+  );
 
   public async cancelDialog() {
     await this.cancelButton.click();
@@ -23,11 +29,18 @@ export class ConfirmationDialog extends BaseElement {
 
   public async confirm({
     triggeredHttpMethod = undefined,
-  }: { triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' } = {}) {
+    triggeredHttpHost = undefined,
+  }: {
+    triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' | 'GET';
+    triggeredHttpHost?: string;
+  } = {}) {
     if (isApiStorageType && triggeredHttpMethod) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === triggeredHttpMethod,
-      );
+      const predicate = (resp: Response) =>
+        triggeredHttpHost
+          ? resp.request().method() === triggeredHttpMethod &&
+            resp.url().includes(triggeredHttpHost)
+          : resp.request().method() === triggeredHttpMethod;
+      const respPromise = this.page.waitForResponse(predicate);
       await this.confirmButton.click();
       return respPromise;
     }

@@ -1,28 +1,77 @@
-import { ChatSelectors } from '../selectors';
+import {
+  CompareSelectors,
+  EntitySelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { ModelSelector } from '@/src/ui/webElements/modelSelector';
+import { Styles, Tags } from '@/src/ui/domData';
 import { Page } from '@playwright/test';
 
 export class ConversationToCompare extends BaseElement {
   constructor(page: Page) {
-    super(page, ChatSelectors.conversationToCompare);
+    super(page, CompareSelectors.conversationToCompare);
   }
 
-  private conversationSelector!: ModelSelector;
-  public showAllConversationsCheckbox = this.getChildElementBySelector(
-    ChatSelectors.showAllCheckbox,
+  public compareConversationRows = this.getChildElementBySelector(
+    CompareSelectors.conversationRow,
   );
 
-  getConversationSelector(): ModelSelector {
-    if (!this.conversationSelector) {
-      this.conversationSelector = new ModelSelector(
-        this.page,
-        this.rootLocator,
-      );
-    }
-    return this.conversationSelector;
+  public compareConversationRowNames = this.getChildElementBySelector(
+    EntitySelectors.entityName,
+  );
+
+  public noConversationsAvailable = this.getChildElementBySelector(
+    CompareSelectors.noConversationsAvailable,
+  );
+
+  public searchCompareConversationInput = this.getChildElementBySelector(
+    CompareSelectors.searchCompareConversation,
+  );
+
+  public loader = this.getChildElementBySelector(CompareSelectors.loader);
+
+  public compareConversationRow = (name: string) =>
+    this.compareConversationRows.getElementLocatorByText(name);
+
+  public compareConversationRowName = (name: string) =>
+    this.createElementFromLocator(
+      this.compareConversationRowNames.getElementLocatorByText(name),
+    );
+
+  public getCompareConversationAdditionalIcon(name: string) {
+    return this.compareConversationRow(name).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
   }
+
+  public getCompareConversationArrowIconColor(name: string) {
+    return this.createElementFromLocator(
+      this.getCompareConversationAdditionalIcon(name).locator(Tags.svg),
+    ).getComputedStyleProperty(Styles.color);
+  }
+
+  public async selectCompareConversation(
+    name: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    if (isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET',
+      );
+      await this.compareConversationRow(name).click();
+      return respPromise;
+    }
+    await this.compareConversationRow(name).click();
+  }
+
+  public async getCompareConversationIcons() {
+    return this.getElementIcons(this.compareConversationRows);
+  }
+
+  public showAllConversationsCheckbox = this.getChildElementBySelector(
+    CompareSelectors.showAllCheckbox,
+  );
 
   public async checkShowAllConversations() {
     if (await this.showAllConversationsCheckbox.isVisible()) {

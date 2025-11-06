@@ -1,107 +1,11 @@
-import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
+import { NextApiRequest } from 'next';
+
+import { FeatureType } from '@/src/types/common';
+import { DialAIError } from '@/src/types/error';
+import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-
-import { RootState } from '@/src/store';
-
-export const getPublishActionByType = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsActions.publishConversation;
-    case SharingType.ConversationFolder:
-      return ConversationsActions.publishFolder;
-    case SharingType.Prompt:
-      return PromptsActions.publishPrompt;
-    case SharingType.PromptFolder:
-      return PromptsActions.publishFolder;
-    default:
-      throw new Error('unknown type');
-  }
-};
-
-export const getUnpublishActionByType = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsActions.unpublishConversation;
-    case SharingType.ConversationFolder:
-      return ConversationsActions.unpublishFolder;
-    case SharingType.Prompt:
-      return PromptsActions.unpublishPrompt;
-    case SharingType.PromptFolder:
-      return PromptsActions.unpublishFolder;
-    case SharingType.File:
-      return FilesActions.unpublishFile;
-    default:
-      throw new Error('unknown type');
-  }
-};
-
-export const isEntityExternal = (entity: ShareEntity) =>
-  !!(entity.sharedWithMe || entity.publishedWithMe);
-
-export const hasExternalParent = (
-  state: RootState,
-  folderId: string,
-  featureType: FeatureType,
-) => {
-  if (!featureType) return false;
-
-  if (featureType === FeatureType.Chat) {
-    return ConversationsSelectors.hasExternalParent(state, folderId);
-  } else if (featureType === FeatureType.Prompt) {
-    return PromptsSelectors.hasExternalParent(state, folderId);
-  }
-
-  return FilesSelectors.hasExternalParent(state, folderId);
-};
-
-export const isEntityOrParentsExternal = (
-  state: RootState,
-  entity: Entity,
-  featureType: FeatureType,
-) => {
-  return (
-    isEntityExternal(entity) ||
-    hasExternalParent(state, entity.folderId, featureType)
-  );
-};
-
-export const isPublishVersionUnique = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsSelectors.isPublishConversationVersionUnique;
-    case SharingType.ConversationFolder:
-      return ConversationsSelectors.isPublishFolderVersionUnique;
-    case SharingType.Prompt:
-      return PromptsSelectors.isPublishPromptVersionUnique;
-    case SharingType.PromptFolder:
-      return PromptsSelectors.isPublishFolderVersionUnique;
-    default:
-      throw new Error('unknown type');
-  }
-};
-
-export const getAttachments = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-    case SharingType.ConversationFolder:
-      return ConversationsSelectors.getAttachments;
-    case SharingType.Prompt:
-    case SharingType.PromptFolder:
-      return () => [];
-    default:
-      throw new Error('unknown type');
-  }
-};
+import { ShareEntity, SharePermission } from '@epam/ai-dial-shared';
 
 export const getShareType = (
   featureType?: FeatureType,
@@ -126,8 +30,28 @@ export const getShareType = (
         return SharingType.Conversation;
       case FeatureType.Prompt:
         return SharingType.Prompt;
+      case FeatureType.Application:
+        return SharingType.Application;
       default:
         return undefined;
     }
   }
 };
+
+export const validateInvitationId = (
+  invitationId: string,
+  request: NextApiRequest,
+) => {
+  // Validate invitationId to ensure it only contains alphanumeric characters and is of a reasonable length
+  const isValidInvitationId = /^[A-Za-z0-9-]+$/.test(invitationId);
+  if (!isValidInvitationId) {
+    throw new DialAIError('Invalid invitationId', 400, request);
+  }
+};
+
+export const hasWritePermission = (
+  permissions: SharePermission[] | undefined,
+) => permissions?.includes(SharePermission.WRITE) || false;
+
+export const canWriteSharedWithMe = (entity: DialAIEntityModel | ShareEntity) =>
+  hasWritePermission(entity?.permissions);

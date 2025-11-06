@@ -24,7 +24,7 @@ import classNames from 'classnames';
 import { ModalState } from '@/src/types/modal';
 
 import { Spinner } from './Spinner';
-import Tooltip from './Tooltip';
+import { Tooltip } from './Tooltip';
 
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
@@ -32,12 +32,14 @@ export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   state?: ModalState | boolean;
   heading?: string | ReactNode;
   headingClassName?: string;
+  loaderClassName?: string;
   dataQa: string;
   initialFocus?: number | MutableRefObject<HTMLElement | null>;
   overlayClassName?: string;
   containerClassName: string;
   lockScroll?: boolean;
   hideClose?: boolean;
+  showHeadingTooltip?: boolean;
   dismissProps?: UseDismissProps;
   form?: {
     noValidate: boolean;
@@ -52,6 +54,7 @@ function ModalView({
   state = ModalState.CLOSED,
   heading,
   headingClassName,
+  loaderClassName,
   onClose,
   children,
   dataQa,
@@ -63,13 +66,14 @@ function ModalView({
   onKeyDownOverlay,
   dismissProps,
   form,
+  showHeadingTooltip = false,
 }: Props) {
   const { refs, context } = useFloating({
     open: state !== ModalState.CLOSED && !!state,
     onOpenChange: onClose,
   });
   const role = useRole(context);
-  const dismiss = useDismiss(context, dismissProps);
+  const dismiss = useDismiss(context, { outsidePress: false, ...dismissProps });
   const { getFloatingProps } = useInteractions([role, dismiss]);
 
   const handleClose = useCallback(
@@ -115,7 +119,7 @@ function ModalView({
                 <button
                   type="button"
                   role="button"
-                  className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+                  className="absolute right-2 top-2 z-50 rounded text-secondary hover:text-accent-primary"
                   onClick={handleClose}
                 >
                   <IconX height={24} width={24} />
@@ -128,7 +132,7 @@ function ModalView({
                     headingClassName,
                   )}
                 >
-                  <Tooltip tooltip={heading}>
+                  <Tooltip tooltip={heading} hideTooltip={!showHeadingTooltip}>
                     <div
                       className="line-clamp-2 w-full break-words"
                       data-qa="modal-entity-name"
@@ -142,7 +146,12 @@ function ModalView({
               )}
 
               {state === ModalState.LOADING ? (
-                <div className="flex min-h-[200px] items-center justify-center">
+                <div
+                  className={classNames(
+                    'flex min-h-[200px] items-center justify-center',
+                    loaderClassName,
+                  )}
+                >
                   <Spinner size={60} />
                 </div>
               ) : (
@@ -156,12 +165,10 @@ function ModalView({
   );
 }
 
-const Modal = (props: Props) => {
+export function Modal(props: Props) {
   if (props.state === ModalState.CLOSED) {
     return null;
   }
 
   return <ModalView {...props} />;
-};
-
-export default Modal;
+}

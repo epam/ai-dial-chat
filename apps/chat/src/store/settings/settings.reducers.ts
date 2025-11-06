@@ -1,226 +1,87 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { FeatureType } from '@/src/types/common';
+import { PageType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
-import { RootState } from '..';
+import { SettingsState } from './settings.types';
 
-import { Feature } from '@epam/ai-dial-shared';
-
-export interface SettingsState {
-  appName: string;
-  isOverlay: boolean;
-  isAuthDisabled: boolean;
-  footerHtmlMessage: string;
-  enabledFeatures: Feature[];
-  codeWarning: string;
-  announcement: string;
-  defaultModelId: string | undefined;
-  defaultRecentModelsIds: string[];
-  defaultRecentAddonsIds: string[];
-  storageType: StorageType;
-  themesHostDefined: boolean;
-  isolatedModelId?: string;
-}
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 const initialState: SettingsState = {
-  appName: 'AI Dial',
+  appName: 'DIAL',
   isOverlay: false,
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
+  enabledFeaturesData: {},
+  publicationFilters: [],
   codeWarning: '',
   announcement: '',
-  defaultModelId: undefined,
+  defaultModelReference: undefined,
   defaultRecentModelsIds: [],
-  defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
+  customRenderers: [],
+  topics: [],
+  codeEditorPythonVersions: [],
+  providerId: null,
+  initialDataStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    initApp: (state) => state,
-    setAppName: (
-      state,
-      { payload }: PayloadAction<SettingsState['appName']>,
-    ) => {
-      state.appName = payload;
-    },
-    setIsOverlay: (
-      state,
-      { payload }: PayloadAction<SettingsState['isOverlay']>,
-    ) => {
-      state.isOverlay = payload;
-    },
-    setAuthDisabled: (
-      state,
-      { payload }: PayloadAction<SettingsState['isAuthDisabled']>,
-    ) => {
-      state.isAuthDisabled = payload;
-    },
-    setFooterHtmlMessage: (
-      state,
-      { payload }: PayloadAction<SettingsState['footerHtmlMessage']>,
-    ) => {
-      state.footerHtmlMessage = payload;
-    },
+    preInitApp: (state) => state,
+    initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
     setEnabledFeatures: (
       state,
       { payload }: PayloadAction<SettingsState['enabledFeatures']>,
     ) => {
       state.enabledFeatures = payload;
     },
-    setCodeWarning: (
+    setEnabledFeaturesData: (
       state,
-      { payload }: PayloadAction<SettingsState['codeWarning']>,
+      { payload }: PayloadAction<SettingsState['enabledFeaturesData']>,
     ) => {
-      state.codeWarning = payload;
+      state.enabledFeaturesData = payload;
     },
-    setDefaultModelId: (
+    setDefaultModeReference: (
       state,
-      { payload }: PayloadAction<{ defaultModelId: string }>,
+      { payload }: PayloadAction<{ defaultModeReference: string }>,
     ) => {
-      state.defaultModelId = payload.defaultModelId;
+      state.defaultModelReference = payload.defaultModeReference;
+    },
+    setOverlayDefaultModelReference: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ overlayDefaultModelReference: string | undefined }>,
+    ) => {
+      state.overlayDefaultModelReference = payload.overlayDefaultModelReference;
+    },
+    setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
+      state.overlayConversationId = payload;
+    },
+    setIsSignInInSameWindow: (state, { payload }: PayloadAction<boolean>) => {
+      state.isSignInInSameWindow = payload;
+    },
+    initStart: (state) => {
+      state.initialDataStatus = UploadStatus.LOADING;
+    },
+    initComplete: (state) => {
+      state.initialDataStatus = UploadStatus.LOADED;
     },
     setDefaultRecentModelsIds: (
       state,
-      { payload }: PayloadAction<{ defaultRecentModelsIds: string[] }>,
+      { payload }: PayloadAction<string[]>,
     ) => {
-      state.defaultRecentModelsIds = payload.defaultRecentModelsIds;
+      state.defaultRecentModelsIds = payload;
     },
-    setDefaultRecentAddonsIds: (
-      state,
-      { payload }: PayloadAction<{ defaultRecentAddonsIds: string[] }>,
-    ) => {
-      state.defaultRecentAddonsIds = payload.defaultRecentAddonsIds;
-    },
-    setStorageType: (
-      state,
-      { payload }: PayloadAction<{ storageType: StorageType }>,
-    ) => {
-      state.storageType = payload.storageType;
-    },
-    setThemeHostDefined: (
-      state,
-      { payload }: PayloadAction<{ themesHostDefined: boolean }>,
-    ) => {
-      state.themesHostDefined = payload.themesHostDefined;
-    },
-    setIsolatedModelId: (state, { payload }: PayloadAction<string>) => {
-      state.isolatedModelId = payload;
+    setThemesHostDefined: (state, { payload }: PayloadAction<boolean>) => {
+      state.themesHostDefined = payload;
     },
   },
-});
-
-const rootSelector = (state: RootState): SettingsState => state.settings;
-
-const selectAppName = createSelector([rootSelector], (state) => {
-  return state.appName;
-});
-
-const selectIsOverlay = createSelector([rootSelector], (state) => {
-  return state.isOverlay;
-});
-
-const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
-  return state.footerHtmlMessage;
-});
-
-const selectEnabledFeatures = createSelector([rootSelector], (state) => {
-  return new Set(state.enabledFeatures);
-});
-
-const selectIsIsolatedView = createSelector([rootSelector], (state) => {
-  return !!state.isolatedModelId;
-});
-
-const selectIsolatedModelId = createSelector([rootSelector], (state) => {
-  return state.isolatedModelId;
-});
-
-const isFeatureEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureName: Feature) => featureName],
-  (enabledFeatures, featureName) => {
-    return enabledFeatures.has(featureName);
-  },
-);
-
-const isPublishingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
-  (enabledFeatures, featureType) => {
-    switch (featureType) {
-      case FeatureType.Chat:
-        return enabledFeatures.has(Feature.ConversationsPublishing);
-      case FeatureType.Prompt:
-        return enabledFeatures.has(Feature.PromptsPublishing);
-      default:
-        return false;
-    }
-  },
-);
-
-const isSharingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
-  (enabledFeatures, featureType) => {
-    switch (featureType) {
-      case FeatureType.Chat:
-        return enabledFeatures.has(Feature.ConversationsSharing);
-      case FeatureType.Prompt:
-        return enabledFeatures.has(Feature.PromptsSharing);
-
-      default:
-        return false;
-    }
-  },
-);
-
-const selectCodeWarning = createSelector([rootSelector], (state) => {
-  return state.codeWarning;
-});
-
-const selectDefaultModelId = createSelector([rootSelector], (state) => {
-  return state.defaultModelId;
-});
-const selectDefaultRecentModelsIds = createSelector([rootSelector], (state) => {
-  return state.defaultRecentModelsIds;
-});
-const selectDefaultRecentAddonsIds = createSelector([rootSelector], (state) => {
-  return state.defaultRecentAddonsIds;
-});
-const selectIsAuthDisabled = createSelector([rootSelector], (state) => {
-  return state.isAuthDisabled;
-});
-const selectStorageType = createSelector([rootSelector], (state) => {
-  return state.storageType;
-});
-const selectAnnouncement = createSelector([rootSelector], (state) => {
-  return state.announcement;
-});
-const selectThemeHostDefined = createSelector([rootSelector], (state) => {
-  return state.themesHostDefined;
 });
 
 export const SettingsActions = settingsSlice.actions;
-export const SettingsSelectors = {
-  selectAppName,
-  selectIsOverlay,
-  selectFooterHtmlMessage,
-  selectEnabledFeatures,
-  isFeatureEnabled,
-  isPublishingEnabled,
-  isSharingEnabled,
-  selectCodeWarning,
-  selectDefaultModelId,
-  selectDefaultRecentModelsIds,
-  selectDefaultRecentAddonsIds,
-  selectIsAuthDisabled,
-  selectStorageType,
-  selectAnnouncement,
-  selectThemeHostDefined,
-  selectIsIsolatedView,
-  selectIsolatedModelId,
-};

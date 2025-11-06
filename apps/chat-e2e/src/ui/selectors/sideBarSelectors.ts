@@ -1,30 +1,29 @@
-import { Attributes, Tags } from '@/src/ui/domData';
-
 export const SideBarSelectors = {
   chatBar: '[data-qa="chatbar"]',
   promptBar: '[data-qa="promptbar"]',
-  newEntity: '[data-qa="new-entity"]',
-  folder: '[data-qa="folder"]',
-  folderGroup: '#folder',
-  folderName: '[data-qa="folder-name"]',
-  dotsMenu: '[aria-haspopup="menu"]',
-  renameInput: (value: string) =>
-    `${Tags.input}[${Attributes.value}="${value}"]`,
-  renameDefaultNameInput: (value: string) =>
-    `${Tags.input}[${Attributes.value}^="${value}"]`,
-  dropdownMenu: '[data-qa="dropdown-menu"]',
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',
+  selectAll: '[data-qa="select-all"]',
+  unselectAll: '[data-qa="unselect-all"]',
   draggableArea: '[data-qa="draggable-area"]',
-  chronology: '[data-qa="chronology"]',
+  chronology: '[data-qa="chronology-container"]',
   newFolder: '[data-qa="create-folder"]',
   resizeIcon: '[data-qa="resize-icon"]',
   bottomPanel: '[data-qa="bottom-panel"]',
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   search: '[data-qa="search"]',
-  filterMenuTrigger: '[data-qa="menu-trigger"]',
+  searchInput: '[data-qa="search-input"]',
   folderSeparator: '.h-1',
+  newEntity: '[data-qa="new-entity"]',
+  pinnedEntities: '[data-qa^="pinned"]',
+  sharedWithMeContainer: '[data-qa="shared-with-me-container"]',
+  approveRequiredContainer: '[data-qa="approve-required-container"]',
+  organizationContainer: '[data-qa="published-with-me-container"]',
+  noData: '[data-qa="no-data-placeholder"]',
+  noDataIcon: '[data-qa="no-data-icon"]',
+  closeSidebar: '[data-qa="close-sidebar"]',
+  selectedEntity: '[data-qa="selected-entity"]',
 };
 
 export const ChatBarSelectors = {
@@ -32,24 +31,54 @@ export const ChatBarSelectors = {
   compare: '[data-qa="compare"]',
   attachments: '[data-qa="attachments"]',
   conversations: '[data-qa="conversations"]',
-  conversation: '[data-qa="conversation"]',
-  conversationName: '[data-qa="conversation-name"]',
   chatFolders: '[data-qa="chat-folders"]',
-  actionButton: '[data-qa="action-button"]',
   exportConversations: '[data-qa="export-conversations"]',
   exportPrompts: '[data-qa="export-prompts"]',
   pinnedChats: () =>
     `${ChatBarSelectors.chatFolders} > [data-qa="pinned-chats-container"]`,
   sharedWithMeChats: () =>
-    `${ChatBarSelectors.chatFolders} > [data-qa="shared-with-me-container"]`,
+    `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
+  approveRequiredConversations: () =>
+    `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.approveRequiredContainer}`,
+  organizationConversations: () =>
+    `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.organizationContainer}`,
 };
 
 export const PromptBarSelectors = {
   newFolder: '[data-qa="create-prompt-folder"]',
   promptFolders: '[data-qa="prompt-folders"]',
   newPromptButton: '[data-qa="new-prompt"]',
-  prompts: '[data-qa="prompts"]',
+  prompts: '[data-qa="prompts-section-container"] >> [data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
   deletePrompts: '[data-qa="delete-prompts"]',
+  pinnedPrompts: () =>
+    `${PromptBarSelectors.promptFolders} > [data-qa="pinned-prompts-container"]`,
+  sharedWithMePrompts: () =>
+    `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
+  approveRequiredPrompts: () =>
+    `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.approveRequiredContainer}`,
+  organizationPrompts: () =>
+    `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.organizationContainer}`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
+};
+
+export const EntitySelectors = {
+  entityName: '[data-qa="entity-name"]',
+  conversation: '[data-qa="conversation"]',
+  prompt: '[data-qa="prompt"]',
+  file: '[data-qa="file"]',
+  application: '[data-qa="application"]',
+  version: '[data-qa="version"]',
+};
+
+export const PublishEntitySelectors = {
+  version: '[data-qa="version"]',
+};
+
+export const NavigationPanelSelectors = {
+  container: '[data-qa="navigation-panel"]',
+  backToChatButton: '[data-qa="back-to-chat"]',
+  marketplaceHomeButton: '[data-qa="marketplace-home-page"]',
+  myWorkspaceButton: '[data-qa="my-workspace"]',
+  buttonLabel: '[data-qa="caption"]',
 };

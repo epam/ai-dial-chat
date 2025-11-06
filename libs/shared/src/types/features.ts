@@ -1,47 +1,86 @@
 export enum Feature {
+  // Layout
+  Header = 'header', // Display app header
+  Footer = 'footer', // Display app footer
   ConversationsSection = 'conversations-section', // Display conversations sidebar
   PromptsSection = 'prompts-section', // Display prompts sidebar
+  ShowConversationsSectionByDefault = 'showConversationsSectionByDefault', // show conversations sidebar by default on desktop
+  ShowPromptsSectionByDefault = 'showPromptsSectionByDefault', // show prompts sidebar by default on desktop
+  AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation
+
+  // Conversation Header
+  HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
   TopSettings = 'top-settings', // Display conversation top header
   TopClearConversation = 'top-clear-conversation', // Display clear conversations button in chat top settings
   TopChatInfo = 'top-chat-info', // Display conversation info in top chat settings
   TopChatModelSettings = 'top-chat-model-settings', // Display change model settings button
-  EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
-  Header = 'header', // Display app header
-  Footer = 'footer', // Display app footer
-  RequestApiKey = 'request-api-key', // Display request API Key modal
-  ReportAnIssue = 'report-an-issue', // Display report issue modal
+  HideTopContextMenu = 'hide-top-context-menu', // Hide top context menu button
+  DisallowChangeAgent = 'disallow-change-agent', // Disallow "Change agent" button
+
+  // Conversation functions
   Likes = 'likes', // Display likes
-  ConversationsSharing = 'conversations-sharing', // Display conversation sharing
-  PromptsSharing = 'prompts-sharing', // Display prompts sharing
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
-  AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation sidebar
+  MessageTemplates = 'message-templates', // message templates
+
+  // Edit assistant message
+  EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
+  EditAllAssistantContent = 'edit-all-assistant-message', // allow edit all assistant messages
+
+  // Edit user message
+  HideEditUserMessage = 'hide-edit-user-message', // Hide editing button of user message
+
+  // Regenerate assistant message
+  HideRegenerateAssistantMessage = 'hide-regenerate-assistant-message', // Hide regenerate button of assistant message
+
+  // Delete user message
+  HideDeleteUserMessage = 'hide-delete-user-message', // Hide delete button of user message
+
+  // Chat input
+  SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
+
+  // Send button
+  DisabledSend = 'disabled-send', // Disable input
+
+  // Playback change
+  DisabledPlaybackControls = 'disabled-playback-controls', // Disable changing playback current message
+
+  // Conversation First Screen
+  EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
+  HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent', // Hide empty chat "Change agent" button
+
+  // Sharing
+  ConversationsSharing = 'conversations-sharing', // Display conversation sharing
+  PromptsSharing = 'prompts-sharing', // Display prompts sharing
+  ApplicationsSharing = 'applications-sharing', // Display applications sharing
+  ToolsetsSharing = 'toolsets-sharing', // Display toolsets sharing
+
+  // Publishing
   ConversationsPublishing = 'conversations-publishing',
   PromptsPublishing = 'prompts-publishing',
+
+  // Special dialogs
+  RequestApiKey = 'request-api-key', // Display request API Key modal
+  ReportAnIssue = 'report-an-issue', // Display report issue modal
+
+  // User settings
+  HideUserSettings = 'hide-user-settings', // Hide user settings
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
-  HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
+
+  // Applications
+  CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
+  CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
+
+  // Marketplace
+  Marketplace = 'marketplace', // Enable Marketplace
+  MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
+
+  //Toolsets
+  Toolsets = 'toolsets', //Enable toolsets
 }
 
-export const availableFeatures: Record<Feature, boolean> = {
-  [Feature.ConversationsSection]: true,
-  [Feature.PromptsSection]: true,
-  [Feature.TopSettings]: true,
-  [Feature.TopClearConversation]: true,
-  [Feature.TopChatInfo]: true,
-  [Feature.TopChatModelSettings]: true,
-  [Feature.EmptyChatSettings]: true,
-  [Feature.Header]: true,
-  [Feature.Footer]: true,
-  [Feature.RequestApiKey]: true,
-  [Feature.ReportAnIssue]: true,
-  [Feature.Likes]: true,
-  [Feature.ConversationsSharing]: true,
-  [Feature.PromptsSharing]: true,
-  [Feature.InputFiles]: true,
-  [Feature.InputLinks]: true,
-  [Feature.AttachmentsManager]: true,
-  [Feature.ConversationsPublishing]: true,
-  [Feature.PromptsPublishing]: true,
-  [Feature.CustomLogo]: true,
-  [Feature.HideNewConversation]: true,
-};
+export interface FeatureData {
+  // Field for adding some description for feature
+  // Can be used in tooltips or other places
+  description?: string;
+}

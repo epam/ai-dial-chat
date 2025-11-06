@@ -1,7 +1,10 @@
 import type { AuthOptions, CookiesOptions } from 'next-auth';
 import NextAuth from 'next-auth/next';
 
+import { constructPath } from '@/src/utils/app/file';
+import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { callbacks } from '@/src/utils/auth/auth-callbacks';
+import { pages } from '@/src/utils/auth/auth-pages';
 import { authProviders } from '@/src/utils/auth/auth-providers';
 
 // https://github.com/nextauthjs/next-auth/blob/a8dfc8ebb11ccb96fd694db888e52f0d20395e64/packages/core/src/lib/cookie.ts#L53
@@ -76,18 +79,27 @@ function defaultCookies(
 const isSecure =
   !!process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.startsWith('https:');
 
+const isDebugEnabled =
+  process.env.AUTH_DEBUG_ENABLED === 'true' ||
+  process.env.AUTH_DEBUG_ENABLED === '1';
+
 export const authOptions: AuthOptions = {
   providers: authProviders,
   cookies: defaultCookies(isSecure, isSecure ? 'none' : 'lax'),
   callbacks,
+  debug: isDebugEnabled,
   session: {
     strategy: 'jwt',
   },
   theme: {
     logo: process.env.THEMES_CONFIG_HOST
-      ? `${process.env.APP_BASE_PATH || ''}/api/themes/image?name=favicon`
+      ? constructPath(
+          process.env.APP_BASE_PATH || '',
+          getThemeIconUrl('favicon'),
+        )
       : undefined,
   },
+  pages,
 };
 
 export default NextAuth(authOptions);

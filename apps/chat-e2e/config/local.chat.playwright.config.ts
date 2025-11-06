@@ -1,0 +1,65 @@
+import config from './chat.playwright.config';
+
+import { ResultFolder } from '@/src/testData';
+import { workspaceRoot } from '@nx/devkit';
+import { ReporterDescription, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+dotenv.config({ path: path.resolve(__dirname, '../../chat/.env.local') });
+dotenv.config({ path: './.env.local' });
+/**
+ * Config used for a local run
+ */
+config.retries = 0;
+config.timeout = 3000000;
+if (config.use) {
+  config.use.headless = false;
+  config.use.video = 'on';
+  config.use.trace = 'on';
+}
+(config.reporter as ReporterDescription[]).push([
+  'html',
+  { outputFolder: `../${ResultFolder.chatHtmlReport}`, open: 'never' },
+]);
+
+/* Run local dev server before starting the tests if the E2E_HOST is not defined*/
+if (!process.env.E2E_HOST) {
+  config.webServer = {
+    cwd: workspaceRoot,
+    command: 'npx nx serve chat',
+    url: 'http://localhost:3000',
+    timeout: 180000,
+    reuseExistingServer: true,
+  };
+}
+
+const isDesktopAuth = process.env.IS_DESKTOP_AUTH === 'true';
+
+config.projects = [
+  {
+    name: isDesktopAuth ? 'auth' : 'debug_auth',
+    fullyParallel: true,
+    testMatch: isDesktopAuth ? /desktopAuth\.ts/ : /debugAuth\.ts/,
+  },
+  {
+    name: 'cleanup',
+    testMatch: /cleanup\.ts/,
+    dependencies: isDesktopAuth ? ['auth'] : ['debug_auth'],
+  },
+  {
+    name: 'chat e2e',
+    testIgnore:
+      /\/chatApi|listingApi|monitoring|desktopAuth|\/overlay\/.*\.test\.ts/,
+    use: {
+      ...devices['Desktop Chrome'],
+      viewport: { width: 1536, height: 864 },
+    },
+    dependencies: ['cleanup'],
+  },
+];
+export default config;

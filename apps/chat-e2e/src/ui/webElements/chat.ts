@@ -1,62 +1,66 @@
-import { ChatSelectors } from '../selectors';
+import {
+  ChatSelectors,
+  ChatSettingsSelectors,
+  ErrorLabelSelectors,
+  ReplaySelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 import { ChatMessages } from './chatMessages';
-import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API } from '@/src/testData';
+import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
+import { keys } from '@/src/ui/keyboard';
+import { AgentInfo } from '@/src/ui/webElements/agentInfo';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
-import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { Page } from '@playwright/test';
+import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
+import { Locator, Page } from '@playwright/test';
+import { Request } from 'playwright-core';
 
 export const PROMPT_APPLY_DELAY = 500;
+export const SCROLL_MOVING_DELAY = 100;
 
 export class Chat extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chat);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.chat, parentLocator);
   }
 
   private chatHeader!: ChatHeader;
-  private conversationSettings!: ConversationSettings;
   private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
   private compare!: Compare;
-  private playBack!: Playback;
   private playbackControl!: PlaybackControl;
-  public replay = new BaseElement(this.page, ChatSelectors.startReplay);
-  public applyChanges = (index?: number) =>
-    new BaseElement(this.page, ChatSelectors.applyChanges).getNthElement(
-      index ?? 1,
-    );
-  public stopGenerating = new BaseElement(
-    this.page,
-    ChatSelectors.stopGenerating,
-  );
-  public proceedGenerating = new BaseElement(
-    this.page,
-    ChatSelectors.proceedGenerating,
-  );
+  private agentInfo!: AgentInfo;
+  private publicationReviewControl!: PublicationReviewControl;
+  public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
-  public footer = this.getChildElementBySelector(ChatSelectors.footer);
   public notAllowedModelLabel = this.getChildElementBySelector(
-    ChatSelectors.notAllowedModel,
+    ErrorLabelSelectors.notAllowedModel,
   );
+  public changeNotAvailableAgentButton =
+    this.notAllowedModelLabel.getChildElementBySelector(
+      ErrorLabelSelectors.changeAgentBtn,
+    );
   public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
+  public scrollableArea = this.getChildElementBySelector(
+    ChatSelectors.chatScrollableArea,
+  );
+  public addModelButton = this.getChildElementBySelector(
+    ChatSelectors.addModelToWorkspace,
+  );
+  public changeAgentButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.changeAgentButton,
+  );
+  public configureSettingsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.configureSettingsButton,
+  );
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
-      this.chatHeader = new ChatHeader(this.page);
+      this.chatHeader = new ChatHeader(this.page, this.rootLocator);
     }
     return this.chatHeader;
-  }
-
-  getConversationSettings(): ConversationSettings {
-    if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
-    }
-    return this.conversationSettings;
   }
 
   getSendMessage(): SendMessage {
@@ -68,7 +72,7 @@ export class Chat extends BaseElement {
 
   getChatMessages(): ChatMessages {
     if (!this.chatMessages) {
-      this.chatMessages = new ChatMessages(this.page);
+      this.chatMessages = new ChatMessages(this.page, this.rootLocator);
     }
     return this.chatMessages;
   }
@@ -80,18 +84,28 @@ export class Chat extends BaseElement {
     return this.compare;
   }
 
-  getPlayBack(): Playback {
-    if (!this.playBack) {
-      this.playBack = new Playback(this.page);
-    }
-    return this.playBack;
-  }
-
   getPlaybackControl(): PlaybackControl {
     if (!this.playbackControl) {
-      this.playbackControl = new PlaybackControl(this.page);
+      this.playbackControl = new PlaybackControl(this.page, this.rootLocator);
     }
     return this.playbackControl;
+  }
+
+  getAgentInfo(): AgentInfo {
+    if (!this.agentInfo) {
+      this.agentInfo = new AgentInfo(this.page, this.rootLocator);
+    }
+    return this.agentInfo;
+  }
+
+  getPublicationReviewControl(): PublicationReviewControl {
+    if (!this.publicationReviewControl) {
+      this.publicationReviewControl = new PublicationReviewControl(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.publicationReviewControl;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {
@@ -105,8 +119,12 @@ export class Chat extends BaseElement {
   public async startReplay(userRequest?: string, waitForAnswer = false) {
     await this.replay.waitForState();
     const requestPromise = this.waitForRequestSent(userRequest);
+    const moveResponsePromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.moveHost),
+    );
     await this.replay.click();
     const request = await requestPromise;
+    await moveResponsePromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
   }
@@ -129,6 +147,8 @@ export class Chat extends BaseElement {
     comparedEntities: { rightEntity: string; leftEntity: string },
     waitForAnswer = false,
   ) {
+    // Click on "Add Model to Workspace" button if present
+    await this.addModelToWorkspace();
     const rightRequestPromise = this.waitForRequestSent(
       comparedEntities.rightEntity,
     );
@@ -147,40 +167,72 @@ export class Chat extends BaseElement {
 
   public async regenerateResponseInCompareMode(
     comparedEntities: { rightEntity: string; leftEntity: string },
-    waitForAnswer = false,
+    compareSide: Side,
   ) {
-    const rightRequestPromise = this.waitForRequestSent(
-      comparedEntities.rightEntity,
+    const rightRespPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().postData() !== null &&
+        resp.request().postData()!.includes(comparedEntities.rightEntity),
     );
-    const leftRequestPromise = this.waitForRequestSent(
-      comparedEntities.leftEntity,
+    const leftRespPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().postData() !== null &&
+        resp.request().postData()!.includes(comparedEntities.leftEntity),
     );
-    await this.getChatMessages().regenerate.getNthElement(1).click();
-    const rightRequest = await rightRequestPromise;
-    const leftRequest = await leftRequestPromise;
-    await this.waitForResponse(waitForAnswer);
-    return {
-      rightRequest: rightRequest.postDataJSON(),
-      leftRequest: leftRequest.postDataJSON(),
-    };
+    const regenerateButtonIndex = compareSide === Side.left ? 1 : 2;
+    await this.getChatMessages()
+      .regenerate.getNthElement(regenerateButtonIndex)
+      .click();
+    await rightRespPromise;
+    await leftRespPromise;
+    await this.waitForResponse(true);
   }
 
   public waitForRequestSent(userRequest: string | undefined) {
-    return userRequest
-      ? this.page.waitForRequest(
-          (request) =>
+    return userRequest !== undefined
+      ? this.page.waitForRequest((request) => {
+          ExpectedConstants.charsToEscape.forEach((char) => {
+            if (userRequest?.includes(char)) {
+              userRequest = userRequest.replaceAll(char, `\\${char}`);
+            }
+          });
+          return (
             request.url().includes(API.chatHost) &&
-            request.postData()!.includes(userRequest),
-        )
+            request.postData()!.includes(userRequest!)
+          );
+        })
       : this.page.waitForRequest(API.chatHost);
   }
 
   public async proceedReplaying(waitForAnswer = false) {
+    const proceedGeneratingButton = this.getSendMessage().proceedGenerating;
+    await proceedGeneratingButton.waitForState();
+    const apiPromises = [];
     const requestPromise = this.page.waitForRequest(API.chatHost);
-    await this.proceedGenerating.click();
-    const request = await requestPromise;
+    apiPromises.push(requestPromise);
+    if (waitForAnswer) {
+      const updateRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'PUT' &&
+          resp.url().includes(API.conversationHost),
+      );
+      const moveRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'POST' &&
+          resp.url().includes(API.moveHost),
+      );
+      apiPromises.push(updateRespPromise, moveRespPromise);
+    }
+    await proceedGeneratingButton.click();
+    let request;
+    for (let i = 0; i < apiPromises.length; i++) {
+      const resolvedPromise = await apiPromises[i];
+      if (i === 0) {
+        request = resolvedPromise as Request;
+      }
+    }
     await this.waitForResponse(waitForAnswer);
-    return request.postDataJSON();
+    return request?.postDataJSON();
   }
 
   public async waitForResponse(waitForAnswer = false) {
@@ -193,24 +245,70 @@ export class Chat extends BaseElement {
     await this.chatSpinner.waitForState({ state: 'detached' });
   }
 
+  public async addModelToWorkspace() {
+    if (await this.addModelButton.isVisible()) {
+      const respPromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.installedDeploymentsHost()),
+      );
+      await this.addModelButton.click();
+      await respPromise;
+    }
+  }
+
   private async sendRequest(
-    message: string,
+    message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
+    await this.addModelToWorkspace();
+    const apiPromises = [];
     const requestPromise = this.waitForRequestSent(message);
+    apiPromises.push(requestPromise);
+    if (waitForAnswer) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'PUT',
+      );
+      apiPromises.push(respPromise);
+    }
     await sendMethod();
-    const request = await requestPromise;
+    let request;
+    for (let i = 0; i < apiPromises.length; i++) {
+      const resolvedPromise = await apiPromises[i];
+      if (i === 0) {
+        request = resolvedPromise as Request;
+      }
+    }
     await this.waitForResponse(waitForAnswer);
-    return request.postDataJSON();
+    return request?.postDataJSON();
   }
 
-  public async sendRequestWithButton(message: string, waitForAnswer = true) {
+  public async sendRequestWithButton(message?: string, waitForAnswer = true) {
     return this.sendRequest(
       message,
       () => this.getSendMessage().send(message),
       waitForAnswer,
     );
+  }
+
+  public async sendRequestWithPrompt(prompt: string, waitForAnswer = true) {
+    return this.sendRequest(
+      prompt,
+      () => this.getSendMessage().send(),
+      waitForAnswer,
+    );
+  }
+
+  public async saveAndSubmitRequest(waitForAnswer = false) {
+    const updateResponsePromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'PUT',
+    );
+    const request = this.sendRequest(
+      undefined,
+      () => this.getChatMessages().saveAndSubmit.click(),
+      waitForAnswer,
+    );
+    await updateResponsePromise;
+    return request;
   }
 
   public async playNextChatMessage(waitForResponse = true) {
@@ -237,15 +335,54 @@ export class Chat extends BaseElement {
     await this.getPlaybackControl().playbackPreviousButton.click();
   }
 
-  public async applyNewEntity() {
-    await this.applyChanges().click();
-  }
-
-  public async duplicateSharedConversation() {
+  public async duplicateConversation() {
     const respPromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'POST',
     );
     await this.duplicate.click();
     await respPromise;
+  }
+
+  public async scrollContent(deltaX: number, deltaY: number) {
+    const chatBounding = await this.getElementBoundingBox();
+    await this.page.mouse.move(
+      chatBounding!.x + chatBounding!.width / 2,
+      chatBounding!.y + chatBounding!.height / 2,
+    );
+    await this.page.mouse.wheel(deltaX, deltaY);
+  }
+
+  public async waitForScrollPosition(state: ScrollState) {
+    let counter = 5;
+    while (counter > 0) {
+      // eslint-disable-next-line playwright/no-wait-for-timeout
+      await this.page.waitForTimeout(SCROLL_MOVING_DELAY);
+      counter--;
+      const scrollPosition =
+        await this.getSendMessage().getVerticalScrollPosition();
+      if (scrollPosition === state) {
+        break;
+      }
+    }
+  }
+
+  public async goToContentPosition(state: ScrollState) {
+    const chatBounding = await this.scrollableArea.getElementBoundingBox();
+    await this.click({
+      position: {
+        x: chatBounding!.x + chatBounding!.width / 2,
+        y: chatBounding!.y + chatBounding!.height / 2,
+      },
+    });
+    let keyToPress;
+    switch (state) {
+      case ScrollState.top:
+        keyToPress = keys.home;
+        break;
+      case ScrollState.bottom:
+        keyToPress = keys.end;
+        break;
+    }
+    await this.page.keyboard.press(keyToPress!);
   }
 }

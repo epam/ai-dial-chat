@@ -9,7 +9,7 @@ interface CaretIconComponentProps {
   showOnHoverOnly?: boolean;
 }
 
-export default function CaretIconComponent({
+export function CaretIconComponent({
   isOpen,
   size = 10,
   hidden,
@@ -21,7 +21,7 @@ export default function CaretIconComponent({
         className={classNames(
           'text-secondary transition-all',
           isOpen && 'rotate-90',
-          showOnHoverOnly
+          showOnHoverOnly || hidden
             ? 'invisible group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]'
             : 'visible',
         )}

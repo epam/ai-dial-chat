@@ -1,78 +1,29 @@
-import { DragEvent, useCallback } from 'react';
+import { DragEvent, useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
-import { ConversationInfo } from '@/src/types/chat';
+import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 
-import { Spinner } from '@/src/components/Common/Spinner';
+import { Sidebar } from '@/src/components/Sidebar/Sidebar';
 
-import PlusIcon from '../../../public/images/icons/plus-large.svg';
-import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
-import { Feature } from '@epam/ai-dial-shared';
-
-const ChatActionsBlock = () => {
-  const { t } = useTranslation(Translation.SideBar);
-  const dispatch = useAppDispatch();
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
-  const isNewConversationDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
-  );
-
-  if (isNewConversationDisabled) {
-    return null;
-  }
-
-  return (
-    <div className="flex px-2 py-1">
-      <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
-        onClick={() => {
-          dispatch(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
-          );
-          dispatch(ConversationsActions.resetSearch());
-        }}
-        disabled={messageIsStreaming || isActiveNewConversationRequest}
-        data-qa="new-entity"
-      >
-        {isActiveNewConversationRequest ? (
-          <Spinner size={18} className="text-secondary" />
-        ) : (
-          <PlusIcon className="text-secondary" width={18} height={18} />
-        )}
-        {t('New conversation')}
-      </button>
-    </div>
-  );
-};
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export const Chatbar = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -94,19 +45,37 @@ export const Chatbar = () => {
     ConversationsSelectors.selectMyItemsFilters,
   );
 
-  const filteredConversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      state,
-      myItemsFilters,
-      searchTerm,
-    ),
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
   );
-  const filteredFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      myItemsFilters,
-      searchTerm,
-    ),
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
+
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(
+        myItemsFilters,
+        searchTerm,
+      ),
+    [myItemsFilters, searchTerm],
+  );
+  const filteredConversations = useAppSelector(
+    selectFilteredConversationsSelector,
+  );
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
+  );
+  const filteredFolders = useAppSelector(selectFilteredFoldersSelector);
+
+  const rootFilteredConversations = useMemo(
+    () =>
+      filteredConversations.filter(
+        (conversation) => conversation.folderId === getConversationRootId(),
+      ),
+    [filteredConversations],
   );
 
   const handleDrop = useCallback(
@@ -129,7 +98,7 @@ export const Chatbar = () => {
                 t(
                   'Conversation with name "{{name}}" already exists at the root.',
                   {
-                    ns: 'chat',
+                    ns: Translation.Chat,
                     name: conversation.name,
                   },
                 ),
@@ -140,6 +109,14 @@ export const Chatbar = () => {
           }
 
           dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Chat,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== CONVERSATIONS_DATE_SECTIONS.today,
+              ),
+            }),
+          );
+          dispatch(
             ConversationsActions.updateConversation({
               id: conversation.id,
               values: { folderId },
@@ -149,28 +126,41 @@ export const Chatbar = () => {
         }
       }
     },
-    [allConversations, dispatch, t],
+    [allConversations, collapsedSections, dispatch, t],
+  );
+
+  const handleSearchTerm = useCallback(
+    (searchTerm: string) => {
+      dispatch(ConversationsActions.setSearchTerm({ searchTerm }));
+      dispatch(ConversationsActions.resetChosenConversations());
+    },
+    [dispatch],
+  );
+
+  const handleSearchFilters = useCallback(
+    (searchFilters: SearchFilters) => {
+      dispatch(ConversationsActions.setSearchFilters({ searchFilters }));
+      dispatch(ConversationsActions.resetChosenConversations());
+    },
+    [dispatch],
   );
 
   return (
     <Sidebar<ConversationInfo>
       featureType={FeatureType.Chat}
-      side="left"
-      actionButtons={<ChatActionsBlock />}
+      side={SidebarSide.Left}
       isOpen={showChatbar}
-      itemComponent={<Conversations conversations={filteredConversations} />}
+      itemComponent={
+        <Conversations conversations={rootFilteredConversations} />
+      }
       folderComponent={<ChatFolders />}
-      filteredItems={filteredConversations}
+      filteredItems={rootFilteredConversations}
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={(searchTerm: string) =>
-        dispatch(ConversationsActions.setSearchTerm({ searchTerm }))
-      }
-      handleSearchFilters={(searchFilters: SearchFilters) =>
-        dispatch(ConversationsActions.setSearchFilters({ searchFilters }))
-      }
-      handleDrop={handleDrop}
+      onSearchTerm={handleSearchTerm}
+      onSearchFilters={handleSearchFilters}
+      onDrop={handleDrop}
       footerComponent={<ChatbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}
     />

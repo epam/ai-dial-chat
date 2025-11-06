@@ -8,10 +8,12 @@ import {
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -22,18 +24,16 @@ import { MigrationStorageKeys } from '@/src/types/storage';
 import { Translation } from '@/src/types/translation';
 
 import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+  ImportExportActions,
+  MigrationActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+  MigrationSelectors,
+  ModelsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -180,18 +180,16 @@ export const MigrationFailedWindow = ({
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isPromptsBackedUp = useAppSelector(
-    PromptsSelectors.selectIsPromptsBackedUp,
+    MigrationSelectors.selectIsPromptsBackedUp,
   );
   const isChatsBackedUp = useAppSelector(
-    ConversationsSelectors.selectIsChatsBackedUp,
+    MigrationSelectors.selectIsChatsBackedUp,
   );
 
-  useEffect(() => {
-    const handleResize = () => setIsScreenSmall(isSmallScreen());
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
+  const handleResize = useCallback(() => {
+    setIsScreenSmall(isSmallScreen());
   }, []);
+  useWindowResizeEvent(handleResize);
 
   useEffect(() => {
     setConversationsToRetryIds(
@@ -215,22 +213,22 @@ export const MigrationFailedWindow = ({
     dispatch(UIActions.setShowSelectToMigrateWindow(false));
 
     dispatch(
-      ConversationsActions.skipFailedMigratedConversations({
+      MigrationActions.skipFailedMigratedConversations({
         idsToMarkAsMigrated: failedMigratedConversationIds.filter(
           (id) => !conversationsToRetryIds.includes(id),
         ),
       }),
     );
     dispatch(
-      PromptsActions.skipFailedMigratedPrompts({
+      MigrationActions.skipFailedMigratedPrompts({
         idsToMarkAsMigrated: failedMigratedPromptIds.filter(
           (id) => !promptsToRetryIds.includes(id),
         ),
       }),
     );
 
-    dispatch(ConversationsActions.migrateConversationsIfRequired());
-    dispatch(PromptsActions.migratePromptsIfRequired());
+    dispatch(MigrationActions.migrateConversationsIfRequired());
+    dispatch(MigrationActions.migratePromptsIfRequired());
   }, [
     conversationsToRetryIds,
     dispatch,
@@ -316,7 +314,7 @@ export const MigrationFailedWindow = ({
                 <p className="flex w-[50px] justify-center">{t('Discard')}</p>
               </div>
             </div>
-            <div className="my-2 flex justify-between overflow-y-scroll border-b-[1px] border-b-tertiary pb-2">
+            <div className="my-2 flex justify-between overflow-y-scroll border-b border-b-tertiary pb-2">
               <div className="flex items-center gap-1 py-1 text-xs">
                 {t('All items')}
               </div>
@@ -368,7 +366,7 @@ export const MigrationFailedWindow = ({
               withPt={!!failedMigratedConversations.length}
             />
           </div>
-          <footer className="flex flex-col items-center justify-end border-t-[1px] border-t-tertiary px-6 pt-4">
+          <footer className="flex flex-col items-center justify-end border-t border-t-tertiary px-6 pt-4">
             {!!(
               (!isChatsBackedUp && failedMigratedConversations.length) ||
               (!isPromptsBackedUp && failedMigratedPrompts.length)
@@ -454,15 +452,15 @@ export const MigrationFailedWindow = ({
           {t('contact us.')}
         </button>
       </p>
-      {enabledFeatures.has(Feature.ReportAnIssue) && (
-        <ReportIssueDialog
-          isOpen={isReportIssueDialogOpen}
-          onClose={() => {
-            setIsReportIssueDialogOpen(false);
-            router.replace(router.basePath);
-          }}
-        />
-      )}
+      {enabledFeatures.has(Feature.ReportAnIssue) &&
+        isReportIssueDialogOpen && (
+          <ReportIssueDialog
+            onClose={() => {
+              setIsReportIssueDialogOpen(false);
+              router.replace(router.basePath);
+            }}
+          />
+        )}
     </div>
   );
 };

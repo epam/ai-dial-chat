@@ -1,11 +1,11 @@
-import { FolderType } from '@/chat/types/folder';
+import { FeatureType } from '@/chat/types/common';
 import { FolderBuilder } from '@/src/testData/conversationHistory/folderBuilder';
 import { GeneratorUtil } from '@/src/utils';
 
 export class FolderData {
   private folderBuilder: FolderBuilder;
 
-  constructor(type: FolderType) {
+  constructor(type: FeatureType) {
     this.folderBuilder = new FolderBuilder().withType(type);
   }
 
@@ -20,22 +20,29 @@ export class FolderData {
 
   public prepareFolder(name?: string) {
     const folderName = name ?? GeneratorUtil.randomString(7);
-    return this.folderBuilder
-      .withName(folderName)
-      .withFolderId(folderName)
-      .build();
+    return this.folderBuilder.withName(folderName).withId(folderName).build();
   }
 
-  public prepareNestedFolder(nestedLevel: number, type: FolderType) {
-    const rootFolder = this.prepareFolder();
+  public prepareNestedFolder(
+    nestedLevel: number,
+    type: FeatureType,
+    folderNames?: Record<number, string>,
+  ) {
+    const rootFolder = this.prepareFolder(
+      folderNames ? folderNames[1] : undefined,
+    );
     this.resetFolderData();
     const foldersHierarchy = [rootFolder];
-    for (let i = 1; i <= nestedLevel; i++) {
-      const nestedFolderName = GeneratorUtil.randomString(7);
+    for (let i = 1; i < nestedLevel; i++) {
+      const nestedFolderName =
+        folderNames !== undefined
+          ? folderNames[i + 1]
+          : GeneratorUtil.randomString(7);
       const nestedFolder = this.folderBuilder
         .withName(nestedFolderName)
         .withType(type)
-        .withFolderId(`${foldersHierarchy[i - 1].folderId}/${nestedFolderName}`)
+        .withId(`${foldersHierarchy[i - 1].id}/${nestedFolderName}`)
+        .withFolderId(foldersHierarchy[i - 1].id)
         .build();
       foldersHierarchy.push(nestedFolder);
       this.resetFolderData();

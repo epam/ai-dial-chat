@@ -1,10 +1,15 @@
-import { Styles, Tags } from '../domData';
+import { Attributes, Styles, Tags } from '../domData';
 
+import { ScrollState } from '@/src/testData';
+import { ChatSelectors } from '@/src/ui/selectors';
 import { Locator, Page } from '@playwright/test';
+import path from 'path';
+
+export const elementIndexExceptionError = 'Element index should start from 1';
 
 export interface EntityIcon {
-  entityName: string;
-  icon: string;
+  entityId: string;
+  iconLocator: Locator;
 }
 
 export class BaseElement {
@@ -26,6 +31,10 @@ export class BaseElement {
     return this.rootLocator;
   }
 
+  public setElementLocator(rootLocator: Locator) {
+    this.rootLocator = rootLocator;
+  }
+
   public createElementFromLocator(locator: Locator): BaseElement {
     return new BaseElement(this.page, '', locator);
   }
@@ -34,10 +43,17 @@ export class BaseElement {
     return this.createElementFromLocator(this.rootLocator.locator(selector));
   }
 
+  public getChildButtonElement(): BaseElement {
+    return this.getChildElementBySelector(Tags.button);
+  }
+
   public getElementLocatorByText(
     text: string | RegExp,
     index?: number,
   ): Locator {
+    if (index === 0) {
+      throw new Error(elementIndexExceptionError);
+    }
     return this.rootLocator
       .filter({ hasText: text })
       .nth(index ? index - 1 : 0);
@@ -55,7 +71,7 @@ export class BaseElement {
     text: string,
     options?: { delay?: number; noWaitAfter?: boolean; timeout?: number },
   ) {
-    await this.rootLocator.type(text, options);
+    await this.rootLocator.pressSequentially(text, options);
   }
 
   async fillInInput(
@@ -116,12 +132,18 @@ export class BaseElement {
     return this.rootLocator.boundingBox();
   }
 
-  async isElementEnabled() {
-    return this.rootLocator.isEnabled();
+  async isElementEnabled(options?: { timeout?: number }) {
+    return this.rootLocator.isEnabled(options);
   }
 
   async scrollIntoElementView() {
     await this.rootLocator.scrollIntoViewIfNeeded();
+  }
+
+  async setElementInputFiles(filesDirectory: string, ...filenames: string[]) {
+    await this.rootLocator.setInputFiles(
+      filenames.map((filename) => path.join(filesDirectory, filename)),
+    );
   }
 
   async getAllBorderColors() {
@@ -177,36 +199,45 @@ export class BaseElement {
     return scrollHeight > clientHeight;
   }
 
-  public async getElementIcons(
-    elements: BaseElement,
-    iconNameSelector?: string,
-  ) {
+  public async getVerticalScrollPosition(): Promise<ScrollState> {
+    const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
+    const scrollTop = await this.rootLocator.evaluate((p) => p.scrollTop);
+    const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
+    if (scrollTop == 0) {
+      return ScrollState.top;
+    } else if (scrollHeight - (scrollTop + clientHeight) < 1) {
+      return ScrollState.bottom;
+    }
+    return ScrollState.middle;
+  }
+
+  public async getElementIcons(elements: BaseElement) {
     const allIcons: EntityIcon[] = [];
     const elementsCount = await elements.getElementsCount();
     for (let i = 1; i <= elementsCount; i++) {
-      const element = await elements.getNthElement(i);
-      const elementIconName = iconNameSelector
-        ? await element.locator(iconNameSelector).textContent()
-        : await element.textContent();
-      const elementIconHtml = await this.getElementIconHtml(element);
-      allIcons.push({ entityName: elementIconName!, icon: elementIconHtml });
+      const element = elements.getNthElement(i);
+      const elementIconLocator = this.getElementIcon(element);
+      const elementIconId = await elementIconLocator.getAttribute(
+        Attributes.id,
+      );
+      allIcons.push({
+        entityId: elementIconId!,
+        iconLocator: elementIconLocator,
+      });
     }
     return allIcons;
   }
 
-  public async getElementIconHtml(elementLocator: Locator): Promise<string> {
-    const iconLocator = elementLocator.locator(`${Tags.svg}:visible`).first();
-    await iconLocator.locator(Tags.desc).waitFor({ state: 'attached' });
-    return iconLocator.innerHTML().then((icon) =>
-      icon
-        .replaceAll('\n', '')
-        .replaceAll(/<desc>.*<\/desc>/g, '')
-        .replaceAll(/><\/path>/g, Tags.closingTag)
-        .replaceAll(/><\/rect>/g, Tags.closingTag)
-        .replaceAll(/><\/polygon>/g, Tags.closingTag)
-        .replaceAll(/><\/circle>/g, Tags.closingTag)
-        .replaceAll(/><\/use>/g, Tags.closingTag)
-        .replaceAll(/><\/image>/g, Tags.closingTag),
-    );
+  public getElementIcon(elementLocator: Locator | BaseElement) {
+    const iconLocator = BaseElement.getElementLocator(elementLocator)
+      .locator(ChatSelectors.iconSelector)
+      .first();
+    return iconLocator.locator(`${Tags.img}:visible`);
+  }
+
+  public static getElementLocator(element: BaseElement | Locator): Locator {
+    return element instanceof BaseElement
+      ? element.getElementLocator()
+      : (element as Locator);
   }
 }

@@ -4,9 +4,9 @@ import classNames from 'classnames';
 
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import ContextMenu from './ContextMenu';
+import { ContextMenu } from './ContextMenu';
 
 const ICON_WIDTH = 24;
 const ITEM_PADDING = 5;
@@ -26,8 +26,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const item = (
     <button
       className={classNames(
-        'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed',
-        'hover:bg-accent-primary-alpha hover:text-accent-primary',
+        'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed [&:not(:disabled)]:hover:bg-accent-primary-alpha [&:not(:disabled)]:hover:text-accent-primary',
         className,
       )}
       onClick={!childMenuItems ? onClick : undefined}
@@ -57,7 +56,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   return item;
 }
 
-export default function SidebarMenu({
+export function SidebarMenu({
   menuItems,
   featureType,
   displayMenuItemCount = 5,
@@ -67,20 +66,44 @@ export default function SidebarMenu({
   const [displayItemsCount, setDisplayItemsCount] =
     useState<number>(displayMenuItemCount);
   const containerRef = useRef<HTMLDivElement>(null);
+  const displayedItems = useMemo(
+    () => menuItems.filter(({ display = true }) => display),
+    [menuItems],
+  );
   const [visibleItems, hiddenItems] = useMemo(() => {
-    const displayedItems = menuItems.filter(({ display = true }) => display);
     const visibleItems = displayedItems.slice(0, displayItemsCount);
     const hiddenItems = displayedItems.slice(displayItemsCount);
     return [visibleItems, hiddenItems];
-  }, [menuItems, displayItemsCount]);
+  }, [displayedItems, displayItemsCount]);
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         if (entry.contentBoxSize) {
           const itemsContainerWidth = entry.contentBoxSize[0].inlineSize;
+          let count = 3;
+          while (
+            itemsContainerWidth >=
+            ITEM_WIDTH * (count + 1) - ITEMS_GAP_IN_PIXELS
+          ) {
+            count++;
+          }
 
-          setDisplayItemsCount(itemsContainerWidth / ITEM_WIDTH);
+          let enoughPlaceForEllipsis = false;
+          if (
+            displayedItems.length > count + 1 ||
+            itemsContainerWidth >= ITEM_WIDTH * count + 25
+          ) {
+            count++;
+            enoughPlaceForEllipsis = true;
+          }
+          if (
+            displayedItems.length > count ||
+            (enoughPlaceForEllipsis && displayedItems.length >= count)
+          ) {
+            count--;
+          }
+          setDisplayItemsCount(count);
         }
       }
     });
@@ -90,7 +113,7 @@ export default function SidebarMenu({
     return () => {
       containerElement && resizeObserver.observe(containerElement);
     };
-  }, []);
+  }, [displayedItems.length]);
 
   return (
     <div
@@ -122,10 +145,12 @@ export default function SidebarMenu({
       })}
 
       <ContextMenu
+        triggerIconClassName="flex min-w-[34px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
         menuItems={hiddenItems}
         isOpen={isOpen}
         featureType={featureType}
         onOpenChange={onOpenChange}
+        triggerIconHighlight
       />
     </div>
   );

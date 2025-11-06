@@ -6,17 +6,25 @@ import {
   oneLight,
 } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
-import { useTranslation } from 'next-i18next';
+import classNames from 'classnames';
 
-import { programmingLanguages } from '@/src/utils/app/codeblock';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import {
+  languageExtensionMapping,
+  languageFilenameMapping,
+  languageNameMapping,
+} from '@/src/utils/app/codeblock';
+import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/selectors';
 
-import Download from '../../../public/images/icons/download.svg';
-import Tooltip from '../Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import Download from '@/public/images/icons/download.svg';
 
 interface Props {
   language: string;
@@ -50,21 +58,25 @@ export const CodeBlock: FC<Props> = memo(
         }, 2000);
       });
     }, [value]);
+    const lowercaseLanguage = language.toLowerCase();
+    const displayLanguage =
+      languageNameMapping[lowercaseLanguage] || lowercaseLanguage;
 
     const downloadAsFile = useCallback(() => {
-      const fileExtension = programmingLanguages[language] || '.txt';
-      const suggestedFileName = `ai-chat-code${fileExtension}`;
-      const fileName = window.prompt(
-        t('Enter file name') || '',
-        suggestedFileName,
-      );
+      // languageExtensionMapping allows set empty extension
+      const fileExtension = languageExtensionMapping[displayLanguage] ?? '.txt';
+      // use the specific filename if it exists in languageFilenameMapping
+      const suggestedFileName =
+        languageFilenameMapping[displayLanguage] ??
+        `ai-chat-code-${getDownLoadCurrentDate()}${fileExtension}`;
+      const fileName = window.prompt(t('Enter file name'), suggestedFileName);
 
       if (!fileName) {
-        // user pressed cancel on prompt
+        // User pressed cancel on prompt
         return;
       }
 
-      const blob = new Blob([value], { type: 'text/plain' });
+      const blob = new Blob([value], { type: 'attachment/plain' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = fileName;
@@ -74,18 +86,24 @@ export const CodeBlock: FC<Props> = memo(
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    }, [language, t, value]);
+    }, [displayLanguage, t, value]);
 
     return (
       <div
-        className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text-primary`}
+        className={classNames(
+          'codeblock relative overflow-hidden rounded border font text-sm text-primary',
+          isInner ? 'border-primary' : 'border-secondary',
+        )}
       >
         <div
-          className={`flex items-center justify-between border-b border-secondary p-3 ${
-            isInner ? 'bg-layer-3' : 'bg-layer-1'
-          }`}
+          className={classNames(
+            'flex items-center justify-between border-b p-3',
+            isInner
+              ? 'border-primary bg-layer-3'
+              : 'border-secondary bg-layer-1',
+          )}
         >
-          <span className="lowercase">{language}</span>
+          <span>{lowercaseLanguage}</span>
 
           {!isLastMessageStreaming && (
             <div
@@ -120,7 +138,7 @@ export const CodeBlock: FC<Props> = memo(
         </div>
 
         <SyntaxHighlighter
-          language={language}
+          language={displayLanguage}
           style={codeBlockTheme[theme] || oneDark}
           customStyle={{
             margin: 0,
@@ -128,13 +146,10 @@ export const CodeBlock: FC<Props> = memo(
             fontSize: 14,
             padding: 12,
             letterSpacing: 0,
-            fontFamily: 'var(--font-inter)',
           }}
-          className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'}`}
+          className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'} font-codeblock`}
           codeTagProps={{
-            style: {
-              fontFamily: 'var(--font-inter)',
-            },
+            className: 'font-codeblock',
           }}
         >
           {value}

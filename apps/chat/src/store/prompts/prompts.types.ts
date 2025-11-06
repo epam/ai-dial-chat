@@ -3,21 +3,25 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 
 export interface PromptsState {
-  migratedPromptsCount: number;
-  promptsToMigrateCount: number;
-  isPromptsBackedUp: boolean;
-  failedMigratedPrompts: Prompt[];
+  initialized: boolean;
   prompts: PromptInfo[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];
   searchTerm: string;
   searchFilters: SearchFilters;
   selectedPromptId: string | undefined;
-  isEditModalOpen: boolean;
-  isModalPreviewMode: boolean;
+  isSelectedPromptApproveRequiredResource: boolean;
+  isPromptModalOpen: boolean;
+  isPromptModalInitModeEdit: boolean;
   newAddedFolderId?: string;
   promptsLoaded: boolean;
   isPromptLoading: boolean;
   loadingFolderIds: string[];
   isNewPromptCreating: boolean;
+  chosenPromptIds: string[];
+  chosenEmptyFoldersIds: string[];
+  promptWithVariablesForApply?: Prompt;
+
+  deletingPrompt: PromptInfo | undefined;
+  moveToPrompt: PromptInfo | undefined;
 }

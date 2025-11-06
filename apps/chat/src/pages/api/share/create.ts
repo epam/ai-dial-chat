@@ -5,8 +5,10 @@ import { getToken } from 'next-auth/jwt';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 import { ShareRequestModel } from '@/src/types/share';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -18,10 +20,12 @@ import fetch from 'node-fetch';
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
-  const token = await getToken({ req });
+
   if (!isSessionValid) {
     return;
   }
+
+  const token = await getToken({ req });
 
   try {
     const body = req.body as ShareRequestModel;
@@ -29,7 +33,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/ops/resource/share/create`,
       {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
         body: JSON.stringify(body),
       },
@@ -37,17 +41,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     let json: unknown;
     if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch (err) {
-        json = undefined;
-      }
+      json = await ServerUtils.getErrorMessageFromResponse(proxyRes);
 
       throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
+        proxyRes.status,
+        req,
       );
     }
 

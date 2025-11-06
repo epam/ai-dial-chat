@@ -1,15 +1,17 @@
+import { SIDEBAR_MIN_WIDTH } from '@/chat/constants/default-ui-settings';
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
+import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   ExpectedConstants,
   ExpectedMessages,
-  ModelIds,
-  Theme,
+  MockedChatApiResponseBodies,
+  ThemeId,
 } from '@/src/testData';
-import { Cursors, Styles } from '@/src/ui/domData';
+import { Overflow } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -19,12 +21,10 @@ const requestTerm = 'qwer';
 const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
 const promptContent = `Type: "${expectedResponse}" if user types ${requestTerm}`;
-let gpt35Model: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
+let simpleRequestModel: DialAIEntityModel | undefined;
 
 dialTest.beforeAll(async () => {
-  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
 dialTest(
@@ -32,10 +32,11 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-476');
     let conversation: Conversation;
@@ -45,12 +46,10 @@ dialTest(
       'write down 100 adjectives',
     ];
     await dialTest.step('Prepare model conversation', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        gpt35Model,
-        userRequests,
-      );
+      conversation =
+        conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -58,10 +57,14 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         const receivedPartialContent =
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
           );
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.regenerateResponse(false);
         const preservedPartialContent =
           await chatMessages.getGeneratedChatContent(
@@ -88,25 +91,22 @@ dialTest(
     chatMessages,
     context,
     sendMessage,
-    tooltip,
     localStorageManager,
     page,
-    setIssueIds,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
-    setIssueIds('790');
     await dialTest.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       'Send a request in chat and emulate error until response received',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await context.setOffline(true);
         await chat.sendRequestWithButton('Type a fairytale', false);
       },
@@ -115,25 +115,22 @@ dialTest(
       'Verify error is displayed as a response, regenerate button is available',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
-          .toBe(ExpectedConstants.answerError);
-
-        const isGenerateResponseVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
-          .soft(
-            isGenerateResponseVisible,
-            ExpectedMessages.regenerateIsAvailable,
-          )
-          .toBeTruthy();
+        baseAssertion.assertValue(
+          generatedContent,
+          ExpectedConstants.answerError,
+          ExpectedMessages.errorReceivedOnReplay,
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.regenerate,
+          'visible',
+          ExpectedMessages.regenerateIsAvailable,
+        );
       },
     );
 
     await dialTest.step(
-      'Hover over Send button and verify it is disabled and tooltip is shown',
+      'Type any prompt, hit Enter button and verify nothing happened, Send button is not shown',
       async () => {
-        await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {
           if (i === 2) {
             const messagesCountBefore =
@@ -144,75 +141,29 @@ dialTest(
             await page.keyboard.press(keys.enter);
             const messagesCountAfter =
               await chatMessages.chatMessages.getElementsCount();
-            expect
-              .soft(
-                messagesCountBefore === messagesCountAfter,
-                ExpectedMessages.messageCountIsCorrect,
-              )
-              .toBeTruthy();
-          }
-          const isSendMessageBtnEnabled =
-            await sendMessage.sendMessageButton.isElementEnabled();
-          expect
-            .soft(
-              isSendMessageBtnEnabled,
-              ExpectedMessages.sendMessageButtonDisabled,
-            )
-            .toBeFalsy();
-
-          await sendMessage.sendMessageButton.hoverOver();
-          const sendBtnCursor =
-            await sendMessage.sendMessageButton.getComputedStyleProperty(
-              Styles.cursor,
+            baseAssertion.assertValue(
+              messagesCountBefore,
+              messagesCountAfter,
+              ExpectedMessages.messageCountIsCorrect,
             );
-          expect
-            .soft(
-              sendBtnCursor[0],
-              ExpectedMessages.sendButtonCursorIsNotAllowed,
-            )
-            .toBe(Cursors.notAllowed);
-
-          const tooltipContent = await tooltip.getContent();
-          expect
-            .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
-        }
-      },
-    );
-
-    await dialTest.step(
-      'Type any message, hit Enter key and verify Send button is disabled and tooltip is shown',
-      async () => {
-        const isSendMessageBtnEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(
-            isSendMessageBtnEnabled,
+          }
+          await baseAssertion.assertElementState(
+            sendMessage.sendMessageButton,
+            'hidden',
             ExpectedMessages.sendMessageButtonDisabled,
-          )
-          .toBeFalsy();
-
-        await sendMessage.sendMessageButton.hoverOver();
-        const sendBtnCursor =
-          await sendMessage.sendMessageButton.getComputedStyleProperty(
-            Styles.cursor,
           );
-        expect
-          .soft(sendBtnCursor[0], ExpectedMessages.sendButtonCursorIsNotAllowed)
-          .toBe(Cursors.notAllowed);
-
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
+        }
       },
     );
 
     await dialTest.step(
       'Click Regenerate response and validate answer received',
       async () => {
-        await chatMessages.regenerateResponse(false);
-        await chatMessages.waitForPartialMessageReceived(2);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await context.setOffline(false);
+        await sendMessage.regenerateErrorResponse();
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
@@ -229,22 +180,21 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
     const editData = 'updated message';
     let conversation: Conversation;
     const userRequests = ['1+2=', '2+3=', '3+4='];
     await dialTest.step('Prepare conversation with 3 requests', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        gpt35Model,
-        userRequests,
-      );
+      conversation =
+        conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -252,16 +202,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], editData);
         await chatMessages.cancel.click();
 
-        const isEditTextareaVisible = await chatMessages
-          .getChatMessageTextarea(userRequests[1])
-          .isVisible();
-        expect
-          .soft(isEditTextareaVisible, ExpectedMessages.editModeIsClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            chatMessages.getChatMessageTextarea(userRequests[1]),
+            ExpectedMessages.editRequestModeIsClosed,
+          )
+          .toBeHidden();
 
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect
@@ -275,11 +226,12 @@ dialTest(
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], '');
-
-        const isSaveButtonDisabled = await chatMessages.isSaveButtonEnabled();
-        expect
-          .soft(isSaveButtonDisabled, ExpectedMessages.saveIsDisabled)
-          .toBeFalsy();
+        await expect
+          .soft(
+            chatMessages.saveAndSubmit.getElementLocator(),
+            ExpectedMessages.saveIsDisabled,
+          )
+          .toBeDisabled();
         await chatMessages.cancel.click();
       },
     );
@@ -288,6 +240,9 @@ dialTest(
       'Edit 2nd request, save changes and verify response is received, last request is deleted',
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.editMessage(userRequests[1], editData);
 
         const messagesCount =
@@ -296,12 +251,12 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe((userRequests.length - 1) * 2);
 
-        const isMessageEdited = await chatMessages
-          .getChatMessage(editData)
-          .isVisible();
-        expect
-          .soft(isMessageEdited, ExpectedMessages.requestMessageIsEdited)
-          .toBeTruthy();
+        await expect
+          .soft(
+            chatMessages.getChatMessage(editData),
+            ExpectedMessages.requestMessageIsEdited,
+          )
+          .toBeVisible();
 
         const lastMessage = await chatMessages.getLastMessageContent();
         expect
@@ -318,21 +273,19 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-488', 'EPMRTC-489');
+    const conversation =
+      conversationData.prepareModelConversationBasedOnRequests(userRequests);
     await dialTest.step('Prepare conversation with 3 requests', async () => {
-      const conversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          gpt35Model,
-          userRequests,
-        );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
@@ -340,6 +293,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
         await chatMessages.openDeleteMessageDialog(userRequests[1]);
         await confirmationDialog.cancelDialog();
         const messagesCount =
@@ -362,45 +316,52 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe((userRequests.length - 1) * 2);
 
-        const isMessageVisible = await chatMessages
-          .getChatMessage(userRequests[1])
-          .isVisible();
-        expect
-          .soft(isMessageVisible, ExpectedMessages.messageIsDeleted)
-          .toBeFalsy();
+        await expect
+          .soft(
+            chatMessages.getChatMessage(userRequests[1]),
+            ExpectedMessages.messageIsDeleted,
+          )
+          .toBeHidden();
       },
     );
   },
 );
 
-dialTest(
+//TC depends on LLM availability and response
+dialTest.skip(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
     chat,
     setTestIds,
     chatMessages,
-    talkToSelector,
-    entitySettings,
+    agentSettings,
+    localStorageManager,
+    conversationSettingsModal,
+    talkToAgentDialog,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-1085');
     await dialTest.step(
       'Set system prompt for model and send request',
       async () => {
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [gpt4Model.iconUrl],
-        });
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await talkToSelector.selectModel(gpt4Model);
-        await entitySettings.setSystemPrompt(promptContent);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
+        );
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(simpleRequestModel!);
+        await chat.configureSettingsButton.click();
+        await agentSettings.setSystemPrompt(promptContent);
+        await conversationSettingsModal.applyChangesButton.click();
         await chat.sendRequestWithButton(requestTerm);
       },
     );
 
     await dialTest.step(
-      'Verify response correspond system prompt',
+      'Verify response corresponds system prompt',
       async () => {
         const response = await chatMessages.getLastMessageContent();
         expect
@@ -420,30 +381,39 @@ dialTest(
     chat,
     setTestIds,
     chatMessages,
+    baseAssertion,
     sendMessage,
-    page,
     tooltip,
     localStorageManager,
     iconApiHelper,
+    talkToAgentDialog,
+    chatMessagesAssertion,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt35Model);
+    const expectedModelIcon = iconApiHelper.getEntityIcon(simpleRequestModel!);
 
     await dialTest.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+      const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        simpleRequestModel!,
+      );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
       'Send request and stop generation immediately',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
+        await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(simpleRequestModel!, {
+          isHttpMethodTriggered: false,
         });
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -455,110 +425,72 @@ dialTest(
         expect
           .soft(receivedContent, ExpectedMessages.messageContentIsValid)
           .toBe('');
-
-        const conversationIcon =
-          await chatMessages.getIconAttributesForMessage();
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
-
-        const isRegenerateButtonVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
-          .soft(
-            isRegenerateButtonVisible,
-            ExpectedMessages.regenerateIsAvailable,
-          )
-          .toBeTruthy();
+        await chatMessagesAssertion.assertMessageIcon(
+          undefined,
+          expectedModelIcon,
+        );
+        await baseAssertion.assertElementState(
+          chatMessages.regenerate,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.regenerate,
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
       'Hover over Send button and verify it is disabled and tooltip is shown',
       async () => {
-        for (let i = 1; i <= 2; i++) {
-          if (i === 2) {
-            const messagesCountBefore =
-              await chatMessages.chatMessages.getElementsCount();
-            await sendMessage.messageInput.fillInInput('   ');
-            await page.keyboard.press(keys.enter);
-            const messagesCountAfter =
-              await chatMessages.chatMessages.getElementsCount();
-            expect
-              .soft(
-                messagesCountBefore === messagesCountAfter,
-                ExpectedMessages.messageCountIsCorrect,
-              )
-              .toBeTruthy();
-          }
-          const isSendMessageBtnEnabled =
-            await sendMessage.sendMessageButton.isElementEnabled();
-          expect
-            .soft(
-              isSendMessageBtnEnabled,
-              ExpectedMessages.sendMessageButtonDisabled,
-            )
-            .toBeFalsy();
-
-          await sendMessage.sendMessageButton.hoverOver();
-          const sendBtnCursor =
-            await sendMessage.sendMessageButton.getComputedStyleProperty(
-              Styles.cursor,
-            );
-          expect
-            .soft(
-              sendBtnCursor[0],
-              ExpectedMessages.sendButtonCursorIsNotAllowed,
-            )
-            .toBe(Cursors.notAllowed);
-
-          const tooltipContent = await tooltip.getContent();
-          expect
-            .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.regenerateResponseTooltip);
-        }
+        await sendMessage.regenerate.hoverOver();
+        const tooltipContent = await tooltip.getContent();
+        expect
+          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+          .toBe(ExpectedConstants.regenerateResponseTooltip);
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Send request and stop generation when partial content received',
       async () => {
         await chatMessages.regenerateResponse(false);
         await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
-    await dialTest.step(
+    await dialTest.step.skip(
       'Verify partial content is preserved and model icon is visible',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
           .not.toBe('');
-        const conversationIcon =
-          await chatMessages.getIconAttributesForMessage();
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
 
-        const isRegenerateButtonVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
+        await chatMessagesAssertion.assertMessageIcon(
+          undefined,
+          expectedModelIcon,
+        );
+
+        await expect
           .soft(
-            isRegenerateButtonVisible,
+            chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
     await dialTest.step(
       'Edit request, click "Save & Submit" and verify response is regenerated',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         const updatedRequest = '1+2=';
         await chatMessages.openEditMessageMode(request);
-        await chatMessages.editMessage(request, updatedRequest);
+        await chatMessages.editFirstMessage(updatedRequest);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
@@ -570,107 +502,104 @@ dialTest(
 );
 
 dialTest(
-  'Send button in new message is available for Model if previous response is partly received when Stop generating was used.\n' +
-    'Compare mode button is not available while response is being generated',
+  'Compare mode button is not available while response is being generated.\n' +
+    '"Talk to" item icon is jumping while generating an answer',
   async ({
     dialHomePage,
     chat,
     setTestIds,
     chatMessages,
-    sendMessage,
+    localStorageManager,
+    baseAssertion,
     chatBar,
   }) => {
-    setTestIds('EPMRTC-1533', 'EPMRTC-538');
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
+    setTestIds('EPMRTC-538', 'EPMRTC-386');
     await dialTest.step(
-      'Send request, verify Compare button is disabled while generating the response and stop generation immediately',
+      'Send request, verify Compare button is disabled while generating the response, model icon is jumping',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await dialHomePage.throttleAPIResponse(API.chatHost, 1500);
-        await chat.sendRequestWithButton(request, false);
-
-        const isCompareButtonEnabled =
-          await chatBar.compareButton.isElementEnabled();
-        expect
-          .soft(
-            isCompareButtonEnabled,
-            ExpectedMessages.compareButtonIsDisabled,
-          )
-          .toBeFalsy();
-
-        await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
-        await chat.stopGenerating.waitForState({ state: 'hidden' });
-      },
-    );
-
-    await dialTest.step(
-      'Type a new message and verify Send button is enabled',
-      async () => {
-        await sendMessage.messageInput.fillInInput(
-          GeneratorUtil.randomString(10),
+        const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
+        await localStorageManager.setChatbarWidth(width.toFixed());
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(
+          simpleRequestModel!,
         );
-        const isSendButtonEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonEnabled)
-          .toBeTruthy();
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.throttleAPIResponse(API.chatHost);
+        await chat.sendRequestWithButton(request, false);
+        await baseAssertion.assertElementActionabilityState(
+          chatBar.compareButton,
+          'disabled',
+        );
+        const jumpingIcon = await chatMessages.getMessageJumpingIcon();
+        await baseAssertion.assertElementState(jumpingIcon, 'visible');
       },
     );
   },
 );
 
 dialTest(
-  'Use simple prompt in system prompt.\n' +
+  'Prompt text without parameters appear in System prompt field in chat settings.\n' +
     'System prompt set using slash is applied in Model',
   async ({
     dialHomePage,
     promptData,
     dataInjector,
-    entitySettings,
+    agentSettings,
     chat,
-    chatMessages,
+    conversationSettingsModal,
     chatHeader,
+    systemPromptListAssertion,
+    localStorageManager,
+    agentSettingAssertion,
+    apiAssertion,
     setTestIds,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-1010', 'EPMRTC-1945');
     let prompt: Prompt;
 
     await dialTest.step('Prepare prompt with content', async () => {
       prompt = promptData.preparePrompt(promptContent);
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setRecentModelsIdsAndUseLastModel(
+        simpleRequestModel!,
+      );
+      await localStorageManager.setShowSideBarPanels();
     });
 
     await dialTest.step(
-      `'On a New Conversation screen set '/' as a system prompt and verify prompt is suggested in the list`,
+      `On a New Conversation screen set '/' as a system prompt and verify prompt is suggested in the list, prompt options have text-overflow=ellipsis css property`,
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [gpt35Model.iconUrl],
+          iconsToBeLoaded: [simpleRequestModel!.iconUrl],
         });
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
+        await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
+        await agentSettings.setSystemPrompt('/');
+        const promptsList = agentSettings.getPromptList();
+        await systemPromptListAssertion.assertPromptOptionOverflow(
+          prompt.name,
+          Overflow.ellipsis,
+        );
+
+        await promptsList.selectPromptWithKeyboard(prompt.name, {
+          triggeredHttpMethod: 'GET',
         });
-        await entitySettings.setSystemPrompt('/');
-        await entitySettings
-          .getPromptList()
-          .selectPrompt(prompt.name, { triggeredHttpMethod: 'PUT' });
-        const actualPrompt = await entitySettings.getSystemPrompt();
-        expect
-          .soft(actualPrompt, ExpectedMessages.systemPromptValid)
-          .toBe(prompt.content);
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
+        await conversationSettingsModal.applyChangesButton.click();
       },
     );
 
     await dialTest.step(
-      'Send request and verify response corresponds system prompt',
+      'Send request and verify system prompt is sent in the request',
       async () => {
-        await chat.sendRequestWithButton(requestTerm);
-        const response = await chatMessages.getLastMessageContent();
-        expect
-          .soft(response, ExpectedMessages.messageContentIsValid)
-          .toBe(expectedResponse);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        const request = await chat.sendRequestWithButton(requestTerm);
+        apiAssertion.assertRequestPrompt(request, prompt.content);
       },
     );
 
@@ -678,10 +607,7 @@ dialTest(
       'Open chat settings and verify system prompt is preserved',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        const actualPrompt = await entitySettings.getSystemPrompt();
-        expect
-          .soft(actualPrompt, ExpectedMessages.systemPromptValid)
-          .toBe(prompt.content);
+        await agentSettingAssertion.assertSystemPromptValue(prompt.content!);
       },
     );
   },

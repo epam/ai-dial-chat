@@ -1,8 +1,10 @@
-import { useId, useRef } from 'react';
+import { MouseEvent, useCallback, useId, useRef } from 'react';
 
 import { ModalState } from '@/src/types/modal';
 
-import Modal from '@/src/components/Common/Modal';
+import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
+
+import { Modal } from '@/src/components/Common/Modal';
 
 interface Props {
   isOpen: boolean;
@@ -11,7 +13,8 @@ interface Props {
   confirmLabel: string;
   cancelLabel?: string | null;
   headingClassName?: string;
-  onClose: (result: boolean) => void;
+  showHeadingTooltip?: boolean;
+  onClose: (isConfirmed: boolean) => void;
 }
 
 export const ConfirmDialog = ({
@@ -22,10 +25,27 @@ export const ConfirmDialog = ({
   cancelLabel,
   isOpen,
   onClose,
+  showHeadingTooltip,
 }: Props) => {
   const confirmLabelRef = useRef<HTMLButtonElement>(null);
 
   const descriptionId = useId();
+
+  const handleConfirm = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      onClose(true);
+    },
+    [onClose],
+  );
+
+  const handleCancel = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      onClose(false);
+    },
+    [onClose],
+  );
 
   return (
     <Modal
@@ -33,11 +53,12 @@ export const ConfirmDialog = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="confirmation-dialog"
-      containerClassName="inline-block w-full min-w-[90%] p-6 text-center md:min-w-[300px] md:max-w-[500px]"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 text-center md:min-w-[300px] md:max-w-[500px]"
+      dismissProps={DISALLOW_INTERACTIONS}
       hideClose
       heading={heading}
       headingClassName={headingClassName}
+      showHeadingTooltip={showHeadingTooltip}
     >
       <div className="flex flex-col justify-between gap-4">
         <div className="flex w-full flex-col gap-2 text-start">
@@ -46,7 +67,7 @@ export const ConfirmDialog = ({
               <p
                 id={descriptionId}
                 data-qa="confirm-message"
-                className="whitespace-pre-wrap text-secondary"
+                className="whitespace-pre-wrap break-words text-secondary"
               >
                 {description}
               </p>
@@ -56,20 +77,20 @@ export const ConfirmDialog = ({
         <div className="flex w-full items-center justify-end gap-3">
           {cancelLabel && (
             <button
+              data-no-context-menu
               className="button button-secondary"
-              onClick={() => {
-                onClose(false);
-              }}
+              onClick={handleCancel}
               data-qa="cancel-dialog"
             >
               {cancelLabel}
             </button>
           )}
           <button
+            data-no-context-menu
             ref={confirmLabelRef}
             autoFocus
             className="button button-primary"
-            onClick={() => onClose(true)}
+            onClick={handleConfirm}
             data-qa="confirm"
           >
             {confirmLabel}

@@ -1,38 +1,44 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
   PostMessageEventParams,
   PostMessageRequestParams,
 } from '@/src/utils/app/overlay';
 
-import { RootState } from '../index';
+import { OverlayState } from './overlay.types';
 
 import {
   ChatOverlayOptions,
+  CreateConversationRequest,
+  CreatePlaybackConversationRequest,
+  DeleteConversationRequest,
+  DeleteMessageRequest,
+  ExportConversationRequest,
+  ImportConversationRequest,
+  MessageButtons,
+  MessageCustomButtonEventResponse,
+  NextMessagePlaybackEventResponse,
   OverlayEvents,
   OverlayRequests,
+  PrevMessagePlaybackEventResponse,
+  RenameConversationRequest,
+  SelectConversationRequest,
+  SendMessageRequest,
+  SetSystemPromptRequest,
+  UpdateMessageRequest,
 } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
 
-export interface SendMessageOptions {
-  content: string;
-}
-
-export interface SetSystemPromptOptions {
-  systemPrompt: string;
-}
-
-interface OverlayState {
-  hostDomain: string;
-
-  systemPrompt: string | null;
-}
-
 const initialState: OverlayState = {
+  _savedOverlayOptions: undefined,
   hostDomain: '*',
+  customMessageButtons: [],
 
   systemPrompt: null,
+  validationUserEmail: null,
+  newConversationsFolder: null,
+  readyToInteractSent: false,
 };
 
 export const overlaySlice = createSlice({
@@ -41,31 +47,126 @@ export const overlaySlice = createSlice({
   reducers: {
     getMessages: (state, _action: PayloadAction<WithRequestId<object>>) =>
       state,
+    getConversations: (state, _action: PayloadAction<WithRequestId<object>>) =>
+      state,
+    getSelectedConversations: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
+    setSystemPrompt: (
+      state,
+      { payload }: PayloadAction<WithRequestId<SetSystemPromptRequest>>,
+    ) => {
+      state.systemPrompt = payload.systemPrompt;
+    },
+    selectConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<SelectConversationRequest>>,
+    ) => state,
+    deleteConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteConversationRequest>>,
+    ) => state,
+    renameConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<RenameConversationRequest>>,
+    ) => state,
+    renameConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<RenameConversationRequest>>,
+    ) => state,
+    createPlaybackConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<CreatePlaybackConversationRequest>>,
+    ) => state,
+    createPlaybackConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<CreatePlaybackConversationRequest>>,
+    ) => state,
+    stopSelectedPlaybackConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
+    stopSelectedPlaybackConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
+    exportConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<ExportConversationRequest>>,
+    ) => state,
+    importConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<ImportConversationRequest>>,
+    ) => state,
+    importConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<ImportConversationRequest>>,
+    ) => state,
+    createConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<CreateConversationRequest>>,
+    ) => state,
+    createConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<CreateConversationRequest>>,
+    ) => state,
+    createLocalConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
+    createLocalConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<object>>,
+    ) => state,
     setOverlayOptions: (
       state,
       { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
       state.hostDomain = payload.hostDomain;
+      state.newConversationsFolder = payload.newConversationsFolderId ?? null;
     },
     setOverlayOptionsSuccess: (
       state,
-      _action: PayloadAction<WithRequestId<{ hostDomain: string }>>,
-    ) => state,
+      _action: PayloadAction<WithRequestId<ChatOverlayOptions>>,
+    ) => {
+      state._savedOverlayOptions = _action.payload;
+      state.optionsReceived = true;
+    },
     signInOptionsSet: (
       state,
       _action: PayloadAction<{
         signInOptions: ChatOverlayOptions['signInOptions'];
       }>,
     ) => state,
-    setSystemPrompt: (
-      state,
-      { payload }: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
-    ) => {
-      state.systemPrompt = payload.systemPrompt;
-    },
+
     sendMessage: (
       state,
-      _action: PayloadAction<WithRequestId<SendMessageOptions>>,
+      _action: PayloadAction<WithRequestId<SendMessageRequest>>,
+    ) => state,
+    sendPrevPlaybackEvent: (
+      state,
+      _action: PayloadAction<PrevMessagePlaybackEventResponse>,
+    ) => state,
+    sendNextPlaybackEvent: (
+      state,
+      _action: PayloadAction<NextMessagePlaybackEventResponse>,
+    ) => state,
+    deleteMessage: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
+    ) => state,
+    deleteMessageEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<DeleteMessageRequest>>,
+    ) => state,
+    updateMessage: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
+    ) => state,
+    updateMessageEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<UpdateMessageRequest>>,
     ) => state,
     sendPMEvent: (
       state,
@@ -81,22 +182,27 @@ export const overlaySlice = createSlice({
         requestParams: PostMessageRequestParams;
       }>,
     ) => state,
+    checkReadyToInteract: (state) => state,
+    sendReadyToInteract: (state) => {
+      state.readyToInteractSent = true;
+    },
+    setCustomMessages: (
+      state,
+      { payload }: PayloadAction<MessageButtons[]>,
+    ) => {
+      state.customMessageButtons = payload;
+    },
+    setValidationUserEmail: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.validationUserEmail = payload;
+    },
+    sendCustomMessageEvent: (
+      state,
+      _action: PayloadAction<MessageCustomButtonEventResponse>,
+    ) => state,
   },
 });
-
-const rootSelector = (state: RootState): OverlayState => state.overlay;
-
-const selectHostDomain = createSelector([rootSelector], (state) => {
-  return state.hostDomain;
-});
-
-const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
-  return state.systemPrompt;
-});
-
-export const OverlaySelectors = {
-  selectHostDomain,
-  selectOverlaySystemPrompt,
-};
 
 export const OverlayActions = overlaySlice.actions;

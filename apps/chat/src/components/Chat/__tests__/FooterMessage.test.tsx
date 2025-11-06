@@ -3,13 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { SettingsSelectors } from '@/src/store/selectors';
 
-import {
-  FooterMessage,
-  reportAnIssueHash,
-  requestApiKeyHash,
-} from '@/src/components/Common/FooterMessage';
+import { reportAnIssueHash, requestApiKeyHash } from '@/src/constants/footer';
+
+import { FooterMessage } from '@/src/components/Common/FooterMessage';
+import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -20,15 +19,25 @@ const footerEnabledFeatures = new Set([
   Feature.ReportAnIssue,
 ]);
 
+const FooterWithSystemDialogs = () => (
+  <>
+    <FooterMessage />
+    <SystemDialogs />
+  </>
+);
+
 vi.mock('@/src/store/hooks', () => ({
   useAppSelector: vi.fn((selector) => selector()),
   useAppDispatch: vi.fn((action) => action),
 }));
 
-vi.mock('@/src/store/settings/settings.reducers', () => ({
+vi.mock('@/src/store/selectors', () => ({
   SettingsSelectors: {
     selectFooterHtmlMessage: vi.fn(() => footerHtmlMessage),
     selectEnabledFeatures: vi.fn(() => footerEnabledFeatures),
+    isFeatureEnabled: vi.fn((_, feature: Feature) => {
+      return footerEnabledFeatures.has(feature);
+    }),
   },
 }));
 
@@ -39,12 +48,11 @@ interface DialogProps {
 
 function makeMockDialog(dataTestId: string) {
   // eslint-disable-next-line react/display-name
-  return ({ isOpen, onClose }: DialogProps) =>
-    isOpen ? (
-      <div data-qa={dataTestId}>
-        <button onClick={onClose}>Close</button>
-      </div>
-    ) : null;
+  return ({ onClose }: DialogProps) => (
+    <div data-qa={dataTestId}>
+      <button onClick={onClose}>Close</button>
+    </div>
+  );
 }
 const reportIssueDialogTestId = 'reportIssueDialog';
 const requestAPIKeyDialogTestId = 'requestAPIKeyDialog';
@@ -67,10 +75,13 @@ describe('FooterMessage', () => {
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
       footerEnabledFeatures,
     );
+    vi.mocked(SettingsSelectors.isFeatureEnabled).mockImplementation(
+      (_, feature) => footerEnabledFeatures.has(feature),
+    );
   });
 
   it('renders footerHtmlMessage properly', async () => {
-    render(<FooterMessage />);
+    render(<FooterWithSystemDialogs />);
 
     const textElement = screen.getByTestId('test');
     const reportAnIssueLink = screen.getByTestId('reportAnIssue');
@@ -83,19 +94,30 @@ describe('FooterMessage', () => {
   });
 
   it('renders nothing when footer feature is disabled', async () => {
+    const footerFeatures = new Set([
+      Feature.RequestApiKey,
+      Feature.ReportAnIssue,
+    ]);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
-      new Set([Feature.RequestApiKey, Feature.ReportAnIssue]),
+      footerFeatures,
     );
-    const { container } = await render(<FooterMessage />);
+    vi.mocked(SettingsSelectors.isFeatureEnabled).mockImplementation(
+      (_, feature) => footerFeatures.has(feature),
+    );
+    const { container } = await render(<FooterWithSystemDialogs />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('does not open the request api key dialog if this option is disabled', async () => {
+    const footerFeatures = new Set([Feature.Footer, Feature.ReportAnIssue]);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
-      new Set([Feature.Footer, Feature.ReportAnIssue]),
+      footerFeatures,
     );
-    await render(<FooterMessage />);
+    vi.mocked(SettingsSelectors.isFeatureEnabled).mockImplementation(
+      (_, feature) => footerFeatures.has(feature),
+    );
+    await render(<FooterWithSystemDialogs />);
     const requestApiKeyLink = screen.getByTestId('requestApiKey');
 
     await userEvent.click(requestApiKeyLink);
@@ -106,7 +128,7 @@ describe('FooterMessage', () => {
   });
 
   it('opens the request api key dialog and closes it by executing onClose', async () => {
-    await render(<FooterMessage />);
+    await render(<FooterWithSystemDialogs />);
     const requestApiKeyLink = screen.getByTestId('requestApiKey');
 
     await userEvent.click(requestApiKeyLink);
@@ -123,10 +145,14 @@ describe('FooterMessage', () => {
   });
 
   it('does not open the request an issue dialog if this option is disabled', async () => {
+    const footerFeatures = new Set([Feature.Footer, Feature.RequestApiKey]);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
-      new Set([Feature.Footer, Feature.RequestApiKey]),
+      footerFeatures,
     );
-    render(<FooterMessage />);
+    vi.mocked(SettingsSelectors.isFeatureEnabled).mockImplementation(
+      (_, feature) => footerFeatures.has(feature),
+    );
+    render(<FooterWithSystemDialogs />);
     const reportAnIssueLink = screen.getByTestId('reportAnIssue');
 
     await userEvent.click(reportAnIssueLink);
@@ -137,7 +163,7 @@ describe('FooterMessage', () => {
   });
 
   it('opens the request an issue dialog and closes it by executing onClose', async () => {
-    render(<FooterMessage />);
+    render(<FooterWithSystemDialogs />);
     const reportAnIssueLink = screen.getByTestId('reportAnIssue');
 
     await userEvent.click(reportAnIssueLink);

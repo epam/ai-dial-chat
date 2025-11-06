@@ -4,43 +4,27 @@ import {
   FC,
   FormEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ModalState } from '@/src/types/modal';
-import { RequestAPIKeyBody } from '@/src/types/request-api-key';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { ServiceActions, UIActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ServiceSelectors } from '@/src/store/selectors';
 
-import { errorsMessages } from '@/src/constants/errors';
-
-import Modal from '@/src/components/Common/Modal';
-
-import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-const requestApiKey = async (
-  fields: Omit<RequestAPIKeyBody, 'requester_email'>,
-) => {
-  const controller = new AbortController();
-  return await fetch('api/request-api-key', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    signal: controller.signal,
-    body: JSON.stringify(fields),
-  });
-};
+import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
+import { Modal } from '@/src/components/Common/Modal';
 
 function transformDateString(dateString: string): string {
   const dateParts = dateString.split('-');
@@ -52,14 +36,17 @@ function transformDateString(dateString: string): string {
 }
 
 interface Props {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
+export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
   const { t } = useTranslation(Translation.Settings);
 
   const dispatch = useAppDispatch();
+
+  const isSuccessfullySent = useAppSelector(
+    ServiceSelectors.selectIsSuccessfullySent,
+  );
 
   const projectNameInputRef = useRef<HTMLInputElement>(null);
   const streamNameInputRef = useRef<HTMLInputElement>(null);
@@ -148,6 +135,20 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     setLocalAgreement(e.target.checked);
   };
 
+  useEffect(() => {
+    if (isSuccessfullySent) {
+      dispatch(ServiceActions.resetIsSuccessfullySent());
+
+      setScenario('');
+      setBusinessJustification('');
+      setProjectEndDate('');
+      setProjectName('');
+      setTechLeadEmail('');
+      setStreamName('');
+      setCost('');
+    }
+  }, [isSuccessfullySent, dispatch]);
+
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -170,39 +171,18 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
         dispatch(
           UIActions.showLoadingToast(t('Requesting API key in progress...')),
         );
+        dispatch(
+          ServiceActions.requestApiKey({
+            access_scenario: scenario,
+            business_reason: businessJustification,
+            project_end: transformDateString(projectEndDate),
+            project_id: projectName,
+            project_lead: techLeadEmail,
+            project_stream: streamName,
+            workload_pattern: cost,
+          }),
+        );
         handleClose();
-
-        const response = await requestApiKey({
-          access_scenario: scenario,
-          business_reason: businessJustification,
-          project_end: transformDateString(projectEndDate),
-          project_id: projectName,
-          project_lead: techLeadEmail,
-          project_stream: streamName,
-          workload_pattern: cost,
-        });
-
-        if (response.ok) {
-          setScenario('');
-          setBusinessJustification('');
-          setProjectEndDate('');
-          setProjectName('');
-          setTechLeadEmail('');
-          setStreamName('');
-          setCost('');
-
-          dispatch(
-            UIActions.showSuccessToast(t('API Key requested succesfully')),
-          );
-        } else {
-          dispatch(
-            UIActions.showErrorToast(
-              t(errorsMessages.generalServer, {
-                ns: 'common',
-              }),
-            ),
-          );
-        }
       }
     },
     [
@@ -233,7 +213,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     <Modal
       initialFocus={projectNameInputRef}
       portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={handleClose}
       dataQa="request-api-key-dialog"
       overlayClassName="fixed inset-0"
@@ -378,9 +358,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           htmlFor="projectEndDateInput"
         >
           <span>5.</span>
-          <span className="ml-1">
-            {t('End date of the project (YYYY-MM-DD)')}
-          </span>
+          <span className="ml-1">{t('End date of the project')}</span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <input

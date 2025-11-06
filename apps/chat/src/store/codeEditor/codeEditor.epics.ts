@@ -1,0 +1,263 @@
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  concat,
+  iif,
+  map,
+  mergeMap,
+  of,
+  switchMap,
+} from 'rxjs';
+
+import { combineEpics, ofType } from 'redux-observable';
+
+import { FileService } from '@/src/utils/app/data/file-service';
+import { TextFileService } from '@/src/utils/app/data/text-file-service';
+import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { translate } from '@/src/utils/app/translation';
+
+import { AppAction, AppEpic } from '@/src/types/store';
+
+import {
+  CodeEditorActions,
+  FilesActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  CodeEditorSelectors,
+  FilesSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
+
+import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+
+import intersectionWith from 'lodash-es/intersectionWith';
+
+const initCodeEditorEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(CodeEditorActions.initCodeEditor.type),
+    switchMap(({ payload }) => {
+      const sourceFolderId = `${payload.sourcesFolderId}${payload.sourcesFolderId.endsWith('/') ? '' : '/'}`;
+
+      const folderFiles = FilesSelectors.selectFiles(state$.value).filter(
+        (file) => file.id.startsWith(sourceFolderId),
+      );
+      const rootFiles = FilesSelectors.selectFiles(state$.value).filter(
+        (file) => file.folderId === payload.sourcesFolderId,
+      );
+
+      if (folderFiles.length) {
+        const appFile = rootFiles.find(
+          (file) => file.name === CODEAPPS_REQUIRED_FILES.APP && !file.status,
+        );
+
+        if (appFile) {
+          return of(CodeEditorActions.setSelectedFileId(appFile.id));
+        } else {
+          return of(CodeEditorActions.setSelectedFileId(folderFiles[0].id));
+        }
+      }
+
+      return of(CodeEditorActions.setSelectedFileId(undefined));
+    }),
+  );
+
+const getFileTextContentEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(CodeEditorActions.getFileTextContent.type),
+    switchMap(({ payload }) => {
+      return TextFileService.getFileContent(payload.id).pipe(
+        map((content) => {
+          return CodeEditorActions.getFileTextContentSuccess({
+            id: payload.id,
+            content,
+          });
+        }),
+        catchError((error) => {
+          console.error(error);
+          return concat(
+            of(
+              UIActions.showErrorToast(
+                translate('File content request failed'),
+              ),
+            ),
+            of(CodeEditorActions.getFileTextContentFail()),
+          );
+        }),
+      );
+    }),
+  );
+
+const setSelectedFileEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(CodeEditorActions.setSelectedFileId.type),
+    switchMap(({ payload }) => {
+      if (!payload) {
+        return EMPTY;
+      }
+
+      const filesContent = CodeEditorSelectors.selectFilesContent(state$.value);
+      if (filesContent.some((file) => file.id === payload)) {
+        return EMPTY;
+      }
+
+      return of(CodeEditorActions.getFileTextContent({ id: payload }));
+    }),
+  );
+
+const deleteFileEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(CodeEditorActions.deleteFile.type),
+    switchMap(({ payload }) => {
+      const file = FilesSelectors.selectFileById(state$.value, payload.id);
+
+      if (!file?.serverSynced) {
+        return concat(
+          of(
+            FilesActions.uploadFileCancel({
+              id: payload.id,
+            }),
+          ),
+          of(
+            FilesActions.deleteFileSuccess({
+              fileId: payload.id,
+            }),
+          ),
+        );
+      }
+
+      return FileService.deleteFile(payload.id).pipe(
+        switchMap(() => {
+          const actions: Observable<AppAction>[] = [];
+          const filesContent = CodeEditorSelectors.selectFilesContent(
+            state$.value,
+          ).filter((file) => file.id !== payload.id);
+          const customLogo = UISelectors.selectCustomLogo(state$.value);
+
+          if (filesContent.length) {
+            actions.push(
+              of(CodeEditorActions.setSelectedFileId(filesContent[0].id)),
+            );
+          } else {
+            const childFiles = FilesSelectors.selectFiles(state$.value).filter(
+              (file) =>
+                file.id.startsWith(`${payload.sourcesFolderId}/`) &&
+                file.id !== payload.id,
+            );
+
+            actions.push(
+              of(
+                CodeEditorActions.setSelectedFileId(
+                  childFiles.length ? childFiles[0].id : undefined,
+                ),
+              ),
+            );
+          }
+
+          return concat(
+            iif(
+              () => !!customLogo && customLogo === payload.id,
+              of(UIActions.deleteCustomLogo()),
+              EMPTY,
+            ),
+            of(
+              FilesActions.deleteFileSuccess({
+                fileId: payload.id,
+              }),
+            ),
+            of(
+              CodeEditorActions.deleteFileSuccess({
+                id: payload.id,
+              }),
+            ),
+            ...actions,
+          );
+        }),
+        catchError(() => {
+          return of(
+            FilesActions.deleteFileFail({
+              fileName: file.name,
+            }),
+          );
+        }),
+      );
+    }),
+  );
+
+const updateFileContentEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(CodeEditorActions.updateFileContent.type),
+    mergeMap(({ payload }) => {
+      const file = FilesSelectors.selectFileById(state$.value, payload.id);
+
+      if (!file) {
+        return EMPTY;
+      }
+
+      const { bucket } = splitEntityId(file.id);
+      return TextFileService.updateContent({
+        relativePath:
+          file.relativePath ?? getIdWithoutRootPathSegments(file.id),
+        fileName: file.name,
+        content: payload.content,
+        contentType: file.contentType,
+        bucket,
+      }).pipe(
+        switchMap(({ success }) => {
+          if (success) {
+            return of(
+              CodeEditorActions.updateFileContentSuccess({
+                id: payload.id,
+                content: payload.content,
+              }),
+            );
+          }
+
+          return EMPTY;
+        }),
+        catchError((error) => {
+          console.error(error);
+          return of(
+            UIActions.showErrorToast(translate('File content update failed')),
+          );
+        }),
+      );
+    }),
+  );
+
+const saveAllModifiedFilesEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(CodeEditorActions.saveAllModifiedFiles.type),
+    switchMap(() => {
+      const modifiedFileIds = CodeEditorSelectors.selectModifiedFileIds(
+        state$.value,
+      );
+      const filesContent = CodeEditorSelectors.selectFilesContent(state$.value);
+
+      const changedFiles = intersectionWith(
+        filesContent,
+        modifiedFileIds,
+        (file, id) => file.id === id,
+      );
+
+      return concat(
+        changedFiles.map((file) =>
+          CodeEditorActions.updateFileContent({
+            id: file.id,
+            content: file.modifiedContent ?? file.content,
+          }),
+        ),
+      );
+    }),
+  );
+
+export const CodeEditorEpics = combineEpics(
+  initCodeEditorEpic,
+  getFileTextContentEpic,
+  setSelectedFileEpic,
+  deleteFileEpic,
+  updateFileContentEpic,
+  saveAllModifiedFilesEpic,
+);

@@ -1,5 +1,8 @@
 import { JWT } from 'next-auth/jwt';
 
+import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { mergeFeatures } from '@/src/utils/app/models';
+
 import { EntityType } from '@/src/types/common';
 import {
   CoreAIEntity,
@@ -13,10 +16,11 @@ import {
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
 
+import { ApiUtils } from './api';
 import { getEntities } from './get-entities';
 import { logger } from './logger';
 
-import { TiktokenEncoding } from '@dqbd/tiktoken';
+import { TiktokenEncoding } from 'tiktoken';
 
 const getTiktokenEncoding = (
   tokenizerModel: TokenizerModel,
@@ -44,24 +48,18 @@ const getTokensPerMessage = (
 };
 
 async function getAllEntities(accessToken: string, jobTitle: string) {
-  const [modelsResult, applicationsResult, assistantsResult] =
-    await Promise.allSettled([
-      getEntities<CoreAIEntity<EntityType.Model>[]>(
-        EntityType.Model,
-        accessToken,
-        jobTitle,
-      ),
-      getEntities<CoreAIEntity<EntityType.Application>[]>(
-        EntityType.Application,
-        accessToken,
-        jobTitle,
-      ),
-      getEntities<CoreAIEntity<EntityType.Assistant>[]>(
-        EntityType.Assistant,
-        accessToken,
-        jobTitle,
-      ),
-    ]);
+  const [modelsResult, applicationsResult] = await Promise.allSettled([
+    getEntities<CoreAIEntity<EntityType.Model>[]>(
+      EntityType.Model,
+      accessToken,
+      jobTitle,
+    ),
+    getEntities<CoreAIEntity<EntityType.Application>[]>(
+      EntityType.Application,
+      accessToken,
+      jobTitle,
+    ),
+  ]);
 
   const models: CoreAIEntity<EntityType.Model>[] =
     modelsResult.status === 'fulfilled'
@@ -73,29 +71,24 @@ async function getAllEntities(accessToken: string, jobTitle: string) {
       ? applicationsResult.value
       : (logger.error(applicationsResult.reason), []);
 
-  const assistants: CoreAIEntity<EntityType.Assistant>[] =
-    assistantsResult.status === 'fulfilled'
-      ? assistantsResult.value
-      : (logger.error(assistantsResult.reason), []);
-
-  return { models, applications, assistants };
+  return { models, applications };
 }
+
+const fixDate = (date: number) => (date === 1672534800 ? 1740006000000 : date); // 1/20/1970 -> 2/20/2025
 
 export const getSortedEntities = async (token: JWT | null) => {
   const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const { models, applications, assistants } = await getAllEntities(
-    accessToken,
-    jobTitle,
-  );
+  const { models, applications } = await getAllEntities(accessToken, jobTitle);
 
-  const preProcessedEntities = [...models, ...applications, ...assistants];
-  let defaultModelId = preProcessedEntities.find(
-    (model) => model.id === DEFAULT_MODEL_ID,
-  )?.id;
+  const preProcessedEntities = [...models, ...applications];
+  let defaultModelReference = preProcessedEntities.find(
+    (model) =>
+      model.reference === DEFAULT_MODEL_ID || model.id === DEFAULT_MODEL_ID,
+  )?.reference;
 
-  for (const entity of [...models, ...applications, ...assistants]) {
+  for (const entity of preProcessedEntities) {
     if (
       entity.capabilities?.embeddings ||
       (entity.object === EntityType.Model &&
@@ -104,12 +97,12 @@ export const getSortedEntities = async (token: JWT | null) => {
       continue;
     }
 
-    if (!defaultModelId) {
+    if (!defaultModelReference) {
       logger.warn(
         undefined,
         `Cannot find default model id("${DEFAULT_MODEL_ID}") in models listing. Recheck config for models in Core or change default model id to existing model.`,
       );
-      defaultModelId = entity.id;
+      defaultModelReference = entity.reference;
     }
 
     let maxRequestTokens;
@@ -146,14 +139,22 @@ export const getSortedEntities = async (token: JWT | null) => {
     }
 
     entities.push({
-      id: entity.id,
+      id: ApiUtils.decodeApiUrl(entity.id),
+      reference: entity.reference,
       name: entity.display_name ?? entity.id,
-      isDefault: defaultModelId === entity.id,
+      isDefault: defaultModelReference === entity.reference,
       version: entity.display_version,
       description: entity.description,
-      iconUrl: entity.icon_url,
+      updatedAt: fixDate(entity.updated_at),
+      createdAt: fixDate(entity.created_at),
+      owner: entity.owner,
+      iconUrl:
+        entity.icon_url && !isAbsoluteUrl(entity.icon_url)
+          ? ApiUtils.decodeApiUrl(entity.icon_url)
+          : entity.icon_url,
       type: entity.object,
-      selectedAddons: entity.addons,
+      topics: entity.description_keywords,
+      applicationTypeSchemaId: entity.application_type_schema_id,
       limits:
         maxRequestTokens && maxResponseTokens && maxTotalTokens
           ? {
@@ -164,17 +165,18 @@ export const getSortedEntities = async (token: JWT | null) => {
                 typeof entity.limits?.max_prompt_tokens === 'undefined',
             }
           : undefined,
-      features: entity.features && {
-        systemPrompt: entity.features.system_prompt || false,
-        truncatePrompt: entity.features.truncate_prompt || false,
-        urlAttachments: entity.features.url_attachments || false,
-      },
+      features: mergeFeatures(entity.features),
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
       tokenizer: entity.tokenizer_model && {
         encoding: getTiktokenEncoding(entity.tokenizer_model),
         tokensPerMessage: getTokensPerMessage(entity.tokenizer_model),
       },
+      ...(entity.function && {
+        functionStatus: entity.function?.status,
+      }),
+      ...(entity.viewer_url && { viewerUrl: entity.viewer_url }),
+      ...(entity.editor_url && { editorUrl: entity.editor_url }),
     });
   }
 

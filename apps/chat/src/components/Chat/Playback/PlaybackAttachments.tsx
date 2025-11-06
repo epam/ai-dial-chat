@@ -1,11 +1,12 @@
 import {
   getDialFilesFromAttachments,
+  getDialFoldersFromAttachments,
   getDialLinksFromAttachments,
 } from '@/src/utils/app/file';
 
-import { Attachment } from '@/src/types/chat';
+import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 
-import { ChatInputAttachments } from '../ChatInput/ChatInputAttachments';
+import { Attachment } from '@epam/ai-dial-shared';
 
 interface PlaybackAttachmentsProps {
   attachments: Attachment[];
@@ -13,12 +14,13 @@ interface PlaybackAttachmentsProps {
 
 export function PlaybackAttachments({ attachments }: PlaybackAttachmentsProps) {
   const files = getDialFilesFromAttachments(attachments);
+  const folders = getDialFoldersFromAttachments(attachments);
   const links = getDialLinksFromAttachments(attachments);
 
   return (
-    <div className="relative rounded">
+    <div className="relative rounded" data-qa="attachment-container">
       <div className="flex max-h-[100px] flex-col gap-1 overflow-auto pt-3 md:grid md:grid-cols-3">
-        <ChatInputAttachments files={files} links={links} />
+        <ChatInputAttachments files={files} folders={folders} links={links} />
       </div>
     </div>
   );

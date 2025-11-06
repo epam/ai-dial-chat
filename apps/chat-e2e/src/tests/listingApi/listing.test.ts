@@ -1,38 +1,27 @@
 import test, { skipReason } from '@/src/core/baseFixtures';
-import { AddonIds, ExpectedMessages, ModelIds } from '@/src/testData';
+import { Entity, ExpectedMessages } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
+const expectedModels = process.env.MODELS_LIST_FOR_TESTS
+  ? (JSON.parse(process.env.MODELS_LIST_FOR_TESTS) as Entity[])
+  : [];
+
 test('Models API listing', async () => {
-  test.skip(process.env.E2E_HOST === undefined, skipReason);
-  const models = ModelsUtil.getModels();
-  const expectedModels = Object.values(ModelIds);
+  test.skip(process.env.MODELS_LIST_FOR_TESTS === undefined, skipReason);
+  const models = ModelsUtil.getModels(false);
 
   expect
     .soft(models.length, ExpectedMessages.entitiesCountIsValid)
     .toBe(expectedModels.length);
 
   expectedModels.forEach((model) => {
-    const actualModel = ModelsUtil.getModel(model);
+    const actualModel = ModelsUtil.getModel(model.entityId);
     expect
-      .soft(actualModel, `${model}: ${ExpectedMessages.modelIsAvailable}`)
-      .toBeDefined();
-  });
-});
-
-test('Addons API listing', async () => {
-  test.skip(process.env.E2E_HOST === undefined, skipReason);
-  const addons = ModelsUtil.getAddons();
-  const expectedAddons = Object.values(AddonIds);
-
-  expect
-    .soft(addons.length, ExpectedMessages.entitiesCountIsValid)
-    .toBe(expectedAddons.length);
-
-  expectedAddons.forEach((addon) => {
-    const actualAddon = ModelsUtil.getAddon(addon);
-    expect
-      .soft(actualAddon, `${addon}: ${ExpectedMessages.addonIsAvailable}`)
+      .soft(
+        actualModel,
+        `${model.entityId}: ${ExpectedMessages.modelIsAvailable}`,
+      )
       .toBeDefined();
   });
 });

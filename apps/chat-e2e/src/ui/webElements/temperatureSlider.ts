@@ -1,23 +1,28 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsModalSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Locator, Page } from '@playwright/test';
 
 export class TemperatureSlider extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.temperatureSlider, parentLocator);
+    super(page, ChatSettingsModalSelectors.temperatureSlider, parentLocator);
   }
-  public slider = this.getChildElementBySelector(ChatSelectors.slider);
+  public slider = this.getChildElementBySelector(
+    ChatSettingsModalSelectors.slider,
+  );
 
   async getTemperature() {
     return this.slider.getElementContent();
   }
 
-  async setTemperature(temperature: number) {
+  async setTemperature(temperature: string | number) {
+    const numericTemperature =
+      typeof temperature === 'string' ? parseFloat(temperature) : temperature;
+
     await this.slider.scrollIntoElementView();
     const bounding = await this.slider.getElementBoundingBox();
     await this.page.mouse.move(
-      bounding!.x + bounding!.width! * temperature,
+      bounding!.x + bounding!.width! * numericTemperature,
       bounding!.y + bounding!.height! / 2,
     );
     await this.page.mouse.down();

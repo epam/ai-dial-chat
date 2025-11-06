@@ -1,11 +1,14 @@
 import { Observable } from 'rxjs';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
+import { BackendChatEntity, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { UIStorageKeys } from '@/src/types/storage';
 
 import { DataService } from './data-service';
 import { BrowserStorage } from './storages/browser-storage';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export class ConversationService {
   public static getConversationsFolders(
@@ -26,9 +29,13 @@ export class ConversationService {
     return DataService.getDataStorage().createConversation(conversation);
   }
 
+  public static moveConversation(moveModel: MoveModel): Observable<MoveModel> {
+    return DataService.getDataStorage().move(moveModel);
+  }
+
   public static updateConversation(
     conversation: Conversation,
-  ): Observable<void> {
+  ): Observable<ConversationInfo | void> {
     return DataService.getDataStorage().updateConversation(conversation);
   }
 
@@ -47,6 +54,16 @@ export class ConversationService {
     recursive?: boolean,
   ): Observable<ConversationInfo[]> {
     return DataService.getDataStorage().getConversations(path, recursive);
+  }
+
+  public static getMultipleFoldersConversations(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]> {
+    return DataService.getDataStorage().getMultipleFoldersConversations(
+      paths,
+      recursive,
+    );
   }
 
   // TODO: allow to pass only path, because it's hard to create full object every time
@@ -73,5 +90,11 @@ export class ConversationService {
       UIStorageKeys.SelectedConversationIds,
       selectedConversationsIds,
     );
+  }
+
+  public static getConversationMetadata(
+    id: string,
+  ): Observable<BackendChatEntity | null> {
+    return DataService.getDataStorage().getConversationMetadata(id);
   }
 }

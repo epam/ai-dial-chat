@@ -8,15 +8,28 @@ export const isApiStorageType =
 export const ExecutionResults = {
   allureReportPath: path.resolve(
     __dirname,
-    `../../${ResultFolder.allureReport}`,
+    `../../${ResultFolder.allureChatReport}`,
   ),
-  htmlReportPath: path.resolve(__dirname, `../../${ResultFolder.htmlReport}`),
+  allureOverlayReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.allureOverlayReport}`,
+  ),
+  chatHtmlReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.chatHtmlReport}`,
+  ),
+  overlayHtmlReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.overlayHtmlReport}`,
+  ),
   testResultsPath: path.resolve(__dirname, `../../${ResultFolder.testResults}`),
 };
 
 async function globalSetup() {
-  for (const path of Object.values(ExecutionResults)) {
-    FileUtil.deleteFolder(path);
+  if (process.env.NX_TASK_TARGET_TARGET === 'e2e:chat') {
+    for (const path of Object.values(ExecutionResults)) {
+      FileUtil.deleteFolder(path);
+    }
   }
 }
 

@@ -12,26 +12,55 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
+import {
+  ApiUtils,
+  getOpsApiUrl,
+  parseEntityApiKey,
+} from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { BackendResourceType, Entity } from '@/src/types/common';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
+import {
+  ApplicationInfo,
+  ApplicationLogsType,
+  CustomApplicationModel,
+  SimpleApplicationStatus,
+} from '@/src/types/applications';
+import { Conversation } from '@/src/types/chat';
+import {
+  BackendChatEntity,
+  BackendResourceType,
+  MoveModel,
+} from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { ServerSlugs } from '@/src/types/slugs-types';
 import { DialStorage } from '@/src/types/storage';
+import { ToolsetInfo, ToolsetModel } from '@/src/types/toolsets';
 
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
+import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
+import { ToolsetApiStorage } from './api/toolset-api-storage';
+
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 const MAX_RETRIES_COUNT = 3;
 
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
   private _promptApiStorage = new PromptApiStorage();
+  private _applicationApiStorage = new ApplicationApiStorage();
+  private _toolsetApiStorage = new ToolsetApiStorage();
 
   private tryCreateEntity<T extends Conversation | Prompt>(
     entity: T,
@@ -108,8 +137,22 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.getEntities(path, recursive);
   }
 
+  getMultipleFoldersConversations(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]> {
+    return this._conversationApiStorage.getMultipleFoldersEntities(
+      paths,
+      recursive,
+    );
+  }
+
   getConversation(info: ConversationInfo): Observable<Conversation | null> {
     return this._conversationApiStorage.getEntity(info);
+  }
+
+  getConversationMetadata(id: string): Observable<BackendChatEntity | null> {
+    return this._conversationApiStorage.getEntityMetadata(id);
   }
 
   createConversation(
@@ -138,7 +181,7 @@ export class ApiStorage implements DialStorage {
     );
   }
 
-  updateConversation(conversation: Conversation): Observable<void> {
+  updateConversation(conversation: Conversation): Observable<ConversationInfo> {
     return this._conversationApiStorage.updateEntity(conversation);
   }
 
@@ -173,8 +216,19 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getEntities(path, recursive);
   }
 
+  getMultipleFoldersPrompts(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<Prompt[]> {
+    return this._promptApiStorage.getMultipleFoldersEntities(paths, recursive);
+  }
+
   getPrompt(info: PromptInfo): Observable<Prompt | null> {
     return this._promptApiStorage.getEntity(info);
+  }
+
+  getPromptMetadata(id: string): Observable<BackendChatEntity | null> {
+    return this._promptApiStorage.getEntityMetadata(id);
   }
 
   createPrompt(prompt: Prompt): Observable<PromptInfo | null> {
@@ -197,7 +251,7 @@ export class ApiStorage implements DialStorage {
     );
   }
 
-  updatePrompt(prompt: Prompt): Observable<void> {
+  updatePrompt(prompt: Prompt): Observable<PromptInfo> {
     return this._promptApiStorage.updateEntity(prompt);
   }
 
@@ -220,5 +274,115 @@ export class ApiStorage implements DialStorage {
         ),
       ),
     );
+  }
+
+  move(data: MoveModel): Observable<MoveModel> {
+    return ApiUtils.request(getOpsApiUrl(ServerSlugs.RESOURCE_MOVE), {
+      method: HTTPMethod.POST,
+      body: JSON.stringify({
+        sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),
+        destinationUrl: ApiUtils.encodeApiUrl(data.destinationUrl),
+        overwrite: data.overwrite,
+      }),
+    });
+  }
+
+  createApplication(
+    application: CustomApplicationModel,
+    schema: ApiDetailedApplicationTypeSchema,
+  ): Observable<ApplicationInfo> {
+    return this._applicationApiStorage.createEntity(application, schema);
+  }
+
+  updateApplication(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<ApplicationInfo> {
+    return this._applicationApiStorage.updateEntity(application, schema);
+  }
+
+  getApplication(
+    applicationId: string,
+  ): Observable<CustomApplicationModel | null> {
+    return this._applicationApiStorage.getEntity({
+      id: applicationId,
+      folderId: '',
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
+    });
+  }
+
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]> {
+    return this._applicationApiStorage.getEntities(path, recursive);
+  }
+
+  deleteApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.deleteEntity({
+      id: applicationId,
+      folderId: '',
+      ...parseEntityApiKey(applicationId, { parseVersion: true }),
+    });
+  }
+
+  deployApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      SimpleApplicationStatus.DEPLOY,
+    );
+  }
+
+  redeployApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      SimpleApplicationStatus.REDEPLOY,
+    );
+  }
+
+  undeployApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      SimpleApplicationStatus.UNDEPLOY,
+    );
+  }
+
+  getApplicationLogs(path: string): Observable<ApplicationLogsType> {
+    return this._applicationApiStorage.getLogs(path);
+  }
+
+  getApplicationConfig(applicationId: string): Observable<MessageFormSchema> {
+    return this._applicationApiStorage.getConfigurationSchema(applicationId);
+  }
+
+  // Toolsets
+  getToolsetById(toolsetId: string): Observable<ToolsetModel | null> {
+    return this._toolsetApiStorage.getEntity({
+      id: toolsetId,
+      //TODO: add folderId to toolsets when folders for toolsets are implemented
+      folderId: '',
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
+    });
+  }
+
+  createToolset(data: ToolsetModel): Observable<ToolsetInfo> {
+    return this._toolsetApiStorage.createEntity(data);
+  }
+
+  updateToolset(data: ToolsetModel): Observable<ToolsetInfo> {
+    return this._toolsetApiStorage.updateEntity(data);
+  }
+
+  getToolsetsByPath(path: string): Observable<ToolsetInfo[]> {
+    return this._toolsetApiStorage.getEntities(path, true);
+  }
+
+  deleteToolset(toolsetId: string): Observable<void> {
+    return this._toolsetApiStorage.deleteEntity({
+      id: toolsetId,
+      //TODO: add folderId to toolsets when folders for toolsets are implemented
+      folderId: '',
+      ...parseEntityApiKey(toolsetId, { parseVersion: true }),
+    });
   }
 }

@@ -1,0 +1,64 @@
+import { ChatSelectors, ChatSettingsModalSelectors } from '../selectors';
+import { BaseElement } from './baseElement';
+
+import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
+import { PromptList } from '@/src/ui/webElements/promptList';
+import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
+import { Locator, Page } from '@playwright/test';
+
+export class AgentSettings extends BaseElement {
+  constructor(page: Page, parentLocator: Locator, index?: number) {
+    const elementLocator = new BaseElement(
+      page,
+      ChatSettingsModalSelectors.entitySettings,
+      parentLocator,
+    ).getNthElement(index ?? 1);
+    super(page, '', elementLocator);
+  }
+
+  public systemPromptContainer = this.getChildElementBySelector(
+    ChatSettingsModalSelectors.systemPromptContainer,
+  );
+  public systemPrompt = this.systemPromptContainer.getChildElementBySelector(
+    ChatSettingsModalSelectors.systemPrompt,
+  );
+  public systemPromptSpinner =
+    this.systemPromptContainer.getChildElementBySelector(
+      ChatSelectors.entitySpinner,
+    );
+
+  private temperatureSlider!: TemperatureSlider;
+  private promptList!: PromptList;
+
+  getPromptList() {
+    if (!this.promptList) {
+      this.promptList = new PromptList(this.page, this.rootLocator);
+    }
+    return this.promptList;
+  }
+
+  getTemperatureSlider(): TemperatureSlider {
+    if (!this.temperatureSlider) {
+      this.temperatureSlider = new TemperatureSlider(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.temperatureSlider;
+  }
+
+  public async setSystemPrompt(prompt: string) {
+    await this.systemPrompt.typeInInput(prompt);
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
+  }
+
+  public async clearAndSetSystemPrompt(prompt: string) {
+    await this.clearSystemPrompt();
+    await this.setSystemPrompt(prompt);
+  }
+
+  public async clearSystemPrompt() {
+    return this.systemPrompt.fillInInput('');
+  }
+}

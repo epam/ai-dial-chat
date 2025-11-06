@@ -1,70 +1,110 @@
-import { IconX } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
-import classNames from 'classnames';
+import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
+import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
-import { ApiUtils } from '@/src/utils/server/api';
-
-import { Translation } from '@/src/types/translation';
-
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
-import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
-import MoveRightIcon from '../../../public/images/icons/move-right.svg';
-import Tooltip from '../Common/Tooltip';
-import { SettingDialog } from '../Settings/SettingDialog';
-import { CreateNewChatMobile } from './CreateNewChatMobile';
+import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
+import {
+  DEFAULT_HEADER_ICON_SIZE,
+  OVERLAY_HEADER_ICON_SIZE,
+} from '@/src/constants/default-ui-settings';
+
+import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
+import { SettingDialog } from '@/src/components/Settings/SettingDialog';
+
+import { BaseHeader } from './BaseHeader';
+import { CreateNewConversation } from './CreateNewEntity';
 import { User } from './User/User';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
-import cssEscape from 'css.escape';
 
-const DEFAULT_HEADER_ICON_SIZE = 24;
-const OVERLAY_HEADER_ICON_SIZE = 18;
-
-const Header = () => {
+export const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-  const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
-  );
-  const customLogoUrl =
-    isCustomLogoFeatureEnabled &&
-    customLogo &&
-    `api/${ApiUtils.encodeApiUrl(customLogo)}`;
+
+  const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth;
+    }
+  });
+
+  const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
+  const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
 
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.SideBar);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
 
   const handleToggleChatbar = useCallback(() => {
-    if (!showChatbar && isSmallScreen()) {
+    if (!showChatbar && isTabletScreen()) {
       dispatch(UIActions.setShowPromptbar(false));
+    }
+
+    if (!showChatbar && isSmallScreen()) {
       dispatch(UIActions.setIsProfileOpen(false));
     }
+
+    if (!showChatbar && !isTabletScreen()) {
+      if (!windowWidth) return;
+      const calculatedChatWidth = centralChatWidth({
+        oppositeSidebarWidth: promptbarWidth,
+        windowWidth,
+        currentSidebarWidth: chatbarWidth,
+      });
+
+      if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
+        const newPromptbarWidth = getNewSidebarWidth({
+          windowWidth,
+          oppositeSidebarWidth: chatbarWidth,
+        });
+        dispatch(UIActions.setPromptbarWidth(newPromptbarWidth));
+      }
+    }
+
     dispatch(UIActions.setShowChatbar(!showChatbar));
-  }, [dispatch, showChatbar]);
+  }, [chatbarWidth, dispatch, promptbarWidth, showChatbar, windowWidth]);
 
   const handleTogglePromtbar = useCallback(() => {
-    if (!showPromptbar && isSmallScreen()) {
+    if (!showPromptbar && isTabletScreen()) {
       dispatch(UIActions.setShowChatbar(false));
+    }
+
+    if (!showPromptbar && isSmallScreen()) {
       dispatch(UIActions.setIsProfileOpen(false));
     }
+
+    if (!showPromptbar && !isTabletScreen()) {
+      if (!windowWidth) return;
+      const calculatedChatWidth = centralChatWidth({
+        oppositeSidebarWidth: chatbarWidth,
+        windowWidth,
+        currentSidebarWidth: promptbarWidth,
+      });
+
+      if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
+        const newChatbarWidth = getNewSidebarWidth({
+          windowWidth,
+          oppositeSidebarWidth: promptbarWidth,
+        });
+        dispatch(UIActions.setChatbarWidth(newChatbarWidth));
+      }
+    }
+
     dispatch(UIActions.setShowPromptbar(!showPromptbar));
-  }, [dispatch, showPromptbar]);
+  }, [chatbarWidth, dispatch, promptbarWidth, showPromptbar, windowWidth]);
 
   const onClose = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -74,98 +114,52 @@ const Header = () => {
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
+  const handleResize = useCallback(() => {
+    setWindowWidth(window.innerWidth);
+  }, []);
+  useWindowResizeEvent(handleResize);
+
   return (
-    <div
-      className={classNames(
-        'z-40 flex w-full border-b border-tertiary bg-layer-3',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
-      )}
-      data-qa="header"
-    >
-      {enabledFeatures.has(Feature.ConversationsSection) && (
-        <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
-          <div
-            className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
-            onClick={handleToggleChatbar}
-            data-qa="chat-panel-toggle"
-          >
-            {showChatbar ? (
-              <>
-                <IconX
-                  className="text-secondary md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-
-                <MoveLeftIcon
-                  className="text-secondary hover:text-accent-secondary max-md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-              </>
-            ) : (
-              <MoveRightIcon
-                className="text-secondary hover:text-accent-secondary"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-            )}
-          </div>
-        </Tooltip>
-      )}
-      {!enabledFeatures.has(Feature.HideNewConversation) && (
-        <CreateNewChatMobile iconSize={headerIconSize} />
-      )}
-      <div className="flex grow justify-between">
-        <span
-          className={classNames(
-            'min-w-[110px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
-            { 'bg-contain': customLogoUrl },
+    <BaseHeader
+      LeftItems={
+        <>
+          {enabledFeatures.has(Feature.ConversationsSection) && (
+            <ToggleSidebarButton
+              iconSize={headerIconSize}
+              tooltip="Conversation list"
+              isOpened={showChatbar}
+              onToggle={handleToggleChatbar}
+              dataQa="left-panel-toggle"
+              isOverlay={isOverlay}
+            />
           )}
-          style={{
-            backgroundImage: customLogoUrl
-              ? `url(${cssEscape(customLogoUrl)})`
-              : `var(--app-logo)`,
-          }}
-        ></span>
-        <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User />
-        </div>
-      </div>
-
-      {enabledFeatures.has(Feature.PromptsSection) && (
-        <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
-          <div
-            className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
-            onClick={handleTogglePromtbar}
-            data-qa="prompts-panel-toggle"
-          >
-            {showPromptbar ? (
-              <>
-                <IconX
-                  className="text-secondary md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-
-                <MoveRightIcon
-                  className="text-secondary hover:text-accent-tertiary max-md:hidden"
-                  width={headerIconSize}
-                  height={headerIconSize}
-                />
-              </>
-            ) : (
-              <MoveLeftIcon
-                className="text-secondary hover:text-accent-tertiary"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
-            )}
+          <div className="w-12 md:w-16">
+            {!enabledFeatures.has(Feature.HideNewConversation) &&
+              !showChatbar && (
+                <CreateNewConversation iconSize={headerIconSize} />
+              )}
           </div>
-        </Tooltip>
-      )}
-      <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-    </div>
+        </>
+      }
+      RightItems={
+        <>
+          <div className="flex w-[48px] items-center justify-center md:w-auto">
+            <User />
+          </div>
+          {enabledFeatures.has(Feature.PromptsSection) && (
+            <ToggleSidebarButton
+              iconSize={headerIconSize}
+              tooltip="Prompt list"
+              isOpened={showPromptbar}
+              onToggle={handleTogglePromtbar}
+              dataQa="right-panel-toggle"
+              rightSide
+              isOverlay={isOverlay}
+            />
+          )}
+          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+        </>
+      }
+    />
   );
-};
-export default Header;
+});

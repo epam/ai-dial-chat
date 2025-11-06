@@ -2,12 +2,13 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
-import { getApiHeaders } from '../../utils/server/get-headers';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
-import { RateBody } from '../../types/chat';
+import { RateBody } from '@/src/types/chat';
+import { HTTPMethod } from '@/src/types/http';
 
 import { DIAL_API_HOST } from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -24,7 +25,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { responseId, modelId, value, id } = req.body as RateBody;
+    const { responseId, modelId, value, id, reference } = req.body as RateBody;
 
     if (!id || !responseId || !modelId) {
       return res.status(400).send(errorsMessages[400]);
@@ -41,11 +42,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await fetch(url, {
       headers: getApiHeaders({
-        chatId: id,
+        chatReference: reference ?? id,
         jwt: token?.access_token as string,
         jobTitle: token?.jobTitle as string,
       }),
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         rate: value,
         responseId,

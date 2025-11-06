@@ -6,7 +6,7 @@ import { AttachmentToUpload } from '@/src/store/import-export/importExport.reduc
 
 import { constructPath, getNextFileName, triggerDownload } from './file';
 import {
-  currentDate,
+  getCurrentDate,
   getDownloadFileName,
   prepareConversationsForExport,
 } from './import-export';
@@ -23,7 +23,7 @@ interface GetZippedFile {
 const getAttachmentFromApi = async (file: DialFile) => {
   const path = encodeURI(constructPath(file.absolutePath, file.name));
 
-  const fileResult = await fetch(`api/${path}`);
+  const fileResult = await fetch(`/api/${path}`);
   return fileResult.blob();
 };
 
@@ -66,18 +66,18 @@ export const downloadExportZip = (content: string, fileName?: string) => {
   const downloadName = getDownloadFileName(fileName);
   triggerDownload(
     `data:application/zip;base64,${content}`,
-    `${downloadName}_chat_with_attachments_${currentDate()}.zip`,
+    `${downloadName}_chat_with_attachments_${getCurrentDate()}.dial`,
   );
 };
 
-export interface PreUnZipedHistory {
+export interface PreUnZippedHistory {
   zip: JSZip;
   history: JSZip.JSZipObject;
   res: { relativePath: string; zipEntry: JSZip.JSZipObject }[];
 }
 export async function importZippedHistory(zipFile: File) {
   const zip = await JSZip.loadAsync(zipFile);
-  const chatsLib = {} as PreUnZipedHistory;
+  const chatsLib = {} as PreUnZippedHistory;
   chatsLib.res = [];
   const regExpConversationsFolder = /^conversations\/*/;
   const regExpConversationsHistory = /\.json$/i;
@@ -121,13 +121,13 @@ const getFieldsFromZipName = (zipName: string) => {
 
 export const getUnZipAttachments = async ({
   attachments,
-  preUnzipedHistory,
+  preUnzippedHistory,
 }: {
   attachments: Partial<DialFile>[];
-  preUnzipedHistory: PreUnZipedHistory;
+  preUnzippedHistory: PreUnZippedHistory;
 }) => {
   const getAllAttachments = attachments.map(async (attachment) => {
-    const fileToUpload = preUnzipedHistory.res.find((file) => {
+    const fileToUpload = preUnzippedHistory.res.find((file) => {
       const fileId = file.relativePath.replace(/^res\//, '');
 
       if (!attachment.folderId) {
@@ -146,7 +146,7 @@ export const getUnZipAttachments = async ({
     }
 
     const { zipEntry } = fileToUpload;
-    const { zip } = preUnzipedHistory;
+    const { zip } = preUnzippedHistory;
     const file = zip.file(zipEntry.name);
 
     if (!file) {
@@ -214,7 +214,7 @@ export const updateAttachmentsNames = ({
       existingFiles.length &&
       existingFiles.some(({ name }) => name === attachment.name)
     ) {
-      const newName = getNextFileName(attachment.name, existingFiles);
+      const newName = getNextFileName(attachment.name, existingFiles, 0, true);
 
       const updatedAttachment = { ...attachment, name: newName };
 

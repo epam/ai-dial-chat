@@ -1,13 +1,30 @@
-import { Attachment, Conversation } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
-import { DialFile, DialLink } from '@/src/types/files';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
+import { translate } from '@/src/utils/app/translation';
+import { ApiUtils } from '@/src/utils/server/api';
+
+import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
+import {
+  DialFile,
+  DialLink,
+  FileFolderAttachment,
+  FileValidationErrors,
+} from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
-import { ApiUtils } from '../server/api';
-import { doesHaveDotsInTheEnd } from './common';
-import { getPathToFolderById } from './folders';
+import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
+import {
+  FOLDER_ATTACHMENT_CONTENT_TYPE,
+  METADATA_PREFIX,
+} from '@/src/constants/folders';
 
+import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import { isFolderId } from './shared-utils';
+
+import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
+import uniq from 'lodash-es/uniq';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -24,7 +41,8 @@ export function triggerDownload(url: string, name: string): void {
 export const constructPath = (
   ...values: (string | undefined | null)[]
 ): string => {
-  return values.filter(Boolean).join('/');
+  const path = values.filter(Boolean).join('/');
+  return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
 };
 
 export const getRelativePath = (
@@ -40,9 +58,10 @@ export const getFileName = (path: string | undefined): string | undefined => {
 
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
+  folders?: FolderInterface[],
   links?: DialLink[],
 ): { attachments: Attachment[] } | undefined => {
-  if (!files?.length && !links?.length) {
+  if (!files?.length && !links?.length && !folders?.length) {
     return undefined;
   }
 
@@ -60,6 +79,16 @@ export const getUserCustomContent = (
       }),
     );
 
+  const folderAttachments: Attachment[] | undefined = folders?.map(
+    (folder: FolderInterface) => ({
+      type: FOLDER_ATTACHMENT_CONTENT_TYPE,
+      title: folder.name ?? folder.id,
+      url: !folder.id.startsWith(METADATA_PREFIX)
+        ? `${METADATA_PREFIX}${ApiUtils.encodeApiUrl(`${folder.id}`)}/`
+        : folder.id,
+    }),
+  );
+
   const linksAttachments: Attachment[] | undefined = links?.map(
     (link): Attachment => ({
       title: link.title ?? link.href,
@@ -71,7 +100,9 @@ export const getUserCustomContent = (
 
   return {
     attachments: (
-      [filesAttachments, linksAttachments].filter(Boolean) as Attachment[][]
+      [folderAttachments, filesAttachments, linksAttachments].filter(
+        Boolean,
+      ) as Attachment[][]
     ).flat(),
   };
 };
@@ -84,10 +115,12 @@ export const isAllowedMimeType = (
     return true;
   }
 
-  const [resourceSubset, resourceTypeName] = resourceMimeType.split('/');
+  const [resourceSubset, resourceTypeName] = resourceMimeType
+    .toLowerCase()
+    .split('/');
 
   return allowedMimeTypes.some((allowedMimeType) => {
-    const [subset, name] = allowedMimeType.split('/');
+    const [subset, name] = allowedMimeType.toLowerCase().split('/');
 
     return (
       subset === resourceSubset && (name === '*' || name === resourceTypeName)
@@ -106,13 +139,6 @@ export const getDialFilesWithInvalidFileType = (
       );
 };
 
-export const getDialFilesWithInvalidFileSize = (
-  files: DialFile[],
-  sizeLimit: number,
-): DialFile[] => {
-  return files.filter((file) => file.contentLength > sizeLimit);
-};
-
 export const getFilesWithInvalidFileType = (
   files: File[],
   allowedFileTypes: string[],
@@ -121,19 +147,24 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/{}%&\\\t\x00-\x1F';
+export const notAllowedSymbols = ':;,=/{}%&\\"';
+export const notAllowedSpaces = '(\r\n|\n|\r|\t)|[\x00-\x1F]';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)`,
+  `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
   'gm',
 );
+export const notAllowedSpacesRegex = new RegExp(notAllowedSpaces, 'gm');
+export const doesHaveNotAllowedSymbols = (name: string) =>
+  !!name.match(notAllowedSymbolsRegex);
+
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
-): T[] => {
-  return files.filter(
-    ({ name }) =>
-      name.match(notAllowedSymbolsRegex) || doesHaveDotsInTheEnd(name),
-  );
-};
+): { filesWithNotAllowedSymbols: T[]; filesWithDotInTheEnd: T[] } => ({
+  filesWithNotAllowedSymbols: files.filter(({ name }) =>
+    doesHaveNotAllowedSymbols(name),
+  ),
+  filesWithDotInTheEnd: files.filter(({ name }) => doesHaveDotsInTheEnd(name)),
+});
 
 export const getFilesWithInvalidFileSize = (
   files: File[],
@@ -152,6 +183,8 @@ const parseAttachmentUrl = (url: string) => {
   };
 };
 
+export const isAttachmentLink = (url: string): boolean => isAbsoluteUrl(url);
+
 export const getDialFilesFromAttachments = (
   attachments: Attachment[] | undefined,
 ): Omit<DialFile, 'contentLength'>[] => {
@@ -163,8 +196,8 @@ export const getDialFilesFromAttachments = (
     .map((attachment): Omit<DialFile, 'contentLength'> | null => {
       if (
         !attachment.url ||
-        attachment.url.startsWith('http') ||
-        attachment.url.startsWith('//')
+        isAttachmentLink(attachment.url) ||
+        isFolderId(attachment.url)
       ) {
         return null;
       }
@@ -182,6 +215,37 @@ export const getDialFilesFromAttachments = (
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
 };
 
+export const getDialFoldersFromAttachments = (
+  attachments: Attachment[] | undefined,
+): FileFolderAttachment[] => {
+  if (!attachments) {
+    return [];
+  }
+
+  return attachments
+    .map((attachment): FileFolderAttachment | null => {
+      if (
+        !attachment.url ||
+        isAttachmentLink(attachment.url) ||
+        !isFolderId(attachment.url)
+      ) {
+        return null;
+      }
+
+      const { absolutePath, name } = parseAttachmentUrl(attachment.url);
+
+      return {
+        id: attachment.url,
+        type: FeatureType.File,
+        contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
+        name,
+        folderId: absolutePath,
+        absolutePath,
+      };
+    })
+    .filter(Boolean) as FileFolderAttachment[];
+};
+
 export const getDialLinksFromAttachments = (
   attachments: Attachment[] | undefined,
 ): DialLink[] => {
@@ -191,10 +255,7 @@ export const getDialLinksFromAttachments = (
 
   return attachments
     .map((attachment): DialLink | null => {
-      if (
-        !attachment.url ||
-        (!attachment.url.startsWith('http') && !attachment.url.startsWith('//'))
-      ) {
+      if (!attachment.url || !isAttachmentLink(attachment.url)) {
         return null;
       }
 
@@ -225,70 +286,34 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
   }
 };
 
-export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
-  return mimeTypes
-    .map((mimeType) => getExtensionsListForMimeType(mimeType))
-    .flat()
-    .map((type) => `.${type}`);
+export const getShortExtensionsListFromMimeType = (
+  mimeTypes: string[],
+  t: (key: string) => string,
+) => {
+  return uniq(
+    mimeTypes
+      .map((mimeType) => {
+        if (mimeType.endsWith('/*')) {
+          return t(mimeType.replace('/*', 's'));
+        }
+
+        return getExtensionsListForMimeType(mimeType)
+          .flat()
+          .map((type) => `.${type}`);
+      })
+      .flat(),
+  );
 };
 
 export const getFileNameWithoutExtension = (filename: string) =>
-  filename.slice(0, filename.lastIndexOf('.'));
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(0, filename.lastIndexOf('.'))
+    : filename;
 
 export const getFileNameExtension = (filename: string) =>
-  filename.slice(filename.lastIndexOf('.'));
-
-export const validatePublishingFileRenaming = (
-  files: DialFile[],
-  newName: string,
-  renamingFile: DialFile,
-) => {
-  const fileWithSameName = files.find(
-    (file) =>
-      file.name === newName.trim() &&
-      file !== renamingFile &&
-      file.relativePath === renamingFile.relativePath,
-  );
-
-  if (fileWithSameName) {
-    return 'Not allowed to have files with same names in one folder';
-  }
-
-  if (newName.match(notAllowedSymbolsRegex)) {
-    return `The symbols ${notAllowedSymbols} are not allowed in file name`;
-  }
-};
-
-export const renameAttachments = (
-  conversation: Conversation,
-  folderId: string | undefined,
-  folders: FolderInterface[],
-  filenameMapping: Map<string, string>,
-): Conversation => {
-  if (!filenameMapping.size) {
-    return conversation;
-  }
-
-  const { path } = getPathToFolderById(folders, folderId);
-
-  return {
-    ...conversation,
-    messages: conversation.messages.map((message) => ({
-      ...message,
-      custom_content: message.custom_content && {
-        ...message.custom_content,
-        attachments: message.custom_content.attachments?.map(
-          ({ title, ...attachment }) => ({
-            ...attachment,
-            title:
-              getFileName(filenameMapping.get(constructPath(path, title))) ??
-              title,
-          }),
-        ),
-      },
-    })),
-  };
-};
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
+    : '';
 
 export const getNextFileName = (
   defaultName: string,
@@ -341,4 +366,150 @@ export const getNextFileName = (
   }
 
   return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
+};
+
+export const prepareFileName = (filename: string) =>
+  prepareEntityName(
+    getFileNameWithoutExtension(filename) + getFileNameExtension(filename),
+  );
+
+export const isAbsoluteUrl = (url: string): boolean => {
+  const urlLower = url.toLowerCase();
+  return [
+    'data:',
+    '//',
+    'http://',
+    'https://',
+    'file://',
+    'ftp://',
+    'mailto:',
+    'telnet://',
+    'api/files',
+  ].some((prefix) => urlLower.startsWith(prefix));
+};
+
+export const getDownloadPath = (file: DialFile) =>
+  file.absolutePath ? constructPath(file.absolutePath, file.name) : file.id;
+
+export const isConversationHasExternalAttachments = (
+  conversation: Conversation,
+): boolean => {
+  const userBucket = BucketService.getBucket();
+  const messages =
+    (conversation.playback?.messagesStack ?? conversation.isReplay)
+      ? [
+          ...(conversation.replay?.replayUserMessagesStack ?? []),
+          ...conversation.messages,
+        ]
+      : conversation.messages;
+
+  const attachments = messages.flatMap(
+    (message) => message.custom_content?.attachments ?? [],
+  );
+
+  const filesIds = getDialFilesFromAttachments(attachments);
+  const folders = getDialFoldersFromAttachments(attachments);
+
+  const entityIds = [...filesIds, ...folders].map(({ id }) =>
+    id.startsWith(METADATA_PREFIX) ? id.slice(METADATA_PREFIX.length) : id,
+  );
+
+  return entityIds.some((id) => {
+    const { bucket: attachmentBucket } = splitEntityId(id);
+
+    return attachmentBucket !== userBucket;
+  });
+};
+
+export const validatePreUploadFiles = (
+  files: File[],
+  allowedTypes: string[] = [],
+): { validFiles: File[]; errorMsg: string } => {
+  const validFiles: File[] = [];
+  const byError: Partial<Record<FileValidationErrors, string[]>> = {};
+
+  files.forEach((file) => {
+    if (file.size > MAX_FILE_SIZE_IN_BYTES) {
+      byError[FileValidationErrors.IncorrectSize] = [
+        ...(byError[FileValidationErrors.IncorrectSize] ?? []),
+        file.name,
+      ];
+      return;
+    }
+    if (!isAllowedMimeType(allowedTypes, file.type)) {
+      byError[FileValidationErrors.IncorrectType] = [
+        ...(byError[FileValidationErrors.IncorrectType] ?? []),
+        file.name,
+      ];
+      return;
+    }
+
+    validFiles.push(file);
+  });
+
+  const errorMsg = Object.entries(byError)
+    .map(([error, names]) => {
+      const fileNames = names.join(', ');
+      switch (error as FileValidationErrors) {
+        case FileValidationErrors.IncorrectSize:
+          return translate(
+            "Max file size up to 512 Mb. Next files haven't been uploaded: {{fileNames}}",
+            { fileNames },
+          );
+        case FileValidationErrors.IncorrectType:
+          return translate(
+            "You're trying to upload files with incorrect type: {{fileNames}}",
+            { fileNames },
+          );
+        default:
+          return '';
+      }
+    })
+    .join('\n');
+
+  return { validFiles, errorMsg };
+};
+
+export const validateUploadFiles = <T extends File | { name: string }>(
+  files: T[],
+): { validFiles: T[] } => {
+  const validFiles: T[] = [];
+
+  files.forEach((file) => {
+    const sanitizedName = prepareEntityName(file.name, {
+      forRenaming: true,
+      trimEndDotsRequired: true,
+    });
+
+    if (file instanceof File) {
+      const renamedFile = new File([file], sanitizedName, {
+        type: file.type,
+        lastModified: file.lastModified,
+      });
+      validFiles.push(renamedFile as T);
+    } else {
+      validFiles.push({
+        ...file,
+        name: sanitizedName,
+      });
+    }
+  });
+
+  return { validFiles };
+};
+
+export const getFilesFromDataTransferItems = (
+  items: DataTransferItemList,
+): File[] => {
+  return Array.from(items)
+    .filter((item) => item.webkitGetAsEntry()?.isFile)
+    .map((item) => item.getAsFile()) as File[];
+};
+
+export const getMyBucketAttachments = (
+  attachments: Attachment[],
+): Attachment[] => {
+  return attachments.filter((attachment) =>
+    isMyEntity({ id: attachment.url ?? '' }),
+  );
 };

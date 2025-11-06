@@ -4,17 +4,19 @@ import { JWT, getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils } from '@/src/utils/server/server';
 
-import { ApiKeys } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
 
@@ -28,19 +30,17 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new DialAIError(`No ${entityType} path provided`, '', '', '400');
+    throw new DialAIError(`No ${entityType} path provided`, 400, req);
   }
 
-  return constructPath(
-    dialApiHost,
-    'v1',
-    entityType,
-    ServerUtils.encodeSlugs(slugs),
+  return sanitizeUri(
+    constructPath(
+      dialApiHost,
+      'v1',
+      entityType,
+      ServerUtils.encodeSlugs(slugs),
+    ),
   );
-};
-
-const isValidEntityApiType = (apiKey: string): boolean => {
-  return Object.values(ApiKeys).includes(apiKey as ApiKeys);
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -51,19 +51,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
-  const token = await getToken({ req });
+
   if (!isSessionValid) {
     return;
   }
 
+  const token = await getToken({ req });
+
   try {
-    if (req.method === 'GET') {
+    if (req.method === HTTPMethod.GET) {
       return await handleGetRequest(req, token, res);
-    } else if (req.method === 'PUT') {
+    } else if (req.method === HTTPMethod.PUT) {
       return await handlePutRequest(req, token, res);
-    } else if (req.method === 'POST') {
+    } else if (req.method === HTTPMethod.POST) {
       return await handlePutRequest(req, token, res, { ifNoneMatch: '*' });
-    } else if (req.method === 'DELETE') {
+    } else if (req.method === HTTPMethod.DELETE) {
       return await handleDeleteRequest(req, token, res);
     }
     return res.status(405).json({ error: 'Method not allowed' });
@@ -100,7 +102,7 @@ async function handlePutRequest(
   const readable = Readable.from(req);
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
-    method: 'PUT',
+    method: HTTPMethod.PUT,
     headers: {
       ...getApiHeaders({
         jwt: token?.access_token as string,
@@ -121,9 +123,8 @@ async function handlePutRequest(
   if (!proxyRes.ok) {
     throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 
@@ -143,9 +144,8 @@ async function handleGetRequest(
   if (!proxyRes.ok) {
     throw new DialAIError(
       `Requesting entity failed - '${url}'` + proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 
@@ -168,7 +168,7 @@ async function handleDeleteRequest(
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
-    method: 'DELETE',
+    method: HTTPMethod.DELETE,
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
 
@@ -181,9 +181,8 @@ async function handleDeleteRequest(
     }
     throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
-      '',
-      '',
-      proxyRes.status + '',
+      proxyRes.status,
+      req,
     );
   }
 

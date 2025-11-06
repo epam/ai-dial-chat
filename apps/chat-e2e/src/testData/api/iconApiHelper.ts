@@ -1,33 +1,56 @@
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { Tags } from '@/src/ui/domData';
 
 export class IconApiHelper extends BaseApiHelper {
-  public async getDefaultEntityIcon() {
-    const response = await this.request.get(API.defaultIconHost);
-    return this.formatIconResponse(response.text());
-  }
-
-  public async getEntityIcon(entity: DialAIEntityModel) {
-    let icon;
-    if (entity.iconUrl && entity.iconUrl.includes(Tags.svg)) {
-      const response = await this.request.get(entity.iconUrl);
-      icon = await this.formatIconResponse(response.text());
+  public getEntityIcon(entity: DialAIEntityModel) {
+    const iconUrl = entity.iconUrl;
+    if (iconUrl) {
+      return this.isAbsoluteUrl(iconUrl)
+        ? iconUrl
+        : `${API.themeUrl}/${iconUrl}`;
     } else {
-      icon = await this.getDefaultEntityIcon();
+      switch (entity.type) {
+        case EntityType.Model:
+        case EntityType.Application:
+          return API.defaultModelIconHost();
+        default:
+          return '';
+      }
     }
-    return icon;
   }
 
-  private async formatIconResponse(responseText: Promise<string>) {
-    return responseText.then((resp) =>
-      resp
-        .replaceAll('\n', '')
-        .replaceAll(/.*<svg[^>]*>/g, '')
-        .replaceAll(/<\/svg>/g, '')
-        .replaceAll(/\s{2,}/g, '')
-        .replaceAll(/><\/path>$/g, Tags.closingTag),
-    );
+  public getCustomIcon(entity: DialAIEntityModel) {
+    const iconUrl = entity.iconUrl;
+    if (iconUrl) {
+      return this.isAbsoluteUrl(iconUrl) ? iconUrl : `${API.api}/${iconUrl}`;
+    } else {
+      switch (entity.type) {
+        case EntityType.Model:
+        case EntityType.Application:
+          return API.defaultModelIconHost();
+        default:
+          return '';
+      }
+    }
   }
+
+  public static getNonCachedIconSource(iconSource: string | null) {
+    return iconSource ? iconSource.replace('?v2', '') : '';
+  }
+
+  private isAbsoluteUrl = (url: string): boolean => {
+    const urlLower = url.toLowerCase();
+    return [
+      'data:',
+      '//',
+      'http://',
+      'https://',
+      'file://',
+      'ftp://',
+      'mailto:',
+      'telnet://',
+    ].some((prefix) => urlLower.startsWith(prefix));
+  };
 }

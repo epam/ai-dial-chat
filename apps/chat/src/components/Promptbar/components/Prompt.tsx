@@ -1,448 +1,440 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb } from '@tabler/icons-react';
+import { IconBulb, IconCheck } from '@tabler/icons-react';
 import {
   DragEvent,
-  MouseEvent,
   MouseEventHandler,
+  memo,
   useCallback,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
+import { usePromptActions } from '@/src/hooks/usePromptActions';
+import { useScreenState } from '@/src/hooks/useScreenState';
+import { useScrollToEntity } from '@/src/hooks/useScrollToEntity';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
-  isEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
 import { getEntityNameError } from '@/src/utils/app/errors';
-import { constructPath } from '@/src/utils/app/file';
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { translate } from '@/src/utils/app/translation';
 
-import { FeatureType } from '@/src/types/common';
-import { MoveToFolderProps } from '@/src/types/folder';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
+  PublicationActions,
+  ShareActions,
+} from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsSelectors,
+  ModelsSelectors,
   PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import PublishModal from '../../Chat/Publish/PublishWizard';
-import UnpublishModal from '../../Chat/UnpublishModal';
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
-import ShareIcon from '../../Common/ShareIcon';
-import Tooltip from '../../Common/Tooltip';
-import { PreviewPromptModal } from './PreviewPromptModal';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   item: PromptInfo;
   level?: number;
+  additionalItemData?: AdditionalItemData;
 }
 
-export const PromptComponent = ({ item: prompt, level }: Props) => {
-  const dispatch = useAppDispatch();
+export const PromptComponent = memo(
+  ({ item: prompt, level, additionalItemData }: Props) => {
+    const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.Chat);
+    const { t } = useTranslation(Translation.Chat);
 
-  const folders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      defaultMyItemsFilters,
-      '',
-      true,
-    ),
-  );
-  const selectedPromptId = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
-  );
-  const isSelected = selectedPromptId === prompt.id;
+    const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
+      useAppSelector(PromptsSelectors.selectSelectedPromptId);
+    const selectedPublicationUrl = useAppSelector(
+      PublicationSelectors.selectSelectedPublicationUrl,
+    );
+    const selectedConversations = useAppSelector(
+      ConversationsSelectors.selectSelectedConversations,
+    );
+    const installedModelIds = useAppSelector(
+      ModelsSelectors.selectInstalledModelIds,
+    );
+    const resourceToReview = useAppSelector((state) =>
+      PublicationSelectors.selectResourceToReviewByReviewAndPublicationUrls(
+        state,
+        prompt.id,
+        additionalItemData?.publicationUrl,
+      ),
+    );
+    const chosenPromptIds = useAppSelector(
+      PromptsSelectors.selectSelectedItems,
+    );
+    const deletingPrompt = useAppSelector(
+      PromptsSelectors.selectDeletingPrompt,
+    );
+    const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+    const isConversationBlocksInput = useAppSelector(
+      ConversationsSelectors.selectIsSelectedConversationBlocksInput,
+    );
 
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
-  );
-  const isNameInvalid = isEntityNameInvalid(prompt.name);
-  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
-  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
-  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const { showModal, isModalPreviewMode } = useAppSelector(
-    PromptsSelectors.selectIsEditModalOpen,
-  );
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
-  const [isContextMenu, setIsContextMenu] = useState(false);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+    const isExternal = isEntityIdExternal(prompt);
+    const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
+    const isPartOfSelectedPublication =
+      !additionalItemData?.publicationUrl ||
+      selectedPublicationUrl === additionalItemData?.publicationUrl;
+    const isSelected =
+      selectedPromptId === prompt.id &&
+      isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
+      isPartOfSelectedPublication;
 
-  const { refs, context } = useFloating({
-    open: isContextMenu,
-    onOpenChange: setIsContextMenu,
-  });
+    const isNameInvalid = isEntityNameInvalid(prompt.name);
+    const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
+    const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
-  const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
+    const [isContextMenu, setIsContextMenu] = useState(false);
+    const [isUnshared, setIsUnshared] = useState(false);
 
-  useEffect(() => {
-    if (!showModal) {
-      setIsRenaming(false);
-    }
-  }, [showModal]);
+    const promptRef = useRef<HTMLButtonElement>(null);
 
-  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      dispatch(
-        ShareActions.share({
-          featureType: FeatureType.Prompt,
-          resourceId: prompt.id,
-        }),
-      );
-    }, [dispatch, prompt.id]);
-  const handleOpenUnsharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnshareConfirmOpened(true);
+    const handleContextMenuOpen = useCallback((e: MouseEvent | TouchEvent) => {
+      if (hasParentWithFloatingOverlay(e.target as Element)) {
+        return;
+      }
+      setIsContextMenu(true);
     }, []);
 
-  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsPublishing(true);
-    }, []);
+    useScrollToEntity({
+      entityId: prompt.id,
+      elementRef: promptRef,
+    });
 
-  const handleClosePublishModal = useCallback(() => {
-    setIsPublishing(false);
-  }, []);
+    useContextMenuTrigger(handleContextMenuOpen, promptRef);
 
-  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnpublishing(true);
-    }, []);
+    const screenState = useScreenState();
+    const isMobileOrTablet =
+      screenState === ScreenState.SM || screenState === ScreenState.MD;
 
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
+    const {
+      handleExport,
+      handleMoveToFolder,
+      handleDuplicate,
+      handleInfo,
+      handleShare,
+      handleUse,
+      handleDelete,
+      handlePublish,
+      handleUnpublish,
+    } = usePromptActions(prompt);
 
-  const handleDelete = useCallback(() => {
-    if (isDeleting) {
+    const isChosen = useMemo(
+      () => chosenPromptIds.includes(prompt.id),
+      [chosenPromptIds, prompt.id],
+    );
+    const areModelsInstalled = selectedConversations.every((conv) =>
+      installedModelIds.has(conv.model.id),
+    );
+
+    const { refs, context } = useFloating({
+      open: isContextMenu,
+      onOpenChange: setIsContextMenu,
+    });
+
+    const dismiss = useDismiss(context);
+    const { getFloatingProps } = useInteractions([dismiss]);
+
+    const handleDragStart = useCallback(
+      (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
+        if (e.dataTransfer && !isExternal && !isSelectMode) {
+          e.dataTransfer.setDragImage(getDragImage(), 0, 0);
+          e.dataTransfer.setData(MoveType.Prompt, JSON.stringify(prompt));
+        }
+      },
+      [isExternal, isSelectMode],
+    );
+
+    const handleOpenViewModal = useCallback(
+      (
+        e: React.MouseEvent<unknown, globalThis.MouseEvent>,
+        isEdit?: boolean,
+      ) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        dispatch(
+          PromptsActions.selectPrompt({
+            promptId: prompt.id,
+            selectInEditMode: isEdit,
+            isApproveRequiredResource,
+          }),
+        );
+
+        if (additionalItemData?.publicationUrl) {
+          dispatch(
+            PublicationActions.selectPublication(
+              additionalItemData?.publicationUrl ?? null,
+            ),
+          );
+        }
+      },
+      [
+        additionalItemData?.publicationUrl,
+        dispatch,
+        isApproveRequiredResource,
+        prompt.id,
+      ],
+    );
+
+    const handleOpenEditModal = useCallback(
+      (e: React.MouseEvent<unknown, globalThis.MouseEvent>) => {
+        handleOpenViewModal(e, true);
+      },
+      [handleOpenViewModal],
+    );
+
+    const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
+      useCallback((e) => {
+        e.stopPropagation();
+        setIsUnshared(true);
+      }, []);
+
+    const handleUnsharing = useCallback(() => {
       if (prompt.sharedWithMe) {
         dispatch(
           ShareActions.discardSharedWithMe({
-            resourceId: prompt.id,
+            resourceIds: [prompt.id],
             featureType: FeatureType.Prompt,
           }),
         );
-      } else {
-        dispatch(PromptsActions.deletePrompt({ prompt }));
       }
-      dispatch(PromptsActions.resetSearch());
-    }
+      setIsUnshared(false);
+    }, [dispatch, prompt.id, prompt.sharedWithMe]);
 
-    setIsDeleting(false);
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch, isDeleting, prompt]);
+    const isHighlighted = !isSelectMode
+      ? !!deletingPrompt || isSelected || isContextMenu
+      : isChosen;
 
-  const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
+    const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+      (e) => {
+        e.stopPropagation();
+        setIsContextMenu(false);
+        dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
+      },
+      [dispatch, prompt.id],
+    );
 
-    setIsRenaming(false);
-    setIsDeleting(true);
-  }, []);
+    const disableUsePrompt =
+      isConversationBlocksInput ||
+      !areModelsInstalled ||
+      !selectedConversations.length;
 
-  const handleDragStart = useCallback(
-    (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
-      if (e.dataTransfer && !isExternal) {
-        e.dataTransfer.setDragImage(getDragImage(), 0, 0);
-        e.dataTransfer.setData(MoveType.Prompt, JSON.stringify(prompt));
+    useEffect(() => {
+      if (isSelectMode) {
+        dispatch(PromptsActions.setDeletingPrompt());
       }
-    },
-    [isExternal],
-  );
+    }, [dispatch, isSelectMode]);
 
-  const handleOpenEditModal = useCallback(
-    (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
-      e.stopPropagation();
-      e.preventDefault();
-      setIsRenaming(true);
-      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
-      dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
-      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
-    },
-    [dispatch, prompt.id],
-  );
-
-  const handleExportPrompt = useCallback(
-    (e?: unknown) => {
-      const typedEvent = e as MouseEvent;
-      typedEvent.preventDefault();
-      typedEvent.stopPropagation();
-
-      dispatch(
-        PromptsActions.exportPrompt({
-          id: prompt.id,
-        }),
-      );
-    },
-    [dispatch, prompt.id],
-  );
-
-  const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const promptRootId = getPromptRootId();
-      const folderPath = (
-        isNewFolder
-          ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => f.folderId === promptRootId), // only my root prompt folders
-            )
-          : folderId
-      ) as string;
-
-      if (
-        !isEntityNameOnSameLevelUnique(
-          prompt.name,
-          { ...prompt, folderId: folderPath },
-          allPrompts,
-        )
-      ) {
-        dispatch(
-          UIActions.showErrorToast(
-            t('Prompt with name "{{name}}" already exists in this folder.', {
-              ns: 'prompt',
-              name: prompt.name,
-            }),
-          ),
-        );
-
-        return;
+    useEffect(() => {
+      if (screenState !== ScreenState.SM) {
+        dispatch(PromptsActions.setMoveToPrompt());
       }
+    }, [dispatch, screenState]);
 
-      if (isNewFolder) {
-        dispatch(
-          PromptsActions.createFolder({
-            name: folderPath,
-            parentId: getPromptRootId(),
-          }),
-        );
-      }
-      dispatch(
-        PromptsActions.updatePrompt({
-          id: prompt.id,
-          values: {
-            folderId: isNewFolder
-              ? constructPath(getPromptRootId(), folderPath)
-              : folderPath,
-          },
-        }),
-      );
-      setIsContextMenu(false);
-    },
-    [allPrompts, dispatch, folders, prompt, t],
-  );
+    const handleToggle = useCallback(() => {
+      PromptsActions.setChosenPrompts({ ids: [prompt.id] });
+    }, [prompt.id]);
 
-  const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-  }, [dispatch]);
+    const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+    const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
 
-  const handleContextMenuOpen = (e: MouseEvent) => {
-    if (hasParentWithFloatingOverlay(e.target as Element)) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    setIsContextMenu(true);
-  };
-  const isHighlited =
-    isDeleting || isRenaming || (showModal && isSelected) || isContextMenu;
-
-  const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(PromptsActions.duplicatePrompt(prompt));
-    },
-    [dispatch, prompt],
-  );
-
-  return (
-    <>
-      <div
-        className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:pr-9',
-          isHighlited
-            ? 'border-l-accent-primary bg-accent-primary-alpha'
-            : 'border-l-transparent',
-        )}
-        style={{
-          paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
-        }}
-        onContextMenu={handleContextMenuOpen}
-        data-qa="prompt"
-      >
-        <div
-          className={classNames('flex size-full items-center gap-2', {
-            'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
-          })}
-          draggable={!isExternal && !isNameOrPathInvalid}
-          onDragStart={(e) => handleDragStart(e, prompt)}
-        >
-          <ShareIcon
-            {...prompt}
-            isHighlighted={isHighlited}
-            featureType={FeatureType.Prompt}
-          >
-            <IconBulb size={18} className="text-secondary" />
-          </ShareIcon>
-
-          <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
-            <Tooltip
-              tooltip={t(
-                getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
-              )}
-              hideTooltip={!isNameOrPathInvalid}
-              triggerClassName={classNames(
-                'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-                isNameOrPathInvalid && 'text-secondary',
-              )}
-            >
-              {prompt.name}
-            </Tooltip>
-          </div>
-        </div>
-        {!isDeleting && !isRenaming && (
-          <div
-            ref={refs.setFloating}
-            {...getFloatingProps()}
-            className={classNames(
-              'absolute right-3 z-50 flex justify-end group-hover:visible',
-              isSelected ? 'visible' : 'invisible',
-            )}
-            onClick={stopBubbling}
-          >
-            <ItemContextMenu
-              entity={prompt}
-              featureType={FeatureType.Prompt}
-              folders={folders}
-              onMoveToFolder={handleMoveToFolder}
-              onDelete={handleOpenDeleteModal}
-              onRename={handleOpenEditModal}
-              onExport={handleExportPrompt}
-              onOpenMoveToModal={() => {
-                setIsShowMoveToModal(true);
-              }}
-              onShare={handleOpenSharing}
-              onUnshare={handleOpenUnsharing}
-              onPublish={handleOpenPublishing}
-              onPublishUpdate={handleOpenPublishing}
-              onUnpublish={handleOpenUnpublishing}
-              onOpenChange={setIsContextMenu}
-              onDuplicate={handleDuplicate}
-              onView={(e) => handleOpenEditModal(e, true)}
-              isOpen={isContextMenu}
-            />
-          </div>
-        )}
-        <div className="md:hidden" onClick={stopBubbling}>
-          {isShowMoveToModal && (
-            <MoveToFolderMobileModal
-              folders={folders}
-              onMoveToFolder={handleMoveToFolder}
-              onClose={() => {
-                setIsShowMoveToModal(false);
-              }}
-            />
+    return (
+      <>
+        <button
+          className={classNames(
+            'group relative flex size-full shrink-0 select-none items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+            !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
+            isContextMenu && !isMobileOrTablet && 'pr-9',
+            !isSelectMode && isHighlighted
+              ? 'border-l-accent-primary '
+              : 'border-l-transparent',
+            isHighlighted && 'bg-accent-primary-alpha',
+            additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
           )}
-        </div>
-        {showModal && isSelected && isModalPreviewMode && (
-          <PreviewPromptModal
-            isOpen
-            onDuplicate={(e) => {
-              handleDuplicate(e);
-              handleClose();
-            }}
-            onClose={handleClose}
-            onDelete={() => setIsDeleting(true)}
-          />
-        )}
-      </div>
+          onClick={(e) => {
+            if (!isSelectMode) {
+              handleOpenViewModal(e, false);
+            }
 
-      {isPublishing && (
-        <PublishModal
-          entity={prompt}
-          type={SharingType.Prompt}
-          isOpen
-          onClose={handleClosePublishModal}
-        />
-      )}
-      {isUnpublishing && (
-        <UnpublishModal
-          entity={prompt}
-          type={SharingType.Prompt}
-          isOpen
-          onClose={handleCloseUnpublishModal}
-        />
-      )}
-      <ConfirmDialog
-        isOpen={isDeleting}
-        heading={t('Confirm deleting prompt')}
-        description={`${t('Are you sure that you want to delete a prompt?')}${t(
-          prompt.isShared
-            ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
-            : '',
-        )}`}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeleting(false);
-          if (result) handleDelete();
-        }}
-      />
-      {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{promptName}}', {
-            promptName: prompt.name,
-          })}
-          description={
-            t('Are you sure that you want to revoke access to this prompt?') ||
-            ''
-          }
-          confirmLabel={t('Revoke access')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: prompt.id,
-                  featureType: FeatureType.Prompt,
-                }),
-              );
+            if (isSelectMode && !isExternal) {
+              dispatch(PromptsActions.setDeletingPrompt());
+              dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
             }
           }}
-        />
-      )}
-    </>
-  );
-};
+          style={{
+            paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
+          }}
+          ref={promptRef}
+          data-qa="prompt"
+          disabled={isSelectMode && isExternal}
+        >
+          <div
+            className={classNames('flex size-full items-center gap-2', {
+              'pr-6 xl:pr-0': !isSelectMode && !deletingPrompt && isSelected,
+            })}
+            draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
+            onDragStart={(e) => handleDragStart(e, prompt)}
+            data-qa={isSelected ? 'selected-entity' : undefined}
+          >
+            <div
+              className={classNames(
+                'relative',
+                additionalItemData?.isSidePanelItem
+                  ? 'size-[24px] items-center justify-center'
+                  : 'size-[18px]',
+                isSelectMode && !isExternal && 'shrink-0 group-hover:flex',
+                isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
+              )}
+            >
+              <input
+                className={classNames(
+                  'checkbox peer size-[18px] bg-layer-3',
+                  additionalItemData?.isSidePanelItem && 'mr-0',
+                )}
+                type="checkbox"
+                checked={isChosen}
+                onChange={handleToggle}
+                data-qa={isChosen ? 'checked' : 'unchecked'}
+              />
+              <IconCheck
+                size={18}
+                className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+              />
+            </div>
+            <ShareIcon
+              {...prompt}
+              isHighlighted={isHighlighted}
+              featureType={FeatureType.Prompt}
+              containerClassName={classNames(
+                isSelectMode && !isExternal && 'group-hover:hidden',
+                isChosen && !isExternal && 'hidden',
+              )}
+            >
+              {resourceToReview && !resourceToReview.reviewed && (
+                <ReviewDot
+                  className={classNames(
+                    'group-hover:bg-accent-tertiary-alpha',
+                    (selectedPromptId === prompt.id || isContextMenu) &&
+                      resourceToReview.publicationUrl ===
+                        selectedPublicationUrl &&
+                      isPartOfSelectedPublication &&
+                      'bg-accent-tertiary-alpha',
+                  )}
+                />
+              )}
+              <IconBulb
+                size={iconSize}
+                strokeWidth={strokeWidth}
+                className="text-secondary"
+              />
+            </ShareIcon>
+
+            <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
+              <Tooltip
+                tooltip={t(
+                  getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
+                )}
+                hideTooltip={!isNameOrPathInvalid}
+                triggerClassName={classNames(
+                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
+                    'text-secondary',
+                  !!additionalItemData?.publicationUrl &&
+                    prompt.publicationInfo?.action === PublishActions.DELETE &&
+                    'text-error',
+                )}
+                dataQa="entity-name"
+              >
+                {prompt.name}
+              </Tooltip>
+            </div>
+          </div>
+          {!isSelectMode && !deletingPrompt && (
+            <div
+              ref={refs.setFloating}
+              {...getFloatingProps()}
+              className={classNames(
+                'absolute right-0 z-50 flex justify-end group-hover:visible',
+                !isSelected && isContextMenu ? 'visible' : 'invisible',
+              )}
+              onClick={stopBubbling}
+            >
+              <ItemContextMenu
+                entity={prompt}
+                featureType={FeatureType.Prompt}
+                onDelete={handleDelete}
+                onRename={handleOpenEditModal}
+                onExport={handleExport}
+                onOpenMoveToModal={handleMoveToFolder}
+                onShare={handleShare}
+                onUnshare={handleOpenUnshareModal}
+                onPublish={handlePublish}
+                onUnpublish={
+                  additionalItemData?.publicationUrl
+                    ? undefined
+                    : handleUnpublish
+                }
+                onOpenChange={setIsContextMenu}
+                onDuplicate={handleDuplicate}
+                onView={handleOpenViewModal}
+                isOpen={isContextMenu}
+                onSelect={handleSelect}
+                disableUse={disableUsePrompt}
+                onUse={handleUse}
+                onShowInfo={handleInfo}
+                className="p-2"
+                hideTriggerIcon={isMobileOrTablet}
+              />
+            </div>
+          )}
+        </button>
+
+        {isUnshared && (
+          <ConfirmDialog
+            isOpen
+            heading={t('Confirm unshare prompt')}
+            description={t('Are you sure that you want to unshare a prompt?')}
+            confirmLabel={t('Unshare')}
+            cancelLabel={t('Cancel')}
+            onClose={(result) => {
+              setIsUnshared(false);
+              if (result) handleUnsharing();
+            }}
+          />
+        )}
+      </>
+    );
+  },
+);
+PromptComponent.displayName = 'PromptComponent';

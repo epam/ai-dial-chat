@@ -2,10 +2,22 @@ import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
 
-import { ConversationInfo } from './chat';
-import { Entity } from './common';
+import { ApiDetailedApplicationTypeSchema } from './application-type-schema';
+import {
+  ApplicationInfo,
+  ApplicationLogsType,
+  CustomApplicationModel,
+} from './applications';
+import { BackendChatEntity, MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
+import { ToolsetInfo, ToolsetModel } from './toolsets';
+
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 export enum StorageType {
   BrowserStorage = 'browserStorage',
@@ -17,11 +29,12 @@ export enum UIStorageKeys {
   ConversationHistory = 'conversationHistory',
   Folders = 'folders',
   SelectedConversationIds = 'selectedConversationIds',
+  SelectedPublicationId = 'selectedPublicationId',
   RecentModelsIds = 'recentModelsIds',
-  RecentAddonsIds = 'recentAddonsIds',
   Settings = 'settings',
   ShowChatbar = 'showChatbar',
   ShowPromptbar = 'showPromptbar',
+  ShowMarketplaceFilterbar = 'showMarketplaceFilterbar',
   ChatbarWidth = 'chatbarWidth',
   PromptbarWidth = 'promptbarWidth',
   IsChatFullWidth = 'isChatFullWidth',
@@ -30,6 +43,12 @@ export enum UIStorageKeys {
   OpenedPromptFoldersIds = 'openedPromptFoldersIds',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
   CustomLogo = 'customLogo',
+  ChatCollapsedSections = 'chatCollapsedSections',
+  PromptCollapsedSections = 'promptCollapsedSections',
+  FileCollapsedSections = 'fileCollapsedSections',
+  LastConversationSettings = 'lastConversationSettings',
+  SelectedWidget = 'selectedWidget',
+  DefaultModelReference = 'defaultModelReference',
 }
 
 export enum MigrationStorageKeys {
@@ -50,6 +69,11 @@ export interface EntityStorage<
 
   getEntities(path?: string, recursive?: boolean): Observable<TEntityInfo[]>; // listing with short information
 
+  getMultipleFoldersEntities(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<TEntityInfo[]>; // listing with short information from multiple folders
+
   getFoldersAndEntities(
     path?: string,
   ): Observable<FoldersAndEntities<TEntityInfo>>;
@@ -58,7 +82,7 @@ export interface EntityStorage<
 
   createEntity(entity: TEntity): Observable<TEntityInfo>;
 
-  updateEntity(entity: TEntity): Observable<void>;
+  updateEntity(entity: TEntity): Observable<TEntityInfo>;
 
   deleteEntity(info: TEntityInfo): Observable<void>;
 
@@ -87,13 +111,22 @@ export interface DialStorage {
     recursive?: boolean,
   ): Observable<ConversationInfo[]>;
 
+  getMultipleFoldersConversations(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]>;
+
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
+
+  getConversationMetadata(id: string): Observable<BackendChatEntity | null>;
 
   createConversation(
     conversation: Conversation,
   ): Observable<ConversationInfo | null>;
 
-  updateConversation(conversation: Conversation): Observable<void>;
+  updateConversation(
+    conversation: Conversation,
+  ): Observable<ConversationInfo | void>;
 
   deleteConversation(info: ConversationInfo): Observable<void>;
 
@@ -105,13 +138,61 @@ export interface DialStorage {
 
   getPrompts(path?: string, recursive?: boolean): Observable<PromptInfo[]>;
 
+  getMultipleFoldersPrompts(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<PromptInfo[]>;
+
   getPrompt(info: PromptInfo): Observable<Prompt | null>;
+
+  getPromptMetadata(id: string): Observable<BackendChatEntity | null>;
 
   createPrompt(prompt: Prompt): Observable<PromptInfo | null>;
 
-  updatePrompt(prompt: Prompt): Observable<void>;
+  updatePrompt(prompt: Prompt): Observable<PromptInfo | void>;
 
   deletePrompt(info: PromptInfo): Observable<void>;
 
   setPrompts(prompts: Prompt[]): Observable<PromptInfo>;
+
+  move(data: MoveModel): Observable<MoveModel>;
+
+  // Application methods
+  createApplication(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<ApplicationInfo>;
+
+  updateApplication(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<ApplicationInfo>;
+
+  getApplication(
+    applicationId: string,
+  ): Observable<CustomApplicationModel | null>;
+
+  getApplications(
+    path?: string,
+    recursive?: boolean,
+  ): Observable<ApplicationInfo[]>;
+
+  deleteApplication(applicationId: string): Observable<void>;
+
+  deployApplication(applicationName: string): Observable<void>;
+
+  redeployApplication(applicationName: string): Observable<void>;
+
+  undeployApplication(applicationName: string): Observable<void>;
+
+  getApplicationLogs(path: string): Observable<ApplicationLogsType>;
+
+  getApplicationConfig(name: string): Observable<MessageFormSchema>;
+
+  // Toolsets methods
+  getToolsetById(id: string): Observable<ToolsetModel | null>;
+  getToolsetsByPath(path: string): Observable<ToolsetInfo[]>;
+  updateToolset(data: ToolsetModel): Observable<ToolsetInfo>;
+  createToolset(data: ToolsetModel): Observable<ToolsetInfo>;
+  deleteToolset(toolsetId: string): Observable<void>;
 }

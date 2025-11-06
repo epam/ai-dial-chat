@@ -1,22 +1,62 @@
-import { memo } from 'react';
-import SVG from 'react-inlinesvg';
+/* eslint-disable jsx-a11y/alt-text */
+
+/* eslint-disable @next/next/no-img-element */
+import {
+  IconBlocks,
+  IconHistoryToggle,
+  IconMessage2,
+} from '@tabler/icons-react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { constructPath } from '@/src/utils/app/file';
+import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
+import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/selectors';
 
-interface Props {
+import { DEFAULT_AGENT, LAST_USED_AGENT } from '@/src/constants/chat';
+
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
+const DEFAULT_ICON_RETRY = 2;
+
+interface FallbackIconProps {
+  entityType: string | undefined;
+  size: number;
+}
+
+export function FallbackIcon({ entityType, size }: FallbackIconProps) {
+  const Icon = entityType === EntityType.Toolset ? IconBlocks : IconMessage2;
+  return (
+    <Icon
+      size={Math.round(size / 1.25)}
+      className="text-primary dark:invert"
+      stroke={entityType === EntityType.Toolset ? 1.1 : 1.2}
+    />
+  );
+}
+
+interface ModelTooltipProps {
   entityId: string;
   entity: DialAIEntity | undefined;
+}
+export const ModelTooltip = ({ entity, entityId }: ModelTooltipProps) => {
+  const name = entity ? getOpenAIEntityFullName(entity) : entityId;
+  return entity?.version ? `${name}\nv. ${entity.version}` : name;
+};
+interface Props extends ModelTooltipProps {
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
-  isInvalid?: boolean;
+  enableShrinking?: boolean;
 }
 
 const ModelIconTemplate = memo(
@@ -25,38 +65,95 @@ const ModelIconTemplate = memo(
     size,
     animate,
     entityId,
-    isInvalid,
+    enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
+    const ref = useRef<HTMLImageElement>(null);
+    const [iconError, setIconError] = useState(false);
+    const [iconRetry, setIconRetry] = useState(DEFAULT_ICON_RETRY);
+
     const fallbackUrl =
-      entity?.type === EntityType.Addon
-        ? 'api/themes/image?name=default-addon'
-        : 'api/themes/image?name=default-model';
+      entity?.type === EntityType.Toolset
+        ? getThemeIconUrl('default-toolset')
+        : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
+    const applicationTypeSchemas = useAppSelector(
+      ApplicationTypesSchemasSelectors.selectAllSchemas,
+    );
+
+    const schemaApplicationFallbackUrl = useMemo(() => {
+      const iconUrl = applicationTypeSchemas?.find(
+        (schema) => schema.id === entity?.applicationTypeSchemaId,
+      )?.iconUrl;
+      if (!iconUrl) return null;
+      return getThemeIconUrl(iconUrl);
+    }, [applicationTypeSchemas, entity?.applicationTypeSchemaId]);
+
+    const handleError = useCallback(() => {
+      if (ref.current) {
+        if (iconRetry > 0) {
+          setIconRetry((prev) => prev - 1);
+        } else {
+          setIconError(true);
+        }
+        ref.current.src = fallbackUrl;
+        ref.current.onerror = null;
+      }
+    }, [fallbackUrl, iconRetry]);
+
+    useEffect(() => {
+      setIconError(false);
+      setIconRetry(DEFAULT_ICON_RETRY);
+    }, [entity?.iconUrl]);
+
+    if (entity?.id === LAST_USED_AGENT) {
+      return <IconHistoryToggle size={size} className="text-secondary" />;
+    }
+
+    if (entity?.id === DEFAULT_AGENT) {
+      return <IconMessage2 size={size} className="text-secondary" />;
+    }
+
+    const getIconUrl = (entity: DialAIEntity | undefined) => {
+      if (!entity?.iconUrl) return schemaApplicationFallbackUrl ?? fallbackUrl;
+
+      if (isApplicationId(entity.id) || isToolsetId(entity.id)) {
+        return constructPath('/api', ApiUtils.encodeApiUrl(entity.iconUrl));
+      }
+
+      return `${getThemeIconUrl(entity.iconUrl)}?v2`;
+    };
 
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none',
-          isInvalid ? 'text-secondary' : 'text-primary',
+          'relative shrink-0 overflow-hidden rounded-full leading-none',
           animate && 'animate-bounce',
+          enableShrinking && 'shrink',
+          iconError ? 'flex items-center justify-center' : 'inline-block',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
+        data-qa="entity-icon"
       >
-        <SVG
-          key={entityId}
-          src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
-          className={classNames(!entity?.iconUrl && 'hidden')}
-          width={size}
-          height={size}
-          description={description}
-        >
-          <SVG
-            src={fallbackUrl}
+        <div
+          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon"
+          style={{ height: `${size}px`, width: `${size}px` }}
+        ></div>
+        {iconError ? (
+          <FallbackIcon entityType={entity?.type} size={size} />
+        ) : (
+          <img
+            key={entityId}
+            src={getIconUrl(entity)}
             width={size}
             height={size}
-            description={description}
+            onError={handleError}
+            data-image-name={description}
+            ref={ref}
+            className="absolute left-0 top-0 z-10 size-full"
+            style={{ height: `${size}px`, width: `${size}px` }}
+            id={entityId}
           />
-        </SVG>
+        )}
       </span>
     );
   },
@@ -69,20 +166,18 @@ export const ModelIcon = ({
   size,
   animate,
   isCustomTooltip,
-  isInvalid,
 }: Props) => {
   return (
     <Tooltip
       hideTooltip={isCustomTooltip}
-      tooltip={entity ? getOpenAIEntityFullName(entity) : entityId}
-      triggerClassName="flex shrink-0 relative"
+      tooltip={<ModelTooltip entity={entity} entityId={entityId} />}
+      triggerClassName="flex shrink-0 relative select-none"
     >
       <ModelIconTemplate
         entity={entity}
         entityId={entityId}
         size={size}
         animate={animate}
-        isInvalid={isInvalid}
       />
     </Tooltip>
   );

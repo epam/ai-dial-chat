@@ -1,64 +1,67 @@
-import { ChatSelectors, SideBarSelectors } from '../selectors';
+import { ChatHeaderSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ChatHeader extends BaseElement {
-  constructor(page: Page, index?: number) {
+  constructor(page: Page, parentLocator: Locator, index?: number) {
     const elementLocator = new BaseElement(
       page,
-      ChatSelectors.chatHeader,
+      ChatHeaderSelectors.chatHeader,
+      parentLocator,
     ).getNthElement(index ?? 1);
     super(page, '', elementLocator);
   }
 
-  public chatTitle = this.getChildElementBySelector(ChatSelectors.chatTitle);
-  public chatModel = this.getChildElementBySelector(ChatSelectors.chatModel);
-  public chatModelIcon = this.getChildElementBySelector(
-    `${ChatSelectors.chatModel} >> ${Tags.svg}`,
+  public chatTitle = this.getChildElementBySelector(
+    ChatHeaderSelectors.chatTitle,
   );
-  public chatAddonIcons = this.getChildElementBySelector(
-    `${ChatSelectors.chatAddons} > ${Tags.span}`,
+  public chatAgent = this.getChildElementBySelector(
+    ChatHeaderSelectors.chatAgent,
+  );
+  public chatModelIcon = this.getChildElementBySelector(
+    `${ChatHeaderSelectors.chatAgent} >> ${Tags.img}`,
+  );
+  public chatModelArrowIcon = this.getChildElementBySelector(
+    `${ChatHeaderSelectors.chatAgent} >> ${SideBarSelectors.arrowAdditionalIcon}`,
   );
   public deleteConversationFromComparison = this.getChildElementBySelector(
-    ChatSelectors.deleteFromCompareIcon,
+    ChatHeaderSelectors.deleteFromCompareIcon,
   );
-  public openConversationSettings = this.getChildElementBySelector(
-    ChatSelectors.conversationSettingsIcon,
+  public conversationSettings = this.getChildElementBySelector(
+    ChatHeaderSelectors.conversationSettingsIcon,
   );
   public clearConversation = this.getChildElementBySelector(
-    ChatSelectors.clearConversationIcon,
+    ChatHeaderSelectors.clearConversationIcon,
   );
   public leavePlaybackMode = this.getChildElementBySelector(
-    ChatSelectors.leavePlayback,
+    ChatHeaderSelectors.leavePlayback,
+  );
+  public version = this.getChildElementBySelector(ChatHeaderSelectors.version);
+  public dotsMenu = this.getChildElementBySelector(
+    ChatHeaderSelectors.dotsMenu,
   );
 
   public async isArrowIconVisible() {
-    return this.chatModel
+    return this.chatAgent
       .getChildElementBySelector(SideBarSelectors.arrowAdditionalIcon)
       .isVisible();
   }
 
   async getHeaderModelIcon() {
-    await this.chatModelIcon.waitForState();
-    return this.getElementIconHtml(this.rootLocator);
-  }
-
-  async getHeaderAddonsIcons() {
-    return this.getElementIcons(this.chatAddonIcons, Tags.desc);
+    return this.getElementIcon(this.rootLocator);
   }
 
   async openConversationSettingsPopup() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.openConversationSettings.click();
-    await modelsResponsePromise;
-    await addonsResponsePromise;
+    await this.conversationSettings.click();
   }
 
   public async hoverOverChatModel() {
-    await this.chatModel.hoverOver();
+    await this.chatAgent.hoverOver();
+  }
+
+  public async hoverOverChatSettings() {
+    await this.conversationSettings.hoverOver();
   }
 }

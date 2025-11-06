@@ -2,25 +2,35 @@ import {
   IconCheck,
   IconCopy,
   IconEdit,
+  IconListDetails,
   IconRefresh,
   IconThumbDown,
   IconThumbUp,
-  IconTrash,
+  IconTrashX,
 } from '@tabler/icons-react';
 import { ButtonHTMLAttributes, FC } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
-import { LikeState, Message, Role } from '@/src/types/chat';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { getMessageCustomContent } from '@/src/utils/app/conversation';
+
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import {
+  ConversationsSelectors,
+  OverlaySelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
+
+import { Feature, LikeState, Message, Role } from '@epam/ai-dial-shared';
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
@@ -43,52 +53,88 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 };
 
 interface MessageUserButtonsProps {
-  toggleEditing: () => void;
-  onDelete: () => void;
+  realMessageIndex: number;
   isEditAvailable: boolean;
   isMessageStreaming: boolean;
-  editDisabled?: boolean;
+  isEditTemplatesAvailable: boolean;
+  onToggleEditing: () => void;
+  onDelete?: () => void;
+  onToggleTemplatesEditing: () => void;
 }
 
 export const MessageUserButtons = ({
-  onDelete,
-  toggleEditing,
+  realMessageIndex,
   isEditAvailable,
-  editDisabled,
   isMessageStreaming,
+  isEditTemplatesAvailable,
+  onDelete,
+  onToggleEditing,
+  onToggleTemplatesEditing,
 }: MessageUserButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isConversationsWithSchema = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationsWithSchema,
+  );
+  const customMessageButtons = useAppSelector((state) =>
+    OverlaySelectors.selectPrependedDefaultButtonsForMessage(
+      state,
+      realMessageIndex,
+    ),
+  );
 
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full items-center justify-end gap-2',
+        'flex h-[18px] w-full select-none items-center justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
       {!isMessageStreaming && (
         <>
+          {customMessageButtons?.map((item) => (
+            <OverlayMessageCustomButton
+              key={item.buttonKey}
+              button={item}
+              defaultClassName="text-secondary hover:text-accent-primary"
+              realMessageIndex={realMessageIndex}
+            />
+          ))}
+          {isEditTemplatesAvailable && !isConversationsWithSchema && (
+            <Tooltip
+              placement="top"
+              isTriggerClickable
+              tooltip={t('Set message template')}
+            >
+              <button
+                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+                onClick={onToggleTemplatesEditing}
+              >
+                <IconListDetails size={18} />
+              </button>
+            </Tooltip>
+          )}
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
-                onClick={toggleEditing}
-                disabled={editDisabled}
+                onClick={onToggleEditing}
               >
                 <IconEdit size={18} />
               </button>
             </Tooltip>
           )}
-          <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-            <button
-              className="text-secondary hover:text-accent-primary"
-              onClick={onDelete}
-            >
-              <IconTrash size={18} />
-            </button>
-          </Tooltip>
+          {onDelete && (
+            <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
+              <button
+                className="text-secondary hover:text-accent-primary"
+                onClick={onDelete}
+              >
+                <IconTrashX size={18} />
+              </button>
+            </Tooltip>
+          )}
         </>
       )}
     </div>
@@ -96,33 +142,51 @@ export const MessageUserButtons = ({
 };
 
 interface MessageAssistantButtonsProps {
+  realMessageIndex: number;
   messageCopied?: boolean;
-  copyOnClick: () => void;
   isLikesEnabled: boolean;
   message: Message;
+  copyOnClick: () => void;
   onLike: (likeStatus: LikeState) => void;
   onRegenerate?: () => void;
+  onToggleEditing?: () => void;
 }
 
 export const MessageAssistantButtons = ({
   messageCopied,
-  copyOnClick,
   message,
+  realMessageIndex,
   isLikesEnabled,
+  copyOnClick,
   onLike,
   onRegenerate,
+  onToggleEditing,
 }: MessageAssistantButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const customMessageButtons = useAppSelector((state) =>
+    OverlaySelectors.selectPrependedDefaultButtonsForMessage(
+      state,
+      realMessageIndex,
+    ),
+  );
 
   return (
     <div
       className={classNames(
-        'flex w-full justify-end gap-2',
+        'flex w-full select-none justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
+      {customMessageButtons?.map((item) => (
+        <OverlayMessageCustomButton
+          key={item.buttonKey}
+          button={item}
+          defaultClassName="text-secondary hover:text-accent-primary"
+          realMessageIndex={realMessageIndex}
+        />
+      ))}
       {onRegenerate && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
           <Button
@@ -134,25 +198,37 @@ export const MessageAssistantButtons = ({
           </Button>
         </Tooltip>
       )}
-      {messageCopied ? (
-        <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
-          <IconCheck size={18} className="text-secondary" />
-        </Tooltip>
-      ) : (
-        <Tooltip
-          key="copy"
-          placement="top"
-          isTriggerClickable
-          tooltip={t('Copy text')}
-        >
-          <Button className="text-secondary" onClick={copyOnClick}>
-            <IconCopy size={18} />
+      {message.content.trim() &&
+        (messageCopied ? (
+          <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
+            <IconCheck size={18} className="text-secondary" />
+          </Tooltip>
+        ) : (
+          <Tooltip
+            key="copy"
+            placement="top"
+            isTriggerClickable
+            tooltip={t('Copy text')}
+          >
+            <Button className="text-secondary" onClick={copyOnClick}>
+              <IconCopy size={18} />
+            </Button>
+          </Tooltip>
+        ))}
+      {onToggleEditing && (
+        <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+          <Button
+            onClick={onToggleEditing}
+            data-qa="edit"
+            className="text-secondary"
+          >
+            <IconEdit size={18} />
           </Button>
         </Tooltip>
       )}
-      <div className="flex flex-row gap-2">
-        {isLikesEnabled && !!message.responseId && (
-          <>
+      {isLikesEnabled &&
+        (message.content.trim() || !!getMessageCustomContent(message)) && (
+          <div className="flex flex-row gap-2">
             {message.like !== LikeState.Disliked && (
               <Tooltip
                 placement="top"
@@ -183,11 +259,9 @@ export const MessageAssistantButtons = ({
               <Tooltip
                 placement="top"
                 isTriggerClickable={message.like !== LikeState.Disliked}
-                tooltip={
-                  message.like !== LikeState.Disliked
-                    ? t('Dislike')
-                    : t('Disliked')
-                }
+                tooltip={t(
+                  message.like !== LikeState.Disliked ? 'Dislike' : 'Disliked',
+                )}
               >
                 <Button
                   onClick={() => {
@@ -207,70 +281,119 @@ export const MessageAssistantButtons = ({
                 </Button>
               </Tooltip>
             )}
-          </>
+          </div>
         )}
-      </div>
     </div>
   );
 };
 
 interface MessageMobileButtonsProps {
   message: Message;
-  onCopy: () => void;
+  realMessageIndex: number;
   messageCopied: boolean;
   editDisabled: boolean;
-  onLike: (likeStatus: LikeState) => void;
-  onDelete: () => void;
   isEditing: boolean;
-  toggleEditing: (value: boolean) => void;
+  isEditTemplatesAvailable: boolean;
   isLastMessage: boolean;
+  isLikesEnabled: boolean;
   isMessageStreaming: boolean;
-  onRegenerate?: () => void;
   isConversationInvalid: boolean;
+  onLike: (likeStatus: LikeState) => void;
+  onDelete?: () => void;
+  onToggleEditing: (value: boolean) => void;
+  onToggleTemplatesEditing: () => void;
+  onCopy: () => void;
+  onRegenerate?: () => void;
 }
 
 export const MessageMobileButtons = ({
   messageCopied,
   editDisabled,
   message,
-  onLike,
-  onCopy,
-  onDelete,
+  realMessageIndex,
+  isLikesEnabled,
   isEditing,
-  toggleEditing,
-  onRegenerate,
+  isEditTemplatesAvailable,
   isLastMessage,
   isMessageStreaming,
   isConversationInvalid,
+  onLike,
+  onDelete,
+  onToggleEditing,
+  onToggleTemplatesEditing,
+  onCopy,
+  onRegenerate,
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const isConversationsWithSchema = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationsWithSchema,
+  );
+  const isEditLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditLastAssistantContent),
+  );
+  const isAllLastMessageEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EditAllAssistantContent),
+  );
+
   const isAssistant = message.role === Role.Assistant;
+  const customMessageButtons = useAppSelector((state) =>
+    OverlaySelectors.selectPrependedDefaultButtonsForMessage(
+      state,
+      realMessageIndex,
+    ),
+  );
 
   if (isAssistant) {
     return (
       !(isMessageStreaming && isLastMessage) &&
       !isConversationInvalid && (
         <>
-          {messageCopied ? (
+          {customMessageButtons?.map((item) => (
             <MenuItem
+              key={item.buttonKey}
+              isChildrenButton
               item={
-                <div className="flex items-center gap-3">
-                  <IconCheck size={20} className="text-secondary" />
-                  <p>{t('Copied')}</p>
-                </div>
+                <OverlayMessageCustomButton
+                  button={item}
+                  realMessageIndex={realMessageIndex}
+                />
               }
             />
-          ) : (
+          ))}
+          {message.content.trim() &&
+            (messageCopied ? (
+              <MenuItem
+                item={
+                  <div className="flex items-center gap-3">
+                    <IconCheck size={20} className="text-secondary" />
+                    <p>{t('Copied')}</p>
+                  </div>
+                }
+              />
+            ) : (
+              <MenuItem
+                className="hover:bg-accent-primary-alpha"
+                item={
+                  <div className="flex items-center gap-3">
+                    <IconCopy className="text-secondary" size={18} />
+                    {t('Copy')}
+                  </div>
+                }
+                onClick={onCopy}
+              />
+            ))}
+          {(isAllLastMessageEnabled ||
+            (isLastMessage && isEditLastMessageEnabled)) && (
             <MenuItem
-              className="hover:bg-accent-primary-alpha"
               item={
                 <div className="flex items-center gap-3">
-                  <IconCopy className="text-secondary" size={18} />
-                  {t('Copy')}
+                  <IconEdit className="text-secondary" size={18} />
+                  {t('Edit')}
                 </div>
               }
-              onClick={onCopy}
+              data-qa="edit"
+              onClick={() => onToggleEditing(true)}
             />
           )}
           {onRegenerate && (
@@ -285,62 +408,71 @@ export const MessageMobileButtons = ({
               onClick={onRegenerate}
             />
           )}
-          {message.like !== LikeState.Disliked && (
-            <MenuItem
-              className={classNames(
-                message.like !== LikeState.Liked &&
-                  'hover:bg-accent-primary-alpha',
-              )}
-              item={
-                <div className="flex items-center gap-3">
-                  <IconThumbUp className="text-secondary" size={18} />
-                  <p
+          {isLikesEnabled &&
+            (message.content.trim() || !!getMessageCustomContent(message)) && (
+              <>
+                {message.like !== LikeState.Disliked && (
+                  <MenuItem
                     className={classNames(
-                      message.like === LikeState.Liked && 'text-secondary',
+                      message.like !== LikeState.Liked &&
+                        'hover:bg-accent-primary-alpha',
                     )}
-                  >
-                    {message.like === LikeState.Liked ? t('Liked') : t('Like')}
-                  </p>
-                </div>
-              }
-              disabled={message.like === LikeState.Liked}
-              data-qa="like"
-              onClick={() => {
-                if (message.like !== LikeState.NoState) {
-                  onLike(LikeState.Liked);
-                }
-              }}
-            />
-          )}
-          {message.like !== LikeState.Liked && (
-            <MenuItem
-              disabled={message.like === LikeState.Disliked}
-              className={classNames(
-                message.like !== LikeState.Disliked &&
-                  'hover:bg-accent-primary-alpha',
-              )}
-              data-qa="dislike"
-              item={
-                <div className="flex items-center gap-3">
-                  <IconThumbDown className="text-secondary" size={18} />
-                  <p
+                    item={
+                      <div className="flex items-center gap-3">
+                        <IconThumbUp className="text-secondary" size={18} />
+                        <p
+                          className={classNames(
+                            message.like === LikeState.Liked &&
+                              'text-secondary',
+                          )}
+                        >
+                          {message.like === LikeState.Liked
+                            ? t('Liked')
+                            : t('Like')}
+                        </p>
+                      </div>
+                    }
+                    disabled={message.like === LikeState.Liked}
+                    data-qa="like"
+                    onClick={() => {
+                      if (message.like !== LikeState.NoState) {
+                        onLike(LikeState.Liked);
+                      }
+                    }}
+                  />
+                )}
+                {message.like !== LikeState.Liked && (
+                  <MenuItem
+                    disabled={message.like === LikeState.Disliked}
                     className={classNames(
-                      message.like === LikeState.Disliked && 'text-secondary',
+                      message.like !== LikeState.Disliked &&
+                        'hover:bg-accent-primary-alpha',
                     )}
-                  >
-                    {message.like === LikeState.Disliked
-                      ? t('Disliked')
-                      : t('Dislike')}
-                  </p>
-                </div>
-              }
-              onClick={() => {
-                if (message.like !== LikeState.NoState) {
-                  onLike(LikeState.Disliked);
-                }
-              }}
-            />
-          )}
+                    data-qa="dislike"
+                    item={
+                      <div className="flex items-center gap-3">
+                        <IconThumbDown className="text-secondary" size={18} />
+                        <p
+                          className={classNames(
+                            message.like === LikeState.Disliked &&
+                              'text-secondary',
+                          )}
+                        >
+                          {message.like === LikeState.Disliked
+                            ? t('Disliked')
+                            : t('Dislike')}
+                        </p>
+                      </div>
+                    }
+                    onClick={() => {
+                      if (message.like !== LikeState.NoState) {
+                        onLike(LikeState.Disliked);
+                      }
+                    }}
+                  />
+                )}
+              </>
+            )}
         </>
       )
     );
@@ -350,27 +482,61 @@ export const MessageMobileButtons = ({
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>
-        <MenuItem
-          className="hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
-          onClick={() => toggleEditing(!isEditing)}
-          disabled={editDisabled}
-          item={
-            <div className="flex items-center gap-3">
-              <IconEdit className="text-secondary" size={18} />
-              <p>{t('Edit')}</p>
-            </div>
-          }
-        />
-        <MenuItem
-          className="hover:text-accent-primary focus:visible group-hover:visible"
-          onClick={onDelete}
-          item={
-            <div className="flex items-center gap-3">
-              <IconTrash className="text-secondary" size={18} />
-              <p>{t('Delete')}</p>
-            </div>
-          }
-        />
+        {customMessageButtons?.map((item) => (
+          <MenuItem
+            key={item.buttonKey}
+            isChildrenButton
+            item={
+              <OverlayMessageCustomButton
+                button={item}
+                defaultClassName="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+                defaultIconClassName="text-secondary"
+                realMessageIndex={realMessageIndex}
+              />
+            }
+          />
+        ))}
+        {isEditTemplatesAvailable && !isConversationsWithSchema && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+            onClick={() => onToggleTemplatesEditing()}
+            item={
+              <div className="flex items-center gap-3 whitespace-nowrap">
+                <IconListDetails
+                  className="text-secondary"
+                  size={18}
+                  height={18}
+                  width={18}
+                />
+                <p className="whitespace-nowrap">{t('Set template')}</p>
+              </div>
+            }
+          />
+        )}
+        {!editDisabled && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+            onClick={() => onToggleEditing(!isEditing)}
+            item={
+              <div className="flex items-center gap-3">
+                <IconEdit className="text-secondary" size={18} />
+                <p>{t('Edit')}</p>
+              </div>
+            }
+          />
+        )}
+        {onDelete && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible group-hover:visible"
+            onClick={onDelete}
+            item={
+              <div className="flex items-center gap-3">
+                <IconTrashX className="text-secondary" size={18} />
+                <p>{t('Delete')}</p>
+              </div>
+            }
+          />
+        )}
       </>
     )
   );

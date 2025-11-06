@@ -8,16 +8,20 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { parseVariablesFromContent } from '../utils/app/prompts';
+import { parseVariablesFromContent } from '@/src/utils/app/prompts';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
-import { DialAIEntityModel } from '../types/models';
+import { FeatureType } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
+import { ChatActions, PromptsActions } from '@/src/store/actions';
 import { useAppSelector } from '@/src/store/hooks';
 import {
-  PromptsActions,
+  ChatSelectors,
   PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+  PublicationSelectors,
+} from '@/src/store/selectors';
 
 import { useTokenizer } from './useTokenizer';
 
@@ -27,40 +31,92 @@ import { useTokenizer } from './useTokenizer';
  * @param tokenizer: tokenizer object which used for tokens calculations.
  * @param prompt Default prompt value.
  * @param onChangePrompt A function to call if prompt selected.
+ * @param useLocalContentState if shouldn't dispatch state changes for content
  * @returns An object containing control functions and states.
  */
+
+const publicationResourceTypesToFilter = [FeatureType.Prompt];
 
 export const usePromptSelection = (
   maxTokensLength: number,
   tokenizer: DialAIEntityModel['tokenizer'],
   prompt: string,
   onChangePrompt?: (prompt: string) => void,
+  useLocalContentState?: boolean,
 ) => {
   const { getTokensLength } = useTokenizer(tokenizer);
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const dispatch = useDispatch();
 
+  const [_content, _setContent] = useState(prompt);
+  const _stateContent = useAppSelector(ChatSelectors.selectInputContent);
+  const content = useLocalContentState ? _content : _stateContent;
+
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
+
+  const promptResourcesSelector = useMemo(
+    () =>
+      PublicationSelectors.selectFilteredPublicationResources(
+        publicationResourceTypesToFilter,
+      ),
+    [],
+  );
+
+  const promptResources = useAppSelector(promptResourcesSelector);
+  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
+  );
 
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [promptInputValue, setPromptInputValue] = useState('');
-  const [content, setContent] = useState<string>(prompt);
   const [isPromptLimitModalOpen, setIsPromptLimitModalOpen] = useState(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [isRequestSent, setIsRequestSent] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const filteredPrompts = useMemo(
-    () =>
-      prompts.filter((prompt) =>
-        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
-      ),
-    [prompts, promptInputValue],
+  const [selectedPromptId, setSelectedPromptId] = useState<string | undefined>(
+    undefined,
   );
+
+  const filteredPrompts = useMemo(() => {
+    const publicationPromptUrls = promptResources.map((r) => r.reviewUrl);
+
+    return prompts.filter(
+      (prompt) =>
+        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()) &&
+        !publicationPromptUrls.includes(prompt.id) &&
+        (!prompt.publicationInfo?.version ||
+          prompt.publicationInfo.version ===
+            publicVersionGroups[
+              getPublicItemIdWithoutVersion(
+                prompt.publicationInfo.version,
+                prompt.id,
+              )
+            ]?.selectedVersion.version),
+    );
+  }, [promptResources, prompts, promptInputValue, publicVersionGroups]);
 
   const selectedPromptRef = useRef(
     filteredPrompts[0] ? filteredPrompts[0] : undefined,
+  );
+
+  const _setStateContent = useCallback(
+    (value: string) => {
+      dispatch(ChatActions.setInputContent(value));
+    },
+    [dispatch],
+  );
+
+  const setContent = useLocalContentState ? _setContent : _setStateContent;
+
+  const addPromptContent = useCallback(
+    (newContent: string) => {
+      setContent(content?.replace(/\/\w*$/, newContent));
+      if (!useLocalContentState) {
+        setTimeout(() => dispatch(ChatActions.setShouldFocusAndScroll(true)));
+      }
+    },
+    [setContent, content, useLocalContentState, dispatch],
   );
 
   /**
@@ -94,13 +150,11 @@ export const usePromptSelection = (
       if (parsedVariables.length > 0) {
         setIsModalVisible(true);
       } else {
-        setContent((prevContent) =>
-          prevContent?.replace(/\/\w*$/, prompt.content as string),
-        );
+        addPromptContent(prompt.content);
         updatePromptListVisibility(prompt.content);
       }
     },
-    [updatePromptListVisibility],
+    [addPromptContent, updatePromptListVisibility],
   );
 
   /**
@@ -122,12 +176,9 @@ export const usePromptSelection = (
       return;
     }
 
-    setContent((prevVal) =>
-      prevVal?.replace(/\/\w*$/, selectedPrompt.content!),
-    );
     handlePromptSelect(selectedPrompt);
     if (onChangePrompt) {
-      onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content!));
+      onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content));
     }
     setShowPromptList(false);
   }, [
@@ -145,9 +196,11 @@ export const usePromptSelection = (
   useEffect(() => {
     if (!isLoading && isRequestSent) {
       setIsRequestSent(false);
-      selectedPromptRef.current = filteredPrompts[activePromptIndex]
-        ? filteredPrompts[activePromptIndex]
-        : undefined;
+      selectedPromptRef.current = selectedPromptId
+        ? prompts.find((prompt) => prompt.id === selectedPromptId)
+        : filteredPrompts[activePromptIndex]
+          ? filteredPrompts[activePromptIndex]
+          : undefined;
 
       handleInitModal();
     }
@@ -157,6 +210,8 @@ export const usePromptSelection = (
     handleInitModal,
     isLoading,
     isRequestSent,
+    prompts,
+    selectedPromptId,
   ]);
 
   /**
@@ -202,14 +257,27 @@ export const usePromptSelection = (
   /**
    * Initializes the prompt loads.
    */
-  const getPrompt = useCallback(() => {
-    setIsRequestSent(true);
-    dispatch(
-      PromptsActions.uploadPrompt({
-        promptId: filteredPrompts[activePromptIndex].id,
-      }),
-    );
-  }, [activePromptIndex, dispatch, filteredPrompts]);
+  const getPrompt = useCallback(
+    (id?: string) => {
+      setSelectedPromptId(undefined);
+      if (id) {
+        setSelectedPromptId(id);
+      }
+
+      setIsRequestSent(true);
+
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: id ? id : filteredPrompts[activePromptIndex].id,
+        }),
+      );
+    },
+    [activePromptIndex, dispatch, filteredPrompts],
+  );
+
+  useEffect(() => {
+    if (prompt) setContent(prompt);
+  }, [prompt, setContent]);
 
   return {
     setActivePromptIndex,
@@ -217,6 +285,7 @@ export const usePromptSelection = (
     isPromptLimitModalOpen,
     setIsPromptLimitModalOpen,
     setContent,
+    addPromptContent,
     setIsModalVisible,
     showPromptList,
     setShowPromptList,
@@ -228,5 +297,6 @@ export const usePromptSelection = (
     isRequestSent,
     getPrompt,
     isLoading: isLoading && isRequestSent,
+    selectedPrompt: selectedPromptRef.current,
   };
 };

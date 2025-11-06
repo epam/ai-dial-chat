@@ -13,3 +13,5 @@ dist
 .github
 helm
 apps/chat-e2e/html-report
+apps/chat-e2e/chat-html-report
+apps/chat-e2e/overlay-html-report

@@ -1,7 +1,13 @@
-import { BasePage, UploadDownloadData } from './basePage';
+import { BasePage, UploadDownloadData, apiTimeout } from './basePage';
 
-import { ExpectedConstants } from '@/src/testData';
+import config from '@/config/chat.playwright.config';
+import { API } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
+import { Request } from 'playwright-chromium';
+import { PageFunction } from 'playwright-core/types/structs';
+
+export const loadingTimeout = config.use!.actionTimeout! * 2;
 
 export class DialHomePage extends BasePage {
   private appContainer!: AppContainer;
@@ -14,33 +20,65 @@ export class DialHomePage extends BasePage {
   }
 
   public async waitForPageLoaded(options?: {
-    isNewConversationVisible?: boolean;
+    selectedSharedConversationName?: string;
+    selectedSharedFolderName?: string;
+    isPromptShared?: boolean;
+    skipSidebars?: boolean;
   }) {
     const appContainer = this.getAppContainer();
-    const chatBar = appContainer.getChatBar();
-    const promptBar = appContainer.getPromptBar();
-    await chatBar.waitForState({ state: 'attached' });
-    await promptBar.waitForState({ state: 'attached' });
-    await chatBar.getChatLoader().waitForState({ state: 'hidden' });
-    await promptBar.getChatLoader().waitForState({ state: 'hidden' });
-    await appContainer.getChatLoader().waitForState({ state: 'hidden' });
-    const chat = appContainer.getChat();
+    if (!options?.skipSidebars) {
+      const chatBar = appContainer.getChatBar();
+      const promptBar = appContainer.getPromptBar();
+      await chatBar.waitForState({ state: 'attached' });
+      await promptBar.waitForState({ state: 'attached' });
+      await chatBar
+        .getChatLoader()
+        .waitForState({ state: 'hidden', timeout: loadingTimeout });
+      await promptBar.getChatLoader().waitForState({
+        state: 'hidden',
+        timeout: loadingTimeout,
+      });
+    }
+    await appContainer.waitForAppLoaded(loadingTimeout);
+    const chat = appContainer.getFileDropArea().getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    if (options?.isNewConversationVisible) {
-      const newConversation = await chatBar
-        .getConversations()
-        .getConversationByName(ExpectedConstants.newConversationTitle);
-      await newConversation.waitFor();
-      await newConversation.waitFor({ state: 'attached' });
-      const conversationSettings = appContainer.getConversationSettings();
-      await conversationSettings
-        .getTalkToSelector()
-        .waitForState({ state: 'attached' });
-      await conversationSettings
-        .getEntitySettings()
-        .waitForState({ state: 'attached' });
+
+    if (
+      options?.selectedSharedConversationName &&
+      !options.selectedSharedFolderName
+    ) {
+      const chatBar = appContainer.getChatBar();
+      const sharedConversation = chatBar
+        .getSharedWithMeConversationsTree()
+        .getEntityByName(options.selectedSharedConversationName);
+      await sharedConversation.waitFor();
+      await sharedConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (
+      options?.selectedSharedConversationName &&
+      options.selectedSharedFolderName
+    ) {
+      const chatBar = appContainer.getChatBar();
+      const sharedFolderConversation = chatBar
+        .getSharedFolderConversations()
+        .getFolderEntity(
+          options.selectedSharedFolderName,
+          options.selectedSharedConversationName,
+        );
+      await sharedFolderConversation.waitFor();
+      await sharedFolderConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (options?.isPromptShared) {
+      const promptPreviewModal = new PromptPreviewModalWindow(this.page);
+      await promptPreviewModal.waitForState();
+      await promptPreviewModal.promptName.waitForState();
+    } else {
+      await chat.getAgentInfo().waitForState({ state: 'attached' });
+      await chat.configureSettingsButton.waitForState({
+        state: 'attached',
+      });
     }
   }
 
@@ -50,24 +88,91 @@ export class DialHomePage extends BasePage {
     await appContainer
       .getChatBar()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
     await appContainer
       .getPromptBar()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
   }
 
   async importFile<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
   ) {
+    const respPromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'POST',
+    );
     await this.uploadData(uploadData, method);
+    await respPromise;
     await this.getAppContainer()
       .getImportExportLoader()
       .waitForState({ state: 'hidden' });
-    await this.getAppContainer()
-      .getChatLoader()
-      .waitForState({ state: 'hidden' });
+    await this.getAppContainer().waitForAppLoaded(loadingTimeout);
     await this.page.waitForLoadState('domcontentloaded');
+  }
+
+  public async addInitScript<Arg>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    script: PageFunction<Arg, any> | { path?: string; content?: string },
+    arg?: Arg,
+  ): Promise<void> {
+    await this.page.addInitScript(script, arg);
+  }
+
+  public async waitForRequest({
+    method,
+    urlPattern,
+    timeout = 5000,
+    shouldNotOccur = false,
+  }: {
+    method: 'PUT' | 'DELETE' | 'POST' | 'GET';
+    urlPattern?: string | RegExp;
+    timeout?: number;
+    shouldNotOccur?: boolean;
+  }) {
+    const matchRequest = (request: Request) => {
+      const methodMatches = request.method() === method;
+      if (!urlPattern) return methodMatches;
+      return (
+        methodMatches &&
+        (urlPattern instanceof RegExp
+          ? urlPattern.test(request.url())
+          : request.url().includes(urlPattern))
+      );
+    };
+
+    if (shouldNotOccur) {
+      try {
+        await this.page.waitForRequest(matchRequest, { timeout: timeout });
+        // If we get here, we found a request when we shouldn't have
+        throw new Error(`Unexpected ${method} request was sent`);
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes('Timeout')) {
+          // Timeout is expected and good in this case
+          return;
+        }
+        throw error;
+      }
+    } else {
+      return this.page.waitForRequest(matchRequest, { timeout });
+    }
+  }
+
+  public async goToMarketplace() {
+    await this.waitForExpectedResponses(
+      () => this.getAppContainer().getNavigationPanel().goToMarketplaceHome(),
+      [{ apiMethod: 'GET', urlPattern: API.marketplaceHost }],
+      200,
+      apiTimeout * 2,
+    );
+  }
+
+  public async goToMyWorkspace() {
+    await this.waitForExpectedResponses(
+      () => this.getAppContainer().getNavigationPanel().goToMyWorkspace(),
+      [{ apiMethod: 'GET', urlPattern: API.marketplaceHost }],
+      200,
+      apiTimeout * 2,
+    );
   }
 }

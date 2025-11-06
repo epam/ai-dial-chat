@@ -4,7 +4,7 @@ import { UserDesktop } from './UserDesktop';
 export const User = () => {
   return (
     <>
-      <div className="h-full md:hidden">
+      <div className="flex h-full items-center justify-center md:hidden">
         <ProfileButton />
       </div>
 

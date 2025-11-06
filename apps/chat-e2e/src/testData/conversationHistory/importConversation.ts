@@ -33,7 +33,6 @@ export class ImportConversation {
       : (folderConversationToImport.version = 4);
     return {
       path: FileUtil.writeDataToFile(folderConversationToImport),
-      isDownloadedData: false,
     };
   }
 

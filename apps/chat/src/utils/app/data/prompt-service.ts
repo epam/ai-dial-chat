@@ -4,6 +4,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 
+import { BackendChatEntity, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
@@ -27,6 +28,16 @@ export class PromptService {
     return DataService.getDataStorage().getPrompts(path, recursive);
   }
 
+  public static getMultipleFoldersPrompts(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<PromptInfo[]> {
+    return DataService.getDataStorage().getMultipleFoldersPrompts(
+      paths,
+      recursive,
+    );
+  }
+
   public static getPromptsAndFolders(
     path?: string,
   ): Observable<FoldersAndEntities<PromptInfo>> {
@@ -45,12 +56,22 @@ export class PromptService {
     return DataService.getDataStorage().createPrompt(prompt);
   }
 
-  public static updatePrompt(prompt: Prompt): Observable<void> {
+  public static movePrompt(moveModel: MoveModel): Observable<MoveModel> {
+    return DataService.getDataStorage().move(moveModel);
+  }
+
+  public static updatePrompt(prompt: Prompt): Observable<PromptInfo | void> {
     return DataService.getDataStorage().updatePrompt(prompt);
   }
 
   public static deletePrompt(info: PromptInfo): Observable<void> {
     return DataService.getDataStorage().deletePrompt(info);
+  }
+
+  public static getPromptMetadata(
+    id: string,
+  ): Observable<BackendChatEntity | null> {
+    return DataService.getDataStorage().getPromptMetadata(id);
   }
 }
 
@@ -91,7 +112,7 @@ export const getImportPreparedPrompts = ({
 }: {
   prompts: Prompt[];
   folders: FolderInterface[];
-}) =>
+}): Prompt[] =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, {
       forRenaming: false,

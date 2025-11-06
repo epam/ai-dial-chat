@@ -1,67 +1,31 @@
-import { SessionContextValue, signIn, useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { FloatingOverlay } from '@floating-ui/react';
 
-import { GetServerSideProps } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import Head from 'next/head';
+import { useScreenState } from '@/src/hooks/useScreenState';
 
-import { isAuthDisabled } from '../utils/auth/auth-providers';
-import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
-import { delay } from '@/src/utils/auth/delay';
-import { isServerSessionValid } from '@/src/utils/auth/session';
-import { timeoutAsync } from '@/src/utils/auth/timeout-async';
+import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
-import { StorageType } from '../types/storage';
-import { Translation } from '../types/translation';
+import { ScreenState } from '@/src/types/common';
 
-import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
-import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
-import { ShareActions, ShareSelectors } from '../store/share/share.reducers';
-import {
-  selectConversationsToMigrateAndMigratedCount,
-  selectFailedMigratedConversations,
-} from '@/src/store/conversations/conversations.selectors';
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  selectFailedMigratedPrompts,
-  selectPromptsToMigrateAndMigratedCount,
-} from '@/src/store/prompts/prompts.selectors';
-import {
-  SettingsActions,
+  MigrationSelectors,
   SettingsSelectors,
-  SettingsState,
-} from '@/src/store/settings/settings.reducers';
-import {
-  UIActions,
   UISelectors,
-  selectShowSelectToMigrateWindow,
-} from '@/src/store/ui/ui.reducers';
+} from '@/src/store/selectors';
+import { SettingsState } from '@/src/store/settings/settings.types';
 
-import { ISOLATED_MODEL_QUERY_PARAM } from '../constants/chat';
-import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
-import { SHARE_QUERY_PARAM } from '../constants/share';
+import { getLayout } from '@/src/pages/_app';
 
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
-
-import ShareModal from '../components/Chat/ShareModal';
-import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
-import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
-import { ReplaceConfirmationModal } from '../components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
-import { Chatbar } from '@/src/components/Chatbar/Chatbar';
-import Header from '@/src/components/Header/Header';
-import { UserMobile } from '@/src/components/Header/User/UserMobile';
-import Promptbar from '@/src/components/Promptbar';
+import { ImportExportLoader } from '@/src/components/Chatbar/ImportExportLoader';
+import { AnnouncementsBanner } from '@/src/components/Common/AnnouncementBanner';
+import { Header } from '@/src/components/Header/Header';
 
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import packageJSON from '../../../../package.json';
-
+import { useCustomizations } from '@/src/customizations';
 import { Feature } from '@epam/ai-dial-shared';
-import { URL } from 'url';
 
 export interface HomeProps {
   initialState: {
@@ -69,113 +33,42 @@ export interface HomeProps {
   };
 }
 
-export default function Home({ initialState }: HomeProps) {
-  const session: SessionContextValue<boolean> = useSession();
-
-  const { t } = useTranslation(Translation.Chat);
+function Home() {
+  useCustomizations();
 
   const dispatch = useAppDispatch();
-
-  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isShareModalClosed = useAppSelector(
-    ShareSelectors.selectShareModalClosed,
-  );
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
-  const authStatus = useAppSelector(AuthSelectors.selectStatus);
+
   const { conversationsToMigrateCount, migratedConversationsCount } =
-    useAppSelector(selectConversationsToMigrateAndMigratedCount);
+    useAppSelector(
+      MigrationSelectors.selectConversationsToMigrateAndMigratedCount,
+    );
+
   const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
-    selectPromptsToMigrateAndMigratedCount,
+    MigrationSelectors.selectPromptsToMigrateAndMigratedCount,
   );
+
   const failedMigratedConversations = useAppSelector(
-    selectFailedMigratedConversations,
+    MigrationSelectors.selectFailedMigratedConversations,
   );
-  const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
+  const failedMigratedPrompts = useAppSelector(
+    MigrationSelectors.selectFailedMigratedPrompts,
+  );
   const showSelectToMigrateWindow = useAppSelector(
-    selectShowSelectToMigrateWindow,
+    UISelectors.selectShowSelectToMigrateWindow,
   );
-  const isImportingExporting = useAppSelector(
-    ImportExportSelectors.selectIsLoadingImportExport,
-  );
+  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
-  const isReplaceModalOpened = useAppSelector(
-    ImportExportSelectors.selectIsShowReplaceDialog,
-  );
-  const shouldOverlayLogin = isOverlay && shouldLogin;
+  const screenState = useScreenState();
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.has(SHARE_QUERY_PARAM)) {
-      dispatch(
-        ShareActions.acceptShareInvitation({
-          invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
-        }),
-      );
-    }
-  }, [dispatch]);
+  const showFloatingOverlay =
+    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
 
-  // EFFECTS  --------------------------------------------
-  useEffect(() => {
-    if (!isOverlay && shouldLogin) {
-      signIn();
-    }
-  }, [isOverlay, shouldLogin]);
-
-  useEffect(() => {
-    dispatch(AuthActions.setSession(session));
-  }, [dispatch, session]);
-
-  // ON LOAD --------------------------------------------
-
-  useEffect(() => {
-    // Hack for ios 100vh issue
-    const handleSetProperVHPoints = () => {
-      document.documentElement.style.setProperty(
-        '--vh',
-        window.innerHeight * 0.01 + 'px',
-      );
-      dispatch(UIActions.resize());
-    };
-    handleSetProperVHPoints();
-    window.addEventListener('resize', handleSetProperVHPoints);
-
-    dispatch(SettingsActions.initApp());
-  }, [dispatch, initialState]);
-
-  const handleOverlayAuth = async () => {
-    const timeout = 30 * 1000;
-    let complete = false;
-    await Promise.race([
-      timeoutAsync(timeout),
-      (async () => {
-        const authWindowLocation = new AuthWindowLocationLike(
-          `api/auth/signin`,
-        );
-
-        await authWindowLocation.ready; // ready after redirects
-        const t = Math.max(100, timeout / 1000);
-        // wait for redirection to back
-        while (!complete) {
-          try {
-            if (authWindowLocation.href === window.location.href) {
-              complete = true;
-              authWindowLocation.destroy();
-              break;
-            }
-          } catch {
-            // Do nothing
-          }
-          await delay(t);
-        }
-        window.location.reload();
-
-        return;
-      })(),
-    ]);
+  const handleCloseOverlay = () => {
+    dispatch(UIActions.closeAllPanels());
   };
 
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
@@ -189,165 +82,44 @@ export default function Home({ initialState }: HomeProps) {
 
   return (
     <>
-      <Head>
-        <title className="whitespace-pre">
-          {initialState.settings.appName}
-        </title>
-        <meta name="description" content="ChatGPT but better." />
-        <meta
-          name="viewport"
-          content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
+      {conversationsToMigrateCount + promptsToMigrateCount !==
+      migratedPromptsCount + migratedConversationsCount ? (
+        <Migration
+          total={conversationsToMigrateCount + promptsToMigrateCount}
+          uploaded={migratedPromptsCount + migratedConversationsCount}
         />
-      </Head>
-
-      {shouldOverlayLogin ? (
-        <div className="grid size-full min-h-[100px] place-items-center bg-layer-1 text-sm text-primary">
-          <button
-            onClick={handleOverlayAuth}
-            className="button button-secondary"
-            disabled={authStatus === 'loading'}
-          >
-            {t('Login')}
-          </button>
-        </div>
+      ) : failedMigratedConversations.length ||
+        failedMigratedPrompts.length ||
+        showSelectToMigrateWindow ? (
+        <MigrationFailedWindow
+          showSelectToMigrateWindow={showSelectToMigrateWindow}
+          failedMigratedConversations={failedMigratedConversations}
+          failedMigratedPrompts={failedMigratedPrompts}
+        />
       ) : (
-        <main
-          // eslint-disable-next-line tailwindcss/enforces-shorthand
-          className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
-          id="theme-main"
-        >
-          {conversationsToMigrateCount + promptsToMigrateCount !==
-          migratedPromptsCount + migratedConversationsCount ? (
-            <Migration
-              total={conversationsToMigrateCount + promptsToMigrateCount}
-              uploaded={migratedPromptsCount + migratedConversationsCount}
-            />
-          ) : failedMigratedConversations.length ||
-            failedMigratedPrompts.length ||
-            showSelectToMigrateWindow ? (
-            <MigrationFailedWindow
-              showSelectToMigrateWindow={showSelectToMigrateWindow}
-              failedMigratedConversations={failedMigratedConversations}
-              failedMigratedPrompts={failedMigratedPrompts}
-            />
-          ) : (
-            <div className="flex size-full flex-col sm:pt-0">
-              {enabledFeatures.has(Feature.Header) && <Header />}
-              <div className="flex w-full grow overflow-auto">
-                {enabledFeatures.has(Feature.ConversationsSection) && (
-                  <Chatbar />
-                )}
-
-                <div className="flex min-w-0 grow flex-col">
-                  <AnnouncementsBanner />
-                  <Chat />
-
-                  {isImportingExporting && (
-                    <ImportExportLoader isOpen={isImportingExporting} />
-                  )}
-                </div>
-                {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
-                {isProfileOpen && <UserMobile />}
-                {!isShareModalClosed && <ShareModal />}
-                {isReplaceModalOpened && (
-                  <ReplaceConfirmationModal isOpen={isReplaceModalOpened} />
-                )}
-              </div>
+        <div className="flex size-full flex-col sm:pt-0">
+          {enabledFeatures.has(Feature.Header) && <Header />}
+          <div className="flex w-full grow overflow-auto">
+            <div className="flex min-w-0 grow flex-col">
+              {showFloatingOverlay && (
+                <FloatingOverlay
+                  className="z-30 bg-blackout"
+                  onClick={handleCloseOverlay}
+                />
+              )}
+              <AnnouncementsBanner />
+              <Chat />
+              <ImportExportLoader />
             </div>
-          )}
-        </main>
+          </div>
+        </div>
       )}
     </>
   );
 }
 
-const hiddenFeaturesForIsolatedView = new Set([
-  Feature.ConversationsSection,
-  Feature.PromptsSection,
-  Feature.EmptyChatSettings,
-  Feature.TopChatModelSettings,
-]);
+Home.getLayout = getLayout;
 
-export const getServerSideProps: GetServerSideProps = async ({
-  locale,
-  req,
-  res,
-}) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    process.env.ALLOWED_IFRAME_ORIGINS
-      ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-      : 'frame-ancestors none',
-  );
+export default Home;
 
-  const session = await getServerSession(req, res, authOptions);
-  let params: URLSearchParams | undefined;
-  if (req.url) {
-    params = new URL(req.url, `http://${req.headers.host}`).searchParams;
-  }
-  if (!isServerSessionValid(session)) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: `api/auth/signin${params?.size ? `?callbackUrl=/?${params.toString()}` : ''}`,
-      },
-    };
-  }
-
-  const settings: SettingsState = {
-    appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
-    codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
-    defaultRecentModelsIds:
-      (process.env.RECENT_MODELS_IDS &&
-        process.env.RECENT_MODELS_IDS.split(',')) ||
-      [],
-    defaultRecentAddonsIds:
-      (process.env.RECENT_ADDONS_IDS &&
-        process.env.RECENT_ADDONS_IDS.split(',')) ||
-      [],
-    defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
-    enabledFeatures: (
-      (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
-    )
-      .filter((feature) =>
-        params?.has(ISOLATED_MODEL_QUERY_PARAM)
-          ? !hiddenFeaturesForIsolatedView.has(feature)
-          : true,
-      )
-      .concat(
-        params?.has(ISOLATED_MODEL_QUERY_PARAM)
-          ? Feature.HideNewConversation
-          : [],
-      ),
-    isOverlay: process.env.IS_IFRAME === 'true' || false,
-    footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
-      '%%VERSION%%',
-      packageJSON.version,
-    ),
-    isAuthDisabled,
-    storageType: Object.values(StorageType).includes(
-      process.env.STORAGE_TYPE as StorageType,
-    )
-      ? (process.env.STORAGE_TYPE as StorageType)
-      : StorageType.API,
-    announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
-    themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
-  };
-
-  if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
-    settings.isolatedModelId = params.get(ISOLATED_MODEL_QUERY_PARAM) || '';
-  }
-
-  return {
-    props: {
-      appName: settings.appName,
-      initialState: {
-        settings,
-      },
-      ...(await serverSideTranslations(
-        locale ?? 'en',
-        Object.values(Translation),
-      )),
-    },
-  };
-};
+export const getServerSideProps = getCommonPageProps;

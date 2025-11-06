@@ -1,29 +1,52 @@
-import { Attachment, Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { EMPTY, Observable, map, of } from 'rxjs';
+
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils } from '@/src/utils/server/api';
+
+import { Conversation } from '@/src/types/chat';
 import {
+  FeatureType,
+  MappedReplaceActions,
+  ReplaceOptions,
+} from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
+import { Prompt } from '@/src/types/prompt';
+import { AppAction } from '@/src/types/store';
+
+import {
+  ConversationsActions,
+  PromptsActions,
+  UIActions,
+} from '@/src/store/actions';
+import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
+
+import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
+import { successMessages } from '@/src/constants/successMessages';
+
+import { cleanConversationHistory } from './clean';
+import { isImportEntityNameOnSameLevelUnique } from './common';
+import { ConversationService } from './data/conversation-service';
+import { constructPath, triggerDownload } from './file';
+import { getConversationRootId, getFileRootId } from './id';
+import { translate } from './translation';
+
+import {
+  Attachment,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV3,
   ExportFormatV4,
   ExportFormatV5,
+  ExportPromptsFormat,
   LatestExportConversationsFormat,
   LatestExportFormat,
-  PromptsHistory,
+  Message,
+  ShareInterface,
+  Stage,
   SupportedExportFormats,
-} from '@/src/types/import-export';
-import { Prompt } from '@/src/types/prompt';
-
-import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
-
-import { chartType } from '@/src/constants/chat';
-
-import { ApiUtils } from '../server/api';
-import { cleanConversationHistory } from './clean';
-import { combineEntities, prepareEntityName } from './common';
-import { constructPath, triggerDownload } from './file';
-import { splitEntityId } from './folders';
-import { getConversationRootId, getRootId } from './id';
+} from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -50,7 +73,7 @@ export function isExportFormatV5(obj: any): obj is ExportFormatV5 {
   return 'version' in obj && obj.version === 5;
 }
 
-export function isPromptsFormat(obj: PromptsHistory) {
+export function isPromptsFormat(obj: ExportPromptsFormat) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
@@ -60,50 +83,9 @@ export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
 
-export function cleanFolders({
-  folders,
-  featureType,
-  folderType,
-}: {
-  folders: FolderInterface[];
-  folderType: FolderType;
-  featureType: FeatureType;
-}) {
-  return (folders || []).map((folder) => {
-    const parentFolder = folders.find((parentFolder) => {
-      return parentFolder.id === folder.folderId;
-    });
-    const newFolderId = constructPath(
-      getRootId({ featureType }),
-      parentFolder?.name,
-    );
-
-    const newName = prepareEntityName(folder.name, {
-      trimEndDotsRequired: true,
-    });
-    const newId = constructPath(newFolderId, newName);
-    return {
-      id: newId,
-      name: newName,
-      type: folderType,
-      folderId: newFolderId,
-    };
-  });
-}
-
-export const cleanConversationsFolders = (folders: FolderInterface[]) =>
-  cleanFolders({
-    folders,
-    folderType: FolderType.Chat,
-    featureType: FeatureType.Chat,
-  });
-
-export const cleanPromptsFolders = (folders: FolderInterface[]) =>
-  cleanFolders({
-    folders,
-    folderType: FolderType.Prompt,
-    featureType: FeatureType.Prompt,
-  });
+const excludePublicationInfo = <T extends ShareInterface>(
+  entity: T,
+): Omit<T, 'publicationInfo'> => omit(entity, ['publicationInfo']);
 
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
@@ -126,7 +108,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
-        type: FolderType.Chat,
+        type: FeatureType.Chat,
         folderId: getConversationRootId(),
       })),
       prompts: [],
@@ -172,7 +154,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   };
 }
 
-export function currentDate() {
+export function getCurrentDate() {
   const date = new Date();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -189,7 +171,7 @@ export const getDownloadFileName = (fileName?: string): string =>
   !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
 
 function downloadChatPromptData(
-  data: LatestExportConversationsFormat | Prompt[] | PromptsHistory,
+  data: LatestExportConversationsFormat | Prompt[] | ExportPromptsFormat,
   exportType: ExportType,
   fileName?: string,
 ) {
@@ -201,8 +183,19 @@ function downloadChatPromptData(
 
   triggerDownload(
     url,
-    `${downloadName}_chat_${exportType}_${currentDate()}.json`,
+    `${downloadName}_chat_${exportType}_${getCurrentDate()}.json`,
   );
+}
+
+export function downloadApplicationLogs(data: string, fileName?: string) {
+  const exportedFileName = [fileName, 'application_logs', getCurrentDate()]
+    .filter(Boolean)
+    .join('_');
+
+  const blob = new Blob([data], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  triggerDownload(url, exportedFileName);
 }
 
 const triggerDownloadConversation = (
@@ -219,26 +212,35 @@ const triggerDownloadConversationsHistory = (
 };
 
 const triggerDownloadPromptsHistory = (
-  data: PromptsHistory,
+  data: ExportPromptsFormat,
   appName?: string,
 ) => {
   downloadChatPromptData(data, 'prompts_history', appName);
 };
 
-const triggerDownloadPrompt = (data: PromptsHistory, appName?: string) => {
+const triggerDownloadPrompt = (data: ExportPromptsFormat, appName?: string) => {
   downloadChatPromptData(data, 'prompt', appName);
 };
 
-export const exportConversation = (
+export const getExportConversationInfo = (
+  conversation: Conversation,
+  folders: FolderInterface[],
+) => {
+  const data: LatestExportConversationsFormat = {
+    version: 5,
+    history: [excludePublicationInfo(conversation)],
+    folders: folders,
+  };
+
+  return data;
+};
+
+export const triggerExportConversation = (
   conversation: Conversation,
   folders: FolderInterface[],
   appName?: string,
 ) => {
-  const data: LatestExportConversationsFormat = {
-    version: 5,
-    history: [conversation] || [],
-    folders: folders,
-  };
+  const data = getExportConversationInfo(conversation, folders);
 
   triggerDownloadConversation(data, appName);
 };
@@ -254,7 +256,7 @@ export const prepareConversationsForExport = ({
 }: PrepareConversationsForExport) => {
   const data = {
     version: 5,
-    history: conversations || [],
+    history: conversations?.map(excludePublicationInfo) || [],
     folders: folders || [],
   } as LatestExportConversationsFormat;
 
@@ -269,7 +271,7 @@ export const exportConversations = (
 ) => {
   const data = {
     version,
-    history: conversations || [],
+    history: conversations?.map(excludePublicationInfo) || [],
     folders: folders || [],
   } as LatestExportConversationsFormat;
 
@@ -282,7 +284,7 @@ export const exportPrompts = (
   appName?: string,
 ) => {
   const data = {
-    prompts,
+    prompts: prompts.map(excludePublicationInfo),
     folders,
   };
   triggerDownloadPromptsHistory(data, appName);
@@ -293,85 +295,13 @@ export const exportPrompt = (
   folders: FolderInterface[],
   appName?: string,
 ) => {
-  const promptsToExport: Prompt[] = [prompt];
+  const promptsToExport: Prompt[] = [excludePublicationInfo(prompt)];
 
-  const data: PromptsHistory = {
+  const data: ExportPromptsFormat = {
     prompts: promptsToExport,
     folders,
   };
   triggerDownloadPrompt(data, appName);
-};
-
-export interface ImportConversationsResponse {
-  history: ConversationInfo[];
-  folders: FolderInterface[];
-  isError: boolean;
-}
-
-export const importConversations = (
-  importedData: SupportedExportFormats,
-  {
-    currentConversations,
-    currentFolders,
-  }: {
-    currentConversations: ConversationInfo[];
-    currentFolders: FolderInterface[];
-  },
-): ImportConversationsResponse => {
-  const { history, folders, isError } = cleanData(importedData);
-
-  const newHistory: ConversationInfo[] = combineEntities(
-    currentConversations,
-    history,
-  );
-
-  const newFolders: FolderInterface[] = combineEntities(
-    currentFolders,
-    folders,
-  ).filter((folder) => folder.type === FolderType.Chat);
-
-  return {
-    history: newHistory,
-    folders: newFolders,
-    isError,
-  };
-};
-
-export interface ImportPromtsResponse {
-  prompts: Prompt[];
-  folders: FolderInterface[];
-  isError: boolean;
-}
-
-export const importPrompts = (
-  importedData: PromptsHistory,
-  {
-    currentPrompts,
-    currentFolders,
-  }: {
-    currentPrompts: Prompt[];
-    currentFolders: FolderInterface[];
-  },
-): ImportPromtsResponse => {
-  if (!isPromptsFormat(importedData)) {
-    return {
-      prompts: currentPrompts,
-      folders: currentFolders,
-      isError: true,
-    };
-  }
-
-  const newPrompts: Prompt[] = combineEntities(
-    currentPrompts,
-    importedData.prompts,
-  );
-
-  const newFolders: FolderInterface[] = combineEntities(
-    currentFolders,
-    cleanPromptsFolders(importedData.folders),
-  ).filter((folder) => folder.type === FolderType.Prompt);
-
-  return { prompts: newPrompts, folders: newFolders, isError: false };
 };
 
 export const updateAttachment = ({
@@ -412,41 +342,194 @@ export const updateAttachment = ({
     return oldRelativePath === cleanOldAttachmentRelativePath;
   });
 
-  if (!newAttachmentFile || !newAttachmentFile.name) {
-    return oldAttachment;
-  }
+  const newAttachmentUrl =
+    (oldAttachment.url || oldAttachment.reference_url) &&
+    (newAttachmentFile
+      ? constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name)
+      : constructPath(getFileRootId(), parentPath, name));
 
+  const encodedNewAttachmentUrl =
+    newAttachmentUrl && ApiUtils.encodeApiUrl(newAttachmentUrl);
   const newReferenceUrl =
     oldAttachment.reference_url &&
-    ApiUtils.encodeApiUrl(
-      constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
-    ) + `#${oldHash}`;
+    encodedNewAttachmentUrl &&
+    `${encodedNewAttachmentUrl}#${oldHash}`;
 
-  // TODO: remove ApiUtils.encodeApiUrl from updateAttachment()
-  const newAttachmentUrl =
-    oldAttachment.url &&
-    (oldAttachment.type === chartType
-      ? constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name)
-      : ApiUtils.encodeApiUrl(
-          constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
-        ));
-
-  const newType =
-    oldAttachment.type === chartType
-      ? oldAttachment.type ?? newAttachmentFile.contentType
-      : newAttachmentFile.contentType ?? oldAttachment.type;
+  const newType = oldAttachment.type ?? newAttachmentFile?.contentType;
 
   const newTitle =
-    oldAttachment.type === chartType
-      ? oldAttachment.title ?? newAttachmentFile.name
-      : newAttachmentFile.name ?? oldAttachment.title;
+    oldAttachment.type === PLOTLY_CONTENT_TYPE
+      ? (oldAttachment.title ?? newAttachmentFile?.name)
+      : (newAttachmentFile?.name ?? oldAttachment.title);
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
     title: newTitle,
     type: newType,
-    url: newAttachmentUrl,
+    url: encodedNewAttachmentUrl,
     reference_url: newReferenceUrl,
   };
   return updatedAttachment;
 };
+
+export const getDuplicatedConversations = (
+  preparedConversations: Conversation[],
+): Observable<{
+  newConversations: Conversation[];
+  duplicatedConversations: Conversation[];
+}> => {
+  return ConversationService.getConversations(undefined, true).pipe(
+    map((conversationsListing) => {
+      const existedImportNamesConversations = preparedConversations.filter(
+        (importConv) =>
+          !isImportEntityNameOnSameLevelUnique({
+            entity: importConv,
+            entities: conversationsListing,
+          }),
+      );
+
+      const nonExistedImportNamesConversations = preparedConversations.filter(
+        (importConv) => {
+          return isImportEntityNameOnSameLevelUnique({
+            entity: importConv,
+            entities: conversationsListing,
+          });
+        },
+      );
+
+      return {
+        newConversations: nonExistedImportNamesConversations,
+        duplicatedConversations: existedImportNamesConversations,
+      };
+    }),
+  );
+};
+
+export const getConversationActions = (
+  conversation: Conversation,
+  index: number,
+): Observable<AppAction>[] => {
+  const firstConversationActions: Observable<AppAction>[] = [];
+  if (index === 0) {
+    firstConversationActions.push(
+      of(
+        ConversationsActions.selectConversations({
+          conversationIds: [conversation.id],
+        }),
+      ),
+      of(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: [conversation.folderId],
+          featureType: FeatureType.Chat,
+        }),
+      ),
+    );
+  }
+
+  return [
+    of(ConversationsActions.saveConversation({ conversation })),
+    of(
+      ConversationsActions.updateConversationSuccess({
+        id: conversation.id,
+        conversation,
+      }),
+    ),
+    ...firstConversationActions,
+  ];
+};
+
+export const getPromptActions = (
+  prompt: Prompt,
+  index: number,
+): Observable<AppAction>[] => {
+  const firstPromptAction$: Observable<AppAction> =
+    index === 0
+      ? of(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: [prompt.folderId],
+            featureType: FeatureType.Prompt,
+          }),
+        )
+      : EMPTY;
+
+  return [
+    of(PromptsActions.savePrompt({ prompt })),
+    of(
+      PromptsActions.updatePromptSuccess({
+        id: prompt.id,
+        prompt,
+      }),
+    ),
+    firstPromptAction$,
+  ];
+};
+
+export const getToastAction = (
+  errorList: string[],
+  featureType: string,
+): Observable<AppAction> => {
+  const errorMessage = `It looks like these ${featureType}(s) ${errorList.join(', ')} have been deleted. Please reload the page and try again`;
+  const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
+
+  if (errorList.length > 0) {
+    return of(UIActions.showErrorToast(translate(errorMessage)));
+  } else {
+    return of(UIActions.showSuccessToast(translate(successMessage)));
+  }
+};
+
+export const getMappedActions = (
+  items: Conversation[] | Prompt[] | DialFile[],
+  action?: ReplaceOptions,
+) => {
+  const replaceActions: MappedReplaceActions = {};
+  items.forEach((item) => {
+    replaceActions[item.id] = action ?? ReplaceOptions.Postfix;
+  });
+  return { ...replaceActions };
+};
+
+export const updateMessageAttachments = ({
+  message,
+  uploadedAttachments,
+}: {
+  message: Message;
+  uploadedAttachments: UploadedAttachment[];
+}) => {
+  if (!message.custom_content?.attachments) {
+    return message;
+  }
+
+  const newAttachments = message.custom_content.attachments.map(
+    (oldAttachment) => updateAttachment({ oldAttachment, uploadedAttachments }),
+  );
+
+  const newStages: Stage[] | undefined =
+    message.custom_content.stages &&
+    message.custom_content.stages.map((stage) => {
+      if (!stage.attachments) {
+        return stage;
+      }
+      const newStageAttachments = stage.attachments.map((oldAttachment) =>
+        updateAttachment({ oldAttachment, uploadedAttachments }),
+      );
+      return {
+        ...stage,
+        attachments: newStageAttachments,
+      };
+    });
+
+  const newCustomContent: Message['custom_content'] = {
+    ...message.custom_content,
+    attachments: newAttachments,
+    stages: newStages,
+  };
+  return {
+    ...message,
+    custom_content: newCustomContent,
+  };
+};
+
+export function getDownLoadCurrentDate() {
+  return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
+}

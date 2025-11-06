@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react';
 
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+
 import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
-import CollapsableSection from '../Common/CollapsableSection';
+import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
+
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {
   conversations: Conversation[];
   label: string;
 }
+
+const additionalConvData = {
+  isSidePanelItem: true,
+};
 
 export const ConversationsRenderer = ({
   conversations,
@@ -20,7 +28,13 @@ export const ConversationsRenderer = ({
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+
+  const { handleToggle, isExpanded } = useSectionToggle(
+    label,
+    FeatureType.Chat,
+  );
 
   useEffect(() => {
     setIsSectionHighlighted(
@@ -28,25 +42,28 @@ export const ConversationsRenderer = ({
     );
   }, [selectedConversationsIds, conversations]);
 
+  if (!conversations.length) {
+    return null;
+  }
+
   return (
-    <>
-      {conversations.length > 0 && (
-        <CollapsableSection
-          name={label}
-          dataQa="chronology"
-          isHighlighted={isSectionHighlighted}
-          openByDefault
-        >
-          <div className="flex flex-col gap-1 py-1">
-            {conversations.map((conversation) => (
-              <ConversationComponent
-                key={conversation.id}
-                item={conversation}
-              />
-            ))}
-          </div>
-        </CollapsableSection>
-      )}
-    </>
+    <CollapsibleSection
+      name={label}
+      onToggle={handleToggle}
+      dataQa="chronology"
+      isHighlighted={isSectionHighlighted}
+      openByDefault={isExpanded}
+      isExpanded={isExpanded}
+    >
+      <div className="flex flex-col gap-1 py-1">
+        {conversations.map((conversation) => (
+          <ConversationComponent
+            key={conversation.id}
+            item={conversation}
+            additionalItemData={additionalConvData}
+          />
+        ))}
+      </div>
+    </CollapsibleSection>
   );
 };

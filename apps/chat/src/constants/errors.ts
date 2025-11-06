@@ -7,13 +7,19 @@ export const errorsMessages = {
   401: 'Authorization failed. Please reload the page and login again.',
   403: 'Forbidden',
   400: 'Invalid request',
+  404: 'Not found',
+  ModelDeprecated:
+    'The model associated with the deployment is deprecated and no longer available for use. Please select another model.',
   contentFiltering:
     'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
-  unsupportedDataFormat: 'Unsupported data format',
+  unsupportedConversationsDataFormat:
+    'Import of conversations failed because of unsupported data format',
+  unsupportedPromptsDataFormat:
+    'Import of prompts failed because of unsupported data format',
   localStorageQuotaExceeded:
     'Conversation storage capacity exceeded. Please clean up some conversations (prefer ones with media attachments) and try again.',
   timeoutError:
-    'Server is taking to long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.',
+    'Server is taking too long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.',
   customThemesConfigNotProvided:
     'The custom config host url not provided. Please recheck application settings',
   errorDuringEntityRequest: (entityType: string) =>
@@ -22,9 +28,16 @@ export const errorsMessages = {
     'Error happened during getting file user bucket. Please contact your administrator or try to reload the page.',
   noModelsAvailable:
     'You do not have any available models. Please contact your administrator or try to reload the page.',
-  importFailed: 'Import failed',
+  importConversationsFailed: 'Import of conversations failed',
+  uploadingConversationsError:
+    'An error occurred while uploading conversations and folders',
+  importPromptsFailed: 'Import of prompts failed',
+  uploadingPromptsError:
+    'An error occurred while uploading prompts and folders',
   exportFailed: 'Export failed',
   shareFailed: 'Sharing failed. Please try again later.',
+  shareWithExternalFilesFailed:
+    'Sharing failed. You are only allowed to share conversations with attachments from "All files"',
   acceptShareFailed:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
   acceptShareNotExists:
@@ -42,4 +55,39 @@ export const errorsMessages = {
   entityPathInvalid: 'The parent folder name is invalid. Please, rename it',
   entityNameInvalidExternal: 'The name is invalid',
   entityPathInvalidExternal: 'The parent folder name is invalid',
+  publicationFailed: 'Creation of publication failed. Please try again later.',
+  publicationWithExternalFilesFailed:
+    'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
+  publicationsUploadFailed: 'Publications uploading failed.',
+  publicationUploadFailed: 'Publication uploading failed.',
+  publishedItemsUploadFailed: 'Published items uploading failed.',
+  publicationApproveFailed: 'Publication approving failed.',
+  publicationRejectFailed: 'Publication rejecting failed.',
+  publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
+  rulesUploadingFailed: 'Rules uploading failed.',
+  createFailed:
+    'Failed to create {{entity}}. Please check your input and try again.',
+  fetchDetailsFailed:
+    'Fetching application details failed. Please try again later.',
+  fetchSchemasFailed:
+    'Fetching application schemas failed. Please try again later.',
+  fetchSchemaFailed:
+    'Fetching application schema failed. Please try again later.',
+  removeFromMarketplaceFailed: (entityType: string) =>
+    `Failed to remove ${entityType} from my workspace`,
+  addToMarketplaceFailed: (entityType: string) =>
+    `Failed to add ${entityType} to my workspace`,
+
+  // Toolsets
+  // params: {{name}}
+  toolsetGetFailed: 'Failed to get toolset: {{name}}',
+  toolsetsGetFailed: 'Failed to get toolsets',
+  toolsetUpdateFailed: 'Failed to update toolset',
+  toolsetOAuthNotSupported: 'MCP server does not support OAuth authentication',
+  toolsetAlreadyExists:
+    'A toolset with this name and this version already exists',
+  toolsetMoveFailed: 'Failed to move toolset',
+  toolsetDeleteFailed: 'Failed to delete toolset',
+  toolsetSignInFailed: 'Failed to sign in toolset',
+  toolsetSignOutFailed: 'Failed to sign out toolset',
 };

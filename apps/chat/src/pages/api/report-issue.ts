@@ -4,6 +4,8 @@ import { getServerSession } from 'next-auth/next';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { logger } from '@/src/utils/server/logger';
 
+import { HTTPMethod } from '@/src/types/http';
+
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -28,7 +30,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const response = await fetch(
     `${process.env.AZURE_FUNCTIONS_API_HOST}/api/issue?code=${process.env.REPORT_ISSUE_CODE}`,
     {
-      method: 'POST',
+      method: HTTPMethod.POST,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -48,7 +50,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(500).send(errorsMessages.generalServer);
   }
 
-  return res.status(200).end();
+  return res.status(200).send(JSON.stringify({}));
 };
 
 export default handler;

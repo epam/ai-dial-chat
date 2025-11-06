@@ -1,21 +1,22 @@
 import { isRootId } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, MappedReplaceActions } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { MappedReplaceActions } from '@/src/types/import-export';
+import { OnItemEvent } from '@/src/types/modal';
 
-import Folder from '../../Folder/Folder';
-import { ConversationRow } from './Components';
-import { OnItemEvent } from './ReplaceConfirmationModal';
+import { Folder } from '@/src/components/Folder/Folder';
+
+import { ConversationRow } from './ReplaceConversationRow';
 
 interface Props {
   folders: FolderInterface[];
-  mappedActions: MappedReplaceActions;
+  mappedActions?: MappedReplaceActions;
   openedFoldersIds: string[];
   conversationsToReplace: Conversation[];
-  handleToggleFolder: (folderId: string) => void;
-  onItemEvent: OnItemEvent;
+  handleToggleFolder?: (folderId: string) => void;
+  onItemEvent?: OnItemEvent;
+  foldersOnly?: boolean;
 }
 export const ConversationsList = ({
   folders,
@@ -24,6 +25,7 @@ export const ConversationsList = ({
   conversationsToReplace,
   handleToggleFolder,
   onItemEvent,
+  foldersOnly = false,
 }: Props) => {
   return (
     <>
@@ -55,21 +57,22 @@ export const ConversationsList = ({
           </div>
         );
       })}
-      {conversationsToReplace.map((conversation) => {
-        if (!isRootId(conversation.folderId)) {
-          return null;
-        }
+      {!foldersOnly &&
+        conversationsToReplace.map((conversation) => {
+          if (!isRootId(conversation.folderId)) {
+            return null;
+          }
 
-        return (
-          <div key={conversation.id}>
-            <ConversationRow
-              item={conversation}
-              onEvent={onItemEvent}
-              additionalItemData={{ mappedActions }}
-            />
-          </div>
-        );
-      })}
+          return (
+            <div key={conversation.id}>
+              <ConversationRow
+                item={conversation}
+                onEvent={onItemEvent}
+                additionalItemData={{ mappedActions }}
+              />
+            </div>
+          );
+        })}
     </>
   );
 };

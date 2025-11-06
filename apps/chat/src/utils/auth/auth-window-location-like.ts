@@ -3,8 +3,11 @@ export class AuthWindowLocationLike {
   protected resolve: (() => void) | null = null;
   protected reject: (() => void) | null = null;
 
-  constructor(url: string) {
-    this.authWindow = window.open(url);
+  constructor(url: string, isSignInInSameWindow?: boolean) {
+    this.authWindow = window.open(
+      url,
+      isSignInInSameWindow ? '_self' : '_blank',
+    );
 
     if (this.authWindow == null) {
       this.reject?.();

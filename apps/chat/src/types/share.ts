@@ -1,14 +1,6 @@
 import { BackendResourceType } from './common';
 
-export interface ShareInterface {
-  isShared?: boolean;
-  sharedWithMe?: boolean;
-
-  isPublished?: boolean;
-  publishedWithMe?: boolean;
-  originalId?: string; // TODO: revise that when publishing will be in work
-  publishVersion?: string;
-}
+import { SharePermission } from '@epam/ai-dial-shared';
 
 export enum SharingType {
   Conversation = 'conversation',
@@ -16,23 +8,13 @@ export enum SharingType {
   Prompt = 'prompt',
   PromptFolder = 'prompts_folder',
   File = 'file',
+  Application = 'application',
+  Toolset = 'toolset',
 }
 
 export interface UserGroup {
   id: string;
   name: string;
-}
-
-export interface TargetAudienceFilterItem {
-  id: string;
-  name: string;
-}
-
-export enum FiltersTypes {
-  Contains = 'Contains',
-  NotContains = 'Not contains',
-  Equals = 'Equals',
-  Regex = 'Regex',
 }
 
 export interface InvitationDetails {
@@ -42,31 +24,18 @@ export interface InvitationDetails {
   expireAt: number;
 }
 
-export interface TargetAudienceFilter extends TargetAudienceFilterItem {
-  filterType: FiltersTypes;
-  filterParams: string[];
-}
-
-export interface PublishRequest {
-  id: string;
-  name: string;
-  path: string;
-  version: string;
-  fileNameMapping: Map<string, string>;
-  targetAudienceFilters?: {
-    userGroups?: UserGroup[];
-    other: TargetAudienceFilter[];
-  };
-}
-
 export enum ShareRequestType {
   email = 'email',
   link = 'link',
 }
 
+export interface ShareResource {
+  url: string;
+  permissions?: SharePermission[];
+}
 export interface ShareRequestModel {
   invitationType: ShareRequestType;
-  resources: { url: string }[];
+  resources: ShareResource[];
 }
 
 // Email sharing not implemented on BE

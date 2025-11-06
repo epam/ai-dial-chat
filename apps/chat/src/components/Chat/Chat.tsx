@@ -1,74 +1,103 @@
-import { FloatingOverlay } from '@floating-ui/react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { IconPlayerPlay } from '@tabler/icons-react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import {
+  excludeSystemMessages,
+  getConversationModelParams,
+} from '@/src/utils/app/conversation';
+import {
+  isConversationWithFormSchema,
+  isFormSchemaValid,
+} from '@/src/utils/app/form-schema';
+import { isEntityIdExternal } from '@/src/utils/app/id';
+import { is4XLScreen } from '@/src/utils/app/mobile';
+import { doesModelHaveConfiguration } from '@/src/utils/app/models';
+import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import {
   Conversation,
   ConversationsTemporarySettings,
-  LikeState,
   MergedMessages,
-  Message,
-  Replay,
-  Role,
 } from '@/src/types/chat';
-import { EntityType, UploadStatus } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import {
-  AddonsActions,
-  AddonsSelectors,
-} from '@/src/store/addons/addons.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ChatActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  ModelsActions,
+  ApplicationTypesSchemasSelectors,
+  AuthSelectors,
+  ChatSelectors,
+  ConversationsSelectors,
   ModelsSelectors,
-} from '@/src/store/models/models.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { Routes } from '@/src/constants/routes';
 
-import Loader from '../Common/Loader';
-import { NotFoundEntity } from '../Common/NotFoundEntity';
+import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
+import { ChatStarters } from '@/src/components/Chat/ChatStarters';
+import { CustomChatViewer } from '@/src/components/Chat/CustomChatViewer';
+import { Loader } from '@/src/components/Common/Loader';
+import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
+
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
-import ChatExternalControls from './ChatExternalControls';
-import { ChatHeader } from './ChatHeader';
+import { ChatHeader } from './ChatHeader/Header';
 import { ChatInput } from './ChatInput/ChatInput';
-import { ChatSettings } from './ChatSettings';
-import { ChatSettingsEmpty } from './ChatSettingsEmpty';
+import { ChatInputControls } from './ChatInput/ChatInputControls';
+import { ChatInputFooter } from './ChatInput/ChatInputFooter';
+import { ChatSettings } from './ChatSettings/ChatSettingsModal';
+import { EmptyChatDescription } from './EmptyChatDescription';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { StartReplayButton } from './StartReplayButton';
+import { ChatPublicationControls } from './Publish/PublicationControls/ChatPublicationControls';
+import { ReviewPublicationHandler } from './Publish/PublicationHandler/ReviewPublicationHandler';
+import { TalkToModal } from './TalkTo/TalkToModal';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Feature,
+  LikeState,
+  Message,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
 
-export const ChatView = memo(() => {
-  const dispatch = useAppDispatch();
+const isWideScreen = () => !is4XLScreen();
 
-  const appName = useAppSelector(SettingsSelectors.selectAppName);
-  const models = useAppSelector(ModelsSelectors.selectModels);
+const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
+  isWideScreen() && !messagesLength && !isCompareMode;
+
+const ChatView = memo(() => {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
-  const addons = useAppSelector(AddonsSelectors.selectAddons);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -82,9 +111,20 @@ export const ChatView = memo(() => {
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
+  );
+  const isEditUserMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideEditUserMessage),
+  );
+  const isRegenerateAssistantMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(
+      state,
+      Feature.HideRegenerateAssistantMessage,
+    ),
+  );
+  const isDeleteMessageHided = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideDeleteUserMessage),
   );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
@@ -92,21 +132,67 @@ export const ChatView = memo(() => {
   const isReplayPaused = useAppSelector(
     ConversationsSelectors.selectIsReplayPaused,
   );
+  const isReplayRequiresVariables = useAppSelector(
+    ConversationsSelectors.selectIsReplayRequiresVariables,
+  );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
+  const isReadOnly = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsReadOnly,
   );
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
-  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
+  const talkToConversationId = useAppSelector(
+    ConversationsSelectors.selectTalkToConversationId,
+  );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
+  const notAvailableEntityType = useAppSelector(
+    ChatSelectors.selectNotAvailableEntityType,
+  );
 
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
-  const [showScrollDownButton, setShowScrollDownButton] =
-    useState<boolean>(false);
+  const configurationSchemas = useAppSelector(
+    ChatSelectors.selectUploadedConfigurationSchemasIds,
+  );
+  const isApproveRequiredEntity = useAppSelector((state) =>
+    PublicationSelectors.selectIsApproveRequiredEntity(
+      state,
+      selectedConversationsIds[0] ?? '',
+    ),
+  );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const notAllowedItemsForDisplay = useAppSelector(
+    ConversationsSelectors.selectNotAllowedItemsForDisplay,
+  );
+  const isNotAllowed = useAppSelector(
+    ConversationsSelectors.selectIsNotAllowed,
+  );
+
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [showScrollDownButton, setShowScrollDownButton] = useState(false);
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
+  const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
+  const [inputHeight, setInputHeight] = useState(142);
+  const [isApproveRequiredInput, setIsApproveRequiredInput] = useState(false);
+  const [isWideLayout, setIsWideLayout] = useState(
+    checkIsWideLayout(mergedMessages.length, isCompareMode),
+  );
+
+  const handleTalkToConversationId = useCallback(
+    (conversationId: string | null) => {
+      dispatch(ConversationsActions.setTalkToConversationId(conversationId));
+    },
+    [dispatch],
+  );
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -115,65 +201,41 @@ export const ChatView = memo(() => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
-  const [inputHeight, setInputHeight] = useState<number>(142);
-  const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
 
   const showReplayControls = useMemo(() => {
-    return isReplay && !messageIsStreaming && isReplayPaused;
-  }, [isReplay, isReplayPaused, messageIsStreaming]);
+    return (
+      isReplay &&
+      !messageIsStreaming &&
+      (isReplayPaused || !!isReplayRequiresVariables)
+    );
+  }, [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming]);
 
-  const isNotEmptyConversations = selectedConversations.some(
-    (conv) => conv.messages.length > 0,
+  const isNotEmptyConversations =
+    isReplayRequiresVariables ||
+    selectedConversations.some((conv) => conv.messages.length > 0);
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditor;
+  }, [router.pathname]);
+
+  const isAdminPreview = isAdmin && isApplicationPreviewChat;
+
+  const areModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
   );
 
-  useEffect(() => {
-    const modelIds = models.map((model) => model.id);
-    const isNotAllowedModel =
-      isModelsLoaded &&
-      (models.length === 0 ||
-        selectedConversations.some((conv) => {
-          if (
-            conv.replay &&
-            conv.replay.isReplay &&
-            conv.replay.replayAsIs &&
-            conv.replay.replayUserMessagesStack &&
-            conv.replay.replayUserMessagesStack[0].model
-          ) {
-            return conv.replay.replayUserMessagesStack.some(
-              (message) =>
-                message.role === Role.User &&
-                message.model?.id &&
-                !modelIds.includes(message.model.id),
-            );
-          }
-
-          const model = models.find(({ id }) => id === conv.model.id);
-
-          return (
-            !modelIds.includes(conv.model.id) ||
-            (model &&
-              model.type === EntityType.Assistant &&
-              conv.assistantModelId &&
-              !modelIds.includes(conv.assistantModelId))
-          );
-        }));
-    if (isNotAllowedModel) {
-      setNotAllowedType(EntityType.Model);
-    } else if (
-      selectedConversations.some((conversation) =>
-        conversation.selectedAddons.some((addonId) => !addonsMap[addonId]),
-      )
-    ) {
-      setNotAllowedType(EntityType.Addon);
+  useLayoutEffect(() => {
+    if (isNotAllowed) {
+      dispatch(ChatActions.setNotAvailableEntityType(EntityType.Model));
     } else {
-      setNotAllowedType(null);
+      dispatch(ChatActions.setNotAvailableEntityType(undefined));
     }
-  }, [selectedConversations, models, isModelsLoaded, addonsMap]);
+  }, [dispatch, isNotAllowed]);
 
-  const onLikeHandler = useCallback(
-    (index: number, conversation: Conversation) => (rate: LikeState) => {
+  const handleLike = useCallback(
+    (index: number, conversation: Conversation, rate: LikeState) => {
       dispatch(
         ConversationsActions.rateMessage({
           conversationId: conversation.id,
@@ -241,52 +303,54 @@ export const ChatView = memo(() => {
     }
   }, []);
 
+  const handleChatMessagesResize = useCallback(() => {
+    if (
+      chatMessagesRef.current &&
+      !messageIsStreaming &&
+      mergedMessages.length
+    ) {
+      handleScroll();
+    }
+  }, [handleScroll, mergedMessages.length, messageIsStreaming]);
+
+  const handleChatResize = useCallback(() => {
+    setIsWideLayout(checkIsWideLayout(mergedMessages.length, isCompareMode));
+  }, [isCompareMode, mergedMessages.length]);
+
+  useResizeObserver(chatMessagesRef.current, handleChatMessagesResize);
+
+  useResizeObserver(document.body, handleChatResize);
+
   useEffect(() => {
     const lastMergedMessages = mergedMessages.length
       ? mergedMessages[mergedMessages.length - 1]
       : [];
 
     const isErrorInSomeLastMessage = lastMergedMessages.some(
-      (mergedStr: [Conversation, Message, number]) =>
+      (mergedStr: [Conversation, Message, number, Message[]]) =>
         !!mergedStr[1].errorMessage,
     );
     setIsLastMessageError(isErrorInSomeLastMessage);
   }, [mergedMessages]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (chatMessagesRef.current && !messageIsStreaming) {
-        handleScroll();
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (chatMessagesRef.current) {
-      resizeObserver.observe(chatMessagesRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [handleScroll, messageIsStreaming]);
-
-  useEffect(() => {
-    setIsShowChatSettings(false);
-
+  useLayoutEffect(() => {
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
-      const firstConversationMessages =
-        selectedConversations[0].messages.filter((m) => m.role !== Role.System);
-      for (let i = 0; i < firstConversationMessages.length; i++) {
+      const userMessages = selectedConversations.map((conv) =>
+        excludeSystemMessages(conv.messages),
+      );
+      const messagesLength = userMessages[0].length;
+
+      for (let i = 0; i < messagesLength; i++) {
         mergedMessages.push(
-          selectedConversations.map((conv) => [
+          selectedConversations.map((conv, convIndex) => [
             conv,
-            conv.messages.filter((m) => m.role !== Role.System)[i] || {
+            userMessages[convIndex][i] || {
               role: Role.Assistant,
               content: '',
             },
             i,
+            userMessages[convIndex],
           ]),
         );
       }
@@ -321,140 +385,16 @@ export const ChatView = memo(() => {
     [dispatch],
   );
 
-  const applySelectedModel = useCallback(
-    (
-      conversation: Conversation,
-      modelId: string | undefined,
-    ): Partial<Conversation> => {
-      const newAiEntity = modelId ? modelsMap[modelId] : undefined;
-      if (!modelId || !newAiEntity) {
-        return {};
-      }
-
-      const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
-        ? conversation.replay
-        : {
-            ...conversation.replay,
-            replayAsIs: false,
-          };
-      const updatedAddons =
-        conversation.replay &&
-        conversation.replay.isReplay &&
-        conversation.replay.replayAsIs &&
-        !updatedReplay?.replayAsIs
-          ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
-          : conversation.selectedAddons;
-
-      return {
-        model: { id: modelId },
-        assistantModelId:
-          newAiEntity.type === EntityType.Assistant
-            ? DEFAULT_ASSISTANT_SUBMODEL_ID
-            : undefined,
-        replay: updatedReplay,
-        selectedAddons: updatedAddons,
-      };
-    },
-    [addonsMap, modelsMap],
-  );
-
-  const handleSelectModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      const newAiEntity = modelsMap[modelId];
-      if (!newAiEntity) {
-        return;
-      }
-
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            ...applySelectedModel(conversation, modelId),
-          },
-        }),
-      );
-    },
-    [applySelectedModel, dispatch, modelsMap],
-  );
-
-  const handleSelectAssistantSubModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { assistantModelId: modelId },
-        }),
-      );
-    },
-    [dispatch],
-  );
-
-  const handleOnChangeAddon = useCallback(
-    (conversation: Conversation, addonId: string) => {
-      const isAddonInConversation = conversation.selectedAddons.some(
-        (id) => id === addonId,
-      );
-      if (isAddonInConversation) {
-        const filteredAddons = conversation.selectedAddons.filter(
-          (id) => id !== addonId,
-        );
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: { selectedAddons: filteredAddons },
-          }),
-        );
-      } else {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: {
-              selectedAddons: conversation.selectedAddons.concat(addonId),
-            },
-          }),
-        );
-      }
-    },
-    [dispatch],
-  );
-
-  const handleOnApplyAddons = useCallback(
-    (conversation: Conversation, addonIds: string[]) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            selectedAddons: addonIds.filter((addonId) => addonsMap[addonId]),
-          },
-        }),
-      );
-    },
-    [addonsMap, dispatch],
-  );
-
-  const handleChangePrompt = useCallback(
-    (conversation: Conversation, prompt: string) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { prompt },
-        }),
-      );
-    },
-    [dispatch],
-  );
-
-  const handleChangeTemperature = useCallback(
-    (conversation: Conversation, temperature: number) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { temperature },
-        }),
-      );
-    },
-    [dispatch],
-  );
+  useEffect(() => {
+    if (!selectedConversationsIds.some((id) => prevSelectedIds.includes(id))) {
+      setAutoScroll();
+      chatContainerRef.current?.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+      });
+      setPrevSelectedIds(selectedConversationsIds);
+      setIsShowChatSettings(false);
+    }
+  }, [prevSelectedIds, selectedConversationsIds]);
 
   const handleDeleteMessage = useCallback(
     (index: number, conv: Conversation) => {
@@ -467,7 +407,7 @@ export const ChatView = memo(() => {
     [dispatch],
   );
 
-  const onSendMessage = useCallback(
+  const handleSendMessage = useCallback(
     (message: Message) => {
       dispatch(
         ConversationsActions.sendMessages({
@@ -475,23 +415,17 @@ export const ChatView = memo(() => {
           message,
           deleteCount: 0,
           activeReplayIndex: 0,
+          skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
         }),
       );
     },
-    [dispatch, selectedConversations],
+    [areModelsInstalled, dispatch, isAdminPreview, selectedConversations],
   );
 
-  const onRegenerateMessage = useCallback(() => {
-    const lastUserMessageIndex = selectedConversations[0].messages
-      .map((msg) => msg.role)
-      .lastIndexOf(Role.User);
+  const handleRegenerateMessage = useCallback(() => {
     dispatch(
-      ConversationsActions.sendMessages({
-        conversations: selectedConversations,
-        message: selectedConversations[0].messages[lastUserMessageIndex],
-        deleteCount:
-          selectedConversations[0].messages.length - lastUserMessageIndex,
-        activeReplayIndex: 0,
+      ConversationsActions.regenerateLastMessage({
+        skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
       }),
     );
 
@@ -501,21 +435,20 @@ export const ChatView = memo(() => {
         behavior: 'smooth',
       });
     }
-  }, [dispatch, selectedConversations]);
+  }, [dispatch, isAdminPreview, areModelsInstalled]);
 
-  const onEditMessage = useCallback(
-    (editedMessage: Message, index: number) => {
-      dispatch(ConversationsActions.stopStreamMessage());
+  const handleEditMessage = useCallback(
+    (editedMessage: Message, index: number, convId: string) => {
       dispatch(
-        ConversationsActions.sendMessages({
-          conversations: selectedConversations,
-          message: editedMessage,
-          deleteCount: mergedMessages.length - index,
-          activeReplayIndex: 0,
+        ConversationsActions.editMessage({
+          editedMessage,
+          index,
+          convId,
+          skipRecentModelsUpdate: isAdminPreview && !areModelsInstalled,
         }),
       );
     },
-    [dispatch, mergedMessages.length, selectedConversations],
+    [dispatch, isAdminPreview, areModelsInstalled],
   );
 
   const handleApplyChatSettings = useCallback(() => {
@@ -528,20 +461,20 @@ export const ChatView = memo(() => {
             id: conversation.id,
             values: {
               messages: clearStateForMessages(conversation.messages),
-              ...applySelectedModel(conversation, temporarySettings.modelId),
+              ...getConversationModelParams(
+                conversation,
+                temporarySettings.modelId,
+                modelsMap,
+              ),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
-              assistantModelId: temporarySettings.currentAssistentModelId,
-              selectedAddons: temporarySettings.addonsIds.filter(
-                (addonId) => addonsMap[addonId],
-              ),
               isShared: temporarySettings.isShared,
             },
           }),
         );
       }
     });
-  }, [selectedConversations, dispatch, applySelectedModel, addonsMap]);
+  }, [selectedConversations, dispatch, modelsMap]);
 
   const handleTemporarySettingsSave = useCallback(
     (conversation: Conversation, args: ConversationsTemporarySettings) => {
@@ -560,344 +493,608 @@ export const ChatView = memo(() => {
     ref.scrollTo({ top: ref.scrollHeight });
   }, []);
 
-  const onChatInputResize = useCallback((inputHeight: number) => {
+  const handleChatInputResize = useCallback((inputHeight: number) => {
     setInputHeight(inputHeight);
   }, []);
 
+  const handleTalkToClose = useCallback(() => {
+    handleTalkToConversationId(null);
+  }, [handleTalkToConversationId]);
+
+  const handleToggleApproveRequiredInput = useCallback(() => {
+    setIsApproveRequiredInput(!isApproveRequiredInput);
+  }, [isApproveRequiredInput]);
+
+  const handleStopMessageStreaming = useCallback(() => {
+    dispatch(ConversationsActions.stopStreamMessage());
+  }, [dispatch]);
+
+  const handleSelectForCompare = useCallback(
+    (conversation: ConversationInfo) => {
+      dispatch(ConversationsActions.selectForCompare(conversation));
+    },
+    [dispatch],
+  );
+
+  const handleCloseSettings = useCallback(() => {
+    setIsShowChatSettings(false);
+  }, []);
+
+  const handleUnselectConversation = useCallback(
+    (id: string) => {
+      dispatch(
+        ConversationsActions.unselectConversations({
+          conversationIds: [id],
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const isValidApproveRequiredConversation =
+    isApproveRequiredEntity && !isReplay && !isPlayback;
   const showLastMessageRegenerate =
-    !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
-  const showFloatingOverlay =
-    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
+    !isReplay &&
+    !isPlayback &&
+    (!isReadOnly || isApproveRequiredEntity) &&
+    !messageIsStreaming &&
+    !isLastMessageError &&
+    !notAvailableEntityType;
+
+  const areSelectedConversationsEmpty = selectedConversations.every(
+    (conv) => !conv.messages.length,
+  );
+
+  const selectedConversationSchemas = useMemo(
+    () =>
+      selectedConversations
+        .map((conversation) =>
+          configurationSchemas.find(
+            (schema) => schema.modelId === conversation.model.id,
+          ),
+        )
+        .filter((schema) => schema !== undefined),
+    [configurationSchemas, selectedConversations],
+  );
+  const isSomeConversationWithSchema = selectedConversations.some(
+    (conv) =>
+      (selectedConversationSchemas.length &&
+        selectedConversationSchemas
+          .map(({ schema }) => schema)
+          .some(isFormSchemaValid)) ||
+      isConversationWithFormSchema(conv),
+  );
+
+  const isChatReadyForInput =
+    areModelsInstalled ||
+    isIsolatedView ||
+    isAdminPreview ||
+    isApproveRequiredEntity;
+
+  const isInputVisible =
+    ((!isReplay || isNotEmptyConversations) &&
+      !isReadOnly &&
+      !isApproveRequiredEntity &&
+      (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
+      !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
+    (isValidApproveRequiredConversation && isApproveRequiredInput);
+
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
+
+  const customViewer = useMemo(() => {
+    const model = modelsMap[selectedConversations[0]?.model?.id];
+
+    if (!model) return;
+
+    if (model.viewerUrl) {
+      return {
+        viewerUrl: model.viewerUrl,
+        title: model.name,
+        applicationId: model.id,
+      };
+    }
+
+    if (
+      model.applicationTypeSchemaId &&
+      applicationTypeSchemas.some(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      )
+    ) {
+      const schema = applicationTypeSchemas.find(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      );
+      if (schema?.viewerUrl) {
+        return {
+          viewerUrl: schema.viewerUrl,
+          title: schema.displayName,
+          applicationId: model.id,
+        };
+      }
+    }
+  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
+
+  useEffect(() => {
+    if (
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
+      textareaRef.current
+    ) {
+      textareaRef.current.focus();
+    }
+  }, [enabledFeatures]);
+
+  useEffect(() => {
+    setIsApproveRequiredInput(false);
+  }, [selectedConversationsIds]);
+
+  useEffect(() => {
+    handleScroll();
+  }, [isApproveRequiredInput, handleScroll]);
+
+  const isScrollDownButton = showScrollDownButton && !isApproveRequiredInput;
 
   return (
-    <div
-      className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
-      data-qa="chat"
-      id="chat"
-    >
-      {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {modelError ? (
-        <ErrorMessageDiv error={modelError} />
-      ) : (
-        <>
-          <div
-            className={classNames(
-              'flex size-full',
-              isCompareMode ? 'landscape:hidden' : 'hidden',
-            )}
-          >
-            <ChatCompareRotate />
-          </div>
-          <div
-            className={classNames(
-              'relative size-full',
-              isCompareMode && 'portrait:hidden',
-            )}
-          >
-            <div className="flex h-full">
-              <div
-                className={classNames(
-                  'flex h-full flex-col',
-                  isCompareMode && selectedConversations.length < 2
-                    ? 'w-[50%]'
-                    : 'w-full',
-                )}
-                data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
-              >
-                <div className="flex h-full flex-col justify-between">
-                  <div className="flex w-full">
-                    {selectedConversations.map((conv) => (
-                      <div
-                        key={conv.id}
-                        className={classNames(
-                          isCompareMode && selectedConversations.length > 1
-                            ? 'w-[50%]'
-                            : 'w-full',
-                        )}
-                      >
-                        {conv.messages.length !== 0 &&
-                          enabledFeatures.has(Feature.TopSettings) && (
-                            <div className="z-10 flex flex-col">
-                              <ChatHeader
-                                conversation={conv}
-                                isCompareMode={isCompareMode}
-                                isShowChatInfo={enabledFeatures.has(
-                                  Feature.TopChatInfo,
-                                )}
-                                isShowClearConversation={
-                                  enabledFeatures.has(
-                                    Feature.TopClearConversation,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isExternal
-                                }
-                                isShowModelSelect={
-                                  enabledFeatures.has(
-                                    Feature.TopChatModelSettings,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isExternal
-                                }
-                                isShowSettings={isShowChatSettings}
-                                setShowSettings={(isShow) => {
-                                  if (isShow) {
-                                    dispatch(ModelsActions.getModels());
-                                    dispatch(AddonsActions.getAddons());
-                                  }
-                                  setIsShowChatSettings(isShow);
-                                }}
-                                selectedConversationIds={
-                                  selectedConversationsIds
-                                }
-                                onClearConversation={() =>
-                                  handleClearConversation(conv)
-                                }
-                                onUnselectConversation={(id) => {
-                                  dispatch(
-                                    ConversationsActions.unselectConversations({
-                                      conversationIds: [id],
-                                    }),
-                                  );
-                                }}
-                              />
-                            </div>
-                          )}
-                      </div>
-                    ))}
-                  </div>
-                  <div
-                    onScroll={() => {
-                      if (
-                        selectedConversations.some(
-                          (conv) =>
-                            !!conv.messages.find(
-                              (m) => m.role !== Role.Assistant,
-                            ),
-                        )
-                      ) {
-                        handleScroll();
-                      }
-                    }}
-                    ref={setChatContainerRef}
-                    className="h-full overflow-x-hidden"
-                  >
-                    <div className="flex max-h-full w-full">
-                      {selectedConversations.map(
-                        (conv) =>
-                          conv.messages.length === 0 && (
-                            <div
-                              key={conv.id}
-                              className={classNames(
-                                'flex h-full flex-col justify-between',
-                                selectedConversations.length > 1
-                                  ? 'w-[50%]'
-                                  : 'w-full',
-                              )}
-                            >
-                              <div
-                                className="shrink-0"
-                                style={{
-                                  height: `calc(100% - ${inputHeight}px)`,
-                                }}
-                              >
-                                <ChatSettingsEmpty
-                                  conversation={conv}
-                                  isModels={models.length !== 0}
-                                  prompts={prompts}
-                                  isShowSettings={enabledFeatures.has(
-                                    Feature.EmptyChatSettings,
-                                  )}
-                                  onSelectModel={(modelId: string) =>
-                                    handleSelectModel(conv, modelId)
-                                  }
-                                  onSelectAssistantSubModel={(
-                                    modelId: string,
-                                  ) =>
-                                    handleSelectAssistantSubModel(conv, modelId)
-                                  }
-                                  onChangeAddon={(addonId: string) =>
-                                    handleOnChangeAddon(conv, addonId)
-                                  }
-                                  onChangePrompt={(prompt) =>
-                                    handleChangePrompt(conv, prompt)
-                                  }
-                                  onChangeTemperature={(temperature) =>
-                                    handleChangeTemperature(conv, temperature)
-                                  }
-                                  appName={appName}
-                                  onApplyAddons={handleOnApplyAddons}
-                                />
-                              </div>
-                            </div>
-                          ),
-                      )}
-                    </div>
-                    <div ref={chatMessagesRef}>
-                      {mergedMessages?.length > 0 && (
-                        <div className="flex flex-col" data-qa="chat-messages">
-                          {mergedMessages.map(
-                            (
-                              mergedStr: [Conversation, Message, number][],
-                              i: number,
-                            ) => (
-                              <div
-                                key={i}
-                                className="flex w-full"
-                                data-qa={
-                                  isCompareMode
-                                    ? 'compare-message-row'
-                                    : 'message-row'
-                                }
-                              >
-                                {mergedStr.map(
-                                  ([conv, message, index]: [
-                                    Conversation,
-                                    Message,
-                                    number,
-                                  ]) => (
-                                    <div
-                                      key={conv.id}
-                                      className={classNames(
-                                        isCompareMode &&
-                                          selectedConversations.length > 1
-                                          ? 'w-[50%]'
-                                          : 'w-full',
-                                      )}
-                                    >
-                                      <div className="size-full">
-                                        <MemoizedChatMessage
-                                          key={conv.id}
-                                          message={message}
-                                          messageIndex={index}
-                                          conversation={conv}
-                                          isLikesEnabled={enabledFeatures.has(
-                                            Feature.Likes,
-                                          )}
-                                          editDisabled={!!notAllowedType}
-                                          onEdit={onEditMessage}
-                                          onLike={onLikeHandler(index, conv)}
-                                          onDelete={() => {
-                                            handleDeleteMessage(index, conv);
-                                          }}
-                                          onRegenerate={
-                                            index ===
-                                              mergedMessages.length - 1 &&
-                                            showLastMessageRegenerate
-                                              ? onRegenerateMessage
-                                              : undefined
-                                          }
-                                          messagesLength={mergedMessages.length}
-                                        />
-                                      </div>
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {!isPlayback && notAllowedType ? (
-                    <NotAllowedModel type={notAllowedType} />
-                  ) : (
-                    <>
-                      {!isPlayback && (
-                        <ChatInput
-                          showReplayControls={showReplayControls}
-                          textareaRef={textareaRef}
-                          showScrollDownButton={showScrollDownButton}
-                          onSend={onSendMessage}
-                          onScrollDownClick={handleScrollDown}
-                          onRegenerate={onRegenerateMessage}
-                          isLastMessageError={isLastMessageError}
-                          onStopConversation={() => {
-                            dispatch(ConversationsActions.stopStreamMessage());
-                          }}
-                          onResize={onChatInputResize}
-                          isShowInput={
-                            (!isReplay || isNotEmptyConversations) &&
-                            !isExternal
-                          }
-                        >
-                          {showReplayControls && !isNotEmptyConversations && (
-                            <StartReplayButton />
-                          )}
-                          {isExternal && (
-                            <ChatExternalControls
-                              conversations={selectedConversations}
-                            />
-                          )}
-                        </ChatInput>
-                      )}
-
-                      {isPlayback && (
-                        <PlaybackControls
-                          nextMessageBoxRef={nextMessageBoxRef}
-                          showScrollDownButton={showScrollDownButton}
-                          onScrollDownClick={handleScrollDown}
-                          onResize={onChatInputResize}
-                        />
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-              {isShowChatSettings && (
+    <ChatDropArea isSettingsModalOpen={isShowChatSettings}>
+      <div
+        className="relative size-full min-w-0 overflow-y-auto"
+        data-qa="chat"
+        id="chat"
+      >
+        {modelError ? (
+          <ErrorMessageDiv error={modelError} />
+        ) : customViewer ? (
+          <CustomViewerChatView
+            customViewer={customViewer}
+            setShowSettings={setIsShowChatSettings}
+          />
+        ) : (
+          <>
+            <div
+              className={classNames(
+                'flex size-full',
+                isCompareMode ? 'landscape:hidden' : 'hidden',
+              )}
+            >
+              <ChatCompareRotate />
+            </div>
+            <div
+              className={classNames(
+                'relative size-full',
+                isCompareMode && 'portrait:hidden',
+              )}
+            >
+              <div className="flex h-full">
                 <div
                   className={classNames(
-                    'absolute left-0 top-0 grid size-full',
-                    selectedConversations.length === 1
-                      ? 'grid-cols-1'
-                      : 'grid-cols-2',
+                    'flex h-full flex-col',
+                    isCompareMode && selectedConversations.length < 2
+                      ? 'w-1/2'
+                      : 'w-full',
                   )}
+                  data-qa={
+                    isCompareMode ? 'compare-mode' : 'app-settings-chat-mode'
+                  }
                 >
-                  {selectedConversations.map((conv) => (
-                    <div className="relative h-full" key={conv.id}>
-                      <ChatSettings
-                        conversation={conv}
-                        modelId={conv.model.id}
-                        prompts={prompts}
-                        addons={addons}
-                        onChangeSettings={(args) => {
-                          handleTemporarySettingsSave(conv, args);
-                        }}
-                        onApplySettings={handleApplyChatSettings}
-                        onClose={() => setIsShowChatSettings(false)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-              {isCompareMode && selectedConversations.length < 2 && (
-                <div className="flex h-full w-[50%] flex-col overflow-auto">
-                  <ChatCompareSelect
-                    conversations={conversations}
-                    selectedConversations={selectedConversations}
-                    onConversationSelect={(conversation) => {
-                      dispatch(
-                        ConversationsActions.selectForCompare(conversation),
-                      );
-                    }}
-                  />
                   <div
-                    className="shrink-0"
-                    style={{ height: inputHeight + 56 }}
-                  />
+                    className={classNames(
+                      'flex h-full flex-col',
+                      areSelectedConversationsEmpty
+                        ? 'justify-center'
+                        : 'justify-between',
+                    )}
+                  >
+                    <div className="flex w-full">
+                      {selectedConversations.map((conv) => (
+                        <div
+                          key={conv.id}
+                          className={classNames(
+                            isCompareMode && selectedConversations.length > 1
+                              ? 'w-1/2'
+                              : 'w-full',
+                          )}
+                        >
+                          {conv.messages.length !== 0 &&
+                            enabledFeatures.has(Feature.TopSettings) &&
+                            !isApplicationPreviewChat && (
+                              <div className="z-10 flex flex-col">
+                                <ChatHeader
+                                  conversation={conv}
+                                  isCompareMode={isCompareMode}
+                                  isShowChatInfo={enabledFeatures.has(
+                                    Feature.TopChatInfo,
+                                  )}
+                                  isShowClearConversation={
+                                    enabledFeatures.has(
+                                      Feature.TopClearConversation,
+                                    ) &&
+                                    !isPlayback &&
+                                    !isReplay &&
+                                    !isReadOnly &&
+                                    !isApproveRequiredEntity
+                                  }
+                                  isShowSettings={isShowChatSettings}
+                                  setShowSettings={setIsShowChatSettings}
+                                  selectedConversationIds={
+                                    selectedConversationsIds
+                                  }
+                                  onClearConversation={handleClearConversation}
+                                  onUnselectConversation={
+                                    handleUnselectConversation
+                                  }
+                                  onModelClick={handleTalkToConversationId}
+                                />
+                              </div>
+                            )}
+                        </div>
+                      ))}
+                    </div>
+                    <div
+                      onScroll={() => {
+                        if (
+                          selectedConversations.some(
+                            (conv) =>
+                              !!conv.messages.find(
+                                (m) => m.role !== Role.Assistant,
+                              ),
+                          )
+                        ) {
+                          handleScroll();
+                        }
+                      }}
+                      ref={setChatContainerRef}
+                      className={classNames('overflow-x-hidden', {
+                        'content-center': areSelectedConversationsEmpty,
+                        'h-full': !isWideLayout,
+                      })}
+                      data-qa="scrollable-area"
+                    >
+                      <div className="flex max-h-full w-full">
+                        {selectedConversations.map(
+                          (conv) =>
+                            conv.messages.length === 0 && (
+                              <div
+                                key={conv.id}
+                                className={classNames(
+                                  'flex h-full flex-col justify-between',
+                                  selectedConversations.length > 1
+                                    ? 'w-1/2'
+                                    : 'w-full',
+                                )}
+                              >
+                                <div
+                                  className="shrink-0"
+                                  style={{
+                                    height: `calc(100% - ${inputHeight}px)`,
+                                  }}
+                                >
+                                  <EmptyChatDescription
+                                    conversation={conv}
+                                    isApplicationPreviewChat={
+                                      isApplicationPreviewChat
+                                    }
+                                    onShowChangeModel={
+                                      handleTalkToConversationId
+                                    }
+                                    onShowSettings={setIsShowChatSettings}
+                                  />
+                                </div>
+                              </div>
+                            ),
+                        )}
+                      </div>
+                      <div ref={chatMessagesRef}>
+                        {mergedMessages?.length > 0 && (
+                          <div
+                            className="flex flex-col"
+                            data-qa="chat-messages"
+                          >
+                            {mergedMessages.map(
+                              (
+                                mergedStr: [
+                                  Conversation,
+                                  Message,
+                                  number,
+                                  Message[],
+                                ][],
+                                i: number,
+                              ) => (
+                                <div
+                                  key={i}
+                                  className="flex w-full"
+                                  data-qa={
+                                    isCompareMode
+                                      ? 'compare-message-row'
+                                      : 'message-row'
+                                  }
+                                  itemID={i.toString()}
+                                  itemProp={
+                                    i === mergedMessages.length - 1
+                                      ? 'last-row'
+                                      : undefined
+                                  }
+                                >
+                                  {mergedStr.map(
+                                    ([conv, message, index, filteredMessages]: [
+                                      Conversation,
+                                      Message,
+                                      number,
+                                      Message[],
+                                    ]) => (
+                                      <div
+                                        key={conv.id}
+                                        className={classNames(
+                                          isCompareMode &&
+                                            selectedConversations.length > 1
+                                            ? 'w-1/2'
+                                            : 'w-full',
+                                        )}
+                                      >
+                                        <div className="size-full">
+                                          <MemoizedChatMessage
+                                            message={message}
+                                            messageIndex={index}
+                                            filteredMessages={filteredMessages}
+                                            conversation={conv}
+                                            isLikesEnabled={
+                                              enabledFeatures.has(
+                                                Feature.Likes,
+                                              ) &&
+                                              (!isEntityReadOnly(conv) ||
+                                                !isEntityIdExternal(conv) ||
+                                                isValidApproveRequiredConversation)
+                                            }
+                                            editDisabled={
+                                              ((!!notAvailableEntityType ||
+                                                isReadOnly ||
+                                                isReplay ||
+                                                isPlayback) &&
+                                                (!isValidApproveRequiredConversation ||
+                                                  !!notAvailableEntityType)) ||
+                                              (message.role === Role.User &&
+                                                isEditUserMessageHided)
+                                            }
+                                            onEdit={handleEditMessage}
+                                            onLike={handleLike}
+                                            onDelete={
+                                              !isDeleteMessageHided
+                                                ? handleDeleteMessage
+                                                : undefined
+                                            }
+                                            onRegenerate={
+                                              index ===
+                                                mergedMessages.length - 1 &&
+                                              showLastMessageRegenerate &&
+                                              (!isRegenerateAssistantMessageHided ||
+                                                message.role !== Role.Assistant)
+                                                ? handleRegenerateMessage
+                                                : undefined
+                                            }
+                                            messagesLength={
+                                              mergedMessages.length
+                                            }
+                                          />
+                                        </div>
+                                      </div>
+                                    ),
+                                  )}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {isExternal && selectedConversations.length === 1 && (
+                      <ChatPublicationControls
+                        showScrollDownButton={showScrollDownButton}
+                        entity={selectedConversations[0]}
+                        onScrollDownClick={handleScrollDown}
+                        onToggleInput={handleToggleApproveRequiredInput}
+                        isInputActive={isApproveRequiredInput}
+                      />
+                    )}
+
+                    {!isPlayback &&
+                    (!selectedPublicationUrl || isApproveRequiredInput) &&
+                    notAvailableEntityType &&
+                    notAllowedItemsForDisplay.length ? (
+                      <NotAllowedModel
+                        showScrollDownButton={isScrollDownButton}
+                        onScrollDownClick={handleScrollDown}
+                        notAllowedItemsForDisplay={notAllowedItemsForDisplay}
+                        onShowChangeModel={handleTalkToConversationId}
+                      />
+                    ) : (
+                      <>
+                        {!isWideLayout && <ChatStarters />}
+
+                        {!isPlayback && (
+                          <ChatInput
+                            isWideLayout={isWideLayout}
+                            showReplayControls={showReplayControls}
+                            textareaRef={textareaRef}
+                            showScrollDownButton={isScrollDownButton}
+                            onSend={handleSendMessage}
+                            onScrollDownClick={handleScrollDown}
+                            onRegenerate={handleRegenerateMessage}
+                            isLastMessageError={isLastMessageError}
+                            onStopConversation={handleStopMessageStreaming}
+                            onResize={handleChatInputResize}
+                            isShowInput={isInputVisible}
+                          >
+                            <ChatInputControls
+                              isWideLayout={isWideLayout}
+                              isNotEmptyConversations={isNotEmptyConversations}
+                              showReplayControls={showReplayControls}
+                              isChatReadyForInput={isChatReadyForInput}
+                              isSomeConversationWithSchema={
+                                isSomeConversationWithSchema
+                              }
+                              showScrollDownButton={isScrollDownButton}
+                              onScrollDown={handleScrollDown}
+                            />
+                          </ChatInput>
+                        )}
+
+                        {isPlayback && (
+                          <PlaybackControls
+                            nextMessageBoxRef={nextMessageBoxRef}
+                            showScrollDownButton={isScrollDownButton}
+                            onScrollDownClick={handleScrollDown}
+                            onResize={handleChatInputResize}
+                          />
+                        )}
+
+                        {isWideLayout && <ChatStarters />}
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
+                {isShowChatSettings && (
+                  <ChatSettings
+                    conversations={selectedConversations}
+                    onChangeSettings={handleTemporarySettingsSave}
+                    onApplySettings={handleApplyChatSettings}
+                    onClose={handleCloseSettings}
+                    isOpen={isShowChatSettings}
+                    isCompareMode={isCompareMode}
+                  />
+                )}
+                {isCompareMode && selectedConversations.length < 2 && (
+                  <div className="flex h-full w-1/2 items-center">
+                    <ChatCompareSelect
+                      conversations={conversations}
+                      selectedConversations={selectedConversations}
+                      onConversationSelect={handleSelectForCompare}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </>
-      )}
-    </div>
+          </>
+        )}
+        {talkToConversationId &&
+          selectedConversations.map((conversation, i) => {
+            if (conversation.id !== talkToConversationId) {
+              return null;
+            }
+
+            return (
+              <TalkToModal
+                key={conversation.id}
+                onClose={handleTalkToClose}
+                conversation={conversation}
+                isCompareMode={selectedConversations.length > 1}
+                isRight={i === 1}
+              />
+            );
+          })}
+      </div>
+    </ChatDropArea>
   );
 });
+
+interface CustomChatViewerProps {
+  setShowSettings: (value: boolean) => void;
+  customViewer: {
+    title: string;
+    viewerUrl: string;
+    applicationId: string;
+  };
+}
+
+const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
+  setShowSettings,
+  customViewer,
+}) => {
+  const dispatch = useAppDispatch();
+  const { t } = useTranslation(Translation.Chat);
+
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const handleTalkToConversationId = useCallback(
+    (conversationId: string | null) => {
+      dispatch(ConversationsActions.setTalkToConversationId(conversationId));
+    },
+    [dispatch],
+  );
+
+  const router = useRouter();
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditor;
+  }, [router.pathname]);
+
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
+  );
+  return (
+    <>
+      {selectedConversations[0].messages.length !== 0 ||
+        (!isStartedCustomViewerConversation && !isApplicationPreviewChat && (
+          <div className="flex h-full flex-col">
+            <div
+              className={classNames('flex size-full flex-col justify-center')}
+            >
+              <div className="shrink-0">
+                <EmptyChatDescription
+                  isApplicationPreviewChat={isApplicationPreviewChat}
+                  conversation={selectedConversations[0]}
+                  onShowChangeModel={handleTalkToConversationId}
+                  onShowSettings={setShowSettings}
+                />
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col items-center pt-3 md:pt-5">
+              <button
+                className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                data-qa="start-working"
+                onClick={() =>
+                  dispatch(
+                    ConversationsActions.setIsStartedCustomViewerConversation(
+                      true,
+                    ),
+                  )
+                }
+              >
+                <IconPlayerPlay size={18} />
+                <span>
+                  {t('Start working with the')}
+                  {` ${customViewer.title}`}
+                </span>
+              </button>
+            </div>
+          </div>
+        ))}
+      {(isStartedCustomViewerConversation ||
+        isApplicationPreviewChat ||
+        selectedConversations[0].messages.length !== 0) && (
+        <CustomChatViewer
+          conversation={selectedConversations[0]}
+          id={customViewer.applicationId}
+          title={customViewer.title}
+          customViewerUrl={customViewer.viewerUrl}
+        />
+      )}
+    </>
+  );
+};
+
 ChatView.displayName = 'ChatView';
 
-export function Chat() {
+interface ChatProps {
+  isPreview?: boolean;
+}
+
+export function Chat({ isPreview }: ChatProps) {
   const { t } = useTranslation(Translation.Chat);
+
+  const dispatch = useAppDispatch();
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -908,29 +1105,74 @@ export function Chat() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const modelIsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const modelIsLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const isolatedModelId = useAppSelector(
     SettingsSelectors.selectIsolatedModelId,
   );
-  const activeModel = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, isolatedModelId || ''),
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const activeModel = modelsMap[isolatedModelId || ''];
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
   );
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
+  const loadingConfigurationSchemas = useAppSelector(
+    ChatSelectors.selectLoadingConfigurationSchemas,
+  );
+  const isPublicationUpdating = useAppSelector(
+    PublicationSelectors.selectIsPublicationUpdating,
+  );
+
+  const isNoMessages = selectedConversations.every(
+    ({ messages }) => !messages?.length,
+  );
+
+  useEffect(() => {
+    dispatch(ChatActions.resetFormValue());
+  }, [dispatch, selectedConversationsIds]);
+
+  useEffect(() => {
+    const configurationAppReference = selectedConversations
+      .filter((conv) => doesModelHaveConfiguration(modelsMap[conv.model.id]))
+      .map((conv) => conv.model.id);
+    const configurationAppIds = configurationAppReference
+      .map((reference) => modelsMap[reference]?.id)
+      .filter((id) => id !== undefined);
+    if (configurationAppIds.length && isNoMessages) {
+      configurationAppIds.forEach((modelId) => {
+        dispatch(ChatActions.getConfigurationSchema({ modelId }));
+      });
+    }
+  }, [dispatch, isNoMessages, modelsMap, selectedConversations]);
+
+  if (selectedPublication?.resources && !selectedConversationsIds.length) {
+    return (
+      <>
+        <div className="w-full grow">
+          <ReviewPublicationHandler publication={selectedPublication} />
+        </div>
+        <ChatInputFooter />
+      </>
+    );
+  }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
     return (
       <div className="h-screen pt-2">
         <NotFoundEntity
-          entity={t('Model is')}
-          additionalText={t('Please contact your administrator.') || ''}
+          entity={t('Agent is')}
+          additionalText={t('Please contact your administrator.')}
         />
       </div>
     );
   }
 
   if (
-    !areSelectedConversationsLoaded &&
-    (!selectedConversations.length ||
-      selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
+    !areSelectedConversationsLoaded ||
+    !isInstalledModelsInitialized ||
+    loadingConfigurationSchemas.length ||
+    isPublicationUpdating
   ) {
     return <Loader />;
   }
@@ -941,9 +1183,15 @@ export function Chat() {
     return (
       <NotFoundEntity
         entity={t('Conversation')}
-        additionalText={t('Please select another conversation.') || ''}
+        additionalText={t('Please select another conversation.')}
       />
     );
   }
-  return <ChatView />;
+
+  return (
+    <>
+      <ChatView />
+      {!isPreview && <ChatInputFooter />}
+    </>
+  );
 }

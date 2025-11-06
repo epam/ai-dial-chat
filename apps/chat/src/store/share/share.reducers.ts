@@ -1,69 +1,70 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { splitEntityId } from '@/src/utils/app/folders';
-import { parseConversationApiKey } from '@/src/utils/server/api';
+import { hasWritePermission } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
-import { ErrorMessage } from '@/src/types/error';
+import { ApplicationInfo } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
 import { ShareRelations } from '@/src/types/share';
 
-import { RootState } from '../index';
+import { ShareState } from './share.types';
 
-export interface ShareState {
-  status: UploadStatus;
-  error: ErrorMessage | undefined;
-  invitationId: string | undefined;
-  shareResourceName: string | undefined;
-  shareModalState: ModalState;
-  acceptedId: string | undefined;
-  isFolderAccepted: boolean | undefined;
-  needToUploadFolder: boolean;
-  shareFeatureType?: FeatureType;
-  shareIsFolder?: boolean;
-}
+import {
+  ConversationInfo,
+  ShareEntity,
+  SharePermission,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
+
+export type { ShareState };
 
 const initialState: ShareState = {
   status: UploadStatus.UNINITIALIZED,
   error: undefined,
   invitationId: undefined,
-  shareResourceName: undefined,
-  shareModalState: ModalState.CLOSED,
+  writeInvitationId: undefined,
   acceptedId: undefined,
   isFolderAccepted: undefined,
+  isConversation: undefined,
+  isPrompt: undefined,
+  unshareResourceId: undefined,
+  unshareEntity: undefined,
+
+  shareResourceName: undefined,
+  shareResourceId: undefined,
+  shareModalState: ModalState.CLOSED,
   shareFeatureType: undefined,
   shareIsFolder: undefined,
-  needToUploadFolder: true,
+  isShared: false,
 };
 
 export const shareSlice = createSlice({
   name: 'share',
   initialState,
   reducers: {
-    init: (state) => state,
     share: (
       state,
       {
         payload,
       }: PayloadAction<{
         featureType: FeatureType;
-        resourceId: string;
+        entity: Omit<ShareEntity, 'folderId'>;
         isFolder?: boolean;
+        permissions?: SharePermission[];
       }>,
     ) => {
       state.invitationId = undefined;
+      state.writeInvitationId = undefined;
       state.shareModalState = ModalState.LOADING;
       state.shareFeatureType = payload.featureType;
       state.shareIsFolder = payload.isFolder;
-
-      const name = splitEntityId(payload.resourceId).name;
-      state.shareResourceName =
-        payload.featureType === FeatureType.Chat
-          ? parseConversationApiKey(splitEntityId(payload.resourceId).name).name
-          : name;
+      state.shareResourceName = payload.entity.name;
+      state.shareResourceId = payload.entity.id;
+      state.sharePermissions = payload.permissions;
+      state.isShared = payload.entity.isShared;
     },
     sharePrompt: (
       state,
@@ -89,22 +90,42 @@ export const shareSlice = createSlice({
         resourceId: string;
       }>,
     ) => state,
+    shareApplication: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        resourceId: string;
+        permissions?: SharePermission[];
+      }>,
+    ) => {
+      state.shareModalState = ModalState.LOADING;
+      state.sharePermissions = payload.permissions;
+      state.shareResourceId = payload.resourceId;
+    },
     shareSuccess: (
       state,
       {
         payload,
       }: PayloadAction<{
         invitationId: string;
+        permissions?: SharePermission[];
       }>,
     ) => {
-      state.invitationId = payload.invitationId;
+      if (hasWritePermission(payload.permissions)) {
+        state.writeInvitationId = payload.invitationId;
+      } else {
+        state.invitationId = payload.invitationId;
+      }
+
       state.shareModalState = ModalState.OPENED;
+      state.sharePermissions = undefined;
     },
-    shareFail: (state) => {
+    shareFail: (state, _action: PayloadAction<string | undefined>) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.CLOSED;
+      state.sharePermissions = undefined;
     },
-
     revokeAccess: (
       state,
       _action: PayloadAction<{
@@ -126,7 +147,7 @@ export const shareSlice = createSlice({
     discardSharedWithMe: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,
@@ -150,6 +171,18 @@ export const shareSlice = createSlice({
     ) => {
       state.shareModalState = payload.modalState;
     },
+    setUnshareEntity: (
+      state,
+      { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
+    ) => {
+      state.unshareEntity = payload;
+    },
+    setUnshareResourceId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.unshareResourceId = payload;
+    },
     acceptShareInvitation: (
       state,
       _action: PayloadAction<{
@@ -158,11 +191,25 @@ export const shareSlice = createSlice({
     ) => state,
     acceptShareInvitationSuccess: (
       state,
-      { payload }: PayloadAction<{ acceptedId: string; isFolder: boolean }>,
+      {
+        payload,
+      }: PayloadAction<{
+        acceptedId: string;
+        isFolder: boolean;
+        isConversation?: boolean;
+        isPrompt?: boolean;
+        isApplication?: boolean;
+      }>,
     ) => {
       state.acceptedId = payload.acceptedId;
       state.isFolderAccepted = payload.isFolder;
+      state.isConversation = payload.isConversation;
+      state.isPrompt = payload.isPrompt;
     },
+    triggerGettingSharedConversationListings: (state) => state,
+    triggerGettingSharedPromptListings: (state) => state,
+    triggerGettingSharedFilesListings: (state) => state,
+    triggerGettingSharedApplicationsListings: (state) => state,
     acceptShareInvitationFail: (
       state,
       _action: PayloadAction<{
@@ -172,6 +219,8 @@ export const shareSlice = createSlice({
     resetAcceptedEntityInfo: (state) => {
       state.acceptedId = undefined;
       state.isFolderAccepted = undefined;
+      state.isConversation = undefined;
+      state.isPrompt = undefined;
     },
     getSharedListing: (
       state,
@@ -186,59 +235,18 @@ export const shareSlice = createSlice({
         featureType: FeatureType;
         sharedWith: ShareRelations;
         resources: {
-          entities: (ConversationInfo | Prompt)[];
+          entities: (
+            | ConversationInfo
+            | Prompt
+            | DialFile
+            | Omit<ApplicationInfo, 'folderId'>
+          )[];
           folders: FolderInterface[];
         };
       }>,
     ) => state,
     getSharedListingFail: (state) => state,
-    resetNeedToUploadFolder: (state) => {
-      state.needToUploadFolder = false;
-    },
   },
 });
-
-const rootSelector = (state: RootState): ShareState => state.share;
-
-const selectInvitationId = createSelector([rootSelector], (state) => {
-  return state.invitationId;
-});
-const selectShareModalState = createSelector([rootSelector], (state) => {
-  return state.shareModalState;
-});
-const selectShareModalClosed = createSelector([rootSelector], (state) => {
-  return state.shareModalState === ModalState.CLOSED;
-});
-const selectShareResourceName = createSelector([rootSelector], (state) => {
-  return state.shareResourceName;
-});
-const selectShareFeatureType = createSelector([rootSelector], (state) => {
-  return state.shareFeatureType;
-});
-const selectShareIsFolder = createSelector([rootSelector], (state) => {
-  return state.shareIsFolder;
-});
-const selectAcceptedEntityInfo = createSelector([rootSelector], (state) => {
-  return {
-    acceptedId: state.acceptedId,
-    isFolderAccepted: state.isFolderAccepted,
-  };
-});
-const selectNeedToUploadFolder = createSelector([rootSelector], (state) => {
-  return {
-    needToUploadFolder: state.needToUploadFolder,
-  };
-});
-
-export const ShareSelectors = {
-  selectInvitationId,
-  selectShareModalState,
-  selectShareModalClosed,
-  selectShareResourceName,
-  selectAcceptedEntityInfo,
-  selectShareFeatureType,
-  selectShareIsFolder,
-  selectNeedToUploadFolder,
-};
 
 export const ShareActions = shareSlice.actions;

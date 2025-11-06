@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
 
-import { Attachment } from '@/src/types/chat';
+import { PlaybackAttachments } from '@/src/components/Chat/Playback/PlaybackAttachments';
 
-import { PlaybackAttachments } from '../Playback/PlaybackAttachments';
+import { Attachment } from '@epam/ai-dial-shared';
 
 vi.mock('@/src/utils/app/file', () => {
   return {
@@ -21,6 +21,7 @@ vi.mock('@/src/utils/app/file', () => {
         });
         return files;
       }),
+    getDialFoldersFromAttachments: vi.fn().mockReturnValue([]),
     getDialLinksFromAttachments: vi.fn().mockReturnValue([]),
   };
 });

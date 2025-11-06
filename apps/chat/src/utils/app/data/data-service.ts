@@ -1,14 +1,14 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
-import { isSmallScreenOrMobile } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
 
+import { LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
-import { ApiUtils } from '../../server/api';
 import { ApiStorage } from './storages/api-storage';
 import { BrowserStorage } from './storages/browser-storage';
 
@@ -39,8 +39,8 @@ export class DataService {
   }
 
   // TODO: extract all this methods to separate services to prevent using Data service there
-  public static getRecentModelsIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, []);
+  public static getRecentModelsIds(): Observable<string[] | undefined> {
+    return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, undefined);
   }
 
   public static setRecentModelsIds(
@@ -49,19 +49,6 @@ export class DataService {
     return BrowserStorage.setData(
       UIStorageKeys.RecentModelsIds,
       recentModelsIds,
-    );
-  }
-
-  public static getRecentAddonsIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.RecentAddonsIds, []);
-  }
-
-  public static setRecentAddonsIds(
-    recentAddonsIds: string[],
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.RecentAddonsIds,
-      recentAddonsIds,
     );
   }
 
@@ -76,7 +63,7 @@ export class DataService {
   }
 
   public static getAvailableThemes(): Observable<Theme[]> {
-    return ApiUtils.request('api/themes/listing');
+    return ApiUtils.request('/api/themes/listing');
   }
 
   public static getChatbarWidth(): Observable<number> {
@@ -112,26 +99,38 @@ export class DataService {
     );
   }
 
-  public static getShowChatbar(): Observable<boolean> {
-    return BrowserStorage.getData(
-      UIStorageKeys.ShowChatbar,
-      !isSmallScreenOrMobile(),
-    );
+  public static getShowChatbar(defaultValue: boolean): Observable<boolean> {
+    return BrowserStorage.getData(UIStorageKeys.ShowChatbar, defaultValue);
   }
 
   public static setShowChatbar(showChatbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowChatbar, showChatbar);
   }
 
-  public static getShowPromptbar(): Observable<boolean> {
-    return BrowserStorage.getData(
-      UIStorageKeys.ShowPromptbar,
-      !isSmallScreenOrMobile(),
-    );
+  public static getShowPromptbar(defaultValue: boolean): Observable<boolean> {
+    return BrowserStorage.getData(UIStorageKeys.ShowPromptbar, defaultValue);
   }
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
+  }
+
+  public static getShowMarketplaceFilterbar(
+    defaultValue: boolean,
+  ): Observable<boolean> {
+    return BrowserStorage.getData(
+      UIStorageKeys.ShowMarketplaceFilterbar,
+      defaultValue,
+    );
+  }
+
+  public static setShowMarketplaceFilterbar(
+    showFilterbar: boolean,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ShowMarketplaceFilterbar,
+      showFilterbar,
+    );
   }
 
   public static getClosedAnnouncement(): Observable<string | undefined> {
@@ -148,10 +147,62 @@ export class DataService {
   }
 
   public static getCustomLogo(): Observable<string | undefined> {
-    return BrowserStorage.getData(UIStorageKeys.CustomLogo, undefined);
+    return BrowserStorage.getData(UIStorageKeys.CustomLogo, '');
   }
 
-  public static setCustomLogo(customLogo?: string): Observable<void> {
+  public static setCustomLogo(customLogo: string): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.CustomLogo, customLogo);
+  }
+
+  public static getChatCollapsedSections(): Observable<string[]> {
+    return BrowserStorage.getData(UIStorageKeys.ChatCollapsedSections, []);
+  }
+
+  public static setChatCollapsedSections(
+    collapsedSections: string[],
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ChatCollapsedSections,
+      collapsedSections,
+    );
+  }
+
+  public static getPromptCollapsedSections(): Observable<string[]> {
+    return BrowserStorage.getData(UIStorageKeys.PromptCollapsedSections, []);
+  }
+
+  public static setPromptCollapsedSections(
+    collapsedSections: string[],
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.PromptCollapsedSections,
+      collapsedSections,
+    );
+  }
+
+  public static getFileCollapsedSections(): Observable<string[]> {
+    return BrowserStorage.getData(UIStorageKeys.FileCollapsedSections, []);
+  }
+
+  public static setFileCollapsedSections(
+    collapsedSections: string[],
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.FileCollapsedSections,
+      collapsedSections,
+    );
+  }
+
+  public static getLastConversationSettings(): Observable<LastConversationSettings | null> {
+    return BrowserStorage.getData(UIStorageKeys.LastConversationSettings, null);
+  }
+
+  public static setLastConversationSettings(
+    lastConversationSettings: LastConversationSettings,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.LastConversationSettings,
+      lastConversationSettings,
+    );
   }
 }

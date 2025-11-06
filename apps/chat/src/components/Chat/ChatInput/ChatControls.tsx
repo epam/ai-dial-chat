@@ -1,23 +1,23 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
 import { FC, useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+} from '@/src/store/selectors';
 
 import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import RefreshCW from '../../../../public/images/icons/refresh-cw.svg';
+import RefreshCW from '@/public/images/icons/refresh-cw.svg';
 
 interface Props {
   showReplayControls: boolean;
@@ -47,15 +47,19 @@ export const ChatControls: FC<Props> = ({
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+  const willReplayRequireVariables = useAppSelector(
+    ConversationsSelectors.selectWillReplayRequireVariables,
+  );
 
   const handleReplayReStart = useCallback(() => {
     dispatch(
       ConversationsActions.replayConversations({
         conversationsIds: selectedConversationsIds,
-        isRestart: true,
+        isRestart: !willReplayRequireVariables,
+        isContinue: willReplayRequireVariables,
       }),
     );
-  }, [dispatch, selectedConversationsIds]);
+  }, [dispatch, selectedConversationsIds, willReplayRequireVariables]);
 
   if (!showReplayControls) {
     return (
@@ -79,6 +83,7 @@ export const ChatControls: FC<Props> = ({
       )}
       onClick={handleReplayReStart}
       data-qa="proceed-reply"
+      data-replay-variables
     >
       <Tooltip
         tooltip={isError ? t('Try again') : t('Continue replay')}

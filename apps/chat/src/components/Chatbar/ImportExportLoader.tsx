@@ -1,22 +1,18 @@
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Operation } from '@/src/types/import-export';
 import { Translation } from '@/src/types/translation';
 
+import { ImportExportActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ImportExportActions,
-  ImportExportSelectors,
-} from '@/src/store/import-export/importExport.reducers';
+import { ImportExportSelectors } from '@/src/store/selectors';
 
-import { FullPageLoader } from '../Common/FullPageLoader';
+import { FullPageLoader } from '@/src/components/Common/FullPageLoader';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-interface Props {
-  isOpen: boolean;
-}
-export const ImportExportLoader = ({ isOpen }: Props) => {
+function ImportExportLoaderView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const operationName =
@@ -38,7 +34,7 @@ export const ImportExportLoader = ({ isOpen }: Props) => {
   return (
     <FullPageLoader
       loaderLabel={t(operationName)}
-      isOpen={isOpen}
+      isOpen
       onClose={() => {
         return;
       }}
@@ -46,4 +42,8 @@ export const ImportExportLoader = ({ isOpen }: Props) => {
       stopLabel={t(stopLabel)}
     />
   );
-};
+}
+
+export const ImportExportLoader = withRenderWhen(
+  ImportExportSelectors.selectIsLoadingImportExport,
+)(ImportExportLoaderView);

@@ -7,6 +7,7 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -17,16 +18,18 @@ import fetch from 'node-fetch';
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
-  const token = await getToken({ req });
+
   if (!isSessionValid) {
     return;
   }
+
+  const token = await getToken({ req });
 
   try {
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/ops/resource/share/revoke`,
       {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
         body: JSON.stringify(req.body),
       },
@@ -42,9 +45,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
+        proxyRes.status,
+        req,
       );
     }
 

@@ -1,13 +1,25 @@
-import { Observable } from 'rxjs';
+import { NextRouter } from 'next/router';
 
-import { AnyAction } from '@reduxjs/toolkit';
+import { Epic } from 'redux-observable';
 
-import { StateObservable } from 'redux-observable';
+import * as allActions from '@/src/store/actions';
 
-import { RootState } from '@/src/store';
+import { rootReducer } from '@/src/store';
 
-export type AppEpic = (
-  action$: Observable<AnyAction>,
+type ExtractAction<T> =
+  T extends Record<string, (...args: never[]) => infer R> ? R : never;
 
-  state$: StateObservable<RootState>,
-) => Observable<AnyAction>;
+export type AppAction = ExtractAction<
+  {
+    [K in keyof typeof allActions]: (typeof allActions)[K];
+  }[keyof typeof allActions]
+>;
+
+export type RootState = ReturnType<typeof rootReducer>;
+
+export type AppEpic = Epic<
+  AppAction,
+  AppAction,
+  RootState,
+  { router: NextRouter }
+>;

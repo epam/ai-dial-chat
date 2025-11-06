@@ -39,7 +39,7 @@ interface TooltipContainerOptions {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function useTooltip({
+function useTooltip({
   initialOpen = false,
   placement = 'bottom',
   isTriggerClickable = false,
@@ -109,7 +109,7 @@ type ContextType = ReturnType<typeof useTooltip> | null;
 
 const TooltipContext = createContext<ContextType>(null);
 
-export const useTooltipContext = () => {
+const useTooltipContext = () => {
   const context = useContext(TooltipContext);
 
   if (context == null) {
@@ -197,7 +197,7 @@ export const TooltipContent = forwardRef<
         }}
         {...context.getFloatingProps(props)}
         className={classNames(
-          'z-50 whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+          'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
           context.getFloatingProps(props).className as string,
         )}
         data-qa="tooltip"
@@ -215,28 +215,49 @@ export const TooltipContent = forwardRef<
   );
 });
 
-interface TooltipOptions extends TooltipContainerOptions {
+export interface TooltipOptions extends TooltipContainerOptions {
   hideTooltip?: boolean;
   tooltip: ReactNode;
   children: ReactNode;
   triggerClassName?: string;
   contentClassName?: string;
+  dataQa?: string;
+  asChild?: boolean;
 }
 
-export default function Tooltip({
+export function Tooltip({
   hideTooltip,
   tooltip,
   children,
   triggerClassName,
   contentClassName,
+  dataQa,
+  asChild,
   ...tooltipProps
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
-    return <span className={triggerClassName}>{children}</span>;
+    return (
+      <span className={triggerClassName} data-qa={dataQa}>
+        {children}
+      </span>
+    );
   return (
     <TooltipContainer {...tooltipProps}>
-      <TooltipTrigger className={triggerClassName}>{children}</TooltipTrigger>
-      <TooltipContent className={contentClassName}>{tooltip}</TooltipContent>
+      <TooltipTrigger
+        className={triggerClassName}
+        data-qa={dataQa}
+        asChild={asChild}
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent
+        className={classNames(
+          'max-w-[250px] break-words sm:max-w-[400px]',
+          contentClassName,
+        )}
+      >
+        {tooltip}
+      </TooltipContent>
     </TooltipContainer>
   );
 }

@@ -1,28 +1,29 @@
 import { Observable, map, throwError } from 'rxjs';
 
+import { constructPath } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiKeys,
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
-  Entity,
-  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { EntityStorage } from '@/src/types/storage';
 
-import { resetShareEntity } from '@/src/constants/chat';
-
-import { constructPath } from '../../../file';
-import { splitEntityId } from '../../../folders';
-import { getRootId } from '../../../id';
-import { EnumMapper } from '../../../mappers';
+import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,
   TEntity extends TEntityInfo,
+  APIResponse = TEntity,
+  APIModel = APIResponse,
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
@@ -35,8 +36,8 @@ export abstract class ApiEntityStorage<
       id,
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
-      type: EnumMapper.getFolderTypeByApiKey(this.getStorageKey()),
-      ...resetShareEntity,
+      type: EnumMapper.getFeatureTypeByApiKey(this.getStorageKey()),
+      permissions: folder.permissions,
     };
   }
 
@@ -48,14 +49,14 @@ export abstract class ApiEntityStorage<
     return {
       ...info,
       id,
-      lastActivityDate: entity.updatedAt,
+      updatedAt: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
-      ...resetShareEntity,
-    } as unknown as TEntityInfo;
+      permissions: entity.permissions,
+    } as TEntityInfo;
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
-    ApiUtils.encodeApiUrl(constructPath('api', entity.id));
+    ApiUtils.encodeApiUrl(constructPath('/api', entity.id));
 
   private getListingUrl = ({
     path,
@@ -66,7 +67,7 @@ export abstract class ApiEntityStorage<
   }): string => {
     const listingUrl = ApiUtils.encodeApiUrl(
       constructPath(
-        'api/listing',
+        '/api/listing',
         path ||
           getRootId({
             featureType: EnumMapper.getFeatureTypeByApiKey(
@@ -129,15 +130,36 @@ export abstract class ApiEntityStorage<
     );
   }
 
+  getMultipleFoldersEntities(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<TEntityInfo[]> {
+    const query = new URLSearchParams({
+      recursive: String(!!recursive),
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(`/api/listing/multiple?${resultQuery}`, {
+      method: HTTPMethod.POST,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        urls: paths.map((path) => ApiUtils.encodeApiUrl(path)),
+      }),
+    }).pipe(
+      map((entities: BackendChatEntity[]) => {
+        return entities.map((entity) => this.mapEntity(entity));
+      }),
+    );
+  }
+
   getEntity(info: TEntityInfo): Observable<TEntity | null> {
     try {
       return ApiUtils.request(this.getEntityUrl(info)).pipe(
-        map((entity: TEntity) => {
+        map((entity: APIResponse) => {
           return {
-            ...this.mergeGetResult(info, {
-              ...entity,
-              ...resetShareEntity,
-            }),
+            ...this.mergeGetResult(info, entity),
             status: UploadStatus.LOADED,
           };
         }),
@@ -147,28 +169,50 @@ export abstract class ApiEntityStorage<
     }
   }
 
-  createEntity(entity: TEntity): Observable<TEntityInfo> {
+  getEntityMetadata(id: string): Observable<BackendChatEntity | null> {
+    try {
+      return ApiUtils.request(
+        `/api/metadata/${ApiUtils.encodeApiUrl(id)}`,
+      ).pipe(
+        map((entityInfo: APIResponse) => {
+          return {
+            ...(entityInfo as BackendChatEntity),
+          };
+        }),
+      );
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
+  createEntity(
+    entity: TEntity,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<TEntityInfo> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.cleanUpEntity(entity)),
+        body: JSON.stringify(this.cleanUpEntity(entity, schema)),
       }).pipe(map((entity) => this.mapEntity(entity)));
     } catch (error) {
       return throwError(() => error);
     }
   }
 
-  updateEntity(entity: TEntity): Observable<void> {
+  updateEntity(
+    entity: TEntity,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<TEntityInfo> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
-        method: 'PUT',
+        method: HTTPMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.cleanUpEntity(entity)),
+        body: JSON.stringify(this.cleanUpEntity(entity, schema)),
       });
     } catch (error) {
       return throwError(() => error);
@@ -178,7 +222,7 @@ export abstract class ApiEntityStorage<
   deleteEntity(info: TEntityInfo): Observable<void> {
     try {
       return ApiUtils.request(this.getEntityUrl(info), {
-        method: 'DELETE',
+        method: HTTPMethod.DELETE,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -194,7 +238,10 @@ export abstract class ApiEntityStorage<
 
   abstract getStorageKey(): ApiKeys;
 
-  abstract cleanUpEntity(entity: TEntity): TEntity;
+  abstract cleanUpEntity(
+    entity: TEntity,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): APIModel;
 
-  abstract mergeGetResult(info: TEntityInfo, entity: TEntity): TEntity;
+  abstract mergeGetResult(info: TEntityInfo, entity: APIResponse): TEntity;
 }

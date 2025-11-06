@@ -1,32 +1,34 @@
 import {
+  Icon,
   IconCheck,
   IconCsv,
   IconMarkdown,
   IconTxt,
-  TablerIconsProps,
 } from '@tabler/icons-react';
-import { FC, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import Tooltip from '@/src/components/Common/Tooltip';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface CopyIconProps {
-  Icon: FC<TablerIconsProps>;
+  Icon: Icon;
   onClick: () => void;
   copied: boolean;
+  type: CopyTableType;
 }
 
-const CopyIcon = ({ Icon, onClick, copied }: CopyIconProps) => {
+const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
   const IconComponent = copied ? IconCheck : Icon;
 
   return (
     <IconComponent
       className="cursor-pointer text-secondary hover:text-accent-primary"
       size={24}
+      data-qa={type.concat('-icon')}
       onClick={() => {
         if (!copied) {
           onClick();
@@ -133,7 +135,9 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
       withCopyToClipboard(CopyTableType.CSV, (table) => {
         const csv = Array.from(table.rows).map((row) => {
           const rowArray = Array.from(row.cells).map((cell) =>
-            cell.textContent ? cell.textContent.trim() : '',
+            cell.textContent?.trim()
+              ? `"${cell.textContent.trim().replace(/"/g, '""')}"`
+              : '',
           );
 
           return rowArray.join(',');
@@ -145,15 +149,19 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
   );
 
   return (
-    <div className="mt-7 max-w-full overflow-auto">
+    <div className="mt-7 max-w-full overflow-auto" data-qa="table">
       {!isLastMessageStreaming && (
-        <div className="flex max-w-full justify-end bg-layer-3 px-2 py-1">
+        <div
+          className="flex max-w-full justify-end bg-layer-3 px-2 py-1"
+          data-qa="table-controls"
+        >
           <div data-no-context-menu className="flex gap-2">
             <Tooltip placement="top" tooltip={t('Copy as CSV')}>
               <CopyIcon
                 Icon={IconCsv}
                 onClick={copyTableToCSV}
                 copied={CopyTableType.CSV === copiedType}
+                type={CopyTableType.CSV}
               />
             </Tooltip>
             <Tooltip placement="top" tooltip={t('Copy as TXT')}>
@@ -161,6 +169,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 Icon={IconTxt}
                 onClick={copyTableToTXT}
                 copied={CopyTableType.TXT === copiedType}
+                type={CopyTableType.TXT}
               />
             </Tooltip>
             <Tooltip placement="top" tooltip={t('Copy as MD')}>
@@ -168,6 +177,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 Icon={IconMarkdown}
                 onClick={copyTableToMD}
                 copied={CopyTableType.MD === copiedType}
+                type={CopyTableType.MD}
               />
             </Tooltip>
           </div>

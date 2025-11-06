@@ -1,0 +1,49 @@
+import { Path, RegisterOptions } from 'react-hook-form';
+
+import { createFormValidationRules } from '@/src/utils/app/forms';
+
+import { PublicationRule } from '@/src/types/publication';
+
+import '@/src/constants/default-ui-settings';
+
+export enum PublishRequestFieldsNames {
+  PUBLISH_REQUEST_NAME = 'publishRequestName',
+  PUBLICATION_AUTHOR = 'publicationAuthor',
+  RULES = 'rules',
+  PUBLISH_TO_URL = 'publishToUrl',
+}
+export interface PublicationRequestFormData {
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: string;
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: string;
+  [PublishRequestFieldsNames.RULES]: PublicationRule[];
+  [PublishRequestFieldsNames.PUBLISH_TO_URL]: string;
+}
+
+type Options<T extends Path<PublicationRequestFormData>> = Omit<
+  RegisterOptions<PublicationRequestFormData, T>,
+  'disabled' | 'valueAsNumber' | 'valueAsDate'
+>;
+
+export type Validators = {
+  [K in keyof PublicationRequestFormData]?: Options<K>;
+};
+
+export const publishRequestFields = {
+  [PublishRequestFieldsNames.PUBLISH_REQUEST_NAME]: {
+    name: PublishRequestFieldsNames.PUBLISH_REQUEST_NAME,
+    label: 'Request name',
+    checkDotsInTheEnd: true,
+  },
+  [PublishRequestFieldsNames.PUBLICATION_AUTHOR]: {
+    name: PublishRequestFieldsNames.PUBLICATION_AUTHOR,
+    label: 'Author',
+  },
+  [PublishRequestFieldsNames.RULES]: {
+    name: PublishRequestFieldsNames.RULES,
+    label: 'Rules',
+  },
+};
+
+export const validators: Validators = createFormValidationRules(
+  Object.values(publishRequestFields),
+);

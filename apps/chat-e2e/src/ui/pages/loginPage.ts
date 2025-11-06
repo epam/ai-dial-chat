@@ -1,8 +1,17 @@
 import { BaseElement } from '../webElements';
 import { BasePage } from './basePage';
 
-import { LoginSelectors } from '@/src/ui/selectors';
+import { AuthProvider } from '@/src/testData';
+import { Auth0Selectors } from '@/src/ui/selectors';
 
 export class LoginPage extends BasePage {
-  public ssoSignInButton = new BaseElement(this.page, LoginSelectors.ssoSignIn);
+  public auth0SignInButton = new BaseElement(
+    this.page,
+    Auth0Selectors.ssoSignIn(AuthProvider.auth0),
+  );
+
+  public keycloakSignInButton = new BaseElement(
+    this.page,
+    Auth0Selectors.ssoSignIn(AuthProvider.keycloak),
+  );
 }

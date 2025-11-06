@@ -11,7 +11,7 @@ interface Props {
 export const Spinner = ({
   size = 16,
   className = '',
-  dataQa = 'message-input-spinner',
+  dataQa = 'entity-spinner',
 }: Props) => {
   return (
     <LoaderIcon

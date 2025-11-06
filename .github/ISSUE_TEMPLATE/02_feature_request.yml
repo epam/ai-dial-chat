@@ -1,6 +1,6 @@
 ---
 name: 🚀 Feature request
-description: Suggest an idea for EPAM AI DIAL chat
+description: Suggest an idea for DIAL chat
 labels: ["enhancement"]
 body:
   - type: markdown
@@ -9,7 +9,7 @@ body:
         <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=40' align='left' width='40' height='40' style='margin-right:10px'>
         Thank you for finding the time to propose new feature!
 
-        We really appreciate the community efforts to improve EPAM AI DIAL chat.
+        We really appreciate the community efforts to improve DIAL chat.
         <br clear='left'/>"
   - type: textarea
     attributes:

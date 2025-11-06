@@ -1,0 +1,82 @@
+'use client';
+
+import {
+  ChatOverlayWrapper,
+  commonOverlayProps,
+} from '../../components/chatOverlayWrapper';
+
+import { MessageButtonPlacement, MessageButtons } from '@epam/ai-dial-shared';
+
+const getSvg = (width: string) => `
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M3 3m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" />
+    <path d="M13 10.5v3a1.5 1.5 0 0 0 3 0v-3a1.5 1.5 0 0 0 -3 0z" />
+    <path d="M8 12h2" />
+    <path d="M10 9h-2v6" />
+</svg>
+                `;
+
+const overlayOptions = {
+  ...commonOverlayProps,
+  messageButtons: [
+    {
+      messageIndex: 0,
+      buttons: [
+        {
+          buttonKey: 'custom-button-1',
+          events: ['click'] as (keyof WindowEventMap)[],
+          tooltip:
+            'Some tooltip with very very long title which should cause scrolls appearing',
+          iconSvg: getSvg('18px'),
+        },
+        {
+          buttonKey: 'custom-button-2',
+          events: ['dblclick'] as (keyof WindowEventMap)[],
+          iconSvg: getSvg('18px'),
+          title: 'dblclick',
+          styles: {
+            backgroundColor: 'red',
+          },
+          hoverStyles: {
+            backgroundColor: 'green',
+          },
+          focusStyles: {
+            backgroundColor: 'blue',
+          },
+          disabledStyles: {
+            backgroundColor: 'orange',
+          },
+        },
+        {
+          buttonKey: 'custom-button-3',
+          events: ['mousedown'] as (keyof WindowEventMap)[],
+          iconSvg: getSvg('18px'),
+          title: 'disabled',
+          skipDefaultStyles: true,
+          disabled: true,
+          disabledStyles: {
+            backgroundColor: 'orange',
+          },
+        },
+        {
+          buttonKey: 'custom-button-4',
+          events: ['click'] as (keyof WindowEventMap)[],
+          tooltip: 'Some Edit',
+          placement: MessageButtonPlacement.PREPEND_DEFAULT_BUTTONS,
+          iconSvg: getSvg('18px'),
+          styles: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          },
+          title: 'Some edit',
+        },
+      ],
+    },
+  ] as MessageButtons[],
+};
+
+export default function Index() {
+  return <ChatOverlayWrapper overlayOptions={overlayOptions} />;
+}

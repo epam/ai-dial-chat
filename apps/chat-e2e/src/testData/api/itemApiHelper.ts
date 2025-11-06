@@ -1,68 +1,89 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
+import {
+  BackendChatEntity,
+  BackendDataNodeType,
+  BackendEntity,
+} from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
-import { API } from '@/src/testData';
+import { API, ExpectedMessages } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { BucketUtil, ItemUtil } from '@/src/utils';
+import { BucketUtil, ItemUtil, applicationNamePrefix } from '@/src/utils';
+import { Entity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 export class ItemApiHelper extends BaseApiHelper {
   public async deleteAllData(bucket?: string) {
-    const conversations = await this.listItems(API.conversationsHost(), bucket);
-    const prompts = await this.listItems(API.promptsHost(), bucket);
-    await this.deleteBackendItem(...conversations, ...prompts);
+    const bucketToUse = this.userBucket ?? bucket;
+    const conversations = await this.listItems(
+      API.conversationsHost(),
+      bucketToUse,
+    );
+    const prompts = await this.listItems(API.promptsHost(), bucketToUse);
+    const apps = await this.listItems(API.appsHost(), bucketToUse);
+    await this.deleteBackendItem(
+      ...conversations,
+      ...prompts,
+      ...apps.filter((a) =>
+        a.name.toLowerCase().includes(applicationNamePrefix.toLowerCase()),
+      ),
+    );
   }
 
   public async listItems(url: string, bucket?: string) {
-    const response = await this.request.get(
-      `${url}/${bucket ?? BucketUtil.getBucket()}`,
-      {
-        params: {
-          filter: BackendDataNodeType.ITEM,
-          recursive: true,
-        },
-      },
-    );
-    const entities = (await response.json()) as BackendDataEntity[];
-    expect(
-      response.status(),
-      `Received items: ${JSON.stringify(entities)}`,
-    ).toBe(200);
-    return entities;
+    const bucketToUse = this.userBucket ?? bucket;
+    return this.getItems(`${url}/${bucketToUse ?? BucketUtil.getBucket()}`);
   }
 
   public async listItem(itemUrl: string) {
-    const response = await this.request.get(`${API.listingHost}/${itemUrl}`, {
+    return this.getItems(`${API.listingHost}/${itemUrl}`);
+  }
+
+  public async getItems(url: string) {
+    const response = await this.request.get(this.getHost(url), {
       params: {
         filter: BackendDataNodeType.ITEM,
         recursive: true,
       },
     });
-    const entities = (await response.json()) as BackendDataEntity[];
+    const statusCode = response.status();
     expect(
-      response.status(),
-      `Received items: ${JSON.stringify(entities)}`,
+      statusCode,
+      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
     ).toBe(200);
-    return entities;
+    return (await response.json()) as BackendChatEntity[];
   }
 
-  public async deleteBackendItem(...items: BackendDataEntity[]) {
+  public async getItem(id: string) {
+    const response = await this.request.get(this.getHost(`${API.api}/${id}`));
+    const statusCode = response.status();
+    expect
+      .soft(
+        statusCode,
+        ExpectedMessages.apiItemReceived(statusCode, await response.text()),
+      )
+      .toBe(200);
+    return (await response.json()) as Conversation;
+  }
+
+  public async deleteBackendItem(...items: BackendEntity[]) {
     for (const item of items) {
-      const url = `/api/${item.url}`;
-      const response = await this.request.delete(url);
+      const path = `${API.api}/${item.url}`;
+      const response = await this.request.delete(this.getHost(path));
       expect(
         response.status(),
-        `Backend item with id: ${item.name} was successfully deleted`,
+        ExpectedMessages.apiItemDeleted(item.name),
       ).toBe(200);
     }
   }
 
-  public async deleteConversation(conversation: Conversation) {
-    const url = `/api/${conversation.id}`;
-    const response = await this.request.delete(url);
+  public async deleteEntity(entity: Entity | string) {
+    const url = `${API.api}/${typeof entity === 'string' ? entity : entity.id}`;
+    const response = await this.request.delete(this.getHost(url));
     expect(
       response.status(),
-      `Conversation with id: ${conversation.name} was successfully deleted`,
+      ExpectedMessages.apiItemDeleted(
+        typeof entity === 'string' ? entity : entity.name,
+      ),
     ).toBe(200);
   }
 
@@ -70,32 +91,37 @@ export class ItemApiHelper extends BaseApiHelper {
     conversations: Conversation[],
     bucket?: string,
   ) {
+    const bucketToUse = this.userBucket ?? bucket;
     for (const conversation of conversations) {
       conversation.folderId = ItemUtil.getApiConversationFolderId(
         conversation,
-        bucket,
+        bucketToUse,
       );
-      conversation.id = ItemUtil.getApiConversationId(conversation, bucket);
+      conversation.id = ItemUtil.getApiConversationId(
+        conversation,
+        bucketToUse,
+      );
       await this.createItem(conversation);
     }
   }
 
-  public async createPrompts(prompts: Prompt[]) {
+  public async createPrompts(prompts: Prompt[], bucket?: string) {
+    const bucketToUse = this.userBucket ?? bucket;
     for (const prompt of prompts) {
-      prompt.folderId = ItemUtil.getApiPromptFolderId(prompt);
-      prompt.id = ItemUtil.getApiPromptId(prompt);
+      prompt.folderId = ItemUtil.getApiPromptFolderId(prompt, bucketToUse);
+      prompt.id = ItemUtil.getApiPromptId(prompt, bucketToUse);
       await this.createItem(prompt);
     }
   }
 
   public async createItem(item: Prompt | Conversation) {
-    const url = `api/${item.id}`;
-    const response = await this.request.put(url, {
+    const url = `${API.api}/${ItemUtil.getEncodedItemId(item.id)}`;
+    const response = await this.request.put(this.getHost(url), {
       data: item,
     });
     expect(
       response.status(),
-      `Item created with data: ${JSON.stringify(item)}`,
+      ExpectedMessages.apiItemCreated(JSON.stringify(item)),
     ).toBe(200);
   }
 }

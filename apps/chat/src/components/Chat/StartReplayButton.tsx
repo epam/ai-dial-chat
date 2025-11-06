@@ -1,14 +1,12 @@
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/selectors';
 
 import Play from '@/public/images/icons/play.svg';
 
@@ -34,6 +32,7 @@ export const StartReplayButton = () => {
       className="button button-chat"
       onClick={handleReplayStart}
       data-qa="start-replay"
+      data-replay-variables
     >
       <Play height={18} width={18} className="shrink-0 text-secondary" />
       <span>{t('Start replay')}</span>

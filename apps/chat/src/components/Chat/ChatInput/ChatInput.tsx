@@ -1,77 +1,136 @@
-import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
+import {
+  MutableRefObject,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 
-import { Message } from '@/src/types/chat';
+import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
+import { useFilePaste } from '@/src/hooks/useFilePaste';
 
-import { ChatInputFooter } from './ChatInputFooter';
+import { replaceStringRange } from '@/src/utils/app/common';
+
+import { ChatActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ChatSelectors, ConversationsSelectors } from '@/src/store/selectors';
+
 import { ChatInputMessage } from './ChatInputMessage';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
+import { Message } from '@epam/ai-dial-shared';
+
 interface Props {
+  textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
+  showScrollDownButton: boolean;
+  isShowInput: boolean;
+  isWideLayout: boolean;
+  isLastMessageError: boolean;
+  showReplayControls: boolean;
+  children?: ReactNode;
   onSend: (message: Message) => void;
   onScrollDownClick: () => void;
   onStopConversation: () => void;
   onResize: (height: number) => void;
-  textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
-  showScrollDownButton: boolean;
-  isShowInput: boolean;
-  isLastMessageError: boolean;
   onRegenerate: () => void;
-  showReplayControls: boolean;
-  children?: ReactNode;
 }
 
-export const ChatInput = ({
-  onSend,
-  onRegenerate,
-  isLastMessageError,
-  onScrollDownClick,
-  onStopConversation,
-  onResize,
-  textareaRef,
-  showScrollDownButton,
-  isShowInput,
-  showReplayControls,
-  children,
-}: Props) => {
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
+export const ChatInput = Inversify.register(
+  'ChatInput',
+  ({
+    isLastMessageError,
+    textareaRef,
+    showScrollDownButton,
+    isShowInput,
+    isWideLayout,
+    showReplayControls,
+    children,
+    onSend,
+    onRegenerate,
+    onScrollDownClick,
+    onStopConversation,
+    onResize,
+  }: Props) => {
+    const dispatch = useAppDispatch();
 
-  const inputRef = useRef<HTMLDivElement | null>(null);
+    const chatInputContent = useAppSelector(ChatSelectors.selectInputContent);
+    const messageIsStreaming = useAppSelector(
+      ConversationsSelectors.selectIsConversationsStreaming,
+    );
+    const canAttachFiles = useAppSelector(
+      ConversationsSelectors.selectCanAttachFile,
+    );
 
-  useEffect(() => {
-    if (!inputRef) {
-      return;
-    }
+    const inputRef = useRef<HTMLDivElement | null>(null);
 
-    const resizeObserver = new ResizeObserver(() => {
-      inputRef.current?.clientHeight && onResize(inputRef.current.clientHeight);
-    });
-    inputRef.current && resizeObserver.observe(inputRef.current);
+    const handleUploadFiles = useChatUploadFiles();
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [inputRef, onResize]);
+    const handlePaste = useCallback(
+      (
+        files: File[],
+        textContent?: string,
+        selection?: { start: number; end: number },
+      ) => {
+        if (canAttachFiles) handleUploadFiles(files);
+        if (textContent) {
+          dispatch(
+            ChatActions.setInputContent(
+              selection
+                ? replaceStringRange(
+                    chatInputContent,
+                    textContent,
+                    selection.start,
+                    selection.end,
+                  )
+                : textContent,
+            ),
+          );
+        }
+      },
+      [canAttachFiles, chatInputContent, dispatch, handleUploadFiles],
+    );
 
-  return (
-    <div ref={inputRef} className="w-full pt-3 md:pt-5">
-      <div className="relative">{!messageIsStreaming && children}</div>
-      {isShowInput && (
-        <ChatInputMessage
-          isLastMessageError={isLastMessageError}
-          onRegenerate={onRegenerate}
-          textareaRef={textareaRef}
-          showScrollDownButton={showScrollDownButton}
-          onScrollDownClick={onScrollDownClick}
-          onSend={onSend}
-          onStopConversation={onStopConversation}
-          showReplayControls={showReplayControls}
-        />
-      )}
-      <ChatInputFooter />
-    </div>
-  );
-};
+    useFilePaste(textareaRef, handlePaste);
+
+    useEffect(() => {
+      if (!inputRef) {
+        return;
+      }
+
+      const resizeObserver = new ResizeObserver(() => {
+        inputRef.current?.clientHeight &&
+          onResize(inputRef.current.clientHeight);
+      });
+      inputRef.current && resizeObserver.observe(inputRef.current);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [inputRef, onResize]);
+
+    return (
+      <div
+        ref={inputRef}
+        className={classNames('w-full pt-3 md:pt-5', {
+          '!pt-10': isWideLayout,
+        })}
+      >
+        <div className="relative">{!messageIsStreaming && children}</div>
+        {isShowInput && (
+          <ChatInputMessage
+            isLastMessageError={isLastMessageError}
+            onRegenerate={onRegenerate}
+            textareaRef={textareaRef}
+            showScrollDownButton={showScrollDownButton}
+            onScrollDownClick={onScrollDownClick}
+            onSend={onSend}
+            onStopConversation={onStopConversation}
+            showReplayControls={showReplayControls}
+          />
+        )}
+      </div>
+    );
+  },
+);
