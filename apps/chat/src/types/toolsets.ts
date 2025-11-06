@@ -25,7 +25,7 @@ export interface ToolsetModel extends ShareEntity {
   reference: string;
   description: string;
   topics: string[];
-  type: EntityType;
+  type: EntityType.Toolset;
 
   endpoint?: string;
   iconUrl?: string;
