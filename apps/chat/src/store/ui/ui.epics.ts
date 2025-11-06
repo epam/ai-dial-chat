@@ -29,6 +29,7 @@ import { UIActions } from '@/src/store/actions';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -138,27 +139,27 @@ const initThemeEpic: AppEpic = (action$, state$) =>
 
       return forkJoin({
         theme: DataService.getTheme(),
-        availableThemes: isThemesDefined
-          ? DataService.getAvailableThemes()
-          : of([]),
+        themesConfig: isThemesDefined
+          ? DataService.getThemesConfig()
+          : of(FALLBACK_THEME_CONFIG),
       }).pipe(
-        switchMap(({ theme, availableThemes }) => {
+        switchMap(({ theme, themesConfig }) => {
           const actions: Observable<AppAction>[] = [];
 
           if (
             theme &&
-            availableThemes.some(
+            themesConfig.themes.some(
               (availableTheme) => availableTheme.id === theme,
             )
           ) {
             actions.push(of(UIActions.setTheme(theme)));
-          } else if (typeof availableThemes[0] !== 'undefined') {
-            actions.push(of(UIActions.setTheme(availableThemes[0]?.id)));
+          } else if (typeof themesConfig.themes[0] !== 'undefined') {
+            actions.push(of(UIActions.setTheme(themesConfig.themes[0]?.id)));
           }
 
           return concat(
             ...actions,
-            of(UIActions.setAvailableThemes(availableThemes)),
+            of(UIActions.setAvailableThemes(themesConfig)),
           );
         }),
       );

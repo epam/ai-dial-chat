@@ -15,6 +15,9 @@ const selectThemeState = (state: RootState) => rootSelector(state).theme;
 const selectAvailableThemes = (state: RootState) =>
   rootSelector(state).availableThemes;
 
+const selectThemesImages = (state: RootState) =>
+  rootSelector(state).themesImages;
+
 const selectCodeEditorTheme = createSelector(
   [selectThemeState, selectAvailableThemes],
   (theme, availableThemes) => {
@@ -117,6 +120,7 @@ export const UISelectors = {
   selectOpenedFoldersIds,
   selectTextOfClosedAnnouncement,
   selectAvailableThemes,
+  selectThemesImages,
   selectChatbarWidth,
   selectPromptbarWidth,
   selectIsChatFullWidth,
