@@ -80,8 +80,9 @@ dialTest(
     const shortDescriptionHexColor = '#F76464';
     const expectedRgbColor = tinycolor(shortDescriptionHexColor).toRgbString();
     const expectedTarget = 'target="_blank"';
+    const expectedRel = 'rel="noopener noreferrer"';
     const shortDescription = (color: string, target: string) =>
-      `abc<i>Short description</i><span style="color:${color};">Red text</span><a href="https://www.epam.com/"${target}>EPAM</a>`;
+      `abc<i>Short description</i><span style="color:${color};">Red text</span><a href="https://www.epam.com/"${expectedRel}${target}>EPAM</a>`;
     const longDescription = GeneratorUtil.randomString(10);
     const appDescription = shortDescription(shortDescriptionHexColor, '')
       .concat('\n\n')
