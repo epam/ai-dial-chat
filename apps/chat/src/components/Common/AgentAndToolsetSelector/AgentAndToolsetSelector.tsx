@@ -2,8 +2,11 @@ import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useSearchParams } from 'next/navigation';
 
 import classNames from 'classnames';
+
+import { updateQueryParamWithReplace } from '@/src/utils/app/url/query-params';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
@@ -32,6 +35,8 @@ interface AgentAndToolsetSelectorProps {
   tooltip?: string;
 }
 
+const agentsAndToolsetsModalQueryParam = 'agentsAndToolsetsModal';
+
 export const AgentAndToolsetSelector: React.FC<
   AgentAndToolsetSelectorProps
 > = ({
@@ -44,15 +49,24 @@ export const AgentAndToolsetSelector: React.FC<
 }) => {
   const { t } = useTranslation(Translation.Common);
 
-  const [isSelectModalOpen, setSelectModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const [isSelectModalOpen, setSelectModalOpen] = useState(
+    searchParams.get(agentsAndToolsetsModalQueryParam) === '1',
+  );
 
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setSelectModalOpen(true);
+
+    // '1' stands for true
+    updateQueryParamWithReplace(agentsAndToolsetsModalQueryParam, '1');
   };
 
   const handleCloseModal = useCallback(() => {
     setSelectModalOpen(false);
+
+    updateQueryParamWithReplace(agentsAndToolsetsModalQueryParam, null);
   }, []);
 
   const handleRemoveItem = (idToRemove: string) => {
@@ -104,6 +118,7 @@ export const AgentAndToolsetSelector: React.FC<
           <AgentAndToolsetModal
             initialSelectedIds={value}
             allItemsMap={allItemsMap}
+            saveSliderStateInURL
             onClose={handleCloseModal}
             onConfirm={handleConfirmSelection}
           />
