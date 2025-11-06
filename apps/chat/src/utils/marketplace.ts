@@ -14,7 +14,7 @@ import {
   MarketplaceFilters,
 } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
 import {
   MarketplaceState,
@@ -34,10 +34,51 @@ import {
 
 import { pluralizeDisplayName } from './app/application-type-schema';
 import { parseCommaSeparatedList } from './app/common';
+import { isEntityIdPublic } from './app/publications';
+import { isToolsetEntityModel, isToolsetSignedIn } from './app/toolsets';
 import { translate } from './app/translation';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
 import { ParsedUrlQuery } from 'querystring';
+
+export interface EntityStatus {
+  isInvalid: boolean;
+  isLoggedOut: boolean;
+  isError: boolean;
+}
+
+export const getEntityStatus = (
+  entity: MarketplaceEntity | undefined,
+): EntityStatus => {
+  const isInvalid = !entity;
+
+  if (isInvalid) {
+    return { isInvalid, isLoggedOut: false, isError: true };
+  }
+
+  if (
+    isToolsetEntityModel(entity) &&
+    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE
+  ) {
+    const isPublic = isEntityIdPublic(entity);
+
+    const authLevel = !isPublic
+      ? ToolsetCredentialsLevel.GLOBAL
+      : ToolsetCredentialsLevel.USER;
+
+    const isSignedIn = isToolsetSignedIn(entity, authLevel);
+    const isLoggedOut = !isSignedIn;
+
+    return {
+      isInvalid,
+      isLoggedOut,
+      isError: isLoggedOut,
+    };
+  }
+
+  return { isInvalid, isLoggedOut: false, isError: false };
+};
 
 // Filter checkers
 const checkEntityTypeFilter = (

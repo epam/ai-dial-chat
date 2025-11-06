@@ -17,6 +17,7 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
+import { getEntityStatus } from '@/src/utils/marketplace';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -90,6 +91,8 @@ export const ItemCardView = <T extends MarketplaceEntity>({
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
+  const { isLoggedOut } = getEntityStatus(entity);
+
   const versionsToSelect = useMemo(() => {
     const sourceList = isDialAiEntityModel(entity)
       ? allModels
@@ -102,7 +105,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
     }
 
     return sourceList.filter(
-      (item) =>
+      (item: MarketplaceEntity) =>
         getGroupMarketplaceEntityKey(entity) ===
         getGroupMarketplaceEntityKey(item),
     );
@@ -131,7 +134,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
-        isUnavailableModel && 'border-error',
+        (!!isUnavailableModel || isLoggedOut) && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
         className,

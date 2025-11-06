@@ -16,7 +16,6 @@ import {
 } from '@/src/utils/app/toolsets';
 
 import { ScreenState } from '@/src/types/common';
-import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
@@ -27,22 +26,16 @@ import { ToolsetAuthAction } from '@/src/constants/toolsets';
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
+import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import { AgentBookmark } from '../AgentBookmark';
-
-interface Props {
-  entity: ToolsetModel;
-  allVersions: ToolsetModel[];
-  onChangeVersion: (entity: ToolsetModel) => void;
-  onBookmarkClick: (entity: ToolsetModel) => void;
-}
 
 export function ToolsetDetailsFooter({
   entity,
   allVersions,
   onChangeVersion,
   onBookmarkClick,
-}: Props) {
+}: ToolsetDetailsFooterProps) {
   const { t } = useTranslation(Translation.Marketplace);
   const screenState = useScreenState();
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
@@ -104,12 +97,14 @@ export function ToolsetDetailsFooter({
             )
           )}
 
-          <AgentBookmark
-            entity={entity}
-            size={24}
-            className="icon-button group/bookmark"
-            onBookmarkClick={onBookmarkClick}
-          />
+          {onBookmarkClick && (
+            <AgentBookmark
+              entity={entity}
+              size={24}
+              className="icon-button group/bookmark"
+              onBookmarkClick={onBookmarkClick}
+            />
+          )}
         </div>
         <div className="flex w-full min-w-0 items-center justify-end gap-4">
           <ModelVersionSelect

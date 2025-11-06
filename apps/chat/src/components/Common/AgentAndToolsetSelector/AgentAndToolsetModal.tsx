@@ -35,8 +35,10 @@ import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
-import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
-import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
+import {
+  SliderGrid,
+  SliderGridRef,
+} from '@/src/components/Common/SliderGrid/SliderGrid';
 
 import { TalkToNotFound } from '../TalkToNotFound';
 import {
@@ -76,7 +78,7 @@ function ScopeTabButton({
 }
 interface AgentAndToolsetModalViewProps {
   onClose: () => void;
-  onConfirm: (selectedItems: MarketplaceEntity[]) => void;
+  onConfirm: (selectedIds: string[]) => void;
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
 }
@@ -93,6 +95,7 @@ const AgentAndToolsetModalView = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
+  const sliderGridRef = useRef<SliderGridRef>(null);
   const currentAppReference =
     router.route === Routes.AppsEditor
       ? router.query[AppsEditorQuery.Id]?.toString()
@@ -238,16 +241,25 @@ const AgentAndToolsetModalView = ({
     installedSet,
   ]);
 
+  const handleItemClick = useCallback(
+    (id: string) => {
+      const isDisplayed = displayedItems.some((item) => item.id === id);
+
+      if (isDisplayed && sliderGridRef.current) {
+        sliderGridRef.current.scrollToItem(id);
+      }
+    },
+    [displayedItems],
+  );
+
   const sliderResetDependencies = useMemo(
     () => [isMyWorkspace, searchTerm],
     [isMyWorkspace, searchTerm],
   );
 
   const handleConfirm = useCallback(() => {
-    const validIds = selectedIds.filter((id) => !!allItemsMap[id]);
-    const itemsToConfirm = validIds.map((id) => allItemsMap[id]!);
-    onConfirm(itemsToConfirm);
-  }, [selectedIds, allItemsMap, onConfirm]);
+    onConfirm(selectedIds);
+  }, [selectedIds, onConfirm]);
 
   return (
     <>
@@ -297,6 +309,7 @@ const AgentAndToolsetModalView = ({
                 selectedIds={selectedIds}
                 allItemsMap={allItemsMap}
                 onRemove={handleRemoveItem}
+                onItemClick={handleItemClick}
               />
             ) : (
               <span className="flex h-[34px] items-center text-xs">
@@ -313,6 +326,7 @@ const AgentAndToolsetModalView = ({
           MarketplaceEntity,
           Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
         >
+          ref={sliderGridRef}
           items={displayedItems}
           SliderItem={AgentAndToolsetSelectItem}
           notFound={
@@ -329,7 +343,6 @@ const AgentAndToolsetModalView = ({
         />
       </div>
 
-      <ToolsetLoginDialog />
       <AgentDialogs />
 
       <div
@@ -349,7 +362,7 @@ const AgentAndToolsetModalView = ({
 
 interface Props {
   onClose: () => void;
-  onConfirm: (selectedItems: MarketplaceEntity[]) => void;
+  onConfirm: (selectedIds: string[]) => void;
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
 }
