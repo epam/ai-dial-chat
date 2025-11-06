@@ -104,7 +104,7 @@ const ModelIconTemplate = memo(
 
     const handleError = useCallback(() => {
       if (ref.current) {
-        if (iconRetry > 0) {
+        if (iconRetry > 0 && fallbackUrl) {
           setIconRetry((prev) => prev - 1);
         } else {
           setIconError(true);
@@ -112,6 +112,8 @@ const ModelIconTemplate = memo(
         if (fallbackUrl) {
           ref.current.src = fallbackUrl;
           ref.current.onerror = null;
+        } else {
+          setIconError(true);
         }
       }
     }, [fallbackUrl, iconRetry]);
