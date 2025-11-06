@@ -14,7 +14,6 @@ import {
 import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -1030,7 +1029,8 @@ dialAdminTest.only(
     '[Admin view][Edit request]: Rename the chat. Special symbols are allowed ( not restricted)\n' +
     '[Admin view][Edit request] Rename the chat several times in a row\n' +
     // "[Admin view][Edit request]: Rename author's public name. Special symbols are allowed (not restricted)\n" +
-    'Dot at the end of public author name is permitted',
+    'Dot at the end of public author name is permitted\n' +
+  '[Admin view][Edit request] Rename the chat with _ underscore sign at the end',
   async (
     {
       conversationData,
@@ -1068,22 +1068,24 @@ dialAdminTest.only(
       'EPMRTC-6550',
       // 'EPMRTC-6789',
       'EPMRTC-6502',
+      'EPMRTC-6567',
     );
-    let conversation: Conversation;
+    const conversation: Conversation =
+      conversationData.prepareDefaultConversation(
+        undefined,
+        `${GeneratorUtil.randomConversationName()}___`,
+      );
     const requestName = GeneratorUtil.randomPublicationRequestName();
     let updatedName: string;
     let publishRequest: PublicationRequestModel = publishRequestBuilder.build();
     let publicAuthorName: string;
     const currentDate = DateUtil.getCurrentLocalDate();
+    const conversationVersion = '0.0.1';
 
     await dialTest.step(
       'Create a default publication request for chat via API',
       async () => {
-        conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
-
-        updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_1`;
-
         publishRequest = publishRequestBuilder
           .withName(requestName)
           .withDisplayAuthor(
@@ -1093,6 +1095,7 @@ dialAdminTest.only(
           .build();
         await publicationApiHelper.createPublishRequest(publishRequest);
         await adminLocalStorageManager.setShowSideBarPanels();
+        updatedName = conversation.name;
       },
     );
 
@@ -1108,21 +1111,50 @@ dialAdminTest.only(
       },
     );
 
-    await dialAdminTest.step(
-      "Update chat's name, click Update request button and verify updated chat's name is displayed in the sidebar",
-      async () => {
+    const underscoreTestSteps = [
+      {
+        title:
+          'Update the name for the chat to have only one underscore at the end and check the chat name and version',
+        name: `${GeneratorUtil.randomConversationName()}_`,
+      },
+      {
+        title:
+          'Update the chat name to have three underscores at the end again and check the chat name and version',
+        name: `${GeneratorUtil.randomConversationName()}___`,
+      },
+      {
+        title:
+          "Update chat's name, click Update request button and verify updated chat's name is displayed in the sidebar",
+        name: `${conversation.name}_${GeneratorUtil.randomString(7)}_1`,
+      },
+    ];
+
+    for (const testCase of underscoreTestSteps) {
+      await dialAdminTest.step(testCase.title, async () => {
         await adminPublishingApprovalModal.renameConversationToApprove(
-          conversation.name,
           updatedName,
+          testCase.name,
         );
         await adminPublishingApprovalModal.updateRequestButton.click();
-        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
-          { name: requestName },
-          { name: updatedName },
+
+        const conversationsTree =
+          adminPublishingApprovalModal.getConversationsToApproveTree();
+        await baseAssertion.assertElementState(
+          conversationsTree.getEntityByName(updatedName),
           'visible',
         );
-      },
-    );
+        await baseAssertion.assertElementText(
+          conversationsTree.getEntityVersion(updatedName),
+          conversationVersion,
+        );
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: requestName },
+          { name: testCase.name },
+          'visible',
+        );
+        updatedName = testCase.name;
+      });
+    }
 
     await dialAdminTest.step(
       'Click "Go to a review" link and view chat\'s name on chat\'s details screen',
@@ -1272,7 +1304,7 @@ dialAdminTest.only(
       },
     );
 
-    const publicNameTestCases = [
+    const publicNameTestSteps = [
       {
         title: "Click Edit button and add '_updated' to author's public name",
         name: `${publishRequest.displayAuthor}_updated`,
@@ -1289,7 +1321,7 @@ dialAdminTest.only(
       // },
     ];
 
-    for (const testCase of publicNameTestCases) {
+    for (const testCase of publicNameTestSteps) {
       await dialAdminTest.step(testCase.title, async () => {
         await adminPublishingApprovalModal.editButton.click();
         await adminPublishingApprovalModal.publicAuthorInputEditMode.fillInInput(

@@ -42,9 +42,10 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const conversation = this.conversationBuilder.getConversation();
-    const modelToUse = model
-      ? { id: typeof model === 'string' ? model : model.reference }
-      : conversation.model;
+    const modelToUse =
+      model || model != undefined
+        ? { id: typeof model === 'string' ? model : model.reference }
+        : conversation.model;
     const settings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
