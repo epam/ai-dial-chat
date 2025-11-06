@@ -439,7 +439,7 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: '/api/themes/image',
-  defaultModelIconHost: () => `${API.themeUrl}/message-square-lines-alt.svg`, // "default-model" value in images of Dark theme
+  defaultModelIconHost: () => `${API.themeUrl}/message-square-lines-alt.svg`, // "default-model" value into images of themes config
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
