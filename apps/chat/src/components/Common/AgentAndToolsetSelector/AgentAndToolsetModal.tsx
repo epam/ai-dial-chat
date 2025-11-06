@@ -79,7 +79,6 @@ function ScopeTabButton({
   );
 }
 interface AgentAndToolsetModalViewProps {
-  onClose: () => void;
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   saveSliderStateInURL: boolean;
