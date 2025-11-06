@@ -2,19 +2,12 @@ import { Conversation } from '@/chat/types/chat';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  API,
-  Attachment,
-  ExpectedConstants,
-  ExpectedMessages,
-  MenuOptions,
-  MockedChatApiResponseBodies,
-  UploadMenuOptions,
-} from '@/src/testData';
+import { API, Attachment, ExpectedConstants, ExpectedMessages, MenuOptions, MockedChatApiResponseBodies, UploadMenuOptions } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
+
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -1022,13 +1015,14 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.only(
   '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
     '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
     "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel.\n" +
     'Edit author public name. Updated name displayed in Info only after request approved\n + ' +
     '[Admin view][Edit request]: Rename the chat. Special symbols are allowed ( not restricted)\n' +
-    '[Admin view][Edit request] Rename the chat several times in a row',
+    '[Admin view][Edit request] Rename the chat several times in a row\n' +
+    "[Admin view][Edit request]: Rename author's public name. Special symbols are allowed (not restricted)",
   async (
     {
       conversationData,
@@ -1064,6 +1058,7 @@ dialAdminTest(
       'EPMRTC-6456',
       'EPMRTC-6787',
       'EPMRTC-6550',
+      // 'EPMRTC-6789',
     );
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -1277,8 +1272,29 @@ dialAdminTest(
           publicAuthorName,
         );
         await adminPublishingApprovalModal.updateRequestButton.click();
+        await baseAssertion.assertElementText(
+          adminPublishingApprovalModal.publicAuthor,
+          publicAuthorName,
+        );
       },
     );
+
+    // #5024
+    // await dialAdminTest.step(
+    //   "Click Edit button and add special chars to author's public name",
+    //   async () => {
+    //     await adminPublishingApprovalModal.editButton.click();
+    //     publicAuthorName = `${publishRequest.displayAuthor}_${ExpectedConstants.allowedSpecialChars}`;
+    //     await adminPublishingApprovalModal.publicAuthorInputEditMode.fillInInput(
+    //       publicAuthorName,
+    //     );
+    //     await adminPublishingApprovalModal.updateRequestButton.click();
+    //     await baseAssertion.assertElementText(
+    //       adminPublishingApprovalModal.publicAuthor,
+    //       publicAuthorName,
+    //     );
+    //   },
+    // );
 
     await dialAdminTest.step(
       'Click "Go to a review" and then "Back to publication request" and approve request',
