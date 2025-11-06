@@ -112,8 +112,6 @@ const ModelIconTemplate = memo(
         if (fallbackUrl) {
           ref.current.src = fallbackUrl;
           ref.current.onerror = null;
-        } else {
-          setIconError(true);
         }
       }
     }, [fallbackUrl, iconRetry]);
