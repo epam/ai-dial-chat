@@ -216,8 +216,6 @@ export const ChatMDComponent = memo(
         className={mdClassNames}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        //TODO check if it possible to set linkTarget
-        // linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
         urlTransform={transformUri}
       >
