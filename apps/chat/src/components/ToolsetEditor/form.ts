@@ -67,6 +67,7 @@ export const ToolsetEditorFormSchema = zodValidation
   .object({
     endpoint: zodValidation
       .string()
+      .trim()
       .nonempty(formErrors.required)
       .regex(/^(https?|sse):\/\//, {
         error: urlErrors.notValidProtocol,
@@ -114,7 +115,12 @@ export const getDefaultLoginFormData = (
         authorizationEndpoint:
           toolset?.authSettings?.authorizationEndpoint ?? '',
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
-        includeOAuthFields: prevData?.includeOAuthFields ?? false,
+        includeOAuthFields:
+          !prevData &&
+          toolset?.authSettings?.clientSecret &&
+          toolset?.authSettings?.clientId
+            ? true
+            : (prevData?.includeOAuthFields ?? false),
       };
     case ToolsetAuthTypes.NONE:
     default:

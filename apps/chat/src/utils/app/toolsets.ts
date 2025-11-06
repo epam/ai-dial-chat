@@ -116,7 +116,7 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
 };
 
 export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
-  endpoint: data.endpoint ?? '',
+  endpoint: data.endpoint?.trim() ?? '',
   transport: data.transport,
   allowed_tools: data.allowedTools,
   display_version: data.version,
