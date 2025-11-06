@@ -54,6 +54,7 @@ export const ToolsetLoginForm = ({
   const { register, formState, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
   const errors = formState.errors;
+  const isValid = formState.isValid;
 
   const includeOAuthFields = useWatch({
     name: 'includeOAuthFields',
@@ -146,7 +147,7 @@ export const ToolsetLoginForm = ({
           buttonClassName,
           isSignedIn ? 'button-secondary' : 'button-primary',
         )}
-        disabled={disabled}
+        disabled={disabled || !isValid}
         onClick={handleSubmit}
       >
         {isSignedIn ? (

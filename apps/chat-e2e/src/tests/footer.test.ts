@@ -3,7 +3,7 @@ import { ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 
 dialTest(
-  'EPAM AI DIAL leads to kb',
+  'DIAL leads to kb',
   async ({
     dialHomePage,
     footerAssertion,
