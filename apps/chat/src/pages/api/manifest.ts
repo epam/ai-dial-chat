@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'AI DIAL';
+  const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'DIAL';
   const iconUrl = getThemeIconUrl('favicon');
   const logoUrl = getThemeIconUrl('dark-logo');
   res.setHeader('Content-Type', 'application/json');
