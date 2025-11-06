@@ -55,11 +55,10 @@ export const ToolsetPreview = ({
     ],
   });
 
-  const cardEntity = useMemo(
+  const cardEntity: ToolsetModel = useMemo(
     () => ({
       type: EntityType.Toolset,
       isDefault: false,
-
       name,
       description,
       iconUrl,
@@ -67,7 +66,6 @@ export const ToolsetPreview = ({
       version,
       allowedTools,
       transport,
-
       createdAt: currentToolset?.createdAt,
       updatedAt: currentToolset?.updatedAt,
       owner: currentToolset?.author,

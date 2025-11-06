@@ -9,6 +9,7 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
 import { AgentAndToolsetModal } from './AgentAndToolsetModal';
@@ -30,6 +31,7 @@ interface AgentAndToolsetSelectorProps {
   addBtnTooltip?: string;
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   tooltip?: string;
+  onItemClick?: (id: string) => void;
 }
 
 export const AgentAndToolsetSelector: React.FC<
@@ -41,6 +43,7 @@ export const AgentAndToolsetSelector: React.FC<
   tooltip,
   allItemsMap,
   onChange,
+  onItemClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -55,14 +58,20 @@ export const AgentAndToolsetSelector: React.FC<
     setSelectModalOpen(false);
   }, []);
 
-  const handleRemoveItem = (idToRemove: string) => {
-    onChange(value.filter((id) => id !== idToRemove));
-  };
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      onChange(value.filter((id) => id !== idToRemove));
+    },
+    [onChange, value],
+  );
 
-  const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
-    onChange(newItems.map((item) => item.id));
-    setSelectModalOpen(false);
-  };
+  const handleConfirmSelection = useCallback(
+    (newIds: string[]) => {
+      onChange(newIds);
+      setSelectModalOpen(false);
+    },
+    [onChange],
+  );
 
   return (
     <Tooltip tooltip={tooltip}>
@@ -94,11 +103,13 @@ export const AgentAndToolsetSelector: React.FC<
                   item={allItemsMap[id]}
                   onRemove={readonly ? undefined : handleRemoveItem}
                   readonly={readonly}
+                  onItemClick={onItemClick}
                 />
               ))}
             </div>
           )}
         </div>
+        <ToolsetLoginDialog />
 
         {isSelectModalOpen && !readonly && (
           <AgentAndToolsetModal
