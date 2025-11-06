@@ -25,7 +25,7 @@ export const RadioButton = ({
   const id = rest.id ?? generatedId;
 
   return (
-    <Tooltip tooltip={tooltip} triggerClassName="w-full">
+    <Tooltip tooltip={tooltip} triggerClassName="w-fit">
       <label
         htmlFor={id}
         className={classNames(
