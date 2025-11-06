@@ -162,16 +162,18 @@ const AuthTypeSection = ({
                 />
               )}
 
-              <RadioButton
-                id={WithLogin.WithoutLogin}
-                name="with-auth"
-                caption={t(WithLogin.WithoutLogin)}
-                onChange={onWithLoginChange}
-                value={WithLogin.WithoutLogin}
-                checked={withLogin === WithLogin.WithoutLogin}
-                disabled={isSignedIn || isDisabled}
-                tooltip={tooltip}
-              />
+              {type !== ToolsetAuthTypes.OAUTH && (
+                <RadioButton
+                  id={WithLogin.WithoutLogin}
+                  name="with-auth"
+                  caption={t(WithLogin.WithoutLogin)}
+                  onChange={onWithLoginChange}
+                  value={WithLogin.WithoutLogin}
+                  checked={withLogin === WithLogin.WithoutLogin}
+                  disabled={isSignedIn || isDisabled}
+                  tooltip={tooltip}
+                />
+              )}
             </div>
 
             {withLogin !== WithLogin.WithoutLogin && (
@@ -231,6 +233,7 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
       }
       setValue('includeOAuthFields', value === WithLogin.WithConfig, {
         shouldDirty: false,
+        shouldValidate: true,
       });
     },
     [clearErrors, setValue],
