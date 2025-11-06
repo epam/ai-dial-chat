@@ -1111,7 +1111,7 @@ dialAdminTest.only(
       },
     );
 
-    const underscoreTestSteps = [
+    const conversationRenamingTestSteps = [
       {
         title:
           'Update the name for the chat to have only one underscore at the end and check the chat name and version',
@@ -1129,7 +1129,7 @@ dialAdminTest.only(
       },
     ];
 
-    for (const testCase of underscoreTestSteps) {
+    for (const testCase of conversationRenamingTestSteps) {
       await dialAdminTest.step(testCase.title, async () => {
         await adminPublishingApprovalModal.renameConversationToApprove(
           updatedName,
@@ -1140,11 +1140,11 @@ dialAdminTest.only(
         const conversationsTree =
           adminPublishingApprovalModal.getConversationsToApproveTree();
         await baseAssertion.assertElementState(
-          conversationsTree.getEntityByName(updatedName),
+          conversationsTree.getEntityByName(testCase.name),
           'visible',
         );
         await baseAssertion.assertElementText(
-          conversationsTree.getEntityVersion(updatedName),
+          conversationsTree.getEntityVersion(testCase.name),
           conversationVersion,
         );
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
