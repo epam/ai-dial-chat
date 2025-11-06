@@ -528,6 +528,7 @@ dialSharedWithMeTest(
         await folderConversations.selectFolderEntity(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
+          { isHttpMethodTriggered: true },
         );
         await folderConversations
           .getSelectedFolderEntity(
@@ -542,7 +543,19 @@ dialSharedWithMeTest(
 
         await folderConversations.editFolderName(updatedFolderName);
         await page.keyboard.press(keys.enter);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
+        await dialHomePage.waitForExpectedResponses(
+          () => confirmationDialog.confirm(),
+          [
+            {
+              apiMethod: 'PUT',
+              urlPattern: nestedConversations[nestedLevel - 1].name,
+            },
+            {
+              apiMethod: 'PUT',
+              urlPattern: nestedConversations[nestedLevel - 2].name,
+            },
+          ],
+        );
         await chatBarFolderAssertion.assertFolderState(
           { name: updatedFolderName },
           'visible',
