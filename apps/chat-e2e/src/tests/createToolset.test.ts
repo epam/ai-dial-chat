@@ -234,9 +234,9 @@ dialTest(
             expectedLongDescription: longDescription,
             expectedTopics: topicsToSelect,
             //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4998
-            // expectedAuthor: UserUtil.getE2EUsername(testInfo.parallelIndex),
+            // expectedAuthor: toolsetEntity.author,
             //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3218
-            // expectedReleaseDade: DateUtil.getCurrentLocalDate(),
+            // expectedReleaseDade: toolsetEntity.releaseDate,
           },
         );
       },
@@ -367,8 +367,7 @@ dialTest(
         expectedVersion: toolsetEntity.version,
         expectedDescription: toolsetEntity.description,
         expectedReleaseDade: toolsetEntity.releaseDate,
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/5012
-        // expectedAuthor: toolsetEntity.author,
+        expectedAuthor: toolsetEntity.author,
         expectedTopics: topicsToSelect,
         expectedIcon: expectedIconUrl,
       });
