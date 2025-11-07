@@ -7,6 +7,7 @@ import {
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
+  FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
@@ -1371,7 +1372,7 @@ dialAdminTest(
 dialAdminTest(
   // 'Last version is not displayed after update chat\'s name\n'+
   '[Admin view][Edit request]: Edit version for chat ( there is no previous version)\n' +
-  '[Admin view][Edit request]:Edit version when there are more that one public version',
+    '[Admin view][Edit request]:Edit version when there are more that one public version',
   async (
     {
       conversationData,
@@ -1556,8 +1557,8 @@ dialAdminTest(
       'Сhange version according to format (example 0.0.5) and click "Update request" buttonб click "Go to a review" link and check version',
       async () => {
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
-               publishRequest2.name!,
-             );
+          publishRequest2.name!,
+        );
         const conversationsTree =
           adminPublishingApprovalModal.getConversationsToApproveTree();
         await baseAssertion.assertElementText(
@@ -1583,6 +1584,110 @@ dialAdminTest(
           `v. ${thirdVersion}`,
         );
         await adminPublicationReviewControl.backToPublicationRequest();
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  "Edit folder's name for publish request for folder with chat",
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      adminPublicationReviewControl,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      setTestIds,
+      adminLocalStorageManager,
+      baseAssertion,
+      dialHomePage,
+      organizationFolderConversations,
+      localStorageManager,
+    },
+    testInfo,
+  ) => {
+    setTestIds('EPMRTC-6465');
+    let folderConversation: FolderConversation;
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const updatedFolderName = 'Folder01_Updated';
+
+    await dialTest.step(
+      'Precondition: Create folder with chat Folder01->Chat01',
+      async () => {
+        folderConversation =
+          conversationData.prepareDefaultConversationInFolder();
+        await dataInjector.createConversations(
+          folderConversation.conversations,
+          folderConversation.folders,
+        );
+      },
+    );
+
+    await dialTest.step('Create publication request for Folder01', async () => {
+      const publishRequest = publishRequestBuilder
+        .withName(requestName)
+        .withDisplayAuthor(
+          UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
+        )
+        .withConversationInFolderResource(
+          folderConversation.conversations[0],
+          PublishActions.ADD,
+        )
+        .build();
+      await publicationApiHelper.createPublishRequest(publishRequest);
+    });
+
+    await dialAdminTest.step('By admin open publication request', async () => {
+      await adminLocalStorageManager.setShowSideBarPanels();
+      await adminDialHomePage.openHomePage();
+      await adminDialHomePage.waitForPageLoaded();
+      await adminApproveRequiredConversations.expandApproveRequiredFolder(
+        requestName,
+      );
+    });
+
+    await dialAdminTest.step('Click Edit button', async () => {
+      await adminPublishingApprovalModal.editButton.click();
+    });
+
+    await dialAdminTest.step(
+      "Update folder's name to Folder01_Updated and click 'Update request'",
+      async () => {
+        await adminPublishingApprovalModal.renameConversationFolderToApproveVersion(
+          folderConversation.folders.name,
+          updatedFolderName,
+        );
+        await adminPublishingApprovalModal.updateRequestButton.click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify new folder name is displayed on publish request form and approve the request',
+      async () => {
+        const folder = adminPublishingApprovalModal
+          .getPublishConversationToApproveFolder()
+          .getFolderByName(updatedFolderName);
+        await baseAssertion.assertElementState(folder, 'visible');
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModal.approveRequest();
+      },
+    );
+
+    await dialTest.step(
+      'Check folder name in Organization by a regular user - renamed folder is displayed in Organization',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(
+          organizationFolderConversations.getFolderByName(updatedFolderName),
+          'visible',
+        );
       },
     );
   },

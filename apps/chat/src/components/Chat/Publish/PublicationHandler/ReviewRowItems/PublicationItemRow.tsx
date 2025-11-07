@@ -337,7 +337,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       )}
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
-      data-qa={"entity-publication-row"}
+      data-qa={'entity-publication-row'}
     >
       <span
         className="relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center gap-2 truncate rounded px-4"

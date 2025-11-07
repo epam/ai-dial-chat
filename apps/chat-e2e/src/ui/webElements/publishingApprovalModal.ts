@@ -2,14 +2,17 @@ import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import {
   EntitySelectors,
+  FolderSelectors,
   IconSelectors,
   PublishEntitySelectors,
   PublishingApprovalModalSelectors,
+  PublishingTreeSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import {
   PublishApplicationsTree,
   PublishConversationsTree,
+  PublishFolder,
   PublishFolderConversations,
   PublishFolderPrompts,
   PublishPromptsTree,
@@ -34,6 +37,7 @@ export class PublishingApprovalModal extends BaseElement {
   //applications to approve tree
   private applicationsToPublishTree!: PublishApplicationsTree;
   private publishingRules!: PublishingRules;
+  private publishConversationToApproveFolder!: PublishFolder;
 
   getConversationsToApproveTree(): PublishConversationsTree {
     if (!this.conversationsToApproveTree) {
@@ -53,6 +57,18 @@ export class PublishingApprovalModal extends BaseElement {
       );
     }
     return this.folderConversationsToApprove;
+  }
+
+  getPublishConversationToApproveFolder(): PublishFolder {
+    if (!this.publishConversationToApproveFolder) {
+      this.publishConversationToApproveFolder = new PublishFolder(
+        this.page,
+        this.rootLocator,
+        PublishingTreeSelectors.conversationsTree,
+        EntitySelectors.conversation,
+      );
+    }
+    return this.publishConversationToApproveFolder;
   }
 
   getFilesToApproveTree(): PublishFilesTree {
@@ -239,6 +255,24 @@ export class PublishingApprovalModal extends BaseElement {
     await versionInput.click();
     await versionInput.fill(newVersion);
     return newVersion;
+  }
+
+  public async renameConversationFolderToApproveVersion(
+    folderName: string,
+    newFolderName: string,
+  ) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+
+    const conversationFolders = this.getPublishConversationToApproveFolder()
+      .getChildElementBySelector(FolderSelectors.folderName)
+      .getChildElementBySelector(`${Tags.input}[value="${folderName}"]`)
+      .getElementLocator();
+
+    await conversationFolders.click();
+    await conversationFolders.fill(newFolderName);
+    return newFolderName;
   }
 
   public async renameFileToApprove(fileName: string, newName: string) {
