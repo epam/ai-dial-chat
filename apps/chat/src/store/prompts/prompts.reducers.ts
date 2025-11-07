@@ -1,5 +1,4 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { skipSelector } from '@reduxjs/toolkit/query';
 
 import { combineEntities } from '@/src/utils/app/common';
 import { addGeneratedFolderId, isFolderEmpty } from '@/src/utils/app/folders';
