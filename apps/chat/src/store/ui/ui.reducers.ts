@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import { ThemesConfig } from '@/src/types/themes';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
@@ -22,6 +23,7 @@ const initialState: UIState = {
   initialized: false,
   theme: '',
   availableThemes: [],
+  themesImages: {},
   showChatbar: false,
   showPromptbar: false,
   showMarketplaceFilterbar: false,
@@ -55,11 +57,9 @@ export const uiSlice = createSlice({
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },
-    setAvailableThemes: (
-      state,
-      { payload }: PayloadAction<UIState['availableThemes']>,
-    ) => {
-      state.availableThemes = payload;
+    setAvailableThemes: (state, { payload }: PayloadAction<ThemesConfig>) => {
+      state.availableThemes = payload.themes;
+      state.themesImages = payload.images;
     },
     setChatbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.chatbarWidth = payload;

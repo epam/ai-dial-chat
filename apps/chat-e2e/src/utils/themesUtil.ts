@@ -1,11 +1,15 @@
-import { Theme } from '@/chat/types/themes';
+import { Theme, ThemesImages } from '@/chat/types/themes';
 import { ThemeId } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import tinycolor from 'tinycolor2';
 
 export class ThemesUtil {
   public static getThemes() {
-    return JSON.parse(process.env.THEMES!) as Theme[];
+    return JSON.parse(process.env.THEMES!).themes as Theme[];
+  }
+
+  public static getImages() {
+    return JSON.parse(process.env.THEMES!).images as ThemesImages;
   }
 
   public static getRgbColorByKey(key: ThemeColorAttributes, themeId?: ThemeId) {
