@@ -48,14 +48,17 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     // dispatch(ShareActions.setUnshareEntity(entity));
   }, []);
 
-  const handleCopy = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!navigator.clipboard) return;
-    const link = getToolsetLink(toolset);
-    navigator.clipboard.writeText(link);
-    dispatch(UIActions.showSuccessToast(t('Link copied!')));
-  }, []);
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!navigator.clipboard) return;
+      const link = getToolsetLink(toolset);
+      navigator.clipboard.writeText(link);
+      dispatch(UIActions.showSuccessToast(t('Link copied!')));
+    },
+    [dispatch, t, toolset],
+  );
 
   const handleEdit = useCallback(
     (e: React.MouseEvent) => {
@@ -67,6 +70,8 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         query: {
           [ToolsetEditorQuery.Id]: toolset.reference,
           [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
+          [ToolsetEditorQuery.ReturnUrl]:
+            window.location.pathname + window.location.search,
         },
       });
     },

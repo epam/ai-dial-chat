@@ -18,6 +18,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
+import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -86,6 +87,7 @@ export const GeneralForm = ({
           id="name"
           disabled={isToolsetPublic}
           error={errors.name?.message}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
         />
         <Field
           {...register('version')}
@@ -95,6 +97,7 @@ export const GeneralForm = ({
           placeholder={DEFAULT_VERSION}
           id="version"
           disabled={isToolsetPublic}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
           error={errors.version?.message}
           name="version"
         />
@@ -114,6 +117,7 @@ export const GeneralForm = ({
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
               disabled={isToolsetPublic}
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
         />
@@ -128,6 +132,7 @@ export const GeneralForm = ({
           className="resize-none"
           id="description"
           disabled={isToolsetPublic}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
         />
         <Controller
           name="topics"
@@ -145,6 +150,7 @@ export const GeneralForm = ({
               isClearable
               menuPlacement={isMobileView ? 'top' : 'auto'}
               isDisabled={isToolsetPublic}
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
         />

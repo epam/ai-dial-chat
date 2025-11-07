@@ -20,7 +20,11 @@ import {
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
-import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  constructPath,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { BackendResourceType } from '@/src/types/common';
@@ -197,7 +201,11 @@ const PublishDialogContainer = ({
           });
 
     const iconResource = [];
-    if (entity.iconUrl && action !== PublishActions.DELETE) {
+    if (
+      entity.iconUrl &&
+      action !== PublishActions.DELETE &&
+      isMyEntity({ id: entity.iconUrl })
+    ) {
       const decodedIconUrl = ApiUtils.decodeApiUrl(entity.iconUrl);
       const targetIconUrl = transformIdToRootEntityId(decodedIconUrl);
 

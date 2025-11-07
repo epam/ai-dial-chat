@@ -106,7 +106,8 @@ export const toolsetSlice = createSlice({
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
         tabToOpen?: ToolsetEditorSteps;
-        redirectUrl?: string;
+        redirectUrl?: URL | string;
+        exitAfterSave?: boolean;
         shouldSelectToolset?: boolean;
         auth?: {
           apiKey?: string;
@@ -251,6 +252,13 @@ export const toolsetSlice = createSlice({
         payload.toolsets,
       );
     },
+    exitEditor: (
+      state,
+      _action: PayloadAction<{
+        redirectUrl?: URL | string;
+        shouldSelectToolset?: boolean;
+      }>,
+    ) => state,
   },
 });
 
