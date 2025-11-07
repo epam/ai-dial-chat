@@ -28,7 +28,6 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import {
   isApplicationType,
-  navigateAndThen,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
