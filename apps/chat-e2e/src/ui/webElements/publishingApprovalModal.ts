@@ -1,7 +1,9 @@
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import {
+  EntitySelectors,
   IconSelectors,
+  PublishEntitySelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -152,6 +154,10 @@ export class PublishingApprovalModal extends BaseElement {
   );
   public publicAuthorInputEditMode =
     this.publicAuthorContainerEditMode.getChildElementBySelector(Tags.input);
+  public conversationToApproveRow =
+    this.getConversationsToApproveTree().getChildElementBySelector(
+      PublishingApprovalModalSelectors.entityRow,
+    );
 
   public async approveRequest({
     isModelsListRetrieved = false,
@@ -210,6 +216,29 @@ export class PublishingApprovalModal extends BaseElement {
     await conversationInput.click();
     await conversationInput.fill(newName);
     return newName;
+  }
+
+  public async renameConversationToApproveVersion(
+    conversationName: string,
+    newVersion: string,
+  ) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+
+    const conversationRow = this.conversationToApproveRow.getElementLocator();
+
+    const filter = conversationRow.filter({
+      has: this.page.locator(`[value="${conversationName}"]`),
+    });
+
+    const versionInput = filter
+      .locator(PublishEntitySelectors.version)
+      .locator(Tags.input);
+
+    await versionInput.click();
+    await versionInput.fill(newVersion);
+    return newVersion;
   }
 
   public async renameFileToApprove(fileName: string, newName: string) {

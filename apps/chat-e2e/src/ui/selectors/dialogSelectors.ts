@@ -192,6 +192,8 @@ export const PublishingApprovalModalSelectors = {
   duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
   editButton: '[data-qa="edit"]',
   updateRequestButton: '[data-qa="update"]',
+  version: '[data-qa="version"]',
+  entityRow: '[data-qa="entity-publication-row"]',
 };
 
 export const PublishingTreeSelectors = {

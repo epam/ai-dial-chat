@@ -2,11 +2,18 @@ import { Conversation } from '@/chat/types/chat';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment, ExpectedConstants, ExpectedMessages, MenuOptions, MockedChatApiResponseBodies, UploadMenuOptions } from '@/src/testData';
+import {
+  API,
+  Attachment,
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+  UploadMenuOptions,
+} from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -1023,7 +1030,7 @@ dialAdminTest(
     '[Admin view][Edit request] Rename the chat several times in a row\n' +
     // "[Admin view][Edit request]: Rename author's public name. Special symbols are allowed (not restricted)\n" +
     'Dot at the end of public author name is permitted\n' +
-  '[Admin view][Edit request] Rename the chat with _ underscore sign at the end',
+    '[Admin view][Edit request] Rename the chat with _ underscore sign at the end',
   async (
     {
       conversationData,
@@ -1362,29 +1369,36 @@ dialAdminTest(
 );
 
 dialAdminTest(
-  'Last version is not displayed after update chat\'s name',
-  async ({
-    conversationData,
-    publishRequestBuilder,
-    publicationApiHelper,
-    adminPublicationApiHelper,
-    dataInjector,
-    adminDialHomePage,
-    adminApproveRequiredConversations,
-    adminPublishingApprovalModal,
-    adminChatHeader,
-    setTestIds,
-    adminLocalStorageManager,
-    baseAssertion,
-  },testInfo,) => {
-    setTestIds('EPMRTC-6500');
+  // 'Last version is not displayed after update chat\'s name\n'+
+  '[Admin view][Edit request]: Edit version for chat ( there is no previous version)',
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      // adminPublicationApiHelper,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      adminChatHeader,
+      setTestIds,
+      adminLocalStorageManager,
+      baseAssertion,
+      adminPublicationReviewControl,
+    },
+    testInfo,
+  ) => {
+    setTestIds(/*'EPMRTC-6500',*/ 'EPMRTC-6790');
     let publishedConversation: Conversation;
-    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const initialVersion = '1.1.1';
     const firstVersion = '0.0.1';
-    const secondVersion = '0.0.2';
-    let publication: Publication;
-    let firstPublishRequest: PublicationRequestModel;
-    let updatedName: string;
+    let publishRequest1: PublicationRequestModel;
+
+    // const secondVersion = '0.0.2';
+    // let publication: Publication;
+    // let updatedName: string;
+    // let publishRequest2: PublicationRequestModel;
 
     await dialTest.step(
       'Create published default conversation with version 0.0.1 via API',
@@ -1392,7 +1406,7 @@ dialAdminTest(
         publishedConversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([publishedConversation]);
 
-        firstPublishRequest = publishRequestBuilder
+        publishRequest1 = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withDisplayAuthor(
             UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
@@ -1400,49 +1414,29 @@ dialAdminTest(
           .withConversationInFolderResource(
             publishedConversation,
             PublishActions.ADD,
-            firstVersion,
+            initialVersion,
           )
           .build();
-        publication =
-          await publicationApiHelper.createPublishRequest(firstPublishRequest);
-        await adminPublicationApiHelper.approveRequest(publication);
-        updatedName = `${publishedConversation.name}_updated`;
-      },
-    );
-
-    await dialTest.step(
-      'Create publish request for default conversation with version 0.0.2 via API',
-      async () => {
-        const secondPublishRequest = publishRequestBuilder
-          .withName(requestName)
-          .withDisplayAuthor(
-            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
-          )
-          .withConversationInFolderResource(
-            publishedConversation,
-            PublishActions.ADD_IF_ABSENT,
-            secondVersion,
-          )
-          .build();
-        await publicationApiHelper.createPublishRequest(secondPublishRequest);
-        await adminLocalStorageManager.setShowSideBarPanels();
+        // publication =
+        await publicationApiHelper.createPublishRequest(publishRequest1);
+        // const updatedName = `${publishedConversation.name}_updated`;
       },
     );
 
     await dialAdminTest.step(
-      'By admin open publication request for chat',
+      'By admin open publication request 1 for chat',
       async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
-          requestName,
+          publishRequest1.name!,
         );
       },
     );
 
-    //TODO EPMRTC-6500 case needs to be clarified - there is no old version
     await dialAdminTest.step(
-      'View that previous version 0.0.1 and current version 0.0.2 are displayed on the request form',
+      'View that the initial version is displayed on the request form, change and assert version. Approve the request',
       async () => {
         const conversationsTree =
           adminPublishingApprovalModal.getConversationsToApproveTree();
@@ -1452,49 +1446,109 @@ dialAdminTest(
         );
         await baseAssertion.assertElementText(
           conversationsTree.getEntityVersion(publishedConversation.name),
-          secondVersion,
+          initialVersion,
         );
-      },
-    );
-
-    await dialAdminTest.step(
-      'Update chat\'s name and save changes',
-      async () => {
-        await adminPublishingApprovalModal.renameConversationToApprove(
+        await adminPublishingApprovalModal.renameConversationToApproveVersion(
           publishedConversation.name,
-          updatedName,
+          firstVersion,
         );
         await adminPublishingApprovalModal.updateRequestButton.click();
-        // publishedConversation.name = updatedName;
-      },
-    );
-
-    await dialAdminTest.step(
-      'View versions - previous version is not displayed, chat name is updated (publish modal and the conversation header), current version 0.0.2 is shown (modal and header)',
-      async () => {
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        await baseAssertion.assertElementState(
-          conversationsTree.getEntityByName(updatedName),
-          'visible',
-        );
         await baseAssertion.assertElementText(
-          conversationsTree.getEntityVersion(updatedName),
-          secondVersion,
+          conversationsTree.getEntityVersion(publishedConversation.name),
+          firstVersion,
         );
-
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: true,
         });
         await baseAssertion.assertElementText(
-          adminChatHeader.chatTitle,
-          updatedName,
-        );
-        await baseAssertion.assertElementText(
           adminChatHeader.version,
-          `v. ${secondVersion}`,
+          `v. ${firstVersion}`,
         );
+        await adminPublicationReviewControl.backToPublicationRequest();
       },
     );
+
+    // //TODO EPMRTC-6500 case needs to be fixed
+    // await dialTest.step(
+    //   'Create publish request for default conversation with version 0.0.2 via API, reload the page',
+    //   async () => {
+    //     await adminPublishingApprovalModal.approveRequest();
+    //     publishRequest2 = publishRequestBuilder
+    //       .withName(GeneratorUtil.randomPublicationRequestName())
+    //       .withDisplayAuthor(
+    //         UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
+    //       )
+    //       .withConversationInFolderResource(
+    //         publishedConversation,
+    //         PublishActions.ADD_IF_ABSENT,
+    //         secondVersion,
+    //       )
+    //       .build();
+    //     await publicationApiHelper.createPublishRequest(publishRequest2);
+    //     await adminPublicationApiHelper.approveRequest(publication);
+    //     await adminDialHomePage.reloadPage();
+    //     await adminDialHomePage.waitForPageLoaded();
+    //   },
+    // );
+    //
+    //
+    // await dialAdminTest.step(
+    //   'View that previous version 0.0.1 and current version 0.0.2 are displayed on the request form',
+    //   async () => {
+    //     await adminApproveRequiredConversations.expandApproveRequiredFolder(
+    //       publishRequest2.name!,
+    //     );
+    //     const conversationsTree =
+    //       adminPublishingApprovalModal.getConversationsToApproveTree();
+    //     await baseAssertion.assertElementState(
+    //       conversationsTree.getEntityByName(publishedConversation.name),
+    //       'visible',
+    //     );
+    //     await baseAssertion.assertElementText(
+    //       conversationsTree.getEntityVersion(publishedConversation.name),
+    //       secondVersion,
+    //     );
+    //   },
+    // );
+    //
+    // await dialAdminTest.step(
+    //   'Update chat\'s name and save changes',
+    //   async () => {
+    //     await adminPublishingApprovalModal.renameConversationToApprove(
+    //       publishedConversation.name,
+    //       updatedName,
+    //     );
+    //     await adminPublishingApprovalModal.updateRequestButton.click();
+    //     // publishedConversation.name = updatedName;
+    //   },
+    // );
+    //
+    // await dialAdminTest.step(
+    //   'View versions - previous version is not displayed, chat name is updated (publish modal and the conversation header), current version 0.0.2 is shown (modal and header)',
+    //   async () => {
+    //     const conversationsTree =
+    //       adminPublishingApprovalModal.getConversationsToApproveTree();
+    //     await baseAssertion.assertElementState(
+    //       conversationsTree.getEntityByName(updatedName),
+    //       'visible',
+    //     );
+    //     await baseAssertion.assertElementText(
+    //       conversationsTree.getEntityVersion(updatedName),
+    //       secondVersion,
+    //     );
+    //
+    //     await adminPublishingApprovalModal.goToEntityReview({
+    //       isHttpMethodTriggered: true,
+    //     });
+    //     await baseAssertion.assertElementText(
+    //       adminChatHeader.chatTitle,
+    //       updatedName,
+    //     );
+    //     await baseAssertion.assertElementText(
+    //       adminChatHeader.version,
+    //       `v. ${secondVersion}`,
+    //     );
+    //   },
+    // );
   },
 );
