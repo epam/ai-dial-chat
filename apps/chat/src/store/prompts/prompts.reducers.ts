@@ -1,4 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { skipSelector } from '@reduxjs/toolkit/query';
 
 import { combineEntities } from '@/src/utils/app/common';
 import { addGeneratedFolderId, isFolderEmpty } from '@/src/utils/app/folders';
@@ -149,7 +150,13 @@ export const promptsSlice = createSlice({
     },
     updatePromptSuccess: (
       state,
-      { payload }: PayloadAction<{ prompt: Partial<Prompt>; id: string }>,
+      {
+        payload,
+      }: PayloadAction<{
+        prompt: Partial<Prompt>;
+        id: string;
+        skipSelect?: boolean;
+      }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
@@ -161,7 +168,7 @@ export const promptsSlice = createSlice({
 
         return prompt;
       });
-      if (state.isPromptModalOpen) {
+      if (state.isPromptModalOpen && !payload.skipSelect) {
         const isPromptSelected = payload.id === state.selectedPromptId;
         state.selectedPromptId =
           isPromptSelected && payload.prompt.id
