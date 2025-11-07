@@ -1370,7 +1370,8 @@ dialAdminTest(
 
 dialAdminTest(
   // 'Last version is not displayed after update chat\'s name\n'+
-  '[Admin view][Edit request]: Edit version for chat ( there is no previous version)',
+  '[Admin view][Edit request]: Edit version for chat ( there is no previous version)\n' +
+  '[Admin view][Edit request]:Edit version when there are more that one public version',
   async (
     {
       conversationData,
@@ -1389,16 +1390,18 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds(/*'EPMRTC-6500',*/ 'EPMRTC-6790');
+    setTestIds(/*'EPMRTC-6500',*/ 'EPMRTC-6790', 'EPMRTC-6459');
     let publishedConversation: Conversation;
     const initialVersion = '1.1.1';
     const firstVersion = '0.0.1';
     let publishRequest1: PublicationRequestModel;
 
-    // const secondVersion = '0.0.2';
+    const secondVersion = '0.0.2';
     // let publication: Publication;
     // let updatedName: string;
-    // let publishRequest2: PublicationRequestModel;
+    let publishRequest2: PublicationRequestModel;
+
+    const thirdVersion = '0.0.3';
 
     await dialTest.step(
       'Create published default conversation with version 0.0.1 via API',
@@ -1468,30 +1471,28 @@ dialAdminTest(
       },
     );
 
-    // //TODO EPMRTC-6500 case needs to be fixed
-    // await dialTest.step(
-    //   'Create publish request for default conversation with version 0.0.2 via API, reload the page',
-    //   async () => {
-    //     await adminPublishingApprovalModal.approveRequest();
-    //     publishRequest2 = publishRequestBuilder
-    //       .withName(GeneratorUtil.randomPublicationRequestName())
-    //       .withDisplayAuthor(
-    //         UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
-    //       )
-    //       .withConversationInFolderResource(
-    //         publishedConversation,
-    //         PublishActions.ADD_IF_ABSENT,
-    //         secondVersion,
-    //       )
-    //       .build();
-    //     await publicationApiHelper.createPublishRequest(publishRequest2);
-    //     await adminPublicationApiHelper.approveRequest(publication);
-    //     await adminDialHomePage.reloadPage();
-    //     await adminDialHomePage.waitForPageLoaded();
-    //   },
-    // );
-    //
-    //
+    await dialTest.step(
+      'Create publish request for default conversation with version 0.0.2 via API, reload the page',
+      async () => {
+        await adminPublishingApprovalModal.approveRequest();
+        publishRequest2 = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withDisplayAuthor(
+            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
+          )
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD_IF_ABSENT,
+            secondVersion,
+          )
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest2);
+        await adminDialHomePage.reloadPage();
+        await adminDialHomePage.waitForPageLoaded();
+      },
+    );
+
+    //TODO EPMRTC-6500 case needs to be fixed
     // await dialAdminTest.step(
     //   'View that previous version 0.0.1 and current version 0.0.2 are displayed on the request form',
     //   async () => {
@@ -1550,5 +1551,39 @@ dialAdminTest(
     //     );
     //   },
     // );
+
+    await dialAdminTest.step(
+      'Сhange version according to format (example 0.0.5) and click "Update request" buttonб click "Go to a review" link and check version',
+      async () => {
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+               publishRequest2.name!,
+             );
+        const conversationsTree =
+          adminPublishingApprovalModal.getConversationsToApproveTree();
+        await baseAssertion.assertElementText(
+          conversationsTree.getEntityVersion(publishedConversation.name),
+          secondVersion,
+        );
+
+        await adminPublishingApprovalModal.renameConversationToApproveVersion(
+          publishedConversation.name,
+          thirdVersion,
+        );
+        await adminPublishingApprovalModal.updateRequestButton.click();
+
+        await baseAssertion.assertElementText(
+          conversationsTree.getEntityVersion(publishedConversation.name),
+          thirdVersion,
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: true,
+        });
+        await baseAssertion.assertElementText(
+          adminChatHeader.version,
+          `v. ${thirdVersion}`,
+        );
+        await adminPublicationReviewControl.backToPublicationRequest();
+      },
+    );
   },
 );
