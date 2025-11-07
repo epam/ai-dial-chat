@@ -14,3 +14,4 @@ jobs:
     secrets: inherit
     with:
       node-version: 22
+      maximize-build-space: true
