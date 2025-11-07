@@ -10,9 +10,9 @@ export function useFilePaste<T extends HTMLElement = HTMLElement>(
     selection?: { start: number; end: number },
   ) => void,
 ) {
-  useEffect(() => {
-    const element = container.current;
+  const element = container.current;
 
+  useEffect(() => {
     if (!element) return;
 
     const pasteHandler = (e: ClipboardEvent) => {
@@ -48,5 +48,5 @@ export function useFilePaste<T extends HTMLElement = HTMLElement>(
     element.addEventListener('paste', pasteHandler);
 
     return () => element?.removeEventListener('paste', pasteHandler);
-  }, [container, onPaste]);
+  }, [element, onPaste]);
 }
