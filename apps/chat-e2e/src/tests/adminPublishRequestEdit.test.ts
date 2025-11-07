@@ -1589,8 +1589,9 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
-  "Edit folder's name for publish request for folder with chat",
+dialAdminTest.only(
+  "Edit folder's name for publish request for folder with chat\n" +
+    '[Admin view][Edit request] Rename the folder several times in a row\n',
   async (
     {
       conversationData,
@@ -1607,16 +1608,18 @@ dialAdminTest(
       dialHomePage,
       organizationFolderConversations,
       localStorageManager,
+      adminApproveRequiredConversationsAssertion,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6465');
+    setTestIds('EPMRTC-6465', 'EPMRTC-6549');
     let folderConversation: FolderConversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const updatedFolderName = 'Folder01_Updated';
+    let updatedFolderName: string;
 
     await dialTest.step(
-      'Precondition: Create folder with chat Folder01->Chat01',
+      'Precondition: Create folder with chat Folder01->Chat01\n' +
+        '[Admin view][Edit request] Rename the folder several times in a row',
       async () => {
         folderConversation =
           conversationData.prepareDefaultConversationInFolder();
@@ -1639,6 +1642,7 @@ dialAdminTest(
         )
         .build();
       await publicationApiHelper.createPublishRequest(publishRequest);
+      updatedFolderName = folderConversation.folders.name;
     });
 
     await dialAdminTest.step('By admin open publication request', async () => {
@@ -1648,20 +1652,26 @@ dialAdminTest(
       await adminApproveRequiredConversations.expandApproveRequiredFolder(
         requestName,
       );
-    });
-
-    await dialAdminTest.step('Click Edit button', async () => {
-      await adminPublishingApprovalModal.editButton.click();
+      // await adminApproveRequiredConversations.expandFolder(
+      //   updatedFolderName,
+      // );
     });
 
     await dialAdminTest.step(
-      "Update folder's name to Folder01_Updated and click 'Update request'",
+      "Update folder's name to Folder01_Updated and click 'Update request' several times in a row",
       async () => {
-        await adminPublishingApprovalModal.renameConversationFolderToApproveVersion(
-          folderConversation.folders.name,
-          updatedFolderName,
-        );
-        await adminPublishingApprovalModal.updateRequestButton.click();
+        for (let i = 1; i <= 2; i++) {
+          updatedFolderName =
+            await adminPublishingApprovalModal.renameConversationFolderToApproveVersion(
+              updatedFolderName,
+              `${updatedFolderName}_${i}`,
+            );
+          await adminPublishingApprovalModal.updateRequestButton.click();
+          await adminApproveRequiredConversationsAssertion.assertFolderState(
+            updatedFolderName,
+            'visible',
+          );
+        }
       },
     );
 
@@ -1672,7 +1682,7 @@ dialAdminTest(
           .getPublishConversationToApproveFolder()
           .getFolderByName(updatedFolderName);
         await baseAssertion.assertElementState(folder, 'visible');
-        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublishingApprovalModal.goToEntityReview( {isHttpMethodTriggered: true} );
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
       },
