@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { FC, useMemo } from 'react';
 
 import { sortItemsVersions } from '@/src/utils/app/common';
 import { isMyToolset } from '@/src/utils/app/id';
@@ -16,14 +16,25 @@ import { ToolsetDetailsContent } from './ToolsetDetailsContent';
 import { ToolsetDetailsFooter } from './ToolsetDetailsFooter';
 import { ToolsetDetailsHeader } from './ToolsetDetailsHeader';
 
+export interface ToolsetDetailsFooterProps {
+  entity: ToolsetModel;
+  allVersions: ToolsetModel[];
+  onChangeVersion: (entity: ToolsetModel) => void;
+  onBookmarkClick?: (entity: ToolsetModel) => void;
+  onRemove?: (entity: ToolsetModel) => void;
+}
+
 interface Props {
   entity: ToolsetModel;
   allEntities: ToolsetModel[];
-  isMyWorkspaceTab: boolean;
+  isMyWorkspaceTab?: boolean;
   isSuggested?: boolean;
   onClose: () => void;
   onChangeVersion: (entity: ToolsetModel) => void;
-  onBookmarkClick: (entity: ToolsetModel) => void;
+  onBookmarkClick?: (entity: ToolsetModel) => void;
+  onRemove?: (entity: ToolsetModel) => void;
+  FooterComponent?: FC<ToolsetDetailsFooterProps>;
+  isPreview?: boolean;
 }
 
 export function ToolsetDetails({
@@ -34,6 +45,9 @@ export function ToolsetDetails({
   onClose,
   onChangeVersion,
   onBookmarkClick,
+  onRemove,
+  FooterComponent = ToolsetDetailsFooter,
+  isPreview,
 }: Props) {
   const installedToolsetsIds = useAppSelector(
     ToolsetSelectors.selectInstalledToolsetsSet,
@@ -66,13 +80,14 @@ export function ToolsetDetails({
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <ToolsetDetailsHeader entity={entity} />
+      <ToolsetDetailsHeader entity={entity} isPreview={isPreview} />
       <ToolsetDetailsContent entity={entity} />
-      <ToolsetDetailsFooter
+      <FooterComponent
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
         onBookmarkClick={onBookmarkClick}
+        onRemove={onRemove}
       />
     </Modal>
   );

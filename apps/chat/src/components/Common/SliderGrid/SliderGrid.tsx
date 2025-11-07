@@ -1,13 +1,17 @@
 import {
   FC,
   ReactNode,
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
+
+import { useSearchParams } from 'next/navigation';
 
 import classNames from 'classnames';
 
@@ -16,6 +20,7 @@ import { useSwipe } from '@/src/hooks/useSwipe';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { getScreenState } from '@/src/utils/app/mobile';
+import { updateQueryParamWithReplace } from '@/src/utils/app/url/query-params';
 
 import { ScreenState } from '@/src/types/common';
 
@@ -67,33 +72,55 @@ const shouldRenderSlide = (
   return slideIndex >= minIndex - 1 && slideIndex <= maxIndex + 1;
 };
 
+const sliderActiveSlideQueryParam = 'sliderActiveSlide';
+const sliderPrevActiveSlideQueryParam = 'sliderPrevActiveSlide';
+
 interface SliderProps<T, P> {
   items: T[];
   SliderItem: FC<P & { groupItem: T }>;
   notFound: ReactNode;
-  sliderResetDependencies: unknown[];
   itemProps: P;
+  sliderResetDependencies?: unknown[];
   modalHeaderHeight?: number;
   modalFooterHeight?: number;
   sliderDotsClassName?: string;
+  saveSliderStateInURL?: boolean;
 }
 
-export const SliderGrid = <T extends { id: string }, P>({
-  items,
-  SliderItem,
-  notFound,
-  sliderResetDependencies,
-  itemProps,
-  modalHeaderHeight = 0,
-  modalFooterHeight = 0,
-  sliderDotsClassName,
-}: SliderProps<T, P>) => {
+export interface SliderGridRef {
+  scrollToItem: (itemId: string) => void;
+}
+
+export const SliderGridInner = <T extends { id: string }, P>(
+  {
+    items,
+    SliderItem,
+    notFound,
+    itemProps,
+    sliderResetDependencies,
+    modalHeaderHeight = 0,
+    modalFooterHeight = 0,
+    sliderDotsClassName,
+    saveSliderStateInURL = false,
+  }: SliderProps<T, P>,
+  ref: React.Ref<SliderGridRef>,
+) => {
+  const searchParams = useSearchParams();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [prevActiveSlide, setPrevActiveSlide] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(
+    searchParams.get(sliderActiveSlideQueryParam)
+      ? parseInt(searchParams.get(sliderActiveSlideQueryParam) ?? '0')
+      : 0,
+  );
+  const [prevActiveSlide, setPrevActiveSlide] = useState(
+    searchParams.get(sliderPrevActiveSlideQueryParam)
+      ? parseInt(searchParams.get(sliderPrevActiveSlideQueryParam) ?? '0')
+      : 0,
+  );
   const [sliderRowsCount, setSliderRowsCount] = useState(1);
   const [resizeTime, setResizeTime] = useState(0);
 
@@ -136,17 +163,44 @@ export const SliderGrid = <T extends { id: string }, P>({
   const maxChunksCountConfig = getSliderChunksConfig(screenState);
   const gridGap = getGridGap(screenState);
 
+  const itemsPerPage = sliderRowsCount * maxChunksCountConfig.cols;
+
   const sliderGroups = useMemo(() => {
-    return chunk(items, sliderRowsCount * maxChunksCountConfig.cols);
-  }, [items, maxChunksCountConfig.cols, sliderRowsCount]);
+    if (itemsPerPage <= 0) return [];
+    return chunk(items, itemsPerPage);
+  }, [items, itemsPerPage]);
 
   const handleSetActiveSlide = useCallback(
     (slide: number) => {
       setPrevActiveSlide(activeSlide);
       setActiveSlide(slide);
+
+      if (saveSliderStateInURL) {
+        updateQueryParamWithReplace(
+          sliderActiveSlideQueryParam,
+          slide.toString(),
+        );
+        updateQueryParamWithReplace(
+          sliderPrevActiveSlideQueryParam,
+          activeSlide.toString(),
+        );
+      }
     },
-    [activeSlide],
+    [activeSlide, saveSliderStateInURL],
   );
+
+  useImperativeHandle(ref, () => ({
+    scrollToItem: (itemId: string) => {
+      if (itemsPerPage <= 0) return;
+      const itemIndex = items.findIndex((item) => item.id === itemId);
+
+      if (itemIndex !== -1) {
+        const targetPage = Math.floor(itemIndex / itemsPerPage);
+
+        handleSetActiveSlide(targetPage);
+      }
+    },
+  }));
 
   const handleSwipedRight = useCallback(() => {
     handleSetActiveSlide(
@@ -161,19 +215,47 @@ export const SliderGrid = <T extends { id: string }, P>({
   const swipeHandlers = useSwipe(handleSwipedRight, handleSwipedLeft);
 
   useEffect(() => {
+    let newActive = activeSlide;
+    let newPrev = prevActiveSlide;
+
     if (!sliderGroups.length) {
-      setActiveSlide(0);
-      setPrevActiveSlide(0);
-    } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
-      setActiveSlide(sliderGroups.length - 1);
-      setPrevActiveSlide(sliderGroups.length - 1);
+      newActive = 0;
+      newPrev = 0;
+    } else if (activeSlide > sliderGroups.length - 1) {
+      newActive = sliderGroups.length - 1;
+      newPrev = sliderGroups.length - 1;
+    } else {
+      return;
     }
-  }, [activeSlide, sliderGroups]);
+
+    setActiveSlide(newActive);
+    setPrevActiveSlide(newPrev);
+
+    if (saveSliderStateInURL) {
+      updateQueryParamWithReplace(
+        sliderActiveSlideQueryParam,
+        newActive.toString(),
+      );
+      updateQueryParamWithReplace(
+        sliderPrevActiveSlideQueryParam,
+        newPrev.toString(),
+      );
+    }
+  }, [activeSlide, prevActiveSlide, sliderGroups, saveSliderStateInURL]);
 
   useEffect(() => {
+    if (!sliderResetDependencies) {
+      return;
+    }
+
     setActiveSlide(0);
     setPrevActiveSlide(0);
-  }, [sliderResetDependencies]);
+
+    if (saveSliderStateInURL) {
+      updateQueryParamWithReplace(sliderActiveSlideQueryParam, '0');
+      updateQueryParamWithReplace(sliderPrevActiveSlideQueryParam, '0');
+    }
+  }, [sliderResetDependencies, saveSliderStateInURL]);
 
   const resizeDeltaTime = Date.now() - resizeTime;
 
@@ -248,3 +330,9 @@ export const SliderGrid = <T extends { id: string }, P>({
     </div>
   );
 };
+
+const ForwardedSliderGrid = forwardRef(SliderGridInner);
+
+export const SliderGrid = ForwardedSliderGrid as <T extends { id: string }, P>(
+  props: SliderProps<T, P> & { ref?: React.Ref<SliderGridRef> },
+) => React.ReactElement;
