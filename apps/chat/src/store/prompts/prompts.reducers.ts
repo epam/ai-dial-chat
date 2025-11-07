@@ -154,7 +154,6 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         prompt: Partial<Prompt>;
         id: string;
-        skipSelect?: boolean;
       }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
@@ -167,8 +166,10 @@ export const promptsSlice = createSlice({
 
         return prompt;
       });
-      if (state.isPromptModalOpen && !payload.skipSelect) {
-        const isPromptSelected = payload.id === state.selectedPromptId;
+
+      const isPromptSelected = payload.id === state.selectedPromptId;
+
+      if (state.isPromptModalOpen && isPromptSelected) {
         state.selectedPromptId =
           isPromptSelected && payload.prompt.id
             ? payload.prompt.id

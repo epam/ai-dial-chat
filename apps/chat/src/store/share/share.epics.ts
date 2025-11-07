@@ -802,7 +802,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     prompt: {
                       isShared: true,
                     },
-                    skipSelect: true,
                   });
                 }
                 return undefined;
