@@ -1,6 +1,7 @@
 import { IconSearch } from '@tabler/icons-react';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
@@ -10,6 +11,7 @@ import { isExternalApp } from '@/src/utils/app/application';
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
+import { updateQueryParamWithReplace } from '@/src/utils/app/url/query-params';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -50,16 +52,16 @@ import { SelectedItemsContainer } from './SelectedItemsContainer';
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
   tab: MarketplaceTabs;
-  setTab: (tab: MarketplaceTabs) => void;
   currentTab: MarketplaceTabs;
   textMap: TextMap;
+  onSetTab: (tab: MarketplaceTabs) => void;
 }
 
 function ScopeTabButton({
   tab,
-  setTab,
   currentTab,
   textMap,
+  onSetTab,
 }: ScopeTabButtonProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -69,7 +71,7 @@ function ScopeTabButton({
     <TabButton
       tabKey={tab}
       selected={currentTab === tab}
-      onClick={setTab}
+      onClick={onSetTab}
       dataQA={tab}
     >
       {t(buttonText)}
@@ -77,20 +79,27 @@ function ScopeTabButton({
   );
 }
 interface AgentAndToolsetModalViewProps {
-  onClose: () => void;
-  onConfirm: (selectedIds: string[]) => void;
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
+  saveSliderStateInURL: boolean;
+  onClose: () => void;
+  onConfirm: (selectedIds: string[]) => void;
 }
 
+const agentsAndToolsetsScopeTabQueryParam = 'agentsAndToolsetsScopeTab';
+const agentsAndToolsetsSearchTermQueryParam = 'agentsAndToolsetsSearchTerm';
+
 const AgentAndToolsetModalView = ({
-  onClose,
-  onConfirm,
   initialSelectedIds,
   allItemsMap,
+  saveSliderStateInURL,
+  onClose,
+  onConfirm,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
@@ -101,13 +110,19 @@ const AgentAndToolsetModalView = ({
       ? router.query[AppsEditorQuery.Id]?.toString()
       : undefined;
 
+  const [shouldResetSliderState, setShouldResetSliderState] = useState(false);
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
-
   const [scopeTab, setScopeTab] = useState<MarketplaceTabs>(
-    MarketplaceTabs.MY_WORKSPACE,
+    searchParams.get(agentsAndToolsetsScopeTabQueryParam)
+      ? ((searchParams.get(
+          agentsAndToolsetsScopeTabQueryParam,
+        ) as MarketplaceTabs) ?? MarketplaceTabs.MY_WORKSPACE)
+      : MarketplaceTabs.MY_WORKSPACE,
   );
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get(agentsAndToolsetsSearchTermQueryParam) ?? '',
+  );
   const [selectedIds, setSelectedIds] = useState<string[]>(
     initialSelectedIds ?? [],
   );
@@ -116,17 +131,16 @@ const AgentAndToolsetModalView = ({
 
   const allAgents = useAppSelector(ModelsSelectors.selectModels);
   const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
-
   const widgetsSchemaIds = useAppSelector(
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
-
   const installedAgentsSet = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
   const installedToolsetsSet = useAppSelector(
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   useLayoutEffect(() => {
     if (footerRef.current) {
@@ -140,8 +154,6 @@ const AgentAndToolsetModalView = ({
     }
   }, [selectedIds]);
 
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
       setSelectedIds((prevIds) => {
@@ -153,6 +165,33 @@ const AgentAndToolsetModalView = ({
     },
     [],
   );
+
+  const handleSetScopeTab = useCallback(
+    (tab: MarketplaceTabs = MarketplaceTabs.HOME) => {
+      setScopeTab(tab);
+      setShouldResetSliderState(true);
+
+      if (saveSliderStateInURL) {
+        updateQueryParamWithReplace(
+          agentsAndToolsetsScopeTabQueryParam,
+          tab.toString(),
+        );
+      }
+    },
+    [saveSliderStateInURL],
+  );
+
+  const handleSetSearchTerm = (searchTerm: string) => {
+    setSearchTerm(searchTerm);
+    setShouldResetSliderState(true);
+
+    if (saveSliderStateInURL) {
+      updateQueryParamWithReplace(
+        agentsAndToolsetsSearchTermQueryParam,
+        searchTerm,
+      );
+    }
+  };
 
   const handleRemoveItem = useCallback((idToRemove: string) => {
     setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
@@ -170,7 +209,7 @@ const AgentAndToolsetModalView = ({
   );
 
   const selectedBaseIdsSet = useMemo(
-    () => new Set(selectedIds.map((id) => getEntityBaseId(id))),
+    () => new Set(selectedIds.map(getEntityBaseId)),
     [selectedIds],
   );
 
@@ -191,10 +230,11 @@ const AgentAndToolsetModalView = ({
     const getSelectedItemFromGroup = (
       entities: MarketplaceEntity[],
     ): MarketplaceEntity => {
-      const reversedSelectedIds = [...selectedIds].reverse();
+      const reversedSelectedIds = selectedIds.toReversed();
       const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
         entities.some((entity) => entity.id === id),
       );
+
       if (lastSelectedIdInGroup) {
         const selectedEntity = entities.find(
           (entity) => entity.id === lastSelectedIdInGroup,
@@ -203,6 +243,7 @@ const AgentAndToolsetModalView = ({
           return selectedEntity;
         }
       }
+
       return sortItemsVersions(entities)[0];
     };
 
@@ -253,8 +294,8 @@ const AgentAndToolsetModalView = ({
   );
 
   const sliderResetDependencies = useMemo(
-    () => [isMyWorkspace, searchTerm],
-    [isMyWorkspace, searchTerm],
+    () => (shouldResetSliderState ? [isMyWorkspace, searchTerm] : undefined),
+    [isMyWorkspace, searchTerm, shouldResetSliderState],
   );
 
   const handleConfirm = useCallback(() => {
@@ -276,7 +317,7 @@ const AgentAndToolsetModalView = ({
               />
               <input
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSetSearchTerm(e.target.value)}
                 placeholder={t('Search')}
                 className="input-form peer m-0 pl-[38px]"
                 data-qa="search-agents"
@@ -285,18 +326,17 @@ const AgentAndToolsetModalView = ({
             </div>
             <div className="flex gap-2">
               <div className="flex gap-2">
-                <ScopeTabButton
-                  tab={MarketplaceTabs.MY_WORKSPACE}
-                  setTab={setScopeTab}
-                  currentTab={scopeTab}
-                  textMap={ChangeMarketplaceTabs}
-                />
-                <ScopeTabButton
-                  tab={MarketplaceTabs.HOME}
-                  setTab={setScopeTab}
-                  currentTab={scopeTab}
-                  textMap={ChangeMarketplaceTabs}
-                />
+                {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
+                  (tab) => (
+                    <ScopeTabButton
+                      key={tab}
+                      tab={tab}
+                      onSetTab={handleSetScopeTab}
+                      currentTab={scopeTab}
+                      textMap={ChangeMarketplaceTabs}
+                    />
+                  ),
+                )}
               </div>
             </div>
           </div>
@@ -326,13 +366,14 @@ const AgentAndToolsetModalView = ({
           MarketplaceEntity,
           Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
         >
+          saveSliderStateInURL={saveSliderStateInURL}
           ref={sliderGridRef}
           items={displayedItems}
           SliderItem={AgentAndToolsetSelectItem}
           notFound={
             <TalkToNotFound
               isMyWorkspace={isMyWorkspace}
-              onOpenMarketplaceTab={() => setScopeTab(MarketplaceTabs.HOME)}
+              onOpenMarketplaceTab={handleSetScopeTab}
             />
           }
           sliderResetDependencies={sliderResetDependencies}
@@ -361,24 +402,35 @@ const AgentAndToolsetModalView = ({
 };
 
 interface Props {
-  onClose: () => void;
-  onConfirm: (selectedIds: string[]) => void;
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
+  saveSliderStateInURL?: boolean;
+  onClose: () => void;
+  onConfirm: (selectedIds: string[]) => void;
 }
 
 export const AgentAndToolsetModal = ({
-  onClose,
-  onConfirm,
   initialSelectedIds,
   allItemsMap,
+  saveSliderStateInURL = false,
+  onClose,
+  onConfirm,
 }: Props) => {
+  const isModelsLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
+  const isToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
+
   return (
     <Modal
       portalId="theme-main"
-      state={ModalState.OPENED}
+      state={
+        isModelsLoading || isToolsetsLoading
+          ? ModalState.LOADING
+          : ModalState.OPENED
+      }
       dataQa="talk-to-agent"
-      containerClassName="flex xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
+      containerClassName="flex items-center xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
       heading
     >
@@ -387,6 +439,7 @@ export const AgentAndToolsetModal = ({
         onConfirm={onConfirm}
         initialSelectedIds={initialSelectedIds}
         allItemsMap={allItemsMap}
+        saveSliderStateInURL={saveSliderStateInURL}
       />
     </Modal>
   );
