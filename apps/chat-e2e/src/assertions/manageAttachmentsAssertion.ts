@@ -109,6 +109,39 @@ export class ManageAttachmentsAssertion extends BaseAssertion {
     );
   }
 
+  public async assertFolderEntityState(
+    folder: TreeEntity,
+    entity: TreeEntity,
+    fileModalSection: FileModalSection,
+    expectedState: ElementState,
+  ) {
+    let entityTree: Folders;
+    switch (fileModalSection) {
+      case FileModalSection.AllFiles:
+        entityTree = this.attachFilesModal.getAllFolderFiles();
+        break;
+      case FileModalSection.SharedWithMe:
+        entityTree = this.attachFilesModal.getSharedWithMeFolderFiles();
+        break;
+      case FileModalSection.Organization:
+        entityTree = this.attachFilesModal.getOrganizationFolderFiles();
+        break;
+    }
+
+    const folderEntity = entityTree.getFolderEntity(
+      folder.name,
+      entity.name,
+      folder.index,
+      entity.index,
+    );
+
+    await this.assertElementState(
+      folderEntity,
+      expectedState,
+      ExpectedMessages.entityIsVisible,
+    );
+  }
+
   public async assertSectionState(
     section: FileModalSection,
     state: ElementCaretState,

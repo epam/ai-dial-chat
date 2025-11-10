@@ -1613,6 +1613,7 @@ dialAdminTest.only(
       chatBar,
       manageAttachmentsAssertion,
       attachFilesModal,
+      attachedOrganizationFiles,
       fileApiHelper,
     },
     testInfo,
@@ -1623,12 +1624,13 @@ dialAdminTest.only(
     let updatedFolderName: string;
     let updatedFileFolderName: string;
     let imageUrl: string;
+    const imageName = GeneratorUtil.randomFilename();
 
     await dialTest.step(
       'Precondition: Create folder with chat with attached file Folder01->Chat01',
       async () => {
         imageUrl = await fileApiHelper.putFileWithCustomName(
-          GeneratorUtil.randomFilename(),
+          imageName,
           Attachment.sunImageName,
         );
         const model = GeneratorUtil.randomArrayElement(
@@ -1753,9 +1755,10 @@ dialAdminTest.only(
           FileModalSection.Organization,
           'visible',
         );
+        await attachedOrganizationFiles.expandFolder(updatedFileFolderName);
         await manageAttachmentsAssertion.assertFolderEntityState(
           { name: updatedFileFolderName },
-          { name: Attachment.sunImageName },
+          { name: imageName },
           FileModalSection.Organization,
           'visible',
         );
