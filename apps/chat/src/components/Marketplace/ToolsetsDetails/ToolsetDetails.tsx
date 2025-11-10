@@ -28,6 +28,7 @@ interface Props {
   entity: ToolsetModel;
   allEntities: ToolsetModel[];
   isMyWorkspaceTab?: boolean;
+  isSuggested?: boolean;
   onClose: () => void;
   onChangeVersion: (entity: ToolsetModel) => void;
   onBookmarkClick?: (entity: ToolsetModel) => void;
@@ -40,6 +41,7 @@ export function ToolsetDetails({
   entity,
   allEntities,
   isMyWorkspaceTab,
+  isSuggested,
   onClose,
   onChangeVersion,
   onBookmarkClick,
@@ -55,11 +57,19 @@ export function ToolsetDetails({
       (e) =>
         getGroupMarketplaceEntityKey(entity) ===
           getGroupMarketplaceEntityKey(e) &&
-        (!isMyWorkspaceTab || installedToolsetsIds.has(e.reference)),
+        (!isMyWorkspaceTab ||
+          isSuggested ||
+          installedToolsetsIds.has(e.reference)),
     );
 
     return isMyToolset(entity) ? sortItemsVersions(filtered) : filtered;
-  }, [allEntities, entity, installedToolsetsIds, isMyWorkspaceTab]);
+  }, [
+    allEntities,
+    entity,
+    installedToolsetsIds,
+    isMyWorkspaceTab,
+    isSuggested,
+  ]);
 
   return (
     <Modal
