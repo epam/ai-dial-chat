@@ -8,7 +8,7 @@ import {
 } from '@/src/constants/marketplace';
 
 interface SuggestionButtonProps {
-  onSetTab: (tab: MarketplaceTabs) => void;
+  onSetTab?: (tab: MarketplaceTabs) => void;
   customText?: string;
 }
 
@@ -21,7 +21,7 @@ export const SuggestionButton = ({
   return (
     <button
       className="text-accent-primary"
-      onClick={() => onSetTab(MarketplaceTabs.HOME)}
+      onClick={() => onSetTab?.(MarketplaceTabs.HOME)}
     >
       {t('{{baseText}} {{tabName}}', {
         baseText: t(customText),
