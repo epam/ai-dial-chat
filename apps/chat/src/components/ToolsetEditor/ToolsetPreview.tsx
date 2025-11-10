@@ -26,7 +26,7 @@ interface ToolsetPreviewProps {
 export const ToolsetPreview = ({ currentToolset }: ToolsetPreviewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const { control } = useFormContext<ToolsetEditorForm>();
-  const [isDetailed, setIsDetailed] = useState(false);
+  const [isDetailed, setIsDetailed] = useState(true);
 
   const [
     name,
@@ -51,11 +51,10 @@ export const ToolsetPreview = ({ currentToolset }: ToolsetPreviewProps) => {
     ],
   });
 
-  const cardEntity = useMemo(
+  const cardEntity: ToolsetModel = useMemo(
     () => ({
       type: EntityType.Toolset,
       isDefault: false,
-
       name,
       description,
       iconUrl,
@@ -63,7 +62,6 @@ export const ToolsetPreview = ({ currentToolset }: ToolsetPreviewProps) => {
       version,
       allowedTools,
       transport,
-
       createdAt: currentToolset?.createdAt,
       updatedAt: currentToolset?.updatedAt,
       owner: currentToolset?.author,

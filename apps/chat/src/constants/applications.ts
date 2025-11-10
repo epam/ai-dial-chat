@@ -50,6 +50,7 @@ export enum AppsEditorQuery {
   Step = 'step',
   Schema = 'schema',
   PublicationUrl = 'publicationUrl',
+  ReturnUrl = 'returnUrl',
 }
 
 export const PUBLIC_APP_TOOLTIP = translate(

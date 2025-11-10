@@ -5,7 +5,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
-import { Theme } from '@/src/types/themes';
+import { ThemesConfig } from '@/src/types/themes';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
@@ -62,7 +62,7 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.Settings, { theme });
   }
 
-  public static getAvailableThemes(): Observable<Theme[]> {
+  public static getThemesConfig(): Observable<ThemesConfig> {
     return ApiUtils.request('/api/themes/listing');
   }
 

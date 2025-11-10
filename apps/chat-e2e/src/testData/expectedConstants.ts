@@ -3,6 +3,7 @@ import config from '../../config/chat.playwright.config';
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
 import { ItemUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -439,7 +440,8 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: '/api/themes/image',
-  defaultModelIconHost: () => `${API.themeUrl}/default-model`,
+  defaultModelIconHost: () =>
+    `${API.themeUrl}/${ThemesUtil.getImages()['default-model']}`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',

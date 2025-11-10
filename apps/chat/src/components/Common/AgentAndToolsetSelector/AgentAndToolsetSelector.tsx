@@ -2,13 +2,17 @@ import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useSearchParams } from 'next/navigation';
 
 import classNames from 'classnames';
+
+import { updateQueryParamWithReplace } from '@/src/utils/app/url/query-params';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
 import { AgentAndToolsetModal } from './AgentAndToolsetModal';
@@ -30,7 +34,10 @@ interface AgentAndToolsetSelectorProps {
   addBtnTooltip?: string;
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   tooltip?: string;
+  onItemClick?: (id: string) => void;
 }
+
+const agentsAndToolsetsModalQueryParam = 'agentsAndToolsetsModal';
 
 export const AgentAndToolsetSelector: React.FC<
   AgentAndToolsetSelectorProps
@@ -41,28 +48,44 @@ export const AgentAndToolsetSelector: React.FC<
   tooltip,
   allItemsMap,
   onChange,
+  onItemClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
-  const [isSelectModalOpen, setSelectModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const [isSelectModalOpen, setSelectModalOpen] = useState(
+    searchParams.get(agentsAndToolsetsModalQueryParam) === '1',
+  );
 
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setSelectModalOpen(true);
+
+    // '1' stands for true
+    updateQueryParamWithReplace(agentsAndToolsetsModalQueryParam, '1');
   };
 
   const handleCloseModal = useCallback(() => {
     setSelectModalOpen(false);
+
+    updateQueryParamWithReplace(agentsAndToolsetsModalQueryParam, null);
   }, []);
 
-  const handleRemoveItem = (idToRemove: string) => {
-    onChange(value.filter((id) => id !== idToRemove));
-  };
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      onChange(value.filter((id) => id !== idToRemove));
+    },
+    [onChange, value],
+  );
 
-  const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
-    onChange(newItems.map((item) => item.id));
-    setSelectModalOpen(false);
-  };
+  const handleConfirmSelection = useCallback(
+    (newIds: string[]) => {
+      onChange(newIds);
+      setSelectModalOpen(false);
+    },
+    [onChange],
+  );
 
   return (
     <Tooltip tooltip={tooltip}>
@@ -94,16 +117,19 @@ export const AgentAndToolsetSelector: React.FC<
                   item={allItemsMap[id]}
                   onRemove={readonly ? undefined : handleRemoveItem}
                   readonly={readonly}
+                  onItemClick={onItemClick}
                 />
               ))}
             </div>
           )}
         </div>
+        <ToolsetLoginDialog />
 
         {isSelectModalOpen && !readonly && (
           <AgentAndToolsetModal
             initialSelectedIds={value}
             allItemsMap={allItemsMap}
+            saveSliderStateInURL
             onClose={handleCloseModal}
             onConfirm={handleConfirmSelection}
           />

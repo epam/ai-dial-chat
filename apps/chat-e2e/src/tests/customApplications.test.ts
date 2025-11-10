@@ -553,6 +553,7 @@ dialTest(
 
     await dialTest.step('Close the application edit mode', async () => {
       await appEditorHeader.saveAndExitButton.click();
+      await agentDetailsModal.closeButton.click();
     });
 
     await dialTest.step(
@@ -1756,6 +1757,7 @@ dialTest(
     await dialTest.step(
       'Verify the updated icon is displayed on the app card in My workspace',
       async () => {
+        await agentDetailsModal.closeButton.click();
         agentElement =
           await marketplaceAgentsSection.findAgentElement(appEntity);
         const cardIconElement = agentElement.getElementIcon(
