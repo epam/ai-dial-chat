@@ -374,6 +374,7 @@ const AgentAndToolsetModalView = ({
             <TalkToNotFound
               isMyWorkspace={isMyWorkspace}
               onOpenMarketplaceTab={handleSetScopeTab}
+              hasNoItems={!searchTerm}
             />
           }
           sliderResetDependencies={sliderResetDependencies}

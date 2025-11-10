@@ -1,3 +1,5 @@
+import { IconClipboardX } from '@tabler/icons-react';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
@@ -13,13 +15,30 @@ import { SuggestionButton } from './SuggestionButton';
 interface TalkToNotFound {
   isMyWorkspace: boolean;
   onOpenMarketplaceTab: () => void;
+  hasNoItems?: boolean;
 }
 
 export const TalkToNotFound = ({
   isMyWorkspace,
   onOpenMarketplaceTab,
+  hasNoItems,
 }: TalkToNotFound) => {
   const { t } = useTranslation(Translation.Chat);
+
+  if (hasNoItems) {
+    return (
+      <div className="flex size-full flex-col items-center justify-center gap-3">
+        <IconClipboardX className="text-secondary" size={60} stroke={0.5} />
+        <span>{t('No Agents and Toolsets')}</span>
+        {isMyWorkspace && (
+          <SuggestionButton
+            customText={t('Go to')}
+            onSetTab={onOpenMarketplaceTab}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex size-full items-center justify-center">
@@ -30,7 +49,7 @@ export const TalkToNotFound = ({
             : ''
         }
       >
-        {isMyWorkspace && <SuggestionButton onClick={onOpenMarketplaceTab} />}
+        {isMyWorkspace && <SuggestionButton onSetTab={onOpenMarketplaceTab} />}
       </NoResultsFound>
     </div>
   );
