@@ -1591,7 +1591,8 @@ dialAdminTest(
 
 dialAdminTest.only(
   "Edit folder's name for publish request for folder with chat\n" +
-    '[Admin view][Edit request] Rename the folder several times in a row\n',
+    '[Admin view][Edit request] Rename the folder several times in a row\n' +
+    "Update folder's name for publish request for folder with chat with attached file. Input different names for chat's folder and file's folder",
   async (
     {
       conversationData,
@@ -1609,20 +1610,41 @@ dialAdminTest.only(
       organizationFolderConversations,
       localStorageManager,
       adminApproveRequiredConversationsAssertion,
+      adminFileApiHelper,
+      chatBar,
+      manageAttachmentsAssertion,
+      attachFilesModal,
+      fileApiHelper,
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6465', 'EPMRTC-6549');
+    setTestIds('EPMRTC-6465', 'EPMRTC-6549', 'EPMRTC-6466');
     let folderConversation: FolderConversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     let updatedFolderName: string;
+    let imageUrl: string;
 
     await dialTest.step(
-      'Precondition: Create folder with chat Folder01->Chat01\n' +
-        '[Admin view][Edit request] Rename the folder several times in a row',
+      'Precondition: Create folder with chat with attached file Folder01->Chat01',
       async () => {
+        imageUrl = await fileApiHelper.putFileWithCustomName(
+          GeneratorUtil.randomFilename(),
+          Attachment.sunImageName,
+        );
+        const model = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getLatestModelsWithAttachment(true, ['*/*']),
+        );
         folderConversation =
           conversationData.prepareDefaultConversationInFolder();
+        const conversationWithAttachment =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            model,
+            true,
+            folderConversation.folders.name,
+            imageUrl,
+          );
+        conversationData.resetData();
+        folderConversation.conversations[0] = conversationWithAttachment;
         await dataInjector.createConversations(
           folderConversation.conversations,
           folderConversation.folders,
@@ -1640,6 +1662,7 @@ dialAdminTest.only(
           folderConversation.conversations[0],
           PublishActions.ADD,
         )
+        .withFileResource(imageUrl, PublishActions.ADD_IF_ABSENT, folderConversation.folders.name)
         .build();
       await publicationApiHelper.createPublishRequest(publishRequest);
       updatedFolderName = folderConversation.folders.name;
@@ -1652,9 +1675,6 @@ dialAdminTest.only(
       await adminApproveRequiredConversations.expandApproveRequiredFolder(
         requestName,
       );
-      // await adminApproveRequiredConversations.expandFolder(
-      //   updatedFolderName,
-      // );
     });
 
     await dialAdminTest.step(
@@ -1676,13 +1696,31 @@ dialAdminTest.only(
     );
 
     await dialAdminTest.step(
+      'Update folder name for file and click Update request',
+      async () => {
+        const updatedFileFolderName = `${updatedFolderName}_file`;
+        await adminPublishingApprovalModal.renameFileFolderToApprove(
+          updatedFolderName,
+          updatedFileFolderName,
+        );
+        await adminPublishingApprovalModal.updateRequestButton.click();
+        const fileFolder = adminPublishingApprovalModal
+          .getFilesToApproveTree()
+          .getFolderByName(updatedFileFolderName);
+        await baseAssertion.assertElementState(fileFolder, 'visible');
+      },
+    );
+
+    await dialAdminTest.step(
       'Verify new folder name is displayed on publish request form and approve the request',
       async () => {
         const folder = adminPublishingApprovalModal
           .getPublishConversationToApproveFolder()
           .getFolderByName(updatedFolderName);
         await baseAssertion.assertElementState(folder, 'visible');
-        await adminPublishingApprovalModal.goToEntityReview( {isHttpMethodTriggered: true} );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: true,
+        });
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
       },
@@ -1698,6 +1736,26 @@ dialAdminTest.only(
           organizationFolderConversations.getFolderByName(updatedFolderName),
           'visible',
         );
+      },
+    );
+
+    await dialTest.step(
+      "Check folder's name for file in Manage attachments - updated folder's names are displayed",
+      async () => {
+        await chatBar.openManageAttachmentsModal();
+        const updatedFileFolderName = `${updatedFolderName}_file`;
+        await manageAttachmentsAssertion.assertFolderState(
+          { name: updatedFileFolderName },
+          FileModalSection.Organization,
+          'visible',
+        );
+        await manageAttachmentsAssertion.assertFolderEntityState(
+          { name: updatedFileFolderName },
+          { name: Attachment.sunImageName },
+          FileModalSection.Organization,
+          'visible',
+        );
+        await attachFilesModal.closeButton.click();
       },
     );
   },

@@ -104,6 +104,7 @@ export class PublishRequestBuilder {
     const targetResource = this.getEntityInFolderTargetResource(
       conversation.id,
     );
+
     return this.withEntityResource(
       action,
       ApiKeys.Conversations,
@@ -158,14 +159,18 @@ export class PublishRequestBuilder {
   withFileResource(
     attachment: Attachment | string,
     action: PublishActions,
+    //That is not a folder in the Organization structure
+    //but the same folder that conversation belongs to
+    targetFolder?: string,
   ): PublishRequestBuilder {
     const title =
       typeof attachment === 'string'
         ? attachment.substring(attachment.lastIndexOf('/') + 1)
         : attachment.title;
+    const targetResource = targetFolder == undefined ? title : targetFolder.endsWith('/') ? `${targetFolder}${title}` : `${targetFolder}/${title}`
     const sourceUrl =
       typeof attachment === 'string' ? attachment : attachment.url!;
-    return this.withEntityResource(action, ApiKeys.Files, title, sourceUrl);
+    return this.withEntityResource(action, ApiKeys.Files, targetResource, sourceUrl);
   }
 
   withRule(rule: PublicationRule): PublishRequestBuilder {

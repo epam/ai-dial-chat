@@ -194,6 +194,7 @@ export const PublishingApprovalModalSelectors = {
   updateRequestButton: '[data-qa="update"]',
   version: '[data-qa="version"]',
   entityRow: '[data-qa="entity-publication-row"]',
+  fieldValue: (name: string) => `[value="${name}"]`,
 };
 
 export const PublishingTreeSelectors = {

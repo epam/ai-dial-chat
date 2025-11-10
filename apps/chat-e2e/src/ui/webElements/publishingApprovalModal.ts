@@ -226,7 +226,7 @@ export class PublishingApprovalModal extends BaseElement {
       await this.editButton.click();
     }
     const conversationInput = this.getConversationsToApproveTree()
-      .getChildElementBySelector(`${Tags.input}[value="${conversationName}"]`)
+      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(conversationName)}`)
       .getElementLocator();
 
     await conversationInput.click();
@@ -245,7 +245,7 @@ export class PublishingApprovalModal extends BaseElement {
     const conversationRow = this.conversationToApproveRow.getElementLocator();
 
     const filter = conversationRow.filter({
-      has: this.page.locator(`[value="${conversationName}"]`),
+      has: this.page.locator(`${PublishingApprovalModalSelectors.fieldValue(conversationName)}`),
     });
 
     const versionInput = filter
@@ -267,7 +267,7 @@ export class PublishingApprovalModal extends BaseElement {
 
     const conversationFolders = this.getPublishConversationToApproveFolder()
       .getChildElementBySelector(FolderSelectors.folderName)
-      .getChildElementBySelector(`${Tags.input}[value="${folderName}"]`)
+      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`)
       .getElementLocator();
 
     await conversationFolders.click();
@@ -280,7 +280,7 @@ export class PublishingApprovalModal extends BaseElement {
       await this.editButton.click();
     }
     const fileInput = this.getFilesToApproveTree()
-      .getChildElementBySelector(`${Tags.input}[value="${fileName}"]`)
+      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(fileName)}`)
       .getElementLocator();
 
     await fileInput.click();

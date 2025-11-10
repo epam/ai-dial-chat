@@ -501,9 +501,7 @@ export class ConversationData extends FolderData {
     }
     return conversationBuilder.withId(conversationId).build();
 
-    return this.conversationBuilder
-      .withId(conversationId)
-      .build();
+    return this.conversationBuilder.withId(conversationId).build();
   }
 
   public prepareHistoryConversationWithAttachmentsInResponse(
