@@ -58,8 +58,8 @@ export function ToolsetDetails({
         getGroupMarketplaceEntityKey(entity) ===
           getGroupMarketplaceEntityKey(e) &&
         (!isMyWorkspaceTab ||
-          installedToolsetsIds.has(e.reference) ||
-          isSuggested),
+          isSuggested ||
+          installedToolsetsIds.has(e.reference)),
     );
 
     return isMyToolset(entity) ? sortItemsVersions(filtered) : filtered;
