@@ -66,12 +66,14 @@ export function ToolsTabRenderer() {
       dispatch(
         MarketplaceActions.setDetailsEntity({
           reference: toolset.reference,
-          isSuggested: false,
+          isSuggested: suggestedResults
+            .map((item) => item.reference)
+            .includes(toolset.reference),
           type: MarketplaceEntitiesTabs.TOOLSETS,
         }),
       );
     },
-    [dispatch],
+    [dispatch, suggestedResults],
   );
 
   const handleBookmarkClick = useCallback(
@@ -136,6 +138,7 @@ export function ToolsTabRenderer() {
           onClose={handleCloseDetailsDialog}
           onChangeVersion={handleSetVersion}
           onBookmarkClick={handleBookmarkClick}
+          isSuggested={detailsToolset?.isSuggested}
         />
       )}
 
