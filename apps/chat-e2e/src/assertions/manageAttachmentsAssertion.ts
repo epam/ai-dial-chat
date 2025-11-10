@@ -6,7 +6,7 @@ import {
   TreeEntity,
 } from '@/src/testData';
 import { AttachFilesModal, FileModalSection } from '@/src/ui/webElements';
-import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
+import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
 export class ManageAttachmentsAssertion extends BaseAssertion {
@@ -76,13 +76,37 @@ export class ManageAttachmentsAssertion extends BaseAssertion {
       entity.name,
       entity.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(entityLocator, ExpectedMessages.entityIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(entityLocator, ExpectedMessages.entityIsNotVisible)
-          .toBeHidden();
+
+    await this.assertElementState(
+      entityLocator,
+      expectedState,
+      ExpectedMessages.entityIsVisible,
+    );
+  }
+
+  public async assertFolderState(
+    folderName: string,
+    fileModalSection: FileModalSection,
+    expectedState: ElementState,
+  ) {
+    let entityTree: Folders;
+    switch (fileModalSection) {
+      case FileModalSection.AllFiles:
+        entityTree = this.attachFilesModal.getAllFolderFiles();
+        break;
+      case FileModalSection.SharedWithMe:
+        entityTree = this.attachFilesModal.getSharedWithMeFolderFiles();
+        break;
+      case FileModalSection.Organization:
+        entityTree = this.attachFilesModal.getOrganizationFolderFiles();
+        break;
+    }
+
+    await this.assertElementState(
+      entityTree.getFolderName(folderName),
+      expectedState,
+      ExpectedMessages.entityIsVisible,
+    );
   }
 
   public async assertSectionState(

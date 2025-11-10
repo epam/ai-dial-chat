@@ -167,10 +167,20 @@ export class PublishRequestBuilder {
       typeof attachment === 'string'
         ? attachment.substring(attachment.lastIndexOf('/') + 1)
         : attachment.title;
-    const targetResource = targetFolder == undefined ? title : targetFolder.endsWith('/') ? `${targetFolder}${title}` : `${targetFolder}/${title}`
+    const targetResource =
+      targetFolder == undefined
+        ? title
+        : targetFolder.endsWith('/')
+          ? `${targetFolder}${title}`
+          : `${targetFolder}/${title}`;
     const sourceUrl =
       typeof attachment === 'string' ? attachment : attachment.url!;
-    return this.withEntityResource(action, ApiKeys.Files, targetResource, sourceUrl);
+    return this.withEntityResource(
+      action,
+      ApiKeys.Files,
+      targetResource,
+      sourceUrl,
+    );
   }
 
   withRule(rule: PublicationRule): PublishRequestBuilder {

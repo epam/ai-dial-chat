@@ -37,7 +37,7 @@ export class AttachFilesModal extends BaseElement {
   private sharedWithMeTree!: AttachFilesTree;
   private sharedWithMeFoldersTree!: Folders;
   private organizationTree!: AttachFilesTree;
-  private organizationFoldersTree!: Folders;
+  private organizationFolderFiles!: Folders;
   private search!: Search;
   public modalError!: ModalError;
 
@@ -118,16 +118,16 @@ export class AttachFilesModal extends BaseElement {
     return this.organizationTree;
   }
 
-  getOrganizationFoldersTree(): Folders {
-    if (!this.organizationFoldersTree) {
-      this.organizationFoldersTree = new Folders(
+  getOrganizationFolderFiles(): Folders {
+    if (!this.organizationFolderFiles) {
+      this.organizationFolderFiles = new Folders(
         this.page,
         this.rootLocator,
         AttachFilesModalSelectors.organizationFilesContainer,
         EntitySelectors.file,
       );
     }
-    return this.organizationFoldersTree;
+    return this.organizationFolderFiles;
   }
 
   getAllFilesTree(): AttachFilesTree {
@@ -171,7 +171,7 @@ export class AttachFilesModal extends BaseElement {
     return this.sharedWithMeTree;
   }
 
-  getSharedWithMeFoldersTree(): Folders {
+  getSharedWithMeFolderFiles(): Folders {
     if (!this.sharedWithMeFoldersTree) {
       this.sharedWithMeFoldersTree = new Folders(
         this.page,
@@ -228,9 +228,9 @@ export class AttachFilesModal extends BaseElement {
       case FileModalSection.AllFiles:
         return this.getAllFolderFiles();
       case FileModalSection.SharedWithMe:
-        return this.getSharedWithMeFoldersTree();
+        return this.getSharedWithMeFolderFiles();
       case FileModalSection.Organization:
-        return this.getOrganizationFoldersTree();
+        return this.getOrganizationFolderFiles();
       default:
         throw new Error(invalidSectionError(section));
     }

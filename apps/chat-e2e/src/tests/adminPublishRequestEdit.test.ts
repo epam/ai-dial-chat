@@ -1610,7 +1610,6 @@ dialAdminTest.only(
       organizationFolderConversations,
       localStorageManager,
       adminApproveRequiredConversationsAssertion,
-      adminFileApiHelper,
       chatBar,
       manageAttachmentsAssertion,
       attachFilesModal,
@@ -1663,7 +1662,11 @@ dialAdminTest.only(
           folderConversation.conversations[0],
           PublishActions.ADD,
         )
-        .withFileResource(imageUrl, PublishActions.ADD_IF_ABSENT, folderConversation.folders.name)
+        .withFileResource(
+          imageUrl,
+          PublishActions.ADD_IF_ABSENT,
+          folderConversation.folders.name,
+        )
         .build();
       await publicationApiHelper.createPublishRequest(publishRequest);
       updatedFolderName = folderConversation.folders.name;
@@ -1684,7 +1687,7 @@ dialAdminTest.only(
       async () => {
         for (let i = 1; i <= 2; i++) {
           updatedFolderName =
-            await adminPublishingApprovalModal.renameConversationFolderToApproveVersion(
+            await adminPublishingApprovalModal.renameConversationFolderToApprove(
               updatedFolderName,
               `${updatedFolderName}_${i}`,
             );
@@ -1700,10 +1703,11 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Update folder name for file and click Update request',
       async () => {
-        updatedFileFolderName = await adminPublishingApprovalModal.renameFileFolderToApprove(
-          updatedFileFolderName,
-          `${updatedFolderName}_file`,
-        );
+        updatedFileFolderName =
+          await adminPublishingApprovalModal.renameFileFolderToApprove(
+            updatedFileFolderName,
+            `${updatedFileFolderName}_file`,
+          );
         await adminPublishingApprovalModal.updateRequestButton.click();
         const fileFolder = adminPublishingApprovalModal
           .getFilesToApproveTree()
@@ -1715,12 +1719,12 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Verify new folder name is displayed on publish request form and approve the request',
       async () => {
-        const folder = adminPublishingApprovalModal
-          .getPublishConversationToApproveFolder()
-          .getFolderByName(updatedFolderName);
-        await baseAssertion.assertElementState(folder, 'visible');
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          updatedFolderName,
+          'visible',
+        );
         await adminPublishingApprovalModal.goToEntityReview({
-          isHttpMethodTriggered: true,
+          isHttpMethodTriggered: false,
         });
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
@@ -1744,9 +1748,8 @@ dialAdminTest.only(
       "Check folder's name for file in Manage attachments - updated folder's names are displayed",
       async () => {
         await chatBar.openManageAttachmentsModal();
-        const updatedFileFolderName = `${updatedFolderName}_file`;
         await manageAttachmentsAssertion.assertFolderState(
-          { name: updatedFileFolderName },
+          updatedFileFolderName,
           FileModalSection.Organization,
           'visible',
         );

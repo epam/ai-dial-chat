@@ -226,7 +226,9 @@ export class PublishingApprovalModal extends BaseElement {
       await this.editButton.click();
     }
     const conversationInput = this.getConversationsToApproveTree()
-      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(conversationName)}`)
+      .getChildElementBySelector(
+        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(conversationName)}`,
+      )
       .getElementLocator();
 
     await conversationInput.click();
@@ -245,7 +247,9 @@ export class PublishingApprovalModal extends BaseElement {
     const conversationRow = this.conversationToApproveRow.getElementLocator();
 
     const filter = conversationRow.filter({
-      has: this.page.locator(`${PublishingApprovalModalSelectors.fieldValue(conversationName)}`),
+      has: this.page.locator(
+        `${PublishingApprovalModalSelectors.fieldValue(conversationName)}`,
+      ),
     });
 
     const versionInput = filter
@@ -257,7 +261,7 @@ export class PublishingApprovalModal extends BaseElement {
     return newVersion;
   }
 
-  public async renameConversationFolderToApproveVersion(
+  public async renameConversationFolderToApprove(
     folderName: string,
     newFolderName: string,
   ) {
@@ -267,7 +271,9 @@ export class PublishingApprovalModal extends BaseElement {
 
     const conversationFolders = this.getPublishConversationToApproveFolder()
       .getChildElementBySelector(FolderSelectors.folderName)
-      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`)
+      .getChildElementBySelector(
+        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`,
+      )
       .getElementLocator();
 
     await conversationFolders.click();
@@ -280,7 +286,9 @@ export class PublishingApprovalModal extends BaseElement {
       await this.editButton.click();
     }
     const fileInput = this.getFilesToApproveTree()
-      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(fileName)}`)
+      .getChildElementBySelector(
+        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(fileName)}`,
+      )
       .getElementLocator();
 
     await fileInput.click();
@@ -297,7 +305,9 @@ export class PublishingApprovalModal extends BaseElement {
 
     const fileFolders = this.getFilesToApproveTree()
       .getChildElementBySelector(FolderSelectors.folder)
-      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`)
+      .getChildElementBySelector(
+        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`,
+      )
       .getElementLocator();
 
     await fileFolders.click();
