@@ -286,4 +286,22 @@ export class PublishingApprovalModal extends BaseElement {
     await fileInput.click();
     await fileInput.fill(newName);
   }
+
+  public async renameFileFolderToApprove(
+    folderName: string,
+    newFolderName: string,
+  ) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+
+    const fileFolders = this.getFilesToApproveTree()
+      .getChildElementBySelector(FolderSelectors.folder)
+      .getChildElementBySelector(`${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`)
+      .getElementLocator();
+
+    await fileFolders.click();
+    await fileFolders.fill(newFolderName);
+    return newFolderName;
+  }
 }

@@ -1622,6 +1622,7 @@ dialAdminTest.only(
     let folderConversation: FolderConversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     let updatedFolderName: string;
+    let updatedFileFolderName: string;
     let imageUrl: string;
 
     await dialTest.step(
@@ -1666,6 +1667,7 @@ dialAdminTest.only(
         .build();
       await publicationApiHelper.createPublishRequest(publishRequest);
       updatedFolderName = folderConversation.folders.name;
+      updatedFileFolderName = folderConversation.folders.name;
     });
 
     await dialAdminTest.step('By admin open publication request', async () => {
@@ -1698,10 +1700,9 @@ dialAdminTest.only(
     await dialAdminTest.step(
       'Update folder name for file and click Update request',
       async () => {
-        const updatedFileFolderName = `${updatedFolderName}_file`;
-        await adminPublishingApprovalModal.renameFileFolderToApprove(
-          updatedFolderName,
+        updatedFileFolderName = await adminPublishingApprovalModal.renameFileFolderToApprove(
           updatedFileFolderName,
+          `${updatedFolderName}_file`,
         );
         await adminPublishingApprovalModal.updateRequestButton.click();
         const fileFolder = adminPublishingApprovalModal
