@@ -197,6 +197,7 @@ export const CodeAppSchema = zodValidation
   .object({
     type: zodValidation.literal(AppsEditorSchemaTypes.CodeApp),
     inputAttachmentTypes: AttachmentTypesSchema,
+    filesLoaded: zodValidation.boolean(),
     sources: zodValidation
       .string()
       .nonempty('Source folder is required')
@@ -226,7 +227,12 @@ export const CodeAppSchema = zodValidation
     env: zodValidation.array(DynamicFieldSchema),
   })
   .superRefine((data, ctx) => {
-    if (data.sources === MANDATORY_FIELD_PLACEHOLDER || !data.sources) return;
+    if (
+      data.sources === MANDATORY_FIELD_PLACEHOLDER ||
+      !data.sources ||
+      !data.filesLoaded
+    )
+      return;
 
     if (!data.sourceFiles.includes(CODEAPPS_REQUIRED_FILES.APP)) {
       ctx.addIssue({
@@ -361,6 +367,7 @@ const getCodeAppFormData = ({
   type: AppsEditorSchemaTypes.CodeApp,
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
   maxInputAttachments: app?.maxInputAttachments ?? undefined,
+  filesLoaded: false,
   sources: getFormSourceFolder(app?.function?.sourceFolder),
   runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
   sourceFiles: [],
