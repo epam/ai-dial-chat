@@ -355,6 +355,11 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   iif(
+                    () => !!payload.tabToOpen,
+                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
+                    EMPTY,
+                  ),
+                  iif(
                     () => !!payload.isSaveAndExit,
                     of(
                       ApplicationActions.exitEditor({
