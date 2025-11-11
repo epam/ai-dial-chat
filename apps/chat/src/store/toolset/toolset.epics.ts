@@ -13,6 +13,7 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { navigateAndThen } from '@/src/utils/app/application';
 import { getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
@@ -285,11 +286,15 @@ const updateToolsetEpic: AppEpic = (action$) =>
                       ),
                       EMPTY,
                     ),
-                    of(
-                      ToolsetActions.updateToolsetSuccess({
-                        oldToolset: payload.oldToolset,
-                        newToolset: savedUpdatedToolset,
-                      }),
+                    iif(
+                      () => !payload.exitAfterSave,
+                      of(
+                        ToolsetActions.updateToolsetSuccess({
+                          oldToolset: payload.oldToolset,
+                          newToolset: savedUpdatedToolset,
+                        }),
+                      ),
+                      EMPTY,
                     ),
                     iif(
                       () => !!payload.tabToOpen,
@@ -832,13 +837,12 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      router.push(route).then(() => {
-        if (route.pathname === Routes.Marketplace) {
-          of(MarketplaceActions.initQueryParams());
-        }
-      });
-
-      return concat(
+      const afterRedirect$ = concat(
+        iif(
+          () => route.pathname === Routes.Marketplace,
+          of(MarketplaceActions.initQueryParams()),
+          EMPTY,
+        ),
         iif(
           () =>
             !!payload.shouldSelectToolset &&
@@ -871,6 +875,7 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
           EMPTY,
         ),
       );
+      return navigateAndThen(router, route, afterRedirect$);
     }),
   );
 

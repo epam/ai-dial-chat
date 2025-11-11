@@ -28,6 +28,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import {
   isApplicationType,
+  navigateAndThen,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
@@ -345,20 +346,6 @@ const updateApplicationEpic: AppEpic = (action$) =>
                 };
 
                 return concat(
-                  of(
-                    ApplicationActions.updateSuccess(updatedCustomApplication),
-                  ),
-                  of(
-                    ModelsActions.updateModel({
-                      model: modelData,
-                      oldApplicationId: payload.oldApplication.id,
-                    }),
-                  ),
-                  iif(
-                    () => !!payload.tabToOpen,
-                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
-                    EMPTY,
-                  ),
                   iif(
                     () => !!payload.isSaveAndExit,
                     of(
@@ -370,6 +357,28 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     ),
                     EMPTY,
                   ),
+                  iif(
+                    () => !payload.isSaveAndExit,
+                    of(
+                      ApplicationActions.updateSuccess(
+                        updatedCustomApplication,
+                      ),
+                    ),
+                    EMPTY,
+                  ),
+
+                  of(
+                    ModelsActions.updateModel({
+                      model: modelData,
+                      oldApplicationId: payload.oldApplication.id,
+                    }),
+                  ),
+                  iif(
+                    () => !!payload.tabToOpen,
+                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
+                    EMPTY,
+                  ),
+
                   iif(
                     () => !!payload.tabToOpen,
                     of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
@@ -805,13 +814,12 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      router.push(route).then(() => {
-        if (route.pathname === Routes.Marketplace) {
-          of(MarketplaceActions.initQueryParams());
-        }
-      });
-
-      return concat(
+      const afterRedirect$ = concat(
+        iif(
+          () => route.pathname === Routes.Marketplace,
+          of(MarketplaceActions.initQueryParams()),
+          EMPTY,
+        ),
         iif(
           () =>
             !!payload.shouldSelectApplication &&
@@ -859,6 +867,8 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
           EMPTY,
         ),
       );
+
+      return navigateAndThen(router, route, afterRedirect$);
     }),
   );
 
