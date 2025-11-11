@@ -52,9 +52,6 @@ export function Layout({
   const isApplyingModel = useAppSelector(
     MarketplaceSelectors.selectIsApplyingModel,
   );
-  const showMarketplaceLoader = useAppSelector(
-    MarketplaceSelectors.selectShowLoader,
-  );
 
   const [loading, setLoading] = useState(isApplyingModel);
 
@@ -63,9 +60,7 @@ export function Layout({
   const handleStartRedirecting = useCallback((url: string) => {
     setLoading(removeQueryString(url) !== window.location.pathname);
   }, []);
-  const handleStopRedirecting = useCallback(() => {
-    return setLoading(showMarketplaceLoader || false);
-  }, [showMarketplaceLoader]);
+  const handleStopRedirecting = useCallback(() => setLoading(false), []);
 
   // EFFECTS  --------------------------------------------
   useEffect(() => {
