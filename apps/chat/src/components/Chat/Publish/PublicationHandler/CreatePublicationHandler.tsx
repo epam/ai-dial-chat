@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { isFileId } from '@/src/utils/app/id';
+import { isFileId, isToolsetId } from '@/src/utils/app/id';
 import { getNewTargetUrlFromEditState } from '@/src/utils/app/publications';
 import { constructPath } from '@/src/utils/app/shared-utils';
 
@@ -31,6 +31,9 @@ export function CreatePublicationHandler({
 }: Props) {
   const dispatch = useAppDispatch();
 
+  const selectedPublishCredentials = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedCredentialsItems(state, publication.url),
+  );
   const selectedPublicationItems = useAppSelector((state) =>
     PublicationSelectors.selectSelectedPublicationItems(state, publication.url),
   );
@@ -74,6 +77,11 @@ export function CreatePublicationHandler({
             formData?.publishToUrl ?? '',
             publicationModel.action,
           ),
+          ...(isToolsetId(resource.reviewUrl) && {
+            publishCredentials: selectedPublishCredentials.includes(
+              resource.reviewUrl,
+            ),
+          }),
         };
       });
 
@@ -97,6 +105,7 @@ export function CreatePublicationHandler({
       publication.targetFolder,
       publicationModel.action,
       selectedPublicationItems,
+      selectedPublishCredentials,
     ],
   );
 
