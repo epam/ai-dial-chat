@@ -224,7 +224,7 @@ export const CodeAppSchema = zodValidation
         return endpoints.length === uniq(keys).length;
       }, 'Key must be unique'),
     maxInputAttachments: MaxInputAttachmentsSchema.optional(),
-    env: zodValidation.array(DynamicFieldSchema),
+    env: zodValidation.array(DynamicFieldSchema).optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -619,7 +619,7 @@ export const getApplicationPayload = ({
             }),
             {},
           ),
-          env: data.env.length
+          env: data.env?.length
             ? data.env.reduce(
                 (acc, option) => ({
                   ...acc,
