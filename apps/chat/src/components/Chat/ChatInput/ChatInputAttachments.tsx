@@ -33,7 +33,7 @@ export const ChatInputAttachments = ({
         <Tooltip
           key={folder.id}
           tooltip={folder.name}
-          triggerClassName={'truncate text-center shrink-0'}
+          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
         >
           <ChatInputFolderAttachment
             folder={folder}
@@ -45,7 +45,7 @@ export const ChatInputAttachments = ({
         <Tooltip
           key={file.id}
           tooltip={file.name}
-          triggerClassName={'truncate text-center shrink-0'}
+          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
         >
           <ChatInputFileAttachment
             file={file}
@@ -58,7 +58,7 @@ export const ChatInputAttachments = ({
         <Tooltip
           key={index}
           tooltip={link.title || link.href}
-          triggerClassName={'truncate text-center shrink-0'}
+          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
         >
           <ChatInputLinkAttachment
             link={link}
