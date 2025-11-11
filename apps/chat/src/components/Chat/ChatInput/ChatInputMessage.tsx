@@ -579,7 +579,7 @@ export const ChatInputMessage = Inversify.register(
                 selectedDialLinks.length > 0 ||
                 selectedFolders.length > 0) && (
                 <div
-                  className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3"
+                  className="mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto px-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]"
                   data-qa="attachment-container"
                 >
                   <ChatInputAttachments
