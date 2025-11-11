@@ -22,12 +22,14 @@ interface ToolsetEditorViewProps {
   onNextClick: (e: React.FormEvent<HTMLFormElement>) => void;
   currentToolset?: ToolsetModel;
   currentStep: ToolsetEditorSteps;
+  disableLoader?: boolean;
 }
 
 export const ToolsetEditorView = ({
   onNextClick,
   currentToolset,
   currentStep,
+  disableLoader,
 }: ToolsetEditorViewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -46,14 +48,14 @@ export const ToolsetEditorView = ({
 
   const LeftContent = useMemo(
     () =>
-      isToolsetDetailsLoading ? (
+      isToolsetDetailsLoading && !disableLoader ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={45} className="mx-auto" />
         </div>
       ) : (
         <EditorForm onNextClick={onNextClick} currentStep={currentStep} />
       ),
-    [currentStep, isToolsetDetailsLoading, onNextClick],
+    [currentStep, disableLoader, isToolsetDetailsLoading, onNextClick],
   );
 
   const RightContent = useMemo(
