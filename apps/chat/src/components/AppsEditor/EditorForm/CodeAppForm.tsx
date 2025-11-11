@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -10,7 +10,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationSelectors, FilesSelectors } from '@/src/store/selectors';
 
 import {
   CONFIRM_SOURCE_FOLDER_VALUES,
@@ -33,6 +33,8 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 const FilesEditor = withLabel(SourceFilesEditor);
@@ -50,6 +52,7 @@ export const CodeAppForm = () => {
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const { control, formState, setError, clearErrors, watch, setValue } =
     useFormContext<CodeAppFormType>();
@@ -59,6 +62,20 @@ export const CodeAppForm = () => {
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppShared = !!appDetails?.isShared;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
+
+  const isTargetFolderLoaded = useMemo(() => {
+    const targetFolder = sources
+      ? folders.find((f) => f.id === sources)
+      : undefined;
+
+    return targetFolder?.status === UploadStatus.LOADED;
+  }, [folders, sources]);
+
+  useEffect(() => {
+    if (isTargetFolderLoaded) {
+      setValue('filesLoaded', true, { shouldDirty: false });
+    }
+  }, [isTargetFolderLoaded, setValue]);
 
   useEffect(() => {
     if (sources === MANDATORY_FIELD_PLACEHOLDER) {
