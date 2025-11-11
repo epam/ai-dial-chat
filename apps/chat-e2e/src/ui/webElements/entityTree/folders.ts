@@ -95,9 +95,17 @@ export class Folders extends BaseElement {
   };
 
   public getFolderByName(name: string, index?: number) {
-    return this.getChildElementBySelector(
-      FolderSelectors.folder,
-    ).getElementLocatorByText(name, index);
+    return this.getChildElementBySelector(FolderSelectors.folder)
+      .getElementLocatorByText(name, index)
+      .or(
+        this.getChildElementBySelector(FolderSelectors.folder)
+          .getElementLocator()
+          .filter({
+            has: this.page.locator(
+              `${Tags.input}[${Attributes.value}="${name}"]`,
+            ),
+          }),
+      );
   }
 
   public getRootFolderByName(name: string, index?: number) {

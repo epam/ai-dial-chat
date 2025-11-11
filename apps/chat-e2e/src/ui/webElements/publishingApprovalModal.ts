@@ -14,6 +14,7 @@ import {
   PublishConversationsTree,
   PublishFolder,
   PublishFolderConversations,
+  PublishFolderFiles,
   PublishFolderPrompts,
   PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -31,13 +32,14 @@ export class PublishingApprovalModal extends BaseElement {
   private folderConversationsToApprove!: PublishFolderConversations;
   //files to approve trees
   private filesToApproveTree!: PublishFilesTree;
+  private folderFilesToApprove!: PublishFolderFiles;
   //prompts to approve trees
   private promptsToApproveTree!: PublishPromptsTree;
   private folderPromptsToApprove!: PublishFolderPrompts;
   //applications to approve tree
   private applicationsToPublishTree!: PublishApplicationsTree;
   private publishingRules!: PublishingRules;
-  private publishConversationToApproveFolder!: PublishFolder;
+  //private publishConversationToApproveFolder!: PublishFolder;
 
   getConversationsToApproveTree(): PublishConversationsTree {
     if (!this.conversationsToApproveTree) {
@@ -59,17 +61,17 @@ export class PublishingApprovalModal extends BaseElement {
     return this.folderConversationsToApprove;
   }
 
-  getPublishConversationToApproveFolder(): PublishFolder {
-    if (!this.publishConversationToApproveFolder) {
-      this.publishConversationToApproveFolder = new PublishFolder(
-        this.page,
-        this.rootLocator,
-        PublishingTreeSelectors.conversationsTree,
-        EntitySelectors.conversation,
-      );
-    }
-    return this.publishConversationToApproveFolder;
-  }
+  // getPublishConversationToApproveFolder(): PublishFolder {
+  //   if (!this.publishConversationToApproveFolder) {
+  //     this.publishConversationToApproveFolder = new PublishFolder(
+  //       this.page,
+  //       this.rootLocator,
+  //       PublishingTreeSelectors.conversationsTree,
+  //       EntitySelectors.conversation,
+  //     );
+  //   }
+  //   return this.publishConversationToApproveFolder;
+  // }
 
   getFilesToApproveTree(): PublishFilesTree {
     if (!this.filesToApproveTree) {
@@ -79,6 +81,16 @@ export class PublishingApprovalModal extends BaseElement {
       );
     }
     return this.filesToApproveTree;
+  }
+
+  getFolderFilesToApprove(): PublishFolderFiles {
+    if (!this.folderFilesToApprove) {
+      this.folderFilesToApprove = new PublishFolderFiles(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.folderFilesToApprove;
   }
 
   getPromptsToApproveTree(): PublishPromptsTree {
@@ -170,10 +182,10 @@ export class PublishingApprovalModal extends BaseElement {
   );
   public publicAuthorInputEditMode =
     this.publicAuthorContainerEditMode.getChildElementBySelector(Tags.input);
-  public conversationToApproveRow =
-    this.getConversationsToApproveTree().getChildElementBySelector(
-      PublishingApprovalModalSelectors.entityRow,
-    );
+  // public conversationToApproveRow =
+  //   this.getConversationsToApproveTree().getChildElementBySelector(
+  //     PublishingApprovalModalSelectors.entityRow,
+  //   );
 
   public async approveRequest({
     isModelsListRetrieved = false,
@@ -225,11 +237,12 @@ export class PublishingApprovalModal extends BaseElement {
     if (await this.editButton.isVisible()) {
       await this.editButton.click();
     }
-    const conversationInput = this.getConversationsToApproveTree()
-      .getChildElementBySelector(
-        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(conversationName)}`,
-      )
-      .getElementLocator();
+    // const conversationInput = this.getConversationsToApproveTree()
+    //   .getChildElementBySelector(
+    //     `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(conversationName)}`,
+    //   )
+    //   .getElementLocator();
+    const conversationInput = this.getConversationsToApproveTree().getEntityNameInput(conversationName)
 
     await conversationInput.click();
     await conversationInput.fill(newName);
@@ -243,18 +256,19 @@ export class PublishingApprovalModal extends BaseElement {
     if (await this.editButton.isVisible()) {
       await this.editButton.click();
     }
+    const versionInput = this.getConversationsToApproveTree().getEntityVersionInput(conversationName)
 
-    const conversationRow = this.conversationToApproveRow.getElementLocator();
-
-    const filter = conversationRow.filter({
-      has: this.page.locator(
-        `${PublishingApprovalModalSelectors.fieldValue(conversationName)}`,
-      ),
-    });
-
-    const versionInput = filter
-      .locator(PublishEntitySelectors.version)
-      .locator(Tags.input);
+    // const conversationRow = this.conversationToApproveRow.getElementLocator();
+    //
+    // const filter = conversationRow.filter({
+    //   has: this.page.locator(
+    //     `${PublishingApprovalModalSelectors.fieldValue(conversationName)}`,
+    //   ),
+    // });
+    //
+    // const versionInput = filter
+    //   .locator(PublishEntitySelectors.version)
+    //   .locator(Tags.input);
 
     await versionInput.click();
     await versionInput.fill(newVersion);
@@ -268,14 +282,16 @@ export class PublishingApprovalModal extends BaseElement {
     if (await this.editButton.isVisible()) {
       await this.editButton.click();
     }
+    const conversationFolders =
+      this.getFolderConversationsToApprove().getFolderNameInput(folderName);
 
-    const conversationFolders = this.getPublishConversationToApproveFolder()
-      .getChildElementBySelector(FolderSelectors.folderName)
-      .getChildElementBySelector(
-        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`,
-      )
-      .getElementLocator();
-
+    // const conversationFolders = this.getPublishConversationToApproveFolder()
+    //   .getChildElementBySelector(FolderSelectors.folderName)
+    //   .getChildElementBySelector(
+    //     `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`,
+    //   )
+    //   .getElementLocator();
+    //
     await conversationFolders.click();
     await conversationFolders.fill(newFolderName);
     return newFolderName;
@@ -285,12 +301,13 @@ export class PublishingApprovalModal extends BaseElement {
     if (await this.editButton.isVisible()) {
       await this.editButton.click();
     }
-    const fileInput = this.getFilesToApproveTree()
-      .getChildElementBySelector(
-        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(fileName)}`,
-      )
-      .getElementLocator();
+    // const fileInput = this.getFilesToApproveTree()
+    //   .getChildElementBySelector(
+    //     `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(fileName)}`,
+    //   )
+    //   .getElementLocator();
 
+    const fileInput = this.getFilesToApproveTree().getEntityNameInput(fileName);
     await fileInput.click();
     await fileInput.fill(newName);
   }
@@ -303,12 +320,14 @@ export class PublishingApprovalModal extends BaseElement {
       await this.editButton.click();
     }
 
-    const fileFolders = this.getFilesToApproveTree()
-      .getChildElementBySelector(FolderSelectors.folder)
-      .getChildElementBySelector(
-        `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`,
-      )
-      .getElementLocator();
+    // const fileFolders = this.getFilesToApproveTree()
+    //   .getChildElementBySelector(FolderSelectors.folder)
+    //   .getChildElementBySelector(
+    //     `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(folderName)}`,
+    //   )
+    //   .getElementLocator();
+    const fileFolders =
+      this.getFolderFilesToApprove().getFolderNameInput(folderName);
 
     await fileFolders.click();
     await fileFolders.fill(newFolderName);

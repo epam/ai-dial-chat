@@ -43,4 +43,10 @@ export class PublishFolder extends Folders {
       ),
     );
   }
+
+  public getFolderNameInput(folderName: string) {
+    return this.getFolderByName(folderName).locator(
+      `[data-qa="folder-input"]`,
+    );
+  }
 }

@@ -26,4 +26,10 @@ export class PublishEntitiesTree extends EntitiesTree {
       .locator('~*')
       .locator(IconSelectors.exclamationCircleIcon);
   }
+
+  public getEntityNameInput(entityName: string, entityIndex?: number) {
+    return this.getEntityByName(entityName, entityIndex).locator(
+      `[data-qa="entity-input"]`,
+    );
+  }
 }

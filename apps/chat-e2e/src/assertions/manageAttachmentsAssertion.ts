@@ -89,18 +89,18 @@ export class ManageAttachmentsAssertion extends BaseAssertion {
     fileModalSection: FileModalSection,
     expectedState: ElementState,
   ) {
-    let entityTree: Folders;
-    switch (fileModalSection) {
-      case FileModalSection.AllFiles:
-        entityTree = this.attachFilesModal.getAllFolderFiles();
-        break;
-      case FileModalSection.SharedWithMe:
-        entityTree = this.attachFilesModal.getSharedWithMeFolderFiles();
-        break;
-      case FileModalSection.Organization:
-        entityTree = this.attachFilesModal.getOrganizationFolderFiles();
-        break;
-    }
+    const entityTree = this.attachFilesModal.getFoldersTree(fileModalSection)
+    // switch (fileModalSection) {
+    //   case FileModalSection.AllFiles:
+    //     entityTree = this.attachFilesModal.getAllFolderFiles();
+    //     break;
+    //   case FileModalSection.SharedWithMe:
+    //     entityTree = this.attachFilesModal.getSharedWithMeFolderFiles();
+    //     break;
+    //   case FileModalSection.Organization:
+    //     entityTree = this.attachFilesModal.getOrganizationFolderFiles();
+    //     break;
+    // }
 
     await this.assertElementState(
       entityTree.getFolderName(folderName),
