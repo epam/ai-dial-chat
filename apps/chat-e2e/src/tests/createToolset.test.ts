@@ -655,39 +655,15 @@ dialTest(
 );
 
 dialTest(
-  '[Toolset]: message on Toolsets tab if no any toolset is created.\n' +
-    'Card detailed view is open when user redirected back to My workspace (where search and filters are applied) after creating toolset.\n' +
-    '[Toolset]:Endpoint url is save after login failed.\n' +
-    "Tooltip for long toolset's name displayed in several lines",
+  '[Toolset]: message on Toolsets tab if no any toolset is created',
   async ({
     marketplacePage,
     marketplace,
     marketplaceEntitiesAssertion,
     marketplaceHeader,
-    marketplaceFilter,
-    marketplaceEntitiesSection,
-    marketplaceEntities,
-    entityEditorPage,
-    entityEditorHeader,
-    entityDetailsModal,
     setTestIds,
-    baseAssertion,
-    toast,
-    toolsetEditorViewForm,
-    toolsetEditorViewFormAssertion,
-    toastAssertion,
-    customAppEditorAppSettingsPreviewBody,
-    entityEditorGeneralForm,
-    tooltipAssertion,
   }) => {
-    setTestIds('EPMRTC-6972', 'EPMRTC-7312', 'EPMRTC-6996', 'EPMRTC-6890');
-    const toolsetEntity = {
-      name: GeneratorUtil.randomToolsetName(),
-      version: ExpectedConstants.defaultEntityVersion,
-      endpoint: ExpectedConstants.mcpServerUrl,
-    };
-    let checkedOption: string;
-    let toolsetElement: BaseElement;
+    setTestIds('EPMRTC-6972');
 
     await dialTest.step(
       'Open My workspace directly, switch on "Toolsets" tab and verify "No toolset" label is displayed set some filters and search word',
@@ -712,21 +688,76 @@ dialTest(
         );
       },
     );
+  },
+);
 
-    await dialTest.step('Set some filters and search word', async () => {
-      await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
-      const filterOptions =
-        await marketplaceFilter.filterByPropertyOptionLabels(
-          MarketplaceFilterTypes.topics,
-        );
-      checkedOption = GeneratorUtil.randomArrayElement(filterOptions);
-      await marketplaceFilter
-        .filterByPropertyOptionInput(
-          MarketplaceFilterTypes.topics,
-          checkedOption,
-        )
-        .click();
-    });
+dialTest(
+  'Card detailed view is open when user redirected back to My workspace (where search and filters are applied) after creating toolset.\n' +
+    '[Toolset]:Endpoint url is save after login failed.\n' +
+    "Tooltip for long toolset's name displayed in several lines",
+  async ({
+    marketplacePage,
+    toolsetBuilder,
+    toolsetApiHelper,
+    marketplaceHeader,
+    marketplaceFilter,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    entityEditorPage,
+    entityEditorHeader,
+    entityDetailsModal,
+    setTestIds,
+    baseAssertion,
+    toast,
+    toolsetEditorViewForm,
+    toolsetEditorViewFormAssertion,
+    toastAssertion,
+    customAppEditorAppSettingsPreviewBody,
+    entityEditorGeneralForm,
+    tooltipAssertion,
+  }) => {
+    setTestIds('EPMRTC-7312', 'EPMRTC-6996', 'EPMRTC-6890');
+    const toolsetEntity = {
+      name: GeneratorUtil.randomToolsetName(),
+      version: ExpectedConstants.defaultEntityVersion,
+      endpoint: ExpectedConstants.mcpServerUrl,
+    };
+    let checkedOption: string;
+    let toolsetElement: BaseElement;
+
+    await dialTest.step(
+      `Precondition: Create toolset via API to make filter's panel available`,
+      async () => {
+        const toolsetModel = toolsetBuilder
+          .withDisplayName(GeneratorUtil.randomToolsetName())
+          .build();
+        toolsetForCleanup = await toolsetApiHelper.createToolset(toolsetModel);
+      },
+    );
+
+    await dialTest.step(
+      'Open My workspace directly, set some filters and search word',
+      async () => {
+        await marketplacePage.openMyWorkspacePage({
+          updateInstalledDeployments: false,
+          getStyles: true,
+        });
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.toolsetsTab.click();
+        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        const filterOptions =
+          await marketplaceFilter.filterByPropertyOptionLabels(
+            MarketplaceFilterTypes.topics,
+          );
+        checkedOption = GeneratorUtil.randomArrayElement(filterOptions);
+        await marketplaceFilter
+          .filterByPropertyOptionInput(
+            MarketplaceFilterTypes.topics,
+            checkedOption,
+          )
+          .click();
+      },
+    );
 
     await dialTest.step(
       'Click on "Add toolset" btn and proceed to "Toolset settings" step',
