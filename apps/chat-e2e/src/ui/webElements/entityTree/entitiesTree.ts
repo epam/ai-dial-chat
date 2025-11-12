@@ -2,6 +2,7 @@ import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import {
   EntitySelectors,
   IconSelectors,
+  PublishingApprovalModalSelectors,
   SideBarSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
@@ -64,17 +65,26 @@ export class EntitiesTree extends BaseElement {
   }
 
   getEntityByName(name: string, index?: number) {
+    return this.getEntityByNameInDisplayMode(name, index).or(
+      this.getEntityByNameInEditMode(name, index),
+    );
+  }
+
+  protected getEntityByNameInEditMode(name: string, index?: number) {
     return this.getChildElementBySelector(this.entitySelector)
-      .getElementLocatorByText(name, index)
-      .or(
-        this.getChildElementBySelector(this.entitySelector)
-          .getElementLocator()
-          .filter({
-            has: this.page.locator(
-              `${Tags.input}[${Attributes.value}="${name}"]`,
-            ),
-          }),
-      );
+      .getElementLocator()
+      .filter({
+        has: this.page.locator(
+          `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(name)}`,
+        ),
+      })
+      .nth(index ? index - 1 : 0);
+  }
+
+  protected getEntityByNameInDisplayMode(name: string, index?: number) {
+    return this.getChildElementBySelector(
+      this.entitySelector,
+    ).getElementLocatorByText(name, index);
   }
 
   getEntityByExactName(name: string): Locator {

@@ -1301,9 +1301,7 @@ dialAdminTest(
     for (const testCase of publicNameTestSteps) {
       await dialAdminTest.step(testCase.title, async () => {
         await adminPublishingApprovalModal.editButton.click();
-        await adminPublishingApprovalModal.publicAuthorInputEditMode.fillInInput(
-          testCase.name,
-        );
+        await adminPublishingApprovalModal.publicAuthor.fill(testCase.name);
         await adminPublishingApprovalModal.updateRequest();
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           publicAuthor: testCase.name,

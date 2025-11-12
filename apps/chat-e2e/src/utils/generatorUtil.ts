@@ -61,7 +61,7 @@ export class GeneratorUtil {
   }
 
   static randomFilename(extension: string) {
-    return `${filenamePrefix}${GeneratorUtil.randomString(7)}${extension}`;
+    return `${filenamePrefix}${GeneratorUtil.randomString(7)}.${extension}`;
   }
 
   static randomApplicationName() {

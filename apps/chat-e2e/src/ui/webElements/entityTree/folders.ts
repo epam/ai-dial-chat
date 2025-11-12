@@ -2,6 +2,7 @@ import {
   ChatSelectors,
   EntitySelectors,
   MenuSelectors,
+  PublishingApprovalModalSelectors,
   SideBarSelectors,
 } from '../../selectors';
 import { BaseElement, elementIndexExceptionError } from '../baseElement';
@@ -94,18 +95,27 @@ export class Folders extends BaseElement {
     return this.getFolderByName(name, index).locator(MenuSelectors.dotsMenu);
   };
 
-  public getFolderByName(name: string, index?: number) {
+  getFolderByName(name: string, index?: number) {
+    return this.getFolderByNameInDisplayMode(name, index).or(
+      this.getFolderByNameInEditMode(name, index),
+    );
+  }
+
+  protected getFolderByNameInEditMode(name: string, index?: number) {
     return this.getChildElementBySelector(FolderSelectors.folder)
-      .getElementLocatorByText(name, index)
-      .or(
-        this.getChildElementBySelector(FolderSelectors.folder)
-          .getElementLocator()
-          .filter({
-            has: this.page.locator(
-              `${Tags.input}[${Attributes.value}="${name}"]`,
-            ),
-          }),
-      );
+      .getElementLocator()
+      .filter({
+        has: this.page.locator(
+          `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(name)}`,
+        ),
+      })
+      .nth(index ? index - 1 : 0);
+  }
+
+  protected getFolderByNameInDisplayMode(name: string, index?: number) {
+    return this.getChildElementBySelector(
+      FolderSelectors.folder,
+    ).getElementLocatorByText(name, index);
   }
 
   public getRootFolderByName(name: string, index?: number) {
