@@ -30,14 +30,14 @@ dialAdminTest(
       marketplacePage,
       adminMarketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
-      marketplaceAgents,
+      marketplaceEntitiesSection,
+      marketplaceEntities,
       customApplicationBuilder,
       applicationApiHelper,
       adminNavigationPanel,
       adminMarketplaceHeader,
-      adminMarketplaceAgentsSection,
-      adminMarketplaceAgentsAssertion,
+      adminMarketplaceEntitiesSection,
+      adminMarketplaceEntitiesAssertion,
       publishingRequestDialog,
       publishingRequestDialogAssertion,
       publishingRulesAssertion,
@@ -147,11 +147,12 @@ dialAdminTest(
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appEntity);
+        appElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities.getEntityElementDotsMenu(appElement).click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.publish);
       },
     );
@@ -375,8 +376,8 @@ dialAdminTest(
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
         appElement =
-          await adminMarketplaceAgentsSection.findAgentElement(appEntity);
-        await adminMarketplaceAgentsAssertion.assertElementState(
+          await adminMarketplaceEntitiesSection.findEntityElement(appEntity);
+        await adminMarketplaceEntitiesAssertion.assertElementState(
           appElement,
           'visible',
         );

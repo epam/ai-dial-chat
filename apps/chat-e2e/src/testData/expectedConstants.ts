@@ -257,9 +257,9 @@ export const ExpectedConstants = {
   workspacePath: () =>
     `${ExpectedConstants.marketplacePath}?${ExpectedConstants.workspaceTab}`,
   createCustomAppPath: '/apps-editor?step=General&schema=custom_app',
-  noWorkspaceAgentsFoundMessage:
+  noWorkspaceEntitiesFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-  noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  noMarketplaceEntitiesFoundMessage: `Sorry, we couldn't find any results for your search.`,
   addAppButtonTitle: 'Add app',
   addToolsetButtonTitle: 'Add toolset',
   openInNewTabButtonTitle: 'Open in New Tab',
@@ -335,6 +335,8 @@ export const ExpectedConstants = {
     `${conversationId.substring(0, conversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversationId.substring(conversationId.indexOf(ItemUtil.entityIdSeparator) + ItemUtil.entityIdSeparator.length)}`,
   externalAppTooltip: 'External application',
   addToolsetHeaderTitle: 'Add toolset',
+  noToolsetsHeader: 'No toolsets',
+  noToolsetsLabel: `You don't have any toolsets.`,
   definitionLabel: 'Definition',
   endpointLabel: 'Endpoint',
   endpointPlaceholder: 'Enter endpoint',
@@ -348,6 +350,8 @@ export const ExpectedConstants = {
   allowedToolsLabel: 'Allowed tools',
   allowedToolsLabelSubtitle:
     'The list of tools will be available after filling in the definition and authentication section',
+  oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
+  mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
 };
 
 export enum Types {
@@ -386,6 +390,7 @@ export enum MenuOptions {
   info = 'Info',
   copyLink = 'Copy link',
   removeAccess = 'Remove access',
+  loginWithMyCreds = 'Login with my creds',
 }
 
 export enum FilterMenuOptions {

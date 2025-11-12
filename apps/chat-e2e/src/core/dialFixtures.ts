@@ -55,10 +55,11 @@ import {
   ConversationToCompareAssertion,
   DownloadAssertion,
   EntityEditorPreviewCardAssertion,
+  EntityEditorPreviewToggleAssertion,
   EntityTreeAssertion,
   FolderAssertion,
   FooterAssertion,
-  MarketplaceAgentsAssertion,
+  MarketplaceEntitiesAssertion,
   MenuAssertion,
   PlaybackAssertion,
   PromptAssertion,
@@ -145,9 +146,9 @@ import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
-import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
-import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
+import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplaceEntities';
+import { MarketplaceEntitiesSection } from '@/src/ui/webElements/marketplace/marketplaceEntitiesSection';
 import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceFilter';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
@@ -206,8 +207,8 @@ const dialTest = test.extend<{
   marketplaceSidebar: MarketplaceSidebar;
   marketplaceFilter: MarketplaceFilter;
   marketplace: Marketplace;
-  marketplaceAgentsSection: MarketplaceAgentsSection;
-  marketplaceAgents: MarketplaceAgents;
+  marketplaceEntitiesSection: MarketplaceEntitiesSection;
+  marketplaceEntities: MarketplaceEntities;
   entityDetailsModal: EntityDetailsModal;
   marketplaceHeader: MarketplaceHeader;
   addAppDropdownMenu: DropdownMenu;
@@ -241,7 +242,7 @@ const dialTest = test.extend<{
   organizationFolderConversations: Folders;
   conversationSettingsModal: ConversationSettingsModal;
   talkToAgentDialog: TalkToAgentDialog;
-  talkToAgents: MarketplaceAgents;
+  talkToAgents: MarketplaceEntities;
   agentSettings: AgentSettings;
   temperatureSlider: TemperatureSlider;
   agentInfo: AgentInfo;
@@ -371,7 +372,7 @@ const dialTest = test.extend<{
   selectFolderModalAssertion: SelectFolderModalAssertion;
   conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
   agentInfoAssertion: AgentInfoAssertion;
-  marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
+  marketplaceEntitiesAssertion: MarketplaceEntitiesAssertion;
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
   publishingRequestFolderPromptAssertion: PublishFolderAssertion<PublishFolder>;
@@ -383,7 +384,7 @@ const dialTest = test.extend<{
   folderToPublishAssertion: PublishFolderAssertion<PublishFolderConversations>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
-  agentVersionsDropdownMenuAssertion: MenuAssertion;
+  entityVersionsDropdownMenuAssertion: MenuAssertion;
   addAppDropdownMenuAssertion: MenuAssertion;
   sharedWithMeConversationAssertion: SideBarConversationAssertion<SharedWithMeConversationsTree>;
   localStorageAssertion: LocalStorageAssertion;
@@ -399,8 +400,10 @@ const dialTest = test.extend<{
   publicationApiAssertion: PublicationApiAssertion;
   additionalShareUserPublicationApiAssertion: PublicationApiAssertion;
   additionalSecondShareUserPublicationApiAssertion: PublicationApiAssertion;
+  entityEditorGeneralInfoPreviewToggleAssertion: EntityEditorPreviewToggleAssertion;
   entityEditorGeneralInfoPreviewCardAssertion: EntityEditorPreviewCardAssertion;
   toolsetEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
+  toolsetEditorSettingsPreviewToggleAssertion: EntityEditorPreviewToggleAssertion;
   toolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
   externalAppEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
 }>({
@@ -642,16 +645,17 @@ const dialTest = test.extend<{
     const marketplace = marketplaceContainer.getMarketplace();
     await use(marketplace);
   },
-  marketplaceAgentsSection: async ({ marketplace }, use) => {
-    const marketplaceAgentsSection = marketplace.getMarketplaceAgentsSection();
-    await use(marketplaceAgentsSection);
+  marketplaceEntitiesSection: async ({ marketplace }, use) => {
+    const marketplaceEntitiesSection =
+      marketplace.getMarketplaceEntitiesSection();
+    await use(marketplaceEntitiesSection);
   },
-  marketplaceAgents: async ({ marketplaceAgentsSection }, use) => {
-    const marketplaceAgents = marketplaceAgentsSection.getAgents();
-    await use(marketplaceAgents);
+  marketplaceEntities: async ({ marketplaceEntitiesSection }, use) => {
+    const marketplaceEntities = marketplaceEntitiesSection.getEntities();
+    await use(marketplaceEntities);
   },
-  entityDetailsModal: async ({ marketplaceAgents }, use) => {
-    const entityDetailsModal = marketplaceAgents.getEntityDetailsModal();
+  entityDetailsModal: async ({ marketplaceEntities }, use) => {
+    const entityDetailsModal = marketplaceEntities.getEntityDetailsModal();
     await use(entityDetailsModal);
   },
   marketplaceHeader: async ({ marketplace }, use) => {
@@ -1420,11 +1424,11 @@ const dialTest = test.extend<{
     const agentInfoAssertion = new AgentInfoAssertion(agentInfo);
     await use(agentInfoAssertion);
   },
-  marketplaceAgentsAssertion: async ({ marketplaceAgents }, use) => {
-    const marketplaceAgentsAssertion = new MarketplaceAgentsAssertion(
-      marketplaceAgents,
+  marketplaceEntitiesAssertion: async ({ marketplaceEntities }, use) => {
+    const marketplaceEntitiesAssertion = new MarketplaceEntitiesAssertion(
+      marketplaceEntities,
     );
-    await use(marketplaceAgentsAssertion);
+    await use(marketplaceEntitiesAssertion);
   },
   conversationToCompareAssertion: async ({ compareConversation }, use) => {
     const conversationToCompareAssertion = new ConversationToCompareAssertion(
@@ -1505,11 +1509,11 @@ const dialTest = test.extend<{
     );
     await use(messageTemplateModalAssertion);
   },
-  agentVersionsDropdownMenuAssertion: async ({ entityDetailsModal }, use) => {
-    const agentVersionsDropdownMenuAssertion = new MenuAssertion(
+  entityVersionsDropdownMenuAssertion: async ({ entityDetailsModal }, use) => {
+    const entityVersionsDropdownMenuAssertion = new MenuAssertion(
       entityDetailsModal.getVersionDropdownMenu(),
     );
-    await use(agentVersionsDropdownMenuAssertion);
+    await use(entityVersionsDropdownMenuAssertion);
   },
   addAppDropdownMenuAssertion: async ({ addAppDropdownMenu }, use) => {
     const addAppDropdownMenuAssertion = new MenuAssertion(addAppDropdownMenu);
@@ -1606,6 +1610,16 @@ const dialTest = test.extend<{
       );
     await use(additionalSecondShareUserPublicationApiAssertion);
   },
+  entityEditorGeneralInfoPreviewToggleAssertion: async (
+    { entityEditorGeneralInfoPreview },
+    use,
+  ) => {
+    const entityEditorGeneralInfoPreviewToggleAssertion =
+      new EntityEditorPreviewToggleAssertion(
+        entityEditorGeneralInfoPreview.getEntityEditorPreviewToggle(),
+      );
+    await use(entityEditorGeneralInfoPreviewToggleAssertion);
+  },
   entityEditorGeneralInfoPreviewCardAssertion: async (
     { entityEditorGeneralInfoPreviewCard },
     use,
@@ -1621,6 +1635,16 @@ const dialTest = test.extend<{
     const toolsetEditorSettingsPreviewCardAssertion =
       new EntityEditorPreviewCardAssertion(toolsetEditorSettingsPreviewCard);
     await use(toolsetEditorSettingsPreviewCardAssertion);
+  },
+  toolsetEditorSettingsPreviewToggleAssertion: async (
+    { toolsetEditorSettingsPreviewBody },
+    use,
+  ) => {
+    const toolsetEditorSettingsPreviewToggleAssertion =
+      new EntityEditorPreviewToggleAssertion(
+        toolsetEditorSettingsPreviewBody.getEntityEditorPreviewToggle(),
+      );
+    await use(toolsetEditorSettingsPreviewToggleAssertion);
   },
   externalAppEditorSettingsPreviewCardAssertion: async (
     { externalAppEditorAppSettingsPreviewCard },
