@@ -1042,7 +1042,7 @@ dialAdminTest(
       setTestIds,
       adminLocalStorageManager,
       adminChatHeaderAssertion,
-      baseAssertion,
+      adminPublishingApprovalModalAssertion,
       adminChatHeader,
       adminChatHeaderDropdownMenu,
       adminRenameConversationModal,
@@ -1186,12 +1186,8 @@ dialAdminTest(
       'Click "Back to publication request" button - updated name is displayed on request form in Conversations section',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        const conversationToApprove =
-          conversationsTree.getEntityByName(updatedName);
-        await baseAssertion.assertElementState(
-          conversationToApprove,
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
           'visible',
         );
       },
@@ -1212,7 +1208,7 @@ dialAdminTest(
         );
         updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_3`;
         await adminRenameConversationModal.editConversationNameWithSaveButton(
-          updatedName,
+          updatedName, {isHttpMethodTriggered: true}
         );
       },
     );
@@ -1233,19 +1229,15 @@ dialAdminTest(
       'Click "Back to publication request" button - chat\'s name was updated on request form in Conversations section',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        const conversationToApprove =
-          conversationsTree.getEntityByName(updatedName);
-        await baseAssertion.assertElementState(
-          conversationToApprove,
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
           'visible',
         );
       },
     );
 
     await dialAdminTest.step(
-      'Rename chat multiple times with special symbols',
+      'Rename chat multiple times with special symbols and verify updated name with special symbols is displayed in the request',
       async () => {
         for (let i = 1; i <= 2; i++) {
           updatedName =
@@ -1255,18 +1247,8 @@ dialAdminTest(
             );
           await adminPublishingApprovalModal.updateRequest();
         }
-      },
-    );
-
-    await dialAdminTest.step(
-      'Verify updated name with special symbols is displayed in the request',
-      async () => {
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        const conversationToApprove =
-          conversationsTree.getEntityByName(updatedName);
-        await baseAssertion.assertElementState(
-          conversationToApprove,
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
           'visible',
         );
       },
@@ -1291,12 +1273,8 @@ dialAdminTest(
       'Click "Back to publication request" button and verify final chat name is displayed',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        const conversationToApprove =
-          conversationsTree.getEntityByName(updatedName);
-        await baseAssertion.assertElementState(
-          conversationToApprove,
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
           'visible',
         );
       },
@@ -1312,7 +1290,7 @@ dialAdminTest(
           "Click Edit button and add a dot at the end of the author's public name",
         name: `${publishRequest.displayAuthor}.`,
       },
-      // #5024
+      // # the step is blocked by the issue with id: 5024
       // {
       //   title: "Click Edit button and add special chars to author's public name",
       //   name: `${publishRequest.displayAuthor}_${ExpectedConstants.allowedSpecialChars}`,
@@ -1326,10 +1304,7 @@ dialAdminTest(
           testCase.name,
         );
         await adminPublishingApprovalModal.updateRequest();
-        await baseAssertion.assertElementText(
-          adminPublishingApprovalModal.publicAuthor,
-          testCase.name,
-        );
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({publicAuthor: testCase.name})
         publicAuthorName = testCase.name;
       });
     }
@@ -1385,13 +1360,14 @@ dialAdminTest(
       adminLocalStorageManager,
       baseAssertion,
       adminPublicationReviewControl,
+      adminPublishConversationsTreeAssertion,
     },
     testInfo,
   ) => {
     setTestIds(/*'EPMRTC-6500',*/ 'EPMRTC-6790', 'EPMRTC-6459');
     let publishedConversation: Conversation;
     const initialVersion = '1.1.1';
-    const firstVersion = '0.0.1';
+    const firstVersion = ExpectedConstants.defaultAppVersion;
     let publishRequest1: PublicationRequestModel;
 
     const secondVersion = '0.0.2';
@@ -1437,23 +1413,21 @@ dialAdminTest(
     await dialAdminTest.step(
       'View that the initial version is displayed on the request form, change and assert version. Approve the request',
       async () => {
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        await baseAssertion.assertElementState(
-          conversationsTree.getEntityByName(publishedConversation.name),
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: publishedConversation.name },
           'visible',
         );
-        await baseAssertion.assertElementText(
-          conversationsTree.getEntityVersion(publishedConversation.name),
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
           initialVersion,
-        );
+          );
         await adminPublishingApprovalModal.renameConversationToApproveVersion(
           publishedConversation.name,
           firstVersion,
         );
         await adminPublishingApprovalModal.updateRequest();
-        await baseAssertion.assertElementText(
-          conversationsTree.getEntityVersion(publishedConversation.name),
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
           firstVersion,
         );
         await adminPublishingApprovalModal.goToEntityReview({
@@ -1486,7 +1460,7 @@ dialAdminTest(
       },
     );
 
-    //TODO EPMRTC-6500 case needs to be fixed
+    //TODO EPMRTC-6500 case needs to be fixed. Issue id: 3410
     // await dialAdminTest.step(
     //   'View that previous version 0.0.1 and current version 0.0.2 are displayed on the request form',
     //   async () => {
@@ -1547,7 +1521,7 @@ dialAdminTest(
     // );
 
     await dialAdminTest.step(
-      'Сhange version according to format (example 0.0.5) and click "Update request" buttonб click "Go to a review" link and check version',
+      'Сhange version according to format (example 0.0.5) and click "Update request" button, click "Go to a review" link and check version',
       async () => {
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           publishRequest2.name!,
