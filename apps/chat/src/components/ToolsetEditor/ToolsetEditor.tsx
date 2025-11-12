@@ -58,7 +58,7 @@ export const ToolsetEditor = () => {
       const payloadToolset = getToolsetPayload(
         {
           name: data.name,
-          endpoint: data.endpoint,
+          endpoint: data.endpoint.trim(),
           iconUrl: data.iconUrl,
           transport: data.protocol,
           description: data.description,

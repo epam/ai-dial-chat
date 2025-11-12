@@ -283,7 +283,7 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
           const newToolset = getToolsetPayload(
             {
               ...toolsetDetails,
-              endpoint,
+              endpoint: endpoint.trim(),
               transport,
               allowedTools,
               authSettings: {
