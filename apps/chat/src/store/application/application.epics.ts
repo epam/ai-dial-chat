@@ -803,8 +803,6 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
       const actions: AppAction[] = [];
 
       if (route.pathname === Routes.Marketplace) {
-        actions.push(MarketplaceActions.initQueryParams());
-
         if (!!payload.shouldSelectApplication && !!reference) {
           actions.push(
             MarketplaceActions.setDetailsEntity({
@@ -814,6 +812,7 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
             }),
           );
         }
+        actions.push(MarketplaceActions.initQueryParams());
       }
 
       if (route.pathname === Routes.Chat) {
