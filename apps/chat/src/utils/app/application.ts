@@ -1,7 +1,3 @@
-import { NextRouter } from 'next/router';
-
-import { Observable, concatMap, from } from 'rxjs';
-
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
@@ -22,7 +18,6 @@ import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import { QuickApp2Config, QuickAppConfig } from '@/src/types/quick-apps';
-import { AppAction } from '@/src/types/store';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
@@ -426,15 +421,3 @@ export const isDialAiEntityModel = (
   entity: MarketplaceEntity,
 ): entity is DialAIEntityModel =>
   entity?.type === EntityType.Application || entity?.type === EntityType.Model;
-
-export const navigateAndThen = (
-  router: NextRouter,
-  to: Parameters<NextRouter['push']>[0],
-  after$: Observable<AppAction>,
-) => {
-  return from(
-    router.push(to, undefined, {
-      shallow: true,
-    }),
-  ).pipe(concatMap(() => after$));
-};
