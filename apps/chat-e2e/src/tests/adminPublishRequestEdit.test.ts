@@ -1166,12 +1166,11 @@ dialAdminTest(
       "In chat's header update chat's name and verify the updated name is displayed in chat's header and sidebar",
       async () => {
         await adminChatHeader.dotsMenu.click();
-        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename, {
-          triggeredHttpMethod: 'POST',
-        });
+        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename);
         updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_2`;
         await adminRenameConversationModal.editConversationNameWithSaveButton(
           updatedName,
+          { isHttpMethodTriggered: true },
         );
         await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
