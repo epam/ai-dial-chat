@@ -80,6 +80,7 @@ const ReviewQuickApp2SectionView = ({
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  // TODO: when uploading application also upload toolsets from config to get full data
   const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
       config.tool_sets?.reduce<{

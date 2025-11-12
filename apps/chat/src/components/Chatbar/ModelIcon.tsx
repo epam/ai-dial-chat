@@ -12,7 +12,7 @@ import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
-import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
+import { isApplicationId, isFileId, isToolsetId } from '@/src/utils/app/id';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -45,7 +45,7 @@ export function FallbackIcon({ entityType, size }: FallbackIconProps) {
   return (
     <Icon
       size={Math.round(size / 1.25)}
-      className="text-primary dark:invert"
+      className="z-0 text-primary dark:invert"
       stroke={entityType === EntityType.Toolset ? 1.1 : 1.2}
     />
   );
@@ -124,7 +124,10 @@ const ModelIconTemplate = memo(
     const iconUrl = useMemo(() => {
       if (!entity?.iconUrl) return schemaApplicationFallbackUrl ?? fallbackUrl;
 
-      if (isApplicationId(entity.id) || isToolsetId(entity.id)) {
+      if (
+        (isApplicationId(entity.id) || isToolsetId(entity.id)) &&
+        isFileId(entity.iconUrl)
+      ) {
         return constructPath('/api', ApiUtils.encodeApiUrl(entity.iconUrl));
       }
 
