@@ -15,17 +15,17 @@ import { SuggestionButton } from './SuggestionButton';
 interface TalkToNotFound {
   isMyWorkspace: boolean;
   onOpenMarketplaceTab: () => void;
-  hasNoItems?: boolean;
+  isSearchMode?: boolean;
 }
 
 export const TalkToNotFound = ({
   isMyWorkspace,
   onOpenMarketplaceTab,
-  hasNoItems,
+  isSearchMode,
 }: TalkToNotFound) => {
   const { t } = useTranslation(Translation.Chat);
 
-  if (hasNoItems) {
+  if (isSearchMode) {
     return (
       <div className="flex size-full flex-col items-center justify-center gap-3">
         <IconClipboardX className="text-secondary" size={60} stroke={0.5} />
