@@ -66,6 +66,7 @@ interface ChipTooltipContentProps {
   isInvalid: boolean;
   isLoggedOut: boolean;
   isInSelectionList?: boolean;
+  hideStatusMessage?: boolean;
 }
 
 export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
@@ -76,18 +77,21 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
   isInvalid,
   isLoggedOut,
   isInSelectionList,
+  hideStatusMessage,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
   return (
     <div className="flex max-w-[440px] flex-col px-2 py-1">
-      <StatusMessage
-        id={id}
-        item={item}
-        isInvalid={isInvalid}
-        isLoggedOut={isLoggedOut}
-        isInSelectionList={isInSelectionList}
-      />
+      {!hideStatusMessage && (
+        <StatusMessage
+          id={id}
+          item={item}
+          isInvalid={isInvalid}
+          isLoggedOut={isLoggedOut}
+          isInSelectionList={isInSelectionList}
+        />
+      )}
 
       <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 flex-col text-sm">
