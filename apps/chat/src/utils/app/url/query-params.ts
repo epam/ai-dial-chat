@@ -1,33 +1,35 @@
 import Router from 'next/router';
 
 /**
- * Updates a query parameter in the URL, avoiding unnecessary re-renders.
+ * Updates query parameters in the URL, avoiding unnecessary re-renders.
  *
- * @param key - the name of the parameter
- * @param value - the new value; if null, the parameter is deleted
+ * @param updates - the object with the key-value pairs of the parameters to update
  * @param options.shallow - use shallow routing (default: true)
  */
-export const updateQueryParamWithReplace = (
-  key: string,
-  value: string | null,
+export const updateQueryParams = (
+  updates: Record<string, string | null>,
   options: Partial<{ shallow: boolean }> = { shallow: true },
 ) => {
   if (typeof window === 'undefined') return;
 
-  const params = new URLSearchParams(window.location.search);
+  const currentQuery = { ...Router.query };
 
-  if (value === null) {
-    params.delete(key);
-  } else {
-    params.set(key, value);
-  }
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value === null) {
+      delete currentQuery[key];
+    } else {
+      currentQuery[key] = value;
+    }
+  });
 
-  const newQuery = params.toString();
-  const currentQuery = window.location.search.slice(1);
-
-  if (newQuery !== currentQuery) {
-    Router.replace(`?${newQuery}`, undefined, {
+  Router.replace(
+    {
+      pathname: Router.pathname,
+      query: currentQuery,
+    },
+    undefined,
+    {
       shallow: options?.shallow ?? true,
-    });
-  }
+    },
+  );
 };
