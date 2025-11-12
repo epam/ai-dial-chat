@@ -24,6 +24,7 @@ import {
   Message,
   PublishActions,
   Role,
+  onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
 
 export interface Props {
@@ -38,6 +39,7 @@ export interface Props {
     index: number,
     conversation: Conversation,
     likeStatus: LikeState,
+    comment?: string,
   ) => void;
   onDelete?: (messageIndex: number, conversation: Conversation) => void;
   onEdit: (
@@ -90,10 +92,10 @@ export const ChatMessage: FC<Props> = memo(
       return isFirstMessageSystem ? messageIndex + 1 : messageIndex;
     }, [isFirstMessageSystem, messageIndex]);
 
-    const handleLike = useCallback(
-      (likeStatus: LikeState) => {
+    const handleLike: onLikeMessageHandler = useCallback(
+      (likeStatus: LikeState, comment?: string) => {
         if (conversation && onLike) {
-          onLike(messageIndex, conversation, likeStatus);
+          onLike(messageIndex, conversation, likeStatus, comment);
         }
       },
       [conversation, onLike, messageIndex],

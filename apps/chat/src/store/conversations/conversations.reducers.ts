@@ -502,6 +502,7 @@ export const conversationsSlice = createSlice({
         conversationId: string;
         messageIndex: number;
         rate: LikeState;
+        comment?: string;
       }>,
     ) => state,
     rateMessageSuccess: (

@@ -41,6 +41,11 @@ export enum LikeState {
   NoState = 0,
 }
 
+export type onLikeMessageHandler = (
+  likeStatus: LikeState,
+  comment?: string,
+) => void;
+
 export interface MessageSettings {
   prompt: string;
   temperature: number;
