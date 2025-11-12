@@ -5,19 +5,21 @@ import {
   concat,
   filter,
   forkJoin,
+  from,
   iif,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { navigateAndThen } from '@/src/utils/app/application';
 import { getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import { isMyEntity } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
@@ -264,7 +266,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
           return ToolsetService.updateToolset(updatedToolset).pipe(
             switchMap(() =>
               ToolsetService.getToolsetById(updatedToolset.id).pipe(
-                switchMap((savedUpdatedToolset) => {
+                mergeMap((savedUpdatedToolset) => {
                   if (!savedUpdatedToolset) {
                     return of(
                       UIActions.showErrorToast(
@@ -274,47 +276,43 @@ const updateToolsetEpic: AppEpic = (action$) =>
                       ),
                     );
                   }
+                  const actions: AppAction[] = [];
 
-                  return concat(
-                    iif(
-                      () => !!payload.exitAfterSave,
-                      of(
-                        ToolsetActions.exitEditor({
-                          redirectUrl: payload.redirectUrl,
-                          shouldSelectToolset: payload.shouldSelectToolset,
-                        }),
-                      ),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !payload.exitAfterSave,
-                      of(
-                        ToolsetActions.updateToolsetSuccess({
-                          oldToolset: payload.oldToolset,
-                          newToolset: savedUpdatedToolset,
-                        }),
-                      ),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.tabToOpen,
-                      of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.auth,
-                      of(
-                        ToolsetActions.startSignInProcess({
-                          authLevel:
-                            payload?.auth?.authLevel ??
-                            ToolsetCredentialsLevel.GLOBAL,
-                          apiKey: payload?.auth?.apiKey,
-                          toolset: savedUpdatedToolset,
-                        }),
-                      ),
-                      EMPTY,
-                    ),
-                  );
+                  if (payload.auth) {
+                    actions.push(
+                      ToolsetActions.startSignInProcess({
+                        authLevel:
+                          payload?.auth?.authLevel ??
+                          ToolsetCredentialsLevel.GLOBAL,
+                        apiKey: payload?.auth?.apiKey,
+                        toolset: savedUpdatedToolset,
+                      }),
+                    );
+                  }
+
+                  if (payload.exitAfterSave) {
+                    actions.push(
+                      ToolsetActions.exitEditor({
+                        redirectUrl: payload.redirectUrl,
+                        shouldSelectToolset: payload.shouldSelectToolset,
+                      }),
+                    );
+                  } else {
+                    actions.push(
+                      ToolsetActions.updateToolsetSuccess({
+                        oldToolset: payload.oldToolset,
+                        newToolset: savedUpdatedToolset,
+                      }),
+                    );
+
+                    if (payload.tabToOpen) {
+                      actions.push(
+                        ToolsetActions.setEditorStep(payload.tabToOpen!),
+                      );
+                    }
+                  }
+
+                  return from(actions);
                 }),
               ),
             ),
@@ -837,45 +835,38 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const afterRedirect$ = concat(
-        iif(
-          () => route.pathname === Routes.Marketplace,
-          of(MarketplaceActions.initQueryParams()),
-          EMPTY,
-        ),
-        iif(
-          () =>
-            !!payload.shouldSelectToolset &&
-            route.pathname === Routes.Marketplace &&
-            !!reference,
-          of(
+      const actions: AppAction[] = [];
+
+      if (route.pathname === Routes.Marketplace) {
+        actions.push(MarketplaceActions.initQueryParams());
+
+        if (payload.shouldSelectToolset && reference) {
+          actions.push(
             MarketplaceActions.setDetailsEntity({
               reference: reference as string,
               type: MarketplaceEntitiesTabs.TOOLSETS,
               isSuggested: false,
             }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () => route.pathname === Routes.Chat && !publicationUrl,
-          of(
+          );
+        }
+      }
+
+      if (route.pathname === Routes.Chat) {
+        if (publicationUrl) {
+          actions.push(
+            ConversationsActions.selectConversations({ conversationIds: [] }),
+            PublicationActions.setIsToolsetReview(true),
+          );
+        } else {
+          actions.push(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
             }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () => route.pathname === Routes.Chat && !!publicationUrl,
-          of(
-            ConversationsActions.selectConversations({ conversationIds: [] }),
-            PublicationActions.setIsToolsetReview(true),
-          ),
-          EMPTY,
-        ),
-      );
-      return navigateAndThen(router, route, afterRedirect$);
+          );
+        }
+      }
+
+      return navigateAndThen(router, route, from(actions));
     }),
   );
 

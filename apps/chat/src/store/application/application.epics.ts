@@ -28,7 +28,6 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import {
   isApplicationType,
-  navigateAndThen,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
@@ -36,6 +35,7 @@ import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import {
   isEntityIdExternal,
   isEntityIdLocal,
@@ -335,7 +335,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
               updatedCustomApplication,
               payload.schema,
             ).pipe(
-              switchMap(() => {
+              mergeMap(() => {
                 const featuresRecord: Record<string, boolean | undefined> = {
                   ...(updatedCustomApplication.features || {}),
                 };
@@ -345,46 +345,32 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   features: mergeFeatures(featuresRecord),
                 };
 
-                return concat(
-                  iif(
-                    () => !!payload.isSaveAndExit,
-                    of(
-                      ApplicationActions.exitEditor({
-                        redirectUrl: payload.redirectUrl,
-                        shouldSelectApplication:
-                          payload.shouldSelectApplication,
-                      }),
-                    ),
-                    EMPTY,
-                  ),
-                  iif(
-                    () => !payload.isSaveAndExit,
-                    of(
-                      ApplicationActions.updateSuccess(
-                        updatedCustomApplication,
-                      ),
-                    ),
-                    EMPTY,
-                  ),
+                const actions: AppAction[] = [
+                  ModelsActions.updateModel({
+                    model: modelData,
+                    oldApplicationId: payload.oldApplication.id,
+                  }),
+                ];
 
-                  of(
-                    ModelsActions.updateModel({
-                      model: modelData,
-                      oldApplicationId: payload.oldApplication.id,
+                if (payload.isSaveAndExit) {
+                  actions.push(
+                    ApplicationActions.exitEditor({
+                      redirectUrl: payload.redirectUrl,
+                      shouldSelectApplication: payload.shouldSelectApplication,
                     }),
-                  ),
-                  iif(
-                    () => !!payload.tabToOpen,
-                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
-                    EMPTY,
-                  ),
+                  );
+                } else {
+                  actions.push(
+                    ApplicationActions.updateSuccess(updatedCustomApplication),
+                  );
+                  if (payload.tabToOpen) {
+                    actions.push(
+                      ApplicationActions.setEditorStep(payload.tabToOpen),
+                    );
+                  }
+                }
 
-                  iif(
-                    () => !!payload.tabToOpen,
-                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
-                    EMPTY,
-                  ),
-                );
+                return from(actions);
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
@@ -814,61 +800,46 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const afterRedirect$ = concat(
-        iif(
-          () => route.pathname === Routes.Marketplace,
-          of(MarketplaceActions.initQueryParams()),
-          EMPTY,
-        ),
-        iif(
-          () =>
-            !!payload.shouldSelectApplication &&
-            route.pathname === Routes.Marketplace &&
-            !!reference,
-          of(
+      const actions: AppAction[] = [];
+
+      if (route.pathname === Routes.Marketplace) {
+        actions.push(MarketplaceActions.initQueryParams());
+
+        if (!!payload.shouldSelectApplication && !!reference) {
+          actions.push(
             MarketplaceActions.setDetailsEntity({
               reference: reference as string,
               type: MarketplaceEntitiesTabs.AGENTS,
               isSuggested: false,
             }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () =>
-            route.pathname === Routes.Chat &&
-            !publicationUrl &&
-            !returnConversationIds?.length,
-          of(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+          );
+        }
+      }
+
+      if (route.pathname === Routes.Chat) {
+        if (publicationUrl) {
+          actions.push(
+            ConversationsActions.selectConversations({
+              conversationIds: [],
             }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () =>
-            route.pathname === Routes.Chat &&
-            !publicationUrl &&
-            !!returnConversationIds?.length,
-          of(
+            PublicationActions.setIsApplicationReview(true),
+          );
+        } else if (returnConversationIds?.length) {
+          actions.push(
             ConversationsActions.selectConversations({
               conversationIds: returnConversationIds as string[],
             }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () => route.pathname === Routes.Chat && !!publicationUrl,
-          of(
-            ConversationsActions.selectConversations({ conversationIds: [] }),
-            PublicationActions.setIsApplicationReview(true),
-          ),
-          EMPTY,
-        ),
-      );
+          );
+        } else {
+          actions.push(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          );
+        }
+      }
 
-      return navigateAndThen(router, route, afterRedirect$);
+      return navigateAndThen(router, route, from(actions));
     }),
   );
 
