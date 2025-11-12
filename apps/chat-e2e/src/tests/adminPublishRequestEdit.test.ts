@@ -1574,7 +1574,6 @@ dialAdminTest(
       adminLocalStorageManager,
       baseAssertion,
       dialHomePage,
-      organizationFolderConversations,
       localStorageManager,
       adminApproveRequiredConversationsAssertion,
       chatBar,
