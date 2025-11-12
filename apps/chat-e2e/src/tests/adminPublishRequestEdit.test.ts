@@ -956,8 +956,8 @@ dialAdminTest(
             .click(),
         );
         const downloadedFileName =
-          downloadedData.path.split('\\')[
-            downloadedData.path.split('\\').length - 1
+          downloadedData.path.split(path.sep)[
+            downloadedData.path.split(path.sep).length - 1
           ];
         baseAssertion.assertValuesAreEqual(
           downloadedFileName,
