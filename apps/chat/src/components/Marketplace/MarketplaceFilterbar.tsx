@@ -299,7 +299,7 @@ export const MarketplaceFilterbar = memo(() => {
             <div className="flex grow flex-col items-center justify-center gap-3">
               <IconClipboardX
                 size={60}
-                strokeWidth={1}
+                strokeWidth={0.5}
                 className="text-secondary"
               />
               <p className="text-center text-sm leading-[24px] text-primary">
