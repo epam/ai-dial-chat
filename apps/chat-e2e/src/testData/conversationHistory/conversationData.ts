@@ -442,6 +442,7 @@ export class ConversationData extends FolderData {
       const conversation = this.prepareConversationWithAttachmentsInRequest(
         conversationData.model,
         conversationData.hasRequest,
+        undefined,
         ...conversationData.attachmentUrl,
       );
       historyConversations.push(conversation);
@@ -499,8 +500,6 @@ export class ConversationData extends FolderData {
       conversationId = `${folder.id}/${conversationId}`;
       this.conversationBuilder.withFolderId(folder.id);
     }
-    return this.conversationBuilder.withId(conversationId).build();
-
     return this.conversationBuilder.withId(conversationId).build();
   }
 

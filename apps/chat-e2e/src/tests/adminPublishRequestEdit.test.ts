@@ -724,6 +724,7 @@ dialAdminTest(
       adminAttachFilesModal,
       adminSendMessage,
       baseAssertion,
+      adminFilesToApproveTree,
     },
     testInfo,
   ) => {
@@ -950,8 +951,7 @@ dialAdminTest(
       'Assert that file can be downloaded and has the updated name and extension',
       async () => {
         const downloadedData = await adminDialHomePage.downloadData(() =>
-          adminPublishingApprovalModal
-            .getFilesToApproveTree()
+          adminFilesToApproveTree
             .getFileDownloadIcon(updatedCloudImageName)
             .click(),
         );
@@ -1153,7 +1153,7 @@ dialAdminTest(
     }
 
     await dialAdminTest.step(
-      'Click "Go to a review" link and view chat\'s name on chat\'s details screen',
+      `Click "Go to a review" link and view chat's name on chat's details screen`,
       async () => {
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
@@ -1208,7 +1208,8 @@ dialAdminTest(
         );
         updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_3`;
         await adminRenameConversationModal.editConversationNameWithSaveButton(
-          updatedName, {isHttpMethodTriggered: true}
+          updatedName,
+          { isHttpMethodTriggered: true },
         );
       },
     );
@@ -1226,7 +1227,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Click "Back to publication request" button - chat\'s name was updated on request form in Conversations section',
+      `Click "Back to publication request" button - chat's name was updated on request form in Conversations section`,
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishConversationsTreeAssertion.assertEntityState(
@@ -1304,7 +1305,9 @@ dialAdminTest(
           testCase.name,
         );
         await adminPublishingApprovalModal.updateRequest();
-        await adminPublishingApprovalModalAssertion.assertGeneralInfo({publicAuthor: testCase.name})
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          publicAuthor: testCase.name,
+        });
         publicAuthorName = testCase.name;
       });
     }
@@ -1420,7 +1423,7 @@ dialAdminTest(
         await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: publishedConversation.name },
           initialVersion,
-          );
+        );
         await adminPublishingApprovalModal.renameConversationToApproveVersion(
           publishedConversation.name,
           firstVersion,
@@ -1481,7 +1484,7 @@ dialAdminTest(
     // );
     //
     // await dialAdminTest.step(
-    //   'Update chat\'s name and save changes',
+    //   `Update chat's name and save changes,
     //   async () => {
     //     await adminPublishingApprovalModal.renameConversationToApprove(
     //       publishedConversation.name,
