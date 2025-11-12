@@ -35,7 +35,7 @@ export class AttachFilesModal extends BaseElement {
   private allFolderFiles!: Folders;
   private allFilesTree!: AttachFilesTree;
   private sharedWithMeTree!: AttachFilesTree;
-  private sharedWithMeFolderTree!: Folders;
+  private sharedWithMeFolderFiles!: Folders;
   private organizationTree!: AttachFilesTree;
   private organizationFolderFiles!: Folders;
   private search!: Search;
@@ -172,15 +172,15 @@ export class AttachFilesModal extends BaseElement {
   }
 
   getSharedWithMeFolderFiles(): Folders {
-    if (!this.sharedWithMeFolderTree) {
-      this.sharedWithMeFolderTree = new Folders(
+    if (!this.sharedWithMeFolderFiles) {
+      this.sharedWithMeFolderFiles = new Folders(
         this.page,
         this.rootLocator,
         AttachFilesModalSelectors.sharedWithMeFilesContainer,
         EntitySelectors.file,
       );
     }
-    return this.sharedWithMeFolderTree;
+    return this.sharedWithMeFolderFiles;
   }
 
   public attachFilesButton = this.getChildElementBySelector(

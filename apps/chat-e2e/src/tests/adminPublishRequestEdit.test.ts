@@ -15,6 +15,7 @@ import {
 import { FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+import path from 'path';
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -939,7 +940,7 @@ dialAdminTest(
           Attachment.cloudImageName,
           updatedCloudImageName,
         );
-        await adminPublishingApprovalModal.updateRequest(); //TODO wait for request?
+        await adminPublishingApprovalModal.updateRequest();
         await adminPublishFilesAssertion.assertEntityState(
           { name: updatedCloudImageName },
           'visible',
@@ -955,10 +956,9 @@ dialAdminTest(
             .getFileDownloadIcon(updatedCloudImageName)
             .click(),
         );
-        const downloadedFileName =
-          downloadedData.path.split(path.sep)[
-            downloadedData.path.split(path.sep).length - 1
-          ];
+        const downloadedFileName = downloadedData.path.split(path.sep)[
+          downloadedData.path.split(path.sep).length - 1
+        ];
         baseAssertion.assertValuesAreEqual(
           downloadedFileName,
           updatedCloudImageName,
@@ -1284,12 +1284,12 @@ dialAdminTest(
     const publicNameTestSteps = [
       {
         title: "Click Edit button and add '_updated' to author's public name",
-        name: `${publishRequest.displayAuthor}_updated`,
+        name: (author: string) => `${author}_updated`,
       },
       {
         title:
           "Click Edit button and add a dot at the end of the author's public name",
-        name: `${publishRequest.displayAuthor}.`,
+        name: (author: string) => author,
       },
       // # the step is blocked by the issue with id: 5024
       // {
@@ -1300,13 +1300,14 @@ dialAdminTest(
 
     for (const testCase of publicNameTestSteps) {
       await dialAdminTest.step(testCase.title, async () => {
+        const publicAuthor = testCase.name(publishRequest.displayAuthor!);
         await adminPublishingApprovalModal.editButton.click();
-        await adminPublishingApprovalModal.publicAuthor.fill(testCase.name);
+        await adminPublishingApprovalModal.publicAuthor.fill(publicAuthor);
         await adminPublishingApprovalModal.updateRequest();
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publicAuthor: testCase.name,
+          publicAuthor: publicAuthor,
         });
-        publicAuthorName = testCase.name;
+        publicAuthorName = publicAuthor;
       });
     }
 
@@ -1351,7 +1352,6 @@ dialAdminTest(
       conversationData,
       publishRequestBuilder,
       publicationApiHelper,
-      // adminPublicationApiHelper,
       dataInjector,
       adminDialHomePage,
       adminApproveRequiredConversations,
@@ -1362,6 +1362,7 @@ dialAdminTest(
       baseAssertion,
       adminPublicationReviewControl,
       adminPublishConversationsTreeAssertion,
+      adminChatHeaderAssertion,
     },
     testInfo,
   ) => {
@@ -1527,10 +1528,8 @@ dialAdminTest(
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           publishRequest2.name!,
         );
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        await baseAssertion.assertElementText(
-          conversationsTree.getEntityVersion(publishedConversation.name),
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
           secondVersion,
         );
 
@@ -1540,14 +1539,14 @@ dialAdminTest(
         );
         await adminPublishingApprovalModal.updateRequest();
 
-        await baseAssertion.assertElementText(
-          conversationsTree.getEntityVersion(publishedConversation.name),
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
           thirdVersion,
         );
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: true,
         });
-        await baseAssertion.assertElementText(
+        await adminChatHeaderAssertion.assertElementText(
           adminChatHeader.version,
           `v. ${thirdVersion}`,
         );
@@ -1583,6 +1582,8 @@ dialAdminTest(
       attachFilesModal,
       attachedOrganizationFiles,
       fileApiHelper,
+      adminFilesToApproveTree,
+      organizationFolderConversationAssertions,
     },
     testInfo,
   ) => {
@@ -1677,9 +1678,9 @@ dialAdminTest(
             `${updatedFileFolderName}_file`,
           );
         await adminPublishingApprovalModal.updateRequest();
-        const fileFolder = adminPublishingApprovalModal
-          .getFilesToApproveTree()
-          .getFolderByName(updatedFileFolderName);
+        const fileFolder = adminFilesToApproveTree.getFolderByName(
+          updatedFileFolderName,
+        );
         await baseAssertion.assertElementState(fileFolder, 'visible');
       },
     );
@@ -1705,8 +1706,8 @@ dialAdminTest(
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await baseAssertion.assertElementState(
-          organizationFolderConversations.getFolderByName(updatedFolderName),
+        await organizationFolderConversationAssertions.assertFolderState(
+          updatedFolderName,
           'visible',
         );
       },
