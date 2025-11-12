@@ -38,13 +38,7 @@ import {
   ChangeMarketplaceTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import {
-  AGENTS_AND_TOOLSETS_MODAL_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SCOPE_TAB_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SEARCH_TERM_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SLIDER_ACTIVE_SLIDE_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SLIDER_PREV_ACTIVE_SLIDE_QUERY_PARAM,
-} from '@/src/constants/quick-apps';
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
@@ -122,19 +116,19 @@ const AgentAndToolsetModalView = ({
       : undefined;
 
   const [activeSlide, setActiveSlide] = useState(
-    searchParams.get(AGENTS_AND_TOOLSETS_SLIDER_ACTIVE_SLIDE_QUERY_PARAM)
+    searchParams.get(AgentsAndToolsetsModalQueryParams.SliderActiveSlide)
       ? parseInt(
           searchParams.get(
-            AGENTS_AND_TOOLSETS_SLIDER_ACTIVE_SLIDE_QUERY_PARAM,
+            AgentsAndToolsetsModalQueryParams.SliderActiveSlide,
           ) ?? '0',
         )
       : 0,
   );
   const [prevActiveSlide, setPrevActiveSlide] = useState(
-    searchParams.get(AGENTS_AND_TOOLSETS_SLIDER_PREV_ACTIVE_SLIDE_QUERY_PARAM)
+    searchParams.get(AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide)
       ? parseInt(
           searchParams.get(
-            AGENTS_AND_TOOLSETS_SLIDER_PREV_ACTIVE_SLIDE_QUERY_PARAM,
+            AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
           ) ?? '0',
         )
       : 0,
@@ -143,14 +137,14 @@ const AgentAndToolsetModalView = ({
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [scopeTab, setScopeTab] = useState<MarketplaceTabs>(
-    searchParams.get(AGENTS_AND_TOOLSETS_SCOPE_TAB_QUERY_PARAM)
+    searchParams.get(AgentsAndToolsetsModalQueryParams.ScopeTab)
       ? ((searchParams.get(
-          AGENTS_AND_TOOLSETS_SCOPE_TAB_QUERY_PARAM,
+          AgentsAndToolsetsModalQueryParams.ScopeTab,
         ) as MarketplaceTabs) ?? MarketplaceTabs.MY_WORKSPACE)
       : MarketplaceTabs.MY_WORKSPACE,
   );
   const [searchTerm, setSearchTerm] = useState(
-    searchParams.get(AGENTS_AND_TOOLSETS_SEARCH_TERM_QUERY_PARAM) ?? '',
+    searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
   );
   const [selectedIds, setSelectedIds] = useState<string[]>(
     initialSelectedIds ?? [],
@@ -186,13 +180,13 @@ const AgentAndToolsetModalView = ({
   useEffect(() => {
     if (saveSliderStateInURL) {
       updateQueryParams({
-        [AGENTS_AND_TOOLSETS_MODAL_QUERY_PARAM]: '1',
-        [AGENTS_AND_TOOLSETS_SLIDER_ACTIVE_SLIDE_QUERY_PARAM]:
+        [AgentsAndToolsetsModalQueryParams.Modal]: '1',
+        [AgentsAndToolsetsModalQueryParams.SliderActiveSlide]:
           activeSlide.toString(),
-        [AGENTS_AND_TOOLSETS_SLIDER_PREV_ACTIVE_SLIDE_QUERY_PARAM]:
+        [AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide]:
           prevActiveSlide.toString(),
-        [AGENTS_AND_TOOLSETS_SEARCH_TERM_QUERY_PARAM]: searchTerm,
-        [AGENTS_AND_TOOLSETS_SCOPE_TAB_QUERY_PARAM]: scopeTab.toString(),
+        [AgentsAndToolsetsModalQueryParams.SearchTerm]: searchTerm,
+        [AgentsAndToolsetsModalQueryParams.ScopeTab]: scopeTab.toString(),
       });
     }
   }, [

@@ -11,13 +11,7 @@ import { updateQueryParams } from '@/src/utils/app/url/query-params';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import {
-  AGENTS_AND_TOOLSETS_MODAL_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SCOPE_TAB_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SEARCH_TERM_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SLIDER_ACTIVE_SLIDE_QUERY_PARAM,
-  AGENTS_AND_TOOLSETS_SLIDER_PREV_ACTIVE_SLIDE_QUERY_PARAM,
-} from '@/src/constants/quick-apps';
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
@@ -61,7 +55,7 @@ export const AgentAndToolsetSelector: React.FC<
   const searchParams = useSearchParams();
 
   const [isSelectModalOpen, setSelectModalOpen] = useState(
-    searchParams.get(AGENTS_AND_TOOLSETS_MODAL_QUERY_PARAM) === '1',
+    searchParams.get(AgentsAndToolsetsModalQueryParams.Modal) === '1',
   );
 
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
@@ -91,11 +85,11 @@ export const AgentAndToolsetSelector: React.FC<
   useEffect(() => {
     if (!isSelectModalOpen) {
       updateQueryParams({
-        [AGENTS_AND_TOOLSETS_MODAL_QUERY_PARAM]: null,
-        [AGENTS_AND_TOOLSETS_SCOPE_TAB_QUERY_PARAM]: null,
-        [AGENTS_AND_TOOLSETS_SEARCH_TERM_QUERY_PARAM]: null,
-        [AGENTS_AND_TOOLSETS_SLIDER_ACTIVE_SLIDE_QUERY_PARAM]: null,
-        [AGENTS_AND_TOOLSETS_SLIDER_PREV_ACTIVE_SLIDE_QUERY_PARAM]: null,
+        [AgentsAndToolsetsModalQueryParams.Modal]: null,
+        [AgentsAndToolsetsModalQueryParams.ScopeTab]: null,
+        [AgentsAndToolsetsModalQueryParams.SearchTerm]: null,
+        [AgentsAndToolsetsModalQueryParams.SliderActiveSlide]: null,
+        [AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide]: null,
       });
     }
   }, [isSelectModalOpen]);
