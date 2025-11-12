@@ -1167,7 +1167,7 @@ dialAdminTest(
       async () => {
         await adminChatHeader.dotsMenu.click();
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename, {
-          triggeredHttpMethod: 'PUT',
+          triggeredHttpMethod: 'POST',
         });
         updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_2`;
         await adminRenameConversationModal.editConversationNameWithSaveButton(
