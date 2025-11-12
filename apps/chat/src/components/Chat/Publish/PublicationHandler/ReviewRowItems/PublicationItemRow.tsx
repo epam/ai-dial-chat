@@ -368,7 +368,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           )}
           tooltipIconClassName="right-5"
           errors={errors}
-          dataQA='entity-input'
+          dataQA="entity-input"
         />
       </span>
       <PublicationVersionInfo item={item} />
