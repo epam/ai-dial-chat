@@ -59,7 +59,7 @@ export const getEntityStatus = (
 
   if (
     isToolsetEntityModel(entity) &&
-    entity.authSettings.authenticationType !== ToolsetAuthTypes.NONE
+    entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE
   ) {
     const isPublic = isEntityIdPublic(entity);
 
@@ -67,8 +67,7 @@ export const getEntityStatus = (
       ? ToolsetCredentialsLevel.GLOBAL
       : ToolsetCredentialsLevel.USER;
 
-    const isSignedIn = isToolsetSignedIn(entity, authLevel);
-    const isLoggedOut = !isSignedIn;
+    const isLoggedOut = !isToolsetSignedIn(entity, authLevel);
 
     return {
       isInvalid,

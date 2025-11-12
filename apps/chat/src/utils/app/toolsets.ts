@@ -199,7 +199,7 @@ export const isToolsetSignedIn = (
   level = ToolsetCredentialsLevel.GLOBAL,
 ) => {
   return (
-    toolset.authSettings.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
+    toolset.authSettings?.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
   );
 };
 

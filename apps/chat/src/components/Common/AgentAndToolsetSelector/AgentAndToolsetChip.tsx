@@ -117,6 +117,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
           version={version}
           isInvalid={isInvalid}
           isLoggedOut={isLoggedOut}
+          hideStatusMessage={readonly}
         />
       }
     >
