@@ -13,7 +13,46 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTooltipContent } from './ChipTooltipContent';
 
-interface ChipViewProps {
+interface ChipWrapperProps {
+  isError: boolean;
+  children: React.ReactNode;
+}
+
+const ChipWrapper: React.FC<ChipWrapperProps> = ({ isError, children }) => (
+  <div
+    className={classNames(
+      'flex h-[34px] items-center rounded',
+      isError ? 'bg-error' : 'bg-accent-primary-alpha',
+    )}
+  >
+    {children}
+  </div>
+);
+
+interface ChipRemoveButtonProps {
+  id: string;
+  isError: boolean;
+  onRemove?: (id: string) => void;
+}
+
+const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
+  id,
+  isError,
+  onRemove,
+}) => (
+  <button
+    className={classNames(
+      'mr-1 p-1 text-secondary',
+      isError ? 'hover:text-error' : 'hover:text-accent-primary',
+    )}
+    onClick={() => onRemove?.(id)}
+    aria-label="Remove item"
+  >
+    <IconX size={14} />
+  </button>
+);
+
+interface ChipBodyProps {
   id: string;
   item?: MarketplaceEntity;
   name: string;
@@ -21,11 +60,10 @@ interface ChipViewProps {
   isError: boolean;
   isInvalid: boolean;
   readonly?: boolean;
-  onRemove?: (id: string) => void;
-  onItemClick?: (id: string) => void;
+  onClick?: (id: string) => void;
 }
 
-const ChipView: React.FC<ChipViewProps> = ({
+const ChipBody: React.FC<ChipBodyProps> = ({
   id,
   item,
   name,
@@ -33,23 +71,18 @@ const ChipView: React.FC<ChipViewProps> = ({
   isError,
   isInvalid,
   readonly,
-  onRemove,
-  onItemClick,
+  onClick,
 }) => {
   const handleClick = () => {
-    if (readonly || isInvalid) {
-      return;
-    }
-    onItemClick?.(id);
+    if (readonly || isInvalid) return;
+    onClick?.(id);
   };
 
   return (
     <div
       className={classNames(
-        'flex h-[34px] items-center gap-2 rounded px-2 py-1.5',
-        isError
-          ? 'bg-error text-error'
-          : 'bg-accent-primary-alpha text-primary',
+        'flex h-full items-center gap-2 py-1.5 pl-2 pr-1',
+        isError ? 'text-error' : 'text-primary',
         readonly || isInvalid ? 'cursor-not-allowed' : 'cursor-pointer',
       )}
       onClick={handleClick}
@@ -66,20 +99,6 @@ const ChipView: React.FC<ChipViewProps> = ({
           {version}
         </span>
       </div>
-      {!readonly && (
-        <button
-          className={classNames(
-            'text-secondary',
-            isError ? 'hover:text-error' : 'hover:text-primary',
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove?.(id);
-          }}
-        >
-          <IconX size={14} />
-        </button>
-      )}
     </div>
   );
 };
@@ -90,6 +109,7 @@ interface AgentAndToolsetChipProps {
   onRemove?: (id: string) => void;
   readonly?: boolean;
   onItemClick?: (id: string) => void;
+  isInSelectionList?: boolean;
 }
 
 export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
@@ -98,6 +118,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   onRemove,
   readonly,
   onItemClick,
+  isInSelectionList,
 }) => {
   const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
 
@@ -107,30 +128,36 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   const version = !item ? getVersionFromId(id) : item.version;
 
   return (
-    <Tooltip
-      isTriggerClickable
-      tooltip={
-        <ChipTooltipContent
+    <ChipWrapper isError={isError}>
+      <Tooltip
+        isTriggerClickable
+        tooltip={
+          <ChipTooltipContent
+            id={id}
+            item={item}
+            name={name}
+            version={version}
+            isInvalid={isInvalid}
+            isLoggedOut={isLoggedOut}
+            isInSelectionList={isInSelectionList}
+          />
+        }
+      >
+        <ChipBody
           id={id}
           item={item}
           name={name}
           version={version}
+          isError={isError}
           isInvalid={isInvalid}
-          isLoggedOut={isLoggedOut}
+          readonly={readonly}
+          onClick={onItemClick}
         />
-      }
-    >
-      <ChipView
-        id={id}
-        item={item}
-        name={name}
-        version={version}
-        isError={isError}
-        isInvalid={isInvalid}
-        readonly={readonly}
-        onRemove={onRemove}
-        onItemClick={onItemClick}
-      />
-    </Tooltip>
+      </Tooltip>
+
+      {!readonly && (
+        <ChipRemoveButton id={id} isError={isError} onRemove={onRemove} />
+      )}
+    </ChipWrapper>
   );
 };

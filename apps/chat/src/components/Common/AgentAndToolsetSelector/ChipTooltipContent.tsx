@@ -1,39 +1,32 @@
 import { useTranslation } from 'next-i18next';
 
-import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
+import { isToolsetId } from '@/src/utils/app/id';
 
-import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
-
-import { EntityMarkdownDescription } from '../MarkdownDescription';
 
 interface StatusMessageProps {
   id: string;
   item?: MarketplaceEntity;
   isInvalid: boolean;
   isLoggedOut: boolean;
+  isInSelectionList?: boolean;
 }
 
 const StatusMessage: React.FC<StatusMessageProps> = ({
   id,
-  item,
   isInvalid,
   isLoggedOut,
+  isInSelectionList,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
+  let entityTypeKey: 'agent' | 'toolset' = 'agent';
+  if (isToolsetId(id)) {
+    entityTypeKey = 'toolset';
+  }
+
   if (isInvalid) {
-    const isToolset = isToolsetId(id);
-    const isApplication = isApplicationId(id);
-
-    let entityTypeKey: 'entity' | 'toolset' | 'agent' = 'entity';
-    if (isToolset) {
-      entityTypeKey = 'toolset';
-    } else if (isApplication) {
-      entityTypeKey = 'agent';
-    }
-
     return (
       <div className="text-sm text-error">
         {t(
@@ -43,26 +36,26 @@ const StatusMessage: React.FC<StatusMessageProps> = ({
       </div>
     );
   }
+
   if (isLoggedOut) {
     return (
       <div className="text-sm text-error">
-        {t('Logged out toolset. Click on the toolset to log in.')}
+        {t(
+          `Logged out toolset. Click ${isInSelectionList ? 'to scroll to' : 'on'} the toolset to log in.`,
+        )}
       </div>
     );
   }
 
-  if (
-    item?.type === EntityType.Model ||
-    item?.type === EntityType.Application
-  ) {
-    return (
-      <div className="text-sm text-secondary">
-        {t('Click on the agent to see details.')}
-      </div>
-    );
-  }
+  const textTemplate = isInSelectionList
+    ? 'Click to scroll to the {{entityType}}'
+    : 'Click on the {{entityType}} to see details.';
 
-  return null;
+  return (
+    <div className="text-sm text-secondary">
+      {t(textTemplate, { entityType: t(entityTypeKey) })}
+    </div>
+  );
 };
 
 interface ChipTooltipContentProps {
@@ -72,6 +65,7 @@ interface ChipTooltipContentProps {
   version?: string;
   isInvalid: boolean;
   isLoggedOut: boolean;
+  isInSelectionList?: boolean;
 }
 
 export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
@@ -81,6 +75,7 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
   version,
   isInvalid,
   isLoggedOut,
+  isInSelectionList,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -91,23 +86,15 @@ export const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
         item={item}
         isInvalid={isInvalid}
         isLoggedOut={isLoggedOut}
+        isInSelectionList={isInSelectionList}
       />
 
       <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 flex-col text-sm">
           <span className="w-full truncate">{name}</span>
-          <span>{t('v. {{version}}', { version })}</span>
+          {version && <span>{t('v. {{version}}', { version })}</span>}
         </div>
       </div>
-
-      {!isInvalid && !isLoggedOut && item?.description && (
-        <EntityMarkdownDescription
-          className="line-clamp-3 text-sm leading-4 text-secondary"
-          isShortDescription
-        >
-          {item.description}
-        </EntityMarkdownDescription>
-      )}
     </div>
   );
 };
