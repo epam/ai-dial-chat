@@ -69,7 +69,11 @@ export class EntitiesTree extends BaseElement {
       .or(
         this.getChildElementBySelector(this.entitySelector)
           .getElementLocator()
-          .filter({ has: this.page.locator(`${Tags.input}[${Attributes.value}="${name}"]`) }),
+          .filter({
+            has: this.page.locator(
+              `${Tags.input}[${Attributes.value}="${name}"]`,
+            ),
+          }),
       );
   }
 

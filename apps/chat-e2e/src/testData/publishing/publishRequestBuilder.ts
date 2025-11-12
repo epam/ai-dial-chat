@@ -104,7 +104,6 @@ export class PublishRequestBuilder {
     const targetResource = this.getEntityInFolderTargetResource(
       conversation.id,
     );
-
     return this.withEntityResource(
       action,
       ApiKeys.Conversations,
@@ -168,7 +167,7 @@ export class PublishRequestBuilder {
         ? attachment.substring(attachment.lastIndexOf('/') + 1)
         : attachment.title;
     const targetResource =
-      targetFolder == undefined
+      targetFolder === undefined
         ? title
         : targetFolder.endsWith('/')
           ? `${targetFolder}${title}`

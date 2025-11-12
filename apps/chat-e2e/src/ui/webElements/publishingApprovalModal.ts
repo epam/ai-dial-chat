@@ -230,6 +230,14 @@ export class PublishingApprovalModal extends BaseElement {
     await responsePromise;
   }
 
+  public async updateRequest() {
+    const responsePromise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.publicationUpdate),
+    );
+    await this.updateRequestButton.click();
+    await responsePromise;
+  }
+
   public async renameConversationToApprove(
     conversationName: string,
     newName: string,
@@ -242,7 +250,8 @@ export class PublishingApprovalModal extends BaseElement {
     //     `${Tags.input}${PublishingApprovalModalSelectors.fieldValue(conversationName)}`,
     //   )
     //   .getElementLocator();
-    const conversationInput = this.getConversationsToApproveTree().getEntityNameInput(conversationName)
+    const conversationInput =
+      this.getConversationsToApproveTree().getEntityNameInput(conversationName);
 
     await conversationInput.click();
     await conversationInput.fill(newName);
@@ -256,7 +265,10 @@ export class PublishingApprovalModal extends BaseElement {
     if (await this.editButton.isVisible()) {
       await this.editButton.click();
     }
-    const versionInput = this.getConversationsToApproveTree().getEntityVersionInput(conversationName)
+    const versionInput =
+      this.getConversationsToApproveTree().getEntityVersionInput(
+        conversationName,
+      );
 
     // const conversationRow = this.conversationToApproveRow.getElementLocator();
     //

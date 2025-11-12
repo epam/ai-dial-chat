@@ -1,17 +1,7 @@
 import { PublishEntitySelectors } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
-import { Locator, Page } from '@playwright/test';
 
 export class PublishFolder extends Folders {
-  constructor(
-    page: Page,
-    parentLocator: Locator,
-    folderSelector: string,
-    entitySelector?: string,
-  ) {
-    super(page, parentLocator, folderSelector, entitySelector);
-  }
-
   public getFolderEntityVersion(
     folderName: string,
     entityName: string,
@@ -45,8 +35,6 @@ export class PublishFolder extends Folders {
   }
 
   public getFolderNameInput(folderName: string) {
-    return this.getFolderByName(folderName).locator(
-      `[data-qa="folder-input"]`,
-    );
+    return this.getFolderByName(folderName).locator(`[data-qa="folder-input"]`);
   }
 }

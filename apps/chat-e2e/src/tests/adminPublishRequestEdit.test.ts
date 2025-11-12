@@ -778,9 +778,7 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
-          .withDisplayAuthor(
-            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
-          )
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .withFileResource(imageUrl1, PublishActions.ADD_IF_ABSENT)
           .build();
@@ -920,7 +918,7 @@ dialAdminTest(
           );
         }
 
-        //TODO EPMRTC-6798 fails
+        //TODO issueId: 5022
         // const filesToApproveTree =
         //   adminPublishingApprovalModal.getFilesToApproveTree();
         // const fileNames = await filesToApproveTree.getAllTreeEntitiesNames();
@@ -940,7 +938,7 @@ dialAdminTest(
           Attachment.cloudImageName,
           updatedCloudImageName,
         );
-        await adminPublishingApprovalModal.updateRequestButton.click(); //TODO wait for request?
+        await adminPublishingApprovalModal.updateRequest(); //TODO wait for request?
         await adminPublishFilesAssertion.assertEntityState(
           { name: updatedCloudImageName },
           'visible',
@@ -1057,6 +1055,7 @@ dialAdminTest(
       informationModalAssertion,
       informationModal,
       localStorageManager,
+      adminPublishConversationsTreeAssertion,
     },
     testInfo,
   ) => {
@@ -1081,7 +1080,7 @@ dialAdminTest(
     let publishRequest: PublicationRequestModel = publishRequestBuilder.build();
     let publicAuthorName: string;
     const currentDate = DateUtil.getCurrentLocalDate();
-    const conversationVersion = '0.0.1';
+    const conversationVersion = ExpectedConstants.defaultAppVersion;
 
     await dialTest.step(
       'Create a default publication request for chat via API',
@@ -1089,9 +1088,7 @@ dialAdminTest(
         await dataInjector.createConversations([conversation]);
         publishRequest = publishRequestBuilder
           .withName(requestName)
-          .withDisplayAuthor(
-            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
-          )
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .build();
         await publicationApiHelper.createPublishRequest(publishRequest);
@@ -1136,16 +1133,14 @@ dialAdminTest(
           updatedName,
           testCase.name,
         );
-        await adminPublishingApprovalModal.updateRequestButton.click();
+        await adminPublishingApprovalModal.updateRequest();
 
-        const conversationsTree =
-          adminPublishingApprovalModal.getConversationsToApproveTree();
-        await baseAssertion.assertElementState(
-          conversationsTree.getEntityByName(testCase.name),
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: testCase.name },
           'visible',
         );
-        await baseAssertion.assertElementText(
-          conversationsTree.getEntityVersion(testCase.name),
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: testCase.name },
           conversationVersion,
         );
         await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
@@ -1171,7 +1166,9 @@ dialAdminTest(
       "In chat's header update chat's name and verify the updated name is displayed in chat's header and sidebar",
       async () => {
         await adminChatHeader.dotsMenu.click();
-        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename, {
+          triggeredHttpMethod: 'PUT',
+        });
         updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_2`;
         await adminRenameConversationModal.editConversationNameWithSaveButton(
           updatedName,
@@ -1256,7 +1253,7 @@ dialAdminTest(
               updatedName,
               `${conversation.name}_${ExpectedConstants.allowedSpecialChars}_${i}`,
             );
-          await adminPublishingApprovalModal.updateRequestButton.click();
+          await adminPublishingApprovalModal.updateRequest();
         }
       },
     );
@@ -1328,7 +1325,7 @@ dialAdminTest(
         await adminPublishingApprovalModal.publicAuthorInputEditMode.fillInInput(
           testCase.name,
         );
-        await adminPublishingApprovalModal.updateRequestButton.click();
+        await adminPublishingApprovalModal.updateRequest();
         await baseAssertion.assertElementText(
           adminPublishingApprovalModal.publicAuthor,
           testCase.name,
@@ -1412,9 +1409,7 @@ dialAdminTest(
 
         publishRequest1 = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withDisplayAuthor(
-            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
-          )
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
           .withConversationInFolderResource(
             publishedConversation,
             PublishActions.ADD,
@@ -1456,7 +1451,7 @@ dialAdminTest(
           publishedConversation.name,
           firstVersion,
         );
-        await adminPublishingApprovalModal.updateRequestButton.click();
+        await adminPublishingApprovalModal.updateRequest();
         await baseAssertion.assertElementText(
           conversationsTree.getEntityVersion(publishedConversation.name),
           firstVersion,
@@ -1478,9 +1473,7 @@ dialAdminTest(
         await adminPublishingApprovalModal.approveRequest();
         publishRequest2 = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
-          .withDisplayAuthor(
-            UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
-          )
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
           .withConversationInFolderResource(
             publishedConversation,
             PublishActions.ADD_IF_ABSENT,
@@ -1520,7 +1513,7 @@ dialAdminTest(
     //       publishedConversation.name,
     //       updatedName,
     //     );
-    //     await adminPublishingApprovalModal.updateRequestButton.click();
+    //     await adminPublishingApprovalModal.updateRequest();
     //     // publishedConversation.name = updatedName;
     //   },
     // );
@@ -1570,7 +1563,7 @@ dialAdminTest(
           publishedConversation.name,
           thirdVersion,
         );
-        await adminPublishingApprovalModal.updateRequestButton.click();
+        await adminPublishingApprovalModal.updateRequest();
 
         await baseAssertion.assertElementText(
           conversationsTree.getEntityVersion(publishedConversation.name),
@@ -1624,7 +1617,7 @@ dialAdminTest(
     let updatedFolderName: string;
     let updatedFileFolderName: string;
     let imageUrl: string;
-    const imageName = GeneratorUtil.randomFilename();
+    const imageName = GeneratorUtil.randomFilename('jpg');
 
     await dialTest.step(
       'Precondition: Create folder with chat with attached file Folder01->Chat01',
@@ -1657,9 +1650,7 @@ dialAdminTest(
     await dialTest.step('Create publication request for Folder01', async () => {
       const publishRequest = publishRequestBuilder
         .withName(requestName)
-        .withDisplayAuthor(
-          UserUtil.getE2EUsername(testInfo.parallelIndex).split('@')[0],
-        )
+        .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
         .withConversationInFolderResource(
           folderConversation.conversations[0],
           PublishActions.ADD,
@@ -1693,7 +1684,7 @@ dialAdminTest(
               updatedFolderName,
               `${updatedFolderName}_${i}`,
             );
-          await adminPublishingApprovalModal.updateRequestButton.click();
+          await adminPublishingApprovalModal.updateRequest();
           await adminApproveRequiredConversationsAssertion.assertFolderState(
             updatedFolderName,
             'visible',
@@ -1710,7 +1701,7 @@ dialAdminTest(
             updatedFileFolderName,
             `${updatedFileFolderName}_file`,
           );
-        await adminPublishingApprovalModal.updateRequestButton.click();
+        await adminPublishingApprovalModal.updateRequest();
         const fileFolder = adminPublishingApprovalModal
           .getFilesToApproveTree()
           .getFolderByName(updatedFileFolderName);

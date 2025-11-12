@@ -486,7 +486,7 @@ export class ConversationData extends FolderData {
     };
     const name = GeneratorUtil.randomConversationName();
 
-    let conversationBuilder = this.conversationBuilder
+    this.conversationBuilder
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
@@ -497,9 +497,9 @@ export class ConversationData extends FolderData {
     if (folderName !== undefined) {
       const folder = this.prepareFolder(folderName);
       conversationId = `${folder.id}/${conversationId}`;
-      conversationBuilder = conversationBuilder.withFolderId(folder.id);
+      this.conversationBuilder.withFolderId(folder.id);
     }
-    return conversationBuilder.withId(conversationId).build();
+    return this.conversationBuilder.withId(conversationId).build();
 
     return this.conversationBuilder.withId(conversationId).build();
   }

@@ -60,8 +60,8 @@ export class GeneratorUtil {
     return unpublishRequestPrefix + GeneratorUtil.randomString(7);
   }
 
-  static randomFilename() {
-    return filenamePrefix + GeneratorUtil.randomString(7) + '.jpg';
+  static randomFilename(extension: string) {
+    return `${filenamePrefix}${GeneratorUtil.randomString(7)}${extension}`;
   }
 
   static randomApplicationName() {
