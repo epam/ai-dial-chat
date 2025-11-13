@@ -115,4 +115,8 @@ export class GeneratorUtil {
   static randomLongDescription() {
     return `long description: ${GeneratorUtil.randomString(150)}`;
   }
+
+  static randomUrl() {
+    return `http://${GeneratorUtil.randomString(7)}.com`;
+  }
 }
