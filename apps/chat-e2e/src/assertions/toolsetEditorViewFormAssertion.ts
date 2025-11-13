@@ -58,89 +58,61 @@ export class ToolsetEditorViewFormAssertion extends BaseAssertion {
       ExpectedConstants.authenticationLabelSubtitle,
     );
     if (attributesToVerify.availableAuthTypes !== undefined) {
+      const authTypeAttributes = {
+        [ToolsetAuthTypes.OAUTH]: {
+          label: this.toolsetEditorViewForm.oauthLabel,
+          expectedLabelText: ExpectedConstants.oAuthLabel,
+          icon: this.toolsetEditorViewForm.oauthIcon,
+        },
+        [ToolsetAuthTypes.API_KEY]: {
+          label: this.toolsetEditorViewForm.apiKeyLabel,
+          expectedLabelText: ExpectedConstants.apiKeyLabel,
+          icon: this.toolsetEditorViewForm.apiKeyIcon,
+        },
+        [ToolsetAuthTypes.NONE]: {
+          label: this.toolsetEditorViewForm.withoutAuthLabel,
+          expectedLabelText: ExpectedConstants.withoutAuthLabel,
+          icon: this.toolsetEditorViewForm.withoutAuthIcon,
+        },
+      };
       for (const authType of attributesToVerify.availableAuthTypes) {
-        switch (authType) {
-          case ToolsetAuthTypes.OAUTH:
-            await this.assertElementText(
-              this.toolsetEditorViewForm.oauthLabel,
-              ExpectedConstants.oAuthLabel,
-            );
-            await this.assertElementState(
-              this.toolsetEditorViewForm.oauthIcon,
-              'visible',
-            );
-            break;
-          case ToolsetAuthTypes.API_KEY:
-            await this.assertElementText(
-              this.toolsetEditorViewForm.apiKeyLabel,
-              ExpectedConstants.apiKeyLabel,
-            );
-            await this.assertElementState(
-              this.toolsetEditorViewForm.apiKeyIcon,
-              'visible',
-            );
-            break;
-          case ToolsetAuthTypes.NONE:
-            await this.assertElementText(
-              this.toolsetEditorViewForm.withoutAuthLabel,
-              ExpectedConstants.withoutAuthLabel,
-            );
-            await this.assertElementState(
-              this.toolsetEditorViewForm.withoutAuthIcon,
-              'visible',
-            );
-            break;
-        }
+        const attributes = authTypeAttributes[authType];
+        await this.assertElementText(
+          attributes.label,
+          attributes.expectedLabelText,
+        );
+        await this.assertElementState(attributes.icon, 'visible');
       }
     }
     if (attributesToVerify.selectedAuthType !== undefined) {
       const expectedColor = ThemesUtil.getRgbColorByKey(
         ThemeColorAttributes.textAccentPrimary,
       );
-      switch (attributesToVerify.selectedAuthType) {
-        case ToolsetAuthTypes.OAUTH:
-          await this.assertElementColor(
-            this.toolsetEditorViewForm.oauthLabel,
-            expectedColor,
-          );
-          await this.assertElementColor(
-            this.toolsetEditorViewForm.oauthIcon,
-            expectedColor,
-          );
-          await this.assertElementActionabilityState(
-            this.toolsetEditorViewForm.oauthContainer,
-            'disabled',
-          );
-          break;
-        case ToolsetAuthTypes.API_KEY:
-          await this.assertElementColor(
-            this.toolsetEditorViewForm.apiKeyLabel,
-            expectedColor,
-          );
-          await this.assertElementColor(
-            this.toolsetEditorViewForm.apiKeyIcon,
-            expectedColor,
-          );
-          await this.assertElementActionabilityState(
-            this.toolsetEditorViewForm.apiKeyContainer,
-            'disabled',
-          );
-          break;
-        case ToolsetAuthTypes.NONE:
-          await this.assertElementColor(
-            this.toolsetEditorViewForm.withoutAuthLabel,
-            expectedColor,
-          );
-          await this.assertElementColor(
-            this.toolsetEditorViewForm.withoutAuthIcon,
-            expectedColor,
-          );
-          await this.assertElementActionabilityState(
-            this.toolsetEditorViewForm.withoutAuthContainer,
-            'disabled',
-          );
-          break;
-      }
+      const authTypeAttributes = {
+        [ToolsetAuthTypes.OAUTH]: {
+          label: this.toolsetEditorViewForm.oauthLabel,
+          icon: this.toolsetEditorViewForm.oauthIcon,
+          container: this.toolsetEditorViewForm.oauthContainer,
+        },
+        [ToolsetAuthTypes.API_KEY]: {
+          label: this.toolsetEditorViewForm.apiKeyLabel,
+          icon: this.toolsetEditorViewForm.apiKeyIcon,
+          container: this.toolsetEditorViewForm.apiKeyContainer,
+        },
+        [ToolsetAuthTypes.NONE]: {
+          label: this.toolsetEditorViewForm.withoutAuthLabel,
+          icon: this.toolsetEditorViewForm.withoutAuthIcon,
+          container: this.toolsetEditorViewForm.withoutAuthContainer,
+        },
+      };
+      const attributes =
+        authTypeAttributes[attributesToVerify.selectedAuthType];
+      await this.assertElementColor(attributes.label, expectedColor);
+      await this.assertElementColor(attributes.icon, expectedColor);
+      await this.assertElementActionabilityState(
+        attributes.container,
+        'disabled',
+      );
     }
     if (attributesToVerify.allowedTools !== undefined) {
       await this.assertElementText(

@@ -1,33 +1,29 @@
 import { BackendEntity } from '@/chat/types/common';
-import { API, ExpectedMessages } from '@/src/testData';
+import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil, toolsetNamePrefix } from '@/src/utils';
 import { Toolset } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
 
 export class ToolsetApiHelper extends BaseApiHelper {
   public async createToolset(toolsetModel: Toolset) {
-    const url = `${API.toolsetCreateHost}/${this.userBucket ?? BucketUtil.getBucket()}/${toolsetModel.display_name}${ItemUtil.entityIdSeparator}${toolsetModel.display_version}`;
+    const url = `${API.toolsetCreateHost()}/${this.userBucket ?? BucketUtil.getBucket()}/${toolsetModel.display_name}${ItemUtil.entityIdSeparator}${toolsetModel.display_version}`;
     const response = await this.request.post(
       this.getHost(ItemUtil.getEncodedItemId(url)),
       {
         data: toolsetModel,
       },
     );
-    expect(
-      response.status(),
-      `Toolset created with data: ${JSON.stringify(toolsetModel)}`,
-    ).toBe(200);
+    this.apiAssertion.assertResponseCode(
+      response,
+      toolsetModel.display_name,
+      200,
+    );
     return (await response.json()) as BackendEntity;
   }
 
   public async listToolsets() {
     const response = await this.request.get(this.getHost(API.toolsetsHost()));
-    const statusCode = response.status();
-    expect(
-      statusCode,
-      ExpectedMessages.apiItemReceived(statusCode, await response.text()),
-    ).toBe(200);
+    this.apiAssertion.assertResponseCode(response, undefined, 200);
     const toolsets = await response.json();
     return toolsets.data as Toolset[];
   }
@@ -40,12 +36,13 @@ export class ToolsetApiHelper extends BaseApiHelper {
         .includes(toolsetNamePrefix.toLowerCase()),
     );
     for (const toolset of e2eToolsets) {
-      const path = `${API.api}/${toolset.id}`;
-      const response = await this.request.delete(this.getHost(path));
-      expect(
-        response.status(),
-        ExpectedMessages.apiItemDeleted(toolset.display_name),
-      ).toBe(200);
+      await this.deleteToolset(toolset);
     }
+  }
+
+  public async deleteToolset(toolset: Toolset) {
+    const path = `${API.api}/${toolset.id}`;
+    const response = await this.request.delete(this.getHost(path));
+    this.apiAssertion.assertResponseCode(response, toolset.display_name, 200);
   }
 }

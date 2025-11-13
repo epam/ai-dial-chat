@@ -16,7 +16,7 @@ export class EntityEditorPreviewCardAssertion extends BaseAssertion {
     expectedLongDescription?: string;
     expectedTopics?: string[];
     expectedAuthor?: string;
-    expectedReleaseDade?: string;
+    expectedReleaseDate?: string;
   }) {
     if (attributesToVerify.expectedName !== undefined) {
       await this.assertElementText(
@@ -54,10 +54,10 @@ export class EntityEditorPreviewCardAssertion extends BaseAssertion {
         attributesToVerify.expectedAuthor,
       );
     }
-    if (attributesToVerify.expectedReleaseDade !== undefined) {
+    if (attributesToVerify.expectedReleaseDate !== undefined) {
       await this.assertElementText(
         this.entityEditorPreviewCard.releaseDate,
-        attributesToVerify.expectedReleaseDade,
+        attributesToVerify.expectedReleaseDate,
       );
     }
   }

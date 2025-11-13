@@ -246,7 +246,7 @@ dialTest(
       'Click Next and verify toolset settings are pre-filled in the form',
       async () => {
         await entityEditorGeneralForm.goNext({
-          hostsArray: [API.toolsetCreateHost, API.installedToolsetsHost()],
+          hostsArray: [API.toolsetCreateHost(), API.installedToolsetsHost()],
         });
         await baseAssertion.assertElementState(
           customAppEditorAppSettingsPreviewBody.previewSpinner,
@@ -341,7 +341,7 @@ dialTest(
             expectedTopics: topicsToSelect,
             //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4998
             // expectedAuthor: toolsetEntity.author,
-            expectedReleaseDade: toolsetEntity.releaseDate,
+            expectedReleaseDate: toolsetEntity.releaseDate,
           },
         );
       },
@@ -366,7 +366,7 @@ dialTest(
         expectedName: toolsetEntity.name,
         expectedVersion: toolsetEntity.version,
         expectedDescription: toolsetEntity.description,
-        expectedReleaseDade: toolsetEntity.releaseDate,
+        expectedReleaseDate: toolsetEntity.releaseDate,
         expectedAuthor: toolsetEntity.author,
         expectedTopics: topicsToSelect,
         expectedIcon: expectedIconUrl,

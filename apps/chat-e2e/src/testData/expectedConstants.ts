@@ -436,14 +436,14 @@ export enum EditPromptFormFields {
 }
 
 export enum EntityEditorToolsetTypes {
-  Toolset = 'Toolset',
+  Toolset = 'toolset',
 }
 
 export const EntityMenuActions = {
   addApp: (app: AddAppMenuOptions) => `Add ${app}`,
   editApp: (app: AddAppMenuOptions) => `Edit ${app}`,
-  addToolset: `Add ${EntityEditorToolsetTypes.Toolset.toLowerCase()}`,
-  editToolset: `Edit ${EntityEditorToolsetTypes.Toolset.toLowerCase()}`,
+  addToolset: `Add ${EntityEditorToolsetTypes.Toolset}`,
+  editToolset: `Edit ${EntityEditorToolsetTypes.Toolset}`,
 };
 
 export const Chronology = {
@@ -519,7 +519,7 @@ export const API = {
   themeStylesHost: '/api/themes/styles',
   publicFilesHost: () => `${API.api}/${API.filesHostSegment}/${API.public}`,
   toolsetEditorHost: '/en/toolset-editor.json',
-  toolsetCreateHost: '/api/toolsets',
+  toolsetCreateHost: () => `${API.api}/toolsets`,
 };
 
 export const Import = {

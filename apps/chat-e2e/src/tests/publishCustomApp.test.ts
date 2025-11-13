@@ -404,7 +404,7 @@ dialAdminTest(
           updatedAuthor,
         );
         await adminEntityDetailsModalAssertion.assertEntityReleaseDate(
-          publishApiModels.response,
+          publishApiModels.response.createdAt,
         );
         await adminEntityDetailsModalAssertion.assertEntityTopics([
           firstTopic,
