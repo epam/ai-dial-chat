@@ -1,11 +1,13 @@
 import { FC, memo, useCallback, useMemo, useState } from 'react';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
+import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -151,6 +153,8 @@ export const ChatMessage: FC<Props> = memo(
       setIsDeleteConfirmationOpened(true);
     }, [onDelete]);
 
+    const screenState = useScreenState();
+
     return (
       <>
         {isDislikeModalOpen && (
@@ -162,7 +166,8 @@ export const ChatMessage: FC<Props> = memo(
             }}
           />
         )}
-        {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
+        {(screenState !== ScreenState.SM || isOverlay) &&
+        !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
           <ChatMessageContent
             isLastMessage={isLastMessage}
             messageIndex={messageIndex}
