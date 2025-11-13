@@ -396,6 +396,7 @@ export const isLoadedConversationEntity = (
 
 export function getMessageCustomContent(
   message: Message,
+  allowAssistantAttachments = false,
 ): Partial<Message> | undefined {
   return message.custom_content?.state ||
     message.custom_content?.attachments?.length ||
@@ -404,7 +405,7 @@ export function getMessageCustomContent(
     ? {
         custom_content: {
           attachments:
-            message.role !== Role.Assistant &&
+            (allowAssistantAttachments || message.role !== Role.Assistant) &&
             message.custom_content?.attachments?.length
               ? message.custom_content?.attachments
               : undefined,
