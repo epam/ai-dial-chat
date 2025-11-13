@@ -21,11 +21,11 @@ interface TalkToNotFound {
 export const TalkToNotFound = ({
   isMyWorkspace,
   onOpenMarketplaceTab,
-  isSearchMode,
+  isSearchMode = true,
 }: TalkToNotFound) => {
   const { t } = useTranslation(Translation.Chat);
 
-  if (isSearchMode) {
+  if (!isSearchMode) {
     return (
       <div className="flex size-full flex-col items-center justify-center gap-3">
         <IconClipboardX className="text-secondary" size={60} stroke={0.5} />
