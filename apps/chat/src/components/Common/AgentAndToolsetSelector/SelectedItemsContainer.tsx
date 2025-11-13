@@ -36,6 +36,7 @@ export const SelectedItemsContainer = ({
         item={item.data}
         onRemove={onRemove}
         onItemClick={onItemClick}
+        isInSelectionList
       />
     ),
     [onRemove, onItemClick],
