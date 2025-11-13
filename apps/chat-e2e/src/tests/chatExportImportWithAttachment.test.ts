@@ -194,6 +194,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -424,6 +425,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();

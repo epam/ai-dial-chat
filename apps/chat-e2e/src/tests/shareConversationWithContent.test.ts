@@ -90,6 +90,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();
@@ -133,6 +134,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModel,
             true,
+            undefined,
             responseImageUrl,
           );
         conversationWithSharedFile.messages[0].custom_content!.attachments =
@@ -379,6 +381,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModel,
             true,
+            undefined,
             requestImageUrl,
           );
         conversationData.resetData();

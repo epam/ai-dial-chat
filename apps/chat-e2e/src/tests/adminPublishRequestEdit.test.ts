@@ -1,5 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
-import { Publication } from '@/chat/types/publication';
+import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -7,13 +7,15 @@ import {
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
+  FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+import path from 'path';
 
 dialAdminTest(
   'Admin can not update chat from unpublish request.\n' +
@@ -692,35 +694,50 @@ dialAdminTest(
   '[Admin view][Edit chat] Generated file by agent appears in review.\n' +
     'Organization: The chat with a generated file is published\n' +
     'Organization: the chat with added by user file is published\n' +
-    '[Admin view][Edit chat] Re-generated file by agent appears in review. Initial file stays',
-  async ({
-    conversationData,
-    publishRequestBuilder,
-    publicationApiHelper,
-    dataInjector,
-    adminDialHomePage,
-    adminApproveRequiredConversations,
-    adminPublishingApprovalModal,
-    setTestIds,
-    adminLocalStorageManager,
-    adminChatMessagesAssertion,
-    adminPublicationReviewControl,
-    adminPublishFilesAssertion,
-    adminFileApiHelper,
-    adminChat,
-    dialHomePage,
-    organizationConversations,
-    localStorageManager,
-    chatMessagesAssertion,
-    chatBar,
-    fileApiHelper,
-    manageAttachmentsAssertion,
-    adminChatMessages,
-    adminAttachmentDropdownMenu,
-    adminAttachFilesModal,
-    adminSendMessage,
-  }) => {
-    setTestIds('EPMRTC-6605', 'EPMRTC-6608', 'EPMRTC-6609', 'EPMRTC-6606');
+    '[Admin view][Edit chat] Re-generated file by agent appears in review. Initial file stays\n' +
+    "Edit file's name attached to chat\n" +
+    'Edit file name: download renamed file',
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      setTestIds,
+      adminLocalStorageManager,
+      adminChatMessagesAssertion,
+      adminPublicationReviewControl,
+      adminPublishFilesAssertion,
+      adminFileApiHelper,
+      adminChat,
+      dialHomePage,
+      organizationConversations,
+      localStorageManager,
+      chatMessagesAssertion,
+      chatBar,
+      fileApiHelper,
+      manageAttachmentsAssertion,
+      adminChatMessages,
+      adminAttachmentDropdownMenu,
+      adminAttachFilesModal,
+      adminSendMessage,
+      baseAssertion,
+      adminFilesToApproveTree,
+    },
+    testInfo,
+  ) => {
+    setTestIds(
+      'EPMRTC-6605',
+      'EPMRTC-6608',
+      'EPMRTC-6609',
+      'EPMRTC-6606',
+      'EPMRTC-6464',
+      'EPMRTC-6798',
+      'EPMRTC-6797',
+    );
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
@@ -729,6 +746,7 @@ dialAdminTest(
     const requestPrompt = 'generate a picture';
     let publicationBucket: string;
     let publication: Publication;
+    let updatedCloudImageName: string;
 
     await dialTest.step(
       'Prepare conversation with attachment-supported model and publication request',
@@ -762,6 +780,7 @@ dialAdminTest(
 
         const publishRequest = publishRequestBuilder
           .withName(requestName)
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
           .withConversationInFolderResource(conversation, PublishActions.ADD)
           .withFileResource(imageUrl1, PublishActions.ADD_IF_ABSENT)
           .build();
@@ -900,6 +919,51 @@ dialAdminTest(
             'visible',
           );
         }
+
+        //TODO issueId: 5022
+        // const filesToApproveTree =
+        //   adminPublishingApprovalModal.getFilesToApproveTree();
+        // const fileNames = await filesToApproveTree.getAllTreeEntitiesNames();
+        // baseAssertion.assertStringsSorting(fileNames, 'asc');
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click edit request, update filename, click update request button and verify updated filename is displayed',
+      async () => {
+        updatedCloudImageName =
+          Attachment.cloudImageName.split('.')[0] +
+          '_updated.' +
+          Attachment.cloudImageName.split('.')[1];
+        await adminPublishingApprovalModal.editButton.click();
+        await adminPublishingApprovalModal.renameFileToApprove(
+          Attachment.cloudImageName,
+          updatedCloudImageName,
+        );
+        await adminPublishingApprovalModal.updateRequest();
+        await adminPublishFilesAssertion.assertEntityState(
+          { name: updatedCloudImageName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Assert that file can be downloaded and has the updated name and extension',
+      async () => {
+        const downloadedData = await adminDialHomePage.downloadData(() =>
+          adminFilesToApproveTree
+            .getFileDownloadIcon(updatedCloudImageName)
+            .click(),
+        );
+        const downloadedFileName = downloadedData.path.split(path.sep)[
+          downloadedData.path.split(path.sep).length - 1
+        ];
+        baseAssertion.assertValuesAreEqual(
+          downloadedFileName,
+          updatedCloudImageName,
+          ExpectedMessages.attachmentIsSuccessfullyDownloaded,
+        );
       },
     );
 
@@ -916,7 +980,7 @@ dialAdminTest(
         await organizationConversations.selectEntity(conversation.name);
 
         const expectedAttachments: Record<number, string> = {
-          2: Attachment.cloudImageName,
+          2: updatedCloudImageName,
           3: Attachment.flowerImageName,
           4: Attachment.heartImageName,
           6: Attachment.heartImageName,
@@ -940,7 +1004,7 @@ dialAdminTest(
       async () => {
         await chatBar.openManageAttachmentsModal();
         for (const attach of [
-          Attachment.cloudImageName,
+          updatedCloudImageName,
           Attachment.heartImageName,
           Attachment.flowerImageName,
           Attachment.longImageName,
@@ -951,6 +1015,719 @@ dialAdminTest(
             'visible',
           );
         }
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
+    '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
+    "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel.\n" +
+    'Edit author public name. Updated name displayed in Info only after request approved\n + ' +
+    '[Admin view][Edit request]: Rename the chat. Special symbols are allowed ( not restricted)\n' +
+    '[Admin view][Edit request] Rename the chat several times in a row\n' +
+    // "[Admin view][Edit request]: Rename author's public name. Special symbols are allowed (not restricted)\n" +
+    'Dot at the end of public author name is permitted\n' +
+    '[Admin view][Edit request] Rename the chat with _ underscore sign at the end',
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      setTestIds,
+      adminLocalStorageManager,
+      adminChatHeaderAssertion,
+      adminPublishingApprovalModalAssertion,
+      adminChatHeader,
+      adminChatHeaderDropdownMenu,
+      adminRenameConversationModal,
+      adminPublicationReviewControl,
+      adminApproveRequiredConversationDropdownMenu,
+      adminApproveRequiredConversationsAssertion,
+      dialHomePage,
+      organizationConversations,
+      conversationDropdownMenu,
+      informationModalAssertion,
+      informationModal,
+      localStorageManager,
+      adminPublishConversationsTreeAssertion,
+    },
+    testInfo,
+  ) => {
+    setTestIds(
+      'EPMRTC-6474',
+      'EPMRTC-6493',
+      'EPMRTC-6658',
+      'EPMRTC-6456',
+      'EPMRTC-6787',
+      'EPMRTC-6550',
+      // 'EPMRTC-6789',
+      'EPMRTC-6502',
+      'EPMRTC-6567',
+    );
+    const conversation: Conversation =
+      conversationData.prepareDefaultConversation(
+        undefined,
+        `${GeneratorUtil.randomConversationName()}___`,
+      );
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    let updatedName: string;
+    let publishRequest: PublicationRequestModel = publishRequestBuilder.build();
+    let publicAuthorName: string;
+    const currentDate = DateUtil.getCurrentLocalDate();
+    const conversationVersion = ExpectedConstants.defaultAppVersion;
+
+    await dialTest.step(
+      'Create a default publication request for chat via API',
+      async () => {
+        await dataInjector.createConversations([conversation]);
+        publishRequest = publishRequestBuilder
+          .withName(requestName)
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
+          .withConversationInFolderResource(conversation, PublishActions.ADD)
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminLocalStorageManager.setShowSideBarPanels();
+        updatedName = conversation.name;
+      },
+    );
+
+    await dialAdminTest.step(
+      'By admin open publication request and click Edit button',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestName,
+        );
+        await adminPublishingApprovalModal.editButton.click();
+      },
+    );
+
+    const conversationRenamingTestSteps = [
+      {
+        title:
+          'Update the name for the chat to have only one underscore at the end and check the chat name and version',
+        name: `${GeneratorUtil.randomConversationName()}_`,
+      },
+      {
+        title:
+          'Update the chat name to have three underscores at the end again and check the chat name and version',
+        name: `${GeneratorUtil.randomConversationName()}___`,
+      },
+      {
+        title:
+          "Update chat's name, click Update request button and verify updated chat's name is displayed in the sidebar",
+        name: `${conversation.name}_${GeneratorUtil.randomString(7)}_1`,
+      },
+    ];
+
+    for (const testCase of conversationRenamingTestSteps) {
+      await dialAdminTest.step(testCase.title, async () => {
+        await adminPublishingApprovalModal.renameConversationToApprove(
+          updatedName,
+          testCase.name,
+        );
+        await adminPublishingApprovalModal.updateRequest();
+
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: testCase.name },
+          'visible',
+        );
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: testCase.name },
+          conversationVersion,
+        );
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: requestName },
+          { name: testCase.name },
+          'visible',
+        );
+        updatedName = testCase.name;
+      });
+    }
+
+    await dialAdminTest.step(
+      `Click "Go to a review" link and view chat's name on chat's details screen`,
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
+      },
+    );
+
+    await dialAdminTest.step(
+      "In chat's header update chat's name and verify the updated name is displayed in chat's header and sidebar",
+      async () => {
+        await adminChatHeader.dotsMenu.click();
+        await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_2`;
+        await adminRenameConversationModal.editConversationNameWithSaveButton(
+          updatedName,
+          { isHttpMethodTriggered: true },
+        );
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: requestName },
+          { name: updatedName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Back to publication request" button - updated name is displayed on request form in Conversations section',
+      async () => {
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      "Go to review conversation again, Hover over chat's name in side panel and select Rename option",
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminApproveRequiredConversations.openFolderEntityDropdownMenu(
+          requestName,
+          updatedName,
+        );
+        await adminApproveRequiredConversationDropdownMenu.selectMenuOption(
+          MenuOptions.rename,
+        );
+        updatedName = `${conversation.name}_${GeneratorUtil.randomString(7)}_3`;
+        await adminRenameConversationModal.editConversationNameWithSaveButton(
+          updatedName,
+          { isHttpMethodTriggered: true },
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      "View chat's name in chat's header and in side panel - name was updated in side panel and in chat's header",
+      async () => {
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: requestName },
+          { name: updatedName },
+          'visible',
+        );
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
+      },
+    );
+
+    await dialAdminTest.step(
+      `Click "Back to publication request" button - chat's name was updated on request form in Conversations section`,
+      async () => {
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Rename chat multiple times with special symbols and verify updated name with special symbols is displayed in the request',
+      async () => {
+        for (let i = 1; i <= 2; i++) {
+          updatedName =
+            await adminPublishingApprovalModal.renameConversationToApprove(
+              updatedName,
+              `${conversation.name}_${ExpectedConstants.allowedSpecialChars}_${i}`,
+            );
+          await adminPublishingApprovalModal.updateRequest();
+        }
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Go to a review" link and verify chat name with special symbols is displayed correctly in header and in the sidebar',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminChatHeaderAssertion.assertHeaderTitle(updatedName);
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: requestName },
+          { name: updatedName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Back to publication request" button and verify final chat name is displayed',
+      async () => {
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: updatedName },
+          'visible',
+        );
+      },
+    );
+
+    const publicNameTestSteps = [
+      {
+        title: "Click Edit button and add '_updated' to author's public name",
+        name: (author: string) => `${author}_updated`,
+      },
+      {
+        title:
+          "Click Edit button and add a dot at the end of the author's public name",
+        name: (author: string) => author,
+      },
+      // # the step is blocked by the issue with id: 5024
+      // {
+      //   title: "Click Edit button and add special chars to author's public name",
+      //   name: `${publishRequest.displayAuthor}_${ExpectedConstants.allowedSpecialChars}`,
+      // },
+    ];
+
+    for (const testCase of publicNameTestSteps) {
+      await dialAdminTest.step(testCase.title, async () => {
+        const publicAuthor = testCase.name(publishRequest.displayAuthor!);
+        await adminPublishingApprovalModal.editButton.click();
+        await adminPublishingApprovalModal.publicAuthor.fill(publicAuthor);
+        await adminPublishingApprovalModal.updateRequest();
+        await adminPublishingApprovalModalAssertion.assertGeneralInfo({
+          publicAuthor: publicAuthor,
+        });
+        publicAuthorName = publicAuthor;
+      });
+    }
+
+    await dialAdminTest.step(
+      'Click "Go to a review" and then "Back to publication request" and approve request',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModal.approveRequest();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Find published chat in Organization section',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+
+        await organizationConversations.openEntityDropdownMenu(updatedName);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.info, {
+          triggeredHttpMethod: 'GET',
+        });
+        await informationModalAssertion.assertFields({
+          createdDate: currentDate,
+          author: publicAuthorName,
+        });
+        await informationModal.cancelButton.click();
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  // 'Last version is not displayed after update chat\'s name\n'+
+  '[Admin view][Edit request]: Edit version for chat ( there is no previous version)\n' +
+    '[Admin view][Edit request]:Edit version when there are more that one public version',
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      adminChatHeader,
+      setTestIds,
+      adminLocalStorageManager,
+      baseAssertion,
+      adminPublicationReviewControl,
+      adminPublishConversationsTreeAssertion,
+      adminChatHeaderAssertion,
+    },
+    testInfo,
+  ) => {
+    setTestIds(/*'EPMRTC-6500',*/ 'EPMRTC-6790', 'EPMRTC-6459');
+    let publishedConversation: Conversation;
+    const initialVersion = '1.1.1';
+    const firstVersion = ExpectedConstants.defaultAppVersion;
+    let publishRequest1: PublicationRequestModel;
+
+    const secondVersion = '0.0.2';
+    // let publication: Publication;
+    // let updatedName: string;
+    let publishRequest2: PublicationRequestModel;
+
+    const thirdVersion = '0.0.3';
+
+    await dialTest.step(
+      'Create published default conversation with version 0.0.1 via API',
+      async () => {
+        publishedConversation = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations([publishedConversation]);
+
+        publishRequest1 = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD,
+            initialVersion,
+          )
+          .build();
+        // publication =
+        await publicationApiHelper.createPublishRequest(publishRequest1);
+        // const updatedName = `${publishedConversation.name}_updated`;
+      },
+    );
+
+    await dialAdminTest.step(
+      'By admin open publication request 1 for chat',
+      async () => {
+        await adminLocalStorageManager.setShowSideBarPanels();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          publishRequest1.name!,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'View that the initial version is displayed on the request form, change and assert version. Approve the request',
+      async () => {
+        await adminPublishConversationsTreeAssertion.assertEntityState(
+          { name: publishedConversation.name },
+          'visible',
+        );
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
+          initialVersion,
+        );
+        await adminPublishingApprovalModal.renameConversationToApproveVersion(
+          publishedConversation.name,
+          firstVersion,
+        );
+        await adminPublishingApprovalModal.updateRequest();
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
+          firstVersion,
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: true,
+        });
+        await baseAssertion.assertElementText(
+          adminChatHeader.version,
+          `v. ${firstVersion}`,
+        );
+        await adminPublicationReviewControl.backToPublicationRequest();
+      },
+    );
+
+    await dialTest.step(
+      'Create publish request for default conversation with version 0.0.2 via API, reload the page',
+      async () => {
+        await adminPublishingApprovalModal.approveRequest();
+        publishRequest2 = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
+          .withConversationInFolderResource(
+            publishedConversation,
+            PublishActions.ADD_IF_ABSENT,
+            secondVersion,
+          )
+          .build();
+        await publicationApiHelper.createPublishRequest(publishRequest2);
+        await adminDialHomePage.reloadPage();
+        await adminDialHomePage.waitForPageLoaded();
+      },
+    );
+
+    //TODO EPMRTC-6500 case needs to be fixed. Issue id: 3410
+    // await dialAdminTest.step(
+    //   'View that previous version 0.0.1 and current version 0.0.2 are displayed on the request form',
+    //   async () => {
+    //     await adminApproveRequiredConversations.expandApproveRequiredFolder(
+    //       publishRequest2.name!,
+    //     );
+    //     const conversationsTree =
+    //       adminPublishingApprovalModal.getConversationsToApproveTree();
+    //     await baseAssertion.assertElementState(
+    //       conversationsTree.getEntityByName(publishedConversation.name),
+    //       'visible',
+    //     );
+    //     await baseAssertion.assertElementText(
+    //       conversationsTree.getEntityVersion(publishedConversation.name),
+    //       secondVersion,
+    //     );
+    //   },
+    // );
+    //
+    // await dialAdminTest.step(
+    //   `Update chat's name and save changes,
+    //   async () => {
+    //     await adminPublishingApprovalModal.renameConversationToApprove(
+    //       publishedConversation.name,
+    //       updatedName,
+    //     );
+    //     await adminPublishingApprovalModal.updateRequest();
+    //     // publishedConversation.name = updatedName;
+    //   },
+    // );
+    //
+    // await dialAdminTest.step(
+    //   'View versions - previous version is not displayed, chat name is updated (publish modal and the conversation header), current version 0.0.2 is shown (modal and header)',
+    //   async () => {
+    //     const conversationsTree =
+    //       adminPublishingApprovalModal.getConversationsToApproveTree();
+    //     await baseAssertion.assertElementState(
+    //       conversationsTree.getEntityByName(updatedName),
+    //       'visible',
+    //     );
+    //     await baseAssertion.assertElementText(
+    //       conversationsTree.getEntityVersion(updatedName),
+    //       secondVersion,
+    //     );
+    //
+    //     await adminPublishingApprovalModal.goToEntityReview({
+    //       isHttpMethodTriggered: true,
+    //     });
+    //     await baseAssertion.assertElementText(
+    //       adminChatHeader.chatTitle,
+    //       updatedName,
+    //     );
+    //     await baseAssertion.assertElementText(
+    //       adminChatHeader.version,
+    //       `v. ${secondVersion}`,
+    //     );
+    //   },
+    // );
+
+    await dialAdminTest.step(
+      'Сhange version according to format (example 0.0.5) and click "Update request" button, click "Go to a review" link and check version',
+      async () => {
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          publishRequest2.name!,
+        );
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
+          secondVersion,
+        );
+
+        await adminPublishingApprovalModal.renameConversationToApproveVersion(
+          publishedConversation.name,
+          thirdVersion,
+        );
+        await adminPublishingApprovalModal.updateRequest();
+
+        await adminPublishConversationsTreeAssertion.assertEntityVersion(
+          { name: publishedConversation.name },
+          thirdVersion,
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: true,
+        });
+        await adminChatHeaderAssertion.assertElementText(
+          adminChatHeader.version,
+          `v. ${thirdVersion}`,
+        );
+        await adminPublicationReviewControl.backToPublicationRequest();
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  "Edit folder's name for publish request for folder with chat\n" +
+    '[Admin view][Edit request] Rename the folder several times in a row\n' +
+    "Update folder's name for publish request for folder with chat with attached file. Input different names for chat's folder and file's folder",
+  async (
+    {
+      conversationData,
+      publishRequestBuilder,
+      publicationApiHelper,
+      adminPublicationReviewControl,
+      dataInjector,
+      adminDialHomePage,
+      adminApproveRequiredConversations,
+      adminPublishingApprovalModal,
+      setTestIds,
+      adminLocalStorageManager,
+      baseAssertion,
+      dialHomePage,
+      localStorageManager,
+      adminApproveRequiredConversationsAssertion,
+      chatBar,
+      manageAttachmentsAssertion,
+      attachFilesModal,
+      attachedOrganizationFiles,
+      fileApiHelper,
+      adminFilesToApproveTree,
+      organizationFolderConversationAssertions,
+    },
+    testInfo,
+  ) => {
+    setTestIds('EPMRTC-6465', 'EPMRTC-6549', 'EPMRTC-6466');
+    let folderConversation: FolderConversation;
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    let updatedFolderName: string;
+    let updatedFileFolderName: string;
+    let imageUrl: string;
+    const imageName = GeneratorUtil.randomFilename('jpg');
+
+    await dialTest.step(
+      'Precondition: Create folder with chat with attached file Folder01->Chat01',
+      async () => {
+        imageUrl = await fileApiHelper.putFileWithCustomName(
+          imageName,
+          Attachment.sunImageName,
+        );
+        const model = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getLatestModelsWithAttachment(true, ['*/*']),
+        );
+        folderConversation =
+          conversationData.prepareDefaultConversationInFolder();
+        const conversationWithAttachment =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            model,
+            true,
+            folderConversation.folders.name,
+            imageUrl,
+          );
+        conversationData.resetData();
+        folderConversation.conversations[0] = conversationWithAttachment;
+        await dataInjector.createConversations(
+          folderConversation.conversations,
+          folderConversation.folders,
+        );
+      },
+    );
+
+    await dialTest.step('Create publication request for Folder01', async () => {
+      const publishRequest = publishRequestBuilder
+        .withName(requestName)
+        .withDisplayAuthor(UserUtil.getE2EUsername(testInfo.parallelIndex))
+        .withConversationInFolderResource(
+          folderConversation.conversations[0],
+          PublishActions.ADD,
+        )
+        .withFileResource(
+          imageUrl,
+          PublishActions.ADD_IF_ABSENT,
+          folderConversation.folders.name,
+        )
+        .build();
+      await publicationApiHelper.createPublishRequest(publishRequest);
+      updatedFolderName = folderConversation.folders.name;
+      updatedFileFolderName = folderConversation.folders.name;
+    });
+
+    await dialAdminTest.step('By admin open publication request', async () => {
+      await adminLocalStorageManager.setShowSideBarPanels();
+      await adminDialHomePage.openHomePage();
+      await adminDialHomePage.waitForPageLoaded();
+      await adminApproveRequiredConversations.expandApproveRequiredFolder(
+        requestName,
+      );
+    });
+
+    await dialAdminTest.step(
+      "Update folder's name to Folder01_Updated and click 'Update request' several times in a row",
+      async () => {
+        for (let i = 1; i <= 2; i++) {
+          updatedFolderName =
+            await adminPublishingApprovalModal.renameConversationFolderToApprove(
+              updatedFolderName,
+              `${updatedFolderName}_${i}`,
+            );
+          await adminPublishingApprovalModal.updateRequest();
+          await adminApproveRequiredConversationsAssertion.assertFolderState(
+            updatedFolderName,
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Update folder name for file and click Update request',
+      async () => {
+        updatedFileFolderName =
+          await adminPublishingApprovalModal.renameFileFolderToApprove(
+            updatedFileFolderName,
+            `${updatedFileFolderName}_file`,
+          );
+        await adminPublishingApprovalModal.updateRequest();
+        const fileFolder = adminFilesToApproveTree.getFolderByName(
+          updatedFileFolderName,
+        );
+        await baseAssertion.assertElementState(fileFolder, 'visible');
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify new folder name is displayed on publish request form and approve the request',
+      async () => {
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          updatedFolderName,
+          'visible',
+        );
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModal.approveRequest();
+      },
+    );
+
+    await dialTest.step(
+      'Check folder name in Organization by a regular user - renamed folder is displayed in Organization',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationFolderConversationAssertions.assertFolderState(
+          updatedFolderName,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      "Check folder's name for file in Manage attachments - updated folder's names are displayed",
+      async () => {
+        await chatBar.openManageAttachmentsModal();
+        await manageAttachmentsAssertion.assertFolderState(
+          updatedFileFolderName,
+          FileModalSection.Organization,
+          'visible',
+        );
+        await attachedOrganizationFiles.expandFolder(updatedFileFolderName);
+        await manageAttachmentsAssertion.assertFolderEntityState(
+          { name: updatedFileFolderName },
+          { name: imageName },
+          FileModalSection.Organization,
+          'visible',
+        );
+        await attachFilesModal.closeButton.click();
       },
     );
   },

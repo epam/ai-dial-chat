@@ -311,6 +311,7 @@ const dialTest = test.extend<{
   selectFolderModal: SelectFolderModal;
   selectFolders: Folders;
   attachedAllFiles: Folders;
+  attachedOrganizationFiles: Folders;
   messageTemplateModal: MessageTemplateModal;
   manageAttachmentsAssertion: ManageAttachmentsAssertion;
   settingsModal: SettingsModal;
@@ -1115,6 +1116,11 @@ const dialTest = test.extend<{
   attachedAllFiles: async ({ attachFilesModal }, use) => {
     const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
+  },
+  attachedOrganizationFiles: async ({ attachFilesModal }, use) => {
+    const attachedOrganizationFiles =
+      attachFilesModal.getOrganizationFolderFiles();
+    await use(attachedOrganizationFiles);
   },
   messageTemplateModal: async ({ page }, use) => {
     const messageTemplateModal = new MessageTemplateModal(page);

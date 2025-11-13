@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
@@ -8,15 +10,26 @@ import {
 } from '@/src/constants/marketplace';
 
 interface SuggestionButtonProps {
-  onClick?: () => void;
+  onSetTab?: (tab: MarketplaceTabs) => void;
+  customText?: string;
 }
 
-export const SuggestionButton = ({ onClick }: SuggestionButtonProps) => {
+export const SuggestionButton = ({
+  onSetTab,
+  customText = 'See results from',
+}: SuggestionButtonProps) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const handleClick = useCallback(() => {
+    onSetTab?.(MarketplaceTabs.HOME);
+  }, [onSetTab]);
+
   return (
-    <button className="text-accent-primary" onClick={onClick}>
-      {t(`See results from ${ChangeMarketplaceTabs[MarketplaceTabs.HOME]}`)}
+    <button className="text-accent-primary" onClick={handleClick}>
+      {t('{{baseText}} {{tabName}}', {
+        baseText: t(customText),
+        tabName: t(ChangeMarketplaceTabs[MarketplaceTabs.HOME]),
+      })}
     </button>
   );
 };

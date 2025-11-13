@@ -51,6 +51,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModelWithAttachment,
             false,
+            undefined,
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);

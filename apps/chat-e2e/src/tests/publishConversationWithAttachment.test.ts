@@ -113,6 +113,7 @@ dialAdminTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithInputAttachments,
             true,
+            undefined,
             imageUrl,
           );
         conversationData.resetData();
@@ -286,6 +287,7 @@ dialAdminTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithInputAttachments,
             true,
+            undefined,
             fileResource.targetUrl,
           );
         await dataInjector.createConversations([secondConversation]);
