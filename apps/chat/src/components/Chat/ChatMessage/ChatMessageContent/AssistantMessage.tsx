@@ -32,9 +32,9 @@ import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
 
 import {
   Feature,
-  LikeState,
   Message,
   MessageFormValue,
+  onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 
@@ -50,7 +50,7 @@ interface AssistantMessageProps {
   withButtons?: boolean;
   messageCopied?: boolean;
   onCopy?: () => void;
-  onLike?: (likeStatus: LikeState) => void;
+  onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing: (value: boolean) => void;
   onEdit?: (
@@ -316,7 +316,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             message={message}
             realMessageIndex={realMessageIndex}
             messageCopied={messageCopied}
-            onLike={(likeStatus) => onLike?.(likeStatus)}
+            onLike={onLike}
             onRegenerate={onRegenerate}
             onToggleEditing={
               (isAllLastMessageEnabled ||
