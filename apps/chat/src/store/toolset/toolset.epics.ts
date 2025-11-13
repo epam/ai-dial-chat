@@ -67,6 +67,24 @@ const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
   }
 };
 
+const getMyWorkspaceUrl = (
+  params?: Partial<Record<MarketplaceQueryParams, unknown>>,
+) => {
+  const route = new URL(Routes.Marketplace);
+  route.searchParams.append(
+    MarketplaceQueryParams.tab,
+    MarketplaceTabs.MY_WORKSPACE,
+  );
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      route.searchParams.append(key, value as string);
+    });
+  }
+
+  return route;
+};
+
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ToolsetActions.init.type),
@@ -800,7 +818,7 @@ const initQueryParamsEpic: AppEpic = (action$) =>
     }),
   );
 
-const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
+const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     ofType(ToolsetActions.exitEditor.type),
     switchMap(({ payload }) => {
@@ -820,17 +838,19 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
         redirectUrl ??
         returnUrl ??
         (publicationUrl
-          ? {
-              pathname: Routes.Chat,
-            }
-          : {
-              pathname: Routes.Marketplace,
-              query: {
-                [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
-                [MarketplaceQueryParams.entitiesTab]:
-                  MarketplaceEntitiesTabs.TOOLSETS,
-              },
-            });
+          ? new URL(Routes.Chat)
+          : getMyWorkspaceUrl({
+              [MarketplaceQueryParams.entitiesTab]:
+                MarketplaceEntitiesTabs.TOOLSETS,
+            }));
+
+      if (
+        route.pathname === Routes.Marketplace &&
+        payload.shouldSelectToolset &&
+        reference
+      ) {
+        route.searchParams.append(MarketplaceQueryParams.toolset, reference);
+      }
 
       router.push(route).then(() => {
         if (route.pathname === Routes.Marketplace) {

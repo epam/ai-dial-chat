@@ -30,9 +30,11 @@ export const ToolsetEditor = () => {
 
   const router = useRouter();
 
-  const { [ToolsetEditorQuery.Id]: idQuery } = router.query;
-  const isCreateRef = useRef(!idQuery);
-
+  const {
+    [ToolsetEditorQuery.Id]: idQuery,
+    [ToolsetEditorQuery.IsCreate]: isCreateQuery,
+  } = router.query;
+  const isCreateRef = useRef(!idQuery || !!isCreateQuery);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
