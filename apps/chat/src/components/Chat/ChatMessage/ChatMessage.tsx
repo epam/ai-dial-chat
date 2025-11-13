@@ -17,6 +17,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu } from '@/src/components/Common/DropdownMenu';
 
 import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
+import { DislikeCommentModal } from './DislikeCommentModal';
 
 import {
   Feature,
@@ -24,6 +25,7 @@ import {
   Message,
   PublishActions,
   Role,
+  onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
 
 export interface Props {
@@ -38,6 +40,7 @@ export interface Props {
     index: number,
     conversation: Conversation,
     likeStatus: LikeState,
+    comment?: string,
   ) => void;
   onDelete?: (messageIndex: number, conversation: Conversation) => void;
   onEdit: (
@@ -90,11 +93,28 @@ export const ChatMessage: FC<Props> = memo(
       return isFirstMessageSystem ? messageIndex + 1 : messageIndex;
     }, [isFirstMessageSystem, messageIndex]);
 
-    const handleLike = useCallback(
+    const isDislikeCommentEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DislikeComment),
+    );
+    const [isDislikeModalOpen, setDislikeModalOpen] = useState(false);
+
+    const handleLike: onLikeMessageHandler = useCallback(
       (likeStatus: LikeState) => {
         if (conversation && onLike) {
-          onLike(messageIndex, conversation, likeStatus);
+          if (!isDislikeCommentEnabled || likeStatus !== LikeState.Disliked) {
+            onLike(messageIndex, conversation, likeStatus);
+          } else {
+            setDislikeModalOpen(true);
+          }
         }
+      },
+      [conversation, onLike, isDislikeCommentEnabled, messageIndex],
+    );
+
+    const handleDislike = useCallback(
+      (comment?: string) => {
+        onLike(messageIndex, conversation, LikeState.Disliked, comment);
+        setDislikeModalOpen(false);
       },
       [conversation, onLike, messageIndex],
     );
@@ -133,6 +153,15 @@ export const ChatMessage: FC<Props> = memo(
 
     return (
       <>
+        {isDislikeModalOpen && (
+          <DislikeCommentModal
+            onClose={() => setDislikeModalOpen(false)}
+            onSubmit={(comment: string) => {
+              handleDislike(comment);
+              setDislikeModalOpen(false);
+            }}
+          />
+        )}
         {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
           <ChatMessageContent
             isLastMessage={isLastMessage}
