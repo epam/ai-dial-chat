@@ -199,7 +199,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         <div className="flex grow flex-col justify-center gap-1 overflow-hidden leading-4 md:gap-2">
           <div className="flex items-center gap-2">
             {!!versionsToSelect.length && (
-              <div className="flex items-center">
+              <div className="flex items-center truncate">
                 <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
                 <ModelVersionSelect
                   readonly={

@@ -1,12 +1,15 @@
 import config, { overlayHost } from '@/config/chat.playwright.config';
+import { ApiAssertion } from '@/src/assertions';
 import { APIRequestContext } from '@playwright/test';
 
 export class BaseApiHelper {
   protected request: APIRequestContext;
+  protected apiAssertion: ApiAssertion;
   protected userBucket?: string;
 
   constructor(request: APIRequestContext, userBucket?: string) {
     this.request = request;
+    this.apiAssertion = new ApiAssertion();
     this.userBucket = userBucket;
   }
 

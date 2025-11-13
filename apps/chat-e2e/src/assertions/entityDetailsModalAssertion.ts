@@ -1,4 +1,3 @@
-import { Publication } from '@/chat/types/publication';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
   ExpectedConstants,
@@ -20,7 +19,7 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
     expectedName?: string;
     expectedVersion?: string;
     expectedDescription?: string;
-    expectedReleaseDade?: string;
+    expectedReleaseDate?: string | number;
     expectedAuthor?: string;
     expectedTopics?: string[];
     expectedIcon?: string | BaseElement;
@@ -40,9 +39,9 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
     if (attributesToVerify.expectedDescription !== undefined) {
       await this.assertDescription(attributesToVerify.expectedDescription);
     }
-    if (attributesToVerify.expectedReleaseDade !== undefined) {
+    if (attributesToVerify.expectedReleaseDate !== undefined) {
       await this.assertEntityReleaseDate(
-        attributesToVerify.expectedReleaseDade,
+        attributesToVerify.expectedReleaseDate,
       );
     }
     if (attributesToVerify.expectedAuthor !== undefined) {
@@ -132,15 +131,11 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
     );
   }
 
-  public async assertEntityReleaseDate(
-    expectedDate: Publication | number | string,
-  ) {
+  public async assertEntityReleaseDate(expectedDate: number | string) {
     const date =
       typeof expectedDate === 'number'
         ? DateUtil.convertUnixTimestampToLocalDate(expectedDate)
-        : typeof expectedDate === 'string'
-          ? expectedDate
-          : DateUtil.convertUnixTimestampToLocalDate(expectedDate.createdAt);
+        : expectedDate;
     await this.assertElementText(
       this.entityDetailsModal.entityReleaseDate,
       date,

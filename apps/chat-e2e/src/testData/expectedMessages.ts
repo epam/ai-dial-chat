@@ -248,8 +248,8 @@ export const ExpectedMessages = {
   folderIsHighlighted: 'Folder is highlighted',
   entitiesCountIsValid: 'Number of entities returned in API response is valid',
   modelIsAvailable: 'Model is returned in API response',
-  responseCodeIsValid: 'Response code is valid for model: ',
-  responseTextIsValid: 'Response text is valid for model: ',
+  responseCodeIsValid: 'Response code is valid for entity: ',
+  responseTextIsValid: 'Response text is valid for entity: ',
   imageUrlReturnedInResponse:
     'Image url is returned in the response for model: ',
   attachmentUrlIsValid: 'Conversation attachment url is valid',
