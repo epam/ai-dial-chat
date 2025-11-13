@@ -10,3 +10,4 @@ export * from './editSelectors';
 export * from './folderSelectors';
 export * from './overlaySelectors';
 export * from './marketplaceSelectors';
+export { EntitySelectors } from '@/src/ui/selectors/entitySelectors';

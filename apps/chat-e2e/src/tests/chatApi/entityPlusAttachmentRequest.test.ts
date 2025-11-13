@@ -25,6 +25,7 @@ for (const entity of entityPlusAttachmentRequests) {
         conversationData.prepareConversationWithAttachmentsInRequest(
           entity.entityId,
           entity.request,
+          undefined,
           imageUrl,
         );
       if (entity.systemPrompt) {
@@ -64,6 +65,7 @@ dialTest(
       conversationData.prepareConversationWithAttachmentsInRequest(
         replayEntity.entityId,
         replayEntity.request,
+        undefined,
         imageUrl,
       );
     conversationData.resetData();

@@ -1,11 +1,11 @@
 import { Tags } from '@/src/ui/domData';
-import { IconSelectors, PublishEntitySelectors } from '@/src/ui/selectors';
+import { EntitySelectors, IconSelectors } from '@/src/ui/selectors';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
 
 export class PublishEntitiesTree extends EntitiesTree {
   public getEntityVersion(entityName: string, entityIndex?: number) {
     return this.getEntityByName(entityName, entityIndex).locator(
-      `~*${PublishEntitySelectors.version}, ~* > ${PublishEntitySelectors.version}`,
+      `~*${EntitySelectors.version}, ~* > ${EntitySelectors.version}`,
     );
   }
 
@@ -18,12 +18,18 @@ export class PublishEntitiesTree extends EntitiesTree {
   public getEntityVersionInput(entityName: string, entityIndex?: number) {
     return this.getEntityByName(entityName, entityIndex)
       .locator('~*')
-      .locator(`${Tags.input}${PublishEntitySelectors.version}`);
+      .locator(`${Tags.input}${EntitySelectors.version}`);
   }
 
   public getEntityVersionErrorIcon(entityName: string, entityIndex?: number) {
     return this.getEntityVersionInput(entityName, entityIndex)
       .locator('~*')
       .locator(IconSelectors.exclamationCircleIcon);
+  }
+
+  public getEntityNameInput(entityName: string, entityIndex?: number) {
+    return this.getEntityByName(entityName, entityIndex).locator(
+      EntitySelectors.entityInput,
+    );
   }
 }
