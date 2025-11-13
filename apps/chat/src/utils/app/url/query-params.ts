@@ -33,3 +33,20 @@ export const updateQueryParams = (
     },
   );
 };
+
+export function getNumberFromSearchParams(
+  searchParams: URLSearchParams,
+  key: string,
+  fallback = 0,
+): number {
+  const value = searchParams.get(key);
+  return value ? parseInt(value, 10) : fallback;
+}
+
+export function getStringFromSearchParams<T extends string>(
+  searchParams: URLSearchParams,
+  key: string,
+  fallback: T = '' as T,
+): T {
+  return (searchParams.get(key) ?? fallback) as T;
+}

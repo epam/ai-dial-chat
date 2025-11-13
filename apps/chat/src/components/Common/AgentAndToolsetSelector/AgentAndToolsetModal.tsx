@@ -18,7 +18,11 @@ import { isExternalApp } from '@/src/utils/app/application';
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
-import { updateQueryParams } from '@/src/utils/app/url/query-params';
+import {
+  getNumberFromSearchParams,
+  getStringFromSearchParams,
+  updateQueryParams,
+} from '@/src/utils/app/url/query-params';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -116,32 +120,26 @@ const AgentAndToolsetModalView = ({
       : undefined;
 
   const [activeSlide, setActiveSlide] = useState(
-    searchParams.get(AgentsAndToolsetsModalQueryParams.SliderActiveSlide)
-      ? parseInt(
-          searchParams.get(
-            AgentsAndToolsetsModalQueryParams.SliderActiveSlide,
-          ) ?? '0',
-        )
-      : 0,
+    getNumberFromSearchParams(
+      searchParams,
+      AgentsAndToolsetsModalQueryParams.SliderActiveSlide,
+    ),
   );
   const [prevActiveSlide, setPrevActiveSlide] = useState(
-    searchParams.get(AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide)
-      ? parseInt(
-          searchParams.get(
-            AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
-          ) ?? '0',
-        )
-      : 0,
+    getNumberFromSearchParams(
+      searchParams,
+      AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
+    ),
   );
   const [shouldResetSliderState, setShouldResetSliderState] = useState(false);
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [scopeTab, setScopeTab] = useState<MarketplaceTabs>(
-    searchParams.get(AgentsAndToolsetsModalQueryParams.ScopeTab)
-      ? ((searchParams.get(
-          AgentsAndToolsetsModalQueryParams.ScopeTab,
-        ) as MarketplaceTabs) ?? MarketplaceTabs.MY_WORKSPACE)
-      : MarketplaceTabs.MY_WORKSPACE,
+    getStringFromSearchParams<MarketplaceTabs>(
+      searchParams,
+      AgentsAndToolsetsModalQueryParams.ScopeTab,
+      MarketplaceTabs.MY_WORKSPACE,
+    ),
   );
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
