@@ -519,7 +519,7 @@ dialTest(
       defaultName = await entityEditorGeneralForm.name.getElementInputValue();
       toolsetEntity.name = defaultName!;
       await entityEditorGeneralForm.goNext({
-        hostsArray: [API.toolsetCreateHost, API.installedToolsetsHost()],
+        hostsArray: [API.toolsetCreateHost(), API.installedToolsetsHost()],
       });
       await baseAssertion.assertElementState(
         customAppEditorAppSettingsPreviewBody.previewSpinner,
@@ -544,7 +544,7 @@ dialTest(
         await entityDetailsModalAssertion.assertEntityCommonAttributes({
           expectedName: toolsetEntity.name,
           expectedVersion: toolsetEntity.version,
-          expectedReleaseDade: toolsetEntity.releaseDate,
+          expectedReleaseDate: toolsetEntity.releaseDate,
           expectedAuthor: toolsetEntity.author,
           expectedIcon: entityDetailsModal.defaultToolsetIcon,
         });
@@ -575,7 +575,7 @@ dialTest(
         );
         await entityEditorGeneralInfoPreviewCardAssertion.assertPreviewCardAttributes(
           {
-            expectedReleaseDade: toolsetEntity.releaseDate,
+            expectedReleaseDate: toolsetEntity.releaseDate,
           },
         );
       },
@@ -773,7 +773,7 @@ dialTest(
           name: toolsetEntity.name,
         });
         await entityEditorGeneralForm.goNext({
-          hostsArray: [API.toolsetCreateHost, API.installedToolsetsHost()],
+          hostsArray: [API.toolsetCreateHost(), API.installedToolsetsHost()],
         });
         await baseAssertion.assertElementState(
           customAppEditorAppSettingsPreviewBody.previewSpinner,
