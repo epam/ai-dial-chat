@@ -402,7 +402,7 @@ const clearAttachments = (attachments: Attachment[], clear: boolean) => {
   }
   return attachments.map((attachment) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { index, ...rest} = attachment;
+    const { index, ...rest } = attachment;
     return rest;
   });
 };
@@ -418,10 +418,21 @@ export function getMessageCustomContent(
     ? {
         custom_content: {
           ...((allowAssistantAttachments || message.role !== Role.Assistant) &&
-            message.custom_content?.attachments?.length && {attachments: clearAttachments(message.custom_content?.attachments, message.role === Role.Assistant)}),
-          ...(message.custom_content?.state && {state: message.custom_content.state}),
-          ...(message.custom_content?.form_value && {form_value: message.custom_content?.form_value}),
-          ...(message.custom_content?.form_schema && {form_schema: message.custom_content?.form_schema}),
+            message.custom_content?.attachments?.length && {
+              attachments: clearAttachments(
+                message.custom_content?.attachments,
+                message.role === Role.Assistant,
+              ),
+            }),
+          ...(message.custom_content?.state && {
+            state: message.custom_content.state,
+          }),
+          ...(message.custom_content?.form_value && {
+            form_value: message.custom_content?.form_value,
+          }),
+          ...(message.custom_content?.form_schema && {
+            form_schema: message.custom_content?.form_schema,
+          }),
         },
       }
     : undefined;
