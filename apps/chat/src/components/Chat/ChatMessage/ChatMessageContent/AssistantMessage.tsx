@@ -316,7 +316,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             message={message}
             realMessageIndex={realMessageIndex}
             messageCopied={messageCopied}
-            onLike={(likeStatus) => onLike?.(likeStatus)}
+            onLike={onLike}
             onRegenerate={onRegenerate}
             onToggleEditing={
               (isAllLastMessageEnabled ||

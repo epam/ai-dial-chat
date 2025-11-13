@@ -134,7 +134,7 @@ interface MessageAssistantButtonsProps {
   isLikesEnabled: boolean;
   message: Message;
   copyOnClick: () => void;
-  onLike: onLikeMessageHandler;
+  onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing?: () => void;
 }
@@ -216,6 +216,7 @@ export const MessageAssistantButtons = ({
         </Tooltip>
       )}
       {isLikesEnabled &&
+        onLike &&
         (hasMessageContent || !!getMessageCustomContent(message)) && (
           <MessageLikes likeStatus={message.like} onLike={onLike} />
         )}

@@ -1,4 +1,5 @@
 import { IconThumbDown, IconThumbUp } from '@tabler/icons-react';
+import { useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -9,6 +10,8 @@ import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Button } from '@/src/components/Common/Button';
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { DislikeCommentModal } from './DislikeCommentModal';
 
 import { Feature, LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
 
@@ -26,6 +29,7 @@ export const MessageLikes = ({
   const isDislikeCommentEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.DislikeComment),
   );
+  const [isDislikeModalOpen, setDislikeModalOpen] = useState(false);
   return (
     <div className="flex flex-row gap-2">
       {likeStatus !== LikeState.Disliked && (
@@ -61,9 +65,7 @@ export const MessageLikes = ({
                   onLike(LikeState.Disliked);
                   return;
                 }
-                // Open comment dialog before sending dislike
-                // For simplicity, we directly call onLike here
-                // In a real scenario, you would open a dialog to get user input
+                setDislikeModalOpen(true);
               }
             }}
             className={notLiked ? 'text-secondary' : 'text-accent-primary'}
@@ -73,6 +75,15 @@ export const MessageLikes = ({
             <IconThumbDown size={18} />
           </Button>
         </Tooltip>
+      )}
+      {isDislikeModalOpen && (
+        <DislikeCommentModal
+          onClose={() => setDislikeModalOpen(false)}
+          onSubmit={(comment: string) => {
+            onLike(LikeState.Disliked, comment);
+            setDislikeModalOpen(false);
+          }}
+        />
       )}
     </div>
   );
