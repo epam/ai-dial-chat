@@ -728,8 +728,10 @@ dialTest(
     await dialTest.step(
       `Precondition: Create toolset via API to make filter's panel available`,
       async () => {
+        //TODO: remove topic from the builder when fixed https://github.com/epam/ai-dial-chat/issues/5085
         const toolsetModel = toolsetBuilder
           .withDisplayName(GeneratorUtil.randomToolsetName())
+          .withDescriptionKeywords(GeneratorUtil.randomString(5))
           .build();
         toolsetForCleanup = await toolsetApiHelper.createToolset(toolsetModel);
       },
@@ -745,6 +747,7 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.toolsetsTab.click();
         await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        //TODO: replace Topics filter with Sources when fixed https://github.com/epam/ai-dial-chat/issues/5085
         const filterOptions =
           await marketplaceFilter.filterByPropertyOptionLabels(
             MarketplaceFilterTypes.topics,
