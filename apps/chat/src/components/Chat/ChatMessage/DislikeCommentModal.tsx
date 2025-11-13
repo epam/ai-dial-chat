@@ -5,6 +5,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+
 import { Modal } from '@/src/components/Common/Modal';
 
 export const DislikeCommentModal = ({
@@ -24,6 +26,7 @@ export const DislikeCommentModal = ({
 
   return (
     <Modal
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
       heading="Send feedback"
       state={ModalState.OPENED}
       onClose={onClose}

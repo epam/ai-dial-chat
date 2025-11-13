@@ -1,19 +1,16 @@
 import { IconThumbDown, IconThumbUp } from '@tabler/icons-react';
-import { useState } from 'react';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/selectors';
-
 import { Button } from '@/src/components/Common/Button';
+import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DislikeCommentModal } from './DislikeCommentModal';
-
-import { Feature, LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
+import { LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
 
 interface MessageLikesProps {
   likeStatus: LikeState | undefined;
@@ -25,27 +22,23 @@ export const MessageLikes = ({
   onLike,
 }: MessageLikesProps) => {
   const { t } = useTranslation(Translation.Chat);
-  const notLiked = likeStatus === LikeState.NoState;
-  const isDislikeCommentEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.DislikeComment),
-  );
-  const [isDislikeModalOpen, setDislikeModalOpen] = useState(false);
+  const wasClicked = likeStatus !== LikeState.NoState;
   return (
     <div className="flex flex-row gap-2">
       {likeStatus !== LikeState.Disliked && (
         <Tooltip
           placement="top"
-          isTriggerClickable={notLiked}
-          tooltip={notLiked ? t('Like') : t('Liked')}
+          isTriggerClickable={!wasClicked}
+          tooltip={!wasClicked ? t('Like') : t('Liked')}
         >
           <Button
             onClick={() => {
-              if (notLiked) {
+              if (!wasClicked) {
                 onLike(LikeState.Liked);
               }
             }}
-            className={notLiked ? 'text-secondary' : 'text-accent-primary'}
-            disabled={!notLiked}
+            className={!wasClicked ? 'text-secondary' : 'text-accent-primary'}
+            disabled={wasClicked}
             data-qa="like"
           >
             <IconThumbUp size={18} />
@@ -55,36 +48,75 @@ export const MessageLikes = ({
       {likeStatus !== LikeState.Liked && (
         <Tooltip
           placement="top"
-          isTriggerClickable={notLiked}
-          tooltip={t(notLiked ? 'Dislike' : 'Disliked')}
+          isTriggerClickable={!wasClicked}
+          tooltip={t(!wasClicked ? 'Dislike' : 'Disliked')}
         >
           <Button
             onClick={() => {
-              if (notLiked) {
-                if (!isDislikeCommentEnabled) {
-                  onLike(LikeState.Disliked);
-                  return;
-                }
-                setDislikeModalOpen(true);
+              if (!wasClicked) {
+                onLike(LikeState.Disliked);
               }
             }}
-            className={notLiked ? 'text-secondary' : 'text-accent-primary'}
-            disabled={!notLiked}
+            className={!wasClicked ? 'text-secondary' : 'text-accent-primary'}
+            disabled={wasClicked}
             data-qa="dislike"
           >
             <IconThumbDown size={18} />
           </Button>
         </Tooltip>
       )}
-      {isDislikeModalOpen && (
-        <DislikeCommentModal
-          onClose={() => setDislikeModalOpen(false)}
-          onSubmit={(comment: string) => {
-            onLike(LikeState.Disliked, comment);
-            setDislikeModalOpen(false);
+    </div>
+  );
+};
+
+export const MessageMobileLikes = ({
+  likeStatus = LikeState.NoState,
+  onLike,
+}: MessageLikesProps) => {
+  const { t } = useTranslation(Translation.Chat);
+  const wasClicked = likeStatus !== LikeState.NoState;
+  return (
+    <>
+      {likeStatus !== LikeState.Disliked && (
+        <MenuItem
+          disabled={wasClicked}
+          className={classNames(!wasClicked && 'hover:bg-accent-primary-alpha')}
+          data-qa="like"
+          item={
+            <div className="flex items-center gap-3">
+              <IconThumbUp className="text-secondary" size={18} />
+              <p className={classNames(wasClicked && 'text-secondary')}>
+                {wasClicked ? t('Liked') : t('Like')}
+              </p>
+            </div>
+          }
+          onClick={() => {
+            if (!wasClicked) {
+              onLike(LikeState.Liked);
+            }
           }}
         />
       )}
-    </div>
+      {likeStatus !== LikeState.Liked && (
+        <MenuItem
+          disabled={wasClicked}
+          className={classNames(!wasClicked && 'hover:bg-accent-primary-alpha')}
+          data-qa="dislike"
+          item={
+            <div className="flex items-center gap-3">
+              <IconThumbDown className="text-secondary" size={18} />
+              <p className={classNames(wasClicked && 'text-secondary')}>
+                {wasClicked ? t('Disliked') : t('Dislike')}
+              </p>
+            </div>
+          }
+          onClick={() => {
+            if (!wasClicked) {
+              onLike(LikeState.Disliked);
+            }
+          }}
+        />
+      )}
+    </>
   );
 };

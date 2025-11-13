@@ -4,8 +4,6 @@ import {
   IconEdit,
   IconListDetails,
   IconRefresh,
-  IconThumbDown,
-  IconThumbUp,
   IconTrashX,
 } from '@tabler/icons-react';
 
@@ -29,11 +27,10 @@ import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
-import { MessageLikes } from './MessageLikes';
+import { MessageLikes, MessageMobileLikes } from './MessageLikes';
 
 import {
   Feature,
-  LikeState,
   Message,
   Role,
   onLikeMessageHandler,
@@ -349,68 +346,7 @@ export const MessageMobileButtons = ({
           )}
           {isLikesEnabled &&
             (hasMessageContent || !!getMessageCustomContent(message)) && (
-              <>
-                {message.like !== LikeState.Disliked && (
-                  <MenuItem
-                    className={classNames(
-                      message.like !== LikeState.Liked &&
-                        'hover:bg-accent-primary-alpha',
-                    )}
-                    item={
-                      <div className="flex items-center gap-3">
-                        <IconThumbUp className="text-secondary" size={18} />
-                        <p
-                          className={classNames(
-                            message.like === LikeState.Liked &&
-                              'text-secondary',
-                          )}
-                        >
-                          {message.like === LikeState.Liked
-                            ? t('Liked')
-                            : t('Like')}
-                        </p>
-                      </div>
-                    }
-                    disabled={message.like === LikeState.Liked}
-                    data-qa="like"
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Liked);
-                      }
-                    }}
-                  />
-                )}
-                {message.like !== LikeState.Liked && (
-                  <MenuItem
-                    disabled={message.like === LikeState.Disliked}
-                    className={classNames(
-                      message.like !== LikeState.Disliked &&
-                        'hover:bg-accent-primary-alpha',
-                    )}
-                    data-qa="dislike"
-                    item={
-                      <div className="flex items-center gap-3">
-                        <IconThumbDown className="text-secondary" size={18} />
-                        <p
-                          className={classNames(
-                            message.like === LikeState.Disliked &&
-                              'text-secondary',
-                          )}
-                        >
-                          {message.like === LikeState.Disliked
-                            ? t('Disliked')
-                            : t('Dislike')}
-                        </p>
-                      </div>
-                    }
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Disliked);
-                      }
-                    }}
-                  />
-                )}
-              </>
+              <MessageMobileLikes likeStatus={message.like} onLike={onLike} />
             )}
         </>
       )
