@@ -1,15 +1,17 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useSearchParams } from 'next/navigation';
 
 import classNames from 'classnames';
 
-import { updateQueryParamWithReplace } from '@/src/utils/app/url/query-params';
+import { updateQueryParams } from '@/src/utils/app/url/query-params';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
+
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
@@ -37,8 +39,6 @@ interface AgentAndToolsetSelectorProps {
   onItemClick?: (id: string) => void;
 }
 
-const agentsAndToolsetsModalQueryParam = 'agentsAndToolsetsModal';
-
 export const AgentAndToolsetSelector: React.FC<
   AgentAndToolsetSelectorProps
 > = ({
@@ -55,21 +55,16 @@ export const AgentAndToolsetSelector: React.FC<
   const searchParams = useSearchParams();
 
   const [isSelectModalOpen, setSelectModalOpen] = useState(
-    searchParams.get(agentsAndToolsetsModalQueryParam) === '1',
+    searchParams.get(AgentsAndToolsetsModalQueryParams.Modal) === '1',
   );
 
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setSelectModalOpen(true);
-
-    // '1' stands for true
-    updateQueryParamWithReplace(agentsAndToolsetsModalQueryParam, '1');
   };
 
   const handleCloseModal = useCallback(() => {
     setSelectModalOpen(false);
-
-    updateQueryParamWithReplace(agentsAndToolsetsModalQueryParam, null);
   }, []);
 
   const handleRemoveItem = useCallback(
@@ -86,6 +81,18 @@ export const AgentAndToolsetSelector: React.FC<
     },
     [onChange],
   );
+
+  useEffect(() => {
+    if (!isSelectModalOpen) {
+      updateQueryParams({
+        [AgentsAndToolsetsModalQueryParams.Modal]: null,
+        [AgentsAndToolsetsModalQueryParams.ScopeTab]: null,
+        [AgentsAndToolsetsModalQueryParams.SearchTerm]: null,
+        [AgentsAndToolsetsModalQueryParams.SliderActiveSlide]: null,
+        [AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide]: null,
+      });
+    }
+  }, [isSelectModalOpen]);
 
   return (
     <Tooltip tooltip={tooltip}>
