@@ -478,8 +478,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
 
     if (
-      (newName && newName !== currentFolder.name) ||
-      newAddedFolderId === currentFolder.id
+      newName &&
+      (newName !== currentFolder.name || newAddedFolderId === currentFolder.id)
     ) {
       onRenameFolder(newName, currentFolder.id);
     }
