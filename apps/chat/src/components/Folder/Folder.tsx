@@ -477,7 +477,10 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    if (newName && newName !== currentFolder.name) {
+    if (
+      (newName && newName !== currentFolder.name) ||
+      newAddedFolderId === currentFolder.id
+    ) {
       onRenameFolder(newName, currentFolder.id);
     }
 
@@ -492,6 +495,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     renameValue,
     skipFolderRenameValidation,
     currentFolder,
+    newAddedFolderId,
     handleNewFolderRename,
     allFoldersWithoutFilters,
     dispatch,
