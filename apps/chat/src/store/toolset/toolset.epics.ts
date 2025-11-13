@@ -5,8 +5,10 @@ import {
   concat,
   filter,
   forkJoin,
+  from,
   iif,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -292,30 +294,34 @@ const updateToolsetEpic: AppEpic = (action$) =>
                     );
                   }
 
-                  return concat(
-                    iif(
-                      () => !!payload.exitAfterSave,
+                  const actions: Observable<AppAction>[] = [];
+
+                  if (payload.exitAfterSave) {
+                    actions.push(
                       of(
                         ToolsetActions.exitEditor({
                           redirectUrl: payload.redirectUrl,
                           shouldSelectToolset: payload.shouldSelectToolset,
                         }),
                       ),
-                      EMPTY,
-                    ),
-                    of(
-                      ToolsetActions.updateToolsetSuccess({
-                        oldToolset: payload.oldToolset,
-                        newToolset: savedUpdatedToolset,
-                      }),
-                    ),
-                    iif(
-                      () => !!payload.tabToOpen,
-                      of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.auth,
+                    );
+                  } else {
+                    actions.push(
+                      of(
+                        ToolsetActions.updateToolsetSuccess({
+                          oldToolset: payload.oldToolset,
+                          newToolset: savedUpdatedToolset,
+                        }),
+                      ),
+                    );
+                    if (payload.tabToOpen) {
+                      actions.push(
+                        of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
+                      );
+                    }
+                  }
+                  if (payload.auth) {
+                    actions.push(
                       of(
                         ToolsetActions.startSignInProcess({
                           authLevel:
@@ -325,9 +331,10 @@ const updateToolsetEpic: AppEpic = (action$) =>
                           toolset: savedUpdatedToolset,
                         }),
                       ),
-                      EMPTY,
-                    ),
-                  );
+                    );
+                  }
+
+                  return concat(...actions);
                 }),
               ),
             ),
@@ -852,45 +859,42 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
         route.searchParams.append(MarketplaceQueryParams.toolset, reference);
       }
 
-      router.push(route).then(() => {
-        if (route.pathname === Routes.Marketplace) {
-          of(MarketplaceActions.initQueryParams());
-        }
-      });
+      const actions: Observable<AppAction>[] = [];
 
-      return concat(
-        iif(
-          () =>
-            !!payload.shouldSelectToolset &&
-            route.pathname === Routes.Marketplace &&
-            !!reference,
-          of(
-            MarketplaceActions.setDetailsEntity({
-              reference: reference as string,
-              type: MarketplaceEntitiesTabs.TOOLSETS,
-              isSuggested: false,
-            }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () => route.pathname === Routes.Chat && !publicationUrl,
-          of(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () => route.pathname === Routes.Chat && !!publicationUrl,
-          of(
-            ConversationsActions.selectConversations({ conversationIds: [] }),
-            PublicationActions.setIsToolsetReview(true),
-          ),
-          EMPTY,
-        ),
-      );
+      if (route.pathname === Routes.Marketplace) {
+        if (payload.shouldSelectToolset && reference) {
+          actions.push(
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: reference as string,
+                type: MarketplaceEntitiesTabs.TOOLSETS,
+                isSuggested: false,
+              }),
+            ),
+          );
+        }
+      }
+
+      if (route.pathname === Routes.Chat) {
+        if (!publicationUrl) {
+          actions.push(
+            of(
+              ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+              }),
+            ),
+          );
+        } else {
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({ conversationIds: [] }),
+            ),
+            of(PublicationActions.setIsToolsetReview(true)),
+          );
+        }
+      }
+
+      return from(router.push(route)).pipe(mergeMap(() => concat(...actions)));
     }),
   );
 
