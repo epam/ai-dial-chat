@@ -27,7 +27,7 @@ import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
-import { MessageLikes, MessageMobileLikes } from './MessageLikes';
+import { MessageLikes } from './MessageLikes';
 
 import {
   Feature,
@@ -215,7 +215,9 @@ export const MessageAssistantButtons = ({
       {isLikesEnabled &&
         onLike &&
         (hasMessageContent || !!getMessageCustomContent(message)) && (
-          <MessageLikes likeStatus={message.like} onLike={onLike} />
+          <div className="flex flex-row gap-2">
+            <MessageLikes likeStatus={message.like} onLike={onLike} />
+          </div>
         )}
     </div>
   );
@@ -346,7 +348,11 @@ export const MessageMobileButtons = ({
           )}
           {isLikesEnabled &&
             (hasMessageContent || !!getMessageCustomContent(message)) && (
-              <MessageMobileLikes likeStatus={message.like} onLike={onLike} />
+              <MessageLikes
+                likeStatus={message.like}
+                onLike={onLike}
+                isMobile
+              />
             )}
         </>
       )
