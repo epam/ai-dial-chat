@@ -1,12 +1,10 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useEffect, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useSearchParams } from 'next/navigation';
 
 import classNames from 'classnames';
-
-import { updateQueryParams } from '@/src/utils/app/url/query-params';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
@@ -81,18 +79,6 @@ export const AgentAndToolsetSelector: React.FC<
     },
     [onChange],
   );
-
-  useEffect(() => {
-    if (!isSelectModalOpen) {
-      updateQueryParams({
-        [AgentsAndToolsetsModalQueryParams.Modal]: null,
-        [AgentsAndToolsetsModalQueryParams.ScopeTab]: null,
-        [AgentsAndToolsetsModalQueryParams.SearchTerm]: null,
-        [AgentsAndToolsetsModalQueryParams.SliderActiveSlide]: null,
-        [AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide]: null,
-      });
-    }
-  }, [isSelectModalOpen]);
 
   return (
     <Tooltip tooltip={tooltip}>

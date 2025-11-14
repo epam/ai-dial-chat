@@ -82,6 +82,7 @@ export const mergeFeatures = (
     allow_resume: allowResume = true,
     configuration = false,
     tools = true,
+    assistant_attachments_in_request: assistantAttachmentsInRequest = false,
     ...otherFeatures
   } = features || {};
   return {
@@ -93,6 +94,7 @@ export const mergeFeatures = (
     allowResume,
     configuration,
     tools,
+    assistantAttachmentsInRequest,
     ...otherFeatures,
   };
 };
