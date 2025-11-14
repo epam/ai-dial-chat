@@ -12,6 +12,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTooltipContent } from './ChipTooltipContent';
+import { EntityTitle } from './EntityTitle';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -88,17 +89,12 @@ const ChipBody: React.FC<ChipBodyProps> = ({
       onClick={handleClick}
     >
       <ModelIcon entityId={id} entity={item} size={18} />
-      <div className="flex max-w-[220px] gap-2 truncate">
-        <span>{name}</span>
-        <span
-          className={classNames(
-            'truncate',
-            isError ? 'text-error brightness-75' : 'text-secondary',
-          )}
-        >
-          {version}
-        </span>
-      </div>
+      <EntityTitle
+        name={name}
+        version={version}
+        isError={isError}
+        className="max-w-[220px]"
+      />
     </div>
   );
 };

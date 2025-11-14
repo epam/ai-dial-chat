@@ -14,6 +14,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTooltipContent } from './ChipTooltipContent';
+import { EntityTitle } from './EntityTitle';
 
 interface ListItemContentProps {
   id: string;
@@ -51,19 +52,7 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
     >
       <div className="flex min-w-0 items-center gap-2">
         <ModelIcon entityId={id} entity={item} size={18} />
-        <div className="flex gap-2 truncate">
-          <span className={classNames('shrink-0', { 'text-error': isError })}>
-            {name}
-          </span>
-          <span
-            className={classNames(
-              'truncate',
-              isError ? 'text-error brightness-75' : 'text-secondary',
-            )}
-          >
-            {version}
-          </span>
-        </div>
+        <EntityTitle name={name} version={version} isError={isError} />
       </div>
       <button
         className="shrink-0 text-secondary hover:text-primary"
