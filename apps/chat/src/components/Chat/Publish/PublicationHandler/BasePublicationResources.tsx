@@ -55,14 +55,17 @@ export const BasePublicationResources = ({
   const entities: ShareEntity[] = useMemo(
     () =>
       resources.map(({ reviewUrl, action, publishCredentials }) => {
-        const { name } = parseEntityApiKey(splitEntityId(reviewUrl).name, {
-          parseVersion:
-            !publicationModel ||
-            publicationModel.action === PublishActions.DELETE ||
-            isApplicationId(reviewUrl) ||
-            isToolsetId(reviewUrl),
-          parseModel: isConversationId(reviewUrl),
-        });
+        const { name, version } = parseEntityApiKey(
+          splitEntityId(reviewUrl).name,
+          {
+            parseVersion:
+              !publicationModel ||
+              publicationModel.action === PublishActions.DELETE ||
+              isApplicationId(reviewUrl) ||
+              isToolsetId(reviewUrl),
+            parseModel: isConversationId(reviewUrl),
+          },
+        );
 
         return {
           id: reviewUrl,
@@ -72,6 +75,7 @@ export const BasePublicationResources = ({
             isNotExist: currentPublicationInvalidEntities.includes(reviewUrl),
             action,
             publishCredentials,
+            version,
           },
         };
       }),

@@ -18,7 +18,7 @@ import { AssistantMessage } from '@/src/components/Chat/ChatMessage/ChatMessageC
 import { UserMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/UserMessage';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
-import { LikeState, Message, Role } from '@epam/ai-dial-shared';
+import { Message, Role, onLikeMessageHandler } from '@epam/ai-dial-shared';
 
 interface Props {
   message: Message;
@@ -42,7 +42,7 @@ interface Props {
     conversationId: string,
   ) => void;
   onCopy?: () => void;
-  onLike?: (likeStatus: LikeState) => void;
+  onLike?: onLikeMessageHandler;
   onDelete?: () => void;
   onClick?: (
     e: MouseEvent<HTMLDivElement>,

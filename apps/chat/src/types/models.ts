@@ -66,6 +66,7 @@ export interface DialAIEntityFeatures {
   allowResume: boolean;
   configuration: boolean;
   tools: boolean;
+  assistantAttachmentsInRequest: boolean;
 }
 
 export interface DialAIEntity {

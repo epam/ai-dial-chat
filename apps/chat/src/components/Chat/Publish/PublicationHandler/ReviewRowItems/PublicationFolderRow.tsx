@@ -218,6 +218,7 @@ export const PublicationFolderRow = ({
               )}
               tooltipIconClassName="right-1"
               errors={errors}
+              dataQA="folder-input"
             />
           </div>
         </div>
