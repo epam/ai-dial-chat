@@ -452,6 +452,31 @@ export const AgentAndToolsetModal = ({
   );
   const isToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
 
+  useEffect(() => {
+    return () => {
+      const queryParamsToNull = [
+        AgentsAndToolsetsModalQueryParams.Modal,
+        AgentsAndToolsetsModalQueryParams.ScopeTab,
+        AgentsAndToolsetsModalQueryParams.SearchTerm,
+        AgentsAndToolsetsModalQueryParams.SliderActiveSlide,
+        AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
+      ];
+      const hasAnyQueryParam = queryParamsToNull.some((param) =>
+        window.location.search.includes(param),
+      );
+
+      if (hasAnyQueryParam) {
+        updateQueryParams({
+          [AgentsAndToolsetsModalQueryParams.Modal]: null,
+          [AgentsAndToolsetsModalQueryParams.ScopeTab]: null,
+          [AgentsAndToolsetsModalQueryParams.SearchTerm]: null,
+          [AgentsAndToolsetsModalQueryParams.SliderActiveSlide]: null,
+          [AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide]: null,
+        });
+      }
+    };
+  }, []);
+
   return (
     <Modal
       portalId="theme-main"
