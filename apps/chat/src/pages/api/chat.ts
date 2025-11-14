@@ -91,7 +91,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     messagesToSend = messagesToSend.map((message) => ({
-      ...getUserMessageCustomContent(message),
+      ...getUserMessageCustomContent(
+        message,
+        model.features?.assistantAttachmentsInRequest,
+      ),
       role: message.role,
       content: message.content,
     }));
