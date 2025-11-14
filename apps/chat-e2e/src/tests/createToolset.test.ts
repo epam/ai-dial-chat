@@ -46,7 +46,6 @@ dialTest(
       toolsetEditorViewForm,
       entityEditorHeaderAssertion,
       entityDetailsModalAssertion,
-      customAppEditorAppSettingsPreviewBody,
       entityEditorGeneralForm,
       toolsetEditorViewFormAssertion,
       listboxMenu,
@@ -75,7 +74,7 @@ dialTest(
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
       description: `${shortDescription}\n\n${longDescription}`,
-      endpoint: `http://${GeneratorUtil.randomString(7)}.com`,
+      endpoint: GeneratorUtil.randomUrl(),
       allowedTools: [
         GeneratorUtil.randomString(5),
         GeneratorUtil.randomString(5),
@@ -267,9 +266,8 @@ dialTest(
         await entityEditorGeneralForm.goNext({
           hostsArray: [API.toolsetCreateHost(), API.installedToolsetsHost()],
         });
-        await baseAssertion.assertElementState(
-          customAppEditorAppSettingsPreviewBody.previewSpinner,
-          'hidden',
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
         );
         await toolsetEditorViewFormAssertion.assertToolsetEditorViewFormAttributes(
           {
@@ -372,7 +370,6 @@ dialTest(
     await dialTest.step(
       'Click on "Save and Exit" btn and verify user is redirected on My workspace page',
       async () => {
-        await entityEditorHeader.focusOn();
         await entityEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(toolsetEditorViewForm, 'hidden');
         await marketplacePage.waitForPageLoaded();

@@ -1,5 +1,12 @@
 import { IconSearch } from '@tabler/icons-react';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
@@ -11,7 +18,11 @@ import { isExternalApp } from '@/src/utils/app/application';
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
-import { updateQueryParamWithReplace } from '@/src/utils/app/url/query-params';
+import {
+  getNumberFromSearchParams,
+  getStringFromSearchParams,
+  updateQueryParams,
+} from '@/src/utils/app/url/query-params';
 import { isInstalledEntity } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -31,6 +42,7 @@ import {
   ChangeMarketplaceTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
@@ -86,9 +98,6 @@ interface AgentAndToolsetModalViewProps {
   onConfirm: (selectedIds: string[]) => void;
 }
 
-const agentsAndToolsetsScopeTabQueryParam = 'agentsAndToolsetsScopeTab';
-const agentsAndToolsetsSearchTermQueryParam = 'agentsAndToolsetsSearchTerm';
-
 const AgentAndToolsetModalView = ({
   initialSelectedIds,
   allItemsMap,
@@ -110,18 +119,30 @@ const AgentAndToolsetModalView = ({
       ? router.query[AppsEditorQuery.Id]?.toString()
       : undefined;
 
+  const [activeSlide, setActiveSlide] = useState(
+    getNumberFromSearchParams(
+      searchParams,
+      AgentsAndToolsetsModalQueryParams.SliderActiveSlide,
+    ),
+  );
+  const [prevActiveSlide, setPrevActiveSlide] = useState(
+    getNumberFromSearchParams(
+      searchParams,
+      AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
+    ),
+  );
   const [shouldResetSliderState, setShouldResetSliderState] = useState(false);
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [scopeTab, setScopeTab] = useState<MarketplaceTabs>(
-    searchParams.get(agentsAndToolsetsScopeTabQueryParam)
-      ? ((searchParams.get(
-          agentsAndToolsetsScopeTabQueryParam,
-        ) as MarketplaceTabs) ?? MarketplaceTabs.MY_WORKSPACE)
-      : MarketplaceTabs.MY_WORKSPACE,
+    getStringFromSearchParams<MarketplaceTabs>(
+      searchParams,
+      AgentsAndToolsetsModalQueryParams.ScopeTab,
+      MarketplaceTabs.MY_WORKSPACE,
+    ),
   );
   const [searchTerm, setSearchTerm] = useState(
-    searchParams.get(agentsAndToolsetsSearchTermQueryParam) ?? '',
+    searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
   );
   const [selectedIds, setSelectedIds] = useState<string[]>(
     initialSelectedIds ?? [],
@@ -154,6 +175,26 @@ const AgentAndToolsetModalView = ({
     }
   }, [selectedIds]);
 
+  useEffect(() => {
+    if (saveSliderStateInURL) {
+      updateQueryParams({
+        [AgentsAndToolsetsModalQueryParams.Modal]: '1',
+        [AgentsAndToolsetsModalQueryParams.SliderActiveSlide]:
+          activeSlide.toString(),
+        [AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide]:
+          prevActiveSlide.toString(),
+        [AgentsAndToolsetsModalQueryParams.SearchTerm]: searchTerm,
+        [AgentsAndToolsetsModalQueryParams.ScopeTab]: scopeTab.toString(),
+      });
+    }
+  }, [
+    activeSlide,
+    prevActiveSlide,
+    saveSliderStateInURL,
+    searchTerm,
+    scopeTab,
+  ]);
+
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
       setSelectedIds((prevIds) => {
@@ -170,27 +211,13 @@ const AgentAndToolsetModalView = ({
     (tab: MarketplaceTabs = MarketplaceTabs.HOME) => {
       setScopeTab(tab);
       setShouldResetSliderState(true);
-
-      if (saveSliderStateInURL) {
-        updateQueryParamWithReplace(
-          agentsAndToolsetsScopeTabQueryParam,
-          tab.toString(),
-        );
-      }
     },
-    [saveSliderStateInURL],
+    [],
   );
 
   const handleSetSearchTerm = (searchTerm: string) => {
     setSearchTerm(searchTerm);
     setShouldResetSliderState(true);
-
-    if (saveSliderStateInURL) {
-      updateQueryParamWithReplace(
-        agentsAndToolsetsSearchTermQueryParam,
-        searchTerm,
-      );
-    }
   };
 
   const handleRemoveItem = useCallback((idToRemove: string) => {
@@ -366,7 +393,6 @@ const AgentAndToolsetModalView = ({
           MarketplaceEntity,
           Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
         >
-          saveSliderStateInURL={saveSliderStateInURL}
           ref={sliderGridRef}
           items={displayedItems}
           SliderItem={AgentAndToolsetSelectItem}
@@ -374,6 +400,7 @@ const AgentAndToolsetModalView = ({
             <TalkToNotFound
               isMyWorkspace={isMyWorkspace}
               onOpenMarketplaceTab={handleSetScopeTab}
+              isSearchMode={!!searchTerm}
             />
           }
           sliderResetDependencies={sliderResetDependencies}
@@ -381,6 +408,10 @@ const AgentAndToolsetModalView = ({
           modalHeaderHeight={headerHeight}
           modalFooterHeight={footerHeight}
           sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
+          activeSlide={activeSlide}
+          prevActiveSlide={prevActiveSlide}
+          onSetActiveSlide={setActiveSlide}
+          onSetPrevActiveSlide={setPrevActiveSlide}
         />
       </div>
 
@@ -420,6 +451,31 @@ export const AgentAndToolsetModal = ({
     ModelsSelectors.selectAreModelsLoading,
   );
   const isToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
+
+  useEffect(() => {
+    return () => {
+      const queryParamsToNull = [
+        AgentsAndToolsetsModalQueryParams.Modal,
+        AgentsAndToolsetsModalQueryParams.ScopeTab,
+        AgentsAndToolsetsModalQueryParams.SearchTerm,
+        AgentsAndToolsetsModalQueryParams.SliderActiveSlide,
+        AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
+      ];
+      const hasAnyQueryParam = queryParamsToNull.some((param) =>
+        window.location.search.includes(param),
+      );
+
+      if (hasAnyQueryParam) {
+        updateQueryParams({
+          [AgentsAndToolsetsModalQueryParams.Modal]: null,
+          [AgentsAndToolsetsModalQueryParams.ScopeTab]: null,
+          [AgentsAndToolsetsModalQueryParams.SearchTerm]: null,
+          [AgentsAndToolsetsModalQueryParams.SliderActiveSlide]: null,
+          [AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide]: null,
+        });
+      }
+    };
+  }, []);
 
   return (
     <Modal

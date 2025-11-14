@@ -260,7 +260,7 @@ dialAdminTest(
           'visible',
         );
         await attachFilesModal
-          .getOrganizationFoldersTree()
+          .getOrganizationFolderFiles()
           .expandFolder(orgFolder);
         await organizationFoldersAssertion.assertFolderEntityState(
           { name: orgFolder },

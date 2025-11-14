@@ -5,8 +5,10 @@ import {
   concat,
   filter,
   forkJoin,
+  from,
   iif,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -65,6 +67,24 @@ const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
     default:
       return false;
   }
+};
+
+const getMyWorkspaceUrl = (
+  params?: Partial<Record<MarketplaceQueryParams, unknown>>,
+) => {
+  const route = new URL(Routes.Marketplace);
+  route.searchParams.append(
+    MarketplaceQueryParams.tab,
+    MarketplaceTabs.MY_WORKSPACE,
+  );
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      route.searchParams.append(key, value as string);
+    });
+  }
+
+  return route;
 };
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -274,30 +294,34 @@ const updateToolsetEpic: AppEpic = (action$) =>
                     );
                   }
 
-                  return concat(
-                    iif(
-                      () => !!payload.exitAfterSave,
+                  const actions: Observable<AppAction>[] = [];
+
+                  if (payload.exitAfterSave) {
+                    actions.push(
                       of(
                         ToolsetActions.exitEditor({
                           redirectUrl: payload.redirectUrl,
                           shouldSelectToolset: payload.shouldSelectToolset,
                         }),
                       ),
-                      EMPTY,
-                    ),
-                    of(
-                      ToolsetActions.updateToolsetSuccess({
-                        oldToolset: payload.oldToolset,
-                        newToolset: savedUpdatedToolset,
-                      }),
-                    ),
-                    iif(
-                      () => !!payload.tabToOpen,
-                      of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.auth,
+                    );
+                  } else {
+                    actions.push(
+                      of(
+                        ToolsetActions.updateToolsetSuccess({
+                          oldToolset: payload.oldToolset,
+                          newToolset: savedUpdatedToolset,
+                        }),
+                      ),
+                    );
+                    if (payload.tabToOpen) {
+                      actions.push(
+                        of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
+                      );
+                    }
+                  }
+                  if (payload.auth) {
+                    actions.push(
                       of(
                         ToolsetActions.startSignInProcess({
                           authLevel:
@@ -307,9 +331,10 @@ const updateToolsetEpic: AppEpic = (action$) =>
                           toolset: savedUpdatedToolset,
                         }),
                       ),
-                      EMPTY,
-                    ),
-                  );
+                    );
+                  }
+
+                  return concat(...actions);
                 }),
               ),
             ),
@@ -800,7 +825,7 @@ const initQueryParamsEpic: AppEpic = (action$) =>
     }),
   );
 
-const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
+const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     ofType(ToolsetActions.exitEditor.type),
     switchMap(({ payload }) => {
@@ -820,57 +845,56 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
         redirectUrl ??
         returnUrl ??
         (publicationUrl
-          ? {
-              pathname: Routes.Chat,
-            }
-          : {
-              pathname: Routes.Marketplace,
-              query: {
-                [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
-                [MarketplaceQueryParams.entitiesTab]:
-                  MarketplaceEntitiesTabs.TOOLSETS,
-              },
-            });
+          ? new URL(Routes.Chat)
+          : getMyWorkspaceUrl({
+              [MarketplaceQueryParams.entitiesTab]:
+                MarketplaceEntitiesTabs.TOOLSETS,
+            }));
 
-      router.push(route).then(() => {
-        if (route.pathname === Routes.Marketplace) {
-          of(MarketplaceActions.initQueryParams());
+      if (
+        route.pathname === Routes.Marketplace &&
+        payload.shouldSelectToolset &&
+        reference
+      ) {
+        route.searchParams.append(MarketplaceQueryParams.toolset, reference);
+      }
+
+      const actions: Observable<AppAction>[] = [];
+
+      if (route.pathname === Routes.Marketplace) {
+        if (payload.shouldSelectToolset && reference) {
+          actions.push(
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: reference as string,
+                type: MarketplaceEntitiesTabs.TOOLSETS,
+                isSuggested: false,
+              }),
+            ),
+          );
         }
-      });
+      }
 
-      return concat(
-        iif(
-          () =>
-            !!payload.shouldSelectToolset &&
-            route.pathname === Routes.Marketplace &&
-            !!reference,
-          of(
-            MarketplaceActions.setDetailsEntity({
-              reference: reference as string,
-              type: MarketplaceEntitiesTabs.TOOLSETS,
-              isSuggested: false,
-            }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () => route.pathname === Routes.Chat && !publicationUrl,
-          of(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
-          ),
-          EMPTY,
-        ),
-        iif(
-          () => route.pathname === Routes.Chat && !!publicationUrl,
-          of(
-            ConversationsActions.selectConversations({ conversationIds: [] }),
-            PublicationActions.setIsToolsetReview(true),
-          ),
-          EMPTY,
-        ),
-      );
+      if (route.pathname === Routes.Chat) {
+        if (!publicationUrl) {
+          actions.push(
+            of(
+              ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+              }),
+            ),
+          );
+        } else {
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({ conversationIds: [] }),
+            ),
+            of(PublicationActions.setIsToolsetReview(true)),
+          );
+        }
+      }
+
+      return from(router.push(route)).pipe(mergeMap(() => concat(...actions)));
     }),
   );
 

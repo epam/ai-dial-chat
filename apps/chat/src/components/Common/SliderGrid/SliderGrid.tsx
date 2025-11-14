@@ -11,8 +11,6 @@ import {
   useState,
 } from 'react';
 
-import { useSearchParams } from 'next/navigation';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -20,7 +18,6 @@ import { useSwipe } from '@/src/hooks/useSwipe';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { getScreenState } from '@/src/utils/app/mobile';
-import { updateQueryParamWithReplace } from '@/src/utils/app/url/query-params';
 
 import { ScreenState } from '@/src/types/common';
 
@@ -72,9 +69,6 @@ const shouldRenderSlide = (
   return slideIndex >= minIndex - 1 && slideIndex <= maxIndex + 1;
 };
 
-const sliderActiveSlideQueryParam = 'sliderActiveSlide';
-const sliderPrevActiveSlideQueryParam = 'sliderPrevActiveSlide';
-
 interface SliderProps<T, P> {
   items: T[];
   SliderItem: FC<P & { groupItem: T }>;
@@ -84,7 +78,10 @@ interface SliderProps<T, P> {
   modalHeaderHeight?: number;
   modalFooterHeight?: number;
   sliderDotsClassName?: string;
-  saveSliderStateInURL?: boolean;
+  activeSlide: number;
+  prevActiveSlide: number;
+  onSetActiveSlide: (slide: number) => void;
+  onSetPrevActiveSlide: (slide: number) => void;
 }
 
 export interface SliderGridRef {
@@ -101,26 +98,17 @@ export const SliderGridInner = <T extends { id: string }, P>(
     modalHeaderHeight = 0,
     modalFooterHeight = 0,
     sliderDotsClassName,
-    saveSliderStateInURL = false,
+    activeSlide,
+    prevActiveSlide,
+    onSetActiveSlide,
+    onSetPrevActiveSlide,
   }: SliderProps<T, P>,
   ref: React.Ref<SliderGridRef>,
 ) => {
-  const searchParams = useSearchParams();
-
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
-  const [activeSlide, setActiveSlide] = useState(
-    searchParams.get(sliderActiveSlideQueryParam)
-      ? parseInt(searchParams.get(sliderActiveSlideQueryParam) ?? '0')
-      : 0,
-  );
-  const [prevActiveSlide, setPrevActiveSlide] = useState(
-    searchParams.get(sliderPrevActiveSlideQueryParam)
-      ? parseInt(searchParams.get(sliderPrevActiveSlideQueryParam) ?? '0')
-      : 0,
-  );
   const [sliderRowsCount, setSliderRowsCount] = useState(1);
   const [resizeTime, setResizeTime] = useState(0);
 
@@ -172,21 +160,10 @@ export const SliderGridInner = <T extends { id: string }, P>(
 
   const handleSetActiveSlide = useCallback(
     (slide: number) => {
-      setPrevActiveSlide(activeSlide);
-      setActiveSlide(slide);
-
-      if (saveSliderStateInURL) {
-        updateQueryParamWithReplace(
-          sliderActiveSlideQueryParam,
-          slide.toString(),
-        );
-        updateQueryParamWithReplace(
-          sliderPrevActiveSlideQueryParam,
-          activeSlide.toString(),
-        );
-      }
+      onSetPrevActiveSlide(activeSlide);
+      onSetActiveSlide(slide);
     },
-    [activeSlide, saveSliderStateInURL],
+    [activeSlide, onSetActiveSlide, onSetPrevActiveSlide],
   );
 
   useImperativeHandle(ref, () => ({
@@ -228,34 +205,24 @@ export const SliderGridInner = <T extends { id: string }, P>(
       return;
     }
 
-    setActiveSlide(newActive);
-    setPrevActiveSlide(newPrev);
-
-    if (saveSliderStateInURL) {
-      updateQueryParamWithReplace(
-        sliderActiveSlideQueryParam,
-        newActive.toString(),
-      );
-      updateQueryParamWithReplace(
-        sliderPrevActiveSlideQueryParam,
-        newPrev.toString(),
-      );
-    }
-  }, [activeSlide, prevActiveSlide, sliderGroups, saveSliderStateInURL]);
+    onSetActiveSlide(newActive);
+    onSetPrevActiveSlide(newPrev);
+  }, [
+    activeSlide,
+    prevActiveSlide,
+    sliderGroups,
+    onSetActiveSlide,
+    onSetPrevActiveSlide,
+  ]);
 
   useEffect(() => {
     if (!sliderResetDependencies) {
       return;
     }
 
-    setActiveSlide(0);
-    setPrevActiveSlide(0);
-
-    if (saveSliderStateInURL) {
-      updateQueryParamWithReplace(sliderActiveSlideQueryParam, '0');
-      updateQueryParamWithReplace(sliderPrevActiveSlideQueryParam, '0');
-    }
-  }, [sliderResetDependencies, saveSliderStateInURL]);
+    onSetActiveSlide(0);
+    onSetPrevActiveSlide(0);
+  }, [sliderResetDependencies, onSetActiveSlide, onSetPrevActiveSlide]);
 
   const resizeDeltaTime = Date.now() - resizeTime;
 

@@ -235,12 +235,18 @@ const ChatView = memo(() => {
   }, [dispatch, isNotAllowed]);
 
   const handleLike = useCallback(
-    (index: number, conversation: Conversation, rate: LikeState) => {
+    (
+      index: number,
+      conversation: Conversation,
+      rate: LikeState,
+      comment?: string,
+    ) => {
       dispatch(
         ConversationsActions.rateMessage({
           conversationId: conversation.id,
           messageIndex: index,
           rate,
+          comment,
         }),
       );
     },

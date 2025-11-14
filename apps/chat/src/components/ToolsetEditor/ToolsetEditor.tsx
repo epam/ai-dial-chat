@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -30,9 +30,11 @@ export const ToolsetEditor = () => {
 
   const router = useRouter();
 
-  const { [ToolsetEditorQuery.Id]: idQuery } = router.query;
-  const isCreateRef = useRef(!idQuery);
-
+  const {
+    [ToolsetEditorQuery.Id]: idQuery,
+    [ToolsetEditorQuery.IsCreate]: isCreateQuery,
+  } = router.query;
+  const isCreateRef = useRef(!idQuery || !!isCreateQuery);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
@@ -40,6 +42,8 @@ export const ToolsetEditor = () => {
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
   const saveAndExitRef = useRef(false);
   const redirectToChatRef = useRef(false);
+
+  const [isExiting, setIsExiting] = useState(false);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -140,6 +144,7 @@ export const ToolsetEditor = () => {
 
   const handleSaveAndExit = useCallback(
     (saveDraft = false, redirectToChat = false) => {
+      setIsExiting(true);
       if ((!isDirty && toolsetDetails) || !toolsetDetails) {
         dispatch(
           ToolsetActions.exitEditor({
@@ -206,6 +211,7 @@ export const ToolsetEditor = () => {
           currentStep={editorStep}
           onNextClick={handleNextClick}
           currentToolset={toolsetDetails}
+          disableLoader={isExiting}
         />
       </div>
     </FormProvider>

@@ -183,11 +183,18 @@ export const PublishingApprovalModalSelectors = {
   author: '[data-qa="publication-author"]',
   publicAuthor: '[data-qa="publication-display-author"]',
   publicAuthorLabel: '[data-qa="publication-display-author-label"]',
+  publicAuthorContainerEditMode: '[data-qa="publicationAuthor"]',
+  publicAuthorLabelEditMode: '[data-qa="publicationAuthor-label"]',
   requestCreatedLabel: '[data-qa="creation-date-label"]',
   goToReviewButton: '[data-qa="go-to-review"]',
   rejectButton: '[data-qa="reject"]',
   approveButton: '[data-qa="submit"]',
   duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
+  editButton: '[data-qa="edit"]',
+  updateRequestButton: '[data-qa="update"]',
+  version: '[data-qa="version"]',
+  entityRow: '[data-qa="entity-publication-row"]',
+  fieldValue: (name: string) => `[value="${name}"]`,
 };
 
 export const PublishingTreeSelectors = {
