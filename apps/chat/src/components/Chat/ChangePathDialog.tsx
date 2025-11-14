@@ -192,7 +192,12 @@ export const ChangePathDialog = ({
       );
       const mappedFolderIds = allFolders.map(({ id }) => id);
 
-      if (mappedFolderIds.some((id) => id === newFolderId)) {
+      if (
+        mappedFolderIds.some(
+          (id) => id === newFolderId && id !== newAddedTemporaryFolderId,
+        )
+      ) {
+        dispatch(FoldersActions.resetNewTemporaryFolderId());
         return;
       }
 
@@ -214,7 +219,7 @@ export const ChangePathDialog = ({
         ),
       );
     },
-    [allFolders, dispatch, openedFoldersIds, t],
+    [allFolders, dispatch, newAddedTemporaryFolderId, openedFoldersIds, t],
   );
 
   const handleAddFolder = useCallback(
