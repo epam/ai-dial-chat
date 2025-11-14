@@ -15,7 +15,10 @@ export const EntityTitle: React.FC<EntityTitleProps> = ({
 }) => {
   return (
     <div
-      className={classNames('flex min-w-0 items-baseline gap-x-2', className)}
+      className={classNames(
+        'flex min-w-0 items-baseline justify-between gap-x-2',
+        className,
+      )}
     >
       <span className="min-w-0 truncate">{name}</span>
       {version && (
