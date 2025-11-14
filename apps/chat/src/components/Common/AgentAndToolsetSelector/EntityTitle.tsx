@@ -22,7 +22,7 @@ export const EntityTitle: React.FC<EntityTitleProps> = ({
         <span
           className={classNames(
             'truncate',
-            'max-w-[50%]',
+            'min-w-8 max-w-[50%]',
             isError ? 'text-error brightness-75' : 'text-secondary',
           )}
         >
