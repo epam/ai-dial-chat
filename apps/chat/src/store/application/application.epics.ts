@@ -344,15 +344,17 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   features: mergeFeatures(featuresRecord),
                 };
 
-                const actions: Observable<AppAction>[] = [];
-                actions.push(
+                const actions: Observable<AppAction>[] = [
                   of(
                     ModelsActions.updateModel({
                       model: modelData,
                       oldApplicationId: payload.oldApplication.id,
                     }),
                   ),
-                );
+                  of(
+                    ApplicationActions.updateSuccess(updatedCustomApplication),
+                  ),
+                ];
 
                 if (payload.isSaveAndExit) {
                   actions.push(
@@ -365,14 +367,6 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     ),
                   );
                 } else {
-                  actions.push(
-                    of(
-                      ApplicationActions.updateSuccess(
-                        updatedCustomApplication,
-                      ),
-                    ),
-                  );
-
                   if (payload.tabToOpen) {
                     actions.push(
                       of(ApplicationActions.setEditorStep(payload.tabToOpen!)),

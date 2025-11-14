@@ -294,7 +294,14 @@ const updateToolsetEpic: AppEpic = (action$) =>
                     );
                   }
 
-                  const actions: Observable<AppAction>[] = [];
+                  const actions: Observable<AppAction>[] = [
+                    of(
+                      ToolsetActions.updateToolsetSuccess({
+                        oldToolset: payload.oldToolset,
+                        newToolset: savedUpdatedToolset,
+                      }),
+                    ),
+                  ];
 
                   if (payload.exitAfterSave) {
                     actions.push(
@@ -306,14 +313,6 @@ const updateToolsetEpic: AppEpic = (action$) =>
                       ),
                     );
                   } else {
-                    actions.push(
-                      of(
-                        ToolsetActions.updateToolsetSuccess({
-                          oldToolset: payload.oldToolset,
-                          newToolset: savedUpdatedToolset,
-                        }),
-                      ),
-                    );
                     if (payload.tabToOpen) {
                       actions.push(
                         of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
