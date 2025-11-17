@@ -5,6 +5,7 @@ import {
   ConversationData,
   PromptData,
   PublishRequestBuilder,
+  ToolsetBuilder,
 } from '@/src/testData';
 import { CustomApplicationBuilder } from '@/src/testData/applications/customApplicationBuilder';
 import { ExternalApplicationBuilder } from '@/src/testData/applications/externalApplicationBuilder';
@@ -58,6 +59,7 @@ const test = base.extend<
     customApplicationBuilder: CustomApplicationBuilder;
     externalApplicationBuilder: ExternalApplicationBuilder;
     marketplaceUrlBuilder: MarketplaceUrlBuilder;
+    toolsetBuilder: ToolsetBuilder;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -230,6 +232,11 @@ const test = base.extend<
   marketplaceUrlBuilder: async ({}, use) => {
     const marketplaceUrlBuilder = new MarketplaceUrlBuilder();
     await use(marketplaceUrlBuilder);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  toolsetBuilder: async ({}, use) => {
+    const toolsetBuilder = new ToolsetBuilder();
+    await use(toolsetBuilder);
   },
 });
 

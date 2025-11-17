@@ -165,7 +165,7 @@ dialTest(
       async () => {
         const applicationModel = customApplicationBuilder
           .withDisplayName(appName)
-          .withDisplayVersion(GeneratorUtil.randomApplicationVersion())
+          .withDisplayVersion(GeneratorUtil.randomEntityVersion())
           .withDescriptionKeywords(firstTopic, secondTopic)
           .build();
         await applicationApiHelper.createApplication(applicationModel);

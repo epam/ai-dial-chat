@@ -131,7 +131,7 @@ export const EditorHeader = <T extends string>({
 
           <span
             className="hidden items-center pl-1 text-primary md:flex xl:pl-0"
-            data-qa="action-application-type-title"
+            data-qa="action-entity-type-title"
           >
             {title}
           </span>

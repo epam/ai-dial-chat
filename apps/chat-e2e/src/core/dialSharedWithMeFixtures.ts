@@ -1,6 +1,5 @@
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
-  AgentDetailsModal,
   AgentSettings,
   AttachFilesModal,
   Chat,
@@ -12,6 +11,7 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
+  EntityDetailsModal,
   FileDropArea,
   InformationModal,
   Marketplace,
@@ -44,9 +44,9 @@ import {
   ToastAssertion,
   TooltipAssertion,
 } from '@/src/assertions';
-import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
+import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
@@ -166,13 +166,13 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserMarketplaceHeader: MarketplaceHeader;
   additionalShareUserMarketplaceAgentsSection: MarketplaceAgentsSection;
   additionalShareUserMarketplaceAgents: MarketplaceAgents;
-  additionalShareUserAgentDetailsModal: AgentDetailsModal;
+  additionalShareUserEntityDetailsModal: EntityDetailsModal;
   additionalShareUserSelectFolderModal: SelectFolderModal;
   additionalShareUserSelectFolders: Folders;
   additionalShareUserChatHeaderDropdownMenu: DropdownMenu;
   additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
-  additionalShareUserAgentDetailsModalAssertion: AgentDetailsModalAssertion;
+  additionalShareUserEntityDetailsModalAssertion: EntityDetailsModalAssertion;
   additionalShareUserMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
   additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
   additionalShareUserTooltip: Tooltip;
@@ -852,13 +852,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserMarketplaceAgentsSection.getAgents();
     await use(additionalShareUserMarketplaceAgents);
   },
-  additionalShareUserAgentDetailsModal: async (
+  additionalShareUserEntityDetailsModal: async (
     { additionalShareUserMarketplaceAgents },
     use,
   ) => {
-    const additionalShareUserAgentDetailsModal =
-      additionalShareUserMarketplaceAgents.getAgentDetailsModal();
-    await use(additionalShareUserAgentDetailsModal);
+    const additionalShareUserEntityDetailsModal =
+      additionalShareUserMarketplaceAgents.getEntityDetailsModal();
+    await use(additionalShareUserEntityDetailsModal);
   },
   additionalShareUserSelectFolderModal: async (
     { additionalShareUserPage },
@@ -903,13 +903,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       new SelectFolderModalAssertion(additionalShareUserSelectFolderModal);
     await use(additionalShareUserSelectFolderModalAssertion);
   },
-  additionalShareUserAgentDetailsModalAssertion: async (
-    { additionalShareUserAgentDetailsModal },
+  additionalShareUserEntityDetailsModalAssertion: async (
+    { additionalShareUserEntityDetailsModal },
     use,
   ) => {
-    const additionalShareUserAgentDetailsModalAssertion =
-      new AgentDetailsModalAssertion(additionalShareUserAgentDetailsModal);
-    await use(additionalShareUserAgentDetailsModalAssertion);
+    const additionalShareUserEntityDetailsModalAssertion =
+      new EntityDetailsModalAssertion(additionalShareUserEntityDetailsModal);
+    await use(additionalShareUserEntityDetailsModalAssertion);
   },
   additionalShareUserMarketplaceAgentsAssertion: async (
     { additionalShareUserMarketplaceAgents },

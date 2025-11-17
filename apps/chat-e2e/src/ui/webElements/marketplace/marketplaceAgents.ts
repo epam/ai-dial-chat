@@ -4,7 +4,7 @@ import { Attributes, Tags } from '@/src/ui/domData';
 import { IconSelectors, MenuSelectors } from '@/src/ui/selectors';
 import { MarketplaceAgentSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement, DropdownMenu } from '@/src/ui/webElements';
-import { AgentDetailsModal } from '@/src/ui/webElements/marketplace/agentDetailsModal';
+import { EntityDetailsModal } from '@/src/ui/webElements/marketplace/entityDetailsModal';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -26,14 +26,14 @@ export class MarketplaceAgents extends BaseElement {
     super(page, MarketplaceAgentSelectors.agent, parentLocator);
   }
 
-  private applicationDetailsModal!: AgentDetailsModal;
+  private entityDetailsModal!: EntityDetailsModal;
   private agentDropdownMenu!: DropdownMenu;
 
-  getAgentDetailsModal(): AgentDetailsModal {
-    if (!this.applicationDetailsModal) {
-      this.applicationDetailsModal = new AgentDetailsModal(this.page);
+  getEntityDetailsModal(): EntityDetailsModal {
+    if (!this.entityDetailsModal) {
+      this.entityDetailsModal = new EntityDetailsModal(this.page);
     }
-    return this.applicationDetailsModal;
+    return this.entityDetailsModal;
   }
 
   getAgentDropdownMenu(): DropdownMenu {

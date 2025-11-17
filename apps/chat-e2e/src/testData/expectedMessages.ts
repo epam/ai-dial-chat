@@ -248,8 +248,8 @@ export const ExpectedMessages = {
   folderIsHighlighted: 'Folder is highlighted',
   entitiesCountIsValid: 'Number of entities returned in API response is valid',
   modelIsAvailable: 'Model is returned in API response',
-  responseCodeIsValid: 'Response code is valid for model: ',
-  responseTextIsValid: 'Response text is valid for model: ',
+  responseCodeIsValid: 'Response code is valid for entity: ',
+  responseTextIsValid: 'Response text is valid for entity: ',
   imageUrlReturnedInResponse:
     'Image url is returned in the response for model: ',
   attachmentUrlIsValid: 'Conversation attachment url is valid',
@@ -402,9 +402,10 @@ export const ExpectedMessages = {
   attachmentClipIconShouldAppear: 'Attachment clip icon should appear here',
   navigationPanelShouldBeVisible: 'Navigation panel should be visible',
   navigationPanelShouldNotBeVisible: 'Navigation panel should not be visible',
-  defaultAppVersionShouldBeFilled: 'Default app version should be pre-filled',
-  defaultAppNameShouldBeFilled:
-    'Default app name should be pre-filled and match pattern "Untitled app <number>"',
+  defaultEntityVersionShouldBeFilled:
+    'Default entity version should be pre-filled',
+  defaultEntityNameShouldBeFilled:
+    'Default entity name should be pre-filled and match pattern "Untitled app/toolset <number>"',
   releaseDateIsValid: 'Release date is valid',
   onlyOneEntityCardFoundInSearch: (entityType: string) =>
     `Only one ${entityType} card found in the search`,

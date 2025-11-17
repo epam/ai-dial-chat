@@ -14,7 +14,7 @@ export class ApplicationBuilderBase<T extends ApiApplicationModelBase> {
   protected reset(): T {
     this.application = {
       display_name: GeneratorUtil.randomString(7),
-      display_version: ExpectedConstants.defaultAppVersion,
+      display_version: ExpectedConstants.defaultEntityVersion,
       icon_url: '',
       description: '',
       input_attachment_types: [],
