@@ -69,7 +69,7 @@ export class ApiAssertion extends BaseAssertion {
 
   public assertRequestTemperature(
     request: ChatBody,
-    expectedTemperature: number,
+    expectedTemperature: number | undefined,
   ) {
     this.assertValue(
       request.temperature,

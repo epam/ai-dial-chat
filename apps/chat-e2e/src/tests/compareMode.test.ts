@@ -1,4 +1,5 @@
-import { Conversation } from '@/chat/types/chat';
+import { ChatBody, Conversation } from '@/chat/types/chat';
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -11,9 +12,10 @@ import {
   Rate,
   Side,
 } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Message, Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -507,6 +509,8 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    conversationToCompareAssertion,
+    apiAssertion,
     conversationAssertion,
     localStorageManager,
   }) => {
@@ -546,12 +550,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await expect
-          .soft(
-            compareConversation.getElementLocator(),
-            ExpectedMessages.conversationToCompareVisible,
-          )
-          .toBeVisible();
+        await conversationToCompareAssertion.assertConversationToCompareState(
+          'visible',
+        );
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
           secondConversation.name,
@@ -568,57 +569,33 @@ dialTest(
           },
           true,
         );
+        await conversationToCompareAssertion.assertElementsCount(
+          chatMessages.compareChatMessages,
+          firstConversation.messages.length +
+            secondConversation.messages.length +
+            4,
+        );
 
-        const messagesCount = await chatMessages.getCompareMessagesCount();
-        expect
-          .soft(
-            messagesCount,
-            ExpectedMessages.responseReceivedForComparedConversations,
-          )
-          .toBe(
-            firstConversation.messages.length +
-              secondConversation.messages.length +
-              4,
-          );
+        const rightRequest = requestsData.rightRequest as ChatBody;
+        const isNotApplication = defaultModel.type !== EntityType.Application;
+        apiAssertion.assertRequestModelId(rightRequest, defaultModel);
+        apiAssertion.assertRequestPrompt(
+          rightRequest,
+          isNotApplication && defaultModel?.features?.systemPrompt
+            ? firstPrompt
+            : undefined,
+        );
+        apiAssertion.assertRequestTemperature(
+          rightRequest,
+          isNotApplication && defaultModel?.features?.temperature
+            ? firstTemp
+            : undefined,
+        );
 
-        expect
-          .soft(
-            requestsData.rightRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(defaultModel.id);
-        expect
-          .soft(
-            requestsData.rightRequest.prompt,
-            ExpectedMessages.requestPromptIsValid,
-          )
-          .toBe(firstPrompt);
-        expect
-          .soft(
-            requestsData.rightRequest.temperature,
-            ExpectedMessages.requestTempIsValid,
-          )
-          .toBe(firstTemp);
-
-        expect
-          .soft(
-            requestsData.leftRequest.model.id,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(aModel.id);
-        expect
-          .soft(
-            requestsData.leftRequest.prompt,
-            ExpectedMessages.requestPromptIsValid,
-          )
-          .toBe(secondPrompt);
-        expect
-          .soft(
-            requestsData.leftRequest.temperature,
-            ExpectedMessages.requestTempIsValid,
-          )
-          .toBe(secondTemp);
-
+        const leftRequest = requestsData.leftRequest as ChatBody;
+        apiAssertion.assertRequestModelId(leftRequest, aModel);
+        apiAssertion.assertRequestPrompt(leftRequest, secondPrompt);
+        apiAssertion.assertRequestTemperature(leftRequest, secondTemp);
         await conversationAssertion.assertEntityState(
           { name: firstConversation.name },
           'visible',
@@ -634,15 +611,55 @@ dialTest(
       'Put like/dislike for compared chat, open this chat and verify like/dislike saved',
       async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
+        const expectedColor = ThemesUtil.getRgbColorByKey(
+          ThemeColorAttributes.textAccentPrimary,
+        );
         await chatMessages.rateCompareRowMessage(Side.left, rate, 2);
+        const messageRateIcon = chatMessages.getCompareRowMessageRate(
+          Side.left,
+          rate,
+          2,
+        );
+        const hiddenMessageRateIcon = chatMessages.getCompareRowMessageRate(
+          Side.left,
+          rate === Rate.like ? Rate.dislike : Rate.like,
+          2,
+        );
         await chatMessagesAssertion.assertElementState(
-          chatMessages.getCompareRowMessageRate(Side.left, rate, 2),
+          messageRateIcon,
           'visible',
           ExpectedMessages.chatMessageIsRated,
         );
-
+        await chatMessagesAssertion.assertElementColor(
+          messageRateIcon,
+          expectedColor,
+        );
+        await chatMessagesAssertion.assertElementActionabilityState(
+          messageRateIcon,
+          'disabled',
+        );
+        await chatMessagesAssertion.assertElementState(
+          hiddenMessageRateIcon,
+          'hidden',
+        );
         await conversations.selectEntity(firstConversation.name);
-        await chatMessages.getChatMessageRate(2, rate).waitFor();
+        const singleChatMessageRateIcon = chatMessages.getChatMessageRate(
+          2,
+          rate,
+        );
+        await chatMessagesAssertion.assertElementState(
+          singleChatMessageRateIcon,
+          'visible',
+          ExpectedMessages.chatMessageIsRated,
+        );
+        await chatMessagesAssertion.assertElementColor(
+          singleChatMessageRateIcon,
+          expectedColor,
+        );
+        await chatMessagesAssertion.assertElementActionabilityState(
+          singleChatMessageRateIcon,
+          'disabled',
+        );
       },
     );
   },
