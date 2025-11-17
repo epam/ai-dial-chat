@@ -141,6 +141,9 @@ dialTest(
     await dialTest.step(
       'Verify default Name and Version are pre-filled in the form and preview',
       async () => {
+        const defaultToolsetNamePattern = new RegExp(
+          `${ExpectedConstants.defaultToolsetName} \\d+`,
+        );
         await baseAssertion.assertElementState(
           entityEditorGeneralForm,
           'visible',

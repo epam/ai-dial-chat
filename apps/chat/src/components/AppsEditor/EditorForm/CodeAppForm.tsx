@@ -149,7 +149,7 @@ export const CodeAppForm = () => {
           />
         )}
       />
-      {sources && (
+      {!!sources && isTargetFolderLoaded && (
         <FormCodeEditor
           disabled={isAppPublic}
           sourcesFolderId={getActualSource(sources)}

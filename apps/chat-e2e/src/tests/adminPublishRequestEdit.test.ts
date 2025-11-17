@@ -1080,7 +1080,7 @@ dialAdminTest(
     let publishRequest: PublicationRequestModel = publishRequestBuilder.build();
     let publicAuthorName: string;
     const currentDate = DateUtil.getCurrentLocalDate();
-    const conversationVersion = ExpectedConstants.defaultAppVersion;
+    const conversationVersion = ExpectedConstants.defaultEntityVersion;
 
     await dialTest.step(
       'Create a default publication request for chat via API',
@@ -1368,7 +1368,7 @@ dialAdminTest(
     setTestIds(/*'EPMRTC-6500',*/ 'EPMRTC-6790', 'EPMRTC-6459');
     let publishedConversation: Conversation;
     const initialVersion = '1.1.1';
-    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const firstVersion = ExpectedConstants.defaultEntityVersion;
     let publishRequest1: PublicationRequestModel;
 
     const secondVersion = '0.0.2';
