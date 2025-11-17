@@ -262,7 +262,7 @@ export const AppsEditorHeader = ({
         saveLabel={saveLabel}
         onSave={handleSaveAndRedirect}
         onLogoClick={handleLogoClick}
-        dataQa="app-editor-header"
+        dataQa="entity-editor-header"
       />
 
       <ConfirmDialog

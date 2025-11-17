@@ -144,7 +144,7 @@ dialAdminTest(
 
         await publishConversationAssertion.assertEntityVersion(
           { name: publishedConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await publishConversationAssertion.assertEntityVersionColor(
           { name: publishedConversation.name },
@@ -261,7 +261,7 @@ dialAdminTest(
         );
         await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: publishedConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminPublishConversationsTreeAssertion.assertEntityVersionColor(
           { name: publishedConversation.name },
@@ -309,7 +309,7 @@ dialAdminTest(
         );
         await adminChatHeaderAssertion.assertElementText(
           adminChatHeader.version,
-          `v. ${ExpectedConstants.defaultAppVersion}`,
+          `v. ${ExpectedConstants.defaultEntityVersion}`,
         );
         await adminChatHeaderAssertion.assertElementColor(
           adminChatHeader.version,

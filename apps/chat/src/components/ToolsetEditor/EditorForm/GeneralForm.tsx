@@ -77,6 +77,7 @@ export const GeneralForm = ({
     <form
       onSubmit={onNextClick}
       className="flex size-full flex-col overflow-hidden bg-layer-2"
+      data-qa="entity-general-form"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Field
@@ -162,6 +163,7 @@ export const GeneralForm = ({
         >
           <button
             className="button button-primary py-2"
+            data-qa="save-entity-general-info"
             type="submit"
             disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
           >

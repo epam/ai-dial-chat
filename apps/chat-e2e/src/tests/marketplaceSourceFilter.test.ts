@@ -4,11 +4,12 @@ import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
+  API,
   AddAppMenuOptions,
-  AppEditorAppTypes,
   ApplicationTypes,
   Attachment,
   CheckboxState,
+  EntityEditorAppTypes,
   ExpectedConstants,
   ExpectedMessages,
   MarketplaceExpectedMessages,
@@ -41,9 +42,9 @@ dialTest(
     setTestIds,
     baseAssertion,
     fileApiHelper,
-    appEditorGeneralForm,
+    entityEditorGeneralForm,
     attachFilesModal,
-    appEditorHeader,
+    entityEditorHeader,
   }) => {
     setTestIds('EPMRTC-5234', 'EPMRTC-5239', 'EPMRTC-6045');
     const appName = GeneratorUtil.randomApplicationName();
@@ -173,17 +174,20 @@ dialTest(
     );
 
     await dialTest.step('Update app icon', async () => {
-      await appEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+      await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
         isHttpMethodTriggered: false,
       });
-      await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
-      await appEditorGeneralForm.changeIcon.click();
+      await baseAssertion.assertElementState(
+        entityEditorGeneralForm,
+        'visible',
+      );
+      await entityEditorGeneralForm.changeIcon.click();
       await attachFilesModal.checkAttachedFile(
         Attachment.cloudImageName,
         FileModalSection.AllFiles,
       );
       await attachFilesModal.attachFiles();
-      await appEditorHeader.saveAndExitButton.click();
+      await entityEditorHeader.saveAndExitButton.click();
       await marketplacePage.waitForPageLoaded();
     });
 
@@ -223,14 +227,14 @@ dialTest(
     marketplaceAgents,
     marketplaceAgentsAssertion,
     addAppDropdownMenuAssertion,
-    appEditorPage,
-    appEditorGeneralForm,
+    entityEditorPage,
+    entityEditorGeneralForm,
     customAppEditorViewForm,
-    appEditorHeader,
+    entityEditorHeader,
     confirmationDialog,
     setTestIds,
     baseAssertion,
-    agentDetailsModal,
+    entityDetailsModal,
   }) => {
     setTestIds('EPMRTC-5351', 'EPMRTC-5238', 'EPMRTC-7181');
     const firstAppName = GeneratorUtil.randomApplicationName();
@@ -289,21 +293,25 @@ dialTest(
 
     await dialTest.step('Create one more custom application', async () => {
       await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-      await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
-      await appEditorGeneralForm.fillInAppFields({
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.CustomApp);
+      await entityEditorGeneralForm.fillInEntityFields({
         name: secondAppName,
       });
-      await appEditorGeneralForm.goNext();
+      await entityEditorGeneralForm.goNext({
+        hostsArray: [API.applicationCreateHost, API.installedDeploymentsHost()],
+      });
       await customAppEditorViewForm.fillInAppFields();
-      await appEditorHeader.focusOn();
-      await appEditorHeader.saveAndExitButton.click();
+      await entityEditorHeader.focusOn({
+        triggeredHost: API.applicationCreateHost,
+      });
+      await entityEditorHeader.saveAndExitButton.click();
       await marketplacePage.waitForPageLoaded();
     });
 
     await dialTest.step(
       'Verify newly added app is displayed immediately',
       async () => {
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
         const actualAgents = await marketplaceAgentsSection.getAllAgents();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
@@ -367,7 +375,7 @@ dialSharedWithMeTest(
     additionalShareUserMarketplaceFilter,
     additionalShareUserMarketplaceAgentsSection,
     additionalShareUserNavigationPanel,
-    additionalShareUserAgentDetailsModal,
+    additionalShareUserEntityDetailsModal,
     setTestIds,
     baseAssertion,
   }) => {
@@ -486,10 +494,10 @@ dialSharedWithMeTest(
           );
         await sharedAppElement.click();
         await baseAssertion.assertElementState(
-          additionalShareUserAgentDetailsModal.copyLink,
+          additionalShareUserEntityDetailsModal.copyLink,
           'hidden',
         );
-        await additionalShareUserAgentDetailsModal.closeButton.click();
+        await additionalShareUserEntityDetailsModal.closeButton.click();
       },
     );
 
