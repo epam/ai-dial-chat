@@ -46,7 +46,7 @@ export const TopicsList = ({
       renderItem={ApplicationTopic}
       renderOverflow={renderOverflow}
       className="flex w-full gap-2"
-      dataQA="app-topics"
+      dataQA="entity-topics"
     />
   );
 };

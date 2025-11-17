@@ -61,10 +61,10 @@ export const ToolsetEditorView = ({
   const RightContent = useMemo(
     () => (
       <div className="flex-1 overflow-auto">
-        <ToolsetPreview currentToolset={currentToolset} />
+        <ToolsetPreview currentToolset={currentToolset} dataQA={currentStep} />
       </div>
     ),
-    [currentToolset],
+    [currentToolset, currentStep],
   );
 
   return (
@@ -76,6 +76,7 @@ export const ToolsetEditorView = ({
       }
       closedPreviewLabel={`${t('Preview')}: ${name} v. ${version}`}
       leftTabLabel={t('Info')}
+      rightQa="entity-preview-settings"
     />
   );
 };

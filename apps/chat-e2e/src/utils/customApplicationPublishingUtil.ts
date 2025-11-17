@@ -79,7 +79,7 @@ export class CustomApplicationPublishingUtil {
     namesToExclude?: string[];
   }): Promise<CustomAppAttributes> {
     const appName = options?.appName ?? GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion(
+    const appVersion = GeneratorUtil.randomEntityVersion(
       options?.namesToExclude,
     );
     const builder = this.customApplicationBuilder

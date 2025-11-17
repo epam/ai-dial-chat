@@ -22,7 +22,7 @@ export const ChatSettingsSelectors = {
   talkToEntityDescr: '[data-qa="talk-to-entity-descr"]',
   expandTalkToEntity: '[data-qa="expand-talk-to-entity"]',
   selectedTalkToEntity: '.border-accent-primary',
-  agentInfoContainer: '[data-qa="agent-info-container"]',
+  agentInfoContainer: '[data-qa="entity-info-container"]',
   agentInfo: '[data-qa="agent-info"]',
   agentName: '[data-qa="entity-name"]',
   agentDescription: '[data-qa="agent-descr"]',

@@ -156,7 +156,7 @@ dialAdminTest(
 
         await publishConversationAssertion.assertEntityVersion(
           { name: firstConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await publishConversationAssertion.assertEntityVersionColor(
           { name: firstConversation.name },
@@ -308,7 +308,7 @@ dialAdminTest(
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersion(
           { name: publishedFolderName },
           { name: firstConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersionColor(
           { name: publishedFolderName },
@@ -558,7 +558,7 @@ dialAdminTest(
           );
           await publishConversationAssertion.assertEntityVersion(
             { name: conversation },
-            ExpectedConstants.defaultAppVersion,
+            ExpectedConstants.defaultEntityVersion,
           );
           await publishConversationAssertion.assertEntityVersionColor(
             { name: conversation },
@@ -675,7 +675,7 @@ dialAdminTest(
           await adminFolderConversationsToApproveAssertion.assertFolderEntityVersion(
             { name: publishedFolderName },
             { name: conversation },
-            ExpectedConstants.defaultAppVersion,
+            ExpectedConstants.defaultEntityVersion,
           );
           await adminFolderConversationsToApproveAssertion.assertFolderEntityVersionColor(
             { name: publishedFolderName },
@@ -914,7 +914,7 @@ dialAdminTest(
         await folderToPublishAssertion.assertFolderEntityVersion(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await folderToPublishAssertion.assertFolderEntityVersionColor(
           { name: innerFolderName },
@@ -1040,7 +1040,7 @@ dialAdminTest(
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersion(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersionColor(
           { name: innerFolderName },

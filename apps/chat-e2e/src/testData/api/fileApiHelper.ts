@@ -123,7 +123,7 @@ export class FileApiHelper extends BaseApiHelper {
     await this.putStringAsFile(
       API.installedDeploymentsFile,
       installedDeploymentsJson,
-      { parentPath: API.installedDeploymentsFolder },
+      { parentPath: API.installedEntityFolder },
     );
   }
 
