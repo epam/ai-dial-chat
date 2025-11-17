@@ -26,6 +26,7 @@ export interface RateBody {
   id: string;
   value: boolean;
   reference?: string;
+  comment?: string;
 }
 
 export type MergedMessages = [Conversation, Message, number, Message[]][];

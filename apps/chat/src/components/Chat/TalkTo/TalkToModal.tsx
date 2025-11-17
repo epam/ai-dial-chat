@@ -104,6 +104,8 @@ const TalkToModalView = ({
   const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
   const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [prevActiveSlide, setPrevActiveSlide] = useState(0);
 
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
@@ -366,6 +368,10 @@ const TalkToModalView = ({
           sliderResetDependencies={sliderResetDependencies}
           itemProps={sliderItemProps}
           modalHeaderHeight={headerHeight}
+          activeSlide={activeSlide}
+          prevActiveSlide={prevActiveSlide}
+          onSetActiveSlide={setActiveSlide}
+          onSetPrevActiveSlide={setPrevActiveSlide}
         />
       </div>
       {isMarketplaceEnabled && (

@@ -1,5 +1,57 @@
+import { AppsEditorQuery } from '@/src/constants/applications';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
+import {
+  ApplicationActions,
+  ApplicationTypesSchemasActions,
+  ConversationsActions,
+  MarketplaceActions,
+  ModelsActions,
+  PublicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  ApplicationSelectors,
+  AuthSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  ShareSelectors,
+} from '@/src/store/selectors';
+import {
+  ApplicationStatus,
+  CustomApplicationModel,
+} from '@/src/types/applications';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
+import { AppAction, AppEpic } from '@/src/types/store';
+import {
+  isApplicationType,
+  regenerateApplicationId,
+} from '@/src/utils/app/application';
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
+import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { DataService } from '@/src/utils/app/data/data-service';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import {
+  isEntityIdExternal,
+  isEntityIdLocal,
+  isMyEntity,
+} from '@/src/utils/app/id';
+import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
+import { mergeFeatures } from '@/src/utils/app/models';
+import { translate } from '@/src/utils/app/translation';
+import { parseEntityApiKey } from '@/src/utils/server/api';
 import Router from 'next/router';
-
+import { parse } from 'querystring';
+import { combineEpics, ofType } from 'redux-observable';
 import {
   EMPTY,
   Observable,
@@ -23,66 +75,6 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
-
-import { combineEpics, ofType } from 'redux-observable';
-
-import {
-  isApplicationType,
-  regenerateApplicationId,
-} from '@/src/utils/app/application';
-import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
-import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
-import { ApplicationService } from '@/src/utils/app/data/application-service';
-import { DataService } from '@/src/utils/app/data/data-service';
-import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
-import {
-  isEntityIdExternal,
-  isEntityIdLocal,
-  isMyEntity,
-} from '@/src/utils/app/id';
-import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
-import { mergeFeatures } from '@/src/utils/app/models';
-import { translate } from '@/src/utils/app/translation';
-import { parseEntityApiKey } from '@/src/utils/server/api';
-
-import {
-  ApplicationStatus,
-  CustomApplicationModel,
-} from '@/src/types/applications';
-import { MarketplaceEditorSteps } from '@/src/types/marketplace';
-import { AppAction, AppEpic } from '@/src/types/store';
-
-import {
-  ApplicationActions,
-  ApplicationTypesSchemasActions,
-  ConversationsActions,
-  MarketplaceActions,
-  ModelsActions,
-  PublicationActions,
-  ShareActions,
-  UIActions,
-} from '@/src/store/actions';
-import {
-  ApplicationSelectors,
-  AuthSelectors,
-  ConversationsSelectors,
-  ModelsSelectors,
-  ShareSelectors,
-} from '@/src/store/selectors';
-
-import { AppsEditorQuery } from '@/src/constants/applications';
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import {
-  DeleteType,
-  MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
-
-import { parse } from 'querystring';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -345,32 +337,37 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   features: mergeFeatures(featuresRecord),
                 };
 
-                const actions: AppAction[] = [
-                  ModelsActions.updateModel({
-                    model: modelData,
-                    oldApplicationId: payload.oldApplication.id,
-                  }),
+                const actions: Observable<AppAction>[] = [
+                  of(
+                    ModelsActions.updateModel({
+                      model: modelData,
+                      oldApplicationId: payload.oldApplication.id,
+                    }),
+                  ),
+                  of(
+                    ApplicationActions.updateSuccess(updatedCustomApplication),
+                  ),
                 ];
 
                 if (payload.isSaveAndExit) {
                   actions.push(
-                    ApplicationActions.exitEditor({
-                      redirectUrl: payload.redirectUrl,
-                      shouldSelectApplication: payload.shouldSelectApplication,
-                    }),
+                    of(
+                      ApplicationActions.exitEditor({
+                        redirectUrl: payload.redirectUrl,
+                        shouldSelectApplication:
+                          payload.shouldSelectApplication,
+                      }),
+                    ),
                   );
                 } else {
-                  actions.push(
-                    ApplicationActions.updateSuccess(updatedCustomApplication),
-                  );
                   if (payload.tabToOpen) {
                     actions.push(
-                      ApplicationActions.setEditorStep(payload.tabToOpen),
+                      of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
                     );
                   }
                 }
 
-                return from(actions);
+                return concat(...actions);
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
@@ -800,45 +797,52 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const actions: AppAction[] = [];
+      const actions: Observable<AppAction>[] = [];
 
       if (route.pathname === Routes.Marketplace) {
-        if (!!payload.shouldSelectApplication && !!reference) {
+        if (payload.shouldSelectApplication && reference) {
           actions.push(
-            MarketplaceActions.setDetailsEntity({
-              reference: reference as string,
-              type: MarketplaceEntitiesTabs.AGENTS,
-              isSuggested: false,
-            }),
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: reference as string,
+                type: MarketplaceEntitiesTabs.AGENTS,
+                isSuggested: false,
+              }),
+            ),
           );
         }
-        actions.push(MarketplaceActions.initQueryParams());
       }
 
       if (route.pathname === Routes.Chat) {
         if (publicationUrl) {
           actions.push(
-            ConversationsActions.selectConversations({
-              conversationIds: [],
-            }),
-            PublicationActions.setIsApplicationReview(true),
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: [],
+              }),
+              PublicationActions.setIsApplicationReview(true),
+            ),
           );
         } else if (returnConversationIds?.length) {
           actions.push(
-            ConversationsActions.selectConversations({
-              conversationIds: returnConversationIds as string[],
-            }),
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: returnConversationIds as string[],
+              }),
+            ),
           );
         } else {
           actions.push(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
+            of(
+              ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+              }),
+            ),
           );
         }
       }
 
-      return navigateAndThen(router, route, from(actions));
+      return from(router.push(route)).pipe(switchMap(() => concat(...actions)));
     }),
   );
 

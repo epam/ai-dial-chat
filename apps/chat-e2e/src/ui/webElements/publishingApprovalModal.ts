@@ -1,4 +1,5 @@
 import { API } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import {
   IconSelectors,
   PublishingApprovalModalSelectors,
@@ -8,6 +9,7 @@ import {
   PublishApplicationsTree,
   PublishConversationsTree,
   PublishFolderConversations,
+  PublishFolderFiles,
   PublishFolderPrompts,
   PublishPromptsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -25,6 +27,7 @@ export class PublishingApprovalModal extends BaseElement {
   private folderConversationsToApprove!: PublishFolderConversations;
   //files to approve trees
   private filesToApproveTree!: PublishFilesTree;
+  private folderFilesToApprove!: PublishFolderFiles;
   //prompts to approve trees
   private promptsToApproveTree!: PublishPromptsTree;
   private folderPromptsToApprove!: PublishFolderPrompts;
@@ -60,6 +63,16 @@ export class PublishingApprovalModal extends BaseElement {
       );
     }
     return this.filesToApproveTree;
+  }
+
+  getFolderFilesToApprove(): PublishFolderFiles {
+    if (!this.folderFilesToApprove) {
+      this.folderFilesToApprove = new PublishFolderFiles(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.folderFilesToApprove;
   }
 
   getPromptsToApproveTree(): PublishPromptsTree {
@@ -122,7 +135,15 @@ export class PublishingApprovalModal extends BaseElement {
   );
   public publicAuthor = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publicAuthor,
-  );
+  )
+    .getElementLocator()
+    .or(
+      this.getChildElementBySelector(
+        PublishingApprovalModalSelectors.publicAuthorContainerEditMode,
+      )
+        .getChildElementBySelector(Tags.input)
+        .getElementLocator(),
+    );
   public publicAuthorLabel = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publicAuthorLabel,
   );
@@ -139,6 +160,12 @@ export class PublishingApprovalModal extends BaseElement {
   );
   public duplicatedUnpublishingError = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.duplicatedPublishing,
+  );
+  public editButton = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.editButton,
+  );
+  public updateRequestButton = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.updateRequestButton,
   );
 
   public async approveRequest({
@@ -182,5 +209,85 @@ export class PublishingApprovalModal extends BaseElement {
     );
     await this.rejectButton.click();
     await responsePromise;
+  }
+
+  public async updateRequest() {
+    const responsePromise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.publicationUpdate),
+    );
+    await this.updateRequestButton.click();
+    await responsePromise;
+  }
+
+  public async renameConversationToApprove(
+    conversationName: string,
+    newName: string,
+  ) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+    const conversationInput =
+      this.getConversationsToApproveTree().getEntityNameInput(conversationName);
+
+    await conversationInput.click();
+    await conversationInput.fill(newName);
+    return newName;
+  }
+
+  public async renameConversationToApproveVersion(
+    conversationName: string,
+    newVersion: string,
+  ) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+    const versionInput =
+      this.getConversationsToApproveTree().getEntityVersionInput(
+        conversationName,
+      );
+
+    await versionInput.click();
+    await versionInput.fill(newVersion);
+    return newVersion;
+  }
+
+  public async renameConversationFolderToApprove(
+    folderName: string,
+    newFolderName: string,
+  ) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+    const conversationFolders =
+      this.getFolderConversationsToApprove().getFolderNameInput(folderName);
+
+    await conversationFolders.click();
+    await conversationFolders.fill(newFolderName);
+    return newFolderName;
+  }
+
+  public async renameFileToApprove(fileName: string, newName: string) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+
+    const fileInput = this.getFilesToApproveTree().getEntityNameInput(fileName);
+    await fileInput.click();
+    await fileInput.fill(newName);
+  }
+
+  public async renameFileFolderToApprove(
+    folderName: string,
+    newFolderName: string,
+  ) {
+    if (await this.editButton.isVisible()) {
+      await this.editButton.click();
+    }
+    const fileFolders =
+      this.getFolderFilesToApprove().getFolderNameInput(folderName);
+
+    await fileFolders.click();
+    await fileFolders.fill(newFolderName);
+    return newFolderName;
   }
 }

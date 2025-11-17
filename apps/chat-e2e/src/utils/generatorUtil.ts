@@ -4,6 +4,7 @@ import { webcrypto } from 'node:crypto';
 export const publicationRequestPrefix = 'E2EPublish';
 export const unpublishRequestPrefix = 'E2EUnpublish';
 export const applicationNamePrefix = 'E2EApp';
+export const filenamePrefix = 'E2EFile';
 
 export const conversationNamePrefix = 'E2EConversation';
 export const promptNamePrefix = 'E2EPrompt';
@@ -57,6 +58,10 @@ export class GeneratorUtil {
 
   static randomUnpublishRequestName() {
     return unpublishRequestPrefix + GeneratorUtil.randomString(7);
+  }
+
+  static randomFilename(extension: string) {
+    return `${filenamePrefix}${GeneratorUtil.randomString(7)}.${extension}`;
   }
 
   static randomApplicationName() {

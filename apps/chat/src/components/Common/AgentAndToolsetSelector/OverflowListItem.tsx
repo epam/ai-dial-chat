@@ -138,6 +138,7 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
           version={version}
           isInvalid={isInvalid}
           isLoggedOut={isLoggedOut}
+          isInSelectionList
         />
       }
     >

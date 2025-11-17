@@ -397,6 +397,12 @@ dialAdminTest(
       'Verify folder on any level can be selected',
       async () => {
         await selectFolderModal.selectRootFoldersSection();
+        //workaround for the issue 5080
+        const editFolderInputActions =
+          selectFolders.getEditFolderInputActions();
+        if (await editFolderInputActions.tickButton.isVisible()) {
+          await editFolderInputActions.clickTickButton();
+        }
         await selectFolderModal.selectFolder(cutNewFolderName);
         await selectFoldersAssertion.assertFolderSelectedState(
           { name: cutNewFolderName },

@@ -170,6 +170,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModelWithAttachment,
             false,
+            undefined,
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
@@ -293,6 +294,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModelWithAttachment,
             false,
+            undefined,
             ...attachmentUrls.slice(0, 2),
           );
         await dataInjector.createConversations([conversation]);
@@ -404,6 +406,7 @@ dialTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             randomModelWithAttachment,
             false,
+            undefined,
             ...attachmentUrls.slice(0, 3),
           );
         await dataInjector.createConversations([conversation]);

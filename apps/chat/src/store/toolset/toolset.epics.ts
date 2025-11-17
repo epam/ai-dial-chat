@@ -1,3 +1,43 @@
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
+import {
+  ConversationsActions,
+  MarketplaceActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
+import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
+import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
+import { AppAction, AppEpic } from '@/src/types/store';
+import {
+  ToolsetAuthPayload,
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+} from '@/src/types/toolsets';
+import { getSafeRedirectUrl } from '@/src/utils/app/common';
+import { ClientDataService } from '@/src/utils/app/data/client-data-service';
+import { DataService } from '@/src/utils/app/data/data-service';
+import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
+import { isMyEntity } from '@/src/utils/app/id';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import {
+  encodeToolsetRedirectState,
+  getToolsetRedirectUri,
+  regenerateToolsetId,
+} from '@/src/utils/app/toolsets';
+import { translate } from '@/src/utils/app/translation';
+import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
+import { parse } from 'querystring';
+import { combineEpics, ofType } from 'redux-observable';
 import {
   EMPTY,
   Observable,
@@ -13,53 +53,6 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { combineEpics, ofType } from 'redux-observable';
-
-import { getSafeRedirectUrl } from '@/src/utils/app/common';
-import { ClientDataService } from '@/src/utils/app/data/client-data-service';
-import { DataService } from '@/src/utils/app/data/data-service';
-import { ToolsetService } from '@/src/utils/app/data/toolset-service';
-import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
-import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
-import { isMyEntity } from '@/src/utils/app/id';
-import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
-import {
-  encodeToolsetRedirectState,
-  getToolsetRedirectUri,
-  regenerateToolsetId,
-} from '@/src/utils/app/toolsets';
-import { translate } from '@/src/utils/app/translation';
-
-import { AppAction, AppEpic } from '@/src/types/store';
-import {
-  ToolsetAuthPayload,
-  ToolsetCredentialsLevel,
-  ToolsetEditorSteps,
-} from '@/src/types/toolsets';
-
-import {
-  ConversationsActions,
-  MarketplaceActions,
-  PublicationActions,
-  UIActions,
-} from '@/src/store/actions';
-import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
-import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
-
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import {
-  MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
-import { ToolsetEditorQuery } from '@/src/constants/toolsets';
-
-import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import uniq from 'lodash-es/uniq';
-import { parse } from 'querystring';
-
 const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
   switch (step) {
     case ToolsetEditorSteps.Settings:
@@ -68,6 +61,24 @@ const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
     default:
       return false;
   }
+};
+
+const getMyWorkspaceUrl = (
+  params?: Partial<Record<MarketplaceQueryParams, unknown>>,
+) => {
+  const route = new URL(Routes.Marketplace);
+  route.searchParams.append(
+    MarketplaceQueryParams.tab,
+    MarketplaceTabs.MY_WORKSPACE,
+  );
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      route.searchParams.append(key, value as string);
+    });
+  }
+
+  return route;
 };
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -276,43 +287,47 @@ const updateToolsetEpic: AppEpic = (action$) =>
                       ),
                     );
                   }
-                  const actions: AppAction[] = [];
 
-                  if (payload.auth) {
-                    actions.push(
-                      ToolsetActions.startSignInProcess({
-                        authLevel:
-                          payload?.auth?.authLevel ??
-                          ToolsetCredentialsLevel.GLOBAL,
-                        apiKey: payload?.auth?.apiKey,
-                        toolset: savedUpdatedToolset,
-                      }),
-                    );
-                  }
-
-                  if (payload.exitAfterSave) {
-                    actions.push(
-                      ToolsetActions.exitEditor({
-                        redirectUrl: payload.redirectUrl,
-                        shouldSelectToolset: payload.shouldSelectToolset,
-                      }),
-                    );
-                  } else {
-                    actions.push(
+                  const actions: Observable<AppAction>[] = [
+                    of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
                         newToolset: savedUpdatedToolset,
                       }),
-                    );
+                    ),
+                  ];
 
+                  if (payload.exitAfterSave) {
+                    actions.push(
+                      of(
+                        ToolsetActions.exitEditor({
+                          redirectUrl: payload.redirectUrl,
+                          shouldSelectToolset: payload.shouldSelectToolset,
+                        }),
+                      ),
+                    );
+                  } else {
                     if (payload.tabToOpen) {
                       actions.push(
-                        ToolsetActions.setEditorStep(payload.tabToOpen!),
+                        of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
                       );
                     }
                   }
+                  if (payload.auth) {
+                    actions.push(
+                      of(
+                        ToolsetActions.startSignInProcess({
+                          authLevel:
+                            payload?.auth?.authLevel ??
+                            ToolsetCredentialsLevel.GLOBAL,
+                          apiKey: payload?.auth?.apiKey,
+                          toolset: savedUpdatedToolset,
+                        }),
+                      ),
+                    );
+                  }
 
-                  return from(actions);
+                  return concat(...actions);
                 }),
               ),
             ),
@@ -803,7 +818,7 @@ const initQueryParamsEpic: AppEpic = (action$) =>
     }),
   );
 
-const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
+const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     ofType(ToolsetActions.exitEditor.type),
     switchMap(({ payload }) => {
@@ -823,50 +838,56 @@ const exitEditorEpic: AppEpic = (action$, state$, { router }) =>
         redirectUrl ??
         returnUrl ??
         (publicationUrl
-          ? {
-              pathname: Routes.Chat,
-            }
-          : {
-              pathname: Routes.Marketplace,
-              query: {
-                [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
-                [MarketplaceQueryParams.entitiesTab]:
-                  MarketplaceEntitiesTabs.TOOLSETS,
-              },
-            });
+          ? new URL(Routes.Chat)
+          : getMyWorkspaceUrl({
+              [MarketplaceQueryParams.entitiesTab]:
+                MarketplaceEntitiesTabs.TOOLSETS,
+            }));
 
-      const actions: AppAction[] = [];
+      if (
+        route.pathname === Routes.Marketplace &&
+        payload.shouldSelectToolset &&
+        reference
+      ) {
+        route.searchParams.append(MarketplaceQueryParams.toolset, reference);
+      }
+
+      const actions: Observable<AppAction>[] = [];
 
       if (route.pathname === Routes.Marketplace) {
-        actions.push(MarketplaceActions.initQueryParams());
-
         if (payload.shouldSelectToolset && reference) {
           actions.push(
-            MarketplaceActions.setDetailsEntity({
-              reference: reference as string,
-              type: MarketplaceEntitiesTabs.TOOLSETS,
-              isSuggested: false,
-            }),
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: reference as string,
+                type: MarketplaceEntitiesTabs.TOOLSETS,
+                isSuggested: false,
+              }),
+            ),
           );
         }
       }
 
       if (route.pathname === Routes.Chat) {
-        if (publicationUrl) {
+        if (!publicationUrl) {
           actions.push(
-            ConversationsActions.selectConversations({ conversationIds: [] }),
-            PublicationActions.setIsToolsetReview(true),
+            of(
+              ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+              }),
+            ),
           );
         } else {
           actions.push(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
+            of(
+              ConversationsActions.selectConversations({ conversationIds: [] }),
+            ),
+            of(PublicationActions.setIsToolsetReview(true)),
           );
         }
       }
 
-      return navigateAndThen(router, route, from(actions));
+      return from(router.push(route)).pipe(mergeMap(() => concat(...actions)));
     }),
   );
 
