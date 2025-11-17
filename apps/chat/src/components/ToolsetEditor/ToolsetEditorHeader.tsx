@@ -146,6 +146,7 @@ export const ToolsetEditorHeader = ({
         saveLabel={isEditing ? 'Save and exit' : 'Exit'}
         onSave={handleSaveClick}
         onLogoClick={handleLogoClick}
+        dataQa="entity-editor-header"
       />
 
       <ConfirmDialog

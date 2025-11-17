@@ -61,7 +61,7 @@ export const AppsEditorView = ({
       }
       closedPreviewLabel={`${t('Preview')}: ${name} v. ${version}`}
       leftTabLabel={t(mobileTabLabels[editorStep])}
-      rightQa="app-preview-settings"
+      rightQa="entity-preview-settings"
       onLeftMouseLeave={onAutoSave}
     />
   );

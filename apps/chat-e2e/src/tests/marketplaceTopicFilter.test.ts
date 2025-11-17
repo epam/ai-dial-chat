@@ -506,14 +506,14 @@ dialTest(
     navigationPanel,
     marketplaceFilter,
     marketplaceAgentsSection,
-    agentDetailsModal,
+    entityDetailsModal,
     agentVersionsDropdownMenuAssertion,
     marketplaceAgents,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-4475', 'EPMRTC-4671');
     const appName = GeneratorUtil.randomApplicationName();
-    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const firstVersion = ExpectedConstants.defaultEntityVersion;
     const secondVersion = '0.0.2';
     const firstAppTopic = GeneratorUtil.randomString(7);
     const secondAppTopic = GeneratorUtil.randomString(10);
@@ -592,19 +592,19 @@ dialTest(
       async () => {
         await agentElement.click();
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           firstVersion,
         );
         await baseAssertion.assertElementInnerText(
-          agentDetailsModal.agentTopics,
+          entityDetailsModal.entityTopics,
           [firstAppTopic],
         );
-        await agentDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal.versionMenuTrigger.click();
         await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
           firstVersion,
           secondVersion,
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -644,19 +644,19 @@ dialTest(
       async () => {
         await agentElement.click();
         await baseAssertion.assertElementText(
-          agentDetailsModal.agentVersion,
+          entityDetailsModal.entityVersion,
           secondVersion,
         );
         await baseAssertion.assertElementInnerText(
-          agentDetailsModal.agentTopics,
+          entityDetailsModal.entityTopics,
           [secondAppTopic],
         );
-        await agentDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal.versionMenuTrigger.click();
         await agentVersionsDropdownMenuAssertion.assertMenuIncludesOptions(
           firstVersion,
           secondVersion,
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 

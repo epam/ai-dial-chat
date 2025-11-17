@@ -11,14 +11,14 @@ import { APIResponse } from 'playwright-core';
 export class ApiAssertion extends BaseAssertion {
   public assertResponseCode(
     response: APIResponse,
-    modelId: string,
+    entityId: string | undefined,
     expectedStatus: number,
   ) {
     const status = response.status();
     this.assertValue(
       status,
       expectedStatus,
-      `${ExpectedMessages.responseCodeIsValid}${modelId}`,
+      `${ExpectedMessages.responseCodeIsValid}${entityId !== undefined ? entityId : ''}`,
     );
   }
 

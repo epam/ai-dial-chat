@@ -4,4 +4,4 @@ export * from './loginPage';
 export * from './azureADPage';
 export * from './marketplacePage';
 export * from './keycloakPage';
-export * from './appEditorPage';
+export * from './entityEditorPage';

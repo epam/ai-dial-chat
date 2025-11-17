@@ -155,10 +155,10 @@ const EmptyChatDescriptionView = ({
           incorrectModel ? 'text-[40px]' : 'text-sm',
         )}
       >
-        <div className="flex flex-col gap-3" data-qa="agent-info-container">
+        <div className="flex flex-col gap-3" data-qa="entity-info-container">
           <div
             className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
-            data-qa="agent-info"
+            data-qa="entity-info"
           >
             {PseudoIcon ? (
               <PseudoIcon size={modelIconSize} />
