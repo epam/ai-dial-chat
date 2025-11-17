@@ -303,7 +303,7 @@ dialAdminTest(
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );
@@ -389,7 +389,7 @@ dialAdminTest(
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );

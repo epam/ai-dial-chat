@@ -16,6 +16,11 @@ import {
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
+export interface TableSort {
+  column: TableColumnSortKeys;
+  order: SortOrder;
+}
+
 export interface MarketplaceState {
   selectedAgentsFilters: MarketplaceFilters;
   selectedToolsetsFilters: MarketplaceFilters;
@@ -25,10 +30,7 @@ export interface MarketplaceState {
   applyModelStatus: UploadStatus;
   selectedView: ViewTypes;
   applyModelId?: string;
-  tableSort: {
-    column: TableColumnSortKeys;
-    order: SortOrder;
-  };
+  tableSort: TableSort;
   isBannerVisible: boolean;
 
   detailsEntity: DetailsEntity | undefined;

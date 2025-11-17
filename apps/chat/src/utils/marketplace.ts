@@ -14,9 +14,12 @@ import {
   MarketplaceFilters,
 } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
-import { MarketplaceState } from '@/src/store/marketplace/marketplace.types';
+import {
+  MarketplaceState,
+  TableSort,
+} from '@/src/store/marketplace/marketplace.types';
 
 import {
   ApplicationTypeToSourceType,
@@ -31,10 +34,50 @@ import {
 
 import { pluralizeDisplayName } from './app/application-type-schema';
 import { parseCommaSeparatedList } from './app/common';
+import { isEntityIdPublic } from './app/publications';
+import { isToolsetEntityModel, isToolsetSignedIn } from './app/toolsets';
 import { translate } from './app/translation';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
 import { ParsedUrlQuery } from 'querystring';
+
+export interface EntityStatus {
+  isInvalid: boolean;
+  isLoggedOut: boolean;
+  isError: boolean;
+}
+
+export const getEntityStatus = (
+  entity: MarketplaceEntity | undefined,
+): EntityStatus => {
+  const isInvalid = !entity;
+
+  if (isInvalid) {
+    return { isInvalid, isLoggedOut: false, isError: true };
+  }
+
+  if (
+    isToolsetEntityModel(entity) &&
+    entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE
+  ) {
+    const isPublic = isEntityIdPublic(entity);
+
+    const authLevel = !isPublic
+      ? ToolsetCredentialsLevel.GLOBAL
+      : ToolsetCredentialsLevel.USER;
+
+    const isLoggedOut = !isToolsetSignedIn(entity, authLevel);
+
+    return {
+      isInvalid,
+      isLoggedOut,
+      isError: isLoggedOut,
+    };
+  }
+
+  return { isInvalid, isLoggedOut: false, isError: false };
+};
 
 // Filter checkers
 const checkEntityTypeFilter = (
@@ -186,11 +229,10 @@ export const getTableSort = (query: ParsedUrlQuery) => {
   const tableSortQuery = query[MarketplaceQueryParams.tableSort];
   if (typeof tableSortQuery === 'string') {
     const splittedTableSortQuery = tableSortQuery.split('-');
-    const tableSortColumn = (
+    const tableSortColumn =
       splittedTableSortQuery[0] in TableColumnSortKeys
-        ? splittedTableSortQuery[0]
-        : TableColumnSortKeys.NAME
-    ) as TableColumnSortKeys;
+        ? (splittedTableSortQuery[0] as TableColumnSortKeys)
+        : TableColumnSortKeys.NAME;
     const tableSortOrder: SortOrder =
       splittedTableSortQuery[1] === 'desc' ? 'desc' : 'asc';
     return {
@@ -198,6 +240,13 @@ export const getTableSort = (query: ParsedUrlQuery) => {
       order: tableSortOrder,
     };
   }
+
+  const defaultTableSort: TableSort = {
+    column: TableColumnSortKeys.NAME,
+    order: 'asc',
+  };
+
+  return defaultTableSort;
 };
 
 export const getLinkErrorMessage = (

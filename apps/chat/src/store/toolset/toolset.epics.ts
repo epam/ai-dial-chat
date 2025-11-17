@@ -5,14 +5,17 @@ import {
   concat,
   filter,
   forkJoin,
+  from,
   iif,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
@@ -34,6 +37,7 @@ import {
 } from '@/src/types/toolsets';
 
 import {
+  ConversationsActions,
   MarketplaceActions,
   PublicationActions,
   UIActions,
@@ -41,6 +45,7 @@ import {
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import {
   MarketplaceEntitiesTabs,
@@ -62,6 +67,24 @@ const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
     default:
       return false;
   }
+};
+
+const getMyWorkspaceUrl = (
+  params?: Partial<Record<MarketplaceQueryParams, unknown>>,
+) => {
+  const route = new URL(Routes.Marketplace);
+  route.searchParams.append(
+    MarketplaceQueryParams.tab,
+    MarketplaceTabs.MY_WORKSPACE,
+  );
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      route.searchParams.append(key, value as string);
+    });
+  }
+
+  return route;
 };
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -205,7 +228,7 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
     }),
   );
 
-const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
+const updateToolsetEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.updateToolset.type),
     switchMap(({ payload }) => {
@@ -270,41 +293,34 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       ),
                     );
                   }
-                  if (payload.redirectUrl) {
-                    void router.push({
-                      pathname: payload.redirectUrl,
-                      ...(payload.redirectUrl === Routes.Marketplace && {
-                        query: {
-                          [MarketplaceQueryParams.tab]:
-                            MarketplaceTabs.MY_WORKSPACE,
-                          [MarketplaceQueryParams.entitiesTab]:
-                            MarketplaceEntitiesTabs.TOOLSETS,
-                        },
-                      }),
-                    });
-                  }
 
-                  return concat(
+                  const actions: Observable<AppAction>[] = [
                     of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
                         newToolset: savedUpdatedToolset,
                       }),
                     ),
-                    iif(
-                      () =>
-                        payload.redirectUrl === Routes.Chat &&
-                        !!router.query.publicationUrl,
-                      of(PublicationActions.setIsToolsetReview(true)),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.tabToOpen,
-                      of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.auth,
+                  ];
+
+                  if (payload.exitAfterSave) {
+                    actions.push(
+                      of(
+                        ToolsetActions.exitEditor({
+                          redirectUrl: payload.redirectUrl,
+                          shouldSelectToolset: payload.shouldSelectToolset,
+                        }),
+                      ),
+                    );
+                  } else {
+                    if (payload.tabToOpen) {
+                      actions.push(
+                        of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
+                      );
+                    }
+                  }
+                  if (payload.auth) {
+                    actions.push(
                       of(
                         ToolsetActions.startSignInProcess({
                           authLevel:
@@ -314,21 +330,10 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                           toolset: savedUpdatedToolset,
                         }),
                       ),
-                      EMPTY,
-                    ),
-                    of(
-                      MarketplaceActions.setDetailsEntity(
-                        payload.redirectUrl === Routes.Marketplace &&
-                          !!payload.shouldSelectToolset
-                          ? {
-                              reference: savedUpdatedToolset.reference,
-                              type: MarketplaceEntitiesTabs.TOOLSETS,
-                              isSuggested: false,
-                            }
-                          : undefined,
-                      ),
-                    ),
-                  );
+                    );
+                  }
+
+                  return concat(...actions);
                 }),
               ),
             ),
@@ -819,6 +824,79 @@ const initQueryParamsEpic: AppEpic = (action$) =>
     }),
   );
 
+const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
+  action$.pipe(
+    ofType(ToolsetActions.exitEditor.type),
+    switchMap(({ payload }) => {
+      const query = parse(window.location.search.slice(1));
+      const publicationUrl =
+        query[ToolsetEditorQuery.PublicationUrl]?.toString();
+      const returnUrlQuery = query[ToolsetEditorQuery.ReturnUrl]?.toString();
+      const reference = query[ToolsetEditorQuery.Id]?.toString();
+      const returnUrl = returnUrlQuery
+        ? getSafeRedirectUrl(decodeURIComponent(returnUrlQuery))
+        : undefined;
+      const redirectUrl = payload.redirectUrl
+        ? getSafeRedirectUrl(payload.redirectUrl.toString())
+        : undefined;
+
+      const route =
+        redirectUrl ??
+        returnUrl ??
+        (publicationUrl
+          ? new URL(Routes.Chat)
+          : getMyWorkspaceUrl({
+              [MarketplaceQueryParams.entitiesTab]:
+                MarketplaceEntitiesTabs.TOOLSETS,
+            }));
+
+      if (
+        route.pathname === Routes.Marketplace &&
+        payload.shouldSelectToolset &&
+        reference
+      ) {
+        route.searchParams.append(MarketplaceQueryParams.toolset, reference);
+      }
+
+      const actions: Observable<AppAction>[] = [];
+
+      if (route.pathname === Routes.Marketplace) {
+        if (payload.shouldSelectToolset && reference) {
+          actions.push(
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: reference as string,
+                type: MarketplaceEntitiesTabs.TOOLSETS,
+                isSuggested: false,
+              }),
+            ),
+          );
+        }
+      }
+
+      if (route.pathname === Routes.Chat) {
+        if (!publicationUrl) {
+          actions.push(
+            of(
+              ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+              }),
+            ),
+          );
+        } else {
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({ conversationIds: [] }),
+            ),
+            of(PublicationActions.setIsToolsetReview(true)),
+          );
+        }
+      }
+
+      return from(router.push(route)).pipe(mergeMap(() => concat(...actions)));
+    }),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -829,6 +907,7 @@ export const ToolsetEpics = combineEpics(
   updateToolsetEpic,
   setQueryParamsEpic,
   initQueryParamsEpic,
+  exitEditorEpic,
 
   //Delete
   deleteToolsetEpic,

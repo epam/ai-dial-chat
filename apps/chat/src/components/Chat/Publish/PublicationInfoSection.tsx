@@ -26,14 +26,15 @@ export function PublicationInfoSection({
         data-qa={labelDataQa}
       >
         {label}
-        <Tooltip
-          hideTooltip={!infoTooltip}
-          tooltip={infoTooltip}
-          triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-          placement="top"
-        >
-          <IconHelp size={18} />
-        </Tooltip>
+        {infoTooltip && (
+          <Tooltip
+            tooltip={infoTooltip}
+            triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+            placement="top"
+          >
+            <IconHelp size={18} />
+          </Tooltip>
+        )}
       </h3>
       <Tooltip
         contentClassName="my-1 text-sm"

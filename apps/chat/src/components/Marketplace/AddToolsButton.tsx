@@ -12,6 +12,7 @@ import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { Routes } from '@/src/constants/routes';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { AddMarketplaceEntityButton } from './AddMarketplaceEntityButton';
 
@@ -34,7 +35,14 @@ export function AddToolsButton() {
             e.stopPropagation();
             dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.General));
             dispatch(ToolsetActions.clearToolsetDetails());
-            void router.push(Routes.ToolsetEditor);
+            void router.push({
+              pathname: Routes.ToolsetEditor,
+              query: {
+                [ToolsetEditorQuery.ReturnUrl]:
+                  window.location.pathname + window.location.search,
+                [ToolsetEditorQuery.IsCreate]: true,
+              },
+            });
           },
         },
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),

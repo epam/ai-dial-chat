@@ -1,13 +1,18 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getSharedTooltip } from '@/src/utils/app/application';
+import {
+  getSharedTooltip,
+  isDialAiEntityModel,
+} from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -17,8 +22,10 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { CONFIRM_DOCUMENT_VALUES } from '@/src/constants/applications';
-import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
+import {
+  CONFIRM_DOCUMENT_VALUES,
+  PUBLIC_APP_TOOLTIP,
+} from '@/src/constants/applications';
 
 import {
   QuickApp2Form as QuickApp2FormType,
@@ -35,6 +42,10 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
+import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/ApplicationDetails/SimpleApplicationDetailsFooter';
+import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
+import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import uniq from 'lodash-es/uniq';
 
@@ -59,10 +70,12 @@ export const QuickApp2Form = () => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
 
+  const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
 
   const toolSupportingModels = useMemo(
-    () => modelTypeAgents.filter((model) => model.features?.toolsSupported),
+    () => modelTypeAgents.filter((model) => model.features?.tools),
     [modelTypeAgents],
   );
 
@@ -74,8 +87,15 @@ export const QuickApp2Form = () => {
     [modelsMap, toolsetsMap],
   );
 
-  const { control, formState, register, setError, clearErrors } =
-    useFormContext<QuickApp2FormType>();
+  const {
+    control,
+    formState,
+    register,
+    setError,
+    clearErrors,
+    getValues,
+    setValue,
+  } = useFormContext<QuickApp2FormType>();
   const errors = formState.errors;
 
   const modelId = useWatch({
@@ -91,10 +111,62 @@ export const QuickApp2Form = () => {
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
+
+  const detailedViewEntity = useMemo(
+    () => (selectedEntityId ? allEntitiesMap[selectedEntityId] : null),
+    [selectedEntityId, allEntitiesMap],
+  );
+
+  const handleOpenDetails = useCallback((entity: MarketplaceEntity) => {
+    setSelectedEntityId(entity.id);
+  }, []);
+
+  const handleCloseDetails = useCallback(() => {
+    setSelectedEntityId(null);
+  }, []);
+
+  const handleChangeVersionInDetails = useCallback(
+    (entity: MarketplaceEntity) => {
+      setSelectedEntityId(entity.id);
+    },
+    [],
+  );
+
+  const handleItemClick = useCallback(
+    (id: string) => {
+      const entity = allEntitiesMap[id];
+      if (entity) {
+        handleOpenDetails(entity);
+      }
+    },
+    [allEntitiesMap, handleOpenDetails],
+  );
+
+  const handleRemoveFromDetails = useCallback(
+    (entityToRemove: MarketplaceEntity) => {
+      const currentValue = getValues('agentsAndToolsets') || [];
+      setValue(
+        'agentsAndToolsets',
+        currentValue.filter((id) => id !== entityToRemove.id),
+        { shouldTouch: true, shouldDirty: true },
+      );
+      handleCloseDetails();
+    },
+    [getValues, setValue, handleCloseDetails],
+  );
+
+  const commonDetailsProps = {
+    onClose: handleCloseDetails,
+    onChangeVersion: handleChangeVersionInDetails,
+    onRemove: handleRemoveFromDetails,
+    isPreview: true,
+  };
+
   return (
     <div
       className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
-      data-qa="app-view-form"
+      data-qa="entity-view-form"
     >
       <Controller
         name="documentRelativeUrl"
@@ -143,16 +215,40 @@ export const QuickApp2Form = () => {
       <Controller
         name="agentsAndToolsets"
         control={control}
-        render={({ field }) => (
-          <AgentAndToolsetSelectorField
-            value={field.value}
-            onChange={field.onChange}
-            allItemsMap={allEntitiesMap}
-            label={t('Agents & Toolsets')}
-            readonly={isAppPublic}
-            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-          />
-        )}
+        render={({ field }) => {
+          return (
+            <>
+              <AgentAndToolsetSelectorField
+                value={field.value}
+                onChange={field.onChange}
+                allItemsMap={allEntitiesMap}
+                label={t('Agents & Toolsets')}
+                readonly={isAppPublic}
+                tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+                onItemClick={handleItemClick}
+              />
+              {detailedViewEntity &&
+                isDialAiEntityModel(detailedViewEntity) && (
+                  <ApplicationDetails
+                    entity={detailedViewEntity}
+                    allEntities={allModels}
+                    FooterComponent={SimpleApplicationDetailsFooter}
+                    {...commonDetailsProps}
+                  />
+                )}
+
+              {detailedViewEntity &&
+                isToolsetEntityModel(detailedViewEntity) && (
+                  <ToolsetDetails
+                    entity={detailedViewEntity}
+                    allEntities={allToolsets}
+                    FooterComponent={SimpleToolsetDetailsFooter}
+                    {...commonDetailsProps}
+                  />
+                )}
+            </>
+          );
+        }}
       />
 
       <FieldTextArea
@@ -213,11 +309,15 @@ export const QuickApp2Form = () => {
         render={({ field }) => (
           <ToggleSwitchField
             label={t('Code Interpreter')}
+            info={t(
+              'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
+            )}
             isOn={field.value}
             handleSwitch={field.onChange}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
-            className="flex w-fit"
+            additionalText={t('Use to execute custom Python code')}
+            className="mt-1 flex w-fit items-center gap-2"
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
           />

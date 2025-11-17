@@ -30,6 +30,7 @@ import {
 } from './id';
 
 import {
+  Attachment,
   Conversation,
   ConversationInfo,
   Message,
@@ -394,8 +395,21 @@ export const isLoadedConversationEntity = (
 ): entity is Conversation =>
   isConversationInfoEntity(entity) && entity.status === UploadStatus.LOADED;
 
+// TODO: need to remove indexes until https://github.com/epam/ai-dial-sdk/issues/293 is fixed
+const clearAttachments = (attachments: Attachment[], clear: boolean) => {
+  if (!clear) {
+    return attachments;
+  }
+  return attachments.map((attachment) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { index, ...rest } = attachment;
+    return rest;
+  });
+};
+
 export function getMessageCustomContent(
   message: Message,
+  allowAssistantAttachments = false,
 ): Partial<Message> | undefined {
   return message.custom_content?.state ||
     message.custom_content?.attachments?.length ||
@@ -403,14 +417,22 @@ export function getMessageCustomContent(
     message.custom_content?.form_schema
     ? {
         custom_content: {
-          attachments:
-            message.role !== Role.Assistant &&
-            message.custom_content?.attachments?.length
-              ? message.custom_content?.attachments
-              : undefined,
-          state: message.custom_content?.state,
-          form_value: message.custom_content?.form_value,
-          form_schema: message.custom_content?.form_schema,
+          ...((allowAssistantAttachments || message.role !== Role.Assistant) &&
+            message.custom_content?.attachments?.length && {
+              attachments: clearAttachments(
+                message.custom_content?.attachments,
+                message.role === Role.Assistant,
+              ),
+            }),
+          ...(message.custom_content?.state && {
+            state: message.custom_content.state,
+          }),
+          ...(message.custom_content?.form_value && {
+            form_value: message.custom_content?.form_value,
+          }),
+          ...(message.custom_content?.form_schema && {
+            form_schema: message.custom_content?.form_schema,
+          }),
         },
       }
     : undefined;

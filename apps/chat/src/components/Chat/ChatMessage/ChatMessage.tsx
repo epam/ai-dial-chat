@@ -1,11 +1,13 @@
 import { FC, memo, useCallback, useMemo, useState } from 'react';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
+import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -17,6 +19,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu } from '@/src/components/Common/DropdownMenu';
 
 import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
+import { DislikeCommentModal } from './DislikeCommentModal';
 
 import {
   Feature,
@@ -24,6 +27,7 @@ import {
   Message,
   PublishActions,
   Role,
+  onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
 
 export interface Props {
@@ -38,6 +42,7 @@ export interface Props {
     index: number,
     conversation: Conversation,
     likeStatus: LikeState,
+    comment?: string,
   ) => void;
   onDelete?: (messageIndex: number, conversation: Conversation) => void;
   onEdit: (
@@ -90,11 +95,28 @@ export const ChatMessage: FC<Props> = memo(
       return isFirstMessageSystem ? messageIndex + 1 : messageIndex;
     }, [isFirstMessageSystem, messageIndex]);
 
-    const handleLike = useCallback(
+    const isDislikeCommentEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.DislikeComment),
+    );
+    const [isDislikeModalOpen, setDislikeModalOpen] = useState(false);
+
+    const handleLike: onLikeMessageHandler = useCallback(
       (likeStatus: LikeState) => {
         if (conversation && onLike) {
-          onLike(messageIndex, conversation, likeStatus);
+          if (!isDislikeCommentEnabled || likeStatus !== LikeState.Disliked) {
+            onLike(messageIndex, conversation, likeStatus);
+          } else {
+            setDislikeModalOpen(true);
+          }
         }
+      },
+      [conversation, onLike, isDislikeCommentEnabled, messageIndex],
+    );
+
+    const handleDislike = useCallback(
+      (comment?: string) => {
+        onLike(messageIndex, conversation, LikeState.Disliked, comment);
+        setDislikeModalOpen(false);
       },
       [conversation, onLike, messageIndex],
     );
@@ -131,9 +153,21 @@ export const ChatMessage: FC<Props> = memo(
       setIsDeleteConfirmationOpened(true);
     }, [onDelete]);
 
+    const screenState = useScreenState();
+
     return (
       <>
-        {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
+        {isDislikeModalOpen && (
+          <DislikeCommentModal
+            onClose={() => setDislikeModalOpen(false)}
+            onSubmit={(comment: string) => {
+              handleDislike(comment);
+              setDislikeModalOpen(false);
+            }}
+          />
+        )}
+        {(screenState !== ScreenState.SM || isOverlay) &&
+        !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
           <ChatMessageContent
             isLastMessage={isLastMessage}
             messageIndex={messageIndex}

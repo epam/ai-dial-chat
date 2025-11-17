@@ -43,6 +43,7 @@ export function AddMarketplaceEntityButton({
       <button
         onClick={visibleActions[0].onClick}
         className="button button-primary hidden items-center gap-2 py-2 xl:flex"
+        data-qa={dataQa}
       >
         <IconPlus size={18} />
         <span>{t(`Add ${label}`)}</span>

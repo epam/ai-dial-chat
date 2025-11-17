@@ -19,9 +19,9 @@ dialTest(
     marketplaceAgentsSection,
     marketplaceAgents,
     navigationPanel,
-    agentDetailsModal,
+    entityDetailsModal,
     confirmationDialog,
-    agentDetailsModalAssertion,
+    entityDetailsModalAssertion,
     confirmationDialogAssertion,
     localStorageManager,
     setTestIds,
@@ -223,28 +223,28 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
         await workspaceAgentElement.click();
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           threeSortedVersions[0],
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'visible',
         );
         for (const version of [
           threeSortedVersions[1],
           threeSortedVersions[2],
         ]) {
-          await agentDetailsModal.versionMenuTrigger.click();
-          await agentDetailsModal
+          await entityDetailsModal.versionMenuTrigger.click();
+          await entityDetailsModal
             .getVersionDropdownMenu()
             .selectMenuOption(version);
-          await agentDetailsModalAssertion.assertApplicationVersion(version);
-          await agentDetailsModalAssertion.assertElementState(
-            agentDetailsModal.removeBookmarkIcon,
+          await entityDetailsModalAssertion.assertEntityVersion(version);
+          await entityDetailsModalAssertion.assertElementState(
+            entityDetailsModal.removeBookmarkIcon,
             'visible',
           );
         }
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -361,8 +361,8 @@ dialTest(
     marketplaceAgentsSection,
     marketplaceAgents,
     dialHomePage,
-    agentDetailsModal,
-    agentDetailsModalAssertion,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
     localStorageManager,
     setTestIds,
     marketplaceAgentsAssertion,
@@ -419,7 +419,7 @@ dialTest(
     await dialTest.step(
       'Click on "Use application" btn, return to the "My workspace" and verify bookmarked app is displayed in the list',
       async () => {
-        await agentDetailsModal.clickUseButton({
+        await entityDetailsModal.clickUseButton({
           isInstalledDeploymentsUpdated: true,
         });
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
@@ -449,22 +449,22 @@ dialTest(
       'Open the agent card and verify all versions are available in the dropdown menu, bookmark icon is shown on version switching',
       async () => {
         await addedAgentElement.click();
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           sortedVersions[0],
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'visible',
         );
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[1]);
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           sortedVersions[1],
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'visible',
         );
       },
@@ -482,11 +482,11 @@ dialTest(
     marketplaceAgentsSection,
     marketplaceAgents,
     navigationPanel,
-    agentDetailsModal,
+    entityDetailsModal,
     tooltipAssertion,
     toast,
     toastAssertion,
-    agentDetailsModalAssertion,
+    entityDetailsModalAssertion,
     localStorageManager,
     setTestIds,
     confirmationDialog,
@@ -546,7 +546,7 @@ dialTest(
     await dialTest.step(
       'Hover over bookmark icon and verify tooltip is shown, icon is highlighted, cursor is changed',
       async () => {
-        const addBookmarkIconElement = agentDetailsModal.addBookmarkIcon;
+        const addBookmarkIconElement = entityDetailsModal.addBookmarkIcon;
         await addBookmarkIconElement.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.addToMyWorkspaceTooltip,
@@ -565,24 +565,24 @@ dialTest(
     await dialTest.step(
       'Change the version, click on bookmark icon and verify toast message is shown, bookmark icon is changed',
       async () => {
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[1]);
-        await agentDetailsModal.addAgentToWorkspace();
+        await entityDetailsModal.addAgentToWorkspace();
         await toastAssertion.assertToastMessage(
           ExpectedConstants.agentAddedToWorkspaceMessage,
         );
         await toast.closeToast();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.addBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.addBookmarkIcon,
           'hidden',
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'visible',
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -604,22 +604,22 @@ dialTest(
       'Open the agent and verify all versions are available in the dropdown menu, bookmark icon is shown on version switching',
       async () => {
         await workspaceAgentElement.click();
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           sortedVersions[0],
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'visible',
         );
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[1]);
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           sortedVersions[1],
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'visible',
         );
       },
@@ -628,7 +628,7 @@ dialTest(
     await dialTest.step(
       'Hover over bookmark icon and verify tooltip is shown, icon is highlighted, cursor is changed',
       async () => {
-        const removeBookmarkIconElement = agentDetailsModal.removeBookmarkIcon;
+        const removeBookmarkIconElement = entityDetailsModal.removeBookmarkIcon;
         await removeBookmarkIconElement.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.removeFromMyWorkspaceTooltip,
@@ -647,11 +647,11 @@ dialTest(
     await dialTest.step(
       'Change the version, click on bookmark icon and verify confirmation modal is shown',
       async () => {
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[1]);
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialogAssertion.assertElementState(
           confirmationDialog,
           'visible',
@@ -673,8 +673,8 @@ dialTest(
           confirmationDialog,
           'hidden',
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'visible',
         );
       },
@@ -683,7 +683,7 @@ dialTest(
     await dialTest.step(
       'Confirm agent removing and verify agent is displayed in the suggested list',
       async () => {
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialogAssertion.assertElementState(
           confirmationDialog,
           'visible',

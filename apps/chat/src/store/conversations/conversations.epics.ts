@@ -1111,6 +1111,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         id: conversation.id,
         reference: conversation.reference,
         value: payload.rate > 0,
+        comment: payload.comment,
       };
 
       return fromFetch('/api/rate', {

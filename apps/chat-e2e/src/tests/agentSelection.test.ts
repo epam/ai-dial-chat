@@ -30,7 +30,7 @@ dialTest(
     setTestIds,
     localStorageManager,
     iconApiHelper,
-    agentDetailsModal,
+    entityDetailsModal,
     navigationPanel,
     confirmationDialog,
     talkToAgentDialogAssertion,
@@ -197,7 +197,7 @@ dialTest(
         const addedModelElement =
           await marketplaceAgentsSection.findAgentElement(addedModel);
         await addedModelElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
@@ -623,7 +623,7 @@ dialTest(
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
-    agentDetailsModal,
+    entityDetailsModal,
     confirmationDialog,
     localStorageAssertion,
     chatAssertion,
@@ -660,7 +660,7 @@ dialTest(
         const firstModelElement =
           await marketplaceAgentsSection.findAgentElement(firstModel);
         await firstModelElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
         await dialHomePage.waitForPageLoaded();

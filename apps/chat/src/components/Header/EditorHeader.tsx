@@ -79,7 +79,7 @@ export const EditorHeader = <T extends string>({
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-secondary bg-layer-1',
+        'z-10 flex w-full border-b border-secondary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
       data-qa={dataQa}
@@ -131,7 +131,7 @@ export const EditorHeader = <T extends string>({
 
           <span
             className="hidden items-center pl-1 text-primary md:flex xl:pl-0"
-            data-qa="action-application-type-title"
+            data-qa="action-entity-type-title"
           >
             {title}
           </span>

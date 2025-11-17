@@ -1,6 +1,5 @@
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
-  AgentDetailsModal,
   AttachFilesModal,
   Chat,
   ChatBar,
@@ -9,6 +8,7 @@ import {
   ConfirmationDialog,
   ConversationSettingsModal,
   DropdownMenu,
+  EntityDetailsModal,
   FileDropArea,
   InformationModal,
   Marketplace,
@@ -52,10 +52,11 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
-import { AgentDetailsModalAssertion } from '@/src/assertions/agentDetailsModalAssertion';
+import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
@@ -87,6 +88,7 @@ import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marke
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
 import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromptPreviewModal';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
@@ -168,13 +170,13 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationPrompts: OrganizationPromptsTree;
   adminOrganizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   adminAttachFilesModal: AttachFilesModal;
-  adminAgentDetailsModal: AgentDetailsModal;
+  adminEntityDetailsModal: EntityDetailsModal;
   adminSelectFolderModal: SelectFolderModal;
   adminAppsToPublishTree: PublishApplicationsTree;
   adminPublishingRules: PublishingRules;
   adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
   adminMarketplaceAgentsAssertion: MarketplaceAgentsAssertion;
-  adminAgentDetailsModalAssertion: AgentDetailsModalAssertion;
+  adminEntityDetailsModalAssertion: EntityDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
   adminPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
   adminAppToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
@@ -195,7 +197,21 @@ const dialAdminTest = dialTest.extend<{
   adminChatSettingsTooltip: ChatSettingsTooltip;
   adminConversationDropdownMenuAssertion: MenuAssertion;
   adminTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  adminRenameConversationModal: RenameConversationModal;
+  adminRenameConversationModalAssertion: RenameConversationModalAssertion;
 }>({
+  adminRenameConversationModal: async ({ adminPage }, use) => {
+    const adminRenameConversationModal = new RenameConversationModal(adminPage);
+    await use(adminRenameConversationModal);
+  },
+  adminRenameConversationModalAssertion: async (
+    { adminRenameConversationModal },
+    use,
+  ) => {
+    const adminRenameConversationModalAssertion =
+      new RenameConversationModalAssertion(adminRenameConversationModal);
+    await use(adminRenameConversationModalAssertion);
+  },
   adminChatSettingsTooltip: async ({ adminPage }, use) => {
     const chatSettingsTooltip = new ChatSettingsTooltip(adminPage);
     await use(chatSettingsTooltip);
@@ -676,10 +692,10 @@ const dialAdminTest = dialTest.extend<{
     const adminAttachFilesModal = new AttachFilesModal(adminPage);
     await use(adminAttachFilesModal);
   },
-  adminAgentDetailsModal: async ({ adminMarketplaceAgents }, use) => {
-    const adminAgentDetailsModal =
-      adminMarketplaceAgents.getAgentDetailsModal();
-    await use(adminAgentDetailsModal);
+  adminEntityDetailsModal: async ({ adminMarketplaceAgents }, use) => {
+    const adminEntityDetailsModal =
+      adminMarketplaceAgents.getEntityDetailsModal();
+    await use(adminEntityDetailsModal);
   },
   adminAppsToPublishTree: async ({ adminPublishingRequestDialog }, use) => {
     const adminAppsToPublishTree =
@@ -707,11 +723,14 @@ const dialAdminTest = dialTest.extend<{
     );
     await use(adminMarketplaceAgentsAssertion);
   },
-  adminAgentDetailsModalAssertion: async ({ adminAgentDetailsModal }, use) => {
-    const adminAgentDetailsModalAssertion = new AgentDetailsModalAssertion(
-      adminAgentDetailsModal,
+  adminEntityDetailsModalAssertion: async (
+    { adminEntityDetailsModal },
+    use,
+  ) => {
+    const adminEntityDetailsModalAssertion = new EntityDetailsModalAssertion(
+      adminEntityDetailsModal,
     );
-    await use(adminAgentDetailsModalAssertion);
+    await use(adminEntityDetailsModalAssertion);
   },
   adminSelectFoldersAssertion: async ({ adminSelectFolderModal }, use) => {
     const adminSelectFoldersAssertion = new FolderAssertion(

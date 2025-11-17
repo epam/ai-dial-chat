@@ -5,7 +5,7 @@ const commonBgColors = {
   'layer-1': 'var(--bg-layer-1, #090D13)',
   'layer-2': 'var(--bg-layer-2, #141A23)',
   'layer-3': 'var(--bg-layer-3, #222932)',
-  'layer-4': 'var(--bg-layer-4, #333942)',
+  'layer-4': 'var(--bg-layer-4, #424952)',
   blackout: 'var(--bg-blackout, #090D13B3)',
   error: 'var(--bg-error, #402027)',
   warning: 'var(--bg-warning, #3F3D25)',
@@ -18,13 +18,13 @@ const commonBgColors = {
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
   overlay: 'var(--bg-overlay, #090D13B3)',
-  'auth-layer-0': 'var(--bg-auth-layer-0, var(--bg-layer-1, #000000))',
-  'auth-layer-1': 'var(--bg-auth-layer-1, var(--bg-layer-3, #222932))',
+  'auth-layer-0': 'var(--bg-auth-layer-0, var(--bg-layer-1, #F7F6F5))',
+  'auth-layer-1': 'var(--bg-auth-layer-1, var(--bg-layer-3, #333451))',
 };
 
 const commonBorderColors = {
   transparent: 'transparent',
-  primary: 'var(--stroke-primary, #333942)',
+  primary: 'var(--stroke-primary, #424952)',
   secondary: 'var(--stroke-secondary, #222932)',
   tertiary: 'var(--stroke-tertiary, #090D13)',
   error: 'var(--stroke-error, #F76464)',
@@ -66,7 +66,7 @@ module.exports = {
       'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
       'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
-      'controls-disable': 'var(--controls-text-disable, #333942)',
+      'controls-disable': 'var(--controls-text-disable, #424952)',
     },
     gradientColorStops: commonBgColors,
     /////////

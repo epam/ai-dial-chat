@@ -1,6 +1,7 @@
 import {
   EntitySelectors,
   FileSelectors,
+  FolderSelectors,
   IconSelectors,
   PublishingDialogSelectors,
   PublishingTreeSelectors,
@@ -29,4 +30,10 @@ export class PublishFilesTree extends PublishEntitiesTree {
     this.getTreeEntity(name, { exactMatch: true }).locator(
       IconSelectors.fileIcon,
     );
+
+  public getFolderByName(name: string, index?: number) {
+    return this.getChildElementBySelector(
+      FolderSelectors.folderName,
+    ).getElementLocatorByText(name, index);
+  }
 }

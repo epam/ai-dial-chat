@@ -48,6 +48,7 @@ describe('SettingsSelectors', () => {
         },
       },
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 
   it('should filter enabled features for the user', () => {

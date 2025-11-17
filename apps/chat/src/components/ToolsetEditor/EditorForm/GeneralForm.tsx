@@ -18,6 +18,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
+import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -76,6 +77,7 @@ export const GeneralForm = ({
     <form
       onSubmit={onNextClick}
       className="flex size-full flex-col overflow-hidden bg-layer-2"
+      data-qa="entity-general-form"
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Field
@@ -86,6 +88,7 @@ export const GeneralForm = ({
           id="name"
           disabled={isToolsetPublic}
           error={errors.name?.message}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
         />
         <Field
           {...register('version')}
@@ -95,6 +98,7 @@ export const GeneralForm = ({
           placeholder={DEFAULT_VERSION}
           id="version"
           disabled={isToolsetPublic}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
           error={errors.version?.message}
           name="version"
         />
@@ -114,6 +118,7 @@ export const GeneralForm = ({
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
               disabled={isToolsetPublic}
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
         />
@@ -128,6 +133,7 @@ export const GeneralForm = ({
           className="resize-none"
           id="description"
           disabled={isToolsetPublic}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
         />
         <Controller
           name="topics"
@@ -145,6 +151,7 @@ export const GeneralForm = ({
               isClearable
               menuPlacement={isMobileView ? 'top' : 'auto'}
               isDisabled={isToolsetPublic}
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
             />
           )}
         />
@@ -156,6 +163,7 @@ export const GeneralForm = ({
         >
           <button
             className="button button-primary py-2"
+            data-qa="save-entity-general-info"
             type="submit"
             disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
           >

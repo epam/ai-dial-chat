@@ -183,7 +183,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
   }
 
   return (
-    <div className="flex grow content-center justify-center">
+    <div className="flex grow place-content-center">
       {searchTerm.length ? <NoResultsFound /> : <NoData />}
     </div>
   );

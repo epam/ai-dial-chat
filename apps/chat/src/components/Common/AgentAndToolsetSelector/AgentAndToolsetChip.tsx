@@ -1,49 +1,91 @@
 import { IconX } from '@tabler/icons-react';
-import React from 'react';
-
-import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
 import { getEntityNameFromId } from '@/src/utils/app/id';
+import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { Translation } from '@/src/types/translation';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
-interface ChipViewProps {
+import { ChipTooltipContent } from './ChipTooltipContent';
+
+interface ChipWrapperProps {
+  isError: boolean;
+  children: React.ReactNode;
+}
+
+const ChipWrapper: React.FC<ChipWrapperProps> = ({ isError, children }) => (
+  <div
+    className={classNames(
+      'flex h-[34px] items-center rounded',
+      isError ? 'bg-error' : 'bg-accent-primary-alpha',
+    )}
+  >
+    {children}
+  </div>
+);
+
+interface ChipRemoveButtonProps {
+  id: string;
+  isError: boolean;
+  onRemove?: (id: string) => void;
+}
+
+const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
+  id,
+  isError,
+  onRemove,
+}) => (
+  <button
+    className={classNames(
+      'mr-1 p-1 text-secondary',
+      isError ? 'hover:text-error' : 'hover:text-accent-primary',
+    )}
+    onClick={() => onRemove?.(id)}
+    aria-label="Remove item"
+  >
+    <IconX size={14} />
+  </button>
+);
+
+interface ChipBodyProps {
   id: string;
   item?: MarketplaceEntity;
   name: string;
   version?: string;
+  isError: boolean;
   isInvalid: boolean;
   readonly?: boolean;
-  onRemove?: (id: string) => void;
+  onClick?: (id: string) => void;
 }
 
-const ChipView: React.FC<ChipViewProps> = ({
+const ChipBody: React.FC<ChipBodyProps> = ({
   id,
   item,
   name,
   version,
+  isError,
   isInvalid,
   readonly,
-  onRemove,
+  onClick,
 }) => {
+  const handleClick = () => {
+    if (readonly || isInvalid) return;
+    onClick?.(id);
+  };
+
   return (
     <div
       className={classNames(
-        'flex h-[34px] items-center gap-2 rounded px-2 py-1.5',
-        isInvalid
-          ? 'bg-error text-error'
-          : 'bg-accent-primary-alpha text-primary',
-        readonly ? 'cursor-default' : 'cursor-pointer',
+        'flex h-full items-center gap-2 py-1.5 pl-2 pr-1',
+        isError ? 'text-error' : 'text-primary',
+        readonly || isInvalid ? 'cursor-not-allowed' : 'cursor-pointer',
       )}
+      onClick={handleClick}
     >
       <ModelIcon entityId={id} entity={item} size={18} />
       <div className="flex max-w-[220px] gap-2 truncate">
@@ -51,83 +93,12 @@ const ChipView: React.FC<ChipViewProps> = ({
         <span
           className={classNames(
             'truncate',
-            isInvalid ? 'text-error brightness-75' : 'text-secondary',
+            isError ? 'text-error brightness-75' : 'text-secondary',
           )}
         >
           {version}
         </span>
       </div>
-      {!readonly && (
-        <button
-          className={classNames(
-            'text-secondary',
-            isInvalid ? 'hover:text-error' : 'hover:text-primary',
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove?.(id);
-          }}
-        >
-          <IconX size={14} />
-        </button>
-      )}
-    </div>
-  );
-};
-
-interface ChipTooltipContentProps {
-  id: string;
-  item?: MarketplaceEntity;
-  name: string;
-  version?: string;
-  isInvalid: boolean;
-}
-
-const ChipTooltipContent: React.FC<ChipTooltipContentProps> = ({
-  id,
-  item,
-  name,
-  version,
-  isInvalid,
-}) => {
-  const { t } = useTranslation(Translation.Common);
-
-  return (
-    <div className="flex w-[440px] max-w-full flex-col gap-3 p-3">
-      <div className="flex items-center gap-3">
-        <div className="shrink-0">
-          <ModelIcon entityId={id} entity={item} size={96} />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-xs text-secondary">
-            {t('Version {{version}}', { version })}
-          </span>
-          <span className="w-full truncate text-base font-bold">{name}</span>
-          {isInvalid ? (
-            <div className="flex items-center gap-2 text-error">
-              <span className="text-sm">
-                {t(
-                  'Not available toolset selected. Please, change or remove toolset to proceed',
-                )}
-              </span>
-            </div>
-          ) : (
-            item?.description && (
-              <EntityMarkdownDescription
-                className="line-clamp-3 text-sm leading-4 text-secondary"
-                isShortDescription
-              >
-                {item.description}
-              </EntityMarkdownDescription>
-            )
-          )}
-        </div>
-      </div>
-      {item?.topics && item.topics.length > 0 && (
-        <div className="shrink-0">
-          <TopicsList topics={item.topics} />
-        </div>
-      )}
     </div>
   );
 };
@@ -137,6 +108,8 @@ interface AgentAndToolsetChipProps {
   item?: MarketplaceEntity;
   onRemove?: (id: string) => void;
   readonly?: boolean;
+  onItemClick?: (id: string) => void;
+  isInSelectionList?: boolean;
 }
 
 export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
@@ -144,36 +117,48 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   item,
   onRemove,
   readonly,
+  onItemClick,
+  isInSelectionList,
 }) => {
-  const isInvalid = !item;
+  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
 
-  const name = isInvalid
+  const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
     : item.name;
-  const version = isInvalid ? getVersionFromId(id) : item.version;
+  const version = !item ? getVersionFromId(id) : item.version;
 
   return (
-    <Tooltip
-      isTriggerClickable
-      tooltip={
-        <ChipTooltipContent
+    <ChipWrapper isError={isError}>
+      <Tooltip
+        isTriggerClickable
+        tooltip={
+          <ChipTooltipContent
+            id={id}
+            item={item}
+            name={name}
+            version={version}
+            isInvalid={isInvalid}
+            isLoggedOut={isLoggedOut}
+            isInSelectionList={isInSelectionList}
+            hideStatusMessage={readonly}
+          />
+        }
+      >
+        <ChipBody
           id={id}
           item={item}
           name={name}
           version={version}
+          isError={isError}
           isInvalid={isInvalid}
+          readonly={readonly}
+          onClick={onItemClick}
         />
-      }
-    >
-      <ChipView
-        id={id}
-        item={item}
-        name={name}
-        version={version}
-        isInvalid={isInvalid}
-        readonly={readonly}
-        onRemove={onRemove}
-      />
-    </Tooltip>
+      </Tooltip>
+
+      {!readonly && (
+        <ChipRemoveButton id={id} isError={isError} onRemove={onRemove} />
+      )}
+    </ChipWrapper>
   );
 };

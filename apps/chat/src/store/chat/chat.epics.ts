@@ -135,7 +135,7 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
 const startConfigurationSchemaUploadingEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatActions.startConfigurationSchemaUploading.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       return ApplicationService.getConfigurationSchema(payload.modelId).pipe(
         switchMap((schema) => {
           return of(

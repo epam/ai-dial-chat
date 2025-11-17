@@ -35,9 +35,9 @@ export class AttachFilesModal extends BaseElement {
   private allFolderFiles!: Folders;
   private allFilesTree!: AttachFilesTree;
   private sharedWithMeTree!: AttachFilesTree;
-  private sharedWithMeFoldersTree!: Folders;
+  private sharedWithMeFolderFiles!: Folders;
   private organizationTree!: AttachFilesTree;
-  private organizationFoldersTree!: Folders;
+  private organizationFolderFiles!: Folders;
   private search!: Search;
   public modalError!: ModalError;
 
@@ -118,16 +118,16 @@ export class AttachFilesModal extends BaseElement {
     return this.organizationTree;
   }
 
-  getOrganizationFoldersTree(): Folders {
-    if (!this.organizationFoldersTree) {
-      this.organizationFoldersTree = new Folders(
+  getOrganizationFolderFiles(): Folders {
+    if (!this.organizationFolderFiles) {
+      this.organizationFolderFiles = new Folders(
         this.page,
         this.rootLocator,
         AttachFilesModalSelectors.organizationFilesContainer,
         EntitySelectors.file,
       );
     }
-    return this.organizationFoldersTree;
+    return this.organizationFolderFiles;
   }
 
   getAllFilesTree(): AttachFilesTree {
@@ -171,16 +171,16 @@ export class AttachFilesModal extends BaseElement {
     return this.sharedWithMeTree;
   }
 
-  getSharedWithMeFoldersTree(): Folders {
-    if (!this.sharedWithMeFoldersTree) {
-      this.sharedWithMeFoldersTree = new Folders(
+  getSharedWithMeFolderFiles(): Folders {
+    if (!this.sharedWithMeFolderFiles) {
+      this.sharedWithMeFolderFiles = new Folders(
         this.page,
         this.rootLocator,
         AttachFilesModalSelectors.sharedWithMeFilesContainer,
         EntitySelectors.file,
       );
     }
-    return this.sharedWithMeFoldersTree;
+    return this.sharedWithMeFolderFiles;
   }
 
   public attachFilesButton = this.getChildElementBySelector(
@@ -223,14 +223,14 @@ export class AttachFilesModal extends BaseElement {
     }
   }
 
-  public getFoldersTree(section: FileModalSection) {
+  public getFolderTree(section: FileModalSection) {
     switch (section) {
       case FileModalSection.AllFiles:
         return this.getAllFolderFiles();
       case FileModalSection.SharedWithMe:
-        return this.getSharedWithMeFoldersTree();
+        return this.getSharedWithMeFolderFiles();
       case FileModalSection.Organization:
-        return this.getOrganizationFoldersTree();
+        return this.getOrganizationFolderFiles();
       default:
         throw new Error(invalidSectionError(section));
     }

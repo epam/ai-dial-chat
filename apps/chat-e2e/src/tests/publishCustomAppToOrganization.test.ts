@@ -18,8 +18,8 @@ dialAdminTest(
       marketplacePage,
       marketplaceHeader,
       marketplaceAgentsSection,
-      agentDetailsModal,
-      agentDetailsModalAssertion,
+      entityDetailsModal,
+      entityDetailsModalAssertion,
       customApplicationBuilder,
       applicationApiHelper,
       adminMarketplaceAgentsAssertion,
@@ -56,7 +56,7 @@ dialAdminTest(
   ) => {
     setTestIds('EPMRTC-4450', 'EPMRTC-4496', 'EPMRTC-5858', 'EPMRTC-5736');
     const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const orgFolder = GeneratorUtil.randomString(7);
     const publicationPath = `${PublishPath.Organization}/${orgFolder}`;
 
@@ -120,11 +120,11 @@ dialAdminTest(
         await marketplaceHeader.searchInput.fillInInput(appName);
         appElement = await marketplaceAgentsSection.findAgentElement(appEntity);
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModal.publishButton.click();
+        await entityDetailsModal.publishButton.click();
         await publishingRequestDialogAssertion.assertElementState(
           publishingRequestDialog,
           'visible',
@@ -235,16 +235,16 @@ dialAdminTest(
       'Click on the found card and verify the details',
       async () => {
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModalAssertion.assertEntityIcon(
-          agentDetailsModal.icon,
+        await entityDetailsModalAssertion.assertEntityIcon(
+          entityDetailsModal.icon,
           expectedPublishedIconUrl,
         );
-        await agentDetailsModalAssertion.assertApplicationAuthor(defaultAuthor);
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModalAssertion.assertEntityAuthor(defaultAuthor);
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -259,7 +259,7 @@ dialAdminTest(
           'visible',
         );
         await attachFilesModal
-          .getOrganizationFoldersTree()
+          .getOrganizationFolderFiles()
           .expandFolder(orgFolder);
         await organizationFoldersAssertion.assertFolderEntityState(
           { name: orgFolder },

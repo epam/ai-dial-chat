@@ -71,7 +71,7 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        installedAppVersion = GeneratorUtil.randomApplicationVersion([
+        installedAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
@@ -81,7 +81,7 @@ dialTest(
           .withDisplayVersion(installedAppVersion)
           .build();
 
-        nonInstalledAppVersion = GeneratorUtil.randomApplicationVersion([
+        nonInstalledAppVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           installedAppVersion,
@@ -297,7 +297,7 @@ dialTest(
     marketplaceHeader,
     marketplaceAgentsSection,
     marketplaceAgents,
-    agentDetailsModal,
+    entityDetailsModal,
     marketplace,
     localStorageManager,
     setTestIds,
@@ -308,7 +308,7 @@ dialTest(
     publicationApiHelper,
     adminPublicationApiHelper,
     publishRequestBuilder,
-    agentDetailsModalAssertion,
+    entityDetailsModalAssertion,
     agentVersionsDropdownMenuAssertion,
   }) => {
     setTestIds('EPMRTC-4510');
@@ -327,16 +327,16 @@ dialTest(
         const recentVersions =
           ModelsUtil.getRecentAgentsVersions(recentModelIds);
 
-        appCommonVersion = GeneratorUtil.randomApplicationVersion([
+        appCommonVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
         ]);
-        secondAppFirstVersion = GeneratorUtil.randomApplicationVersion([
+        secondAppFirstVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           appCommonVersion,
         ]);
-        secondAppThirdVersion = GeneratorUtil.randomApplicationVersion([
+        secondAppThirdVersion = GeneratorUtil.randomEntityVersion([
           ...recentNames,
           ...recentVersions,
           appCommonVersion,
@@ -484,10 +484,8 @@ dialTest(
             isEditable: false,
           });
         await bookmarkedSecondAgentElement.click();
-        await agentDetailsModalAssertion.assertApplicationVersion(
-          appCommonVersion,
-        );
-        await agentDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModalAssertion.assertEntityVersion(appCommonVersion);
+        await entityDetailsModal.versionMenuTrigger.click();
         await agentVersionsDropdownMenuAssertion.assertMenuOptions(
           SortingUtil.sortVersionsArray([
             secondAppFirstVersion,
@@ -497,7 +495,7 @@ dialTest(
         );
 
         await baseAssertion.assertElementBackgroundColors(
-          agentDetailsModal
+          entityDetailsModal
             .getVersionDropdownMenu()
             .menuOption(appCommonVersion),
           ThemesUtil.getRgbColorByKey(
@@ -521,8 +519,8 @@ dialTest(
     marketplaceHeader,
     marketplaceAgentsSection,
     marketplaceAgents,
-    agentDetailsModal,
-    agentDetailsModalAssertion,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
     setTestIds,
     baseAssertion,
   }) => {
@@ -647,12 +645,12 @@ dialTest(
       'Open app card and verify it does not have bookmark icon',
       async () => {
         await actualAgent.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.addBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.addBookmarkIcon,
           'hidden',
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.removeBookmarkIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.removeBookmarkIcon,
           'hidden',
         );
       },

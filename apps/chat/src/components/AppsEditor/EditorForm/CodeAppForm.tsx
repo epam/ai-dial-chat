@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -10,13 +10,13 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationSelectors, FilesSelectors } from '@/src/store/selectors';
 
-import { CONFIRM_SOURCE_FOLDER_VALUES } from '@/src/constants/applications';
 import {
-  CODE_APPS_ENDPOINTS,
+  CONFIRM_SOURCE_FOLDER_VALUES,
   PUBLIC_APP_TOOLTIP,
-} from '@/src/constants/code-apps';
+} from '@/src/constants/applications';
+import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 
 import {
   CodeAppForm as CodeAppFormType,
@@ -32,6 +32,8 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
@@ -50,6 +52,7 @@ export const CodeAppForm = () => {
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const { control, formState, setError, clearErrors, watch, setValue } =
     useFormContext<CodeAppFormType>();
@@ -59,6 +62,20 @@ export const CodeAppForm = () => {
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppShared = !!appDetails?.isShared;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
+
+  const isTargetFolderLoaded = useMemo(() => {
+    const targetFolder = sources
+      ? folders.find((f) => f.id === sources)
+      : undefined;
+
+    return targetFolder?.status === UploadStatus.LOADED;
+  }, [folders, sources]);
+
+  useEffect(() => {
+    if (isTargetFolderLoaded) {
+      setValue('filesLoaded', true, { shouldDirty: false });
+    }
+  }, [isTargetFolderLoaded, setValue]);
 
   useEffect(() => {
     if (sources === MANDATORY_FIELD_PLACEHOLDER) {
@@ -72,7 +89,7 @@ export const CodeAppForm = () => {
   return (
     <div
       className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
-      data-qa="app-view-form"
+      data-qa="entity-view-form"
     >
       <Controller
         name="inputAttachmentTypes"
@@ -132,7 +149,7 @@ export const CodeAppForm = () => {
           />
         )}
       />
-      {sources && (
+      {!!sources && isTargetFolderLoaded && (
         <FormCodeEditor
           disabled={isAppPublic}
           sourcesFolderId={getActualSource(sources)}

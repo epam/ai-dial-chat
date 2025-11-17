@@ -8,6 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
+
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -53,9 +55,29 @@ const FormSection = ({
       {(!!title || !!subtitle) && (
         <div>
           {!!title && (
-            <h5 className="text-base font-semibold text-primary">{title}</h5>
+            <h5
+              className="text-base font-semibold text-primary"
+              data-qa={title
+                .toLowerCase()
+                .split(' ')
+                .join('-')
+                .concat('-label')}
+            >
+              {title}
+            </h5>
           )}
-          {!!subtitle && <h6 className="text-sm text-secondary">{subtitle}</h6>}
+          {!!subtitle && (
+            <h6
+              className="text-sm text-secondary"
+              data-qa={title
+                ?.toLowerCase()
+                .split(' ')
+                .join('-')
+                .concat('-subtitle')}
+            >
+              {subtitle}
+            </h6>
+          )}
         </div>
       )}
       {children}
@@ -90,7 +112,10 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
   }, [clearErrors, endpointField, setValue]);
 
   return (
-    <div className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
+    <div
+      className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
+      data-qa="entity-view-form"
+    >
       <FormSection title={t('Definition')}>
         <Field
           {...register('endpoint')}
@@ -99,6 +124,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
           placeholder={t('Enter endpoint')}
           id="endpoint"
           error={errors.endpoint?.message}
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
           disabled={isToolsetPublic}
         />
         <Controller
@@ -119,6 +145,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               id="protocol"
               options={protocolOptions}
               closeMenuOnSelect
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
               isDisabled={isToolsetPublic}
             />
           )}
@@ -132,7 +159,10 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         )}
         className="pt-4"
       >
-        <AuthField isDisabled={isToolsetPublic} />
+        <AuthField
+          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
+          isDisabled={isToolsetPublic}
+        />
       </FormSection>
 
       <FormSection
@@ -161,6 +191,8 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               hasDeleteAll
               hideSuggestions
               itemHeightClassName="h-[31px]"
+              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
+              dataQa="combobox"
             />
           )}
         />
