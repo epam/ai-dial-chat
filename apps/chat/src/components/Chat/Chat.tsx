@@ -159,7 +159,7 @@ const ChatView = memo(() => {
   );
 
   const configurationSchemas = useAppSelector(
-    ChatSelectors.selectUploadedConfigurationSchemasIds,
+    ChatSelectors.selectUploadedConfigurationSchemas,
   );
   const isApproveRequiredEntity = useAppSelector((state) =>
     PublicationSelectors.selectIsApproveRequiredEntity(
