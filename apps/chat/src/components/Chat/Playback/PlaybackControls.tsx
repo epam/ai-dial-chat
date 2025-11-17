@@ -292,7 +292,7 @@ export const PlaybackControls = ({
     <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
       <div
         className={classNames(
-          'relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
+          'relative mx-2 mb-2 flex flex-row md:mx-4 md:mb-0 md:last:mb-6',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
         )}
         data-qa="playback-control"
