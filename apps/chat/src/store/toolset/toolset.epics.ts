@@ -1,43 +1,3 @@
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import {
-  MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
-import { ToolsetEditorQuery } from '@/src/constants/toolsets';
-import {
-  ConversationsActions,
-  MarketplaceActions,
-  PublicationActions,
-  UIActions,
-} from '@/src/store/actions';
-import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
-import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
-import { AppAction, AppEpic } from '@/src/types/store';
-import {
-  ToolsetAuthPayload,
-  ToolsetCredentialsLevel,
-  ToolsetEditorSteps,
-} from '@/src/types/toolsets';
-import { getSafeRedirectUrl } from '@/src/utils/app/common';
-import { ClientDataService } from '@/src/utils/app/data/client-data-service';
-import { DataService } from '@/src/utils/app/data/data-service';
-import { ToolsetService } from '@/src/utils/app/data/toolset-service';
-import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
-import { isMyEntity } from '@/src/utils/app/id';
-import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
-import {
-  encodeToolsetRedirectState,
-  getToolsetRedirectUri,
-  regenerateToolsetId,
-} from '@/src/utils/app/toolsets';
-import { translate } from '@/src/utils/app/translation';
-import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import uniq from 'lodash-es/uniq';
-import { parse } from 'querystring';
-import { combineEpics, ofType } from 'redux-observable';
 import {
   EMPTY,
   Observable,
@@ -52,6 +12,52 @@ import {
   of,
   switchMap,
 } from 'rxjs';
+
+import { combineEpics, ofType } from 'redux-observable';
+
+import { getSafeRedirectUrl } from '@/src/utils/app/common';
+import { ClientDataService } from '@/src/utils/app/data/client-data-service';
+import { DataService } from '@/src/utils/app/data/data-service';
+import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
+import { isMyEntity } from '@/src/utils/app/id';
+import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import {
+  encodeToolsetRedirectState,
+  getToolsetRedirectUri,
+  regenerateToolsetId,
+} from '@/src/utils/app/toolsets';
+import { translate } from '@/src/utils/app/translation';
+
+import { AppAction, AppEpic } from '@/src/types/store';
+import {
+  ToolsetAuthPayload,
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+} from '@/src/types/toolsets';
+
+import {
+  ConversationsActions,
+  MarketplaceActions,
+  PublicationActions,
+  UIActions,
+} from '@/src/store/actions';
+import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
+import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
+
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
+
+import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
+import { parse } from 'querystring';
 
 const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
   switch (step) {

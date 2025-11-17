@@ -1,57 +1,5 @@
-import { AppsEditorQuery } from '@/src/constants/applications';
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
-import {
-  DeleteType,
-  MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
-import {
-  ApplicationActions,
-  ApplicationTypesSchemasActions,
-  ConversationsActions,
-  MarketplaceActions,
-  ModelsActions,
-  PublicationActions,
-  ShareActions,
-  UIActions,
-} from '@/src/store/actions';
-import {
-  ApplicationSelectors,
-  AuthSelectors,
-  ConversationsSelectors,
-  ModelsSelectors,
-  ShareSelectors,
-} from '@/src/store/selectors';
-import {
-  ApplicationStatus,
-  CustomApplicationModel,
-} from '@/src/types/applications';
-import { MarketplaceEditorSteps } from '@/src/types/marketplace';
-import { AppAction, AppEpic } from '@/src/types/store';
-import {
-  isApplicationType,
-  regenerateApplicationId,
-} from '@/src/utils/app/application';
-import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
-import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
-import { ApplicationService } from '@/src/utils/app/data/application-service';
-import { DataService } from '@/src/utils/app/data/data-service';
-import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import {
-  isEntityIdExternal,
-  isEntityIdLocal,
-  isMyEntity,
-} from '@/src/utils/app/id';
-import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
-import { mergeFeatures } from '@/src/utils/app/models';
-import { translate } from '@/src/utils/app/translation';
-import { parseEntityApiKey } from '@/src/utils/server/api';
 import Router from 'next/router';
-import { parse } from 'querystring';
-import { combineEpics, ofType } from 'redux-observable';
+
 import {
   EMPTY,
   Observable,
@@ -75,6 +23,65 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
+
+import { combineEpics, ofType } from 'redux-observable';
+
+import {
+  isApplicationType,
+  regenerateApplicationId,
+} from '@/src/utils/app/application';
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
+import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { DataService } from '@/src/utils/app/data/data-service';
+import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import {
+  isEntityIdExternal,
+  isEntityIdLocal,
+  isMyEntity,
+} from '@/src/utils/app/id';
+import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
+import { mergeFeatures } from '@/src/utils/app/models';
+import { translate } from '@/src/utils/app/translation';
+import { parseEntityApiKey } from '@/src/utils/server/api';
+
+import {
+  ApplicationStatus,
+  CustomApplicationModel,
+} from '@/src/types/applications';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
+import { AppAction, AppEpic } from '@/src/types/store';
+
+import {
+  ApplicationActions,
+  ApplicationTypesSchemasActions,
+  ConversationsActions,
+  MarketplaceActions,
+  ModelsActions,
+  PublicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
+import {
+  ApplicationSelectors,
+  AuthSelectors,
+  ConversationsSelectors,
+  ModelsSelectors,
+  ShareSelectors,
+} from '@/src/store/selectors';
+
+import { AppsEditorQuery } from '@/src/constants/applications';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
+import {
+  DeleteType,
+  MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
+import { Routes } from '@/src/constants/routes';
+
+import { parse } from 'querystring';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
