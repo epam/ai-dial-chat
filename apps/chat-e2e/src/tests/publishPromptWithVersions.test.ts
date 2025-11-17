@@ -50,9 +50,9 @@ dialTest(
     );
     let prompt: Prompt;
     const sortedVersionsArray = SortingUtil.sortVersionsArray([
-      GeneratorUtil.randomApplicationVersion(),
-      GeneratorUtil.randomApplicationVersion(),
-      GeneratorUtil.randomApplicationVersion(),
+      GeneratorUtil.randomEntityVersion(),
+      GeneratorUtil.randomEntityVersion(),
+      GeneratorUtil.randomEntityVersion(),
     ]);
     const promptVersionDataMap = new Map(
       sortedVersionsArray.map((version) => [

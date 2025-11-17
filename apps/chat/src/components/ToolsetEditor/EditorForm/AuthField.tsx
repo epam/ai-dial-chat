@@ -117,6 +117,7 @@ const AuthTypeSection = ({
             isSectionDisabled && 'cursor-not-allowed',
           )}
           disabled={isSectionDisabled}
+          data-qa={type.toString().toLowerCase()}
         >
           <Icon
             size={18}
@@ -130,6 +131,7 @@ const AuthTypeSection = ({
               'text-sm font-semibold',
               isSelected ? 'text-accent-primary' : 'text-primary',
             )}
+            data-qa={type.toString().toLowerCase().concat('-label')}
           >
             {name}
           </span>
@@ -314,7 +316,7 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
   );
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" data-qa="auth-container">
       <Controller
         name="authenticationType"
         control={control}

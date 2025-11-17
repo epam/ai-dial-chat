@@ -2,9 +2,10 @@ import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
-  AppEditorAppTypes,
   CheckboxState,
+  EntityEditorAppTypes,
   ExpectedMessages,
   MarketplaceExpectedMessages,
   MarketplaceFilterTypes,
@@ -183,13 +184,13 @@ dialTest(
     marketplaceAgentsSection,
     confirmationDialog,
     addAppDropdownMenu,
-    appEditorPage,
-    appEditorGeneralForm,
+    entityEditorPage,
+    entityEditorGeneralForm,
     customAppEditorViewForm,
-    appEditorHeader,
+    entityEditorHeader,
     setTestIds,
     baseAssertion,
-    agentDetailsModal,
+    entityDetailsModal,
   }) => {
     setTestIds('EPMRTC-4441', 'EPMRTC-5353');
     const appName = GeneratorUtil.randomApplicationName();
@@ -199,7 +200,7 @@ dialTest(
     await dialTest.step('Create a custom application', async () => {
       const applicationModel = customApplicationBuilder
         .withDisplayName(appName)
-        .withDisplayVersion(GeneratorUtil.randomApplicationVersion())
+        .withDisplayVersion(GeneratorUtil.randomEntityVersion())
         .build();
       await applicationApiHelper.createApplication(applicationModel);
     });
@@ -243,16 +244,25 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
-        await appEditorGeneralForm.fillInAppFields({
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.CustomApp,
+        );
+        await entityEditorGeneralForm.fillInEntityFields({
           name: addedAppName,
         });
-        await appEditorGeneralForm.goNext();
+        await entityEditorGeneralForm.goNext({
+          hostsArray: [
+            API.applicationCreateHost,
+            API.installedDeploymentsHost(),
+          ],
+        });
         await customAppEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
+        await entityEditorHeader.focusOn({
+          triggeredHost: API.applicationCreateHost,
+        });
+        await entityEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
 
         addedAppElement = await marketplaceAgentsSection.findAgentElement(
           addedAppName,

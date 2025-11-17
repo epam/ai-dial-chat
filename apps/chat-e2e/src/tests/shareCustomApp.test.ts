@@ -39,8 +39,8 @@ dialSharedWithMeTest(
       marketplaceAgentsSection,
       marketplaceAgents,
       marketplaceAgentsAssertion,
-      agentDetailsModal,
-      agentDetailsModalAssertion,
+      entityDetailsModal,
+      entityDetailsModalAssertion,
       shareAppModal,
       confirmationDialog,
       confirmationDialogAssertion,
@@ -54,8 +54,8 @@ dialSharedWithMeTest(
       additionalShareUserMarketplacePage,
       additionalShareUserDialHomePage,
       additionalShareUserMarketplace,
-      additionalShareUserAgentDetailsModal,
-      additionalShareUserAgentDetailsModalAssertion,
+      additionalShareUserEntityDetailsModal,
+      additionalShareUserEntityDetailsModalAssertion,
       additionalShareUserPage,
       additionalShareUserMarketplaceHeader,
       additionalShareUserMarketplaceAgentsSection,
@@ -155,8 +155,8 @@ dialSharedWithMeTest(
         const shareLink = await marketplacePage.readTextFromClipboard();
         await additionalShareUserMarketplacePage.navigateToUrl(shareLink);
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-          additionalShareUserAgentDetailsModal,
+        await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+          additionalShareUserEntityDetailsModal,
           'visible',
         );
         const expectedUrl = marketplaceUrlBuilder
@@ -167,36 +167,36 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step('Verify app card attributes', async () => {
-      await additionalShareUserAgentDetailsModalAssertion.assertApplicationName(
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityName(
         appData.name,
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertEntityIcon(
-        additionalShareUserAgentDetailsModal.icon,
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityIcon(
+        additionalShareUserEntityDetailsModal.icon,
         `${API.api}/${appData.iconUrl}`,
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-        additionalShareUserAgentDetailsModal.applicationDescription,
+      await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+        additionalShareUserEntityDetailsModal.entityDescription,
         'hidden',
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertApplicationAuthor(
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityAuthor(
         UserUtil.getE2EUser(testInfo.parallelIndex),
       );
       const configApp = await modelApiHelper.getAgentByNameAndVersion({
         name: appData.name,
         version: appData.version,
       });
-      await additionalShareUserAgentDetailsModalAssertion.assertApplicationReleaseDate(
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityReleaseDate(
         configApp.createdAt!,
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertApplicationVersion(
+      await additionalShareUserEntityDetailsModalAssertion.assertEntityVersion(
         appData.version!,
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-        additionalShareUserAgentDetailsModal.shareButton,
+      await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+        additionalShareUserEntityDetailsModal.shareButton,
         'hidden',
       );
-      await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-        additionalShareUserAgentDetailsModal.unshareButton,
+      await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+        additionalShareUserEntityDetailsModal.unshareButton,
         'visible',
       );
     });
@@ -204,7 +204,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Close the modal and verify app is listed, no bookmark icon is available on the card',
       async () => {
-        await additionalShareUserAgentDetailsModal.closeButton.click();
+        await additionalShareUserEntityDetailsModal.closeButton.click();
         await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
           appData.name,
         );
@@ -305,11 +305,11 @@ dialSharedWithMeTest(
       'Open app details modal and verify the arrow icon is displayed',
       async () => {
         await agentElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.arrowIcon,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.arrowIcon,
           'visible',
         );
-        await agentDetailsModal.arrowIcon.hoverOver();
+        await entityDetailsModal.arrowIcon.hoverOver();
         await tooltipAssertion.assertElementText(
           tooltip,
           ExpectedConstants.sharedEntityTooltip,
@@ -320,7 +320,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open Share modal again, click on "Remove access for all users" btn and verify confirmation popup is displayed',
       async () => {
-        await agentDetailsModal.clickShareButton();
+        await entityDetailsModal.clickShareButton();
         await shareAppModalAssertion.assertModalState('visible');
         await shareAppModal.removeAccessBtn.click();
         await confirmationDialogAssertion.assertElementState(
@@ -350,7 +350,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open Share modal again and verify bottom label',
       async () => {
-        await agentDetailsModal.clickShareButton();
+        await entityDetailsModal.clickShareButton();
         await shareAppModalAssertion.assertModalState('visible');
         await shareAppModalAssertion.assertGeneralInfo({
           notSharedEntityLabel: ExpectedConstants.notSharedAppText,
@@ -407,7 +407,7 @@ dialSharedWithMeTest(
     marketplacePage,
     marketplaceHeader,
     marketplaceAgentsSection,
-    agentDetailsModal,
+    entityDetailsModal,
     shareAppModal,
     shareModalAssertion,
     marketplaceUrlBuilder,
@@ -416,8 +416,8 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserMarketplacePage,
     additionalShareUserNavigationPanel,
-    additionalShareUserAgentDetailsModal,
-    additionalShareUserAgentDetailsModalAssertion,
+    additionalShareUserEntityDetailsModal,
+    additionalShareUserEntityDetailsModalAssertion,
     additionalShareUserPage,
     additionalShareUserMarketplaceHeader,
     additionalShareUserMarketplaceAgentsSection,
@@ -479,7 +479,7 @@ dialSharedWithMeTest(
           { isWorkspaceAgent: true, isEditable: true },
         );
         await agentElement.click();
-        await agentDetailsModal.clickShareButton();
+        await entityDetailsModal.clickShareButton();
         await shareModalAssertion.assertModalState('visible');
       },
     );
@@ -512,8 +512,8 @@ dialSharedWithMeTest(
         const shareLink = await marketplacePage.readTextFromClipboard();
         await additionalShareUserMarketplacePage.navigateToUrl(shareLink);
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-          additionalShareUserAgentDetailsModal,
+        await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+          additionalShareUserEntityDetailsModal,
           'visible',
         );
         const expectedUrl = marketplaceUrlBuilder
@@ -526,12 +526,12 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify Unshare and Edit icons are available on the app card',
       async () => {
-        await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-          additionalShareUserAgentDetailsModal.unshareButton,
+        await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+          additionalShareUserEntityDetailsModal.unshareButton,
           'visible',
         );
-        await additionalShareUserAgentDetailsModalAssertion.assertElementState(
-          additionalShareUserAgentDetailsModal.editButton,
+        await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+          additionalShareUserEntityDetailsModal.editButton,
           'visible',
         );
       },
@@ -540,7 +540,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Close the agent details modal and verify app card dropdown menu options',
       async () => {
-        await additionalShareUserAgentDetailsModal.closeButton.click();
+        await additionalShareUserEntityDetailsModal.closeButton.click();
         await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
           appData.name,
         );
@@ -696,7 +696,7 @@ dialSharedWithMeTest(
     additionalShareUserChatBar,
     additionalShareUserAttachFilesModal,
     additionalShareUserManageAttachmentsAssertion,
-    additionalShareUserAgentDetailsModal,
+    additionalShareUserEntityDetailsModal,
     shareApiAssertion,
   }) => {
     setTestIds('EPMRTC-5328', 'EPMRTC-5385', 'EPMRTC-5465');
@@ -791,7 +791,7 @@ dialSharedWithMeTest(
       'Open agent card, click on Unshare btn and verify confirmation popup is displayed',
       async () => {
         await sharedAppElement.click();
-        await additionalShareUserAgentDetailsModal.unshareButton.click();
+        await additionalShareUserEntityDetailsModal.unshareButton.click();
         await additionalShareUserConfirmationDialogAssertion.assertElementState(
           additionalShareUserConfirmationDialog,
           'visible',

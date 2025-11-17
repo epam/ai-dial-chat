@@ -28,11 +28,18 @@ export class AgentInfoAssertion extends BaseAssertion {
         ExpectedMessages.agentDescriptionIsValid,
       );
     } else {
-      await this.assertElementText(
-        this.agentInfo.agentDescription,
-        expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0] ?? '',
-        ExpectedMessages.agentDescriptionIsValid,
-      );
+      if (expectedModel.description) {
+        await this.assertElementText(
+          this.agentInfo.agentDescription,
+          expectedModel.description.split(/\s*\n\s*\n\s*/g)[0] ?? '',
+          ExpectedMessages.agentDescriptionIsValid,
+        );
+      } else {
+        await this.assertElementState(
+          this.agentInfo.agentDescription,
+          'hidden',
+        );
+      }
     }
   }
 

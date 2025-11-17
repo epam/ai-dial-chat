@@ -29,7 +29,7 @@ export const HeaderModelTooltip = ({
       <div className="mt-3 grid grid-cols-[auto,1fr] gap-x-4 gap-y-2">
         <>
           <span className="text-secondary">{t('Agent')}:</span>
-          <div data-qa="agent-info">
+          <div data-qa="entity-info">
             {getOpenAIEntityFullName(model ?? { id: conversationModelId })}
           </div>
         </>

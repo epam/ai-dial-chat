@@ -679,7 +679,7 @@ const ChatView = memo(() => {
                       : 'w-full',
                   )}
                   data-qa={
-                    isCompareMode ? 'compare-mode' : 'app-settings-chat-mode'
+                    isCompareMode ? 'compare-mode' : 'entity-settings-chat-mode'
                   }
                 >
                   <div

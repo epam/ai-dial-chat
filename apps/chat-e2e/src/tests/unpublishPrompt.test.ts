@@ -114,7 +114,7 @@ dialAdminTest(
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );
@@ -209,7 +209,7 @@ dialAdminTest(
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );
@@ -262,7 +262,7 @@ dialAdminTest(
         await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
           name: prompt.name,
           content: prompt.content!,
-          version: ExpectedConstants.defaultAppVersion,
+          version: ExpectedConstants.defaultEntityVersion,
           versionColor: expectedErrorColor,
         });
         publicationReviewControlElement =

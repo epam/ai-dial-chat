@@ -66,7 +66,7 @@ dialAdminTest(
       'EPMRTC-5827',
     );
     const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const appDescription = GeneratorUtil.randomString(10);
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);
@@ -312,7 +312,7 @@ dialAdminTest(
           expectedFeatures: features,
           expectedAttachmentTypes: [attachmentType],
           expectedMaxAttachmentNumbers: maxAttachments,
-          expectedCompletionUrl: ExpectedConstants.appDefaultCompletionUrl,
+          expectedCompletionUrl: ExpectedConstants.defaultEntityUrl,
         });
         await adminPublishedAppReviewModalControlsAssertion.assertButtonsState({
           backToPublicationRequestButtonState: 'enabled',
@@ -407,8 +407,8 @@ dialAdminTest(
     adminPublishingRequestDialogAssertion,
     baseAssertion,
     adminAppToPublishAssertion,
-    adminAgentDetailsModal,
-    adminAgentDetailsModalAssertion,
+    adminEntityDetailsModal,
+    adminEntityDetailsModalAssertion,
     adminLocalStorageManager,
     adminApproveRequiredPromptsAssertion,
     adminDialHomePage,
@@ -440,8 +440,8 @@ dialAdminTest(
     setTestIds('EPMRTC-5785', 'EPMRTC-5891');
     const appName = GeneratorUtil.randomApplicationName();
     const sortedAppVersions = SortingUtil.sortVersionsArray([
-      GeneratorUtil.randomApplicationVersion(),
-      GeneratorUtil.randomApplicationVersion(),
+      GeneratorUtil.randomEntityVersion(),
+      GeneratorUtil.randomEntityVersion(),
     ]);
     let appElement: BaseElement;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
@@ -611,15 +611,15 @@ dialAdminTest(
       'Open the app card and verify only the minor version is displayed',
       async () => {
         await appElement.click();
-        await adminAgentDetailsModalAssertion.assertElementState(
-          adminAgentDetailsModal,
+        await adminEntityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal,
           'visible',
         );
-        await adminAgentDetailsModalAssertion.assertApplicationVersion(
+        await adminEntityDetailsModalAssertion.assertEntityVersion(
           sortedAppVersions[1],
         );
-        await adminAgentDetailsModalAssertion.assertElementState(
-          adminAgentDetailsModal.getVersionDropdownMenu(),
+        await adminEntityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal.getVersionDropdownMenu(),
           'hidden',
         );
       },
@@ -657,7 +657,7 @@ dialAdminTest(
     marketplacePage,
     marketplaceHeader,
     marketplaceAgentsSection,
-    agentDetailsModal,
+    entityDetailsModal,
     marketplaceAgents,
     publishingRequestDialog,
     publishingRequestDialogAssertion,
@@ -673,7 +673,7 @@ dialAdminTest(
     adminPublishedAppReviewModalAssertion,
     setTestIds,
     marketplaceAgentsAssertion,
-    agentDetailsModalAssertion,
+    entityDetailsModalAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-5786', 'EPMRTC-5942');
@@ -716,11 +716,11 @@ dialAdminTest(
           isEditable: false,
         });
         await appElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedAppVersions[1]);
-        await agentDetailsModal.unpublishButton.click();
+        await entityDetailsModal.unpublishButton.click();
       },
     );
 
@@ -815,15 +815,15 @@ dialAdminTest(
       'Open the app card and verify only the major version is displayed',
       async () => {
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           sortedAppVersions[0],
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.getVersionDropdownMenu(),
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.getVersionDropdownMenu(),
           'hidden',
         );
       },

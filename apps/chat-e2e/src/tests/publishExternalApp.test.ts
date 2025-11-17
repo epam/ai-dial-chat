@@ -4,8 +4,8 @@ import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  AppEditorAppTypes,
   CheckboxState,
+  EntityEditorAppTypes,
   ExpectedConstants,
   MenuOptions,
   PublishPath,
@@ -55,8 +55,8 @@ dialAdminTest(
       adminTooltip,
       adminTooltipAssertion,
       baseAssertion,
-      adminAgentDetailsModal,
-      agentDetailsModalAssertion,
+      adminEntityDetailsModal,
+      entityDetailsModalAssertion,
     },
     testInfo,
   ) => {
@@ -69,7 +69,7 @@ dialAdminTest(
     );
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: GeneratorUtil.randomEntityVersion(),
     } as DialAIEntityModel;
     const externalUrl = `http://${GeneratorUtil.randomString(6)}.com`;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
@@ -87,7 +87,7 @@ dialAdminTest(
         .withDisplayVersion(appEntity.version!)
         .withExternalUrl(externalUrl)
         .withApplicationTypeSchemaId(
-          ApplicationsUtil.getAppSchemaByName(AppEditorAppTypes.ExternalApp),
+          ApplicationsUtil.getAppSchemaByName(EntityEditorAppTypes.ExternalApp),
         )
         .build();
       await applicationApiHelper.createApplication(applicationModel);
@@ -240,20 +240,20 @@ dialAdminTest(
       async () => {
         await agentElement.click();
         await baseAssertion.assertElementState(
-          adminAgentDetailsModal,
+          adminEntityDetailsModal,
           'visible',
         );
-        await agentDetailsModalAssertion.assertElementState(
-          adminAgentDetailsModal.openInNewTabButton,
+        await entityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal.openInNewTabButton,
           'visible',
         );
-        await agentDetailsModalAssertion.assertElementAttribute(
-          adminAgentDetailsModal.openInNewTabButton,
+        await entityDetailsModalAssertion.assertElementAttribute(
+          adminEntityDetailsModal.openInNewTabButton,
           Attributes.href,
           externalUrl,
         );
-        await agentDetailsModalAssertion.assertElementAttribute(
-          adminAgentDetailsModal.openInNewTabButton,
+        await entityDetailsModalAssertion.assertElementAttribute(
+          adminEntityDetailsModal.openInNewTabButton,
           Attributes.target,
           Attributes.blank,
         );
