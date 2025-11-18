@@ -70,6 +70,7 @@ export enum Feature {
   // Applications
   CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
   CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
+  CodeInterpreter = 'code-interpreter', // Enable Code Interpreter feature
 
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace

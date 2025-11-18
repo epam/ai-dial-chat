@@ -12,6 +12,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ModelsSelectors,
+  SettingsSelectors,
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
@@ -28,6 +29,7 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 
+import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -46,6 +48,10 @@ export const QuickApp2Form = () => {
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+
+  const isCodeInterpreterEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
+  );
 
   const allEntitiesMap = useMemo(
     () => ({
@@ -135,22 +141,24 @@ export const QuickApp2Form = () => {
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
       />
 
-      <Controller
-        name="codeInterpreter"
-        control={control}
-        render={({ field }) => (
-          <ToggleSwitchField
-            label={t('Code Interpreter')}
-            isOn={field.value}
-            handleSwitch={field.onChange}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
-            className="flex w-fit"
-            disabled={isAppPublic}
-            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-          />
-        )}
-      />
+      {isCodeInterpreterEnabled && (
+        <Controller
+          name="codeInterpreter"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              label={t('Code Interpreter')}
+              isOn={field.value}
+              handleSwitch={field.onChange}
+              switchOnText={t('ON')}
+              switchOFFText={t('OFF')}
+              className="flex w-fit"
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+            />
+          )}
+        />
+      )}
 
       <Controller
         name="temperature"
