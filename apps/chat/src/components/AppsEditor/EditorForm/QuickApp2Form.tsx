@@ -82,10 +82,7 @@ export const QuickApp2Form = () => {
   );
 
   const isCodeInterpreterEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(
-      state,
-      Feature.CodeInterpreterInQuickApp,
-    ),
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
   const allEntitiesMap = useMemo(
