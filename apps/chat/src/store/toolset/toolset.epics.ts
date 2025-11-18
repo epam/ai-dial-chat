@@ -693,7 +693,7 @@ const startSignInProcessEpic: AppEpic = (action$) =>
             );
           }
 
-          return autoUpdateAction$;
+          return EMPTY;
         }),
         catchError((err) => {
           console.error('Failed to login', err);
