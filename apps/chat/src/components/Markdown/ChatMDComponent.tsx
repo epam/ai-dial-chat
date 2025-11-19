@@ -29,7 +29,6 @@ import 'katex/dist/katex.min.css';
 import isObject from 'lodash-es/isObject';
 import partition from 'lodash-es/partition';
 import rehypeExternalLinks from 'rehype-external-links';
-// import { PluggableList } from 'react-markdown/lib/index';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';

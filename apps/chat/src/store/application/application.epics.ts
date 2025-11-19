@@ -334,7 +334,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
               updatedCustomApplication,
               payload.schema,
             ).pipe(
-              mergeMap(() => {
+              switchMap(() => {
                 const featuresRecord: Record<string, boolean | undefined> = {
                   ...(updatedCustomApplication.features || {}),
                 };

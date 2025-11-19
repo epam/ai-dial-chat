@@ -283,7 +283,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
           return ToolsetService.updateToolset(updatedToolset).pipe(
             switchMap(() =>
               ToolsetService.getToolsetById(updatedToolset.id).pipe(
-                mergeMap((savedUpdatedToolset) => {
+                switchMap((savedUpdatedToolset) => {
                   if (!savedUpdatedToolset) {
                     return of(
                       UIActions.showErrorToast(
