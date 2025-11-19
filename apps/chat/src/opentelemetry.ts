@@ -1,12 +1,13 @@
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import pkg from '@/../../package.json';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPLogExporter as OTLPLogExporterHTTP } from '@opentelemetry/exporter-logs-otlp-http';
 import { OTLPMetricExporter as OTLPMetricExporterHTTP } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK, logs } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
@@ -35,14 +36,16 @@ const logRecordProcessor = new logs.BatchLogRecordProcessor(logExporter);
 
 const sdk = new NodeSDK({
   metricReader: metricReader,
-  resource: Resource.default().merge(
-    new Resource({
-      [ATTR_SERVICE_NAME]:
-        process.env.OTEL_SERVICE_NAME || pkg.name || 'dial-chat',
-      [ATTR_SERVICE_VERSION]: pkg.version,
-    }),
-  ),
-  instrumentations: [httpInstrumentation, pinoInstrumentation],
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]:
+      process.env.OTEL_SERVICE_NAME || pkg.name || 'dial-chat',
+    [ATTR_SERVICE_VERSION]: pkg.version,
+  }),
+  instrumentations: [
+    getNodeAutoInstrumentations(),
+    httpInstrumentation,
+    pinoInstrumentation,
+  ],
   spanProcessors: [defaultSpanProcessor],
   logRecordProcessor: logRecordProcessor,
 });

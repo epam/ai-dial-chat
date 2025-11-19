@@ -15,8 +15,8 @@ interface Props {
 }
 
 export interface AgentsListWrapperRef {
-  parentRef: React.RefObject<HTMLDivElement>;
-  suggestedRowRef: React.RefObject<HTMLSpanElement>;
+  parentRef: React.RefObject<HTMLDivElement | null>;
+  suggestedRowRef: React.RefObject<HTMLSpanElement | null>;
 }
 
 export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
