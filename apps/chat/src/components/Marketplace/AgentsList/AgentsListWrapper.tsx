@@ -5,7 +5,11 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { stripQueryParamsFromUrl } from '@/src/utils/app/url/query-params';
+
 import { Translation } from '@/src/types/translation';
+
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 interface Props {
   children: React.ReactNode;
@@ -43,19 +47,12 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
       let previousUrl = router.asPath;
 
       const handleRouteChange = (url: string) => {
-        const stripModelParam = (urlString: string) => {
-          const [path, queryString] = urlString.split('?');
-          if (!queryString) return urlString;
-
-          const params = new URLSearchParams(queryString);
-          params.delete('model');
-          const newQuery = params.toString();
-
-          return newQuery ? `${path}?${newQuery}` : path;
-        };
-
-        const normalizedPrevUrl = stripModelParam(previousUrl);
-        const normalizedNewUrl = stripModelParam(url);
+        const normalizedPrevUrl = stripQueryParamsFromUrl(previousUrl, [
+          MarketplaceQueryParams.model,
+        ]);
+        const normalizedNewUrl = stripQueryParamsFromUrl(url, [
+          MarketplaceQueryParams.model,
+        ]);
 
         if (normalizedNewUrl !== normalizedPrevUrl) {
           parentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
