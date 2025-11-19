@@ -279,6 +279,8 @@ export const AppsEditor = () => {
 
       saveAndExitRef.current = true;
       redirectToChatRef.current = redirectToChat;
+      dispatch(UIActions.setEditorLoader(true));
+
       void handleSubmit(undefined, saveDraft);
     },
     [isDirty, appDetails, isAppPublic, handleSubmit, dispatch],

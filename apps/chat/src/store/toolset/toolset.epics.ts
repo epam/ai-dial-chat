@@ -3,12 +3,12 @@ import {
   Observable,
   catchError,
   concat,
+  concatMap,
   filter,
   forkJoin,
   from,
   iif,
   map,
-  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -883,26 +883,24 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
         }
       }
 
-      if (route.pathname === Routes.Chat) {
-        if (!publicationUrl) {
-          actions.push(
-            of(
-              ConversationsActions.createNewConversations({
-                names: [DEFAULT_CONVERSATION_NAME],
-              }),
-            ),
-          );
-        } else {
-          actions.push(
-            of(
-              ConversationsActions.selectConversations({ conversationIds: [] }),
-            ),
-            of(PublicationActions.setIsToolsetReview(true)),
-          );
-        }
+      if (!publicationUrl) {
+        actions.push(
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+        );
+      } else {
+        actions.push(
+          of(ConversationsActions.selectConversations({ conversationIds: [] })),
+          of(PublicationActions.setIsToolsetReview(true)),
+        );
       }
 
-      return from(router.push(route)).pipe(mergeMap(() => concat(...actions)));
+      actions.push(of(UIActions.setEditorLoader(false)));
+
+      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
     }),
   );
 

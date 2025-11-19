@@ -840,34 +840,34 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
         }
       }
 
-      if (route.pathname === Routes.Chat) {
-        if (publicationUrl) {
-          actions.push(
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: [],
-              }),
-              PublicationActions.setIsApplicationReview(true),
-            ),
-          );
-        } else if (returnConversationIds?.length) {
-          actions.push(
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: returnConversationIds as string[],
-              }),
-            ),
-          );
-        } else {
-          actions.push(
-            of(
-              ConversationsActions.createNewConversations({
-                names: [DEFAULT_CONVERSATION_NAME],
-              }),
-            ),
-          );
-        }
+      if (publicationUrl) {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [],
+            }),
+            PublicationActions.setIsApplicationReview(true),
+          ),
+        );
+      } else if (returnConversationIds?.length) {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: returnConversationIds as string[],
+            }),
+          ),
+        );
+      } else {
+        actions.push(
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+        );
       }
+
+      actions.push(of(UIActions.setEditorLoader(false)));
 
       return from(router.push(route)).pipe(switchMap(() => concat(...actions)));
     }),
