@@ -19,6 +19,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ModelsSelectors,
+  SettingsSelectors,
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
@@ -47,6 +48,7 @@ import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/App
 import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
+import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -77,6 +79,10 @@ export const QuickApp2Form = () => {
   const toolSupportingModels = useMemo(
     () => modelTypeAgents.filter((model) => model.features?.tools),
     [modelTypeAgents],
+  );
+
+  const isCodeInterpreterEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
   const allEntitiesMap = useMemo(
@@ -306,26 +312,28 @@ export const QuickApp2Form = () => {
         dataQa={'max-attachment-number-field'}
       />
 
-      <Controller
-        name="codeInterpreter"
-        control={control}
-        render={({ field }) => (
-          <ToggleSwitchField
-            label={t('Code Interpreter')}
-            info={t(
-              'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
-            )}
-            isOn={field.value}
-            handleSwitch={field.onChange}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
-            additionalText={t('Use to execute custom Python code')}
-            className="mt-1 flex w-fit items-center gap-2"
-            disabled={isAppPublic}
-            tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-          />
-        )}
-      />
+      {isCodeInterpreterEnabled && (
+        <Controller
+          name="codeInterpreter"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              label={t('Code Interpreter')}
+              info={t(
+                'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
+              )}
+              isOn={field.value}
+              handleSwitch={field.onChange}
+              switchOnText={t('ON')}
+              switchOFFText={t('OFF')}
+              additionalText={t('Use to execute custom Python code')}
+              className="mt-1 flex w-fit items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+            />
+          )}
+        />
+      )}
 
       {showTemperatureSlider && (
         <Controller
