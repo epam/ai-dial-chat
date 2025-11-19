@@ -189,8 +189,14 @@ export const applicationSlice = createSlice({
     updateComplete: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
-    updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
-      state.appDetails = action.payload;
+    updateSuccess: (
+      state,
+      action: PayloadAction<{
+        appDetails: CustomApplicationModel;
+        isExitingAfterSave?: boolean;
+      }>,
+    ) => {
+      state.appDetails = action.payload.appDetails;
     },
     setAppDetails: (
       state,

@@ -136,6 +136,7 @@ export const toolsetSlice = createSlice({
       }: PayloadAction<{
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
+        isExitingAfterSave?: boolean;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
