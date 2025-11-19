@@ -1,15 +1,18 @@
 import { TypeValidator } from '@/src/utils/app/typeValidator';
 
 import { Conversation, FormButtonType } from '@/src/types/chat';
+import { FormSchemaPropertyType } from '@/src/types/form-schema';
 
 import {
   DialSchemaProperties,
   FormSchemaButtonOption,
+  FormSchemaDefinition,
   Message,
   MessageFormSchema,
   MessageFormValue,
 } from '@epam/ai-dial-shared';
 import { mapValues, omit } from 'lodash';
+import get from 'lodash-es/get';
 
 export const getMessageSchema = (message?: Message) =>
   message?.custom_content?.form_schema;
@@ -115,7 +118,7 @@ export const isFormSchemaValid = TypeValidator.shape({
   ),
 });
 
-export const getFormValueDefinitions = (
+export const getChosenFormButtons = (
   value: MessageFormValue,
   schema?: MessageFormSchema,
 ) => {
@@ -128,4 +131,75 @@ export const getFormValueDefinitions = (
       );
     })
     .filter(Boolean) as FormSchemaButtonOption[];
+};
+
+export const getFormCheckboxDefinitionOptions = (
+  schema: MessageFormSchema,
+  property: string,
+) => {
+  const path = schema.properties[property]?.items?.$ref;
+
+  if (!path || !schema.definitions) return [];
+
+  const formattedPath = path.replace('#/', '').replaceAll('/', '.');
+  const definitions = get(
+    { definitions: schema.definitions },
+    formattedPath,
+  ) as FormSchemaDefinition;
+
+  return definitions.enum.map((value, i) => ({
+    value,
+    label: definitions.enumNames[i] ?? '',
+  }));
+};
+
+export const getFormSchemaPropertyType = (
+  schema: MessageFormSchema,
+  property: string,
+) => {
+  if (
+    schema.properties[property]?.uniqueItems &&
+    schema.properties[property]?.items?.$ref
+  ) {
+    return FormSchemaPropertyType.Checkbox;
+  }
+  return FormSchemaPropertyType.Button;
+};
+
+export const getVisibleFormValues = (
+  schema?: MessageFormSchema,
+  value?: MessageFormValue,
+) => {
+  if (!schema || !value) return [];
+
+  return Object.entries(schema.properties).map(([key, property]) => {
+    const type = getFormSchemaPropertyType(schema, key);
+    const info = {
+      type,
+      property: key,
+      description: property.description,
+    };
+
+    if (type === FormSchemaPropertyType.Button) {
+      return {
+        ...info,
+        options:
+          property.oneOf?.map((option) => ({
+            label: option.title,
+            value: option.const,
+            selected: value[key] === option.const,
+            buttonType: getFormButtonType(option),
+          })) ?? [],
+      };
+    }
+
+    return {
+      ...info,
+      options: getFormCheckboxDefinitionOptions(schema, key).map((option) => ({
+        ...option,
+        buttonType: null,
+        selected: (value[key] as string[])?.includes(option.value),
+      })),
+    };
+  });
 };

@@ -10,11 +10,11 @@ export enum DialSchemaProperties {
   DialChatMessageInputDisabled = 'dial:chatMessageInputDisabled',
 }
 
-export type MessageFormValueType = number | string | boolean;
+export type MessageFormValueType = number | string | boolean | string[];
 
 export interface FormSchemaButtonOption {
   title: string;
-  const: MessageFormValueType;
+  const: Exclude<MessageFormValueType, string[]>;
   [DialSchemaProperties.DialWidgetOptions]?: {
     confirmationMessage?: string;
     populateText?: string;
@@ -22,13 +22,23 @@ export interface FormSchemaButtonOption {
   };
 }
 
+export interface FormSchemaDefinition {
+  enumNames: string[];
+  enum: string[];
+}
+
 export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
 
 export interface FormSchemaProperty extends JSONSchemaPropertyBase {
   [DialSchemaProperties.DialWidget]?: FormSchemaPropertyWidget;
   oneOf?: FormSchemaButtonOption[];
+  uniqueItems?: boolean;
+  items?: {
+    $ref: string;
+  }
 }
 
 export interface MessageFormSchema extends JSONSchemaBase<FormSchemaProperty> {
   [DialSchemaProperties.DialChatMessageInputDisabled]?: boolean;
+  definitions?: Record<string, FormSchemaDefinition>
 }

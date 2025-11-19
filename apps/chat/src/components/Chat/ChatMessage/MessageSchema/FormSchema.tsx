@@ -1,13 +1,19 @@
 import { IconDotsVertical } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getFormButtonType } from '@/src/utils/app/form-schema';
+import {
+  getFormButtonType,
+  getFormCheckboxDefinitionOptions,
+  getFormSchemaPropertyType,
+} from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
+import { SelectOption } from '@/src/types/common';
+import { FormSchemaPropertyType } from '@/src/types/form-schema';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -15,6 +21,7 @@ import { ConversationsSelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
+import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
 
 import { ButtonsSchemaModal } from './ButtonsSchemaModal';
 import { SchemaButton } from './SchemaButton';
@@ -23,7 +30,6 @@ import {
   DialSchemaProperties,
   FormSchemaButtonOption,
   FormSchemaProperty,
-  FormSchemaPropertyWidget,
   MessageFormSchema,
   MessageFormValue,
   MessageFormValueType,
@@ -327,8 +333,41 @@ const ButtonsProperty = ({
   );
 };
 
+interface CheckboxPropertyProps {
+  options: SelectOption<string, string>[];
+  formValue?: MessageFormValue;
+  propertyKey: string;
+  onClick: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+const CheckboxProperty = ({
+  options,
+  formValue,
+  propertyKey,
+  onClick,
+  className,
+  disabled,
+}: CheckboxPropertyProps) => {
+  return (
+    <div className={classNames('flex flex-wrap gap-4', className)}>
+      {options.map(({ value, label }) => (
+        <Checkbox
+          key={value}
+          checked={(formValue?.[propertyKey] as string[])?.includes(value)}
+          onChange={() => onClick(value)}
+          caption={label}
+          disabled={disabled}
+        />
+      ))}
+    </div>
+  );
+};
+
 interface PropertyRendererProps {
   property: FormSchemaProperty;
+  schema: MessageFormSchema;
   name: string;
   onChange: (
     name: string,
@@ -346,6 +385,7 @@ interface PropertyRendererProps {
 
 const PropertyRenderer = ({
   property,
+  schema,
   name,
   onChange,
   formValue,
@@ -356,12 +396,30 @@ const PropertyRenderer = ({
   buttonsWrapperClassName,
   buttonClassName,
 }: PropertyRendererProps) => {
-  const handleClick = useCallback(
+  const propertyType = getFormSchemaPropertyType(schema, name);
+
+  const handleButtonClick = useCallback(
     (value: MessageFormValueType, type: FormButtonType) => {
       onChange(name, value, type === FormButtonType.Submit);
     },
     [name, onChange],
   );
+
+  const handleCheckboxClick = useCallback(
+    (value: string) => {
+      const currentValue = (formValue?.[name] as string[]) ?? [];
+      const newValue = currentValue.includes(value)
+        ? currentValue.filter((v) => v !== value)
+        : [...currentValue, value];
+
+      onChange(name, newValue, false);
+    },
+    [formValue, name, onChange],
+  );
+
+  const checkboxDefinitions = useMemo(() => {
+    return getFormCheckboxDefinitionOptions(schema, name);
+  }, [name, schema]);
 
   return (
     <div
@@ -373,16 +431,25 @@ const PropertyRenderer = ({
         </p>
       )}
 
-      {property[DialSchemaProperties.DialWidget] ===
-        FormSchemaPropertyWidget.buttons && (
+      {propertyType === FormSchemaPropertyType.Button && (
         <ButtonsProperty
           options={property.oneOf}
-          onClick={handleClick}
+          onClick={handleButtonClick}
           disabled={disabled}
           showSelected={showSelected}
           formValue={formValue}
           className={buttonsWrapperClassName}
           buttonClassName={buttonClassName}
+        />
+      )}
+
+      {propertyType === FormSchemaPropertyType.Checkbox && (
+        <CheckboxProperty
+          options={checkboxDefinitions}
+          onClick={handleCheckboxClick}
+          disabled={disabled}
+          formValue={formValue}
+          propertyKey={name}
         />
       )}
     </div>
@@ -422,6 +489,7 @@ export const FormSchemaMemo = memo(function FormSchema({
       {Object.entries(schema.properties).map(([name, property]) => (
         <PropertyRenderer
           property={property}
+          schema={schema}
           name={name}
           onChange={onChange}
           key={name}
