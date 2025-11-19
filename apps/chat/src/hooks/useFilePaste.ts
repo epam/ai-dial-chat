@@ -3,7 +3,7 @@ import { RefObject, useEffect } from 'react';
 import { getFilesFromDataTransferItems } from '@/src/utils/app/file';
 
 export function useFilePaste<T extends HTMLElement = HTMLElement>(
-  container: RefObject<T>,
+  container: RefObject<T | null>,
   onPaste: (
     files: File[],
     textContent?: string,
