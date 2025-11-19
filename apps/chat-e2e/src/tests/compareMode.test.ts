@@ -552,6 +552,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await conversationToCompareAssertion.assertConversationToCompareState(
           'visible',
+          ExpectedMessages.conversationToCompareVisible,
         );
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
@@ -574,6 +575,7 @@ dialTest(
           firstConversation.messages.length +
             secondConversation.messages.length +
             4,
+          ExpectedMessages.responseReceivedForComparedConversations,
         );
 
         const rightRequest = requestsData.rightRequest as ChatBody;

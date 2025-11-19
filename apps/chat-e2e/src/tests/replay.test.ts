@@ -704,7 +704,6 @@ dialTest(
     sendMessage,
     sendMessageAssertion,
     talkToAgents,
-    marketplaceEntitiesAssertion,
   }) => {
     setTestIds('EPMRTC-1328', 'EPMRTC-2839');
     let notAllowedModelConversation: Conversation;
@@ -767,7 +766,7 @@ dialTest(
         const replayAsIsDescrElement = talkToAgents.getEntityDescription(
           replayAsIsModelElement,
         );
-        await marketplaceEntitiesAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           replayAsIsDescrElement,
           ExpectedConstants.replayAsIsDescr,
         );

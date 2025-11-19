@@ -59,7 +59,6 @@ import {
   EntityTreeAssertion,
   FolderAssertion,
   FooterAssertion,
-  MarketplaceEntitiesAssertion,
   MenuAssertion,
   PlaybackAssertion,
   PromptAssertion,
@@ -373,7 +372,6 @@ const dialTest = test.extend<{
   selectFolderModalAssertion: SelectFolderModalAssertion;
   conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
   agentInfoAssertion: AgentInfoAssertion;
-  marketplaceEntitiesAssertion: MarketplaceEntitiesAssertion;
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
   publishingRequestFolderPromptAssertion: PublishFolderAssertion<PublishFolder>;
@@ -1429,12 +1427,6 @@ const dialTest = test.extend<{
   agentInfoAssertion: async ({ agentInfo }, use) => {
     const agentInfoAssertion = new AgentInfoAssertion(agentInfo);
     await use(agentInfoAssertion);
-  },
-  marketplaceEntitiesAssertion: async ({ marketplaceEntities }, use) => {
-    const marketplaceEntitiesAssertion = new MarketplaceEntitiesAssertion(
-      marketplaceEntities,
-    );
-    await use(marketplaceEntitiesAssertion);
   },
   conversationToCompareAssertion: async ({ compareConversation }, use) => {
     const conversationToCompareAssertion = new ConversationToCompareAssertion(

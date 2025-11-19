@@ -227,7 +227,6 @@ dialTest(
     marketplaceHeader,
     marketplaceEntitiesSection,
     marketplaceEntities,
-    marketplaceEntitiesAssertion,
     addAppDropdownMenuAssertion,
     entityEditorPage,
     entityEditorGeneralForm,
@@ -282,7 +281,7 @@ dialTest(
       async () => {
         await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceHeader.addAppButton,
           ExpectedConstants.addAppButtonTitle,
         );

@@ -35,7 +35,6 @@ dialTest(
       externalAppEditorViewForm,
       entityEditorHeader,
       marketplaceEntitiesSection,
-      marketplaceEntitiesAssertion,
       marketplaceEntities,
       entityDetailsModal,
       setTestIds,
@@ -251,22 +250,19 @@ dialTest(
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceEntities.getEntityName(agentElement),
           appEntity.name,
         );
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceEntities.getEntityVersion(agentElement),
           appEntity.version!,
         );
-        await marketplaceEntitiesAssertion.assertEntityIcon(
+        await baseAssertion.assertEntityIcon(
           await marketplaceEntities.getEntityIcon(agentElement),
         );
         externalIcon = marketplaceEntities.getAppExternalIcon(agentElement);
-        await marketplaceEntitiesAssertion.assertElementState(
-          externalIcon,
-          'visible',
-        );
+        await baseAssertion.assertElementState(externalIcon, 'visible');
       },
     );
 

@@ -211,8 +211,10 @@ export class MarketplaceEntities extends BaseElement {
   }
 
   public getNotAvailableEntityElement = (reference: string) => {
-    const agent = this.rootLocator.filter({ has: this.entityName(reference) });
-    return this.createElementFromLocator(agent);
+    const entityLocator = this.rootLocator.filter({
+      has: this.entityName(reference),
+    });
+    return this.createElementFromLocator(entityLocator);
   };
 
   public getToolsetDefaultIcon(entityElement: BaseElement) {

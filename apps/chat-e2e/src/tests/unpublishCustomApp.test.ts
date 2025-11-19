@@ -46,7 +46,7 @@ dialAdminTest(
       adminPublishedAppReviewModalAssertion,
       adminPublishedAppReviewModalControlsAssertion,
       setTestIds,
-      marketplaceEntitiesAssertion,
+      baseAssertion,
       adminCustomApplicationPublishingUtil,
       publishRequestBuilder,
       customApplicationBuilder,
@@ -367,13 +367,10 @@ dialAdminTest(
             isEditable: true,
           },
         );
-        await marketplaceEntitiesAssertion.assertElementState(
-          appElement,
-          'visible',
-        );
+        await baseAssertion.assertElementState(appElement, 'visible');
 
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
-        marketplaceEntitiesAssertion.assertValue(
+        baseAssertion.assertValue(
           actualAgents.length,
           1,
           ExpectedMessages.elementsCountIsValid,
@@ -678,7 +675,7 @@ dialAdminTest(
     adminPublishedApplicationReviewModal,
     adminPublishedAppReviewModalAssertion,
     setTestIds,
-    marketplaceEntitiesAssertion,
+    baseAssertion,
     entityDetailsModalAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
@@ -816,7 +813,7 @@ dialAdminTest(
             isEditable: false,
           },
         );
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceEntities.getEntityVersion(appElement),
           sortedAppVersions[0],
         );

@@ -32,7 +32,6 @@ export * from './selectFolderModalAssertion';
 export * from './base/baseAssertion';
 export * from './conversationInfoTooltipAssertion';
 export * from './agentInfoAssertion';
-export * from './marketplaceEntitiesAssertion';
 export * from './conversationToCompareAssertion';
 export * from '@/src/assertions/publishing/trees/publishFolderAssertion';
 export * from './publishing/trees/publishEntityAssertion';

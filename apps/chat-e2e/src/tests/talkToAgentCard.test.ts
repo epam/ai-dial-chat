@@ -55,7 +55,6 @@ dialTest(
     publishRequestBuilder,
     adminFileApiHelper,
     localStorageManager,
-    marketplaceEntitiesAssertion,
     entityVersionsDropdownMenuAssertion,
   }) => {
     setTestIds(
@@ -160,7 +159,7 @@ dialTest(
         await talkToAgentDialogAssertion.assertAgentIsSelected(agent);
         agentElement = talkToAgents.getEntity(agent);
         actualIcon = await talkToAgents.getEntityIcon(agentElement);
-        await marketplaceEntitiesAssertion.assertEntityIcon(
+        await talkToAgentDialogAssertion.assertEntityIcon(
           actualIcon,
           '/api/' + agent.iconUrl,
         );
@@ -168,15 +167,15 @@ dialTest(
         actualDescriptionElement =
           talkToAgents.getEntityDescription(agentElement);
         actualVersionElement = talkToAgents.getEntityVersion(agentElement);
-        await marketplaceEntitiesAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           actualNameElement,
           appName,
         );
-        await marketplaceEntitiesAssertion.assertElementInnerHtml(
+        await talkToAgentDialogAssertion.assertElementInnerHtml(
           actualDescriptionElement,
           shortDescription(` ${expectedRgbColor}`, ` ${expectedTarget}`),
         );
-        await marketplaceEntitiesAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           actualVersionElement,
           appSecondVersion,
         );
@@ -340,7 +339,6 @@ dialTest(
     publicationApiHelper,
     publishRequestBuilder,
     localStorageManager,
-    marketplaceEntitiesAssertion,
     iconApiHelper,
     conversationData,
     dataInjector,
@@ -449,12 +447,12 @@ dialTest(
         await talkToAgentDialogAssertion.assertAgentState(agent, 'visible');
         agentElement = talkToAgents.getEntity(agent);
         const actualIcon = await talkToAgents.getEntityIcon(agentElement);
-        await marketplaceEntitiesAssertion.assertEntityIcon(
+        await talkToAgentDialogAssertion.assertEntityIcon(
           actualIcon,
           API.defaultModelIconHost(),
         );
         actualVersionElement = talkToAgents.getEntityVersion(agentElement);
-        await marketplaceEntitiesAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           actualVersionElement,
           appVersion,
         );
@@ -581,43 +579,43 @@ dialTest(
             talkToAgents.getEntityVersion(modelElement);
           const actualDescrElement =
             talkToAgents.getEntityDescription(modelElement);
-          await marketplaceEntitiesAssertion.assertElementText(
+          await talkToAgentDialogAssertion.assertElementText(
             talkToAgents.getEntityName(modelElement),
             randomModel.name,
           );
           randomModel.description
-            ? await marketplaceEntitiesAssertion.assertElementText(
+            ? await talkToAgentDialogAssertion.assertElementText(
                 actualDescrElement,
                 randomModel.description.split('\n\n')[0],
               )
-            : await marketplaceEntitiesAssertion.assertElementState(
+            : await talkToAgentDialogAssertion.assertElementState(
                 actualDescrElement,
                 'hidden',
               );
           randomModel.version
-            ? await marketplaceEntitiesAssertion.assertElementText(
+            ? await talkToAgentDialogAssertion.assertElementText(
                 actualVersionElement,
                 randomModel.version,
               )
-            : await marketplaceEntitiesAssertion.assertElementState(
+            : await talkToAgentDialogAssertion.assertElementState(
                 actualVersionElement,
                 'hidden',
               );
           const actualTopics =
             talkToAgents.getEntityVisibleTopics(modelElement);
           randomModel.topics && randomModel.topics.length > 0
-            ? marketplaceEntitiesAssertion.assertNumberIsGreaterThan(
+            ? talkToAgentDialogAssertion.assertNumberIsGreaterThan(
                 await actualTopics.getElementsCount(),
                 0,
               )
-            : await marketplaceEntitiesAssertion.assertElementState(
+            : await talkToAgentDialogAssertion.assertElementState(
                 actualTopics,
                 'hidden',
               );
           const actualIconElement =
             await talkToAgents.getEntityIcon(modelElement);
           const expectedIcon = iconApiHelper.getEntityIcon(randomModel);
-          await marketplaceEntitiesAssertion.assertEntityIcon(
+          await talkToAgentDialogAssertion.assertEntityIcon(
             actualIconElement,
             expectedIcon,
           );
@@ -652,7 +650,7 @@ dialTest(
         await talkToAgentDialogAssertion.assertAgentState(agent, 'visible');
         const agentElement = talkToAgents.getEntity(agent);
         actualVersionElement = talkToAgents.getEntityVersion(agentElement);
-        await marketplaceEntitiesAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           actualVersionElement,
           appVersion,
         );
@@ -1040,10 +1038,10 @@ dialTest(
     talkToAgentDialogAssertion,
     chat,
     marketplaceEntitiesSection,
+    baseAssertion,
     setTestIds,
     marketplaceEntities,
     entityDetailsModal,
-    marketplaceEntitiesAssertion,
     entityVersionsDropdownMenuAssertion,
     marketplacePage,
     navigationPanel,
@@ -1155,7 +1153,7 @@ dialTest(
           firstConfigApp,
           { isWorkspaceEntity: true, isEditable: false },
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await talkToAgentDialogAssertion.assertElementState(
           marketplaceEntities.getEntityElementRemoveBookmarkIcon(agentElement),
           'visible',
         );
@@ -1223,7 +1221,7 @@ dialTest(
           secondConfigAppMajorV,
           { isWorkspaceEntity: true, isEditable: false },
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementRemoveBookmarkIcon(agentElement),
           'visible',
         );

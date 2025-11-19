@@ -51,7 +51,6 @@ dialAdminTest(
       adminMarketplacePage,
       adminMarketplaceHeader,
       adminMarketplaceEntitiesSection,
-      adminMarketplaceEntitiesAssertion,
       adminTooltip,
       adminTooltipAssertion,
       baseAssertion,
@@ -225,10 +224,7 @@ dialAdminTest(
         );
         const externalIcon =
           marketplaceEntities.getAppExternalIcon(agentElement);
-        await adminMarketplaceEntitiesAssertion.assertElementState(
-          externalIcon,
-          'visible',
-        );
+        await baseAssertion.assertElementState(externalIcon, 'visible');
         await externalIcon.hoverOver();
         await adminTooltipAssertion.assertElementText(
           adminTooltip,

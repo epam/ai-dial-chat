@@ -37,7 +37,7 @@ dialAdminTest(
       adminNavigationPanel,
       adminMarketplaceHeader,
       adminMarketplaceEntitiesSection,
-      adminMarketplaceEntitiesAssertion,
+      baseAssertion,
       publishingRequestDialog,
       publishingRequestDialogAssertion,
       publishingRulesAssertion,
@@ -377,10 +377,7 @@ dialAdminTest(
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
         appElement =
           await adminMarketplaceEntitiesSection.findEntityElement(appEntity);
-        await adminMarketplaceEntitiesAssertion.assertElementState(
-          appElement,
-          'visible',
-        );
+        await baseAssertion.assertElementState(appElement, 'visible');
       },
     );
 

@@ -17,7 +17,7 @@ dialTest(
     dialHomePage,
     talkToAgentDialog,
     iconApiHelper,
-    marketplaceEntitiesAssertion,
+    baseAssertion,
     chat,
     setTestIds,
     localStorageManager,
@@ -42,7 +42,7 @@ dialTest(
         const expectedEntityIcon = iconApiHelper.getEntityIcon(
           ModelsUtil.getOpenAIEntity(actualIcon.entityId)!,
         );
-        await marketplaceEntitiesAssertion.assertEntityIcon(
+        await baseAssertion.assertEntityIcon(
           actualIcon.iconLocator,
           expectedEntityIcon,
         );

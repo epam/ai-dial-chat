@@ -38,7 +38,6 @@ dialSharedWithMeTest(
       marketplaceHeader,
       marketplaceEntitiesSection,
       marketplaceEntities,
-      marketplaceEntitiesAssertion,
       entityDetailsModal,
       entityDetailsModalAssertion,
       shareAppModal,
@@ -64,7 +63,6 @@ dialSharedWithMeTest(
       additionalShareUserChatBar,
       additionalShareUserAttachFilesModal,
       additionalShareUserManageAttachmentsAssertion,
-      additionalShareUserMarketplaceEntitiesAssertion,
       baseAssertion,
       downloadAssertion,
       modelApiHelper,
@@ -215,11 +213,8 @@ dialSharedWithMeTest(
             appData,
             { isWorkspaceEntity: true, isEditable: false },
           );
-        await additionalShareUserMarketplaceEntitiesAssertion.assertElementState(
-          sharedAgentElement,
-          'visible',
-        );
-        await additionalShareUserMarketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(sharedAgentElement, 'visible');
+        await baseAssertion.assertElementState(
           additionalShareUserMarketplaceEntities.getEntityElementAddBookmarkIcon(
             sharedAgentElement,
           ),
@@ -291,7 +286,7 @@ dialSharedWithMeTest(
         );
         const agentArrowIconElement =
           marketplaceEntities.getEntityArrowIcon(agentElement);
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           agentArrowIconElement,
           'visible',
         );
@@ -342,7 +337,7 @@ dialSharedWithMeTest(
       'Confirm access removing and verify arrow icon disappears from the card',
       async () => {
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityArrowIcon(agentElement),
           'hidden',
         );
@@ -424,7 +419,6 @@ dialSharedWithMeTest(
     additionalShareUserMarketplaceHeader,
     additionalShareUserMarketplaceEntitiesSection,
     additionalShareUserMarketplaceEntities,
-    additionalShareUserMarketplaceEntitiesAssertion,
     baseAssertion,
     conversationData,
     additionalShareUserDataInjector,
@@ -555,7 +549,7 @@ dialSharedWithMeTest(
         await additionalShareUserMarketplaceEntities
           .getEntityElementDotsMenu(sharedAgentElement)
           .click();
-        additionalShareUserMarketplaceEntitiesAssertion.assertArrayIncludesAll(
+        baseAssertion.assertArrayIncludesAll(
           await additionalShareUserMarketplaceEntities
             .getEntityDropdownMenu()
             .getAllMenuOptions(),
@@ -691,7 +685,7 @@ dialSharedWithMeTest(
     additionalShareUserMarketplaceHeader,
     additionalShareUserMarketplaceEntitiesSection,
     additionalShareUserMarketplaceEntities,
-    additionalShareUserMarketplaceEntitiesAssertion,
+    baseAssertion,
     additionalShareUserLocalStorageManager,
     additionalShareUserConfirmationDialog,
     additionalShareUserConfirmationDialogAssertion,
@@ -782,7 +776,7 @@ dialSharedWithMeTest(
           await additionalShareUserMarketplaceEntities.getEntityIcon(
             sharedAppElement,
           );
-        await additionalShareUserMarketplaceEntitiesAssertion.assertEntityIcon(
+        await baseAssertion.assertEntityIcon(
           sharedAppIcon,
           API.defaultModelIconHost(),
         );

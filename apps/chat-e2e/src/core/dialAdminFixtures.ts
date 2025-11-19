@@ -37,7 +37,6 @@ import {
   ConversationAssertion,
   ConversationInfoTooltipAssertion,
   ManageAttachmentsAssertion,
-  MarketplaceEntitiesAssertion,
   MenuAssertion,
   PublicationReviewControlAssertion,
   PublishEntityAssertion,
@@ -175,7 +174,6 @@ const dialAdminTest = dialTest.extend<{
   adminAppsToPublishTree: PublishApplicationsTree;
   adminPublishingRules: PublishingRules;
   adminManageAttachmentsAssertion: ManageAttachmentsAssertion;
-  adminMarketplaceEntitiesAssertion: MarketplaceEntitiesAssertion;
   adminEntityDetailsModalAssertion: EntityDetailsModalAssertion;
   adminSelectFoldersAssertion: FolderAssertion<Folders>;
   adminPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
@@ -720,15 +718,6 @@ const dialAdminTest = dialTest.extend<{
   adminSelectFolderModal: async ({ adminPage }, use) => {
     const adminSelectFolderModal = new SelectFolderModal(adminPage);
     await use(adminSelectFolderModal);
-  },
-  adminMarketplaceEntitiesAssertion: async (
-    { adminMarketplaceEntities },
-    use,
-  ) => {
-    const adminMarketplaceEntitiesAssertion = new MarketplaceEntitiesAssertion(
-      adminMarketplaceEntities,
-    );
-    await use(adminMarketplaceEntitiesAssertion);
   },
   adminEntityDetailsModalAssertion: async (
     { adminEntityDetailsModal },

@@ -17,12 +17,12 @@ dialAdminTest(
     {
       marketplacePage,
       marketplaceHeader,
+      baseAssertion,
       marketplaceEntitiesSection,
       entityDetailsModal,
       entityDetailsModalAssertion,
       customApplicationBuilder,
       applicationApiHelper,
-      adminMarketplaceEntitiesAssertion,
       publishingRequestDialog,
       selectFolderModal,
       selectFolders,
@@ -225,10 +225,7 @@ dialAdminTest(
           appEntity,
           { isWorkspaceEntity: false, isEditable: false },
         );
-        await adminMarketplaceEntitiesAssertion.assertElementState(
-          appElement,
-          'visible',
-        );
+        await baseAssertion.assertElementState(appElement, 'visible');
       },
     );
 

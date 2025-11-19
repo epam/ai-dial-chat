@@ -63,7 +63,7 @@ export class ApiAssertion extends BaseAssertion {
     this.assertValue(
       request.model?.id,
       expectedModel.id,
-      ExpectedMessages.chatRequestModelIsValid,
+      ExpectedMessages.requestModeIdIsValid,
     );
   }
 
@@ -74,7 +74,7 @@ export class ApiAssertion extends BaseAssertion {
     this.assertValue(
       request.temperature,
       expectedTemperature,
-      ExpectedMessages.chatRequestTemperatureIsValid,
+      ExpectedMessages.requestTempIsValid,
     );
   }
 
@@ -84,13 +84,13 @@ export class ApiAssertion extends BaseAssertion {
   ) {
     if (expectedPrompt === undefined) {
       expect
-        .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
+        .soft(request.prompt, ExpectedMessages.requestPromptIsValid)
         .toBeUndefined();
     } else {
       this.assertValue(
         request.prompt,
         expectedPrompt,
-        ExpectedMessages.chatRequestPromptIsValid,
+        ExpectedMessages.requestPromptIsValid,
       );
     }
   }

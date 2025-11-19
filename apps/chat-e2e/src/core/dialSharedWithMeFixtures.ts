@@ -38,7 +38,6 @@ import {
   ConversationAssertion,
   DownloadAssertion,
   ManageAttachmentsAssertion,
-  MarketplaceEntitiesAssertion,
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
@@ -173,7 +172,6 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSelectFoldersAssertion: FolderAssertion<Folders>;
   additionalShareUserSelectFolderModalAssertion: SelectFolderModalAssertion;
   additionalShareUserEntityDetailsModalAssertion: EntityDetailsModalAssertion;
-  additionalShareUserMarketplaceEntitiesAssertion: MarketplaceEntitiesAssertion;
   additionalShareUserConversationDropdownMenuAssertion: MenuAssertion;
   additionalShareUserTooltip: Tooltip;
   additionalShareUserTooltipAssertion: TooltipAssertion;
@@ -910,14 +908,6 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserEntityDetailsModalAssertion =
       new EntityDetailsModalAssertion(additionalShareUserEntityDetailsModal);
     await use(additionalShareUserEntityDetailsModalAssertion);
-  },
-  additionalShareUserMarketplaceEntitiesAssertion: async (
-    { additionalShareUserMarketplaceEntities },
-    use,
-  ) => {
-    const additionalShareUserMarketplaceEntitiesAssertion =
-      new MarketplaceEntitiesAssertion(additionalShareUserMarketplaceEntities);
-    await use(additionalShareUserMarketplaceEntitiesAssertion);
   },
   additionalShareUserConversationDropdownMenuAssertion: async (
     { additionalShareUserConversationDropdownMenu },

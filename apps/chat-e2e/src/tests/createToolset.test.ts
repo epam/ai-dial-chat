@@ -36,7 +36,6 @@ dialTest(
       marketplaceHeader,
       marketplaceEntitiesSection,
       marketplaceEntities,
-      marketplaceEntitiesAssertion,
       toolsetBuilder,
       entityEditorPage,
       entityEditorHeader,
@@ -114,11 +113,11 @@ dialTest(
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.toolsetsTab.click();
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceHeader.addToolsetButton,
           ExpectedConstants.addToolsetButtonTitle,
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceHeader.addToolsetButtonIcon,
           'visible',
         );
@@ -429,7 +428,7 @@ dialTest(
         const allMenuOptions = await marketplaceEntities
           .getEntityDropdownMenu()
           .getAllMenuOptions();
-        marketplaceEntitiesAssertion.assertArrayExcludesAll(
+        baseAssertion.assertArrayExcludesAll(
           allMenuOptions,
           [MenuOptions.loginWithMyCreds],
           ExpectedMessages.contextMenuOptionIsNotAvailable,
@@ -449,7 +448,6 @@ dialTest(
       marketplacePage,
       marketplaceHeader,
       marketplaceEntitiesSection,
-      marketplaceEntitiesAssertion,
       toolsetBuilder,
       entityEditorPage,
       entityEditorHeader,
@@ -474,7 +472,7 @@ dialTest(
     const toolsetEntity = {
       name: '',
       version: ExpectedConstants.defaultEntityVersion,
-      endpoint: `http://${GeneratorUtil.randomString(7)}.com`,
+      endpoint: GeneratorUtil.randomUrl(),
       releaseDate: DateUtil.getCurrentLocalDate(),
       author: UserUtil.getE2EUsername(testInfo.parallelIndex),
     };
@@ -533,7 +531,6 @@ dialTest(
         await toolsetEditorViewForm.endpoint.fillInInput(
           toolsetEntity.endpoint,
         );
-        await entityEditorHeader.focusOn();
         await entityEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(toolsetEditorViewForm, 'hidden');
         await marketplacePage.waitForPageLoaded();
@@ -603,12 +600,9 @@ dialTest(
             toolsetEntity.name,
             { isWorkspaceEntity: true, isEditable: true },
           );
-        await marketplaceEntitiesAssertion.assertElementState(
-          toolsetElement,
-          'visible',
-        );
+        await baseAssertion.assertElementState(toolsetElement, 'visible');
         await marketplaceHeader.searchInput.fillInInput(defaultName);
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplace.noResultsFound,
           ExpectedConstants.noResults,
         );
@@ -659,7 +653,7 @@ dialTest(
   async ({
     marketplacePage,
     marketplace,
-    marketplaceEntitiesAssertion,
+    baseAssertion,
     marketplaceHeader,
     setTestIds,
   }) => {
@@ -674,15 +668,15 @@ dialTest(
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.toolsetsTab.click();
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplace.noDataHeader,
           ExpectedConstants.noToolsetsHeader,
         );
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplace.noResultsFoundDescription,
           ExpectedConstants.noToolsetsLabel,
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplace.noToolsetsIcon,
           'visible',
         );
@@ -795,7 +789,16 @@ dialTest(
           ExpectedConstants.oAuthNotSupportedError,
         );
         await toast.closeToast();
-        await entityEditorHeader.saveAndExitButton.click();
+        await entityEditorPage.waitForExpectedResponses(
+          () => entityEditorHeader.saveAndExitButton.click(),
+          [
+            {
+              apiMethod: 'PUT',
+              urlPattern: toolsetEntity.name,
+            },
+            { apiMethod: 'GET', urlPattern: toolsetEntity.name },
+          ],
+        );
         await baseAssertion.assertElementState(toolsetEditorViewForm, 'hidden');
       },
     );

@@ -695,7 +695,7 @@ dialTest(
         );
         await baseAssertion.assertElementState(customAppEditorViewForm);
         await baseAssertion.assertElementText(
-          entityEditorHeader.actionAndEntitylicationTypeTitle,
+          entityEditorHeader.actionAndEntityTypeTitle,
           `${EntityMenuActions.editApp(AddAppMenuOptions.customApp)}`,
           ExpectedMessages.headerTitleIsValid,
         );

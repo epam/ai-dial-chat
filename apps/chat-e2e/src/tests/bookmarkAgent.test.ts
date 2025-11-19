@@ -28,7 +28,7 @@ dialTest(
     toast,
     tooltipAssertion,
     toastAssertion,
-    marketplaceEntitiesAssertion,
+    baseAssertion,
     adminCustomApplicationPublishingUtil,
     chat,
     talkToAgents,
@@ -102,11 +102,11 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.addToMyWorkspaceTooltip,
         );
-        await marketplaceEntitiesAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           addBookmarkIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceEntitiesAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           addBookmarkIcon,
           Cursors.pointer,
         );
@@ -121,13 +121,13 @@ dialTest(
           ExpectedConstants.agentAddedToWorkspaceMessage,
         );
         await toast.closeToast();
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             agentToAddElement,
           ),
           'visible',
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementAddBookmarkIcon(
             agentToAddElement,
           ),
@@ -147,7 +147,7 @@ dialTest(
           appFirstVersion.version!,
           appSecondVersion.version!,
         ]);
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceEntities.getEntityVersion(workspaceAgentElement),
           twoSortedVersions[0],
         );
@@ -285,7 +285,7 @@ dialTest(
           confirmationDialog,
           'hidden',
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             marketplaceAgentElement,
           ),
@@ -301,11 +301,11 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.removeFromMyWorkspaceTooltip,
         );
-        await marketplaceEntitiesAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           removeBookmarkIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceEntitiesAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           removeBookmarkIcon,
           Cursors.pointer,
         );
@@ -321,11 +321,8 @@ dialTest(
           'visible',
         );
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await marketplaceEntitiesAssertion.assertElementState(
-          removeBookmarkIcon,
-          'hidden',
-        );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(removeBookmarkIcon, 'hidden');
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementAddBookmarkIcon(
             marketplaceAgentElement,
           ),
@@ -340,12 +337,12 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         const allAgents = await marketplaceEntitiesSection.getAllEntities();
-        marketplaceEntitiesAssertion.assertValue(
+        baseAssertion.assertValue(
           allAgents.filter((agent) => agent.isWorkspaceEntity).length,
           0,
           ExpectedMessages.elementsCountIsValid,
         );
-        marketplaceEntitiesAssertion.assertValue(
+        baseAssertion.assertValue(
           allAgents.filter(
             (agent) => agent.isSuggested && agent.name === appName,
           ).length,
@@ -369,7 +366,7 @@ dialTest(
     entityDetailsModalAssertion,
     localStorageManager,
     setTestIds,
-    marketplaceEntitiesAssertion,
+    baseAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-4465');
@@ -436,13 +433,13 @@ dialTest(
           },
         );
 
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             agentToAddElement,
           ),
           'visible',
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementAddBookmarkIcon(
             agentToAddElement,
           ),
@@ -496,7 +493,6 @@ dialTest(
     localStorageManager,
     setTestIds,
     confirmationDialog,
-    marketplaceEntitiesAssertion,
     confirmationDialogAssertion,
     baseAssertion,
     adminCustomApplicationPublishingUtil,
@@ -557,11 +553,11 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.addToMyWorkspaceTooltip,
         );
-        await marketplaceEntitiesAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           addBookmarkIconElement,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceEntitiesAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           addBookmarkIconElement,
           Cursors.pointer,
         );
@@ -599,7 +595,7 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         workspaceAgentElement =
           await marketplaceEntitiesSection.findEntityElement(appName);
-        await marketplaceEntitiesAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceEntities.getEntityVersion(workspaceAgentElement),
           sortedVersions[0],
         );
@@ -639,11 +635,11 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.removeFromMyWorkspaceTooltip,
         );
-        await marketplaceEntitiesAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           removeBookmarkIconElement,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceEntitiesAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           removeBookmarkIconElement,
           Cursors.pointer,
         );
@@ -706,11 +702,11 @@ dialTest(
           appName,
           { isWorkspaceEntity: false },
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementAddBookmarkIcon(agentElement),
           'visible',
         );
-        await marketplaceEntitiesAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           marketplaceEntities.getEntityElementRemoveBookmarkIcon(agentElement),
           'hidden',
         );
