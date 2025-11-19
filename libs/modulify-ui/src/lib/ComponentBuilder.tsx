@@ -185,10 +185,13 @@ export class ComponentBuilder<
           : createElement(this.baseComponent, { ...props })
       ) as ReactElement;
 
-      const renderedChildren = cloneElement(reactElement, {
-        ...reactElement.props,
+      const typedReactElement = reactElement as ReactElement<
+        Record<string, unknown> & { className: string | string[] }
+      >;
+      const renderedChildren = cloneElement(typedReactElement, {
+        ...typedReactElement.props,
         className: composeClassNames(
-          reactElement.props.className,
+          typedReactElement.props.className,
           composedComponentClassNames,
         ),
       });
@@ -292,10 +295,17 @@ export class ComponentBuilder<
         return child;
       }
 
-      const customizeId = child.props[DATA_CUSTOMIZE_ID];
-      const htmlReplacements = this.htmlReplacements[customizeId as BlockIds];
-      if (customizeId && htmlReplacements) {
-        const replacedContent = htmlReplacements(
+      // Type assertion after isValidElement check
+      const typedChild = child as ReactElement<
+        Record<string, unknown> & { children: ReactNode | ReactNode[] }
+      >;
+      const customizeId = typedChild.props[DATA_CUSTOMIZE_ID];
+
+      if (customizeId && this.htmlReplacements[customizeId as BlockIds]) {
+        const replacementFn = this.htmlReplacements[
+          customizeId as BlockIds
+        ] as CB_HTMLContentFn;
+        const replacedContent = replacementFn(
           cloneElement(child, {
             [DATA_CUSTOMIZE_ID]: undefined,
           } as HTMLAttributes<HTMLElement>),
@@ -307,11 +317,15 @@ export class ComponentBuilder<
           return child;
         }
 
+        // Type assertion for replacedContent
+        const typedReplacedContent = replacedContent as ReactElement<
+          Record<string, unknown> & { children: ReactNode | ReactNode[] }
+        >;
         return cloneElement(replacedContent, {
           [DATA_CUSTOMIZE_ID]: customizeId,
-          ...(replacedContent.props.children && {
+          ...(typedReplacedContent.props.children && {
             children: this.applyHTMLReplacements(
-              replacedContent.props.children,
+              typedReplacedContent.props.children,
               state,
               handlers,
             ),
@@ -320,9 +334,9 @@ export class ComponentBuilder<
       }
 
       return cloneElement(child, {
-        ...(child.props.children && {
+        ...(typedChild.props.children && {
           children: this.applyHTMLReplacements(
-            child.props.children,
+            typedChild.props.children,
             state,
             handlers,
           ),

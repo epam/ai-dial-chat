@@ -97,7 +97,7 @@ export function ShareModalView() {
   const dispatch = useAppDispatch();
 
   const [urlCopied, setUrlCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [editAccess, setEditAccess] = useState(false);
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
@@ -177,7 +177,9 @@ export function ShareModalView() {
 
       navigator.clipboard.writeText(url).then(() => {
         setUrlCopied(true);
-        clearTimeout(timeoutRef.current);
+        if (timeoutRef.current !== null) {
+          clearTimeout(timeoutRef.current);
+        }
         timeoutRef.current = setTimeout(() => {
           setUrlCopied(false);
         }, 2000);
@@ -196,7 +198,12 @@ export function ShareModalView() {
     dispatch(ShareActions.setUnshareResourceId(shareResourceId));
   }, [dispatch, handleClose, shareResourceId]);
 
-  useEffect(() => () => clearTimeout(timeoutRef.current), []);
+  useEffect(
+    () => () => {
+      if (timeoutRef.current !== null) return clearTimeout(timeoutRef.current);
+    },
+    [],
+  );
 
   return (
     <Modal
