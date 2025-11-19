@@ -22,6 +22,7 @@ export interface AgentsListWrapperRef {
 export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
   ({ children, separatorRowId, rowsHeight, className }, ref) => {
     const { t } = useTranslation(Translation.Marketplace);
+
     const router = useRouter();
 
     const parentRef = useRef<HTMLDivElement>(null);
@@ -39,18 +40,38 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
     }));
 
     useEffect(() => {
-      const handleRouteChange = () => {
-        parentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      let previousUrl = router.asPath;
+
+      const handleRouteChange = (url: string) => {
+        const stripModelParam = (urlString: string) => {
+          const [path, queryString] = urlString.split('?');
+          if (!queryString) return urlString;
+
+          const params = new URLSearchParams(queryString);
+          params.delete('model');
+          const newQuery = params.toString();
+
+          return newQuery ? `${path}?${newQuery}` : path;
+        };
+
+        const normalizedPrevUrl = stripModelParam(previousUrl);
+        const normalizedNewUrl = stripModelParam(url);
+
+        if (normalizedNewUrl !== normalizedPrevUrl) {
+          parentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        previousUrl = url;
       };
 
       router.events.on('routeChangeComplete', handleRouteChange);
 
-      handleRouteChange();
-
       return () => {
         router.events.off('routeChangeComplete', handleRouteChange);
       };
-    }, [router.events]);
+      // We don't need to re-run this effect when the router changes, because we just register the event listener once.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
       <section
