@@ -68,6 +68,9 @@ export function AddAppButton() {
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             openEditor(ApplicationType.CUSTOM_APP);
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
           },
         },
         {
@@ -78,6 +81,9 @@ export function AddAppButton() {
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             openEditor(ApplicationType.CODE_APP);
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
