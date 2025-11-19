@@ -2,7 +2,8 @@
 import ComponentBuilder from '../ComponentBuilder';
 
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { PropsWithChildren } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -87,7 +88,7 @@ describe('ComponentBuilder', () => {
     expect(queryByText('Replaced Content')).toBeInTheDocument();
   });
 
-  it('should update text on button click using state and effects', () => {
+  it('should update text on button click using state and effects', async () => {
     const stateFn = vi.fn((state, setState) => {
       if (state.clicked === undefined) {
         setState((state: any) => ({ ...state, clicked: false }));
@@ -132,7 +133,7 @@ describe('ComponentBuilder', () => {
     const { getByText } = render(<Component text="Hello" />);
     const button = getByText('Click me');
 
-    fireEvent.click(button);
+    await userEvent.click(button);
 
     expect(handlerFn).toHaveBeenCalled();
     expect(onClickFn).toHaveBeenCalled();
