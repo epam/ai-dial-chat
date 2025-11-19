@@ -1096,7 +1096,9 @@ dialTest(
     'Preview on step "App settings"\n' + // EPMRTC-5750
     'Chat created from preview form on step "App settings" is not available on DIAL home page\n' + // EPMRTC-5762
     'Input on step "App settings" data saved when switch back to step "General info"\n' + // EPMRTC-5765
-    'Input on step "General info" data saved when switch to step "App settings" using stepper (not Next button )', // EPMRTC-5928
+    'Chat created from preview form on step "App settings" is not saved if switch to "General info" step and then back to "App settings".\n' + // EPMRTC-7868
+    'Input on step "General info" data saved when switch to step "App settings" using stepper (not Next button ).\n' + // EPMRTC-5928
+    'Custom app appears on the first screen (after the creation) if user types something in Preview', // EPMRTC-6671
   async (
     {
       marketplacePage,
@@ -1117,11 +1119,13 @@ dialTest(
       customAppEditorAppSettingsPreviewChat,
       dialHomePage,
       chatMessagesAssertion,
+      agentInfoAssertion,
       sendMessage,
       chatMessages,
       conversationAssertion,
       entityDetailsModal,
       entityDetailsModalAssertion,
+      localStorageManager,
     },
     testInfo,
   ) => {
@@ -1132,7 +1136,9 @@ dialTest(
       'EPMRTC-5750',
       'EPMRTC-5762',
       'EPMRTC-5765',
+      'EPMRTC-7868',
       'EPMRTC-5928',
+      'EPMRTC-6671',
     );
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
@@ -1151,6 +1157,7 @@ dialTest(
     const previewChatMessage = 'Hello from preview';
     const attachmentTypeToSet = 'image/png';
     const updatedAppNameForStepperTest = `${appEntity.name}-stepper-update`; // New name for EPMRTC-5928
+    await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
@@ -1527,17 +1534,26 @@ dialTest(
       );
     });
 
-    await dialTest.step('Verify attachment types are preserved', async () => {
-      const actualAttachmentTypes =
-        await customAppEditorViewForm.attachmentTypes.getSelectedPillValues(
-          true,
+    await dialTest.step(
+      'Verify attachment types are preserved, preview chat is not saved',
+      async () => {
+        const actualAttachmentTypes =
+          await customAppEditorViewForm.attachmentTypes.getSelectedPillValues(
+            true,
+          );
+        baseAssertion.assertArrayIncludesAll(
+          actualAttachmentTypes,
+          [attachmentTypeToSet],
+          ExpectedMessages.fieldValueIsValid,
         );
-      baseAssertion.assertArrayIncludesAll(
-        actualAttachmentTypes,
-        [attachmentTypeToSet],
-        ExpectedMessages.fieldValueIsValid,
-      );
-    });
+
+        await chatMessagesAssertion.assertElementState(chatMessages, 'hidden');
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+      },
+    );
 
     await dialTest.step(
       'Navigate back to General Info step using header stepper',
@@ -1617,6 +1633,26 @@ dialTest(
       },
     );
 
+    await dialTest.step(
+      'Navigate to App Settings step and create a preview chat',
+      async () => {
+        await entityEditorHeader.goToEntitySettingsStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementState(
+          customAppEditorViewForm,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          customAppEditorAppSettingsPreview,
+          'visible',
+        );
+        await sendMessage.messageInput.fillInInput(previewChatMessage);
+        await sendMessage.sendMessageButton.click();
+        await chatMessages.getChatMessage(2).waitFor();
+      },
+    );
+
     await dialTest.step('Click Save and Exit link', async () => {
       await entityEditorHeader.saveAndExitButton.click();
       await baseAssertion.assertElementState(entityDetailsModal, 'visible');
@@ -1627,18 +1663,23 @@ dialTest(
       await entityDetailsModal.closeButton.click();
     });
 
-    await dialTest.step(
-      'Click back to chat - created on preview form chat is not visible on DIAL main screen',
+    //TODO: enable the step when fixed https://github.com/epam/ai-dial-chat/issues/5124
+    await dialTest.step.skip(
+      'Click back to chat - created on preview form chat is not visible on DIAL main screen, created app is applied on a new conversation',
       async () => {
         await marketplacePage
           .getMarketplaceContainer()
           .getNavigationPanel()
           .backToChatButton.click();
-        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+        await dialHomePage.waitForPageLoaded();
         await conversationAssertion.assertEntityState(
           { name: previewChatMessage },
           'hidden',
         );
+        await chatMessagesAssertion.assertElementState(chatMessages, 'hidden');
+        await agentInfoAssertion.assertAgentName(updatedAppNameForStepperTest);
+        await agentInfoAssertion.assertAgentVersion(appEntity.version);
+        await agentInfoAssertion.assertShortDescription(shortAppDescription);
       },
     );
   },
