@@ -34,7 +34,6 @@ import {
 
 import { pluralizeDisplayName } from './app/application-type-schema';
 import { parseCommaSeparatedList } from './app/common';
-import { isEntityIdPublic } from './app/publications';
 import { isToolsetEntityModel, isToolsetSignedIn } from './app/toolsets';
 import { translate } from './app/translation';
 
@@ -61,13 +60,12 @@ export const getEntityStatus = (
     isToolsetEntityModel(entity) &&
     entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE
   ) {
-    const isPublic = isEntityIdPublic(entity);
-
-    const authLevel = !isPublic
-      ? ToolsetCredentialsLevel.GLOBAL
-      : ToolsetCredentialsLevel.USER;
-
-    const isLoggedOut = !isToolsetSignedIn(entity, authLevel);
+    const isSignedInGlobal = isToolsetSignedIn(entity);
+    const isSignedInUser = isToolsetSignedIn(
+      entity,
+      ToolsetCredentialsLevel.USER,
+    );
+    const isLoggedOut = !isSignedInGlobal && !isSignedInUser;
 
     return {
       isInvalid,

@@ -7,7 +7,7 @@ import { UISelectors } from '@/src/store/selectors';
 
 interface ScrollToEntityProps {
   entityId: string;
-  elementRef: RefObject<HTMLElement>;
+  elementRef: RefObject<HTMLElement | null>;
 }
 
 export const useScrollToEntity = ({

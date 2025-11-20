@@ -1909,6 +1909,9 @@ dialTest(
           attachmentType,
         );
         await customAppEditorViewForm.maxAttachmentsInput.typeInInput('');
+        await entityEditorHeader.focusOn({
+          triggeredHost: API.applicationCreateHost,
+        });
         await entityEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
         await entityDetailsModal.closeButton.click();
@@ -2272,6 +2275,9 @@ dialTest(
       async () => {
         await customAppEditorViewForm.fillInAppFields({
           chatCompletionUrl: 'http://testurl.com',
+        });
+        await entityEditorHeader.focusOn({
+          triggeredHost: API.applicationCreateHost,
         });
         await entityEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
