@@ -11,6 +11,7 @@ import {
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
+import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -537,7 +538,21 @@ const getQuickApp2Toolsets = ({
     }>(
       (acc, agentAndToolset) => {
         const entity = allEntitiesMap[agentAndToolset];
-        if (!entity) return acc;
+        if (!entity) {
+          if (isApplicationId(agentAndToolset)) {
+            acc.dialDeploymentsToolsets.push({
+              type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
+              deployment_id: ApiUtils.encodeApiUrl(agentAndToolset),
+            });
+          } else if (isToolsetId(agentAndToolset)) {
+            acc.dialMCPToolsets.push({
+              name: agentAndToolset,
+              dial_id: ApiUtils.encodeApiUrl(agentAndToolset),
+              type: ToolsetTypes.DialMcp,
+            });
+          }
+          return acc;
+        }
 
         if (isDialAiEntityModel(entity)) {
           acc.dialDeploymentsToolsets.push({
@@ -548,9 +563,7 @@ const getQuickApp2Toolsets = ({
           acc.dialMCPToolsets.push({
             name: entity.name,
             dial_id: ApiUtils.encodeApiUrl(entity.id),
-            description: entity.description,
             type: ToolsetTypes.DialMcp,
-            transport: entity.transport,
           });
         }
 
