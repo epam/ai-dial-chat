@@ -13,6 +13,8 @@ import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
+import { LIMIT_STAGE_CONTENT } from '@/src/constants/default-ui-settings';
+
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -62,9 +64,6 @@ interface Props {
   stage: Stage;
 }
 
-const maxKiloBytes = 40;
-const maxBytes = maxKiloBytes * 1024; // in bytes
-
 const DownloadStageView = ({ content }: { content: string }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -98,9 +97,12 @@ const DownloadStageView = ({ content }: { content: string }) => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, [content]);
+
   return (
     <div className="flex justify-between gap-1 ps-1">
-      {t(`Content is too large to display (exceeds ${maxKiloBytes} KB).`)}
+      {t(
+        `Content is too large to display (exceeds ${LIMIT_STAGE_CONTENT} KB).`,
+      )}
       <div className="flex items-center gap-3 text-secondary">
         <button
           className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
@@ -134,7 +136,8 @@ const StageView = ({ content }: { content: string }) => {
   // Calculate byte size of the string
   const size = useMemo(() => new Blob([content]).size, [content]);
 
-  if (size > maxBytes) {
+  // in bytes
+  if (size > LIMIT_STAGE_CONTENT * 1024) {
     return <DownloadStageView content={content} />;
   }
   return (
