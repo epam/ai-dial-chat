@@ -13,8 +13,6 @@ import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
-import { LIMIT_STAGE_CONTENT } from '@/src/constants/default-ui-settings';
-
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -60,6 +58,9 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => (
   </div>
 );
 
+const getLimitStageContent = () =>
+  parseFloat(process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT ?? '40');
+
 interface Props {
   stage: Stage;
 }
@@ -101,7 +102,7 @@ const DownloadStageView = ({ content }: { content: string }) => {
   return (
     <div className="flex justify-between gap-1 ps-1">
       {t(
-        `Content is too large to display (exceeds ${LIMIT_STAGE_CONTENT} KB).`,
+        `Content is too large to display (exceeds ${getLimitStageContent()} KB).`,
       )}
       <div className="flex items-center gap-3 text-secondary">
         <button
@@ -137,7 +138,7 @@ const StageView = ({ content }: { content: string }) => {
   const size = useMemo(() => new Blob([content]).size, [content]);
 
   // in bytes
-  if (size > LIMIT_STAGE_CONTENT * 1024) {
+  if (size > getLimitStageContent() * 1024) {
     return <DownloadStageView content={content} />;
   }
   return (
