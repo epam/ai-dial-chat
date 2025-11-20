@@ -4,7 +4,7 @@ import {
   ExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
-import { EntityDetailsModal } from '@/src/ui/webElements';
+import { BaseElement, EntityDetailsModal } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
 
 export class EntityDetailsModalAssertion extends BaseAssertion {
@@ -22,7 +22,7 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
     expectedReleaseDate?: string | number;
     expectedAuthor?: string;
     expectedTopics?: string[];
-    expectedIcon?: string;
+    expectedIcon?: string | BaseElement;
   }) {
     if (attributesToVerify.expectedName !== undefined) {
       await this.assertElementText(
@@ -58,10 +58,15 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
       );
     }
     if (attributesToVerify.expectedIcon !== undefined) {
-      await this.assertEntityIcon(
-        this.entityDetailsModal.icon,
-        attributesToVerify.expectedIcon,
-      );
+      typeof attributesToVerify.expectedIcon === 'string'
+        ? await this.assertEntityIcon(
+            this.entityDetailsModal.icon,
+            attributesToVerify.expectedIcon,
+          )
+        : await this.assertElementState(
+            attributesToVerify.expectedIcon,
+            'visible',
+          );
     }
   }
 

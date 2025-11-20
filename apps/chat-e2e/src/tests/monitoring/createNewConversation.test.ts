@@ -47,7 +47,7 @@ dialTest(
           );
         }
         await talkToAgentDialogAssertion.assertElementInnerText(
-          talkToAgents.agentNames,
+          talkToAgents.entityNames,
           expectedDefaultRecentEntities,
           ExpectedMessages.recentEntitiesVisible,
         );

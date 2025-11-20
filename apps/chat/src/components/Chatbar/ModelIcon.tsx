@@ -74,13 +74,15 @@ const ModelIconTemplate = memo(
     entityId,
     enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
-    const ref = useRef<HTMLImageElement>(null);
-    const [iconError, setIconError] = useState(false);
-    const [iconRetry, setIconRetry] = useState(DEFAULT_ICON_RETRY);
+    const themesImages = useAppSelector(UISelectors.selectThemesImages);
     const applicationTypeSchemas = useAppSelector(
       ApplicationTypesSchemasSelectors.selectAllSchemas,
     );
-    const themesImages = useAppSelector(UISelectors.selectThemesImages);
+
+    const [iconError, setIconError] = useState(false);
+    const [iconRetry, setIconRetry] = useState(DEFAULT_ICON_RETRY);
+
+    const ref = useRef<HTMLImageElement>(null);
 
     const fallbackUrl = useMemo(() => {
       const defaultImageName =
