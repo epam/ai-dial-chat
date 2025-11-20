@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -7,6 +7,7 @@ import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { FileFolderInterface } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -43,6 +44,17 @@ const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormType, 'endpoints' | 'env'>,
 );
 
+const checkIsTargetFolderLoaded = (
+  folders: FileFolderInterface[],
+  sources: string,
+) => {
+  const targetFolder = sources
+    ? folders.find((f) => f.id === sources)
+    : undefined;
+
+  return targetFolder?.status === UploadStatus.LOADED;
+};
+
 const getActualSource = (value: string) =>
   value === MANDATORY_FIELD_PLACEHOLDER ? '' : value;
 
@@ -58,24 +70,19 @@ export const CodeAppForm = () => {
     useFormContext<CodeAppFormType>();
   const errors = formState.errors;
   const sources = watch('sources');
+  const filesLoaded = watch('filesLoaded');
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppShared = !!appDetails?.isShared;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
-  const isTargetFolderLoaded = useMemo(() => {
-    const targetFolder = sources
-      ? folders.find((f) => f.id === sources)
-      : undefined;
-
-    return targetFolder?.status === UploadStatus.LOADED;
-  }, [folders, sources]);
-
   useEffect(() => {
-    if (isTargetFolderLoaded) {
+    const isFolderLoaded = checkIsTargetFolderLoaded(folders, sources);
+
+    if (isFolderLoaded) {
       setValue('filesLoaded', true, { shouldDirty: false });
     }
-  }, [isTargetFolderLoaded, setValue]);
+  }, [setValue, folders, sources]);
 
   useEffect(() => {
     if (sources === MANDATORY_FIELD_PLACEHOLDER) {
@@ -149,7 +156,7 @@ export const CodeAppForm = () => {
           />
         )}
       />
-      {!!sources && isTargetFolderLoaded && (
+      {!!sources && filesLoaded && (
         <FormCodeEditor
           disabled={isAppPublic}
           sourcesFolderId={getActualSource(sources)}
