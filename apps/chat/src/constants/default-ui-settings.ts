@@ -20,3 +20,7 @@ export const FALLBACK_TEMPERATURE = 1;
 export const DEFAULT_TEMPERATURE = process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE
   ? parseFloat(process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE)
   : FALLBACK_TEMPERATURE;
+
+export const LIMIT_STAGE_CONTENT = process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT
+  ? parseFloat(process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT)
+  : 40; // kilobytes
