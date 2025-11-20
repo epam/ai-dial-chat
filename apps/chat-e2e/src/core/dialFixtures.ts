@@ -158,6 +158,7 @@ import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { PublishingRequestDialog } from '@/src/ui/webElements/publishingRequestDialog';
 import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
+import { ReplaceConfirmationDialog } from '@/src/ui/webElements/replaceConfirmationDialog';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -249,6 +250,7 @@ const dialTest = test.extend<{
   folderDropdownMenu: DropdownMenu;
   promptDropdownMenu: DropdownMenu;
   confirmationDialog: ConfirmationDialog;
+  replaceConfirmationDialog: ReplaceConfirmationDialog;
   promptModalDialog: PromptModalDialog;
   renameConversationModal: RenameConversationModal;
   renameConversationModalAssertion: RenameConversationModalAssertion;
@@ -828,6 +830,10 @@ const dialTest = test.extend<{
   confirmationDialog: async ({ page }, use) => {
     const confirmationDialog = new ConfirmationDialog(page);
     await use(confirmationDialog);
+  },
+  replaceConfirmationDialog: async ({ page }, use) => {
+    const replaceConfirmationDialog = new ReplaceConfirmationDialog(page);
+    await use(replaceConfirmationDialog);
   },
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);

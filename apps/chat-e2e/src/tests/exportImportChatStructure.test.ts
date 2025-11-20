@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { FeatureType } from '@/chat/types/common';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
@@ -23,9 +24,11 @@ dialTest.only(
     localStorageManager,
     chatBar,
     folderConversations,
+    folderDropdownMenu,
     chat,
     chatMessages,
     conversations,
+    replaceConfirmationDialog,
   }) => {
     setTestIds('EPMRTC-3024');
     let exportedData: UploadDownloadData;
@@ -49,10 +52,6 @@ dialTest.only(
     await dialTest.step(
       'Prepare folder structure and conversations',
       async () => {
-        // 1. Create Folder1 with no chats
-        folder1 = conversationData.prepareFolder('Folder1');
-        conversationData.resetData();
-
         // 2. Create Folder2 with Chat1 and Chat2
         folder2 = conversationData.prepareFolder('Folder2');
 
@@ -104,7 +103,6 @@ dialTest.only(
 
         await dataInjector.createConversations(
           [chat1, chat2, chat3, chat4, chat5, chat6, chat7],
-          folder1,
           folder2,
           ...nestedFolders,
         );
@@ -113,10 +111,25 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Export the structure using Export button',
+      'Create Folder1 via UI and export the structure',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+
+        // 1. Create Folder1 via UI (empty folder can't be created via API)
+        await chatBar.createNewFolder();
+        await folderConversations.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await folderConversations.renameEmptyFolderWithTick('Folder1');
+        folder1 = {
+          id: 'Folder1',
+          name: 'Folder1',
+          type: FeatureType.Chat,
+          folderId: '',
+        };
+
         exportedData = await dialHomePage.downloadData(
           () => chatBar.exportButton.click(),
           GeneratorUtil.exportedWithoutAttachmentsFilename(),
@@ -127,11 +140,14 @@ dialTest.only(
     await dialTest.step(
       'Update Chat1 and Chat4 with new requests',
       async () => {
-        // Update Chat1
-        await folderConversations.selectFolderEntity(folder2.name, chat1.name);
+        // Mock chat text response once for all requests
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
+
+        // Update Chat1
+        await folderConversations.expandFolder(folder2.name);
+        await folderConversations.selectFolderEntity(folder2.name, chat1.name);
         await chat.sendRequestWithButton('New request for Chat1');
 
         // Update Chat4 - need to expand nested folders
@@ -144,9 +160,6 @@ dialTest.only(
           nestedFolders[3].name,
           chat4.name,
         );
-        await dialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
-        );
         await chat.sendRequestWithButton('New request for Chat4');
       },
     );
@@ -154,15 +167,61 @@ dialTest.only(
     await dialTest.step(
       'Import the structure and handle duplicate resolution',
       async () => {
-        // Note: The test description mentions selecting different import options
-        // (Replace, Postfix, Ignore) for different chats. However, based on my research
-        // of the framework, there doesn't seem to be a duplicateDialog fixture yet.
-        // This test currently handles the basic import flow.
-        // TODO: Add duplicate resolution handling when the duplicateDialog fixture is available.
-
-        await dialHomePage.importFile(exportedData, () =>
-          chatBar.importButton.click(),
+        // Set isHttpMethodTriggered to false because a modal dialog will appear
+        // for handling duplicate conversations (Replace, Postfix, Ignore options)
+        await dialHomePage.importFile(
+          exportedData,
+          () => chatBar.importButton.click(),
+          false,
         );
+
+        // Wait for replace confirmation modal to appear
+        await replaceConfirmationDialog.waitForState();
+
+        // Set individual conversation options
+        // Chat1: Replace (will restore original content)
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat1',
+          'Replace',
+        );
+
+        // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat2',
+          'Postfix',
+        );
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat4',
+          'Postfix',
+        );
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat7',
+          'Postfix',
+        );
+
+        // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat3',
+          'Ignore',
+        );
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat5',
+          'Ignore',
+        );
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat6',
+          'Ignore',
+        );
+
+        // Click Continue to proceed with import
+        await replaceConfirmationDialog.clickContinue();
+
+        // Wait for import to complete
+        await dialHomePage
+          .getAppContainer()
+          .getImportExportLoader()
+          .waitForState({ state: 'hidden' });
+        await dialHomePage.getAppContainer().waitForAppLoaded();
       },
     );
 

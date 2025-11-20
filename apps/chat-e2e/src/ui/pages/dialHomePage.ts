@@ -98,17 +98,22 @@ export class DialHomePage extends BasePage {
   async importFile<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
+    isHttpMethodTriggered: boolean = true,
   ) {
-    const respPromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'POST',
-    );
-    await this.uploadData(uploadData, method);
-    await respPromise;
-    await this.getAppContainer()
-      .getImportExportLoader()
-      .waitForState({ state: 'hidden' });
-    await this.getAppContainer().waitForAppLoaded(loadingTimeout);
-    await this.page.waitForLoadState('domcontentloaded');
+    if (isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (r) => r.request().method() === 'POST',
+      );
+      await this.uploadData(uploadData, method);
+      await respPromise;
+      await this.getAppContainer()
+        .getImportExportLoader()
+        .waitForState({ state: 'hidden' });
+      await this.getAppContainer().waitForAppLoaded(loadingTimeout);
+      await this.page.waitForLoadState('domcontentloaded');
+    } else {
+      await this.uploadData(uploadData, method);
+    }
   }
 
   public async addInitScript<Arg>(
