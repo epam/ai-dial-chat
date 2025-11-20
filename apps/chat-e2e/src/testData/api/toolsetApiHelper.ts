@@ -1,5 +1,5 @@
 import { BackendEntity } from '@/chat/types/common';
-import { API } from '@/src/testData';
+import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil, toolsetNamePrefix } from '@/src/utils';
 import { Toolset } from '@epam/ai-dial-shared';
@@ -30,10 +30,12 @@ export class ToolsetApiHelper extends BaseApiHelper {
 
   public async deleteAllToolsets() {
     const allToolsets = await this.listToolsets();
-    const e2eToolsets = Object.values(allToolsets).filter((toolset) =>
-      toolset.display_name
-        .toLowerCase()
-        .includes(toolsetNamePrefix.toLowerCase()),
+    const e2eToolsets = Object.values(allToolsets).filter(
+      (toolset) =>
+        toolset.display_name
+          .toLowerCase()
+          .includes(toolsetNamePrefix.toLowerCase()) ||
+        toolset.display_name === ExpectedConstants.defaultToolsetName,
     );
     for (const toolset of e2eToolsets) {
       await this.deleteToolset(toolset);

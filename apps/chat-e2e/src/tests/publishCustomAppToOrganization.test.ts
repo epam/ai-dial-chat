@@ -17,12 +17,12 @@ dialAdminTest(
     {
       marketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
+      baseAssertion,
+      marketplaceEntitiesSection,
       entityDetailsModal,
       entityDetailsModalAssertion,
       customApplicationBuilder,
       applicationApiHelper,
-      adminMarketplaceAgentsAssertion,
       publishingRequestDialog,
       selectFolderModal,
       selectFolders,
@@ -118,7 +118,8 @@ dialAdminTest(
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appEntity);
+        appElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.click();
         await entityDetailsModalAssertion.assertElementState(
           entityDetailsModal,
@@ -220,14 +221,11 @@ dialAdminTest(
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
-        appElement = await marketplaceAgentsSection.findAgentElement(
+        appElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
-          { isWorkspaceAgent: false, isEditable: false },
+          { isWorkspaceEntity: false, isEditable: false },
         );
-        await adminMarketplaceAgentsAssertion.assertElementState(
-          appElement,
-          'visible',
-        );
+        await baseAssertion.assertElementState(appElement, 'visible');
       },
     );
 

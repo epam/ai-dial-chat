@@ -50,3 +50,19 @@ export function getStringFromSearchParams<T extends string>(
 ): T {
   return (searchParams.get(key) ?? fallback) as T;
 }
+
+export function stripQueryParamsFromUrl(
+  url: string,
+  keysToStrip: string[],
+): string {
+  const [path, queryString] = url.split('?');
+  if (!queryString) return url;
+
+  const params = new URLSearchParams(queryString);
+  keysToStrip.forEach((key) => {
+    params.delete(key);
+  });
+  const newQuery = params.toString();
+
+  return newQuery ? `${path}?${newQuery}` : path;
+}
