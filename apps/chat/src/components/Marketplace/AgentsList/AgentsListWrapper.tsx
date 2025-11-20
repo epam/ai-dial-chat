@@ -73,7 +73,7 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
     return (
       <section
         ref={parentRef}
-        data-qa="agents-section"
+        data-qa="entities-section"
         className={classNames(
           'relative flex grow overflow-y-auto overflow-x-hidden px-3 md:px-5 xl:px-16',
           className,

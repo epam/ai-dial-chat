@@ -1,33 +1,34 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import { ToolsetModel } from '@/chat/types/toolsets';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { MarketplaceSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
-  FoundMarketplaceAgents,
-  MarketplaceAgentProperties,
-  MarketplaceAgents,
+  FoundMarketplaceEntities,
+  MarketplaceEntities,
+  MarketplaceEntityProperties,
 } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export const marketplaceContentDisplayTimeout = 200;
 
-export class MarketplaceAgentsSection extends BaseElement {
+export class MarketplaceEntitiesSection extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, MarketplaceSelectors.marketplaceAgentSection, parentLocator);
+    super(page, MarketplaceSelectors.marketplaceEntitiesSection, parentLocator);
   }
 
-  private agents!: MarketplaceAgents;
+  private entities!: MarketplaceEntities;
 
-  getAgents(): MarketplaceAgents {
-    if (!this.agents) {
-      this.agents = new MarketplaceAgents(this.page, this.rootLocator);
+  getEntities(): MarketplaceEntities {
+    if (!this.entities) {
+      this.entities = new MarketplaceEntities(this.page, this.rootLocator);
     }
-    return this.agents;
+    return this.entities;
   }
 
-  public agentsRow = this.getChildElementBySelector(
-    MarketplaceSelectors.marketplaceAgentsRow,
+  public entitiesRow = this.getChildElementBySelector(
+    MarketplaceSelectors.marketplaceEntitiesRow,
   );
 
   public async findAndUseAgent(
@@ -39,10 +40,10 @@ export class MarketplaceAgentsSection extends BaseElement {
     },
   ) {
     let isAgentFoundAndUsed = false;
-    const agentElement = await this.findAgentElement(agent, options);
+    const agentElement = await this.findEntityElement(agent, options);
     //open agent's details card
     await agentElement.click();
-    const agentDetailsModal = this.getAgents().getEntityDetailsModal();
+    const agentDetailsModal = this.getEntities().getEntityDetailsModal();
 
     //if agent has more than one version in the config
     if (agent.version) {
@@ -89,9 +90,9 @@ export class MarketplaceAgentsSection extends BaseElement {
     return isAgentFoundAndUsed;
   }
 
-  public async findAgentElement(
-    agent: DialAIEntityModel | string,
-    options?: { isWorkspaceAgent?: boolean; isEditable?: boolean },
+  public async findEntityElement(
+    entity: DialAIEntityModel | ToolsetModel | string,
+    options?: { isWorkspaceEntity?: boolean; isEditable?: boolean },
   ) {
     const scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
@@ -99,49 +100,49 @@ export class MarketplaceAgentsSection extends BaseElement {
     };
     let rowHeight = 0;
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
-    await this.moveToAgentsSection();
-    let agentElement;
+    await this.moveToEntitiesSection();
+    let entityElement;
     do {
-      const visibleAgents = this.getAgents();
-      const visibleAgentNames = await visibleAgents.getAgentNames();
-      //if agent stays among visible
+      const visibleEntities = this.getEntities();
+      const visibleEntityNames = await visibleEntities.getEntityNames();
+      //if entity stays among visible
       if (
-        visibleAgentNames.includes(
-          typeof agent === 'string' ? agent : agent.name,
+        visibleEntityNames.includes(
+          typeof entity === 'string' ? entity : entity.name,
         )
       ) {
-        const agentElements = visibleAgents.getAgent(agent);
-        const agentsCount = await agentElements.getElementsCount();
-        //if need to find an agent from a specific section
-        if (options?.isWorkspaceAgent !== undefined) {
-          //marketplace agent cannot be editable
-          if (!options.isWorkspaceAgent) {
+        const entityElements = visibleEntities.getEntity(entity);
+        const entitiesCount = await entityElements.getElementsCount();
+        //if need to find an entity from a specific section
+        if (options?.isWorkspaceEntity !== undefined) {
+          //marketplace entity cannot be editable
+          if (!options.isWorkspaceEntity) {
             options.isEditable = false;
           }
-          for (let j = 1; j <= agentsCount; j++) {
-            const nthAgentElement = agentElements.getNthElement(j);
-            const agentType = await nthAgentElement.getAttribute(
+          for (let j = 1; j <= entitiesCount; j++) {
+            const nthEntityElement = entityElements.getNthElement(j);
+            const entityType = await nthEntityElement.getAttribute(
               Attributes.ariaDetails,
             );
-            const isWorkspaceAgent =
-              agentType ===
-              FoundMarketplaceAgents[FoundMarketplaceAgents.filtered];
-            agentElement = this.createElementFromLocator(nthAgentElement);
-            const hasPencilIcon = await visibleAgents
-              .getAgentPencilIcon(agentElement)
+            const isWorkspaceEntity =
+              entityType ===
+              FoundMarketplaceEntities[FoundMarketplaceEntities.filtered];
+            entityElement = this.createElementFromLocator(nthEntityElement);
+            const hasPencilIcon = await visibleEntities
+              .getEntityPencilIcon(entityElement)
               .isVisible();
             if (
-              options.isWorkspaceAgent === isWorkspaceAgent &&
+              options.isWorkspaceEntity === isWorkspaceEntity &&
               options?.isEditable === hasPencilIcon
             ) {
-              return agentElement;
+              return entityElement;
             }
           }
         } else {
-          agentElement = this.createElementFromLocator(
-            agentElements.getNthElement(1),
+          entityElement = this.createElementFromLocator(
+            entityElements.getNthElement(1),
           );
-          return agentElement;
+          return entityElement;
         }
       }
       rowHeight = await this.scrollIntoLastRow();
@@ -149,21 +150,21 @@ export class MarketplaceAgentsSection extends BaseElement {
       Math.ceil(scrollHeight - scrollPosition.scrollTop) >
       2 * scrollPosition.clientHeight - rowHeight
     );
-    if (agentElement === undefined) {
-      throw new Error(`Agent : ${JSON.stringify(agent)} is not found!`);
+    if (entityElement === undefined) {
+      throw new Error(`Entity : ${JSON.stringify(entity)} is not found!`);
     }
-    return agentElement;
+    return entityElement;
   }
 
-  public async getAllAgents() {
-    const allAgents: MarketplaceAgentProperties[] = [];
+  public async getAllEntities() {
+    const allEntities: MarketplaceEntityProperties[] = [];
     if (!(await this.rootLocator.isVisible())) {
-      return allAgents;
+      return allEntities;
     }
     //wait for available cards are displayed
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(marketplaceContentDisplayTimeout);
-    await this.moveToAgentsSection();
+    await this.moveToEntitiesSection();
     let scrollPosition: { scrollTop: number; clientHeight: number } = {
       scrollTop: 0,
       clientHeight: await this.rootLocator.evaluate((p) => p.clientHeight),
@@ -176,52 +177,53 @@ export class MarketplaceAgentsSection extends BaseElement {
       if (iteration !== 1) {
         rowHeight = await this.scrollIntoLastRow();
       }
-      const visibleAgents = this.getAgents();
-      const visibleAgentNames = await visibleAgents.getAgentNames();
-      const visibleAgentsCount = visibleAgentNames.length;
-      for (let i = 0; i < visibleAgentsCount; i++) {
-        const agentName = visibleAgentNames[i];
-        //agent's name may be duplicated on "My Workspace" tab in the filtered and suggested results
-        const visibleAgent = visibleAgents.getAgent(agentName);
-        const agentsCount = await visibleAgent.getElementsCount();
-        //iterate through agents with duplicated name
-        for (let j = 1; j <= agentsCount; j++) {
-          const agentElement = visibleAgent.getNthElement(j);
-          const agentType = await agentElement.getAttribute(
+      const visibleEntities = this.getEntities();
+      const visibleEntityNames = await visibleEntities.getEntityNames();
+      const visibleEntitiesCount = visibleEntityNames.length;
+      for (let i = 0; i < visibleEntitiesCount; i++) {
+        const entityName = visibleEntityNames[i];
+        //entity's name may be duplicated on "My Workspace" tab in the filtered and suggested results
+        const visibleEntity = visibleEntities.getEntity(entityName);
+        const entitiesCount = await visibleEntity.getElementsCount();
+        //iterate through entities with duplicated name
+        for (let j = 1; j <= entitiesCount; j++) {
+          const entityElement = visibleEntity.getNthElement(j);
+          const entityType = await entityElement.getAttribute(
             Attributes.ariaDetails,
           );
-          const isWorkspaceAgent =
-            agentType ===
-            FoundMarketplaceAgents[FoundMarketplaceAgents.filtered];
+          const isWorkspaceEntity =
+            entityType ===
+            FoundMarketplaceEntities[FoundMarketplaceEntities.filtered];
 
-          const agentBaseElement = this.createElementFromLocator(agentElement);
-          const hasPencilIcon = await visibleAgents
-            .getAgentPencilIcon(agentBaseElement)
+          const entityBaseElement =
+            this.createElementFromLocator(entityElement);
+          const hasPencilIcon = await visibleEntities
+            .getEntityPencilIcon(entityBaseElement)
             .isVisible();
-          //check whether agent's name+editable+section exists in the allAgents array
+          //check whether entity's name+editable+section exists in the allAgents array
           if (
-            !allAgents.some(
+            !allEntities.some(
               (a) =>
-                a.name === agentName &&
-                a.isWorkspaceAgent === isWorkspaceAgent &&
+                a.name === entityName &&
+                a.isWorkspaceEntity === isWorkspaceEntity &&
                 a.isEditable === hasPencilIcon,
             )
           ) {
             const versionElement =
-              visibleAgents.getAgentVersion(agentBaseElement);
-            let agentVersion;
+              visibleEntities.getEntityVersion(entityBaseElement);
+            let entityVersion;
             if (await versionElement.isVisible()) {
-              agentVersion = await versionElement.getElementInnerContent();
+              entityVersion = await versionElement.getElementInnerContent();
             }
-            allAgents.push({
-              name: agentName,
-              version: agentVersion ?? undefined,
+            allEntities.push({
+              name: entityName,
+              version: entityVersion ?? undefined,
               isSuggested:
-                agentType ===
-                FoundMarketplaceAgents[FoundMarketplaceAgents.suggested],
-              isWorkspaceAgent:
-                agentType ===
-                FoundMarketplaceAgents[FoundMarketplaceAgents.filtered],
+                entityType ===
+                FoundMarketplaceEntities[FoundMarketplaceEntities.suggested],
+              isWorkspaceEntity:
+                entityType ===
+                FoundMarketplaceEntities[FoundMarketplaceEntities.filtered],
               isEditable: hasPencilIcon,
             });
           }
@@ -234,7 +236,7 @@ export class MarketplaceAgentsSection extends BaseElement {
         2 * scrollPosition.clientHeight - rowHeight;
       iteration++;
     }
-    return allAgents;
+    return allEntities;
   }
 
   public async goTop() {
@@ -255,8 +257,8 @@ export class MarketplaceAgentsSection extends BaseElement {
   }
 
   private async scrollIntoLastRow() {
-    const rowsCount = await this.agentsRow.getElementsCount();
-    const lastRowBounding = await this.agentsRow
+    const rowsCount = await this.entitiesRow.getElementsCount();
+    const lastRowBounding = await this.entitiesRow
       .getNthElement(rowsCount)
       .boundingBox();
     await this.page.mouse.wheel(
@@ -270,7 +272,7 @@ export class MarketplaceAgentsSection extends BaseElement {
     return rowHeight;
   }
 
-  private async moveToAgentsSection() {
+  private async moveToEntitiesSection() {
     const agentsSectionBounding = await this.getElementBoundingBox();
     await this.page.mouse.move(
       agentsSectionBounding!.x + agentsSectionBounding!.width / 2,
