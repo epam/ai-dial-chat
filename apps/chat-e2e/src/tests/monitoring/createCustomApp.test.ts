@@ -23,7 +23,7 @@ dialTest(
     entityEditorGeneralForm,
     customAppEditorViewForm,
     entityEditorHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     entityDetailsModal,
     baseAssertion,
     entityEditorHeaderAssertion,
@@ -200,7 +200,7 @@ dialTest(
       async () => {
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
       },
     );

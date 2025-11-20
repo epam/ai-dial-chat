@@ -257,7 +257,7 @@ export const SliderGridInner = <T extends { id: string }, P>(
               <section
                 key={sliderGroup.map((groupItem) => groupItem.id).join('.')}
                 className="h-full min-w-full"
-                data-qa="agents-section"
+                data-qa="entities-section"
               >
                 {shouldRenderSlide(index, activeSlide, prevActiveSlide) && (
                   <div

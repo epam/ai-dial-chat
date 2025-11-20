@@ -147,6 +147,7 @@ export const ToolsetLoginForm = ({
           buttonClassName,
           isSignedIn ? 'button-secondary' : 'button-primary',
         )}
+        data-qa="sign-in-button"
         disabled={disabled || !isValid}
         onClick={handleSubmit}
       >

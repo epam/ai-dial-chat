@@ -123,6 +123,7 @@ export function ToolsetDetailsFooter({
                   authAction === ToolsetAuthAction.LoginWithMyCreds,
                 'button-secondary': authAction === ToolsetAuthAction.LogOut,
               })}
+              data-qa="login-button"
             >
               <LoginIcon size={18} />
               {t(getToolsetAuthActionLabel(authAction, screenState))}
