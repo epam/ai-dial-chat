@@ -34,9 +34,8 @@ dialTest(
       entityEditorGeneralForm,
       externalAppEditorViewForm,
       entityEditorHeader,
-      marketplaceAgentsSection,
-      marketplaceAgentsAssertion,
-      marketplaceAgents,
+      marketplaceEntitiesSection,
+      marketplaceEntities,
       entityDetailsModal,
       setTestIds,
       baseAssertion,
@@ -249,24 +248,21 @@ dialTest(
           )
           .click();
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentName(agentElement),
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityName(agentElement),
           appEntity.name,
         );
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(agentElement),
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityVersion(agentElement),
           appEntity.version!,
         );
-        await marketplaceAgentsAssertion.assertEntityIcon(
-          await marketplaceAgents.getAgentIcon(agentElement),
+        await baseAssertion.assertEntityIcon(
+          await marketplaceEntities.getEntityIcon(agentElement),
         );
-        externalIcon = marketplaceAgents.getAgentExternalIcon(agentElement);
-        await marketplaceAgentsAssertion.assertElementState(
-          externalIcon,
-          'visible',
-        );
+        externalIcon = marketplaceEntities.getAppExternalIcon(agentElement);
+        await baseAssertion.assertElementState(externalIcon, 'visible');
       },
     );
 

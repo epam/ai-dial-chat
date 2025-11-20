@@ -17,7 +17,7 @@ dialTest(
     dialHomePage,
     talkToAgentDialog,
     iconApiHelper,
-    marketplaceAgentsAssertion,
+    baseAssertion,
     chat,
     setTestIds,
     localStorageManager,
@@ -37,12 +37,12 @@ dialTest(
     );
 
     await dialTest.step('Verify all agents have valid icons', async () => {
-      const actualIcons = await talkToAgentDialog.getAgents().getAgentsIcons();
+      const actualIcons = await talkToAgentDialog.getAgents().getEntityIcons();
       for (const actualIcon of actualIcons) {
         const expectedEntityIcon = iconApiHelper.getEntityIcon(
           ModelsUtil.getOpenAIEntity(actualIcon.entityId)!,
         );
-        await marketplaceAgentsAssertion.assertEntityIcon(
+        await baseAssertion.assertEntityIcon(
           actualIcon.iconLocator,
           expectedEntityIcon,
         );

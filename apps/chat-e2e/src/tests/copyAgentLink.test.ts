@@ -21,9 +21,9 @@ dialTest(
     {
       marketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
+      marketplaceEntitiesSection,
       entityDetailsModal,
-      marketplaceAgents,
+      marketplaceEntities,
       toast,
       errorPopup,
       setTestIds,
@@ -94,7 +94,8 @@ dialTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        agentElement = await marketplaceAgentsSection.findAgentElement(appName);
+        agentElement =
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await agentElement.click();
         await entityDetailsModal.versionMenuTrigger.click();
         await entityDetailsModal
@@ -149,9 +150,11 @@ dialTest(
       'Back to the cards list, open agent card dots menu, select "Copy link" option and verify toast is shown',
       async () => {
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.copyLink);
         await baseAssertion.assertElementState(toast, 'visible');
         await baseAssertion.assertElementText(
@@ -216,7 +219,7 @@ dialTest(
         await errorPopup.cancelPopup();
         await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
         await baseAssertion.assertElementState(
-          marketplaceAgentsSection,
+          marketplaceEntitiesSection,
           'visible',
         );
       },
@@ -241,7 +244,7 @@ dialTest(
         await errorPopup.cancelPopup();
         await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
         await baseAssertion.assertElementState(
-          marketplaceAgentsSection,
+          marketplaceEntitiesSection,
           'visible',
         );
       },
