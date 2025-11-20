@@ -6,7 +6,7 @@ import {
   IconPaperclip,
   IconUpload,
 } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { JSX, useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 

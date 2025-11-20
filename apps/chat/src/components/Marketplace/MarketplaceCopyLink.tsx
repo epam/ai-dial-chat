@@ -35,7 +35,7 @@ export function MarketplaceCopyLink({
 
   const [urlCopied, setUrlCopied] = useState(false);
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const link =
     'authSettings' in entity
@@ -51,7 +51,9 @@ export function MarketplaceCopyLink({
 
       navigator.clipboard.writeText(link).then(() => {
         setUrlCopied(true);
-        clearTimeout(timeoutRef.current);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
         timeoutRef.current = setTimeout(() => {
           setUrlCopied(false);
         }, 2000);

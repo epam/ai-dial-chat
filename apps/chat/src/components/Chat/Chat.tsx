@@ -159,7 +159,7 @@ const ChatView = memo(() => {
   );
 
   const configurationSchemas = useAppSelector(
-    ChatSelectors.selectUploadedConfigurationSchemasIds,
+    ChatSelectors.selectUploadedConfigurationSchemas,
   );
   const isApproveRequiredEntity = useAppSelector((state) =>
     PublicationSelectors.selectIsApproveRequiredEntity(
@@ -201,7 +201,9 @@ const ChatView = memo(() => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
-  const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const disableAutoScrollTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const lastScrollTop = useRef(0);
 
   const showReplayControls = useMemo(() => {
@@ -254,7 +256,10 @@ const ChatView = memo(() => {
   );
 
   const setAutoScroll = () => {
-    clearTimeout(disableAutoScrollTimeoutRef.current);
+    if (disableAutoScrollTimeoutRef.current !== null) {
+      clearTimeout(disableAutoScrollTimeoutRef.current);
+    }
+
     setAutoScrollEnabled(true);
     setShowScrollDownButton(false);
   };
@@ -295,7 +300,9 @@ const ChatView = memo(() => {
         setAutoScrollEnabled(false);
         setShowScrollDownButton(true);
       } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
-        clearTimeout(disableAutoScrollTimeoutRef.current);
+        if (disableAutoScrollTimeoutRef.current !== null) {
+          clearTimeout(disableAutoScrollTimeoutRef.current);
+        }
 
         disableAutoScrollTimeoutRef.current = setTimeout(() => {
           setAutoScrollEnabled(false);
