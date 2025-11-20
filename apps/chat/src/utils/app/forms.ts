@@ -25,13 +25,14 @@ import { doesHaveNotAllowedSymbols } from './file';
 
 export type InputElement = HTMLInputElement | HTMLTextAreaElement;
 export const checkValidity = (
-  inputsRefs: RefObject<InputElement>[],
+  inputsRefs: RefObject<InputElement | null>[],
 ): boolean => {
   let isValid = true;
   let focusableElement: InputElement | null = null;
 
-  for (const { current } of inputsRefs) {
-    if (!current) return false;
+  for (const ref of inputsRefs) {
+    if (!ref || !ref.current) return false;
+    const current = ref.current;
 
     const isEmpty =
       !current.value ||

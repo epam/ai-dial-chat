@@ -25,11 +25,9 @@ const PRESS_THRESHOLD = 500;
  */
 export const useContextMenuTrigger = (
   cb: (e: MouseEvent | TouchEvent) => void,
-  ref: React.RefObject<HTMLElement>,
+  ref: React.RefObject<HTMLElement | null>,
 ) => {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timer = useRef<number | null>(null);
 
   const handleContextMenuEvent = useCallback(
@@ -58,8 +56,10 @@ export const useContextMenuTrigger = (
       timer.current &&
       new Date().valueOf() - timer.current < PRESS_THRESHOLD
     ) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = null;
       timer.current = null;
     }
   }, []);
