@@ -8,17 +8,31 @@ interface CheckboxProps
   caption?: string;
   className?: string;
   isPartiallyChecked?: boolean;
+  readonly?: boolean;
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ className, isPartiallyChecked, caption, checked, ...props }, ref) => (
+  (
+    {
+      className,
+      isPartiallyChecked,
+      caption,
+      checked,
+      readonly,
+      disabled,
+      ...props
+    },
+    ref,
+  ) => (
     <div className="flex items-center gap-2">
       <div className="relative size-[18px]">
         <input
+          {...props}
           ref={ref}
           type="checkbox"
           checked={checked}
           onChange={props.onChange}
+          disabled={disabled || readonly}
           data-qa={
             checked
               ? 'checked'
@@ -30,10 +44,10 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             className,
             'peer relative m-0 mr-2 inline size-[18px] shrink-0 appearance-none rounded-sm border  border-primary bg-layer-3 focus-visible:outline-none',
             {
-              'indeterminate::border-primary checked:border-primary':
-                props.disabled,
+              'indeterminate::border-primary checked:border-primary': disabled,
               'checked:border-accent-primary indeterminate:border-accent-primary hover:border-accent-primary':
-                !props.disabled,
+                !disabled,
+              'cursor-not-allowed': disabled || readonly,
             },
           )}
         />
@@ -43,7 +57,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             size={18}
             className={classNames(
               'pointer-events-none absolute left-0 top-0',
-              props.disabled ? 'stroke-primary' : 'text-accent-primary',
+              disabled ? 'stroke-primary' : 'text-accent-primary',
             )}
           />
         )}
@@ -53,7 +67,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             size={18}
             className={classNames(
               'pointer-events-none absolute left-0 top-0',
-              props.disabled ? 'stroke-primary' : 'text-accent-primary',
+              disabled ? 'stroke-primary' : 'text-accent-primary',
             )}
           />
         )}

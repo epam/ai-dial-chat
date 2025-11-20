@@ -166,13 +166,26 @@ export const getFormSchemaPropertyType = (
   return FormSchemaPropertyType.Button;
 };
 
+export const getSortedFormSchemaProperties = (schema: MessageFormSchema) => {
+  const priorityByType = {
+    [FormSchemaPropertyType.Checkbox]: 0,
+    [FormSchemaPropertyType.Button]: 1,
+  };
+
+  return Object.entries(schema.properties).sort(
+    (a, b) =>
+      priorityByType[getFormSchemaPropertyType(schema, a[0])] -
+      priorityByType[getFormSchemaPropertyType(schema, b[0])],
+  );
+};
+
 export const getVisibleFormValues = (
   schema?: MessageFormSchema,
   value?: MessageFormValue,
 ) => {
   if (!schema || !value) return [];
 
-  return Object.entries(schema.properties).map(([key, property]) => {
+  return getSortedFormSchemaProperties(schema).map(([key, property]) => {
     const type = getFormSchemaPropertyType(schema, key);
     const info = {
       type,

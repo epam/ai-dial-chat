@@ -9,6 +9,7 @@ import {
   getFormButtonType,
   getFormCheckboxDefinitionOptions,
   getFormSchemaPropertyType,
+  getSortedFormSchemaProperties,
 } from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
@@ -350,6 +351,10 @@ const CheckboxProperty = ({
   className,
   disabled,
 }: CheckboxPropertyProps) => {
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+
   return (
     <div className={classNames('flex flex-wrap gap-4', className)}>
       {options.map(({ value, label }) => (
@@ -359,6 +364,7 @@ const CheckboxProperty = ({
           onChange={() => onClick(value)}
           caption={label}
           disabled={disabled}
+          readonly={isPlayback}
         />
       ))}
     </div>
@@ -484,9 +490,14 @@ export const FormSchemaMemo = memo(function FormSchema({
   buttonsWrapperClassName,
   buttonClassName,
 }: FormSchemaProps) {
+  const sortedProperties = useMemo(
+    () => getSortedFormSchemaProperties(schema),
+    [schema],
+  );
+
   return (
-    <div className={classNames('flex flex-col gap-2', wrapperClassName)}>
-      {Object.entries(schema.properties).map(([name, property]) => (
+    <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
+      {sortedProperties.map(([name, property]) => (
         <PropertyRenderer
           property={property}
           schema={schema}

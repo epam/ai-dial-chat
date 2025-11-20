@@ -27,6 +27,8 @@ import {
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
 
+const emptyHandler = () => undefined;
+
 interface UserSchemaProps {
   messageIndex: number;
   allMessages: Message[];
@@ -96,7 +98,7 @@ const UserSchemaView = memo(function UserSchemaView({
     );
 
   return schemaPropertiesWithUserResponse ? (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-6">
       {schemaPropertiesWithUserResponse.map((row) => (
         <div key={row.property}>
           {!!row.description && (
@@ -129,7 +131,9 @@ const UserSchemaView = memo(function UserSchemaView({
                   key={String(option.value)}
                   checked={option.selected}
                   caption={option.label}
-                  disabled
+                  disabled={!option.selected}
+                  readonly={option.selected}
+                  onClick={emptyHandler}
                 />
               ))}
             </div>
