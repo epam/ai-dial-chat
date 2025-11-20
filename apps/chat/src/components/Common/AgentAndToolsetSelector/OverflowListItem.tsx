@@ -13,8 +13,8 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
-import { EntityTitle } from './EntityTitle';
 
 interface ListItemContentProps {
   id: string;
@@ -52,7 +52,7 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
     >
       <div className="flex min-w-0 items-center gap-2">
         <ModelIcon entityId={id} entity={item} size={18} />
-        <EntityTitle name={name} version={version} isError={isError} />
+        <ChipTitle name={name} version={version} isError={isError} />
       </div>
       <button
         className="shrink-0 text-secondary hover:text-primary"

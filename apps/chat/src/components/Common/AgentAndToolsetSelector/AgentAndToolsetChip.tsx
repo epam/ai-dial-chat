@@ -11,8 +11,8 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
-import { EntityTitle } from './EntityTitle';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -89,7 +89,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
       onClick={handleClick}
     >
       <ModelIcon entityId={id} entity={item} size={18} />
-      <EntityTitle
+      <ChipTitle
         name={name}
         version={version}
         isError={isError}

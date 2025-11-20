@@ -1,13 +1,13 @@
 import classNames from 'classnames';
 
-interface EntityTitleProps {
+interface ChipTitleProps {
   name: string;
   version?: string;
   isError: boolean;
   className?: string;
 }
 
-export const EntityTitle: React.FC<EntityTitleProps> = ({
+export const ChipTitle: React.FC<ChipTitleProps> = ({
   name,
   version,
   isError,
@@ -20,7 +20,14 @@ export const EntityTitle: React.FC<EntityTitleProps> = ({
         className,
       )}
     >
-      <span className="min-w-0 truncate">{name}</span>
+      <span
+        className={classNames(
+          'min-w-0 truncate',
+          isError ? 'text-error' : 'text-secondary',
+        )}
+      >
+        {name}
+      </span>
       {version && (
         <span
           className={classNames(
