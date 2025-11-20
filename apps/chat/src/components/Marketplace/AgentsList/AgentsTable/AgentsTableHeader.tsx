@@ -21,8 +21,8 @@ const headerItems = [
 
 export const AgentsTableHeader = forwardRef<
   {
-    leftColumnHeaderRef: React.RefObject<HTMLDivElement>;
-    rightColumnHeaderRef: React.RefObject<HTMLDivElement>;
+    leftColumnHeaderRef: React.RefObject<HTMLDivElement | null>;
+    rightColumnHeaderRef: React.RefObject<HTMLDivElement | null>;
   },
   NonNullable<unknown>
 >((_, ref) => {
