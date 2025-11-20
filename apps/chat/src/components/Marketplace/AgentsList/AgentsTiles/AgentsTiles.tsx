@@ -148,7 +148,7 @@ export const AgentsTiles: React.FC<AgentsListProps<MarketplaceEntity>> = ({
                   gridTemplateColumns: `repeat(${colsCount}, minmax(0, 1fr))`,
                   gap: `${gap}px`,
                 }}
-                data-qa="agents-row"
+                data-qa="entities-row"
                 aria-colcount={colsCount}
               >
                 {rowEntities.map((entity) => {

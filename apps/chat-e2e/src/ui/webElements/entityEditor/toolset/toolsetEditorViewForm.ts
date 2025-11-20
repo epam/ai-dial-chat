@@ -38,6 +38,12 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   public oauthIcon = this.authContainer.getChildElementBySelector(
     IconSelectors.oauthIcon,
   );
+  public authDetailsContainer = this.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.authDetailsContainer,
+  );
+  public signInButton = this.authDetailsContainer.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.signInButton,
+  );
   public apiKeyContainer = this.authContainer.getChildElementBySelector(
     AddToolsetSettingsFormSelector.apiKeyContainer,
   );
@@ -63,4 +69,17 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     AddToolsetSettingsFormSelector.allowedToolsLabelSubtitle,
   );
   public allowedTools = new Combobox(this.page, this.rootLocator);
+
+  public async clickSignInButton({
+    isHttpMethodTriggered = true,
+  }: { isHttpMethodTriggered?: boolean } = {}) {
+    if (isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET' && resp.ok(),
+      );
+      await this.signInButton.click();
+      return respPromise;
+    }
+    await this.signInButton.click();
+  }
 }

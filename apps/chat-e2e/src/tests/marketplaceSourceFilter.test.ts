@@ -36,8 +36,8 @@ dialTest(
     marketplace,
     marketplaceFilter,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     modelApiHelper,
     setTestIds,
     baseAssertion,
@@ -98,7 +98,7 @@ dialTest(
             SourcesFilterOptions.myCustomApps,
           )
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
           [appName],
@@ -127,7 +127,7 @@ dialTest(
         await marketplaceFilter
           .filterByPropertyOptionInput(MarketplaceFilterTypes.topics, appTopic)
           .click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
           1,
@@ -158,17 +158,19 @@ dialTest(
       'Set app name in the search field and open it for edit',
       async () => {
         await marketplaceHeader.searchInput.fillInInput(appName);
-        const agentElement = await marketplaceAgentsSection.findAgentElement(
+        const agentElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
-            isWorkspaceAgent: true,
+            isWorkspaceEntity: true,
             isEditable: true,
           },
         );
-        await marketplaceAgents.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities.hoverOver();
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.edit);
       },
     );
@@ -223,9 +225,8 @@ dialTest(
     navigationPanel,
     marketplaceFilter,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
-    marketplaceAgentsAssertion,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     addAppDropdownMenuAssertion,
     entityEditorPage,
     entityEditorGeneralForm,
@@ -266,7 +267,7 @@ dialTest(
             SourcesFilterOptions.myCustomApps,
           );
         await myCustomAppsSourceFilterElement.click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
           [firstAppName],
@@ -280,7 +281,7 @@ dialTest(
       async () => {
         await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceAgentsAssertion.assertElementText(
+        await baseAssertion.assertElementText(
           marketplaceHeader.addAppButton,
           ExpectedConstants.addAppButtonTitle,
         );
@@ -312,7 +313,7 @@ dialTest(
       'Verify newly added app is displayed immediately',
       async () => {
         await entityDetailsModal.closeButton.click();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayIncludesAll(
           actualAgents.map((agent) => agent.name),
           [firstAppName, secondAppName],
@@ -325,11 +326,13 @@ dialTest(
       'Delete the first app and verify it disappears immediately',
       async () => {
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(firstAppName);
+          await marketplaceEntitiesSection.findEntityElement(firstAppName);
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
@@ -337,7 +340,7 @@ dialTest(
           myCustomAppsSourceFilterElement,
           CheckboxState.checked,
         );
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayExcludesAll(
           actualAgentNames,
@@ -373,7 +376,7 @@ dialSharedWithMeTest(
     additionalShareUserMarketplacePage,
     additionalShareUserMarketplace,
     additionalShareUserMarketplaceFilter,
-    additionalShareUserMarketplaceAgentsSection,
+    additionalShareUserMarketplaceEntitiesSection,
     additionalShareUserNavigationPanel,
     additionalShareUserEntityDetailsModal,
     setTestIds,
@@ -470,7 +473,7 @@ dialSharedWithMeTest(
           CheckboxState.checked,
         );
         const actualAgents =
-          await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+          await additionalShareUserMarketplaceEntitiesSection.getAllEntities();
         const actualAgentNames = actualAgents.map((agent) => agent.name);
         baseAssertion.assertArrayIncludesAll(
           actualAgentNames,
@@ -489,7 +492,7 @@ dialSharedWithMeTest(
       'Open shared app and verify no Copy link is available',
       async () => {
         const sharedAppElement =
-          await additionalShareUserMarketplaceAgentsSection.findAgentElement(
+          await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             sharedAppName,
           );
         await sharedAppElement.click();
@@ -523,14 +526,14 @@ dialSharedWithMeTest(
               CheckboxState.checked,
             );
             actualAgents =
-              await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+              await additionalShareUserMarketplaceEntitiesSection.getAllEntities();
           } else {
             await additionalShareUserNavigationPanel.goToMyWorkspace();
             await additionalShareUserMarketplacePage.waitForPageLoaded();
             actualAgents =
-              await additionalShareUserMarketplaceAgentsSection.getAllAgents();
+              await additionalShareUserMarketplaceEntitiesSection.getAllEntities();
             baseAssertion.assertValue(
-              actualAgents.filter((agent) => agent.isWorkspaceAgent).length,
+              actualAgents.filter((agent) => agent.isWorkspaceEntity).length,
               0,
             );
             await baseAssertion.assertElementState(

@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { EntityEditorPreviewToggleSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
@@ -13,5 +14,5 @@ export class EntityEditorPreviewToggle extends BaseElement {
 
   public detailedSwitch = this.getChildElementBySelector(
     EntityEditorPreviewToggleSelectors.detailedSwitch,
-  ).getNthElement(1);
+  ).getChildElementBySelector(Tags.label);
 }

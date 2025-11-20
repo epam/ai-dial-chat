@@ -5,15 +5,17 @@ export const MarketplaceSelectors = {
   addApp: '[data-qa="add-app"]',
   addToolset: '[data-qa="add-toolset"]',
   noWorkspaceResultsFound: '[data-qa="no-workspace-results-found"]',
+  noDataHeader: '[data-qa="no-data-header"]',
   noResultsFoundDescription: '[data-qa="no-data-description"]',
   marketplaceSuggestions: '[data-qa="marketplace-suggestions-label"]',
-  marketplaceAgentSection: '[data-qa="agents-section"]',
-  marketplaceAgentsRow: '[data-qa="agents-row"]',
+  marketplaceEntitiesSection: '[data-qa="entities-section"]',
+  marketplaceEntitiesRow: '[data-qa="entities-row"]',
+  marketplaceNoDataContainer: '[data-qa="no-data-container"]',
 };
 
-export const MarketplaceAgentSelectors = {
-  agent: '[data-qa="agent"]',
-  agentName: '[data-qa="entity-name"]',
+export const MarketplaceEntitySelectors = {
+  entity: '[data-qa="entity"]',
+  entityName: '[data-qa="entity-name"]',
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',
@@ -54,6 +56,7 @@ export const MarketplaceDetailsModal = {
   unpublishButton: '[data-qa="unpublish"]',
   shareButton: '[data-qa="share"]',
   unshareButton: '[data-qa="unshare"]',
+  loginButton: '[data-qa="login-button"]',
 };
 
 export const MarketplaceSideBarSelectors = {

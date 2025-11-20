@@ -101,7 +101,7 @@ export const ApplicationCard = memo(
           'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
           !isPreview && 'cursor-pointer',
         )}
-        data-qa="agent"
+        data-qa="entity"
         aria-details={dataQA}
       >
         <div>

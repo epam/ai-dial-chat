@@ -75,12 +75,12 @@ dialTest(
           );
         }
 
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         expect
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
           .toEqual(expectedDefaultRecentEntities);
 
-        const recentAgentsIcons = await talkToAgents.getAgentsIcons();
+        const recentAgentsIcons = await talkToAgents.getEntityIcons();
         expect
           .soft(
             recentAgentsIcons.length,
@@ -272,7 +272,7 @@ dialTest(
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(nonDefaultModel);
 
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         expect
           .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
           .toBe(nonDefaultModel.name);
@@ -405,7 +405,7 @@ dialTest(
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(configApp);
 
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         baseAssertion.assertValue(recentTalkTo[0], appName);
         baseAssertion.assertValue(
           recentTalkTo[1],
@@ -423,7 +423,7 @@ dialTest.skip(
     dialHomePage,
     marketplaceContainer,
     marketplaceFilter,
-    marketplaceAgents,
+    marketplaceEntities,
     marketplaceHeader,
     talkToAgentDialog,
     chat,
@@ -456,7 +456,7 @@ dialTest.skip(
       async () => {
         await marketplaceHeader.searchInput.fillInInput(searchTerm);
         const entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
 
         const configModels = await modelApiHelper.getModels();
         const matchedModels = configModels.filter(
@@ -487,19 +487,21 @@ dialTest.skip(
       async () => {
         await marketplaceFilter.checkTypeFilterOption(Types.models);
         let entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(expectedMatchedModelsCount);
 
         await marketplaceFilter.checkTypeFilterOption(Types.assistants);
-        entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
+        entitiesCount =
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(expectedMatchedModelsCount);
 
         await marketplaceFilter.checkTypeFilterOption(Types.applications);
-        entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
+        entitiesCount =
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
@@ -511,7 +513,7 @@ dialTest.skip(
       async () => {
         await marketplaceHeader.searchInput.fillInInput('');
         const entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(
