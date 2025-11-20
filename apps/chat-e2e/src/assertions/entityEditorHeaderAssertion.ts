@@ -120,7 +120,7 @@ export class EntityEditorHeaderAssertion extends BaseAssertion {
    */
   public async assertActionTitle(expectedTitle: string) {
     await this.assertElementText(
-      this.entityEditorHeader.actionAndEntitylicationTypeTitle,
+      this.entityEditorHeader.actionAndEntityTypeTitle,
       expectedTitle,
       ExpectedMessages.headerTitleIsValid, // Or a more specific message
     );

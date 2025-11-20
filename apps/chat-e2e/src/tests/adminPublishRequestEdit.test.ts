@@ -1432,7 +1432,7 @@ dialAdminTest(
           firstVersion,
         );
         await adminPublishingApprovalModal.goToEntityReview({
-          isHttpMethodTriggered: true,
+          isHttpMethodTriggered: false,
         });
         await baseAssertion.assertElementText(
           adminChatHeader.version,
@@ -1543,7 +1543,7 @@ dialAdminTest(
           thirdVersion,
         );
         await adminPublishingApprovalModal.goToEntityReview({
-          isHttpMethodTriggered: true,
+          isHttpMethodTriggered: false,
         });
         await adminChatHeaderAssertion.assertElementText(
           adminChatHeader.version,

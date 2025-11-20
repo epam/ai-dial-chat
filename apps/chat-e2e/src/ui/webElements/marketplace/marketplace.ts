@@ -1,11 +1,12 @@
 import { Tags } from '@/src/ui/domData';
 import {
   ErrorLabelSelectors,
+  IconSelectors,
   MarketplaceSelectors,
   marketplaceContainer,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
-import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
+import { MarketplaceEntitiesSection } from '@/src/ui/webElements/marketplace/marketplaceEntitiesSection';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { Locator, Page } from '@playwright/test';
 
@@ -15,7 +16,7 @@ export class Marketplace extends BaseElement {
   }
 
   private marketplaceHeader!: MarketplaceHeader;
-  private marketplaceAgentsSection!: MarketplaceAgentsSection;
+  private marketplaceEntitiesSection!: MarketplaceEntitiesSection;
 
   getMarketplaceHeader(): MarketplaceHeader {
     if (!this.marketplaceHeader) {
@@ -27,31 +28,44 @@ export class Marketplace extends BaseElement {
     return this.marketplaceHeader;
   }
 
-  getMarketplaceAgentsSection(): MarketplaceAgentsSection {
-    if (!this.marketplaceAgentsSection) {
-      this.marketplaceAgentsSection = new MarketplaceAgentsSection(
+  getMarketplaceEntitiesSection(): MarketplaceEntitiesSection {
+    if (!this.marketplaceEntitiesSection) {
+      this.marketplaceEntitiesSection = new MarketplaceEntitiesSection(
         this.page,
         this.rootLocator,
       );
     }
-    return this.marketplaceAgentsSection;
+    return this.marketplaceEntitiesSection;
   }
 
   public marketplaceSuggestionsLabel = this.getChildElementBySelector(
     MarketplaceSelectors.marketplaceSuggestions,
+  );
+  public marketplaceNoDataContainer = this.getChildElementBySelector(
+    MarketplaceSelectors.marketplaceNoDataContainer,
   );
   public noWorkspaceResultsFound = this.getChildElementBySelector(
     MarketplaceSelectors.noWorkspaceResultsFound,
   );
   public noWorkspaceResultsFoundIcon =
     this.noWorkspaceResultsFound.getChildElementBySelector(Tags.svg);
-  public noResultsFound = this.getChildElementBySelector(
-    ErrorLabelSelectors.noResultFound,
-  );
+  public noResultsFound =
+    this.marketplaceNoDataContainer.getChildElementBySelector(
+      ErrorLabelSelectors.noResultFound,
+    );
   public noResultsFoundIcon = this.noResultsFound.getChildElementBySelector(
     Tags.svg,
   );
-  public noResultsFoundDescription = this.getChildElementBySelector(
-    MarketplaceSelectors.noResultsFoundDescription,
-  );
+  public noDataHeader =
+    this.marketplaceNoDataContainer.getChildElementBySelector(
+      MarketplaceSelectors.noDataHeader,
+    );
+  public noResultsFoundDescription =
+    this.marketplaceNoDataContainer.getChildElementBySelector(
+      MarketplaceSelectors.noResultsFoundDescription,
+    );
+  public noToolsetsIcon =
+    this.marketplaceNoDataContainer.getChildElementBySelector(
+      IconSelectors.noToolsetIcon,
+    );
 }
