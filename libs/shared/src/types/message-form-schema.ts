@@ -35,10 +35,10 @@ export interface FormSchemaProperty extends JSONSchemaPropertyBase {
   uniqueItems?: boolean;
   items?: {
     $ref: string;
-  }
+  };
 }
 
 export interface MessageFormSchema extends JSONSchemaBase<FormSchemaProperty> {
   [DialSchemaProperties.DialChatMessageInputDisabled]?: boolean;
-  definitions?: Record<string, FormSchemaDefinition>
+  definitions?: Record<string, FormSchemaDefinition>;
 }
