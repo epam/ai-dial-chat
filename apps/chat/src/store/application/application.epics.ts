@@ -869,7 +869,7 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
       actions.push(of(UIActions.setEditorLoader(false)));
 
-      return from(router.push(route)).pipe(switchMap(() => concat(...actions)));
+      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
     }),
   );
 
