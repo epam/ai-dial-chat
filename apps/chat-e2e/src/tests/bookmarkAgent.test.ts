@@ -16,8 +16,8 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     navigationPanel,
     entityDetailsModal,
     confirmationDialog,
@@ -28,7 +28,7 @@ dialTest(
     toast,
     tooltipAssertion,
     toastAssertion,
-    marketplaceAgentsAssertion,
+    baseAssertion,
     adminCustomApplicationPublishingUtil,
     chat,
     talkToAgents,
@@ -36,7 +36,7 @@ dialTest(
     dialHomePage,
     modelApiHelper,
     talkToAgentDialog,
-    agentVersionsDropdownMenuAssertion,
+    entityVersionsDropdownMenuAssertion,
     fileApiHelper,
   }) => {
     setTestIds(
@@ -93,18 +93,20 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
         agentToAddElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         const addBookmarkIcon =
-          marketplaceAgents.getAgentElementAddBookmarkIcon(agentToAddElement);
+          marketplaceEntities.getEntityElementAddBookmarkIcon(
+            agentToAddElement,
+          );
         await addBookmarkIcon.hoverOver();
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.addToMyWorkspaceTooltip,
         );
-        await marketplaceAgentsAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           addBookmarkIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceAgentsAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           addBookmarkIcon,
           Cursors.pointer,
         );
@@ -114,19 +116,21 @@ dialTest(
     await dialTest.step(
       'Click on bookmark icon and verify toast message is shown, bookmark icon is changed',
       async () => {
-        await marketplaceAgents.addAgentToWorkspace(agentToAddElement);
+        await marketplaceEntities.addEntityToWorkspace(agentToAddElement);
         await toastAssertion.assertToastMessage(
           ExpectedConstants.agentAddedToWorkspaceMessage,
         );
         await toast.closeToast();
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             agentToAddElement,
           ),
           'visible',
         );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementAddBookmarkIcon(agentToAddElement),
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementAddBookmarkIcon(
+            agentToAddElement,
+          ),
           'hidden',
         );
       },
@@ -138,13 +142,13 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         workspaceAgentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         twoSortedVersions = SortingUtil.sortVersionsArray([
           appFirstVersion.version!,
           appSecondVersion.version!,
         ]);
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(workspaceAgentElement),
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityVersion(workspaceAgentElement),
           twoSortedVersions[0],
         );
       },
@@ -157,10 +161,10 @@ dialTest(
         await navigationPanel.backToChat({ isHttpMethodTriggered: true });
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await chat.changeAgentButton.click();
-        const agentElement = talkToAgents.getAgent(appName);
+        const agentElement = talkToAgents.getEntity(appName);
         await talkToAgentDialogAssertion.assertAgentState(appName, 'visible');
         await talkToAgentDialog.getVersionMenuTrigger(agentElement).click();
-        await agentVersionsDropdownMenuAssertion.assertMenuOptions(
+        await entityVersionsDropdownMenuAssertion.assertMenuOptions(
           twoSortedVersions,
         );
       },
@@ -183,7 +187,7 @@ dialTest(
             expectedInstalledDeploymentsNames.push(expectedName);
           }
         }
-        const actualAgentNames = await talkToAgents.getAgentNames();
+        const actualAgentNames = await talkToAgents.getEntityNames();
         talkToAgentDialogAssertion.assertArrayIncludesAll(
           actualAgentNames,
           expectedInstalledDeploymentsNames,
@@ -254,9 +258,9 @@ dialTest(
         await navigationPanel.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded();
         marketplaceAgentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         removeBookmarkIcon =
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             marketplaceAgentElement,
           );
         await removeBookmarkIcon.click();
@@ -281,8 +285,8 @@ dialTest(
           confirmationDialog,
           'hidden',
         );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             marketplaceAgentElement,
           ),
           'visible',
@@ -297,11 +301,11 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.removeFromMyWorkspaceTooltip,
         );
-        await marketplaceAgentsAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           removeBookmarkIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceAgentsAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           removeBookmarkIcon,
           Cursors.pointer,
         );
@@ -317,12 +321,9 @@ dialTest(
           'visible',
         );
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-        await marketplaceAgentsAssertion.assertElementState(
-          removeBookmarkIcon,
-          'hidden',
-        );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementAddBookmarkIcon(
+        await baseAssertion.assertElementState(removeBookmarkIcon, 'hidden');
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementAddBookmarkIcon(
             marketplaceAgentElement,
           ),
           'visible',
@@ -335,13 +336,13 @@ dialTest(
       async () => {
         await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
-        marketplaceAgentsAssertion.assertValue(
-          allAgents.filter((agent) => agent.isWorkspaceAgent).length,
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
+        baseAssertion.assertValue(
+          allAgents.filter((agent) => agent.isWorkspaceEntity).length,
           0,
           ExpectedMessages.elementsCountIsValid,
         );
-        marketplaceAgentsAssertion.assertValue(
+        baseAssertion.assertValue(
           allAgents.filter(
             (agent) => agent.isSuggested && agent.name === appName,
           ).length,
@@ -358,14 +359,14 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     dialHomePage,
     entityDetailsModal,
     entityDetailsModalAssertion,
     localStorageManager,
     setTestIds,
-    marketplaceAgentsAssertion,
+    baseAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-4465');
@@ -411,7 +412,7 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
         agentToAddElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await agentToAddElement.click();
       },
     );
@@ -425,21 +426,23 @@ dialTest(
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await dialHomePage.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        addedAgentElement = await marketplaceAgentsSection.findAgentElement(
+        addedAgentElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
-            isWorkspaceAgent: true,
+            isWorkspaceEntity: true,
           },
         );
 
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(
             agentToAddElement,
           ),
           'visible',
         );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementAddBookmarkIcon(agentToAddElement),
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementAddBookmarkIcon(
+            agentToAddElement,
+          ),
           'hidden',
         );
       },
@@ -479,8 +482,8 @@ dialTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     navigationPanel,
     entityDetailsModal,
     tooltipAssertion,
@@ -490,7 +493,6 @@ dialTest(
     localStorageManager,
     setTestIds,
     confirmationDialog,
-    marketplaceAgentsAssertion,
     confirmationDialogAssertion,
     baseAssertion,
     adminCustomApplicationPublishingUtil,
@@ -538,7 +540,7 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
         agentToAddElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
+          await marketplaceEntitiesSection.findEntityElement(appName);
         await agentToAddElement.click();
       },
     );
@@ -551,11 +553,11 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.addToMyWorkspaceTooltip,
         );
-        await marketplaceAgentsAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           addBookmarkIconElement,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceAgentsAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           addBookmarkIconElement,
           Cursors.pointer,
         );
@@ -569,7 +571,7 @@ dialTest(
         await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedVersions[1]);
-        await entityDetailsModal.addAgentToWorkspace();
+        await entityDetailsModal.addEntityToWorkspace();
         await toastAssertion.assertToastMessage(
           ExpectedConstants.agentAddedToWorkspaceMessage,
         );
@@ -592,9 +594,9 @@ dialTest(
         await navigationPanel.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         workspaceAgentElement =
-          await marketplaceAgentsSection.findAgentElement(appName);
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(workspaceAgentElement),
+          await marketplaceEntitiesSection.findEntityElement(appName);
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityVersion(workspaceAgentElement),
           sortedVersions[0],
         );
       },
@@ -633,11 +635,11 @@ dialTest(
         await tooltipAssertion.assertTooltipContent(
           ExpectedConstants.removeFromMyWorkspaceTooltip,
         );
-        await marketplaceAgentsAssertion.assertElementBorderColors(
+        await baseAssertion.assertElementBorderColors(
           removeBookmarkIconElement,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
-        await marketplaceAgentsAssertion.assertElementCursor(
+        await baseAssertion.assertElementCursor(
           removeBookmarkIconElement,
           Cursors.pointer,
         );
@@ -690,22 +692,22 @@ dialTest(
         );
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
-          allAgents.filter((agent) => agent.isWorkspaceAgent).length,
+          allAgents.filter((agent) => agent.isWorkspaceEntity).length,
           0,
           ExpectedMessages.elementsCountIsValid,
         );
-        const agentElement = await marketplaceAgentsSection.findAgentElement(
+        const agentElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
-          { isWorkspaceAgent: false },
+          { isWorkspaceEntity: false },
         );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementAddBookmarkIcon(agentElement),
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementAddBookmarkIcon(agentElement),
           'visible',
         );
-        await marketplaceAgentsAssertion.assertElementState(
-          marketplaceAgents.getAgentElementRemoveBookmarkIcon(agentElement),
+        await baseAssertion.assertElementState(
+          marketplaceEntities.getEntityElementRemoveBookmarkIcon(agentElement),
           'hidden',
         );
       },

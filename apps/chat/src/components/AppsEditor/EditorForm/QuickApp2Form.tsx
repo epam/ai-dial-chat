@@ -162,12 +162,15 @@ export const QuickApp2Form = () => {
     [getValues, setValue, handleCloseDetails],
   );
 
-  const commonDetailsProps = {
-    onClose: handleCloseDetails,
-    onChangeVersion: handleChangeVersionInDetails,
-    onRemove: handleRemoveFromDetails,
-    isPreview: true,
-  };
+  const commonDetailsProps = useMemo(
+    () => ({
+      onClose: handleCloseDetails,
+      onChangeVersion: handleChangeVersionInDetails,
+      onRemove: handleRemoveFromDetails,
+      isPreview: true,
+    }),
+    [handleCloseDetails, handleChangeVersionInDetails, handleRemoveFromDetails],
+  );
 
   return (
     <div

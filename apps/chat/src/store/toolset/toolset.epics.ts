@@ -4,6 +4,7 @@ import {
   catchError,
   concat,
   concatMap,
+  defer,
   filter,
   forkJoin,
   from,
@@ -37,6 +38,7 @@ import {
 } from '@/src/types/toolsets';
 
 import {
+  ApplicationActions,
   ConversationsActions,
   MarketplaceActions,
   PublicationActions,
@@ -626,17 +628,25 @@ const startSignInProcessEpic: AppEpic = (action$) =>
             : of(undefined),
       }).pipe(
         switchMap(() => {
+          const autoUpdateAction$ =
+            window.location.pathname === Routes.AppsEditor
+              ? of(ApplicationActions.setShouldTriggerEditorAutoUpdate(true))
+              : EMPTY;
+
           if (
             authSettings?.authenticationType === ToolsetAuthTypes.API_KEY &&
             payload.apiKey
           ) {
-            return of(
-              ToolsetActions.logInToolset({
-                toolsetId: payload.toolset.id,
-                authLevel: payload.authLevel,
-                authType: ToolsetAuthTypes.API_KEY,
-                apiKey: payload.apiKey,
-              }),
+            return concat(
+              autoUpdateAction$,
+              of(
+                ToolsetActions.logInToolset({
+                  toolsetId: payload.toolset.id,
+                  authLevel: payload.authLevel,
+                  authType: ToolsetAuthTypes.API_KEY,
+                  apiKey: payload.apiKey,
+                }),
+              ),
             );
           }
           if (
@@ -675,7 +685,13 @@ const startSignInProcessEpic: AppEpic = (action$) =>
               );
             }
 
-            window.location.assign(url.toString());
+            return concat(
+              autoUpdateAction$,
+              defer(() => {
+                window.location.assign(url.toString());
+                return EMPTY;
+              }),
+            );
           }
 
           return EMPTY;

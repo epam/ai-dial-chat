@@ -29,6 +29,7 @@ const initialState: ApplicationState = {
   publicFolders: [],
   logsEntityId: undefined,
   editorStep: MarketplaceEditorSteps.General,
+  shouldTriggerEditorAutoUpdate: false,
 };
 
 export const applicationSlice = createSlice({
@@ -120,6 +121,12 @@ export const applicationSlice = createSlice({
     ) => {
       state.appDetails = payload.oldApplication;
       state.appLoading = UploadStatus.FAILED;
+    },
+    setShouldTriggerEditorAutoUpdate: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.shouldTriggerEditorAutoUpdate = payload;
     },
     get: (
       state,

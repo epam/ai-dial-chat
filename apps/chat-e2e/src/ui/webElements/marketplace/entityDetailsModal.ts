@@ -1,7 +1,7 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { IconSelectors, MarketplaceAgentSelectors } from '@/src/ui/selectors';
+import { IconSelectors, MarketplaceEntitySelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
@@ -28,10 +28,10 @@ export class EntityDetailsModal extends BaseElement {
     MarketplaceDetailsModal.entityVersion,
   );
   public entityTopics = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.topicsContainer,
+    MarketplaceEntitySelectors.topicsContainer,
   );
   public entityTopic = this.entityTopics.getChildElementBySelector(
-    MarketplaceAgentSelectors.topic,
+    MarketplaceEntitySelectors.topic,
   );
   public useButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.useButton,
@@ -51,8 +51,11 @@ export class EntityDetailsModal extends BaseElement {
   public unshareButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.unshareButton,
   );
+  public loginButton = this.getChildElementBySelector(
+    MarketplaceDetailsModal.loginButton,
+  );
   public arrowIcon = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.arrowIcon,
+    MarketplaceEntitySelectors.arrowIcon,
   ).getChildElementBySelector(Tags.svg);
   public unpublishButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.unpublishButton,
@@ -61,25 +64,25 @@ export class EntityDetailsModal extends BaseElement {
     MarketplaceDetailsModal.versionMenuTrigger,
   );
   public addBookmarkIcon = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.addBookmarkIcon,
+    MarketplaceEntitySelectors.addBookmarkIcon,
   ).getChildElementBySelector(Tags.svg);
   public removeBookmarkIcon = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.removeBookmarkIcon,
+    MarketplaceEntitySelectors.removeBookmarkIcon,
   ).getChildElementBySelector(Tags.svg);
   public copyLink = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.copyLink,
+    MarketplaceEntitySelectors.copyLink,
   );
   public copyLinkText = this.copyLink.getChildElementBySelector(
-    MarketplaceAgentSelectors.copyLinkText,
+    MarketplaceEntitySelectors.copyLinkText,
   );
   public copyLinkIcon = this.copyLink.getChildElementBySelector(
-    MarketplaceAgentSelectors.copyIcon,
+    MarketplaceEntitySelectors.copyIcon,
   );
   public copiedLink = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.copiedLink,
+    MarketplaceEntitySelectors.copiedLink,
   );
   public copiedLinkIcon = this.copiedLink.getChildElementBySelector(
-    MarketplaceAgentSelectors.copiedIcon,
+    MarketplaceEntitySelectors.copiedIcon,
   );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
   public entityContent = this.getChildElementBySelector(
@@ -98,14 +101,17 @@ export class EntityDetailsModal extends BaseElement {
     MarketplaceDetailsModal.entityReleaseDate,
   );
   public iconContainer = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.iconContainer,
+    MarketplaceEntitySelectors.iconContainer,
   );
   public icon = this.getElementIcon(this.iconContainer);
+  public defaultToolsetIcon = this.iconContainer.getChildElementBySelector(
+    IconSelectors.defaultToolsetIcon,
+  );
   public externalAppIcon = this.iconContainer.getChildElementBySelector(
     IconSelectors.externalAppIcon,
   );
   public openInNewTabButton = this.getChildElementBySelector(
-    MarketplaceAgentSelectors.openInNewTab,
+    MarketplaceEntitySelectors.openInNewTab,
   );
   public openInNewTabButtonTitle =
     this.openInNewTabButton.getChildElementBySelector(Tags.span);
@@ -131,7 +137,7 @@ export class EntityDetailsModal extends BaseElement {
     await this.waitForState({ state: 'hidden' });
   }
 
-  public async addAgentToWorkspace() {
+  public async addEntityToWorkspace() {
     const respPromise = this.page.waitForResponse(
       (r) =>
         r.url().includes(API.installedDeploymentsHost()) && r.status() === 200,

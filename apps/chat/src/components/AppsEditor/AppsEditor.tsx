@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -99,6 +99,9 @@ export const AppsEditor = () => {
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const isSchemaApplicationType = !isApplicationType(type);
+  const shouldTriggerEditorAutoUpdate = useAppSelector(
+    ApplicationSelectors.selectShouldTriggerEditorAutoUpdate,
+  );
 
   const changeEditorTabRef = useRef<MarketplaceEditorSteps | null>(null);
   const saveAndExitRef = useRef(false);
@@ -329,6 +332,13 @@ export const AppsEditor = () => {
     if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
     void handleSubmit(undefined, true, true);
   }, [editorStep, handleSubmit, isAppPublic]);
+
+  useEffect(() => {
+    if (shouldTriggerEditorAutoUpdate && !isAppPublic) {
+      void handleSubmit(undefined, true, true);
+      dispatch(ApplicationActions.setShouldTriggerEditorAutoUpdate(false));
+    }
+  }, [shouldTriggerEditorAutoUpdate, isAppPublic, handleSubmit, dispatch]);
 
   return (
     <FormProvider {...formMethods}>
