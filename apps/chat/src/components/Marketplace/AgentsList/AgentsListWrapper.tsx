@@ -5,7 +5,11 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { stripQueryParamsFromUrl } from '@/src/utils/app/url/query-params';
+
 import { Translation } from '@/src/types/translation';
+
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 interface Props {
   children: React.ReactNode;
@@ -22,6 +26,7 @@ export interface AgentsListWrapperRef {
 export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
   ({ children, separatorRowId, rowsHeight, className }, ref) => {
     const { t } = useTranslation(Translation.Marketplace);
+
     const router = useRouter();
 
     const parentRef = useRef<HTMLDivElement>(null);
@@ -39,18 +44,31 @@ export const AgentsListWrapper = forwardRef<AgentsListWrapperRef, Props>(
     }));
 
     useEffect(() => {
-      const handleRouteChange = () => {
-        parentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      let previousUrl = router.asPath;
+
+      const handleRouteChange = (url: string) => {
+        const normalizedPrevUrl = stripQueryParamsFromUrl(previousUrl, [
+          MarketplaceQueryParams.model,
+        ]);
+        const normalizedNewUrl = stripQueryParamsFromUrl(url, [
+          MarketplaceQueryParams.model,
+        ]);
+
+        if (normalizedNewUrl !== normalizedPrevUrl) {
+          parentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        previousUrl = url;
       };
 
       router.events.on('routeChangeComplete', handleRouteChange);
 
-      handleRouteChange();
-
       return () => {
         router.events.off('routeChangeComplete', handleRouteChange);
       };
-    }, [router.events]);
+      // We don't need to re-run this effect when the router changes, because we just register the event listener once.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
       <section
