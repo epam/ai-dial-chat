@@ -6,6 +6,7 @@ import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 
 import { MemoizedReactMarkdown } from '@/src/components/Markdown/MemoizedReactMarkdown';
 
+import rehypeExternalLinks from 'rehype-external-links';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
@@ -39,7 +40,6 @@ export const EntityMarkdownDescription = ({
         className,
         'prose-sm text-xs prose-a:break-all prose-a:underline',
       )}
-      linkTarget="_blank"
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[
         rehypeRaw,
@@ -52,6 +52,10 @@ export const EntityMarkdownDescription = ({
               span: [...(defaultSchema.attributes?.span || []), ['style']],
             },
           },
+        ],
+        [
+          rehypeExternalLinks,
+          { target: '_blank', rel: ['noopener', 'noreferrer'] },
         ],
       ]}
     >

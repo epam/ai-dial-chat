@@ -54,6 +54,9 @@ const selectLogsEntityId = (state: RootState) =>
 
 const selectEditorStep = (state: RootState) => rootSelector(state).editorStep;
 
+const selectShouldTriggerEditorAutoUpdate = (state: RootState) =>
+  rootSelector(state).shouldTriggerEditorAutoUpdate;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -66,4 +69,5 @@ export const ApplicationSelectors = {
   selectSelectedWidget,
   selectLogsEntityId,
   selectEditorStep,
+  selectShouldTriggerEditorAutoUpdate,
 };

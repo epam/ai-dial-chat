@@ -34,10 +34,15 @@ const NoMarketplaceEntitiesFound = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   return (
-    <div className="flex grow flex-col items-center justify-center">
+    <div
+      className="flex grow flex-col items-center justify-center"
+      data-qa="no-data-container"
+    >
       {children}
       {header && (
-        <span className="mt-5 text-lg font-semibold">{t(header)}</span>
+        <span className="mt-5 text-lg font-semibold" data-qa="no-data-header">
+          {t(header)}
+        </span>
       )}
       {description && (
         <span

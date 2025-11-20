@@ -10,13 +10,13 @@ import { reportAnIssueHash, requestApiKeyHash } from '@/src/constants/footer';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, FeatureData } from '@epam/ai-dial-shared';
 
 const footerHtmlMessage = `<p data-qa="test">Some footer text.</p><a data-qa="reportAnIssue" href="${reportAnIssueHash}">reportAnIssue</a> and <a data-qa="requestApiKey" href="${requestApiKeyHash}">requestApiKey</a>`;
-const footerEnabledFeatures = new Set([
-  Feature.Footer,
-  Feature.RequestApiKey,
-  Feature.ReportAnIssue,
+const footerEnabledFeatures = new Map<Feature, FeatureData | undefined>([
+  [Feature.Footer, undefined],
+  [Feature.RequestApiKey, undefined],
+  [Feature.ReportAnIssue, undefined],
 ]);
 
 const FooterWithSystemDialogs = () => (
@@ -94,9 +94,9 @@ describe('FooterMessage', () => {
   });
 
   it('renders nothing when footer feature is disabled', async () => {
-    const footerFeatures = new Set([
-      Feature.RequestApiKey,
-      Feature.ReportAnIssue,
+    const footerFeatures = new Map([
+      [Feature.RequestApiKey, undefined],
+      [Feature.ReportAnIssue, undefined],
     ]);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
       footerFeatures,
@@ -110,7 +110,10 @@ describe('FooterMessage', () => {
   });
 
   it('does not open the request api key dialog if this option is disabled', async () => {
-    const footerFeatures = new Set([Feature.Footer, Feature.ReportAnIssue]);
+    const footerFeatures = new Map([
+      [Feature.Footer, undefined],
+      [Feature.ReportAnIssue, undefined],
+    ]);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
       footerFeatures,
     );
@@ -145,7 +148,10 @@ describe('FooterMessage', () => {
   });
 
   it('does not open the request an issue dialog if this option is disabled', async () => {
-    const footerFeatures = new Set([Feature.Footer, Feature.RequestApiKey]);
+    const footerFeatures = new Map([
+      [Feature.Footer, undefined],
+      [Feature.RequestApiKey, undefined],
+    ]);
     vi.mocked(SettingsSelectors.selectEnabledFeatures).mockReturnValue(
       footerFeatures,
     );

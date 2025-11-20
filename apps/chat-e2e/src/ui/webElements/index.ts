@@ -47,7 +47,7 @@ export * from './publicationReviewControl';
 export * from './publishingRules';
 export * from './baseLayoutContainer';
 export * from './marketplace/entityDetailsModal';
-export * from './marketplace/marketplaceAgents';
+export * from './marketplace/marketplaceEntities';
 export * from './marketplace/marketplace';
 export * from './marketplace/marketplaceContainer';
 export * from './marketplace/marketplaceFilter';

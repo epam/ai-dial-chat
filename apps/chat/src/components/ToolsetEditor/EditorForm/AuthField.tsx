@@ -138,7 +138,10 @@ const AuthTypeSection = ({
         </button>
 
         {isSelected && type !== ToolsetAuthTypes.NONE && (
-          <div className="flex flex-col gap-4 border-t border-tertiary p-4">
+          <div
+            className="flex flex-col gap-4 border-t border-tertiary p-4"
+            data-qa="auth-details-container"
+          >
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
               <RadioButton
                 id={WithLogin.WithLogin}

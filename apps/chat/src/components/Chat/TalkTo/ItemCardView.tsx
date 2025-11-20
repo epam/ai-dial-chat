@@ -140,7 +140,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         className,
       )}
       aria-selected={isSelected}
-      data-qa="agent"
+      data-qa="entity"
     >
       {hasContextMenu && (
         <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">

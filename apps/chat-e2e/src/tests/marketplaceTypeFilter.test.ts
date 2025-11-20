@@ -26,7 +26,7 @@ dialTest(
     marketplacePage,
     marketplaceFilter,
     marketplace,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     navigationPanel,
     baseAssertion,
   }) => {
@@ -68,7 +68,7 @@ dialTest(
             EntityType.Model,
           )
           .click();
-        const actualModels = await marketplaceAgentsSection.getAllAgents();
+        const actualModels = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualModels.length,
           groupedModelNames.length,
@@ -86,9 +86,9 @@ dialTest(
       'Switch to "My Workspace" tab and verify only installed models are displayed, other models stay under "Suggested results"',
       async () => {
         await navigationPanel.goToMyWorkspace();
-        const allAgents = await marketplaceAgentsSection.getAllAgents();
+        const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const actualWorkspaceModels = allAgents
-          .filter((agent) => agent.isWorkspaceAgent)
+          .filter((agent) => agent.isWorkspaceEntity)
           .map((agent) => agent.name);
         baseAssertion.assertValue(
           actualWorkspaceModels.length,
@@ -153,7 +153,8 @@ dialTest(
           marketplace.noWorkspaceResultsFound,
           'visible',
         );
-        const suggestedAgents = await marketplaceAgentsSection.getAllAgents();
+        const suggestedAgents =
+          await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           suggestedAgents.length,
           groupedModelNames.length,
@@ -180,8 +181,8 @@ dialTest(
     marketplaceHeader,
     navigationPanel,
     marketplaceFilter,
-    marketplaceAgents,
-    marketplaceAgentsSection,
+    marketplaceEntities,
+    marketplaceEntitiesSection,
     confirmationDialog,
     addAppDropdownMenu,
     entityEditorPage,
@@ -217,7 +218,7 @@ dialTest(
           )
           .click();
         const allAgents = await modelApiHelper.getModels();
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         for (const actualAgent of actualAgents) {
           const actualAgentModel = allAgents.find(
             (app) => app.name === actualAgent.name,
@@ -264,9 +265,9 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await entityDetailsModal.closeButton.click();
 
-        addedAppElement = await marketplaceAgentsSection.findAgentElement(
+        addedAppElement = await marketplaceEntitiesSection.findEntityElement(
           addedAppName,
-          { isWorkspaceAgent: true, isEditable: true },
+          { isWorkspaceEntity: true, isEditable: true },
         );
         await baseAssertion.assertElementState(addedAppElement, 'visible');
       },
@@ -276,18 +277,18 @@ dialTest(
       'Delete added custom app and verify it disappears immediately',
       async () => {
         await addedAppElement.hoverOver();
-        await marketplaceAgents
-          .getAgentElementDotsMenu(addedAppElement)
+        await marketplaceEntities
+          .getEntityElementDotsMenu(addedAppElement)
           .click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertArrayExcludesAll(
           actualAgents
-            .filter((agent) => agent.isWorkspaceAgent)
+            .filter((agent) => agent.isWorkspaceEntity)
             .map((agent) => agent.name),
           [addedAppName],
           MarketplaceExpectedMessages.filteredAgentsAreValid,

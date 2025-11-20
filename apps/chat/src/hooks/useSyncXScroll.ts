@@ -7,8 +7,8 @@ import { useEffect } from 'react';
  */
 
 export const useSyncXScroll = (
-  firstRef: React.RefObject<HTMLElement> | null,
-  secondRef: React.RefObject<HTMLElement> | null,
+  firstRef: React.RefObject<HTMLElement | null> | null,
+  secondRef: React.RefObject<HTMLElement | null> | null,
 ) => {
   useEffect(() => {
     const firstElement = firstRef?.current;

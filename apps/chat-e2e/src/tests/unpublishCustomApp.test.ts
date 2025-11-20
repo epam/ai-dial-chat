@@ -28,8 +28,8 @@ dialAdminTest(
     {
       marketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
-      marketplaceAgents,
+      marketplaceEntitiesSection,
+      marketplaceEntities,
       publishingRequestDialog,
       publishingRequestDialogAssertion,
       publishingRulesAssertion,
@@ -46,7 +46,7 @@ dialAdminTest(
       adminPublishedAppReviewModalAssertion,
       adminPublishedAppReviewModalControlsAssertion,
       setTestIds,
-      marketplaceAgentsAssertion,
+      baseAssertion,
       adminCustomApplicationPublishingUtil,
       publishRequestBuilder,
       customApplicationBuilder,
@@ -128,14 +128,17 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: false,
-          isEditable: false,
-        });
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: false,
+            isEditable: false,
+          },
+        );
         await appElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities.getEntityElementDotsMenu(appElement).click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.unpublish);
       },
     );
@@ -357,17 +360,17 @@ dialAdminTest(
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: true,
-          isEditable: true,
-        });
-        await marketplaceAgentsAssertion.assertElementState(
-          appElement,
-          'visible',
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: true,
+            isEditable: true,
+          },
         );
+        await baseAssertion.assertElementState(appElement, 'visible');
 
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
-        marketplaceAgentsAssertion.assertValue(
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
+        baseAssertion.assertValue(
           actualAgents.length,
           1,
           ExpectedMessages.elementsCountIsValid,
@@ -401,8 +404,8 @@ dialAdminTest(
   async ({
     adminMarketplacePage,
     adminMarketplaceHeader,
-    adminMarketplaceAgentsSection,
-    adminMarketplaceAgents,
+    adminMarketplaceEntitiesSection,
+    adminMarketplaceEntities,
     adminPublishingRequestDialog,
     adminPublishingRequestDialogAssertion,
     baseAssertion,
@@ -500,19 +503,19 @@ dialAdminTest(
         });
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await adminMarketplaceAgentsSection.findAgentElement(
+        appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
-            isWorkspaceAgent: false,
+            isWorkspaceEntity: false,
             isEditable: false,
           },
         );
         await appElement.hoverOver();
-        await adminMarketplaceAgents
-          .getAgentElementDotsMenu(appElement)
+        await adminMarketplaceEntities
+          .getEntityElementDotsMenu(appElement)
           .click();
-        await adminMarketplaceAgents
-          .getAgentDropdownMenu()
+        await adminMarketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.unpublish);
       },
     );
@@ -597,10 +600,10 @@ dialAdminTest(
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await adminMarketplaceAgentsSection.findAgentElement(
+        appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
-            isWorkspaceAgent: false,
+            isWorkspaceEntity: false,
             isEditable: false,
           },
         );
@@ -656,9 +659,9 @@ dialAdminTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     entityDetailsModal,
-    marketplaceAgents,
+    marketplaceEntities,
     publishingRequestDialog,
     publishingRequestDialogAssertion,
     appToPublishAssertion,
@@ -672,7 +675,7 @@ dialAdminTest(
     adminPublishedApplicationReviewModal,
     adminPublishedAppReviewModalAssertion,
     setTestIds,
-    marketplaceAgentsAssertion,
+    baseAssertion,
     entityDetailsModalAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
@@ -711,10 +714,13 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: false,
-          isEditable: false,
-        });
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: false,
+            isEditable: false,
+          },
+        );
         await appElement.click();
         await entityDetailsModal.versionMenuTrigger.click();
         await entityDetailsModal
@@ -800,12 +806,15 @@ dialAdminTest(
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: false,
-          isEditable: false,
-        });
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(appElement),
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: false,
+            isEditable: false,
+          },
+        );
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityVersion(appElement),
           sortedAppVersions[0],
         );
       },
