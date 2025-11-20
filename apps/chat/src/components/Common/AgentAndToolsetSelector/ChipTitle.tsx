@@ -23,7 +23,7 @@ export const ChipTitle: React.FC<ChipTitleProps> = ({
       <span
         className={classNames(
           'min-w-0 truncate',
-          isError ? 'text-error' : 'text-secondary',
+          isError ? 'text-error' : 'text-primary',
         )}
       >
         {name}
