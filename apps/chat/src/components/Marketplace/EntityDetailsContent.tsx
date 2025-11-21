@@ -19,7 +19,7 @@ export function EntityDetailsContent({ entity }: Props) {
 
   const entityInfo = useMemo(
     () => ({
-      author: entity?.author ? entity.author : t('Unknown'),
+      author: entity?.author ?? t('Unknown'),
       createdAt: entity?.createdAt,
     }),
     [entity.author, entity?.createdAt, t],
