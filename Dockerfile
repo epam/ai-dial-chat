@@ -24,7 +24,6 @@ RUN node tools/patch-nextjs.js
 # ---- Production ----
 FROM node:22-alpine AS production
 WORKDIR /app
-COPY --from=run_dependencies /app/dist/apps/chat ./
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -33,6 +32,8 @@ ENV KEEP_ALIVE_TIMEOUT=61000
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+COPY --chown=nextjs:nodejs --from=run_dependencies /app/dist/apps/chat ./
 
 USER nextjs
 
