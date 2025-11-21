@@ -48,7 +48,7 @@ const StatusMessage: React.FC<StatusMessageProps> = ({
   }
 
   const textTemplate = isInSelectionList
-    ? 'Click to scroll to the {{entityType}}'
+    ? 'Click to scroll to the {{entityType}}.'
     : 'Click on the {{entityType}} to see details.';
 
   return (
