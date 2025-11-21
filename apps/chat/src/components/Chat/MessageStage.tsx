@@ -58,12 +58,12 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => (
   </div>
 );
 
+const getLimitStageContent = () =>
+  parseFloat(process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT ?? '40');
+
 interface Props {
   stage: Stage;
 }
-
-const maxKiloBytes = 40;
-const maxBytes = maxKiloBytes * 1024; // in bytes
 
 const DownloadStageView = ({ content }: { content: string }) => {
   const { t } = useTranslation(Translation.Chat);
@@ -98,9 +98,12 @@ const DownloadStageView = ({ content }: { content: string }) => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }, [content]);
+
   return (
     <div className="flex justify-between gap-1 ps-1">
-      {t(`Content is too large to display (exceeds ${maxKiloBytes} KB).`)}
+      {t(
+        `Content is too large to display (exceeds ${getLimitStageContent()} KB).`,
+      )}
       <div className="flex items-center gap-3 text-secondary">
         <button
           className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
@@ -134,7 +137,8 @@ const StageView = ({ content }: { content: string }) => {
   // Calculate byte size of the string
   const size = useMemo(() => new Blob([content]).size, [content]);
 
-  if (size > maxBytes) {
+  // in bytes
+  if (size > getLimitStageContent() * 1024) {
     return <DownloadStageView content={content} />;
   }
   return (

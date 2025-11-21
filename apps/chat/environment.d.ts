@@ -51,6 +51,7 @@ declare global {
       TOPICS?: string;
       CODE_EDITOR_PYTHON_VERSIONS?: string;
       WIDGETS_SCHEMA_IDS?: string;
+      NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;
