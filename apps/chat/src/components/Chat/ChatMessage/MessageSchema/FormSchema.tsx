@@ -360,7 +360,10 @@ const CheckboxProperty = ({
       {options.map(({ value, label }) => (
         <Checkbox
           key={value}
-          checked={(formValue?.[propertyKey] as string[])?.includes(value)}
+          checked={
+            Array.isArray(formValue?.[propertyKey]) &&
+            formValue?.[propertyKey]?.includes(value)
+          }
           onChange={() => onClick(value)}
           caption={label}
           disabled={disabled}
@@ -413,7 +416,9 @@ const PropertyRenderer = ({
 
   const handleCheckboxClick = useCallback(
     (value: string) => {
-      const currentValue = (formValue?.[name] as string[]) ?? [];
+      const currentValue = Array.isArray(formValue?.[name])
+        ? formValue?.[name]
+        : [];
       const newValue = currentValue.includes(value)
         ? currentValue.filter((v) => v !== value)
         : [...currentValue, value];
