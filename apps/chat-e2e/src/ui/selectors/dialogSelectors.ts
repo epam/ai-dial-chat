@@ -362,3 +362,10 @@ export const InformationModalSelectors = {
   authorLabel: '[data-qa="author-label"]',
   authorValue: '[data-qa="author-value"]',
 };
+
+export const ReplaceConfirmationModalSelectors = {
+  modalContainer: '[data-qa="replace-confirmation-modal"]',
+  allItemsSelector: '[data-qa="all-items-selector"]',
+  cancelButton: '[data-qa="cancel-import"]',
+  continueButton: '[data-qa="continue-import"]',
+};
