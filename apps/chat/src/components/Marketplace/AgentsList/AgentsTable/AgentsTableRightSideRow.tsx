@@ -7,10 +7,14 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { isDialAiEntityModel } from '@/src/utils/app/application';
+import { isMyApplication } from '@/src/utils/app/id';
 
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
+
+import { AuthSelectors } from '@/src/store/auth/auth.selectors';
+import { useAppSelector } from '@/src/store/hooks';
 
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -40,8 +44,13 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
     onBookmarkClick,
   }) => {
     const { t } = useTranslation(Translation.Marketplace);
+    const userName = useAppSelector(AuthSelectors.selectUserName);
 
     const screenState = useScreenState();
+
+    const author = isDialAiEntityModel(entity) ? entity.owner : entity.author;
+    const displayedAuthor =
+      (isMyApplication(entity) ? userName : author) ?? t('Unknown');
 
     const { visibleTopics, hiddenTopics } = useMemo<{
       visibleTopics: string[];
@@ -104,7 +113,7 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
           )}
         </div>
         <div className="flex w-[130px] min-w-[130px] items-center">
-          <p className="truncate">{entity.author ?? t('Unknown')}</p>
+          <p className="truncate">{displayedAuthor}</p>
         </div>
         <div className="flex w-[86px] min-w-[86px] items-center">
           <p className="truncate">

@@ -402,7 +402,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
         )}
       >
         <div
-          className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
+          className="relative flex size-full flex-col divide-y divide-tertiary rounded 2xl:max-w-[1000px]"
           data-qa="publish-approval-modal"
         >
           <div className="flex w-full flex-col justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
