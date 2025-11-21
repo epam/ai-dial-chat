@@ -140,6 +140,10 @@ export class BaseElement {
     await this.rootLocator.scrollIntoViewIfNeeded();
   }
 
+  async getElementInputValue() {
+    return this.rootLocator.inputValue();
+  }
+
   async setElementInputFiles(filesDirectory: string, ...filenames: string[]) {
     await this.rootLocator.setInputFiles(
       filenames.map((filename) => path.join(filesDirectory, filename)),

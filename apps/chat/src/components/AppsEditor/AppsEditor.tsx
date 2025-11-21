@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -99,9 +99,14 @@ export const AppsEditor = () => {
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const isSchemaApplicationType = !isApplicationType(type);
+  const shouldTriggerEditorAutoUpdate = useAppSelector(
+    ApplicationSelectors.selectShouldTriggerEditorAutoUpdate,
+  );
 
   const changeEditorTabRef = useRef<MarketplaceEditorSteps | null>(null);
-  const saveAndExitRef = useRef<Routes.Chat | Routes.Marketplace | null>(null);
+  const saveAndExitRef = useRef(false);
+  const redirectToChatRef = useRef(false);
+
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const modelsWithFolder = useMemo(
@@ -198,14 +203,16 @@ export const AppsEditor = () => {
               ? decodeURIComponent(publicationUrl.toString())
               : undefined,
             tabToOpen: changeEditorTabRef.current ?? undefined,
-            redirectUrl: saveAndExitRef.current ?? undefined,
+            redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
+            isSaveAndExit: saveAndExitRef.current,
             shouldSelectApplication: isCreateRef.current,
           }),
         );
       }
 
       changeEditorTabRef.current = null;
-      saveAndExitRef.current = null;
+      saveAndExitRef.current = false;
+      redirectToChatRef.current = false;
       formMethods.reset(formMethods.getValues(), {
         keepIsValid: true,
         keepErrors: true,
@@ -254,7 +261,7 @@ export const AppsEditor = () => {
           .then(() => cb?.());
       } else {
         changeEditorTabRef.current = null;
-        saveAndExitRef.current = null;
+        saveAndExitRef.current = false;
         cb?.();
       }
     },
@@ -263,23 +270,21 @@ export const AppsEditor = () => {
 
   const handleSaveAndExit = useCallback(
     (saveDraft = false, redirectToChat = false) => {
-      const chatUrl =
-        (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
-
       if ((!isDirty && appDetails) || !appDetails || isAppPublic) {
         dispatch(
           ApplicationActions.exitEditor({
-            redirectUrl: chatUrl || Routes.Marketplace,
+            redirectUrl: redirectToChat ? Routes.Chat : undefined,
             shouldSelectApplication: isCreateRef.current,
           }),
         );
         return;
       }
 
-      saveAndExitRef.current = chatUrl || Routes.Marketplace;
-      handleSubmit(undefined, saveDraft);
+      saveAndExitRef.current = true;
+      redirectToChatRef.current = redirectToChat;
+      void handleSubmit(undefined, saveDraft);
     },
-    [router, isDirty, appDetails, isAppPublic, handleSubmit, dispatch],
+    [isDirty, appDetails, isAppPublic, handleSubmit, dispatch],
   );
 
   const handleTabClick = useCallback(
@@ -290,13 +295,13 @@ export const AppsEditor = () => {
         return;
       }
       if (!isDirty && appDetails) {
-        handleSubmit(
+        void handleSubmit(
           () => dispatch(ApplicationActions.setEditorStep(tab)),
           true,
         );
       } else {
         changeEditorTabRef.current = tab;
-        handleSubmit(undefined, true);
+        void handleSubmit(undefined, true);
       }
     },
     [appDetails, dispatch, editorStep, handleSubmit, isAppPublic, isDirty],
@@ -310,21 +315,28 @@ export const AppsEditor = () => {
       return;
     }
     if (!isDirty && appDetails) {
-      handleSubmit(() =>
+      void handleSubmit(() =>
         dispatch(
           ApplicationActions.setEditorStep(MarketplaceEditorSteps.Settings),
         ),
       );
     } else {
       changeEditorTabRef.current = MarketplaceEditorSteps.Settings;
-      handleSubmit(undefined, !!appDetails);
+      void handleSubmit(undefined, !!appDetails);
     }
   }, [isAppPublic, isDirty, appDetails, dispatch, handleSubmit]);
 
   const handleAutoSave = useCallback(() => {
     if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
-    handleSubmit(undefined, true, true);
+    void handleSubmit(undefined, true, true);
   }, [editorStep, handleSubmit, isAppPublic]);
+
+  useEffect(() => {
+    if (shouldTriggerEditorAutoUpdate && !isAppPublic) {
+      void handleSubmit(undefined, true, true);
+      dispatch(ApplicationActions.setShouldTriggerEditorAutoUpdate(false));
+    }
+  }, [shouldTriggerEditorAutoUpdate, isAppPublic, handleSubmit, dispatch]);
 
   return (
     <FormProvider {...formMethods}>

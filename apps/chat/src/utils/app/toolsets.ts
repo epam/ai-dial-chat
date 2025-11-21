@@ -116,7 +116,7 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
 };
 
 export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
-  endpoint: data.endpoint ?? '',
+  endpoint: data.endpoint?.trim() ?? '',
   transport: data.transport,
   allowed_tools: data.allowedTools,
   display_version: data.version,
@@ -199,7 +199,7 @@ export const isToolsetSignedIn = (
   level = ToolsetCredentialsLevel.GLOBAL,
 ) => {
   return (
-    toolset.authSettings.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
+    toolset.authSettings?.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
   );
 };
 

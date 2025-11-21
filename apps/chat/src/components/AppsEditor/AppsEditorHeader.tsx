@@ -24,9 +24,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
-  ConversationsSelectors,
   ModelsSelectors,
-  SettingsSelectors,
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
@@ -36,7 +34,6 @@ import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
-import { Feature } from '@epam/ai-dial-shared';
 import { capitalize } from 'lodash';
 import omit from 'lodash-es/omit';
 
@@ -90,15 +87,6 @@ export const AppsEditorHeader = ({
   );
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
-  const areConversationsLoaded = useAppSelector(
-    ConversationsSelectors.areConversationsUploaded,
-  );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
-  const isNewConversationDisabled = enabledFeatures.has(
-    Feature.HideNewConversation,
   );
 
   const isEditing = !!appDetails;
@@ -162,16 +150,6 @@ export const AppsEditorHeader = ({
     [onTabClick],
   );
 
-  const createNewConversation = useCallback(() => {
-    if (!areConversationsLoaded || isNewConversationDisabled) return;
-    dispatch(
-      ConversationsActions.createNewConversations({
-        names: [DEFAULT_CONVERSATION_NAME],
-      }),
-    );
-    dispatch(ConversationsActions.resetSearch());
-  }, [areConversationsLoaded, dispatch, isNewConversationDisabled]);
-
   const handleLogoClick = useCallback(
     async (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
@@ -184,10 +162,9 @@ export const AppsEditorHeader = ({
           return;
         }
       }
-      createNewConversation();
       onSave(false, true);
     },
-    [createNewConversation, isEditing, trigger, onSave],
+    [isEditing, trigger, onSave],
   );
 
   const handleSaveAndRedirect = useCallback(async () => {
@@ -206,7 +183,6 @@ export const AppsEditorHeader = ({
     (result: boolean) => {
       setSaveDraftDialog(false);
       if (result && redirectToChat) {
-        createNewConversation();
         onSave(true, true);
         return;
       } else if (result) {
@@ -220,7 +196,7 @@ export const AppsEditorHeader = ({
         dispatch(ApplicationActions.setEditorStep(invalidStep));
       }
     },
-    [createNewConversation, dispatch, errorSteps, onSave, redirectToChat],
+    [dispatch, errorSteps, onSave, redirectToChat],
   );
 
   const handleCustomViewerExit = useCallback(() => {
@@ -286,7 +262,7 @@ export const AppsEditorHeader = ({
         saveLabel={saveLabel}
         onSave={handleSaveAndRedirect}
         onLogoClick={handleLogoClick}
-        dataQa="app-editor-header"
+        dataQa="entity-editor-header"
       />
 
       <ConfirmDialog

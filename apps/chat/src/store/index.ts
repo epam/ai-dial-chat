@@ -8,7 +8,6 @@ import {
   combineReducers,
   configureStore,
 } from '@reduxjs/toolkit';
-import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware';
 
 import { Epic, EpicMiddleware, createEpicMiddleware } from 'redux-observable';
 
@@ -72,7 +71,8 @@ const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
 ) => {
-  return (getDefaultMiddleware: CurriedGetDefaultMiddleware) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (getDefaultMiddleware: any) => {
     return getDefaultMiddleware({
       thunk: false,
       serializableCheck: false,

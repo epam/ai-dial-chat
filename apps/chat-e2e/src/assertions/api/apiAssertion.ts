@@ -11,14 +11,14 @@ import { APIResponse } from 'playwright-core';
 export class ApiAssertion extends BaseAssertion {
   public assertResponseCode(
     response: APIResponse,
-    modelId: string,
+    entityId: string | undefined,
     expectedStatus: number,
   ) {
     const status = response.status();
     this.assertValue(
       status,
       expectedStatus,
-      `${ExpectedMessages.responseCodeIsValid}${modelId}`,
+      `${ExpectedMessages.responseCodeIsValid}${entityId !== undefined ? entityId : ''}`,
     );
   }
 
@@ -63,18 +63,18 @@ export class ApiAssertion extends BaseAssertion {
     this.assertValue(
       request.model?.id,
       expectedModel.id,
-      ExpectedMessages.chatRequestModelIsValid,
+      ExpectedMessages.requestModeIdIsValid,
     );
   }
 
   public assertRequestTemperature(
     request: ChatBody,
-    expectedTemperature: number,
+    expectedTemperature: number | undefined,
   ) {
     this.assertValue(
       request.temperature,
       expectedTemperature,
-      ExpectedMessages.chatRequestTemperatureIsValid,
+      ExpectedMessages.requestTempIsValid,
     );
   }
 
@@ -84,13 +84,13 @@ export class ApiAssertion extends BaseAssertion {
   ) {
     if (expectedPrompt === undefined) {
       expect
-        .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
+        .soft(request.prompt, ExpectedMessages.requestPromptIsValid)
         .toBeUndefined();
     } else {
       this.assertValue(
         request.prompt,
         expectedPrompt,
-        ExpectedMessages.chatRequestPromptIsValid,
+        ExpectedMessages.requestPromptIsValid,
       );
     }
   }

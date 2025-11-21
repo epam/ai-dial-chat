@@ -160,6 +160,7 @@ dialSharedWithMeTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             defaultModelId,
             true,
+            undefined,
             specialCharsImageUrl,
           );
         await localStorageManager.setRecentModelsIdsAndUseLastModel(

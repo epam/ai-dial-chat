@@ -173,10 +173,16 @@ export class PublicationApiHelper extends BaseApiHelper {
   public async createUnpublishRequest(
     publicationRequest: Publication | PublicationRequestModel,
   ) {
-    const unpublishResources = [];
+    const unpublishResources: {
+      action: PublishActions;
+      sourceUrl: string;
+      targetUrl: string;
+      publishCredentials?: boolean;
+    }[] = [];
     for (const resource of publicationRequest.resources) {
       unpublishResources.push({
         action: PublishActions.DELETE,
+        sourceUrl: resource.targetUrl,
         targetUrl: resource.targetUrl,
       });
     }

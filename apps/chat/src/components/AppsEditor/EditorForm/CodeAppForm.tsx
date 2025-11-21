@@ -7,16 +7,17 @@ import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { FileFolderInterface } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors } from '@/src/store/selectors';
+import { ApplicationSelectors, FilesSelectors } from '@/src/store/selectors';
 
-import { CONFIRM_SOURCE_FOLDER_VALUES } from '@/src/constants/applications';
 import {
-  CODE_APPS_ENDPOINTS,
+  CONFIRM_SOURCE_FOLDER_VALUES,
   PUBLIC_APP_TOOLTIP,
-} from '@/src/constants/code-apps';
+} from '@/src/constants/applications';
+import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 
 import {
   CodeAppForm as CodeAppFormType,
@@ -33,6 +34,8 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 const FilesEditor = withLabel(SourceFilesEditor);
@@ -40,6 +43,17 @@ const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormType, 'endpoints' | 'env'>,
 );
+
+const checkIsTargetFolderLoaded = (
+  folders: FileFolderInterface[],
+  sources: string,
+) => {
+  const targetFolder = sources
+    ? folders.find((f) => f.id === sources)
+    : undefined;
+
+  return targetFolder?.status === UploadStatus.LOADED;
+};
 
 const getActualSource = (value: string) =>
   value === MANDATORY_FIELD_PLACEHOLDER ? '' : value;
@@ -50,15 +64,25 @@ export const CodeAppForm = () => {
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const { control, formState, setError, clearErrors, watch, setValue } =
     useFormContext<CodeAppFormType>();
   const errors = formState.errors;
   const sources = watch('sources');
+  const filesLoaded = watch('filesLoaded');
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppShared = !!appDetails?.isShared;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
+
+  useEffect(() => {
+    const isFolderLoaded = checkIsTargetFolderLoaded(folders, sources);
+
+    if (isFolderLoaded) {
+      setValue('filesLoaded', true, { shouldDirty: false });
+    }
+  }, [setValue, folders, sources]);
 
   useEffect(() => {
     if (sources === MANDATORY_FIELD_PLACEHOLDER) {
@@ -72,7 +96,7 @@ export const CodeAppForm = () => {
   return (
     <div
       className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
-      data-qa="app-view-form"
+      data-qa="entity-view-form"
     >
       <Controller
         name="inputAttachmentTypes"
@@ -132,7 +156,7 @@ export const CodeAppForm = () => {
           />
         )}
       />
-      {sources && (
+      {!!sources && filesLoaded && (
         <FormCodeEditor
           disabled={isAppPublic}
           sourcesFolderId={getActualSource(sources)}

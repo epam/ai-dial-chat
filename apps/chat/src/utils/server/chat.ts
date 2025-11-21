@@ -90,7 +90,7 @@ export function limitMessagesByTokens({
 
 export const hardLimitMessages = (messages: Message[]) => {
   let userMessageFound = false;
-  return messages
+  return [...messages]
     .reverse()
     .filter((message) => message.role !== Role.Assistant)
     .reduce((acc, current) => {
@@ -106,15 +106,17 @@ export const hardLimitMessages = (messages: Message[]) => {
 
 export function getUserMessageCustomContent(
   message: Message,
+  allowAssistantAttachments = false,
 ): Partial<Message> | undefined {
   if (
+    !allowAssistantAttachments &&
     message.role === Role.Assistant &&
     !message.custom_content?.state &&
     !message.custom_content?.form_schema
   ) {
     return;
   }
-  return getMessageCustomContent(message);
+  return getMessageCustomContent(message, allowAssistantAttachments);
 }
 
 const getResponseBody = (

@@ -3,23 +3,26 @@ export const marketplaceContainer = '[data-qa="marketplace"]';
 export const MarketplaceSelectors = {
   header: '[data-qa="marketplace-header"]',
   addApp: '[data-qa="add-app"]',
+  addToolset: '[data-qa="add-toolset"]',
   noWorkspaceResultsFound: '[data-qa="no-workspace-results-found"]',
+  noDataHeader: '[data-qa="no-data-header"]',
   noResultsFoundDescription: '[data-qa="no-data-description"]',
   marketplaceSuggestions: '[data-qa="marketplace-suggestions-label"]',
-  marketplaceAgentSection: '[data-qa="agents-section"]',
-  marketplaceAgentsRow: '[data-qa="agents-row"]',
+  marketplaceEntitiesSection: '[data-qa="entities-section"]',
+  marketplaceEntitiesRow: '[data-qa="entities-row"]',
+  marketplaceNoDataContainer: '[data-qa="no-data-container"]',
 };
 
-export const MarketplaceAgentSelectors = {
-  agent: '[data-qa="agent"]',
-  agentName: '[data-qa="entity-name"]',
+export const MarketplaceEntitySelectors = {
+  entity: '[data-qa="entity"]',
+  entityName: '[data-qa="entity-name"]',
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',
   description: '.text-sm',
   addBookmarkIcon: '[data-qa="add-bookmark"]',
   removeBookmarkIcon: '[data-qa="remove-bookmark"]',
-  topicsContainer: '[data-qa="app-topics"]',
+  topicsContainer: '[data-qa="entity-topics"]',
   topic: '[data-qa="app-topic"]',
   hiddenTopics: '[data-qa="hidden-topics"]',
   copyLink: '[data-qa="copy-link"]',
@@ -34,14 +37,14 @@ export const MarketplaceAgentSelectors = {
 };
 
 export const MarketplaceDetailsModal = {
-  modalContainer: '[data-qa="marketplace-agent-details"]',
-  applicationContentContainer: '[data-qa="application-content"]',
-  applicationDescription: '[data-qa="application-description"]',
-  applicationInformation: '[data-qa="application-information"]',
-  agentName: '[data-qa="entity-name"]',
-  agentVersion: '[data-qa="version"]',
-  agentAuthor: '[data-qa="author"]',
-  agentReleaseDate: '[data-qa="created-at"]',
+  modalContainer: '[data-qa="marketplace-entity-details"]',
+  entityContentContainer: '[data-qa="entity-content"]',
+  entityDescription: '[data-qa="entity-description"]',
+  entityInformation: '[data-qa="entity-information"]',
+  entityName: '[data-qa="entity-name"]',
+  entityVersion: '[data-qa="version"]',
+  entityAuthor: '[data-qa="author"]',
+  entityReleaseDate: '[data-qa="created-at"]',
   versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   useButton: '[data-qa="use-button"]',
   icon: '[data-qa="entity-icon"]',
@@ -53,11 +56,14 @@ export const MarketplaceDetailsModal = {
   unpublishButton: '[data-qa="unpublish"]',
   shareButton: '[data-qa="share"]',
   unshareButton: '[data-qa="unshare"]',
+  loginButton: '[data-qa="login-button"]',
 };
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
   searchInput: '[name="titleInput"]',
+  agentsTab: '[data-qa="agents-tab"]',
+  toolsetsTab: '[data-qa="toolsets-tab"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',
   filterProperty: '[data-qa="filter-property"]',
   filterPropertyOptions: '[data-qa="filter-property-options"]',

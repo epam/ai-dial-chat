@@ -73,6 +73,9 @@ import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 import { PublishActions } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 
+const AUTHOR_PUBLIC_NAME_TOOLTIP =
+  "This name will be displayed instead of the author's name for this publication.";
+
 interface Props {
   publication: Publication;
   onSubmit: (
@@ -186,17 +189,26 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     userName,
   ]);
 
-  const formMethods = useForm<PublicationRequestFormData>({
-    defaultValues: {
+  const getDefaultValues = useCallback(
+    () => ({
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
       ),
       rules: initialState.rules,
       publicationAuthor: initialState.displayAuthor,
       publishToUrl: initialState.publishToUrl,
-    },
+    }),
+    [initialState, userName],
+  );
+
+  const formMethods = useForm<PublicationRequestFormData>({
+    defaultValues: getDefaultValues(),
     mode: 'onChange',
   });
+
+  useEffect(() => {
+    formMethods.reset(getDefaultValues());
+  }, [getDefaultValues, formMethods]);
 
   const rulesOnEdit = formMethods.watch(PublishRequestFieldsNames.RULES);
   const displayAuthorEditState = formMethods.watch(
@@ -220,14 +232,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   }, [formMethods, isEditMode]);
 
   useEffect(() => {
-    if (!isReview && editedPublishToUrl !== PUBLIC_URL_PREFIX) {
+    if (editedPublishToUrl !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
           path: getIdWithoutFeatureType(editedPublishToUrl),
         }),
       );
     }
-  }, [dispatch, editedPublishToUrl, isReview]);
+  }, [dispatch, editedPublishToUrl]);
 
   const filteredRuleEntries = useMemo(() => {
     const rulesEntries = Object.entries(rules);
@@ -368,15 +380,17 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
-  const firstNotMyFileEntity = publication.resources.find(
-    ({ reviewUrl }) => !isMyEntity({ id: reviewUrl }) && isFileId(reviewUrl),
-  );
   const doesPublicationContainFiles = publication.resources.some(
     ({ reviewUrl }) => isFileId(reviewUrl),
   );
   const showPublicDisplayAuthor =
     !isPublicationHasOnlyUnpublishEntities ||
     (publicationModel && publicationModel.action !== PublishActions.DELETE);
+  const doesInvalidPublishApplicationIconExist =
+    !isReview &&
+    doesIncludeMarketplaceEntity &&
+    isFileId(publicationModel.entity.iconUrl) &&
+    !isMyEntity({ id: publicationModel.entity.iconUrl ?? '' });
 
   return (
     <FormProvider {...formMethods}>
@@ -388,7 +402,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
         )}
       >
         <div
-          className="relative flex size-full flex-col gap-px rounded 2xl:max-w-[1000px]"
+          className="relative flex size-full flex-col divide-y divide-tertiary rounded 2xl:max-w-[1000px]"
           data-qa="publish-approval-modal"
         >
           <div className="flex w-full flex-col justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
@@ -474,7 +488,12 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     {showPublicDisplayAuthor &&
                       (isEditMode || !isReview ? (
                         <Field
-                          label={t("Author's public name")}
+                          info={
+                            isReview ? t(AUTHOR_PUBLIC_NAME_TOOLTIP) : undefined
+                          }
+                          label={t(
+                            isReview ? "Author's public name" : 'Author',
+                          )}
                           {...formMethods.register(
                             PublishRequestFieldsNames.PUBLICATION_AUTHOR,
                             validators.publicationAuthor,
@@ -492,9 +511,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           label={t("Author's public name")}
                           valueDataQa="publication-display-author"
                           valueToDisplay={publication.displayAuthor ?? ''}
-                          infoTooltip={t(
-                            "This name will be displayed instead of the author's name for this publication.",
-                          )}
+                          infoTooltip={t(AUTHOR_PUBLIC_NAME_TOOLTIP)}
                         />
                       ))}
 
@@ -564,23 +581,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 EnumMapper.getFeatureTypeByApiKey(apiKey);
                               return itemFeatureType === featureType;
                             });
-
                           const isConversationSectionAndNoFiles =
                             !isReview &&
                             featureType === FeatureType.File &&
                             doesIncludeConversation &&
                             !doesPublicationContainFiles;
-                          const doesInvalidPublishApplicationIconExist =
-                            !isReview &&
-                            firstNotMyFileEntity &&
-                            doesIncludeMarketplaceEntity &&
-                            featureType === FeatureType.File;
                           const shouldRenderSection =
                             publication.resourceTypes.includes(
                               EnumMapper.getBackendResourceTypeByFeatureType(
                                 featureType,
                               ),
-                            ) || doesInvalidPublishApplicationIconExist;
+                            ) ||
+                            (doesInvalidPublishApplicationIconExist &&
+                              featureType === FeatureType.File);
 
                           if (!shouldRenderSection) {
                             return null;
@@ -605,14 +618,13 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 )
                               }
                             >
-                              {!!filteredResources.length &&
-                                !doesInvalidPublishApplicationIconExist && (
-                                  <BasePublicationResources
-                                    publicationUrl={publication.url}
-                                    resources={filteredResources}
-                                    ItemComponent={ItemComponent}
-                                  />
-                                )}
+                              {!!filteredResources.length && (
+                                <BasePublicationResources
+                                  publicationUrl={publication.url}
+                                  resources={filteredResources}
+                                  ItemComponent={ItemComponent}
+                                />
+                              )}
                               {isConversationSectionAndNoFiles && (
                                 <p
                                   className="pl-3.5 text-secondary"
@@ -633,7 +645,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                   <ErrorMessage
                                     type="warning"
                                     error={t(
-                                      `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: firstNotMyFileEntity.reviewUrl }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
+                                      `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: publicationModel.entity.iconUrl ?? '' }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
                                     )}
                                   />
                                 )}

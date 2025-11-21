@@ -291,7 +291,7 @@ const ChatFolderTemplate = ({
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
-        readonly={readonly}
+        readonly={readonly || isConversationsStreaming}
         searchTerm={searchTerm}
         currentFolder={folder}
         itemComponent={ConversationComponent}
@@ -309,7 +309,7 @@ const ChatFolderTemplate = ({
         featureType={FeatureType.Chat}
         loadingFolderIds={loadingFolderIds}
         onSelectFolder={handleFolderSelect}
-        canSelectFolders={isSelectMode}
+        canSelectFolders={!isConversationsStreaming && isSelectMode}
         additionalItemData={additionalFolderData}
       />
       {isLast && (

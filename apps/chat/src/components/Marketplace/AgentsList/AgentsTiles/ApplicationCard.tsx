@@ -46,7 +46,7 @@ const CardFooter = <T extends MarketplaceEntity>({
     <>
       <EntityMarkdownDescription
         className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden"
-        data-qa="application-description"
+        data-qa="entity-description"
       >
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
@@ -101,7 +101,7 @@ export const ApplicationCard = memo(
           'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
           !isPreview && 'cursor-pointer',
         )}
-        data-qa="agent"
+        data-qa="entity"
         aria-details={dataQA}
       >
         <div>
@@ -181,10 +181,7 @@ export const ApplicationCard = memo(
                   </span>
                 </div>
               </div>
-              <div
-                data-qa="application-description"
-                className="hidden xl:block"
-              >
+              <div data-qa="entity-description" className="hidden xl:block">
                 <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
                   {getModelShortDescription(entity)}
                 </EntityMarkdownDescription>

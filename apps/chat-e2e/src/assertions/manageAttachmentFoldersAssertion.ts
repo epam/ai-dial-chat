@@ -4,7 +4,7 @@ import { Folders } from '@/src/ui/webElements/entityTree';
 
 export class ManageAttachmentFoldersAssertion extends FolderAssertion<Folders> {
   constructor(attachFilesModal: AttachFilesModal, section: FileModalSection) {
-    const folderSection = attachFilesModal.getFoldersTree(section);
+    const folderSection = attachFilesModal.getFolderTree(section);
     super(folderSection);
   }
 }

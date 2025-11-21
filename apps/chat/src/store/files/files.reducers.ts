@@ -7,6 +7,7 @@ import {
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getFolderFromId,
   getNextDefaultName,
   getPartialAndFullyChosenFolders,
   isFolderEmpty,
@@ -14,7 +15,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId } from '@/src/utils/app/id';
+import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType, MoveModel } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -179,6 +180,7 @@ export const filesSlice = createSlice({
         foldersSet: Set<string>;
       }>,
     ) => {
+      const parentFolderId = Array.from(payload.foldersSet)[0];
       const mappedFiles: DialFile[] = payload.files.map((file) =>
         state.sharedFileIds.includes(file.id)
           ? { ...file, isShared: true }
@@ -195,6 +197,19 @@ export const filesSlice = createSlice({
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
+
+      if (!isRootId(parentFolderId)) {
+        state.folders = combineEntities(
+          [
+            getFolderFromId(
+              parentFolderId,
+              FeatureType.File,
+              UploadStatus.LOADED,
+            ),
+          ],
+          state.folders,
+        );
+      }
 
       const idsToReselect = state.chosenEmptyFoldersIds.reduce<{
         folderIds: string[];

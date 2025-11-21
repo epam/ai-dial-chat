@@ -1,11 +1,12 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
-  AppEditorAppTypes,
-  AppEditorGeneralFormFields,
-  AppEditorViewFormFields,
-  AppMenuActions,
+  EntityEditorAppTypes,
+  EntityEditorGeneralFormFields,
+  EntityEditorViewFormFields,
+  EntityMenuActions,
   ExpectedConstants,
   ExpectedMessages,
   MarketplaceFilterTypes,
@@ -29,29 +30,30 @@ dialTest(
       marketplaceHeader,
       marketplaceFilter,
       addAppDropdownMenu,
-      appEditorPage,
-      appEditorGeneralForm,
+      entityEditorPage,
+      entityEditorGeneralForm,
       externalAppEditorViewForm,
-      appEditorHeader,
-      marketplaceAgentsSection,
-      marketplaceAgentsAssertion,
-      marketplaceAgents,
-      agentDetailsModal,
+      entityEditorHeader,
+      marketplaceEntitiesSection,
+      marketplaceEntities,
+      entityDetailsModal,
       setTestIds,
       baseAssertion,
-      appEditorHeaderAssertion,
+      entityEditorHeaderAssertion,
       dialHomePage,
       localStorageManager,
       chat,
       talkToAgentDialog,
       talkToAgentDialogAssertion,
-      agentDetailsModalAssertion,
-      appEditorPreviewCard,
+      entityDetailsModalAssertion,
+      entityEditorGeneralInfoPreviewCard,
       navigationPanel,
       externalAppEditorAppSettingsPreviewCard,
       page,
       tooltip,
       tooltipAssertion,
+      entityEditorGeneralInfoPreviewCardAssertion,
+      externalAppEditorSettingsPreviewCardAssertion,
     },
     testInfo,
   ) => {
@@ -66,7 +68,7 @@ dialTest(
     );
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: GeneratorUtil.randomEntityVersion(),
       description: GeneratorUtil.randomShortDescription(),
     } as DialAIEntityModel;
     let agentElement: BaseElement;
@@ -96,17 +98,22 @@ dialTest(
         await addAppDropdownMenu.selectMenuOption(
           AddAppMenuOptions.externalApp,
         );
-        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.ExternalApp);
-        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
-        await appEditorHeaderAssertion.assertActionTitle(
-          AppMenuActions.add(AddAppMenuOptions.externalApp),
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.ExternalApp,
         );
-        generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        await appEditorHeaderAssertion.assertStepIsSelected(
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
+        await entityEditorHeaderAssertion.assertActionTitle(
+          EntityMenuActions.addApp(AddAppMenuOptions.externalApp),
+        );
+        generalInfoStep = entityEditorHeader.getGeneralInfoStep();
+        await entityEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
           true,
         );
-        await appEditorHeaderAssertion.assertActiveStepIconState(
+        await entityEditorHeaderAssertion.assertActiveStepIconState(
           generalInfoStep,
           'visible',
         );
@@ -117,19 +124,19 @@ dialTest(
       'Check that the required fields of General Info step form are marked with asterisks, optional fields are displayed',
       async () => {
         for (const field of [
-          AppEditorGeneralFormFields.name,
-          AppEditorGeneralFormFields.version,
+          EntityEditorGeneralFormFields.name,
+          EntityEditorGeneralFormFields.version,
         ]) {
           await baseAssertion.assertElementState(
-            appEditorGeneralForm.getRequiredIndicator(field),
+            entityEditorGeneralForm.getRequiredIndicator(field),
             'visible',
             ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
           );
         }
         for (const field of [
-          appEditorGeneralForm.iconField,
-          appEditorGeneralForm.description,
-          appEditorGeneralForm.topicsDropdownContainer,
+          entityEditorGeneralForm.iconField,
+          entityEditorGeneralForm.description,
+          entityEditorGeneralForm.topicsDropdownContainer,
         ]) {
           await baseAssertion.assertElementState(field, 'visible');
         }
@@ -139,50 +146,44 @@ dialTest(
     await dialTest.step(
       `Fill required fields and verify app preview form on the right side of General Info screen`,
       async () => {
-        await appEditorGeneralForm.fillInAppFields({
+        await entityEditorGeneralForm.fillInEntityFields({
           name: appEntity.name,
           version: appEntity.version,
           description: appEntity.description,
         });
-        await baseAssertion.assertElementState(appEditorPreviewCard, 'visible');
-        await baseAssertion.assertElementText(
-          appEditorPreviewCard.previewName,
-          appEntity.name,
-          ExpectedMessages.agentNameIsValid,
+        await entityEditorGeneralInfoPreviewCardAssertion.assertPreviewCardAttributes(
+          {
+            expectedName: appEntity.name,
+            expectedIcon: '',
+            expectedShortDescription: appEntity.description,
+            expectedAuthor: currentUsername,
+          },
         );
         await baseAssertion.assertElementState(
-          appEditorPreviewCard.previewInformationSection,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          appEditorPreviewCard.previewAuthorValue,
-          currentUsername,
-          ExpectedMessages.authorIsValid,
-        );
-        await baseAssertion.assertEntityIcon(appEditorPreviewCard.previewIcon);
-        await baseAssertion.assertElementState(
-          appEditorPreviewCard.externalAppIcon,
+          entityEditorGeneralInfoPreviewCard.externalAppIcon,
           'visible',
         );
         await baseAssertion.assertElementDisplayStyle(
-          appEditorPreviewCard.descriptionParagraphs,
+          entityEditorGeneralInfoPreviewCard.descriptionParagraphs,
           StyleValues.block,
         );
       },
     );
 
     await dialTest.step('Click Next and verify the header', async () => {
-      await appEditorGeneralForm.goNext();
+      await entityEditorGeneralForm.goNext({
+        hostsArray: [API.applicationCreateHost, API.installedDeploymentsHost()],
+      });
       await baseAssertion.assertElementState(
         externalAppEditorViewForm,
         'visible',
       );
-      appSettingsStep = appEditorHeader.getAppSettingsStep();
-      await appEditorHeaderAssertion.assertStepIsSelected(
+      appSettingsStep = entityEditorHeader.getAppSettingsStep();
+      await entityEditorHeaderAssertion.assertStepIsSelected(
         appSettingsStep,
         true,
       );
-      await appEditorHeaderAssertion.assertActiveStepIconState(
+      await entityEditorHeaderAssertion.assertActiveStepIconState(
         appSettingsStep,
         'visible',
       );
@@ -193,31 +194,18 @@ dialTest(
       async () => {
         await baseAssertion.assertElementState(
           externalAppEditorViewForm.getRequiredIndicator(
-            AppEditorViewFormFields.externalUrl,
+            EntityEditorViewFormFields.externalUrl,
           ),
           'visible',
           ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
         );
-        await baseAssertion.assertElementState(
-          externalAppEditorAppSettingsPreviewCard,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          externalAppEditorAppSettingsPreviewCard.previewName,
-          appEntity.name,
-          ExpectedMessages.agentNameIsValid,
-        );
-        await baseAssertion.assertElementState(
-          externalAppEditorAppSettingsPreviewCard.previewInformationSection,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          externalAppEditorAppSettingsPreviewCard.previewAuthorValue,
-          currentUsername,
-          ExpectedMessages.authorIsValid,
-        );
-        await baseAssertion.assertEntityIcon(
-          externalAppEditorAppSettingsPreviewCard.previewIcon,
+        await externalAppEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
+          {
+            expectedName: appEntity.name,
+            expectedIcon: '',
+            expectedShortDescription: appEntity.description,
+            expectedAuthor: currentUsername,
+          },
         );
         await baseAssertion.assertElementState(
           externalAppEditorAppSettingsPreviewCard.externalAppIcon,
@@ -234,17 +222,19 @@ dialTest(
       'Set External URL, click Save and Exit link and verify user is redirected on My workspace page',
       async () => {
         await externalAppEditorViewForm.externalUrl.fillInInput(externalUrl);
-        await appEditorHeader.focusOn();
-        await appEditorHeader.saveAndExitButton.click();
+        await entityEditorHeader.focusOn({
+          triggeredHost: API.applicationCreateHost,
+        });
+        await entityEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(
           externalAppEditorViewForm,
           'hidden',
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -258,24 +248,21 @@ dialTest(
           )
           .click();
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentName(agentElement),
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityName(agentElement),
           appEntity.name,
         );
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(agentElement),
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityVersion(agentElement),
           appEntity.version!,
         );
-        await marketplaceAgentsAssertion.assertEntityIcon(
-          await marketplaceAgents.getAgentIcon(agentElement),
+        await baseAssertion.assertEntityIcon(
+          await marketplaceEntities.getEntityIcon(agentElement),
         );
-        externalIcon = marketplaceAgents.getAgentExternalIcon(agentElement);
-        await marketplaceAgentsAssertion.assertElementState(
-          externalIcon,
-          'visible',
-        );
+        externalIcon = marketplaceEntities.getAppExternalIcon(agentElement);
+        await baseAssertion.assertElementState(externalIcon, 'visible');
       },
     );
 
@@ -292,12 +279,10 @@ dialTest(
 
     await dialTest.step('Open the card and verify the details', async () => {
       await agentElement.click();
-      await baseAssertion.assertElementState(agentDetailsModal, 'visible');
-      await agentDetailsModalAssertion.assertApplicationName(appEntity.name);
-      await agentDetailsModalAssertion.assertApplicationVersion(
-        appEntity.version!,
-      );
-      await agentDetailsModalAssertion.assertApplicationAuthor(currentUsername);
+      await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+      await entityDetailsModalAssertion.assertEntityName(appEntity.name);
+      await entityDetailsModalAssertion.assertEntityVersion(appEntity.version!);
+      await entityDetailsModalAssertion.assertEntityAuthor(currentUsername);
       //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3218
       // const configApp = await modelApiHelper.getAgentByNameAndVersion({
       //   name: appEntity.name,
@@ -306,32 +291,34 @@ dialTest(
       // await agentDetailsModalAssertion.assertApplicationReleaseDate(
       //   configApp.createdAt!,
       // );
-      await agentDetailsModalAssertion.assertElementState(
-        agentDetailsModal.openInNewTabButton,
+      await entityDetailsModalAssertion.assertElementState(
+        entityDetailsModal.openInNewTabButton,
         'visible',
       );
       const viewport = page.viewportSize();
-      await agentDetailsModalAssertion.assertOpenInNewTabButtonTitle(viewport);
-      await agentDetailsModalAssertion.assertElementState(
-        agentDetailsModal.openInNewTabButtonIcon,
+      await entityDetailsModalAssertion.assertOpenInNewTabButtonTitle(viewport);
+      await entityDetailsModalAssertion.assertElementState(
+        entityDetailsModal.openInNewTabButtonIcon,
         'visible',
       );
-      await agentDetailsModalAssertion.assertElementAttribute(
-        agentDetailsModal.openInNewTabButton,
+      await entityDetailsModalAssertion.assertElementAttribute(
+        entityDetailsModal.openInNewTabButton,
         Attributes.href,
         externalUrl,
       );
-      await agentDetailsModalAssertion.assertElementAttribute(
-        agentDetailsModal.openInNewTabButton,
+      await entityDetailsModalAssertion.assertElementAttribute(
+        entityDetailsModal.openInNewTabButton,
         Attributes.target,
         Attributes.blank,
       );
-      await agentDetailsModalAssertion.assertEntityIcon(agentDetailsModal.icon);
-      await agentDetailsModalAssertion.assertElementState(
-        agentDetailsModal.externalAppIcon,
+      await entityDetailsModalAssertion.assertEntityIcon(
+        entityDetailsModal.icon,
+      );
+      await entityDetailsModalAssertion.assertElementState(
+        entityDetailsModal.externalAppIcon,
         'visible',
       );
-      await agentDetailsModal.closeButton.click();
+      await entityDetailsModal.closeButton.click();
     });
 
     await dialTest.step(

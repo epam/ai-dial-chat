@@ -13,7 +13,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
-import { PUBLIC_APP_TOOLTIP } from '@/src/constants/code-apps';
+import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 
 import {
   CustomAppForm as CustomAppFormType,
@@ -62,7 +62,7 @@ export const CustomAppForm = () => {
   return (
     <div
       className="flex size-full grow flex-col space-y-4 divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
-      data-qa="app-view-form"
+      data-qa="entity-view-form"
     >
       <FieldTextArea
         {...register('features')}
@@ -102,7 +102,7 @@ export const CustomAppForm = () => {
             error={errors.inputAttachmentTypes?.message}
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
-            dataQa={'attachment-types-field'}
+            dataQa="combobox"
             {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
           />
         )}
