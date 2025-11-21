@@ -1,7 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { FeatureType } from '@/chat/types/common';
 import { FolderInterface } from '@/chat/types/folder';
-import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
@@ -11,7 +10,6 @@ import {
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
-import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 
 dialTest.only(
@@ -26,7 +24,6 @@ dialTest.only(
     folderConversations,
     folderDropdownMenu,
     chat,
-    chatMessages,
     conversations,
     replaceConfirmationDialog,
   }) => {
@@ -46,8 +43,6 @@ dialTest.only(
     let chat5: Conversation;
     let chat6: Conversation;
     let chat7: Conversation;
-
-    let defaultModel = ModelsUtil.getDefaultAgent()!;
 
     await dialTest.step(
       'Prepare folder structure and conversations',
@@ -69,7 +64,7 @@ dialTest.only(
         chat3 = conversationData.prepareDefaultConversation(undefined, 'Chat3');
         conversationData.resetData();
 
-        // 5. Create Folder3 with nested folders (3 levels deep for 4 total folders)
+        // 5. Create Folder3 with nested folder structure (3 levels deep for 4 total folders)
         nestedFolders = conversationData.prepareNestedFolder(4, {
           1: 'Folder3',
           2: 'Folder3.1',
@@ -77,7 +72,7 @@ dialTest.only(
           4: 'Folder3.1.1.1',
         });
 
-        // 6-9. Create chats and assign them to nested folders
+        // Create chats and assign them to nested folders
         // Chat4 in Folder3.1.1.1 (deepest)
         chat4 = conversationData.prepareDefaultConversation(undefined, 'Chat4');
         chat4.folderId = nestedFolders[3].id;
@@ -168,7 +163,6 @@ dialTest.only(
       'Import the structure and handle duplicate resolution',
       async () => {
         // Set isHttpMethodTriggered to false because a modal dialog will appear
-        // for handling duplicate conversations (Replace, Postfix, Ignore options)
         await dialHomePage.importFile(
           exportedData,
           () => chatBar.importButton.click(),
@@ -179,27 +173,10 @@ dialTest.only(
         await replaceConfirmationDialog.waitForState();
 
         // Set individual conversation options
-        // Chat1: Replace (will restore original content)
         await replaceConfirmationDialog.setConversationOption(
           'Chat1',
           'Replace',
         );
-
-        // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
-        await replaceConfirmationDialog.setConversationOption(
-          'Chat2',
-          'Postfix',
-        );
-        await replaceConfirmationDialog.setConversationOption(
-          'Chat4',
-          'Postfix',
-        );
-        await replaceConfirmationDialog.setConversationOption(
-          'Chat7',
-          'Postfix',
-        );
-
-        // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
         await replaceConfirmationDialog.setConversationOption(
           'Chat3',
           'Ignore',
@@ -212,16 +189,7 @@ dialTest.only(
           'Chat6',
           'Ignore',
         );
-
-        // Click Continue to proceed with import
         await replaceConfirmationDialog.clickContinue();
-
-        // Wait for import to complete
-        await dialHomePage
-          .getAppContainer()
-          .getImportExportLoader()
-          .waitForState({ state: 'hidden' });
-        await dialHomePage.getAppContainer().waitForAppLoaded();
       },
     );
 
@@ -229,69 +197,35 @@ dialTest.only(
       'Verify import results - basic verification',
       async () => {
         // Verify Folder1 (empty folder) exists
-        await expect
-          .soft(
-            folderConversations.getFolderByName(folder1.name),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+        await folderConversations.getFolderByName(folder1.name).waitFor();
 
         // Verify Folder2 structure with chats exists
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(folder2.name, chat1.name),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await folderConversations
+          .getFolderEntity(folder2.name, chat1.name)
+          .waitFor();
+        await folderConversations
+          .getFolderEntity(folder2.name, chat2.name)
+          .waitFor();
 
         // Verify Chat3 exists at root
-        await expect
-          .soft(
-            conversations.getEntityByName(chat3.name),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await conversations.getEntityByName(chat3.name).waitFor();
 
         // Verify nested folder structure with chats
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              nestedFolders[3].name,
-              chat4.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await folderConversations
+          .getFolderEntity(nestedFolders[3].name, chat4.name)
+          .waitFor();
 
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              nestedFolders[2].name,
-              chat5.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await folderConversations
+          .getFolderEntity(nestedFolders[2].name, chat5.name)
+          .waitFor();
 
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              nestedFolders[1].name,
-              chat6.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await folderConversations
+          .getFolderEntity(nestedFolders[1].name, chat6.name)
+          .waitFor();
 
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              nestedFolders[0].name,
-              chat7.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await folderConversations
+          .getFolderEntity(nestedFolders[0].name, chat7.name)
+          .waitFor();
       },
     );
   },

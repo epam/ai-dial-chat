@@ -98,7 +98,7 @@ export class DialHomePage extends BasePage {
   async importFile<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
-    isHttpMethodTriggered: boolean = true,
+    isHttpMethodTriggered = true,
   ) {
     if (isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(

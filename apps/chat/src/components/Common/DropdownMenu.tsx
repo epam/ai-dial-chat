@@ -155,16 +155,16 @@ export const MenuComponent = forwardRef<
       shift(),
       ...(shouldApplySize
         ? [
-            size({
-              apply({ rects, availableWidth, availableHeight, elements }) {
-                setFloatingWidth(rects.reference.width);
-                Object.assign(elements.floating.style, {
-                  maxWidth: `${!dropdownWidth && availableWidth}px`,
-                  maxHeight: `${availableHeight}px`,
-                });
-              },
-            }),
-          ]
+          size({
+            apply({ rects, availableWidth, availableHeight, elements }) {
+              setFloatingWidth(rects.reference.width);
+              Object.assign(elements.floating.style, {
+                maxWidth: `${!dropdownWidth && availableWidth}px`,
+                maxHeight: `${availableHeight}px`,
+              });
+            },
+          }),
+        ]
         : []),
     ],
     whileElementsMounted: autoUpdate,
@@ -248,6 +248,7 @@ export const MenuComponent = forwardRef<
         data-open={isOpen ? '' : undefined}
         data-nested={isNested ? '' : undefined}
         data-focus-inside={hasFocusInside ? '' : undefined}
+        data-qa="dropdown-trigger"
         className={classNames(
           isNested && menuItemClassNames,
           isNested ? 'h-[34px] w-full px-3' : 'h-full px-0',
@@ -324,9 +325,9 @@ interface MenuItemProps {
 export const MenuItem = forwardRef<
   HTMLButtonElement | HTMLDivElement,
   MenuItemProps &
-    ButtonHTMLAttributes<HTMLButtonElement | HTMLDivElement> & {
-      isChildrenButton?: boolean;
-    }
+  ButtonHTMLAttributes<HTMLButtonElement | HTMLDivElement> & {
+    isChildrenButton?: boolean;
+  }
 >(function MenuItem(
   {
     className,
@@ -351,6 +352,7 @@ export const MenuItem = forwardRef<
         ref={useMergeRefs([item.ref, forwardedRef])}
         type="button"
         role="menuitem"
+        data-qa="menu-item"
         className={classNames(
           menuItemClassNames,
           'h-[34px] w-full px-3',

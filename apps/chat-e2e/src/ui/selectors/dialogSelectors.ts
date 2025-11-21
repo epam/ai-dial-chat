@@ -1,4 +1,5 @@
 import { Tags } from '@/src/ui/domData';
+import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
@@ -368,4 +369,9 @@ export const ReplaceConfirmationModalSelectors = {
   allItemsSelector: '[data-qa="all-items-selector"]',
   cancelButton: '[data-qa="cancel-import"]',
   continueButton: '[data-qa="continue-import"]',
+  dropdownTrigger: '[data-qa="dropdown-trigger"]',
+  dropdownMenu: '[data-qa="dropdown-menu"]',
+  menuItem: '[data-qa="menu-item"]',
+  conversationByName: (name: string) =>
+    `${EntitySelectors.conversation}:has(${EntitySelectors.entityName}:text("${name}"))`,
 };
