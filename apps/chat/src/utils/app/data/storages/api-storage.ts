@@ -53,6 +53,7 @@ import {
   Entity,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
+import { DialCopiedItem } from '@epam/ai-dial-ui-kit';
 
 const MAX_RETRIES_COUNT = 3;
 
@@ -284,6 +285,27 @@ export class ApiStorage implements DialStorage {
         destinationUrl: ApiUtils.encodeApiUrl(data.destinationUrl),
         overwrite: data.overwrite,
       }),
+    });
+  }
+
+  copyFiles(data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+    return ApiUtils.request('/api/files/copy', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+
+  moveFiles(data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+    return ApiUtils.request('/api/files/move', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+
+  deleteFiles(data: { files: DialCopiedItem[] }): Observable<void> {
+    return ApiUtils.request('/api/files/delete', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
     });
   }
 

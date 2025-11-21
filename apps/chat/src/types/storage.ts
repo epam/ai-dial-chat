@@ -18,6 +18,7 @@ import {
   Entity,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
+import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
 
 export enum StorageType {
   BrowserStorage = 'browserStorage',
@@ -156,6 +157,12 @@ export interface DialStorage {
   setPrompts(prompts: Prompt[]): Observable<PromptInfo>;
 
   move(data: MoveModel): Observable<MoveModel>;
+
+  copyFiles(data: { files: DialCopiedItem[] }): Observable<MoveModel[]>;
+
+  moveFiles(data: { files: DialCopiedItem[] }): Observable<MoveModel[]>;
+
+  deleteFiles(data: { files: DialDeletedItem[] }): Observable<void>;
 
   // Application methods
   createApplication(

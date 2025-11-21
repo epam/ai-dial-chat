@@ -22,6 +22,9 @@ import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
 
+import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
+import { saveAs } from 'file-saver';
+
 const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
     ? ApiUtils.decodeApiUrl(file.parentPath)
@@ -36,6 +39,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     contentLength: file.contentLength,
     contentType: file.contentType,
     serverSynced: true,
+    updatedAt: file.updatedAt,
   };
 };
 
@@ -214,5 +218,74 @@ export class FileService {
 
   public static moveFile(moveModel: MoveModel): Observable<MoveModel> {
     return DataService.getDataStorage().move(moveModel);
+  }
+
+  public static copyFiles(data: {
+    files: DialCopiedItem[];
+  }): Observable<MoveModel[]> {
+    return DataService.getDataStorage().copyFiles(data);
+  }
+
+  public static moveFiles(data: {
+    files: DialCopiedItem[];
+  }): Observable<MoveModel[]> {
+    return DataService.getDataStorage().moveFiles(data);
+  }
+
+  public static deleteFiles(data: {
+    files: DialDeletedItem[];
+  }): Observable<void> {
+    return DataService.getDataStorage().deleteFiles(data);
+  }
+
+  public static async downloadFilesAsArchive(files: DialFile[]): Promise<void> {
+    try {
+      const archiveName = files.length === 1 ? files[0].name : 'files';
+
+      const response = await fetch('/api/files/download', {
+        method: HTTPMethod.POST,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ files }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download files');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const chunks: Uint8Array[] = [];
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+        }
+      }
+
+      const size = chunks.reduce((s, c) => s + c.byteLength, 0);
+      const merged = new Uint8Array(size);
+      let offset = 0;
+      for (const c of chunks) {
+        merged.set(c, offset);
+        offset += c.byteLength;
+      }
+
+      const contentType =
+        response.headers.get('content-type') ?? 'application/zip';
+
+      const blob = new Blob([merged.buffer as ArrayBuffer], {
+        type: contentType,
+      });
+      saveAs(blob, `${archiveName}.zip`);
+    } catch (error) {
+      throw new Error(`Error downloading files: ${error}`);
+    }
   }
 }

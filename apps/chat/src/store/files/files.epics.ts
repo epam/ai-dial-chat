@@ -4,6 +4,7 @@ import {
   concat,
   filter,
   forkJoin,
+  from,
   groupBy,
   ignoreElements,
   iif,
@@ -427,6 +428,91 @@ const setChosenFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const copyFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.copyFiles.type),
+    switchMap(({ payload }) => {
+      return FileService.copyFiles(payload).pipe(
+        switchMap((response) => {
+          return concat(
+            of(FilesActions.copyFilesSuccess({ files: response })),
+            of(
+              FilesActions.getFilesWithFolders({
+                id: payload.destinationFolder,
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const moveFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.moveFiles.type),
+    switchMap(({ payload }) => {
+      return FileService.moveFiles(payload).pipe(
+        switchMap((response) => {
+          return concat(
+            of(FilesActions.moveFilesSuccess({ files: response })),
+            of(
+              FilesActions.getFilesWithFolders({
+                id: payload.destinationFolder,
+              }),
+            ),
+            of(FilesActions.getFilesWithFolders({ id: payload.sourceFolder })),
+          );
+        }),
+      );
+    }),
+  );
+
+const deleteFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.deleteFiles.type),
+    switchMap(({ payload }) => {
+      return FileService.deleteFiles({ files: payload.files }).pipe(
+        switchMap(() => {
+          return concat(
+            of(
+              FilesActions.deleteFilesSuccess({
+                files: payload.files,
+              }),
+            ),
+            of(
+              FilesActions.getFilesWithFolders({
+                id: payload.folderUrl,
+              }),
+            ),
+          );
+        }),
+        catchError((error) => {
+          return of(FilesActions.deleteFilesFail(error));
+        }),
+      );
+    }),
+  );
+
+const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.downloadFilesAsArchive.type),
+    switchMap(({ payload }) => {
+      return from(FileService.downloadFilesAsArchive(payload.files)).pipe(
+        map(() => FilesActions.downloadFilesAsArchiveSuccess()),
+        catchError(() => {
+          return of(
+            UIActions.showErrorToast(
+              translate('Failed to download files. Please try again later.', {
+                ns: Translation.Files,
+              }),
+            ),
+            FilesActions.downloadFilesAsArchiveFail(),
+          );
+        }),
+      );
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -445,4 +531,9 @@ export const FilesEpics = combineEpics(
   deleteFileFailEpic,
   unselectFilesEpic,
   setChosenFolderEpic,
+
+  copyFilesEpic,
+  moveFilesEpic,
+  deleteFilesEpic,
+  downloadFilesAsArchiveEpic,
 );

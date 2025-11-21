@@ -37,6 +37,7 @@ export interface BackendDataEntity {
   parentPath?: string | null;
   url: string;
   permissions?: SharePermission[];
+  updatedAt?: number;
 }
 
 export interface BackendEntity extends BackendDataEntity {

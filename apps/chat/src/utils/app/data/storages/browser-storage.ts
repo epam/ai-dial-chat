@@ -37,6 +37,7 @@ import {
   Entity,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
+import { DialCopiedItem } from '@epam/ai-dial-ui-kit';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';
@@ -394,6 +395,18 @@ export class BrowserStorage implements DialStorage {
 
   move(_data: MoveModel): Observable<MoveModel> {
     throw new Error('Method not implemented.');
+  }
+
+  copyFiles(_data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+    throw new Error('BrowserStorage.copyFiles not implemented');
+  }
+
+  moveFiles(_data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+    throw new Error('BrowserStorage.moveFiles not implemented');
+  }
+
+  deleteFiles(_data: { files: DialCopiedItem[] }): Observable<void> {
+    throw new Error('BrowserStorage.deleteFiles not implemented');
   }
 
   createApplication(

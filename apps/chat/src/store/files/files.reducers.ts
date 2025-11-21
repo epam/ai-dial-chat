@@ -16,7 +16,7 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, MoveModel } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
@@ -25,6 +25,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
@@ -188,7 +189,9 @@ export const filesSlice = createSlice({
         state.files.filter(
           (stateFile) =>
             //remove all files from loaded folder to have latest folder update
-            !payload.foldersSet.has(stateFile.folderId),
+            !payload.foldersSet.has(stateFile.folderId) ||
+            stateFile.publishedWithMe ||
+            stateFile.sharedWithMe,
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
@@ -582,6 +585,79 @@ export const filesSlice = createSlice({
         newChosenEmptyFolderIds,
       );
     },
+
+    copyFiles: (
+      state,
+      _action: PayloadAction<{
+        files: DialCopiedItem[];
+        destinationFolder: string;
+      }>,
+    ) => state,
+    copyFilesSuccess: (
+      state,
+      _action: PayloadAction<{
+        files: MoveModel[];
+      }>,
+    ) => state,
+    copyFilesFail: (
+      state,
+      _action: PayloadAction<{
+        files: DialCopiedItem[];
+        destinationFolder: string;
+      }>,
+    ) => state,
+
+    moveFiles: (
+      state,
+      _action: PayloadAction<{
+        files: DialCopiedItem[];
+        sourceFolder: string;
+        destinationFolder: string;
+      }>,
+    ) => state,
+    moveFilesSuccess: (
+      state,
+      _action: PayloadAction<{
+        files: MoveModel[];
+      }>,
+    ) => state,
+    moveFilesFail: (
+      state,
+      _action: PayloadAction<{
+        files: DialCopiedItem[];
+      }>,
+    ) => state,
+
+    deleteFiles: (
+      state,
+      _action: PayloadAction<{
+        files: DialDeletedItem[];
+        folderUrl: string;
+      }>,
+    ) => state,
+    deleteFilesSuccess: (
+      state,
+      _action: PayloadAction<{
+        files: DialDeletedItem[];
+      }>,
+    ) => state,
+    deleteFilesFail: (
+      state,
+      _action: PayloadAction<{
+        files: DialDeletedItem[];
+      }>,
+    ) => state,
+
+    downloadFilesAsArchive: (
+      state,
+      _action: PayloadAction<{
+        files: DialFile[];
+      }>,
+    ) => state,
+
+    downloadFilesAsArchiveSuccess: (state) => state,
+
+    downloadFilesAsArchiveFail: (state) => state,
   },
 });
 
