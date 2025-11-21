@@ -31,7 +31,7 @@ ENV NODE_OPTIONS="${NODE_OPTIONS} --max-http-header-size=32768"
 ENV KEEP_ALIVE_TIMEOUT=61000
 
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 -G nodejs nextjs
 
 COPY --chown=nextjs:nodejs --from=run_dependencies /app/dist/apps/chat ./
 
