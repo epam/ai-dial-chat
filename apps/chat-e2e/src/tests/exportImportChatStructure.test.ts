@@ -23,9 +23,12 @@ dialTest.only(
     chatBar,
     folderConversations,
     folderDropdownMenu,
+    chatBarFolderAssertion,
     chat,
     conversations,
+    conversationAssertion,
     replaceConfirmationDialog,
+    toastAssertion,
   }) => {
     setTestIds('EPMRTC-3024');
     let exportedData: UploadDownloadData;
@@ -47,7 +50,7 @@ dialTest.only(
     await dialTest.step(
       'Prepare folder structure and conversations',
       async () => {
-        // 2. Create Folder2 with Chat1 and Chat2
+        // Create Folder2 with Chat1 and Chat2
         folder2 = conversationData.prepareFolder('Folder2');
 
         chat1 = conversationData.prepareDefaultConversation(undefined, 'Chat1');
@@ -60,7 +63,7 @@ dialTest.only(
         chat2.id = `${folder2.id}/${chat2.id}`;
         conversationData.resetData();
 
-        // 3. Create Chat3 outside of all folders
+        // Create Chat3 outside of all folders
         chat3 = conversationData.prepareDefaultConversation(undefined, 'Chat3');
         conversationData.resetData();
 
@@ -72,7 +75,6 @@ dialTest.only(
           4: 'Folder3.1.1.1',
         });
 
-        // Create chats and assign them to nested folders
         // Chat4 in Folder3.1.1.1 (deepest)
         chat4 = conversationData.prepareDefaultConversation(undefined, 'Chat4');
         chat4.folderId = nestedFolders[3].id;
@@ -173,10 +175,27 @@ dialTest.only(
         await replaceConfirmationDialog.waitForState();
 
         // Set individual conversation options
+        // Chat1: Replace (will restore original content)
         await replaceConfirmationDialog.setConversationOption(
           'Chat1',
           'Replace',
         );
+
+        // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat2',
+          'Postfix',
+        );
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat4',
+          'Postfix',
+        );
+        await replaceConfirmationDialog.setConversationOption(
+          'Chat7',
+          'Postfix',
+        );
+
+        // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
         await replaceConfirmationDialog.setConversationOption(
           'Chat3',
           'Ignore',
@@ -189,43 +208,183 @@ dialTest.only(
           'Chat6',
           'Ignore',
         );
+      },
+    );
+
+    await dialTest.step(
+      'Verify duplicate resolution dialog state',
+      async () => {
+        // Verify Folder1 (empty folder) does not appear in duplicate window
+        await expect(
+          folderConversations.getFolderByName(folder1.name),
+        ).toBeHidden();
+
+        // Verify all conversations are visible in the dialog
+        await replaceConfirmationDialog
+          .getElementLocator()
+          .getByText(chat1.name)
+          .waitFor();
+        await replaceConfirmationDialog
+          .getElementLocator()
+          .getByText(chat2.name)
+          .waitFor();
+        await replaceConfirmationDialog
+          .getElementLocator()
+          .getByText(chat3.name)
+          .waitFor();
+        await replaceConfirmationDialog
+          .getElementLocator()
+          .getByText(chat4.name)
+          .waitFor();
+        await replaceConfirmationDialog
+          .getElementLocator()
+          .getByText(chat5.name)
+          .waitFor();
+        await replaceConfirmationDialog
+          .getElementLocator()
+          .getByText(chat6.name)
+          .waitFor();
+        await replaceConfirmationDialog
+          .getElementLocator()
+          .getByText(chat7.name)
+          .waitFor();
+
+        // Click Continue to proceed with import
         await replaceConfirmationDialog.clickContinue();
       },
     );
 
     await dialTest.step(
-      'Verify import results - basic verification',
+      'Verify import results and conversation states',
       async () => {
+        // Verify success toast message appears
+        await toastAssertion.assertToastMessage(
+          'Conversation(s) imported successfully',
+        );
+
         // Verify Folder1 (empty folder) exists
         await folderConversations.getFolderByName(folder1.name).waitFor();
 
-        // Verify Folder2 structure with chats exists
-        await folderConversations
-          .getFolderEntity(folder2.name, chat1.name)
-          .waitFor();
-        await folderConversations
-          .getFolderEntity(folder2.name, chat2.name)
-          .waitFor();
+        // Verify Folder2 structure with original Chat1 (replaced, no new messages)
+        await chatBarFolderAssertion.assertFolderEntityState(
+          folder2,
+          chat1,
+          'visible',
+        );
 
-        // Verify Chat3 exists at root
-        await conversations.getEntityByName(chat3.name).waitFor();
+        // Verify Chat2 1 was created with postfix in Folder2
+        await chatBarFolderAssertion.assertFolderEntityState(
+          folder2,
+          { name: 'Chat2 1' },
+          'visible',
+        );
 
-        // Verify nested folder structure with chats
-        await folderConversations
-          .getFolderEntity(nestedFolders[3].name, chat4.name)
-          .waitFor();
+        // Verify original Chat2 still exists
+        await chatBarFolderAssertion.assertFolderEntityState(
+          folder2,
+          chat2,
+          'visible',
+        );
 
-        await folderConversations
-          .getFolderEntity(nestedFolders[2].name, chat5.name)
-          .waitFor();
+        // Verify Chat3 exists at root and unchanged (no postfix)
+        await conversationAssertion.assertEntityState(chat3, 'visible');
+        await conversationAssertion.assertEntityState(
+          { name: 'Chat3 1' },
+          'hidden',
+        );
 
-        await folderConversations
-          .getFolderEntity(nestedFolders[1].name, chat6.name)
-          .waitFor();
+        // Verify nested folder structure with Chat4 1 (postfix)
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[3],
+          { name: 'Chat4 1' },
+          'visible',
+        );
 
-        await folderConversations
-          .getFolderEntity(nestedFolders[0].name, chat7.name)
-          .waitFor();
+        // Verify original Chat4 still exists
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[3],
+          chat4,
+          'visible',
+        );
+
+        // Verify Chat5 unchanged (ignored, no postfix)
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[2],
+          chat5,
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[2],
+          { name: 'Chat5 1' },
+          'hidden',
+        );
+
+        // Verify Chat6 unchanged (ignored, no postfix)
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[1],
+          chat6,
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[1],
+          { name: 'Chat6 1' },
+          'hidden',
+        );
+
+        // Verify Chat7 1 was created with postfix
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[0],
+          { name: 'Chat7 1' },
+          'visible',
+        );
+
+        // Verify original Chat7 still exists
+        await chatBarFolderAssertion.assertFolderEntityState(
+          nestedFolders[0],
+          chat7,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify Chat1 was replaced and Chat4/Chat4 1 history',
+      async () => {
+        // Select Chat1 and verify it has original content (no new message from update step)
+        await folderConversations.selectFolderEntity(folder2.name, chat1.name);
+        const chat1MessagesCount = await chat
+          .getChatMessages()
+          .getElementsCount();
+        expect(
+          chat1MessagesCount,
+          'Chat1 should have original messages only (replaced)',
+        ).toBe(2); // Default conversation has 1 request + 1 response
+
+        // Select original Chat4 and verify it has updated content (with new message)
+        await folderConversations.selectFolderEntity(
+          nestedFolders[3].name,
+          chat4.name,
+        );
+        const chat4MessagesCount = await chat
+          .getChatMessages()
+          .getElementsCount();
+        expect(
+          chat4MessagesCount,
+          'Chat4 should have original + new messages',
+        ).toBe(4); // Original (1 req + 1 resp) + New (1 req + 1 resp)
+
+        // Select Chat4 1 and verify it has imported (original) content only
+        await folderConversations.selectFolderEntity(
+          nestedFolders[3].name,
+          'Chat4 1',
+        );
+        const chat4_1MessagesCount = await chat
+          .getChatMessages()
+          .getElementsCount();
+        expect(
+          chat4_1MessagesCount,
+          'Chat4 1 should have imported (original) messages only',
+        ).toBe(2); // Imported original: 1 request + 1 response
       },
     );
   },
