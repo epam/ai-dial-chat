@@ -505,17 +505,13 @@ export const conversationsSlice = createSlice({
         comment?: string;
       }>,
     ) => state,
-    rateMessageSuccess: (
+    rateMessageFail: (
       state,
       _action: PayloadAction<{
         conversationId: string;
         messageIndex: number;
-        rate: LikeState;
+        error: Response | string;
       }>,
-    ) => state,
-    rateMessageFail: (
-      state,
-      _action: PayloadAction<{ error: Response | string }>,
     ) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
     sendMessages: (state, _action: PayloadAction<SendMessagesPayload>) => state,
