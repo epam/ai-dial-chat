@@ -2,6 +2,7 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
+import { OAuthMockConfig } from '@/src/testData/toolsets/oauthMockConfig';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
@@ -525,6 +526,8 @@ export const API = {
   publicFilesHost: () => `${API.api}/${API.filesHostSegment}/${API.public}`,
   toolsetEditorHost: '/en/toolset-editor.json',
   toolsetCreateHost: () => `${API.api}/toolsets`,
+  authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
+  tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
 };
 
 export const Import = {
@@ -689,4 +692,24 @@ export enum EntityEditorAppTypes {
   QuickApp = 'Quick app',
   QuickApp2 = 'Quick app2',
   CodeApp = 'Code App',
+}
+
+export enum MarketplaceEntitiesTabs {
+  AGENTS = 'agents',
+  TOOLSETS = 'toolsets',
+}
+
+export enum OAuthQueryParams {
+  responseType = 'response_type',
+  codeChallengeMethod = 'code_challenge_method',
+  clientId = 'client_id',
+  redirectUri = 'redirect_uri',
+  scope = 'scope',
+  state = 'state',
+  code = 'code',
+}
+
+export enum Creds {
+  myCreds = 'MY CREDS',
+  orgCreds = 'ORG CREDS',
 }

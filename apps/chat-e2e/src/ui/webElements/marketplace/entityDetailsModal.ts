@@ -1,7 +1,11 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { IconSelectors, MarketplaceEntitySelectors } from '@/src/ui/selectors';
+import {
+  EntityEditorGeneralInfoPreviewSelectors,
+  IconSelectors,
+  MarketplaceEntitySelectors,
+} from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
@@ -119,6 +123,9 @@ export class EntityDetailsModal extends BaseElement {
     this.openInNewTabButton.getChildElementBySelector(
       IconSelectors.externalAppIcon,
     );
+  public credsLabel = this.getChildElementBySelector(
+    MarketplaceDetailsModal.credsLabel,
+  );
 
   public async clickUseButton({
     isInstalledDeploymentsUpdated = false,

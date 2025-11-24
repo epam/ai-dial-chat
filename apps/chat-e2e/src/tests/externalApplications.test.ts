@@ -326,7 +326,7 @@ dialTest(
       async () => {
         await navigationPanel.backToChat();
         await dialHomePage.waitForPageLoaded();
-        //TODO: enable the step when fixed https://github.com/epam/ai-dial-chat/issues/4881
+        //TODO: enable the step when fixed https://github.com/epam/ai-dial-chat/issues/5124
         // await agentInfoAssertion.assertAgentName(
         //   ModelsUtil.getDefaultAgent()!.name,
         // );
