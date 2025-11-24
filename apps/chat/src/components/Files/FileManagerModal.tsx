@@ -670,7 +670,11 @@ export const FileManagerModal = memo(
                           onItemEvent={handleItemCallback}
                           withBorderHighlight={false}
                           featureType={FeatureType.File}
-                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          canSelectFolders={
+                            canAttachFolders ||
+                            canAttachFiles ||
+                            forceShowSelectCheckBox
+                          }
                           showTooltip={showTooltip}
                           onSelectFolder={handleSelectFolder}
                           onShowError={setErrorMessage}
@@ -724,7 +728,11 @@ export const FileManagerModal = memo(
                           onItemEvent={handleItemCallback}
                           withBorderHighlight={false}
                           featureType={FeatureType.File}
-                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          canSelectFolders={
+                            canAttachFolders ||
+                            canAttachFiles ||
+                            forceShowSelectCheckBox
+                          }
                           showTooltip={showTooltip}
                           onSelectFolder={handleSelectFolder}
                           onUnshareFolder={handleDiscardSharedWithMeFolder}
@@ -757,7 +765,11 @@ export const FileManagerModal = memo(
                   openedFoldersIds={openedFoldersIds}
                   onItemEvent={handleItemCallback}
                   onClickFolder={handleFolderClick}
-                  canAttachFolders={canAttachFolders}
+                  canAttachFolders={
+                    canAttachFolders ||
+                    canAttachFiles ||
+                    !!forceShowSelectCheckBox
+                  }
                   onToggleFolder={handleSelectFolder}
                 />
 
@@ -795,7 +807,11 @@ export const FileManagerModal = memo(
                           onItemEvent={handleItemCallback}
                           withBorderHighlight={false}
                           featureType={FeatureType.File}
-                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          canSelectFolders={
+                            canAttachFolders ||
+                            canAttachFiles ||
+                            forceShowSelectCheckBox
+                          }
                           showTooltip={showTooltip}
                           onSelectFolder={handleSelectFolder}
                           onShowError={setErrorMessage}
