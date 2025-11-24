@@ -17,7 +17,6 @@ import { expect } from '@playwright/test';
 let defaultModel: DialAIEntityModel;
 let nonDefaultModel: DialAIEntityModel;
 let recentModelIds: string[];
-let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultAgent()!;
@@ -25,7 +24,6 @@ dialTest.beforeAll(async () => {
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );
   recentModelIds = ModelsUtil.getRecentModelIds();
-  allEntities = ModelsUtil.getOpenAIEntities();
 });
 
 dialTest(
@@ -50,11 +48,12 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
+    let modelWithoutAttachments: DialAIEntityModel;
 
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
-        const modelWithoutAttachments = GeneratorUtil.randomArrayElement(
+        modelWithoutAttachments = GeneratorUtil.randomArrayElement(
           ModelsUtil.getModelsWithoutAttachment(),
         );
         await fileApiHelper.updateInstalledDeployments([
@@ -78,17 +77,10 @@ dialTest(
     await dialTest.step(
       'Verify the list of recent entities and icons are displayed and valid',
       async () => {
-        const expectedDefaultRecentEntities = [];
-        for (const entity of recentModelIds) {
-          expectedDefaultRecentEntities.push(
-            allEntities.find((e) => e.id === entity)!.name,
-          );
-        }
-
         const recentTalkTo = await talkToAgents.getEntityNames();
         expect
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
-          .toEqual(expectedDefaultRecentEntities);
+          .toEqual([modelWithoutAttachments.name]);
 
         const recentAgentsIcons = await talkToAgents.getEntityIcons();
         expect
@@ -96,19 +88,15 @@ dialTest(
             recentAgentsIcons.length,
             ExpectedMessages.entitiesIconsCountIsValid,
           )
-          .toBe(recentModelIds.length);
+          .toBe(1);
 
-        for (const recentEntityId of recentModelIds) {
-          const entity = ModelsUtil.getOpenAIEntity(recentEntityId)!;
-          const actualRecentEntity = recentAgentsIcons.find(
-            (e) => e.entityId === entity.id,
-          )!;
-          const expectedEntityIcon = iconApiHelper.getEntityIcon(entity);
-          await baseAssertion.assertEntityIcon(
-            actualRecentEntity.iconLocator,
-            expectedEntityIcon,
-          );
-        }
+        const expectedEntityIcon = iconApiHelper.getEntityIcon(
+          modelWithoutAttachments,
+        );
+        await baseAssertion.assertEntityIcon(
+          recentAgentsIcons[0].iconLocator,
+          expectedEntityIcon,
+        );
         await talkToAgentDialog.cancelButton.click();
       },
     );
