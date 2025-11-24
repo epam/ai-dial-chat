@@ -46,6 +46,7 @@ dialTest(
     talkToAgents,
     baseAssertion,
     localStorageManager,
+    fileApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
@@ -53,6 +54,15 @@ dialTest(
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
+        const modelWithoutAttachments = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModelsWithoutAttachment(),
+        );
+        await fileApiHelper.updateInstalledDeployments([
+          modelWithoutAttachments,
+        ]);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          modelWithoutAttachments,
+        );
         await localStorageManager.useLastConversationSettingsOnce();
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
@@ -60,7 +70,7 @@ dialTest(
         await chat.changeAgentButton.click();
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(
-          defaultModel.name,
+          modelWithoutAttachments.name,
         );
       },
     );
