@@ -54,7 +54,13 @@ dialTest(
       'Verify default model is selected by default',
       async () => {
         modelWithoutAttachments = GeneratorUtil.randomArrayElement(
-          ModelsUtil.getModelsWithoutAttachment(),
+          ModelsUtil.getModelsWithoutAttachment().filter(
+            (m) =>
+              m.features?.temperature !== undefined &&
+              m.features.temperature === true &&
+              m.features.systemPrompt !== undefined &&
+              m.features.systemPrompt === true,
+          ),
         );
         await fileApiHelper.updateInstalledDeployments([
           modelWithoutAttachments,
