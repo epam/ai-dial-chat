@@ -193,6 +193,13 @@ export const FileManager: React.FC = () => {
           month: 'short',
           day: '2-digit',
         },
+        actionLabels: {
+          duplicate: t('Duplicate'),
+          copy: t('Copy to'),
+          move: t('Move to'),
+          delete: t('Delete'),
+          download: t('Download'),
+        },
       }}
       toolbarOptions={{
         tabs: tabs,
