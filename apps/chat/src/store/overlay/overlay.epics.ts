@@ -55,6 +55,7 @@ import {
   ImportExportActions,
   ModelsActions,
   OverlayActions,
+  PublicationActions,
   SettingsActions,
   ShareActions,
   UIActions,
@@ -1179,7 +1180,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       const availableThemes = UISelectors.selectAvailableThemes(state$.value);
       const _savedOverlayOptions = state$.value.overlay._savedOverlayOptions;
       const isOverlayOptionsReceived = state$.value.overlay.optionsReceived;
-      const actions = [];
+      const actions: Observable<AppAction>[] = [];
       const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);
 
       const isOptionChanged = (optionName: keyof ChatOverlayOptions) => {
@@ -1237,6 +1238,36 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             actions.push(
               of(ShareActions.triggerGettingSharedConversationListings()),
             );
+          }
+
+          if (!shouldLogIn) {
+            if (features.includes(Feature.ConversationsPublishing)) {
+              actions.push(
+                of(
+                  PublicationActions.uploadAllPublishedWithMeItems({
+                    featureType: FeatureType.Chat,
+                  }),
+                ),
+              );
+            }
+
+            if (features.includes(Feature.PromptsPublishing)) {
+              actions.push(
+                of(
+                  PublicationActions.uploadAllPublishedWithMeItems({
+                    featureType: FeatureType.Prompt,
+                  }),
+                ),
+              );
+            }
+
+            if (
+              AuthSelectors.selectIsAdmin(state$.value) &&
+              (features.includes(Feature.ConversationsPublishing) ||
+                features.includes(Feature.PromptsPublishing))
+            ) {
+              actions.push(of(PublicationActions.uploadPublications()));
+            }
           }
         } else {
           const incorrectFeatures = features
