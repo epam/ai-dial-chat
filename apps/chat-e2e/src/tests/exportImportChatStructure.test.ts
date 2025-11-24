@@ -4,7 +4,6 @@ import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
@@ -25,7 +24,6 @@ dialTest.only(
     folderDropdownMenu,
     chatBarFolderAssertion,
     chat,
-    conversations,
     conversationAssertion,
     replaceConfirmationDialog,
     toastAssertion,
@@ -67,7 +65,7 @@ dialTest.only(
         chat3 = conversationData.prepareDefaultConversation(undefined, 'Chat3');
         conversationData.resetData();
 
-        // 5. Create Folder3 with nested folder structure (3 levels deep for 4 total folders)
+        // Create Folder3 with nested folder structure (4 folders, 3 levels deep)
         nestedFolders = conversationData.prepareNestedFolder(4, {
           1: 'Folder3',
           2: 'Folder3.1',
@@ -75,28 +73,15 @@ dialTest.only(
           4: 'Folder3.1.1.1',
         });
 
-        // Chat4 in Folder3.1.1.1 (deepest)
-        chat4 = conversationData.prepareDefaultConversation(undefined, 'Chat4');
-        chat4.folderId = nestedFolders[3].id;
-        chat4.id = `${nestedFolders[3].id}/${chat4.id}`;
-        conversationData.resetData();
-
-        // Chat5 in Folder3.1.1
-        chat5 = conversationData.prepareDefaultConversation(undefined, 'Chat5');
-        chat5.folderId = nestedFolders[2].id;
-        chat5.id = `${nestedFolders[2].id}/${chat5.id}`;
-        conversationData.resetData();
-
-        // Chat6 in Folder3.1
-        chat6 = conversationData.prepareDefaultConversation(undefined, 'Chat6');
-        chat6.folderId = nestedFolders[1].id;
-        chat6.id = `${nestedFolders[1].id}/${chat6.id}`;
-        conversationData.resetData();
-
-        // Chat7 in Folder3
-        chat7 = conversationData.prepareDefaultConversation(undefined, 'Chat7');
-        chat7.folderId = nestedFolders[0].id;
-        chat7.id = `${nestedFolders[0].id}/${chat7.id}`;
+        // Create conversations for nested folders: Chat4-7
+        const nestedConversations =
+          conversationData.prepareConversationsForNestedFolders(nestedFolders, {
+            1: 'Chat7', // Folder3
+            2: 'Chat6', // Folder3.1
+            3: 'Chat5', // Folder3.1.1
+            4: 'Chat4', // Folder3.1.1.1 (deepest)
+          });
+        [chat7, chat6, chat5, chat4] = nestedConversations;
 
         await dataInjector.createConversations(
           [chat1, chat2, chat3, chat4, chat5, chat6, chat7],
@@ -216,7 +201,7 @@ dialTest.only(
       async () => {
         // Verify Folder1 (empty folder) does not appear in duplicate window
         await expect(
-          folderConversations.getFolderByName(folder1.name),
+          replaceConfirmationDialog.getElementLocator().getByText(folder1.name),
         ).toBeHidden();
 
         // Verify all conversations are visible in the dialog
