@@ -37,6 +37,10 @@ export const ToolsetEditorView = ({
     ToolsetSelectors.selectIsToolsetDetailsLoading,
   );
 
+  const [previewMode, setPreviewMode] = React.useState<PreviewMode>(
+    screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
+  );
+
   const { control } = useFormContext<ToolsetEditorForm>();
 
   const [name, version] = useWatch({
@@ -69,9 +73,8 @@ export const ToolsetEditorView = ({
     <MarketplaceEditorView
       leftContent={LeftContent}
       rightContent={RightContent}
-      defaultPreviewMode={
-        screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half
-      }
+      previewMode={previewMode}
+      onPreviewModeChange={setPreviewMode}
       closedPreviewLabel={`${t('Preview')}: ${name} v. ${version}`}
       leftTabLabel={t('Info')}
     />
