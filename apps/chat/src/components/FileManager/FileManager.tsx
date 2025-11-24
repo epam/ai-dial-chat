@@ -21,6 +21,7 @@ import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileManager, useDialFileManagerTabs } from '@epam/ai-dial-ui-kit';
 
 export const FileManager: React.FC = () => {
@@ -29,9 +30,6 @@ export const FileManager: React.FC = () => {
   const [treeCollapsedState, setTreeCollapsedState] = useState<
     boolean | undefined
   >(true);
-  const [loadedFolderIds, setLoadedFolderIds] = useState<Set<string>>(
-    new Set(),
-  );
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
@@ -60,20 +58,16 @@ export const FileManager: React.FC = () => {
       setCurrentPath(bucketRootId);
     }
     dispatch(FilesActions.getFilesWithFolders({}));
-    if (!loadedFolderIds.has(bucketRootId)) {
-      dispatch(FilesActions.getFilesWithFolders({ id: bucketRootId }));
-      setLoadedFolderIds((prev) => new Set(prev).add(bucketRootId));
-    }
-  }, [dispatch, initialized, bucketRootId, loadedFolderIds]);
+  }, [dispatch, initialized, bucketRootId]);
 
   useEffect(() => {
     if (currentPath && currentPath !== bucketRootId) {
-      if (!loadedFolderIds.has(currentPath)) {
+      const folder = folders.find((folder) => folder.id === currentPath);
+      if (folder?.status !== UploadStatus.LOADED) {
         dispatch(FilesActions.getFilesWithFolders({ id: currentPath }));
-        setLoadedFolderIds((prev) => new Set(prev).add(currentPath));
       }
     }
-  }, [dispatch, currentPath, bucketRootId, loadedFolderIds, destinationPath]);
+  }, [dispatch, currentPath, bucketRootId, folders]);
 
   useEffect(() => {
     if (
@@ -81,12 +75,12 @@ export const FileManager: React.FC = () => {
       destinationPath !== bucketRootId &&
       destinationPath !== currentPath
     ) {
-      if (!loadedFolderIds.has(destinationPath)) {
+      const folder = folders.find((folder) => folder.id === destinationPath);
+      if (folder?.status !== UploadStatus.LOADED) {
         dispatch(FilesActions.getFilesWithFolders({ id: destinationPath }));
-        setLoadedFolderIds((prev) => new Set(prev).add(destinationPath));
       }
     }
-  }, [dispatch, currentPath, bucketRootId, loadedFolderIds, destinationPath]);
+  }, [dispatch, currentPath, bucketRootId, destinationPath, folders]);
 
   const { fileTreeItems, rootFolder } = useMemo(() => {
     let filteredFiles = files;
