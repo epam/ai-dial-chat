@@ -13,7 +13,7 @@ import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
-dialTest.only(
+dialTest(
   '[Toolset]: toolset with default name and version is saved correctly.\n' +
     '[Toolset]: cards are not duplicated for each saved changes when edit toolset several times.\n' +
     '[App editor]: Release date displayed on detailed preview on "General info" step when edit toolset.\n' +

@@ -16,7 +16,6 @@ import {
 } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
-
 export interface OAuthState {
   isSignedIn: boolean;
   capturedOAuthUrl: string | null;
@@ -32,6 +31,10 @@ export class OAuthMockHelper {
   private readonly toolsetEndpoint: string;
   private readonly mockConfig: OAuthMockConfig;
   private readonly authorizationCode: string;
+  private readonly expectedStatusCodes: {
+    updateToolsetCode?: number;
+    backendSigInCode?: number;
+  };
   private state: OAuthState = {
     isSignedIn: false,
     capturedOAuthUrl: null,
@@ -79,6 +82,10 @@ export class OAuthMockHelper {
     };
     this.authorizationCode =
       options.authorizationCode ?? DEFAULT_AUTHORIZATION_CODE;
+    this.expectedStatusCodes = options.expectedStatusCodes || {
+      updateToolsetCode: 200,
+      backendSigInCode: 200,
+    };
   }
 
   private static pageLoadingTimeout = 2000;
@@ -162,7 +169,7 @@ export class OAuthMockHelper {
     await this.page.unrouteAll({ behavior: 'ignoreErrors' });
   }
 
-  private async setupToolsetRoutes(): Promise<void> {
+  public async setupToolsetRoutes(): Promise<void> {
     await this.page.route(
       `**${API.api}/${this.initialToolset.id}`,
       async (route, request) => {
@@ -174,10 +181,14 @@ export class OAuthMockHelper {
         }
         // Intercepted PUT request
         if (method === 'PUT') {
+          const expectedCode = this.expectedStatusCodes.updateToolsetCode;
           await route.fulfill({
-            status: 200,
+            status: expectedCode,
             contentType: 'application/json',
-            body: JSON.stringify({ success: true }),
+            body:
+              expectedCode === 200
+                ? JSON.stringify({ success: true })
+                : undefined,
           });
           // Intercepted GET request
         } else if (method === 'GET') {
@@ -209,31 +220,39 @@ export class OAuthMockHelper {
     );
   }
 
-  private async setupSignInRoute(): Promise<void> {
+  public async setupSignInRoute(): Promise<void> {
     const signInUrl = `**${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`;
     let requestBody;
     await this.page.route(signInUrl, async (route, request) => {
       // Intercept '/api/ops/toolset/signin' call
       if (request.method() === 'POST') {
-        this.state.isSignedIn = true;
-        requestBody = request.postDataJSON();
-        this.state.signInRequest = requestBody;
-
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            message: 'Authentication successful',
-          }),
-        });
+        const expectedCode = this.expectedStatusCodes.backendSigInCode;
+        if (expectedCode === 200) {
+          this.state.isSignedIn = true;
+          requestBody = request.postDataJSON();
+          this.state.signInRequest = requestBody;
+          await route.fulfill({
+            status: expectedCode,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              message: 'Authentication successful',
+            }),
+          });
+        } else {
+          await route.fulfill({
+            status: expectedCode,
+            contentType: 'application/json',
+            body: undefined,
+          });
+        }
       } else {
         await route.continue();
       }
     });
   }
 
-  private async setupOAuthRedirectRoute(): Promise<void> {
+  public async setupOAuthRedirectRoute(): Promise<void> {
     const redirectPattern = `${this.mockConfig.authorization_endpoint}*`;
     // Intercept OAuth redirect
     await this.page.route(redirectPattern, async (route) => {

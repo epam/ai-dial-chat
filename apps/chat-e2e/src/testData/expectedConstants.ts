@@ -2,7 +2,6 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
-import { OAuthMockConfig } from '@/src/testData/toolsets/oauthMockConfig';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
@@ -352,7 +351,6 @@ export const ExpectedConstants = {
   allowedToolsLabelSubtitle:
     'The list of tools will be available after filling in the definition and authentication section',
   oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
-  mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
 };
 
 export enum Types {

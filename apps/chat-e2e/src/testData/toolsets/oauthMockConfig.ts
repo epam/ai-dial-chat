@@ -12,6 +12,18 @@ export interface OAuthMockConfig {
 export interface OAuthMockOptions {
   mockOAuthConfig?: Partial<OAuthMockConfig>;
   authorizationCode?: string;
+  expectedStatusCodes?: {
+    updateToolsetCode?: number;
+    backendSigInCode?: number;
+  };
+}
+
+export interface ToolsetSignInRequest {
+  url: string;
+  authenticationType: ToolsetAuthTypes;
+  credentialsLevel: ToolsetCredentialsLevel;
+  code: string;
+  state?: string;
 }
 
 export const DEFAULT_OAUTH_CONFIG: OAuthMockConfig = {
@@ -21,13 +33,5 @@ export const DEFAULT_OAUTH_CONFIG: OAuthMockConfig = {
   scopes_supported: ['mcp.read', 'mcp.execute', 'mcp.tools'],
   code_challenge_method: 'S256',
 };
-
-export interface ToolsetSignInRequest {
-  url: string;
-  authenticationType: ToolsetAuthTypes;
-  credentialsLevel: ToolsetCredentialsLevel;
-  code: string;
-  state?: string;
-}
 
 export const DEFAULT_AUTHORIZATION_CODE = 'MOCK_AUTH_CODE_12345';

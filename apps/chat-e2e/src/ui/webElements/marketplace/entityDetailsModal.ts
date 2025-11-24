@@ -1,11 +1,7 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import {
-  EntityEditorGeneralInfoPreviewSelectors,
-  IconSelectors,
-  MarketplaceEntitySelectors,
-} from '@/src/ui/selectors';
+import { IconSelectors, MarketplaceEntitySelectors } from '@/src/ui/selectors';
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
