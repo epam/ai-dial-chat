@@ -71,6 +71,7 @@ const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
 ) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (getDefaultMiddleware: any) => {
     return getDefaultMiddleware({
       thunk: false,
