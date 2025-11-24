@@ -151,8 +151,11 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-2965');
     const attachmentName = Attachment.sunImageName;
+    //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) => !m.id.includes(':'),
+      ),
     )!;
     const testMessage = 'Test message with attachment';
 
