@@ -1,6 +1,14 @@
-import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
+import { ImportResolutionOption } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
+import { FolderSelectors } from '@/src/ui/selectors';
+import {
+  PublishingApprovalModalSelectors,
+  ReplaceConfirmationModalSelectors,
+} from '@/src/ui/selectors/dialogSelectors';
+import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class ReplaceConfirmationDialog extends BaseElement {
@@ -20,24 +28,29 @@ export class ReplaceConfirmationDialog extends BaseElement {
     ReplaceConfirmationModalSelectors.continueButton,
   );
 
-  /**
-   * Gets the dropdown menu button for a specific conversation by its name
-   */
-  private getConversationDropdownByName(conversationName: string) {
-    return this.getElementLocator()
-      .locator(
-        ReplaceConfirmationModalSelectors.conversationByName(conversationName),
-      )
-      .locator(ReplaceConfirmationModalSelectors.dropdownTrigger);
+  public allItemsLine = this.getChildElementBySelector(
+    ReplaceConfirmationModalSelectors.allItemsSelector,
+  );
+
+  public getConversationDropdownByName(conversationName: string) {
+    return this.getConversationRowByName(
+      conversationName,
+    ).getChildElementBySelector(
+      ReplaceConfirmationModalSelectors.dropdownTrigger,
+    );
+  }
+
+  private getConversationRowByName(conversationName: string) {
+    return this.getChildElementBySelector(
+      `${EntitySelectors.conversation}:has(${EntitySelectors.entityName}:text("${conversationName}"))`,
+    );
   }
 
   /**
    * Gets the dropdown menu for "All items"
    */
-  private getAllItemsDropdown() {
-    return this.getChildElementBySelector(
-      ReplaceConfirmationModalSelectors.allItemsSelector,
-    ).getChildElementBySelector(
+  public getAllItemsDropdown() {
+    return this.allItemsLine.getChildElementBySelector(
       ReplaceConfirmationModalSelectors.dropdownTrigger,
     );
   }
@@ -45,7 +58,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
   /**
    * Clicks on a dropdown menu item (Replace, Postfix, Ignore)
    */
-  private async selectDropdownOption(option: 'Replace' | 'Postfix' | 'Ignore') {
+  private async selectDropdownOption(option: ImportResolutionOption) {
     const menuItem = this.page
       .locator(ReplaceConfirmationModalSelectors.menuItem)
       .filter({ hasText: option });
@@ -55,7 +68,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
   /**
    * Sets the resolution option for all items
    */
-  public async setAllItemsOption(option: 'Replace' | 'Postfix' | 'Ignore') {
+  public async setAllItemsOption(option: ImportResolutionOption) {
     await this.getAllItemsDropdown().click();
     await this.selectDropdownOption(option);
   }
@@ -65,7 +78,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
    */
   public async setConversationOption(
     conversationName: string,
-    option: 'Replace' | 'Postfix' | 'Ignore',
+    option: ImportResolutionOption,
   ) {
     await this.getConversationDropdownByName(conversationName).click();
     await this.selectDropdownOption(option);
@@ -94,10 +107,49 @@ export class ReplaceConfirmationDialog extends BaseElement {
     }
   }
 
+  public getConversationByExactName(name: string) {
+    return this.getChildElementBySelector(EntitySelectors.conversation)
+      .getChildElementBySelector(EntitySelectors.entityName)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+  }
+
+  public getConversationByName(name: string, index?: number) {
+    return this.getChildElementBySelector(EntitySelectors.conversation)
+      .getChildElementBySelector(EntitySelectors.entityName)
+      .getElementLocatorByText(name, index);
+  }
+
+  public getConversationIcon(conversationName: string, index?: number) {
+    return this.getConversationByName(conversationName, index)
+      .locator('..')
+      .locator(ReplaceConfirmationModalSelectors.iconContainer)
+      .locator('img');
+  }
+
   /**
-   * Clicks the Cancel button to cancel import
+   * Gets conversation arrow icon by conversation name
    */
-  public async clickCancel() {
-    await this.cancelButton.click();
+  public getConversationArrowIcon(conversationName: string, index?: number) {
+    return this.getConversationByName(conversationName, index)
+      .locator('..')
+      .locator('svg')
+      .first();
+  }
+
+  public getFolderByName(folderName: string) {
+    return this.getChildElementBySelector(FolderSelectors.folder)
+      .getChildElementBySelector(FolderSelectors.folderName)
+      .getElementLocator()
+      .filter({
+        hasText: `${folderName}`,
+      });
+  }
+
+  /**
+   * Gets folder arrow icon (expand/collapse indicator)
+   */
+  public getFolderArrowIcon(folderName: string) {
+    return this.getFolderByName(folderName).locator('svg').first();
   }
 }

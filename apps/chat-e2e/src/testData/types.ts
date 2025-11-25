@@ -69,3 +69,9 @@ export enum ApplicationTypes {
   CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
 }
+
+export enum ImportResolutionOption {
+  Replace = 'Replace',
+  Postfix = 'Postfix',
+  Ignore = 'Ignore',
+}

@@ -4,6 +4,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
+  ImportResolutionOption,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
@@ -26,6 +27,7 @@ dialTest.only(
     chat,
     conversationAssertion,
     replaceConfirmationDialog,
+    replaceConfirmationDialogAssertion,
     toastAssertion,
   }) => {
     setTestIds('EPMRTC-3024');
@@ -147,7 +149,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Import the structure and handle duplicate resolution',
+      'Import the structure using Import button at the bottom of the chat panel',
       async () => {
         // Set isHttpMethodTriggered to false because a modal dialog will appear
         await dialHomePage.importFile(
@@ -155,89 +157,107 @@ dialTest.only(
           () => chatBar.importButton.click(),
           false,
         );
-
-        // Wait for replace confirmation modal to appear
         await replaceConfirmationDialog.waitForState();
+      },
+    );
 
+    await dialTest.step('Verify the modal elements', async () => {
+      // Verify "All items" has Postfix option selected
+      await replaceConfirmationDialogAssertion.assertAllItemsOption(
+        ImportResolutionOption.Postfix,
+      );
+
+      // Verify Empty folder (Folder1) does not exist on the duplicates window
+      await replaceConfirmationDialogAssertion.assertFolderState(
+        folder1.name,
+        'hidden',
+      );
+
+      // Verify other folders exist
+      const visibleFolders = [folder2.name, nestedFolders[0].name];
+      for (const folderName of visibleFolders) {
+        await replaceConfirmationDialogAssertion.assertFolderState(
+          folderName,
+          'visible',
+        );
+      }
+
+      // Verify all conversations exist
+      const allConversations = [
+        chat1,
+        chat2,
+        chat3,
+        chat4,
+        chat5,
+        chat6,
+        chat7,
+      ];
+      for (const conversation of allConversations) {
+        await replaceConfirmationDialogAssertion.assertConversationState(
+          conversation.name,
+          'visible',
+        );
+      }
+
+      // TODO: Verify folders can be collapsed and expanded (blocked by issue #4996 - do not automate)
+      // TODO: Verify icons near folders is like on chat panel
+      // TODO: Verify icons for the chats are the same as model icons on chat panel
+      // TODO: Verify folders are located with indents (nice hierarchy) and expanded (blocked by issue #4996 - do not automate)
+    });
+
+    await dialTest.step(
+      'Select options for individual conversations',
+      async () => {
         // Set individual conversation options
         // Chat1: Replace (will restore original content)
         await replaceConfirmationDialog.setConversationOption(
           'Chat1',
-          'Replace',
+          ImportResolutionOption.Replace,
         );
 
         // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
         await replaceConfirmationDialog.setConversationOption(
           'Chat2',
-          'Postfix',
+          ImportResolutionOption.Postfix,
         );
         await replaceConfirmationDialog.setConversationOption(
           'Chat4',
-          'Postfix',
+          ImportResolutionOption.Postfix,
         );
         await replaceConfirmationDialog.setConversationOption(
           'Chat7',
-          'Postfix',
+          ImportResolutionOption.Postfix,
         );
 
         // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
         await replaceConfirmationDialog.setConversationOption(
           'Chat3',
-          'Ignore',
+          ImportResolutionOption.Ignore,
         );
         await replaceConfirmationDialog.setConversationOption(
           'Chat5',
-          'Ignore',
+          ImportResolutionOption.Ignore,
         );
         await replaceConfirmationDialog.setConversationOption(
           'Chat6',
-          'Ignore',
+          ImportResolutionOption.Ignore,
         );
       },
     );
 
     await dialTest.step(
-      'Verify duplicate resolution dialog state',
+      'Verify "All items" has Mixed option selected',
       async () => {
-        // Verify Folder1 (empty folder) does not appear in duplicate window
-        await expect(
-          replaceConfirmationDialog.getElementLocator().getByText(folder1.name),
-        ).toBeHidden();
-
-        // Verify all conversations are visible in the dialog
-        await replaceConfirmationDialog
-          .getElementLocator()
-          .getByText(chat1.name)
-          .waitFor();
-        await replaceConfirmationDialog
-          .getElementLocator()
-          .getByText(chat2.name)
-          .waitFor();
-        await replaceConfirmationDialog
-          .getElementLocator()
-          .getByText(chat3.name)
-          .waitFor();
-        await replaceConfirmationDialog
-          .getElementLocator()
-          .getByText(chat4.name)
-          .waitFor();
-        await replaceConfirmationDialog
-          .getElementLocator()
-          .getByText(chat5.name)
-          .waitFor();
-        await replaceConfirmationDialog
-          .getElementLocator()
-          .getByText(chat6.name)
-          .waitFor();
-        await replaceConfirmationDialog
-          .getElementLocator()
-          .getByText(chat7.name)
-          .waitFor();
-
-        // Click Continue to proceed with import
-        await replaceConfirmationDialog.clickContinue();
+        // After selecting different options for individual conversations,
+        // "All items" should show "Mixed" option
+        await replaceConfirmationDialogAssertion.assertAllItemsOption('Mixed');
       },
     );
+
+    await dialTest.step('Continue import', async () => {
+      // Click Continue to proceed with import
+      await replaceConfirmationDialog.clickContinue();
+    });
 
     await dialTest.step(
       'Verify import results and conversation states',

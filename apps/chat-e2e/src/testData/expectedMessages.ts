@@ -425,6 +425,23 @@ export const ExpectedMessages = {
     `Received response code: ${statusCode} with body: ${body}`,
   apiItemCreated: (body: string) => `Item created with data: ${body}`,
   apiItemDeleted: (id: string) => `Item with id: ${id} was deleted`,
+  folderVisibleInReplaceDialog: (folderName: string) =>
+    `Folder "${folderName}" should be visible in replace confirmation dialog`,
+  folderNotVisibleInReplaceDialog: (folderName: string) =>
+    `Folder "${folderName}" should not be visible in replace confirmation dialog`,
+  conversationVisibleInReplaceDialog: (conversationName: string) =>
+    `Conversation "${conversationName}" should be visible in replace confirmation dialog`,
+  conversationNotVisibleInReplaceDialog: (conversationName: string) =>
+    `Conversation "${conversationName}" should not be visible in replace confirmation dialog`,
+  folderExpandedInReplaceDialog: (folderName: string) =>
+    `Folder "${folderName}" should be expanded (arrow icon rotated)`,
+  allItemsOptionIsValid: (expectedOption: string) =>
+    `"All items" dropdown should show "${expectedOption}" option`,
+  conversationOptionIsValid: (
+    conversationName: string,
+    expectedOption: string,
+  ) =>
+    `Conversation "${conversationName}" dropdown should show "${expectedOption}" option`,
 };
 
 export const PublishingExpectedMessages = {

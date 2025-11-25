@@ -68,6 +68,7 @@ import {
   PublishFileAssertion,
   PublishFolderAssertion,
   PublishingRequestDialogAssertion,
+  ReplaceConfirmationDialogAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
   ShareAppModalAssertion,
@@ -406,6 +407,7 @@ const dialTest = test.extend<{
   toolsetEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
   toolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
   externalAppEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
+  replaceConfirmationDialogAssertion: ReplaceConfirmationDialogAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1649,6 +1651,18 @@ const dialTest = test.extend<{
       toolsetEditorViewForm,
     );
     await use(toolsetEditorViewFormAssertion);
+  },
+  replaceConfirmationDialog: async ({ page }, use) => {
+    const replaceConfirmationDialog = new ReplaceConfirmationDialog(page);
+    await use(replaceConfirmationDialog);
+  },
+  replaceConfirmationDialogAssertion: async (
+    { replaceConfirmationDialog },
+    use,
+  ) => {
+    const replaceConfirmationDialogAssertion =
+      new ReplaceConfirmationDialogAssertion(replaceConfirmationDialog);
+    await use(replaceConfirmationDialogAssertion);
   },
 });
 

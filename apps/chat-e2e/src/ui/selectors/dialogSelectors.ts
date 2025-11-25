@@ -372,6 +372,5 @@ export const ReplaceConfirmationModalSelectors = {
   dropdownTrigger: '[data-qa="dropdown-trigger"]',
   dropdownMenu: '[data-qa="dropdown-menu"]',
   menuItem: '[data-qa="menu-item"]',
-  conversationByName: (name: string) =>
-    `${EntitySelectors.conversation}:has(${EntitySelectors.entityName}:text("${name}"))`,
+  iconContainer: '[data-qa="icon-container"]',
 };
