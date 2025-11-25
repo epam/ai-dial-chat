@@ -159,9 +159,13 @@ export class ReplaceConfirmationDialog extends BaseElement {
    */
   public getFolderArrowIcon(folderName: string) {
     // Get the folder container that contains this folder name
-    const folderContainer = this.getChildElementBySelector(FolderSelectors.folder)
+    const folderContainer = this.getChildElementBySelector(
+      FolderSelectors.folder,
+    )
       .getElementLocator()
-      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(folderName)}$`) });
+      .filter({
+        hasText: new RegExp(`^${RegexUtil.escapeRegexChars(folderName)}$`),
+      });
 
     // The arrow icon is the first SVG within the folder container
     return folderContainer.locator('svg').first();
@@ -171,7 +175,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
    * Clicks on a folder to toggle its expanded/collapsed state
    */
   public async expandCollapseFolder(folderName: string) {
-    const folderElement = this.getFolderByName(folderName);
+    const folderElement = this.getFolderByExactName(folderName);
     await folderElement.click();
   }
 }
