@@ -14,10 +14,7 @@ import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 dialTest(
-  '[Toolset]: toolset with default name and version is saved correctly.\n' +
-    '[Toolset]: cards are not duplicated for each saved changes when edit toolset several times.\n' +
-    '[App editor]: Release date displayed on detailed preview on "General info" step when edit toolset.\n' +
-    '[Toolset]: add 2 toolsets with the same name and different versions - not published toolsets grouped by name',
+  'Create toolset with OAuth (without configuration)',
   async ({
     marketplacePage,
     entityEditorPage,
@@ -33,7 +30,7 @@ dialTest(
     toolsetApiHelper,
     page,
   }) => {
-    setTestIds('EPMRTC-6874', 'EPMRTC-6870', 'EPMRTC-6889', 'EPMRTC-6886');
+    setTestIds('EPMRTC-6969');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
