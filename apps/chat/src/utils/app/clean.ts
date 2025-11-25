@@ -89,12 +89,15 @@ export const cleanConversation = (
       conversation.prompt ?? DefaultsService.get('defaultSystemPrompt', ''),
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
-    messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
+    messages: !conversation.playback?.isPlayback
+      ? conversation.messages?.map(migrateMessageAttachmentUrls) || []
+      : [],
     selectedAddons: [],
     updatedAt: conversation.updatedAt || conversation.lastActivityDate || 0,
     ...(conversation.playback && {
       playback: {
         ...conversation.playback,
+        activePlaybackIndex: 0,
         messagesStack:
           conversation.playback.messagesStack?.map(
             migrateMessageAttachmentUrls,

@@ -1239,6 +1239,16 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
         ...payload.values,
       };
 
+      const playbackMessages = conversation.playback?.isPlayback
+        ? [...conversation.playback.messagesStack]
+        : null;
+      if (playbackMessages) {
+        playbackMessages[payload.messageIndex] = {
+          ...messages[payload.messageIndex],
+          ...payload.values,
+        };
+      }
+
       const attachments =
         messages[payload.messageIndex].custom_content?.attachments;
 
@@ -1273,6 +1283,14 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
             id: payload.conversationId,
             values: {
               messages: [...messages],
+              ...(conversation.playback && playbackMessages
+                ? {
+                    playback: {
+                      ...conversation.playback,
+                      messagesStack: playbackMessages,
+                    },
+                  }
+                : {}),
             },
           }),
         ),
@@ -2715,6 +2733,13 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const isPlaybackIndexChanged =
+        newConversation.isPlayback &&
+        conversation.playback &&
+        newConversation.playback &&
+        conversation.playback.activePlaybackIndex !==
+          newConversation.playback.activePlaybackIndex;
+
       return concat(
         iif(
           () => !areIdsEqual,
@@ -2725,7 +2750,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             }),
           ),
           iif(
-            () => !newConversation.isPlayback,
+            () => !isPlaybackIndexChanged,
             of(
               ConversationsActions.saveConversation({
                 conversation: newConversation,
