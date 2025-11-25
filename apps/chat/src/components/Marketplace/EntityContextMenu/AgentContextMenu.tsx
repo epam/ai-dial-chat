@@ -2,6 +2,7 @@ import classNames from 'classnames';
 
 import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
 
+import { ApplicationContextMenuDisabledActions } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
@@ -10,17 +11,7 @@ import { FeatureType } from '@epam/ai-dial-shared';
 
 interface AgentContextMenuProps {
   entity: DialAIEntityModel;
-  disabledActions?: Partial<{
-    copyLink: boolean;
-    deploy: boolean;
-    edit: boolean;
-    share: boolean;
-    unshare: boolean;
-    publish: boolean;
-    unpublish: boolean;
-    logs: boolean;
-    delete: boolean;
-  }>;
+  disabledActions?: ApplicationContextMenuDisabledActions;
   className?: string;
   isPreview?: boolean;
   triggerIconSize?: number;

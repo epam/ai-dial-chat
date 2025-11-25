@@ -1,6 +1,8 @@
 import { isDialAiEntityModel } from '@/src/utils/app/application';
 
+import { ApplicationContextMenuDisabledActions } from '@/src/types/applications';
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ToolsetContextMenuDisabledActions } from '@/src/types/toolsets';
 
 import { AgentContextMenu } from './AgentContextMenu';
 import { ToolsetContextMenu } from './ToolsetContextMenu';
@@ -9,17 +11,9 @@ interface Props {
   entity: MarketplaceEntity;
   isPreview?: boolean;
   className?: string;
-  disabledActions?: Partial<{
-    copyLink: boolean;
-    deploy: boolean;
-    edit: boolean;
-    share: boolean;
-    unshare: boolean;
-    publish: boolean;
-    unpublish: boolean;
-    logs: boolean;
-    delete: boolean;
-  }>;
+  disabledActions?:
+    | ApplicationContextMenuDisabledActions
+    | ToolsetContextMenuDisabledActions;
   triggerIconSize?: number;
 }
 

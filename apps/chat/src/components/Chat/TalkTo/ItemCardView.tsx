@@ -146,7 +146,11 @@ export const ItemCardView = <T extends MarketplaceEntity>({
           <MarketplaceEntityContextMenuRenderer
             className="xl:invisible group-hover:xl:visible"
             entity={entity}
-            disabledActions={agentDisabledActions}
+            disabledActions={
+              isDialAiEntityModel(entity)
+                ? agentDisabledActions
+                : toolsetDisabledActions
+            }
           />
         </div>
       )}

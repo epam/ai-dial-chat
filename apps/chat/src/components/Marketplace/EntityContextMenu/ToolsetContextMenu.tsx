@@ -2,7 +2,10 @@ import classNames from 'classnames';
 
 import { useToolsetMenuItems } from '@/src/hooks/useToolsetMenuItems';
 
-import { ToolsetModel } from '@/src/types/toolsets';
+import {
+  ToolsetContextMenuDisabledActions,
+  ToolsetModel,
+} from '@/src/types/toolsets';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
@@ -10,16 +13,7 @@ import { FeatureType } from '@epam/ai-dial-shared';
 
 interface ToolsetContextMenuProps {
   entity: ToolsetModel;
-  disabledActions?: Partial<{
-    copyLink: boolean;
-    edit: boolean;
-    share: boolean;
-    unshare: boolean;
-    publish: boolean;
-    unpublish: boolean;
-    delete: boolean;
-    login: boolean;
-  }>;
+  disabledActions?: ToolsetContextMenuDisabledActions;
   className?: string;
   isPreview?: boolean;
   triggerIconSize?: number;
