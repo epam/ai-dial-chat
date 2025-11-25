@@ -1,4 +1,5 @@
 import { ImportResolutionOption } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import { FolderSelectors } from '@/src/ui/selectors';
 import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
@@ -28,32 +29,32 @@ export class ReplaceConfirmationDialog extends BaseElement {
     ReplaceConfirmationModalSelectors.allItemsSelector,
   );
 
+  /** Returns the import resolution dropdown for a specific conversation */
   public getConversationDropdownByName(conversationName: string) {
-    return this.getConversationRowByName(
-      conversationName,
-    ).getChildElementBySelector(
+    return this.getConversationRowByName(conversationName).locator(
       ReplaceConfirmationModalSelectors.dropdownTrigger,
     );
   }
 
+  /** Returns conversation row element by name */
   private getConversationRowByName(conversationName: string) {
-    return this.getChildElementBySelector(
-      `${EntitySelectors.conversation}:has(${EntitySelectors.entityName}:text("${conversationName}"))`,
-    );
+    return this.getChildElementBySelector(EntitySelectors.conversation)
+      .getElementLocator()
+      .filter({
+        has: this.page.locator(EntitySelectors.entityName).filter({
+          hasText: conversationName,
+        }),
+      });
   }
 
-  /**
-   * Gets the dropdown menu for "All items"
-   */
+  /** Returns the "All items" dropdown element */
   public getAllItemsDropdown() {
     return this.allItemsLine.getChildElementBySelector(
       ReplaceConfirmationModalSelectors.dropdownTrigger,
     );
   }
 
-  /**
-   * Clicks on a dropdown menu item (Replace, Postfix, Ignore)
-   */
+  /** Selects an import resolution option from the dropdown menu */
   private async selectDropdownOption(option: ImportResolutionOption) {
     const menuItem = this.page
       .locator(ReplaceConfirmationModalSelectors.menuItem)
@@ -61,17 +62,13 @@ export class ReplaceConfirmationDialog extends BaseElement {
     await menuItem.click();
   }
 
-  /**
-   * Sets the resolution option for all items
-   */
+  /** Sets import resolution option for all items */
   public async setAllItemsOption(option: ImportResolutionOption) {
     await this.getAllItemsDropdown().click();
     await this.selectDropdownOption(option);
   }
 
-  /**
-   * Sets the resolution option for a specific conversation
-   */
+  /** Sets import resolution option for a specific conversation */
   public async setConversationOption(
     conversationName: string,
     option: ImportResolutionOption,
@@ -80,9 +77,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
     await this.selectDropdownOption(option);
   }
 
-  /**
-   * Clicks the Continue button to proceed with import
-   */
+  /** Clicks Continue button and waits for import completion */
   public async clickContinue({
     isHttpMethodTriggered = true,
   }: { isHttpMethodTriggered?: boolean } = {}) {
@@ -103,6 +98,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
     }
   }
 
+  /** Returns conversation element by exact name match */
   public getConversationByExactName(name: string) {
     return this.getChildElementBySelector(EntitySelectors.conversation)
       .getChildElementBySelector(EntitySelectors.entityName)
@@ -110,29 +106,30 @@ export class ReplaceConfirmationDialog extends BaseElement {
       .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
   }
 
+  /** Returns conversation element by name (partial match) */
   public getConversationByName(name: string, index?: number) {
     return this.getChildElementBySelector(EntitySelectors.conversation)
       .getChildElementBySelector(EntitySelectors.entityName)
       .getElementLocatorByText(name, index);
   }
 
+  /** Returns the icon element for a conversation */
   public getConversationIcon(conversationName: string, index?: number) {
     return this.getConversationByName(conversationName, index)
       .locator('..')
       .locator(ReplaceConfirmationModalSelectors.iconContainer)
-      .locator('img');
+      .locator(Tags.img);
   }
 
-  /**
-   * Gets conversation arrow icon by conversation name
-   */
+  /** Returns the expand/collapse arrow icon for a conversation */
   public getConversationArrowIcon(conversationName: string, index?: number) {
     return this.getConversationByName(conversationName, index)
       .locator('..')
-      .locator('svg')
+      .locator(Tags.svg)
       .first();
   }
 
+  /** Returns folder element by name (partial match) */
   public getFolderByName(folderName: string) {
     return this.getChildElementBySelector(FolderSelectors.folder)
       .getChildElementBySelector(FolderSelectors.folderName)
@@ -142,6 +139,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
       });
   }
 
+  /** Returns folder element by exact name match */
   public getFolderByExactName(name: string) {
     return this.getChildElementBySelector(FolderSelectors.folder)
       .getChildElementBySelector(FolderSelectors.folderName)
@@ -149,12 +147,8 @@ export class ReplaceConfirmationDialog extends BaseElement {
       .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
   }
 
-  /**
-   * Gets folder arrow icon (expand/collapse indicator)
-   * The arrow SVG is the first SVG element within the folder container
-   */
+  /** Returns the expand/collapse arrow icon for a folder */
   public getFolderArrowIcon(folderName: string) {
-    // Get the folder container that contains this folder name
     const folderContainer = this.getChildElementBySelector(
       FolderSelectors.folder,
     )
@@ -163,13 +157,10 @@ export class ReplaceConfirmationDialog extends BaseElement {
         hasText: new RegExp(`^${RegexUtil.escapeRegexChars(folderName)}$`),
       });
 
-    // The arrow icon is the first SVG within the folder container
-    return folderContainer.locator('svg').first();
+    return folderContainer.locator(Tags.svg).first();
   }
 
-  /**
-   * Clicks on a folder to toggle its expanded/collapsed state
-   */
+  /** Toggles folder expand/collapse state */
   public async expandCollapseFolder(folderName: string) {
     const folderElement = this.getFolderByExactName(folderName);
     await folderElement.click();

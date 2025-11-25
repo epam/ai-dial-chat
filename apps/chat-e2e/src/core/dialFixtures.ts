@@ -1668,10 +1668,6 @@ const dialTest = test.extend<{
     );
     await use(toolsetEditorViewFormAssertion);
   },
-  replaceConfirmationDialog: async ({ page }, use) => {
-    const replaceConfirmationDialog = new ReplaceConfirmationDialog(page);
-    await use(replaceConfirmationDialog);
-  },
   replaceConfirmationDialogAssertion: async (
     { replaceConfirmationDialog },
     use,

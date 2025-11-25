@@ -10,9 +10,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     this.replaceConfirmationDialog = replaceConfirmationDialog;
   }
 
-  /**
-   * Asserts that a folder is in the specified state (visible/hidden) in the dialog
-   */
+  /** Verifies folder visibility state in the dialog */
   public async assertFolderState(
     folderName: string,
     expectedState: ElementState,
@@ -22,9 +20,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     await super.assertElementState(folderLocator, expectedState);
   }
 
-  /**
-   * Asserts that a conversation is in the specified state (visible/hidden) in the dialog
-   */
+  /** Verifies conversation visibility state in the dialog */
   public async assertConversationState(
     conversationName: string,
     expectedState: ElementState,
@@ -36,15 +32,11 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     await super.assertElementState(conversationLocator, expectedState);
   }
 
-  /**
-   * Asserts that a folder is expanded (arrow icon is rotated)
-   * Expanded state is indicated by the arrow icon having the rotate-90 class
-   */
+  /** Verifies folder is expanded (arrow has rotate-90 class) */
   public async assertFolderExpanded(folderName: string) {
     const arrowIcon =
       this.replaceConfirmationDialog.getFolderArrowIcon(folderName);
 
-    // Check if the arrow has the rotate-90 class which indicates expanded state
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
       classList !== null && classList.includes('rotate-90'),
@@ -53,15 +45,11 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     );
   }
 
-  /**
-   * Asserts that a folder is collapsed (arrow icon is not rotated)
-   * Collapsed state is indicated by the arrow icon NOT having the rotate-90 class
-   */
+  /** Verifies folder is collapsed (arrow lacks rotate-90 class) */
   public async assertFolderCollapsed(folderName: string) {
     const arrowIcon =
       this.replaceConfirmationDialog.getFolderArrowIcon(folderName);
 
-    // Check if the arrow does not have the rotate-90 class which indicates collapsed state
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
       classList === null || !classList.includes('rotate-90'),
@@ -70,9 +58,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     );
   }
 
-  /**
-   * Asserts that an entity has the expected icon (renamed to avoid name collision)
-   */
+  /** Verifies conversation icon matches expected icon */
   public async assertDialogEntityIcon(
     entityName: string,
     expectedIcon: string,
@@ -82,9 +68,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     await super.assertEntityIcon(entityIcon, expectedIcon);
   }
 
-  /**
-   * Asserts that the "All items" dropdown shows the expected option
-   */
+  /** Verifies "All items" dropdown displays the expected option */
   public async assertAllItemsOption(expectedOption: string) {
     await super.assertElementText(
       this.replaceConfirmationDialog.getAllItemsDropdown(),
@@ -93,9 +77,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     );
   }
 
-  /**
-   * Asserts that a conversation dropdown shows the expected option
-   */
+  /** Verifies conversation dropdown displays the expected option */
   public async assertConversationOption(
     conversationName: string,
     expectedOption: string,
@@ -112,9 +94,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     );
   }
 
-  /**
-   * Asserts that a conversation has the expected icon
-   */
+  /** Verifies conversation has the expected icon */
   public async assertConversationIcon(
     conversationName: string,
     expectedIcon: string,
