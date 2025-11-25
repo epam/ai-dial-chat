@@ -4,6 +4,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
+  ExpectedMessages,
   ImportResolutionOption,
   MenuOptions,
   MockedChatApiResponseBodies,
@@ -283,7 +284,6 @@ dialTest.only(
       // Expand nested folders from shallowest to deepest
       for (let i = 0; i < nestedFolders.length; i++) {
         const folder = nestedFolders[i];
-        let conversation = nestedConversations[i];
         // Expand the current folder
         await replaceConfirmationDialog.expandCollapseFolder(folder.name);
         await replaceConfirmationDialogAssertion.assertFolderExpanded(
@@ -295,6 +295,17 @@ dialTest.only(
           nestedConversations[i].name,
           'visible',
         );
+
+        // Verify all parent folders remain visible and expanded
+        for (let j = 0; j < i; j++) {
+          await replaceConfirmationDialogAssertion.assertFolderState(
+            nestedFolders[j].name,
+            'visible',
+          );
+          await replaceConfirmationDialogAssertion.assertFolderExpanded(
+            nestedFolders[j].name,
+          );
+        }
 
         // Verify immediate nested folder is visible (if exists)
         if (i < nestedFolders.length - 1) {
@@ -314,7 +325,6 @@ dialTest.only(
 
         // Verify conversations in deeper nested folders remain hidden
         for (let j = i + 1; j < nestedConversations.length; j++) {
-          let conversation = nestedConversations[j];
           await replaceConfirmationDialogAssertion.assertConversationState(
             nestedConversations[j].name,
             'hidden',
@@ -384,7 +394,7 @@ dialTest.only(
       async () => {
         // Verify success toast message appears
         await toastAssertion.assertToastMessage(
-          'Conversation(s) imported successfully',
+          ExpectedMessages.conversationsImportedSuccessfully,
         );
 
         // Verify Folder1 (empty folder) exists

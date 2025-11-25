@@ -442,6 +442,7 @@ export const ExpectedMessages = {
     expectedOption: string,
   ) =>
     `Conversation "${conversationName}" dropdown should show "${expectedOption}" option`,
+  conversationsImportedSuccessfully: 'Conversation(s) imported successfully',
 };
 
 export const PublishingExpectedMessages = {
