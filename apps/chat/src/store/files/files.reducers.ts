@@ -26,7 +26,11 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
+import {
+  DialCopiedItem,
+  DialDeletedItem,
+  DialUploadFileItem,
+} from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
@@ -673,6 +677,16 @@ export const filesSlice = createSlice({
     downloadFilesAsArchiveSuccess: (state) => state,
 
     downloadFilesAsArchiveFail: (state) => state,
+
+    uploadFiles: (
+      state,
+      _action: PayloadAction<{
+        files: DialUploadFileItem[];
+        destinationUrl: string;
+      }>,
+    ) => state,
+    uploadFilesSuccess: (state) => state,
+    uploadFilesFail: (state) => state,
   },
 });
 

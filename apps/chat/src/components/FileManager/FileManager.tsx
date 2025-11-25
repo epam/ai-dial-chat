@@ -240,6 +240,15 @@ export const FileManager: React.FC = () => {
         destinationFolderPath: destinationPath,
         setDestinationFolderPath: setDestinationPath,
       }}
+      onUploadFiles={(filesToUpload, destinationUrl) => {
+        if (filesToUpload.length === 0) return;
+        dispatch(
+          FilesActions.uploadFiles({
+            files: filesToUpload,
+            destinationUrl,
+          }),
+        );
+      }}
     />
   );
 };
