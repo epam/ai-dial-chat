@@ -37,7 +37,9 @@ export function ToolsetDetailsFooter({
   onBookmarkClick,
 }: ToolsetDetailsFooterProps) {
   const { t } = useTranslation(Translation.Marketplace);
+
   const screenState = useScreenState();
+
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const { handleLogin } = useToolsetMenuActions(entity);
