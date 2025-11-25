@@ -206,102 +206,122 @@ dialTest.only(
     // TODO: Verify icons near folders is like on chat panel
     // TODO: Verify icons for the chats are the same as model icons on chat panel
 
-    await dialTest.step(
-      'Verify folders can be collapsed and expanded',
-      async () => {
-        // Collapse folders from deepest to shallowest
-        // nestedFolders: [0]=Folder3, [1]=Folder3.1, [2]=Folder3.1.1, [3]=Folder3.1.1.1
-        // Conversations: [0]=chat7, [1]=chat6, [2]=chat5, [3]=chat4
-        const nestedConversations = [chat7, chat6, chat5, chat4];
+    await dialTest.step('Verify folders can be collapsed', async () => {
+      // Collapse folders from deepest to shallowest
+      // nestedFolders: [0]=Folder3, [1]=Folder3.1, [2]=Folder3.1.1, [3]=Folder3.1.1.1
+      // Conversations: [0]=chat7, [1]=chat6, [2]=chat5, [3]=chat4
+      const nestedConversations = [chat7, chat6, chat5, chat4];
 
-        for (let i = nestedFolders.length - 1; i >= 0; i--) {
-          const folder = nestedFolders[i];
-          // Collapse the current folder
-          await replaceConfirmationDialog.expandCollapseFolder(folder.name);
-          await replaceConfirmationDialogAssertion.assertFolderCollapsed(
-            folder.name,
-          );
+      for (let i = nestedFolders.length - 1; i >= 0; i--) {
+        const folder = nestedFolders[i];
+        // Collapse the current folder
+        await replaceConfirmationDialog.expandCollapseFolder(folder.name);
+        await replaceConfirmationDialogAssertion.assertFolderCollapsed(
+          folder.name,
+        );
 
-          // Verify the conversation in this folder is now hidden
-          await replaceConfirmationDialogAssertion.assertConversationState(
-            nestedConversations[i].name,
+        // Verify the conversation in this folder is now hidden
+        await replaceConfirmationDialogAssertion.assertConversationState(
+          nestedConversations[i].name,
+          'hidden',
+        );
+
+        // Verify all nested folders inside this folder are hidden
+        for (let j = i + 1; j < nestedFolders.length; j++) {
+          await replaceConfirmationDialogAssertion.assertFolderState(
+            nestedFolders[j].name,
             'hidden',
           );
-
-          // Verify all nested folders inside this folder are hidden
-          for (let j = i + 1; j < nestedFolders.length; j++) {
-            await replaceConfirmationDialogAssertion.assertFolderState(
-              nestedFolders[j].name,
-              'hidden',
-            );
-          }
-
-          // Verify all conversations in nested folders remain hidden
-          for (let j = i + 1; j < nestedConversations.length; j++) {
-            await replaceConfirmationDialogAssertion.assertConversationState(
-              nestedConversations[j].name,
-              'hidden',
-            );
-          }
         }
 
-        // Collapse Folder2 (root level)
-        await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
-        await replaceConfirmationDialogAssertion.assertFolderCollapsed(
-          folder2.name,
-        );
-        // Verify Chat1 and Chat2 are hidden
-        await replaceConfirmationDialogAssertion.assertConversationState(
-          chat1.name,
-          'hidden',
-        );
-        await replaceConfirmationDialogAssertion.assertConversationState(
-          chat2.name,
-          'hidden',
-        );
-
-        // Expand folders in reverse order (shallowest to deepest)
-
-        // Expand Folder2
-        await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
-        await replaceConfirmationDialogAssertion.assertFolderExpanded(
-          folder2.name,
-        );
-        // Verify Chat1 and Chat2 are visible
-        await replaceConfirmationDialogAssertion.assertConversationState(
-          chat1.name,
-          'visible',
-        );
-        await replaceConfirmationDialogAssertion.assertConversationState(
-          chat2.name,
-          'visible',
-        );
-
-        // Expand nested folders from shallowest to deepest
-        for (let i = 0; i < nestedFolders.length; i++) {
-          await replaceConfirmationDialog.expandCollapseFolder(
-            nestedFolders[i].name,
-          );
-          await replaceConfirmationDialogAssertion.assertFolderExpanded(
-            nestedFolders[i].name,
-          );
-
-          // Verify conversation in this folder is visible
+        // Verify all conversations in nested folders remain hidden
+        for (let j = i + 1; j < nestedConversations.length; j++) {
           await replaceConfirmationDialogAssertion.assertConversationState(
-            nestedConversations[i].name,
+            nestedConversations[j].name,
+            'hidden',
+          );
+        }
+      }
+
+      // Collapse Folder2 (root level)
+      await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
+      await replaceConfirmationDialogAssertion.assertFolderCollapsed(
+        folder2.name,
+      );
+      // Verify Chat1 and Chat2 are hidden
+      await replaceConfirmationDialogAssertion.assertConversationState(
+        chat1.name,
+        'hidden',
+      );
+      await replaceConfirmationDialogAssertion.assertConversationState(
+        chat2.name,
+        'hidden',
+      );
+    });
+
+    await dialTest.step('Verify folders can be expanded', async () => {
+      // Expand folders in reverse order (shallowest to deepest)
+      // nestedFolders: [0]=Folder3, [1]=Folder3.1, [2]=Folder3.1.1, [3]=Folder3.1.1.1
+      // Conversations: [0]=chat7, [1]=chat6, [2]=chat5, [3]=chat4
+      const nestedConversations = [chat7, chat6, chat5, chat4];
+
+      // Expand Folder2
+      await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
+      await replaceConfirmationDialogAssertion.assertFolderExpanded(
+        folder2.name,
+      );
+      // Verify Chat1 and Chat2 are visible
+      await replaceConfirmationDialogAssertion.assertConversationState(
+        chat1.name,
+        'visible',
+      );
+      await replaceConfirmationDialogAssertion.assertConversationState(
+        chat2.name,
+        'visible',
+      );
+
+      // Expand nested folders from shallowest to deepest
+      for (let i = 0; i < nestedFolders.length; i++) {
+        const folder = nestedFolders[i];
+        let conversation = nestedConversations[i];
+        // Expand the current folder
+        await replaceConfirmationDialog.expandCollapseFolder(folder.name);
+        await replaceConfirmationDialogAssertion.assertFolderExpanded(
+          folder.name,
+        );
+
+        // Verify conversation in this folder is visible
+        await replaceConfirmationDialogAssertion.assertConversationState(
+          nestedConversations[i].name,
+          'visible',
+        );
+
+        // Verify immediate nested folder is visible (if exists)
+        if (i < nestedFolders.length - 1) {
+          await replaceConfirmationDialogAssertion.assertFolderState(
+            nestedFolders[i + 1].name,
             'visible',
           );
-
-          // Verify immediate nested folder is visible (if not the last one)
-          if (i < nestedFolders.length - 1) {
-            await replaceConfirmationDialogAssertion.assertFolderState(
-              nestedFolders[i + 1].name,
-              'visible',
-            );
-          }
         }
-      },
-    );
+
+        // Verify all deeper nested folders are still collapsed (hidden)
+        for (let j = i + 2; j < nestedFolders.length; j++) {
+          await replaceConfirmationDialogAssertion.assertFolderState(
+            nestedFolders[j].name,
+            'hidden',
+          );
+        }
+
+        // Verify conversations in deeper nested folders remain hidden
+        for (let j = i + 1; j < nestedConversations.length; j++) {
+          let conversation = nestedConversations[j];
+          await replaceConfirmationDialogAssertion.assertConversationState(
+            nestedConversations[j].name,
+            'hidden',
+          );
+        }
+      }
+    });
 
     // TODO: Verify folders are located with indents (nice hierarchy) and expanded (blocked by issue #4996 - do not automate)
 
