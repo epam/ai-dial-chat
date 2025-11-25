@@ -17,15 +17,15 @@ dialSharedWithMeTest(
     applicationApiHelper,
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
     additionalShareUserTooltip,
     additionalShareUserTooltipAssertion,
     additionalShareUserNavigationPanel,
     setTestIds,
     additionalShareUserMarketplacePage,
     additionalShareUserMarketplaceHeader,
-    additionalShareUserMarketplaceAgentsSection,
+    additionalShareUserMarketplaceEntitiesSection,
     additionalShareUserDialHomePage,
     additionalShareUserChat,
     additionalShareUserTalkToAgentDialog,
@@ -72,14 +72,16 @@ dialSharedWithMeTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
-        agentElement = await marketplaceAgentsSection.findAgentElement(
+        agentElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
-          { isWorkspaceAgent: true, isEditable: true },
+          { isWorkspaceEntity: true, isEditable: true },
         );
         await agentElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(agentElement).click();
-        const shareLinkRequestResponse = await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
+          .click();
+        const shareLinkRequestResponse = await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectShareMenuOption();
         shareLinkResponse = shareLinkRequestResponse!.response;
       },
@@ -165,9 +167,9 @@ dialSharedWithMeTest(
           appEntity.name,
         );
         agentElement =
-          await additionalShareUserMarketplaceAgentsSection.findAgentElement(
+          await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             appEntity,
-            { isWorkspaceAgent: true, isEditable: false },
+            { isWorkspaceEntity: true, isEditable: false },
           );
         await agentElement.click();
         await additionalShareUserEntityDetailsModal.unshareButton.click();

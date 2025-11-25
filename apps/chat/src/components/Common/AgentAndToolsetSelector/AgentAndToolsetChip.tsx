@@ -11,6 +11,7 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 
 interface ChipWrapperProps {
@@ -87,18 +88,13 @@ const ChipBody: React.FC<ChipBodyProps> = ({
       )}
       onClick={handleClick}
     >
-      <ModelIcon entityId={id} entity={item} size={18} />
-      <div className="flex max-w-[220px] gap-2 truncate">
-        <span>{name}</span>
-        <span
-          className={classNames(
-            'truncate',
-            isError ? 'text-error brightness-75' : 'text-secondary',
-          )}
-        >
-          {version}
-        </span>
-      </div>
+      <ModelIcon entityId={id} entity={item} size={18} isCustomTooltip />
+      <ChipTitle
+        name={name}
+        version={version}
+        isError={isError}
+        className="max-w-[220px]"
+      />
     </div>
   );
 };
@@ -110,6 +106,7 @@ interface AgentAndToolsetChipProps {
   readonly?: boolean;
   onItemClick?: (id: string) => void;
   isInSelectionList?: boolean;
+  customTooltip?: string;
 }
 
 export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
@@ -119,6 +116,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   readonly,
   onItemClick,
   isInSelectionList,
+  customTooltip,
 }) => {
   const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
 
@@ -132,16 +130,19 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
       <Tooltip
         isTriggerClickable
         tooltip={
-          <ChipTooltipContent
-            id={id}
-            item={item}
-            name={name}
-            version={version}
-            isInvalid={isInvalid}
-            isLoggedOut={isLoggedOut}
-            isInSelectionList={isInSelectionList}
-            hideStatusMessage={readonly}
-          />
+          <>
+            {customTooltip && <div className="px-2 pt-1">{customTooltip}</div>}
+            <ChipTooltipContent
+              id={id}
+              item={item}
+              name={name}
+              version={version}
+              isInvalid={isInvalid}
+              isLoggedOut={isLoggedOut}
+              isInSelectionList={isInSelectionList}
+              hideStatusMessage={readonly}
+            />
+          </>
         }
       >
         <ChipBody

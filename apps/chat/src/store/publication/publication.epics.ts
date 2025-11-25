@@ -81,6 +81,7 @@ import {
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   ConversationsActions,
@@ -98,6 +99,7 @@ import {
   PromptsSelectors,
   PublicationSelectors,
   SettingsSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -983,6 +985,36 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ),
               );
             });
+          }
+
+          const toolsetResourcesToPublish =
+            selectedPublication.resources.filter((r) =>
+              isToolsetId(r.targetUrl),
+            );
+
+          if (toolsetResourcesToPublish.length) {
+            const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
+            const toolsetsToReplace = toolsetResourcesToPublish
+              .map((r) =>
+                toolsetsMap[r.reviewUrl]
+                  ? ({
+                      ...toolsetsMap[r.reviewUrl],
+                      id: r.targetUrl,
+                    } as ToolsetModel)
+                  : undefined,
+              )
+              .filter((t) => !!t);
+
+            actions.push(
+              ...toolsetsToReplace.map((t) =>
+                of(
+                  ToolsetActions.deleteToolsetSuccess({
+                    reference: t.reference,
+                  }),
+                ),
+              ),
+              of(ToolsetActions.setToolsets(toolsetsToReplace)),
+            );
           }
 
           return concat(

@@ -28,7 +28,7 @@ export class EntityEditorHeader extends BaseElement {
   public exitLink = this.getChildElementBySelector(
     EntityEditorHeaderSelectors.exitLink,
   );
-  public actionAndEntitylicationTypeTitle = this.getChildElementBySelector(
+  public actionAndEntityTypeTitle = this.getChildElementBySelector(
     EntityEditorHeaderSelectors.actionAndEntityTypeTitle,
   );
   public stepsContainer = this.getChildElementBySelector(

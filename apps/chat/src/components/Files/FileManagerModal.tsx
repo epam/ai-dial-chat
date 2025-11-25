@@ -85,6 +85,7 @@ interface Props {
   showTooltip?: boolean;
   sourceFilters?: Set<FileSourceType>;
   warningMessage?: string;
+  hideFolderCheckbox?: boolean;
 }
 
 export const FileManagerModal = memo(
@@ -103,6 +104,7 @@ export const FileManagerModal = memo(
     showTooltip,
     sourceFilters,
     warningMessage,
+    hideFolderCheckbox = false,
   }: Props) => {
     const dispatch = useAppDispatch();
 
@@ -574,6 +576,10 @@ export const FileManagerModal = memo(
     const isDeleteDisabled =
       somePublicFileSelected || someReviewBucketFileSelected;
 
+    const canSelectFolders =
+      !hideFolderCheckbox &&
+      (canAttachFolders || canAttachFiles || forceShowSelectCheckBox);
+
     return (
       <Modal
         portalId="theme-main"
@@ -670,7 +676,7 @@ export const FileManagerModal = memo(
                           onItemEvent={handleItemCallback}
                           withBorderHighlight={false}
                           featureType={FeatureType.File}
-                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          canSelectFolders={canSelectFolders}
                           showTooltip={showTooltip}
                           onSelectFolder={handleSelectFolder}
                           onShowError={setErrorMessage}
@@ -724,7 +730,7 @@ export const FileManagerModal = memo(
                           onItemEvent={handleItemCallback}
                           withBorderHighlight={false}
                           featureType={FeatureType.File}
-                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          canSelectFolders={canSelectFolders}
                           showTooltip={showTooltip}
                           onSelectFolder={handleSelectFolder}
                           onUnshareFolder={handleDiscardSharedWithMeFolder}
@@ -757,7 +763,11 @@ export const FileManagerModal = memo(
                   openedFoldersIds={openedFoldersIds}
                   onItemEvent={handleItemCallback}
                   onClickFolder={handleFolderClick}
-                  canAttachFolders={canAttachFolders}
+                  canAttachFolders={
+                    canAttachFolders ||
+                    canAttachFiles ||
+                    !!forceShowSelectCheckBox
+                  }
                   onToggleFolder={handleSelectFolder}
                 />
 
@@ -795,7 +805,7 @@ export const FileManagerModal = memo(
                           onItemEvent={handleItemCallback}
                           withBorderHighlight={false}
                           featureType={FeatureType.File}
-                          canSelectFolders={canAttachFolders || canAttachFiles}
+                          canSelectFolders={canSelectFolders}
                           showTooltip={showTooltip}
                           onSelectFolder={handleSelectFolder}
                           onShowError={setErrorMessage}
