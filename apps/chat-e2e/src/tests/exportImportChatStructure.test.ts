@@ -173,11 +173,11 @@ dialTest.only(
         'hidden',
       );
 
-      // Verify other folders exist
-      const visibleFolders = [folder2.name, nestedFolders[0].name];
-      for (const folderName of visibleFolders) {
+      // Verify other folders exist (Folder2 and all nested folders)
+      const visibleFolders = [folder2, ...nestedFolders];
+      for (const folder of visibleFolders) {
         await replaceConfirmationDialogAssertion.assertFolderState(
-          folderName,
+          folder.name,
           'visible',
         );
       }
@@ -198,12 +198,59 @@ dialTest.only(
           'visible',
         );
       }
-
-      // TODO: Verify folders can be collapsed and expanded (blocked by issue #4996 - do not automate)
-      // TODO: Verify icons near folders is like on chat panel
-      // TODO: Verify icons for the chats are the same as model icons on chat panel
-      // TODO: Verify folders are located with indents (nice hierarchy) and expanded (blocked by issue #4996 - do not automate)
     });
+
+    await dialTest.step(
+      'Verify folders can be collapsed and expanded',
+      async () => {
+        // Verify all folders are initially expanded
+        const visibleFolders = [folder2, ...nestedFolders];
+        for (const folder of visibleFolders) {
+          await replaceConfirmationDialogAssertion.assertFolderExpanded(
+            folder.name,
+          );
+        }
+
+        // Collapse folders from deepest to shallowest
+        // nestedFolders: [0]=Folder3, [1]=Folder3.1, [2]=Folder3.1.1, [3]=Folder3.1.1.1
+        for (let i = nestedFolders.length - 1; i >= 0; i--) {
+          await replaceConfirmationDialog.expandCollapseFolder(
+            nestedFolders[i].name,
+          );
+          await replaceConfirmationDialogAssertion.assertFolderCollapsed(
+            nestedFolders[i].name,
+          );
+        }
+
+        // Collapse Folder2 (root level)
+        await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
+        await replaceConfirmationDialogAssertion.assertFolderCollapsed(
+          folder2.name,
+        );
+
+        // Expand folders in reverse order (shallowest to deepest)
+
+        // Expand Folder2
+        await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
+        await replaceConfirmationDialogAssertion.assertFolderExpanded(
+          folder2.name,
+        );
+
+        // Expand nested folders from shallowest to deepest
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await replaceConfirmationDialog.expandCollapseFolder(
+            nestedFolders[i].name,
+          );
+          await replaceConfirmationDialogAssertion.assertFolderExpanded(
+            nestedFolders[i].name,
+          );
+        }
+      },
+    );
+
+    // TODO: Verify icons near folders is like on chat panel
+    // TODO: Verify icons for the chats are the same as model icons on chat panel
+    // TODO: Verify folders are located with indents (nice hierarchy) and expanded (blocked by issue #4996 - do not automate)
 
     await dialTest.step(
       'Select options for individual conversations',

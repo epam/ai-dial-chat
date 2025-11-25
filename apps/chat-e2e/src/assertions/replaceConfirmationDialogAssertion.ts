@@ -18,7 +18,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     expectedState: ElementState,
   ) {
     const folderLocator =
-      this.replaceConfirmationDialog.getFolderByName(folderName);
+      this.replaceConfirmationDialog.getFolderByExactName(folderName);
     await super.assertElementState(folderLocator, expectedState);
   }
 
@@ -42,7 +42,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
    */
   public async assertFolderExpanded(folderName: string) {
     const arrowIcon =
-      this.replaceConfirmationDialog.getConversationArrowIcon(folderName);
+      this.replaceConfirmationDialog.getFolderArrowIcon(folderName);
 
     // Check if the arrow has the rotate-90 class which indicates expanded state
     const classList = await arrowIcon.getAttribute('class');
@@ -50,6 +50,23 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
       classList !== null && classList.includes('rotate-90'),
       true,
       ExpectedMessages.folderExpandedInReplaceDialog(folderName),
+    );
+  }
+
+  /**
+   * Asserts that a folder is collapsed (arrow icon is not rotated)
+   * Collapsed state is indicated by the arrow icon NOT having the rotate-90 class
+   */
+  public async assertFolderCollapsed(folderName: string) {
+    const arrowIcon =
+      this.replaceConfirmationDialog.getFolderArrowIcon(folderName);
+
+    // Check if the arrow does not have the rotate-90 class which indicates collapsed state
+    const classList = await arrowIcon.getAttribute('class');
+    this.assertBooleanCondition(
+      classList === null || !classList.includes('rotate-90'),
+      true,
+      ExpectedMessages.folderCollapsed,
     );
   }
 

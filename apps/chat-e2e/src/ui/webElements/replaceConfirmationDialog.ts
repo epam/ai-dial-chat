@@ -146,10 +146,25 @@ export class ReplaceConfirmationDialog extends BaseElement {
       });
   }
 
+  public getFolderByExactName(name: string) {
+    return this.getChildElementBySelector(FolderSelectors.folder)
+      .getChildElementBySelector(FolderSelectors.folderName)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+  }
+
   /**
    * Gets folder arrow icon (expand/collapse indicator)
    */
   public getFolderArrowIcon(folderName: string) {
     return this.getFolderByName(folderName).locator('svg').first();
+  }
+
+  /**
+   * Clicks on a folder to toggle its expanded/collapsed state
+   */
+  public async expandCollapseFolder(folderName: string) {
+    const folderElement = this.getFolderByName(folderName);
+    await folderElement.click();
   }
 }
