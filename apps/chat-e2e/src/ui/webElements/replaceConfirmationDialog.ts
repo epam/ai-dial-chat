@@ -155,9 +155,16 @@ export class ReplaceConfirmationDialog extends BaseElement {
 
   /**
    * Gets folder arrow icon (expand/collapse indicator)
+   * The arrow SVG is the first SVG element within the folder container
    */
   public getFolderArrowIcon(folderName: string) {
-    return this.getFolderByName(folderName).locator('svg').first();
+    // Get the folder container that contains this folder name
+    const folderContainer = this.getChildElementBySelector(FolderSelectors.folder)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(folderName)}$`) });
+
+    // The arrow icon is the first SVG within the folder container
+    return folderContainer.locator('svg').first();
   }
 
   /**
