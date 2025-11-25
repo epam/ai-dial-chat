@@ -13,7 +13,7 @@ import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Export and import chat structure with all conversations with the same names that exist : Mixed option selected',
   async ({
     dialHomePage,

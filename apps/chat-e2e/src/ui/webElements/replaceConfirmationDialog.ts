@@ -1,10 +1,6 @@
 import { ImportResolutionOption } from '@/src/testData';
-import { Tags } from '@/src/ui/domData';
 import { FolderSelectors } from '@/src/ui/selectors';
-import {
-  PublishingApprovalModalSelectors,
-  ReplaceConfirmationModalSelectors,
-} from '@/src/ui/selectors/dialogSelectors';
+import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BaseElement } from '@/src/ui/webElements/baseElement';

@@ -1,5 +1,4 @@
 import { Tags } from '@/src/ui/domData';
-import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',

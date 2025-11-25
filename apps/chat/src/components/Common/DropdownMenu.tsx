@@ -155,16 +155,16 @@ export const MenuComponent = forwardRef<
       shift(),
       ...(shouldApplySize
         ? [
-          size({
-            apply({ rects, availableWidth, availableHeight, elements }) {
-              setFloatingWidth(rects.reference.width);
-              Object.assign(elements.floating.style, {
-                maxWidth: `${!dropdownWidth && availableWidth}px`,
-                maxHeight: `${availableHeight}px`,
-              });
-            },
-          }),
-        ]
+            size({
+              apply({ rects, availableWidth, availableHeight, elements }) {
+                setFloatingWidth(rects.reference.width);
+                Object.assign(elements.floating.style, {
+                  maxWidth: `${!dropdownWidth && availableWidth}px`,
+                  maxHeight: `${availableHeight}px`,
+                });
+              },
+            }),
+          ]
         : []),
     ],
     whileElementsMounted: autoUpdate,
@@ -325,9 +325,9 @@ interface MenuItemProps {
 export const MenuItem = forwardRef<
   HTMLButtonElement | HTMLDivElement,
   MenuItemProps &
-  ButtonHTMLAttributes<HTMLButtonElement | HTMLDivElement> & {
-    isChildrenButton?: boolean;
-  }
+    ButtonHTMLAttributes<HTMLButtonElement | HTMLDivElement> & {
+      isChildrenButton?: boolean;
+    }
 >(function MenuItem(
   {
     className,
