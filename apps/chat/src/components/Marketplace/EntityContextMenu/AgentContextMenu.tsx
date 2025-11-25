@@ -1,8 +1,10 @@
+import classNames from 'classnames';
+
 import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { MarketplaceEntityContextMenu } from './MarketplaceEntityContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { FeatureType } from '@epam/ai-dial-shared';
 
@@ -24,10 +26,17 @@ interface AgentContextMenuProps {
   triggerIconSize?: number;
 }
 
-export const AgentContextMenu: React.FC<AgentContextMenuProps> = (props) => (
-  <MarketplaceEntityContextMenu
-    {...props}
-    useMenuItems={useAgentMenuItems}
-    featureType={FeatureType.Application}
-  />
-);
+export const AgentContextMenu: React.FC<AgentContextMenuProps> = (props) => {
+  const { triggerIconSize = 18, className } = props;
+  const menuItems = useAgentMenuItems(props);
+
+  return (
+    <ContextMenu
+      menuItems={menuItems}
+      featureType={FeatureType.Application}
+      triggerIconHighlight
+      triggerIconSize={triggerIconSize}
+      className={classNames('m-0', className)}
+    />
+  );
+};

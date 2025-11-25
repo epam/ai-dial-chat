@@ -27,9 +27,8 @@ import {
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
-import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
-import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
+import { MarketplaceEntityContextMenuRenderer } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenuRenderer';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
@@ -71,7 +70,7 @@ interface MarketplaceEntityCardProps<T> {
   dataQA?: string;
 }
 
-export const ApplicationCard = memo(
+export const MarketplaceEntityCard = memo(
   <T extends MarketplaceEntity>({
     entity,
     onClick,
@@ -108,20 +107,12 @@ export const ApplicationCard = memo(
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
             {!isPreview && (
               <>
-                {isDialAiEntityModel(entity) ? (
-                  <AgentContextMenu
-                    isPreview={isPreview}
-                    className="xl:invisible group-hover:xl:visible"
-                    entity={entity}
-                  />
-                ) : (
-                  <ToolsetContextMenu
-                    isPreview={isPreview}
-                    className="xl:invisible group-hover:xl:visible"
-                    entity={entity}
-                  />
-                )}
-                <AgentBookmark
+                <MarketplaceEntityContextMenuRenderer
+                  isPreview={isPreview}
+                  className="xl:invisible group-hover:xl:visible"
+                  entity={entity}
+                />
+                <MarketplaceEntityBookmark
                   onBookmarkClick={onBookmarkClick}
                   entity={entity}
                 />
@@ -194,4 +185,4 @@ export const ApplicationCard = memo(
     );
   },
 );
-ApplicationCard.displayName = 'ApplicationCard';
+MarketplaceEntityCard.displayName = 'MarketplaceEntityCard';

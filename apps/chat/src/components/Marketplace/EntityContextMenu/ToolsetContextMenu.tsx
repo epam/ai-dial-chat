@@ -1,8 +1,10 @@
+import classNames from 'classnames';
+
 import { useToolsetMenuItems } from '@/src/hooks/useToolsetMenuItems';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
-import { MarketplaceEntityContextMenu } from './MarketplaceEntityContextMenu';
+import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { FeatureType } from '@epam/ai-dial-shared';
 
@@ -25,10 +27,17 @@ interface ToolsetContextMenuProps {
 
 export const ToolsetContextMenu: React.FC<ToolsetContextMenuProps> = (
   props,
-) => (
-  <MarketplaceEntityContextMenu
-    {...props}
-    useMenuItems={useToolsetMenuItems}
-    featureType={FeatureType.Toolset}
-  />
-);
+) => {
+  const { triggerIconSize = 18, className } = props;
+  const menuItems = useToolsetMenuItems(props);
+
+  return (
+    <ContextMenu
+      menuItems={menuItems}
+      featureType={FeatureType.Toolset}
+      triggerIconHighlight
+      triggerIconSize={triggerIconSize}
+      className={classNames('m-0', className)}
+    />
+  );
+};

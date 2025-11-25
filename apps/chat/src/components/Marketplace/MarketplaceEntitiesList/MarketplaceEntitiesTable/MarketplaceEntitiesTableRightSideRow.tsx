@@ -18,11 +18,10 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
-import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
-import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
+import { MarketplaceEntityContextMenuRenderer } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenuRenderer';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
+import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 interface Props<T> {
@@ -34,7 +33,9 @@ interface Props<T> {
   onBookmarkClick?: (entity: T) => void;
 }
 
-export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
+export const MarketplaceEntitiesTableRightSideRow: React.FC<
+  Props<MarketplaceEntity>
+> = memo(
   ({
     entity,
     isHovered,
@@ -90,7 +91,7 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
           ) : (
             <>
               {visibleTopics.map((topic) => (
-                <ApplicationTopic key={topic} topic={topic} />
+                <MarketplaceEntityTopic key={topic} topic={topic} />
               ))}
               {!!hiddenTopics.length && (
                 <Tooltip
@@ -98,7 +99,7 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
                   tooltip={
                     <div className="my-1 flex max-w-48 flex-wrap gap-2">
                       {hiddenTopics.map((topic) => (
-                        <ApplicationTopic key={topic} topic={topic} />
+                        <MarketplaceEntityTopic key={topic} topic={topic} />
                       ))}
                     </div>
                   }
@@ -126,22 +127,15 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
         </div>
         <div className="hidden flex-none items-center xl:flex">
           <div className="flex gap-1">
-            <AgentBookmark
+            <MarketplaceEntityBookmark
               onBookmarkClick={onBookmarkClick}
               entity={entity}
               allocatePlace
             />
-            {isDialAiEntityModel(entity) ? (
-              <AgentContextMenu
-                className={isHovered ? 'xl:visible' : 'xl:invisible'}
-                entity={entity}
-              />
-            ) : (
-              <ToolsetContextMenu
-                className={isHovered ? 'xl:visible' : 'xl:invisible'}
-                entity={entity}
-              />
-            )}
+            <MarketplaceEntityContextMenuRenderer
+              className={isHovered ? 'xl:visible' : 'xl:invisible'}
+              entity={entity}
+            />
           </div>
         </div>
       </li>
@@ -149,4 +143,5 @@ export const AgentsTableRightSideRow: React.FC<Props<MarketplaceEntity>> = memo(
   },
 );
 
-AgentsTableRightSideRow.displayName = 'AgentsTableRightSideRow';
+MarketplaceEntitiesTableRightSideRow.displayName =
+  'MarketplaceEntitiesTableRightSideRow';

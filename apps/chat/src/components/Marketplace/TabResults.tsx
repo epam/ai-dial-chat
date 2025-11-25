@@ -17,8 +17,8 @@ import {
 
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
-import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
-import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
+import { AgentsTable } from './MarketplaceEntitiesList/AgentsTable/AgentsTable';
+import { AgentsTiles } from './MarketplaceEntitiesList/MarketplaceEntitiesTiles/AgentsTiles';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;

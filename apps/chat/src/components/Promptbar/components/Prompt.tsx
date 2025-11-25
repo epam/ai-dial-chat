@@ -99,6 +99,7 @@ export const PromptComponent = memo(
     const isConversationBlocksInput = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
+    const moveToPrompt = useAppSelector(PromptsSelectors.selectMoveToPrompt);
 
     const isExternal = isEntityIdExternal(prompt);
     const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -257,10 +258,10 @@ export const PromptComponent = memo(
     }, [dispatch, isSelectMode]);
 
     useEffect(() => {
-      if (screenState !== ScreenState.SM) {
+      if (screenState !== ScreenState.SM && moveToPrompt?.id) {
         dispatch(PromptsActions.setMoveToPrompt());
       }
-    }, [dispatch, screenState]);
+    }, [dispatch, screenState, moveToPrompt?.id]);
 
     const handleToggle = useCallback(() => {
       PromptsActions.setChosenPrompts({ ids: [prompt.id] });

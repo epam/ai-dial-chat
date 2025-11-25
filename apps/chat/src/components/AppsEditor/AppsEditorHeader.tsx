@@ -71,7 +71,9 @@ export const AppsEditorHeader = ({
       [AppsEditorQuery.PublicationUrl]: publicationUrl,
     },
   } = useRouter();
+
   const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const { formState, trigger } = useFormContext<AppsEditorFormType>();
@@ -88,14 +90,12 @@ export const AppsEditorHeader = ({
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
-
-  const isEditing = !!appDetails;
-
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const returnConversationIds = useAppSelector(
     ApplicationSelectors.selectReturnConversationIds,
   );
 
+  const isEditing = !!appDetails;
   const isSchemaApplicationType = !isApplicationType(
     decodeURIComponent(schemaId.toString()),
   );
