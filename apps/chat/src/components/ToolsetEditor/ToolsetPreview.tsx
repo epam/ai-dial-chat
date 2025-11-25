@@ -14,7 +14,7 @@ import { DRAFT_TOOLSET_ID } from '@/src/constants/toolsets';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
-import { ApplicationCard } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesTiles/MarketplaceEntityCard';
+import { MarketplaceEntityCard } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesTiles/MarketplaceEntityCard';
 import { ToolsetDetailsContent } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsContent';
 import { ToolsetDetailsHeader } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetailsHeader';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
@@ -144,7 +144,7 @@ export const ToolsetPreview = ({
               <ToolsetDetailsContent entity={cardEntity} />
             </div>
           ) : (
-            <ApplicationCard
+            <MarketplaceEntityCard
               entity={cardEntity}
               onClick={fakeCallback}
               isPreview
