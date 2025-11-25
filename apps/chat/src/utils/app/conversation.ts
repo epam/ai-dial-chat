@@ -4,9 +4,9 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import {
+  getChosenFormButtons,
   getConfigurationSchema,
   getConfigurationValue,
-  getFormValueDefinitions,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -30,7 +30,6 @@ import {
 } from './id';
 
 import {
-  Attachment,
   Conversation,
   ConversationInfo,
   Message,
@@ -46,7 +45,7 @@ export const isSettingsChanged = (
   conversation: Conversation,
   newSettings: MessageSettings,
 ): boolean => {
-  const isChanged = Object.keys(newSettings).some((key) => {
+  return Object.keys(newSettings).some((key) => {
     const convSetting = conversation[key as keyof Conversation];
     const newSetting = newSettings[key as keyof MessageSettings];
 
@@ -69,8 +68,6 @@ export const isSettingsChanged = (
       newSettings[key as keyof MessageSettings]
     );
   });
-
-  return isChanged;
 };
 
 export const getNewConversationName = (
@@ -90,7 +87,7 @@ export const getNewConversationName = (
 
     return prepareEntityName(!title && reference_url ? reference_url : title);
   } else if (formValue && configurationSchema) {
-    const definitions = getFormValueDefinitions(formValue, configurationSchema);
+    const definitions = getChosenFormButtons(formValue, configurationSchema);
 
     if (definitions.length) return prepareEntityName(definitions[0].title);
   }
@@ -221,18 +218,14 @@ export const isChosenConversationValidForCompare = (
     (message) => message.role === Role.User,
   );
 
-  if (convUserMessages.length !== selectedConvUserMessages.length) {
-    return false;
-  }
-
-  return true;
+  return convUserMessages.length === selectedConvUserMessages.length;
 };
 
 export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
   model.name || model.id;
 
 export const addPausedError = (
-  conversation: Conversation,
+  _conversation: Conversation,
   models: DialAIEntityModel[],
   messages: Message[],
 ): Message[] => {
@@ -395,18 +388,6 @@ export const isLoadedConversationEntity = (
 ): entity is Conversation =>
   isConversationInfoEntity(entity) && entity.status === UploadStatus.LOADED;
 
-// TODO: need to remove indexes until https://github.com/epam/ai-dial-sdk/issues/293 is fixed
-const clearAttachments = (attachments: Attachment[], clear: boolean) => {
-  if (!clear) {
-    return attachments;
-  }
-  return attachments.map((attachment) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { index, ...rest } = attachment;
-    return rest;
-  });
-};
-
 export function getMessageCustomContent(
   message: Message,
   allowAssistantAttachments = false,
@@ -419,10 +400,7 @@ export function getMessageCustomContent(
         custom_content: {
           ...((allowAssistantAttachments || message.role !== Role.Assistant) &&
             message.custom_content?.attachments?.length && {
-              attachments: clearAttachments(
-                message.custom_content?.attachments,
-                message.role === Role.Assistant,
-              ),
+              attachments: message.custom_content?.attachments,
             }),
           ...(message.custom_content?.state && {
             state: message.custom_content.state,

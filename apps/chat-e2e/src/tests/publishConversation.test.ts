@@ -542,9 +542,6 @@ dialAdminTest(
           playbackPublicationName,
         );
         await adminPublishingApprovalModal.goToEntityReview();
-        for (let i = 1; i <= 2; i++) {
-          await adminChat.getPlaybackControl().playbackNextButton.click();
-        }
         await adminChatHeader.dotsMenu.click();
         await adminConversationDropdownMenuAssertion.assertMenuIncludesOptions(
           MenuOptions.rename,
