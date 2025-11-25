@@ -198,7 +198,7 @@ export class Chat extends BaseElement {
           });
           return (
             request.url().includes(API.chatHost) &&
-            request.postData()!.includes(userRequest!)
+            request.postDataJSON().id.includes(userRequest)
           );
         })
       : this.page.waitForRequest(API.chatHost);

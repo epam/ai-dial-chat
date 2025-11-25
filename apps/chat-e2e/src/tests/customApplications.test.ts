@@ -517,6 +517,7 @@ dialTest(
       async () => {
         await marketplacePage.openMyWorkspacePage({
           updateInstalledDeployments: false,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
