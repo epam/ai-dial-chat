@@ -159,6 +159,7 @@ export const CustomLogoSelect = ({
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
+          hideFolderCheckbox
         />
       )}
 

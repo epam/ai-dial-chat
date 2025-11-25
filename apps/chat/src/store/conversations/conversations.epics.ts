@@ -2497,7 +2497,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
         });
       }
 
-      const uploadedConversations$ = zip(
+      const uploadConversations$ = zip(
         conversationIds.map((id) =>
           getOrUploadConversation({ id }, state$.value).pipe(
             map((result) => result.conversation),
@@ -2510,18 +2510,35 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       );
 
       return forkJoin({
-        uploadedConversations: uploadedConversations$,
+        uploadedConversations: uploadConversations$,
         setIds: of(new Set(conversationIds)),
         showLoader: of(showLoader),
       });
     }),
-    map(({ uploadedConversations, setIds, showLoader }) =>
-      ConversationsActions.uploadConversationsByIdsSuccess({
+    map(({ uploadedConversations, setIds, showLoader }) => {
+      const selectedPublicationUrl =
+        PublicationSelectors.selectSelectedPublicationUrl(state$.value);
+      return ConversationsActions.uploadConversationsByIdsSuccess({
         setIds,
-        conversations: uploadedConversations.filter(Boolean) as Conversation[],
+        conversations: uploadedConversations
+          .filter((conv) => conv !== null)
+          .map((conv) => {
+            if (selectedPublicationUrl && conv.playback) {
+              return {
+                ...conv,
+                messages: conv.playback.messagesStack ?? [],
+                playback: {
+                  ...conv.playback,
+                  activePlaybackIndex: conv.playback.messagesStack.length,
+                },
+              };
+            }
+
+            return conv;
+          }),
         showLoader,
-      }),
-    ),
+      });
+    }),
   );
 
 const saveConversationEpic: AppEpic = (action$, state$) =>
