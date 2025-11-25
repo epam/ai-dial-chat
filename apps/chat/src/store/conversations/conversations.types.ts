@@ -45,6 +45,9 @@ export interface ConversationsState {
   isStartedCustomViewerConversation: boolean;
   previewConversationId?: string | null;
   preselectedAction?: string | null;
+
+  deletingConversation: ConversationInfo | undefined;
+  moveToConversation: ConversationInfo | undefined;
 }
 
 export interface BaseSendMessagePayload {

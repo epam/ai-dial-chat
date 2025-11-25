@@ -77,7 +77,6 @@ export const ResultsView = memo(
     const selectedEntitiesTab = useAppSelector(
       MarketplaceSelectors.selectSelectedEntitiesTab,
     );
-    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
     if (entities.length || suggestedResults.length) {
       const MarketplaceEntitiesListComponent =
@@ -96,6 +95,8 @@ export const ResultsView = memo(
     }
 
     if (areAllFiltersEmpty) {
+      const isAgentsTab =
+        selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
       const Icon = isAgentsTab ? IconMessage2 : IconBlocks;
       return (
         <NoMarketplaceEntitiesFound
