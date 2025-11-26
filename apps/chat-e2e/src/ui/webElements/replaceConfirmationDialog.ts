@@ -83,7 +83,7 @@ export class ReplaceConfirmationDialog extends BaseElement {
   }: { isHttpMethodTriggered?: boolean } = {}) {
     if (isHttpMethodTriggered) {
       const responsePromise = this.page.waitForResponse(
-        (r) => r.request().method() === 'GET',
+        (r) => r.request().method() === 'POST',
       );
       await this.continueButton.click();
       await responsePromise;
