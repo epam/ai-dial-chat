@@ -8,6 +8,7 @@ import { getToolsetPayload } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
@@ -157,6 +158,7 @@ export const ToolsetEditor = () => {
 
       saveAndExitRef.current = true;
       redirectToChatRef.current = redirectToChat;
+      dispatch(UIActions.setEditorLoader(true));
       handleSubmit(undefined, saveDraft);
     },
     [dispatch, handleSubmit, isDirty, toolsetDetails],
