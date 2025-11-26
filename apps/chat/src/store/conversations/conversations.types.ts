@@ -46,7 +46,6 @@ export interface ConversationsState {
   previewConversationId?: string | null;
   preselectedAction?: string | null;
 
-  deletingConversation: ConversationInfo | undefined;
   moveToConversation: ConversationInfo | undefined;
 }
 

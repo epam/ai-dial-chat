@@ -804,9 +804,6 @@ const selectIsSelectedConversationsWithSchema = createSelector(
 const selectAction = (state: RootState) =>
   rootSelector(state).preselectedAction;
 
-const selectDeletingConversation = (state: RootState) =>
-  rootSelector(state).deletingConversation;
-
 const selectMoveToConversation = (state: RootState) =>
   rootSelector(state).moveToConversation;
 
@@ -887,6 +884,5 @@ export const ConversationsSelectors = {
   selectAction,
   selectIsNotAllowed,
   selectNotAllowedItemsForDisplay,
-  selectDeletingConversation,
   selectMoveToConversation,
 };
