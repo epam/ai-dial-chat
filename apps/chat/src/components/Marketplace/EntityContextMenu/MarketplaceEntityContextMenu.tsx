@@ -22,27 +22,20 @@ interface MarketplaceEntityContextMenuComponentProps {
   featureType: FeatureType;
   menuItems: DisplayMenuItemProps[];
   triggerIconSize: number;
-  className?: string;
+  className: string;
 }
 
-function MarketplaceEntityContextMenuComponent({
-  className,
-  ...props
-}: MarketplaceEntityContextMenuComponentProps) {
-  return (
-    <ContextMenu
-      {...props}
-      triggerIconHighlight
-      className={classNames('m-0', className)}
-    />
-  );
+function MarketplaceEntityContextMenuComponent(
+  props: MarketplaceEntityContextMenuComponentProps,
+) {
+  return <ContextMenu {...props} triggerIconHighlight />;
 }
 
 interface ToolsetContextMenuProps {
   entity: ToolsetModel;
   triggerIconSize: number;
+  className: string;
   disabledActions?: ToolsetContextMenuDisabledActions;
-  className?: string;
   isPreview?: boolean;
 }
 
@@ -66,8 +59,8 @@ function ToolsetContextMenu({
 interface AgentContextMenuProps {
   entity: DialAIEntityModel;
   triggerIconSize: number;
+  className: string;
   disabledActions?: ApplicationContextMenuDisabledActions;
-  className?: string;
   isPreview?: boolean;
 }
 
@@ -100,30 +93,29 @@ interface Props {
 
 export function MarketplaceEntityContextMenu({
   entity,
-  isPreview,
   className,
-  disabledActions,
   triggerIconSize = 18,
+  ...props
 }: Props) {
+  const contextMenuClassName = classNames('m-0', className);
+
   if (isDialAiEntityModel(entity)) {
     return (
       <AgentContextMenu
-        isPreview={isPreview}
-        className={className}
+        className={contextMenuClassName}
         entity={entity}
-        disabledActions={disabledActions}
         triggerIconSize={triggerIconSize}
+        {...props}
       />
     );
   }
 
   return (
     <ToolsetContextMenu
-      isPreview={isPreview}
-      className={className}
+      className={contextMenuClassName}
       entity={entity}
-      disabledActions={disabledActions}
       triggerIconSize={triggerIconSize}
+      {...props}
     />
   );
 }
