@@ -793,7 +793,7 @@ dialTest.skip(
   },
 );
 
-dialTest(
+dialTest.only(
   'Chat is moved to folder created from Move to',
   async ({
     dialHomePage,

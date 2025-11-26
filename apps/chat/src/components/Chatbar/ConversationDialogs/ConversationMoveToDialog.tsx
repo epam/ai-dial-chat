@@ -90,6 +90,7 @@ function ConversationMoveToDialogComponent() {
           }).id,
         ),
       );
+      dispatch(ConversationsActions.setMoveToConversation());
     },
     [allConversations, collapsedSections, moveToConversation, dispatch, t],
   );
