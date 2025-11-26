@@ -443,6 +443,13 @@ export const ExpectedMessages = {
   ) =>
     `Conversation "${conversationName}" dropdown should show "${expectedOption}" option`,
   conversationsImportedSuccessfully: 'Conversation(s) imported successfully',
+  mixedImportOption: 'Mixed',
+  replacedConversationHasOriginalMessages:
+    'Replaced conversation should have original messages only',
+  updatedConversationHasOriginalAndNewMessages:
+    'Updated conversation should have original and new messages',
+  postfixedConversationHasImportedMessages:
+    'Postfixed conversation should have imported (original) messages only',
 };
 
 export const PublishingExpectedMessages = {

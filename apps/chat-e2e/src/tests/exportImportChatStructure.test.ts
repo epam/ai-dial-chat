@@ -27,15 +27,16 @@ dialTest.only(
     chatBarFolderAssertion,
     chat,
     conversationAssertion,
+    chatMessagesAssertion,
     replaceConfirmationDialog,
     replaceConfirmationDialogAssertion,
     toastAssertion,
+    toast,
   }) => {
     setTestIds('EPMRTC-3024');
     let exportedData: UploadDownloadData;
 
     // Folder entities
-    let folder1: FolderInterface;
     let folder2: FolderInterface;
     let nestedFolders: FolderInterface[];
 
@@ -48,7 +49,7 @@ dialTest.only(
     let chat6: Conversation;
     let chat7: Conversation;
 
-    folder1 = {
+    const folder1 = {
       id: 'Folder1',
       name: 'Folder1',
       type: FeatureType.Chat,
@@ -388,6 +389,7 @@ dialTest.only(
       await replaceConfirmationDialog.clickContinue({
         expectedPostRequests: 4,
       });
+      await dialHomePage.waitForPageLoaded();
     });
 
     await dialTest.step(
@@ -397,6 +399,7 @@ dialTest.only(
         await toastAssertion.assertToastMessage(
           ExpectedMessages.conversationsImportedSuccessfully,
         );
+        await toast.closeToast();
 
         // Verify Folder1 (empty folder) exists
         await folderConversations.getFolderByName(folder1.name).waitFor();
@@ -484,43 +487,34 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Verify Chat1 was replaced and Chat4/Chat4 1 history',
+      'Verify Chat1 was replaced and verify Chat4 and "Chat4 1" histories',
       async () => {
         // Select Chat1 and verify it has original content (no new message from update step)
         await folderConversations.selectFolderEntity(folder2.name, chat1.name);
-        const chat1MessagesCount = await chat
-          .getChatMessages()
-          .getElementsCount();
-        expect(
-          chat1MessagesCount,
-          'Chat1 should have original messages only (replaced)',
-        ).toBe(2); // Default conversation has 1 request + 1 response
+        await chatMessagesAssertion.assertMessagesCount(
+          chat1.messages.length,
+          ExpectedMessages.replacedConversationHasOriginalMessages,
+        );
 
         // Select original Chat4 and verify it has updated content (with new message)
         await folderConversations.selectFolderEntity(
           nestedFolders[3].name,
           chat4.name,
         );
-        const chat4MessagesCount = await chat
-          .getChatMessages()
-          .getElementsCount();
-        expect(
-          chat4MessagesCount,
-          'Chat4 should have original + new messages',
-        ).toBe(4); // Original (1 req + 1 resp) + New (1 req + 1 resp)
+        await chatMessagesAssertion.assertMessagesCount(
+          chat4.messages.length + 2,
+          ExpectedMessages.updatedConversationHasOriginalAndNewMessages,
+        );
 
         // Select Chat4 1 and verify it has imported (original) content only
         await folderConversations.selectFolderEntity(
           nestedFolders[3].name,
           'Chat4 1',
         );
-        const chat4_1MessagesCount = await chat
-          .getChatMessages()
-          .getElementsCount();
-        expect(
-          chat4_1MessagesCount,
-          'Chat4 1 should have imported (original) messages only',
-        ).toBe(2); // Imported original: 1 request + 1 response
+        await chatMessagesAssertion.assertMessagesCount(
+          chat4.messages.length,
+          ExpectedMessages.postfixedConversationHasImportedMessages,
+        );
       },
     );
   },

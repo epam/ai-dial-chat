@@ -94,12 +94,6 @@ export class ReplaceConfirmationDialog extends BaseElement {
       }
       await this.continueButton.click();
       await Promise.all(responsePromises);
-      const appContainer = new AppContainer(this.page);
-      await appContainer
-        .getImportExportLoader()
-        .waitForState({ state: 'hidden' });
-      await appContainer.waitForAppLoaded();
-      await this.page.waitForLoadState('domcontentloaded');
     } else {
       await this.continueButton.click();
     }
