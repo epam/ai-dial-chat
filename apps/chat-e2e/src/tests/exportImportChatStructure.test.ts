@@ -13,7 +13,7 @@ import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.only(
   'Export and import chat structure with all conversations with the same names that exist : Mixed option selected',
   async ({
     dialHomePage,
@@ -383,7 +383,11 @@ dialTest(
 
     await dialTest.step('Continue import', async () => {
       // Click Continue to proceed with import
-      await replaceConfirmationDialog.clickContinue();
+      // Wait for 4 POST requests: Chat1 (Replace) + Chat2, Chat4, Chat7 (Postfix)
+      // Chat3, Chat5, Chat6 are Ignored and don't trigger POST requests
+      await replaceConfirmationDialog.clickContinue({
+        expectedPostRequests: 4,
+      });
     });
 
     await dialTest.step(

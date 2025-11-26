@@ -80,13 +80,20 @@ export class ReplaceConfirmationDialog extends BaseElement {
   /** Clicks Continue button and waits for import completion */
   public async clickContinue({
     isHttpMethodTriggered = true,
-  }: { isHttpMethodTriggered?: boolean } = {}) {
+    expectedPostRequests = 1,
+  }: {
+    isHttpMethodTriggered?: boolean;
+    expectedPostRequests?: number;
+  } = {}) {
     if (isHttpMethodTriggered) {
-      const responsePromise = this.page.waitForResponse(
-        (r) => r.request().method() === 'POST',
-      );
+      const responsePromises: Promise<unknown>[] = [];
+      for (let i = 0; i < expectedPostRequests; i++) {
+        responsePromises.push(
+          this.page.waitForResponse((r) => r.request().method() === 'POST'),
+        );
+      }
       await this.continueButton.click();
-      await responsePromise;
+      await Promise.all(responsePromises);
       const appContainer = new AppContainer(this.page);
       await appContainer
         .getImportExportLoader()
