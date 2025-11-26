@@ -51,21 +51,17 @@ dialTest(
     await dialTest.step(
       'Prepare folder structure and conversations',
       async () => {
-        // Create Folder2 with Chat1 and Chat2
-        folder2 = conversationData.prepareFolder('Folder2');
-
-        chat1 = conversationData.prepareDefaultConversation(undefined, 'Chat1');
-        chat1.folderId = folder2.id;
-        chat1.id = `${folder2.id}/${chat1.id}`;
+        // Create Folder2 with Chat1 and Chat2 using E2E-prefixed names
+        const folder2Data =
+          conversationData.prepareFolderWithConversations(2,'Folder2');
+        folder2 = folder2Data.folders;
+        folder2.name = 'Folder2';
+        folder2.id = 'Folder2';
+        [chat1, chat2] = folder2Data.conversations;
         conversationData.resetData();
 
-        chat2 = conversationData.prepareDefaultConversation(undefined, 'Chat2');
-        chat2.folderId = folder2.id;
-        chat2.id = `${folder2.id}/${chat2.id}`;
-        conversationData.resetData();
-
-        // Create Chat3 outside of all folders
-        chat3 = conversationData.prepareDefaultConversation(undefined, 'Chat3');
+        // Create Chat3 outside of all folders with E2E-prefixed name
+        chat3 = conversationData.prepareDefaultConversation();
         conversationData.resetData();
 
         // Create Folder3 with nested folder structure (4 folders, 3 levels deep)
@@ -76,14 +72,9 @@ dialTest(
           4: 'Folder3.1.1.1',
         });
 
-        // Create conversations for nested folders: Chat4-7
+        // Create conversations for nested folders with E2E-prefixed names
         const nestedConversations =
-          conversationData.prepareConversationsForNestedFolders(nestedFolders, {
-            1: 'Chat7', // Folder3
-            2: 'Chat6', // Folder3.1
-            3: 'Chat5', // Folder3.1.1
-            4: 'Chat4', // Folder3.1.1.1 (deepest)
-          });
+          conversationData.prepareConversationsForNestedFolders(nestedFolders);
         [chat7, chat6, chat5, chat4] = nestedConversations;
 
         await dataInjector.createConversations(
