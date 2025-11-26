@@ -48,12 +48,21 @@ dialTest(
     let chat6: Conversation;
     let chat7: Conversation;
 
+    folder1 = {
+      id: 'Folder1',
+      name: 'Folder1',
+      type: FeatureType.Chat,
+      folderId: '',
+    };
+
     await dialTest.step(
       'Prepare folder structure and conversations',
       async () => {
         // Create Folder2 with Chat1 and Chat2 using E2E-prefixed names
-        const folder2Data =
-          conversationData.prepareFolderWithConversations(2,'Folder2');
+        const folder2Data = conversationData.prepareFolderWithConversations(
+          2,
+          'Folder2',
+        );
         folder2 = folder2Data.folders;
         folder2.name = 'Folder2';
         folder2.id = 'Folder2';
@@ -73,9 +82,8 @@ dialTest(
         });
 
         // Create conversations for nested folders with E2E-prefixed names
-        const nestedConversations =
+        [chat7, chat6, chat5, chat4] =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
-        [chat7, chat6, chat5, chat4] = nestedConversations;
 
         await dataInjector.createConversations(
           [chat1, chat2, chat3, chat4, chat5, chat6, chat7],
@@ -98,13 +106,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.renameEmptyFolderWithTick('Folder1');
-        folder1 = {
-          id: 'Folder1',
-          name: 'Folder1',
-          type: FeatureType.Chat,
-          folderId: '',
-        };
+        await folderConversations.renameEmptyFolderWithTick(folder1.name);
 
         exportedData = await dialHomePage.downloadData(
           () => chatBar.exportButton.click(),
@@ -123,18 +125,20 @@ dialTest(
 
         // Update Chat1
         await folderConversations.expandFolder(folder2.name);
-        await folderConversations.selectFolderEntity(folder2.name, chat1.name);
+        await folderConversations.selectFolderEntity(folder2.name, chat1.name, {
+          isHttpMethodTriggered: true,
+        });
         await chat.sendRequestWithButton('New request for Chat1');
 
         // Update Chat4 - need to expand nested folders
-        await folderConversations.expandFolder(nestedFolders[0].name);
-        await folderConversations.expandFolder(nestedFolders[1].name);
-        await folderConversations.expandFolder(nestedFolders[2].name);
-        await folderConversations.expandFolder(nestedFolders[3].name);
+        for (const folder of nestedFolders) {
+          await folderConversations.expandFolder(folder.name);
+        }
 
         await folderConversations.selectFolderEntity(
           nestedFolders[3].name,
           chat4.name,
+          { isHttpMethodTriggered: true },
         );
         await chat.sendRequestWithButton('New request for Chat4');
       },
@@ -371,7 +375,9 @@ dialTest(
       async () => {
         // After selecting different options for individual conversations,
         // "All items" should show "Mixed" option
-        await replaceConfirmationDialogAssertion.assertAllItemsOption('Mixed');
+        await replaceConfirmationDialogAssertion.assertAllItemsOption(
+          ExpectedConstants.mixedImportOption,
+        );
       },
     );
 
