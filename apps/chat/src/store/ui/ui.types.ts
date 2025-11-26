@@ -27,4 +27,5 @@ export interface UIState {
     [FeatureType.Chat]: number;
     [FeatureType.Prompt]: number;
   };
+  isEditorLoader?: boolean;
 }

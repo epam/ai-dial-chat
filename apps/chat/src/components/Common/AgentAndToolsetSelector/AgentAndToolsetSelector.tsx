@@ -81,53 +81,54 @@ export const AgentAndToolsetSelector: React.FC<
   );
 
   return (
-    <Tooltip tooltip={tooltip}>
-      <div className="relative grow space-y-4">
-        <div className="flex flex-col">
-          <div className="absolute right-0 top-[-22px]">
-            <Tooltip tooltip={addBtnTooltip ?? t('Add Agents and Toolsets')}>
-              <button
-                disabled={readonly}
-                className={classNames(
-                  'flex items-center text-accent-primary',
-                  readonly && 'cursor-not-allowed',
-                )}
-                onClick={handleOpenSelectModal}
-              >
-                <IconPlus size={18} />
-                <p className="ml-2">{t('Add')}</p>
-              </button>
-            </Tooltip>
-          </div>
-          {!value.length ? (
-            <NoAgentsAndToolsets />
-          ) : (
-            <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
-              {value.map((id) => (
-                <AgentAndToolsetChip
-                  key={id}
-                  id={id}
-                  item={allItemsMap[id]}
-                  onRemove={readonly ? undefined : handleRemoveItem}
-                  readonly={readonly}
-                  onItemClick={onItemClick}
-                />
-              ))}
-            </div>
-          )}
+    <div className="relative grow space-y-4">
+      <div className="flex flex-col">
+        <div className="absolute right-0 top-[-22px]">
+          <Tooltip
+            tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
+          >
+            <button
+              disabled={readonly}
+              className={classNames(
+                'flex items-center text-accent-primary',
+                readonly && 'cursor-not-allowed',
+              )}
+              onClick={handleOpenSelectModal}
+            >
+              <IconPlus size={18} />
+              <p className="ml-2">{t('Add')}</p>
+            </button>
+          </Tooltip>
         </div>
-        <ToolsetLoginDialog />
-
-        {isSelectModalOpen && !readonly && (
-          <AgentAndToolsetModal
-            initialSelectedIds={value}
-            allItemsMap={allItemsMap}
-            saveSliderStateInURL
-            onClose={handleCloseModal}
-            onConfirm={handleConfirmSelection}
-          />
+        {!value.length ? (
+          <NoAgentsAndToolsets />
+        ) : (
+          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+            {value.map((id) => (
+              <AgentAndToolsetChip
+                key={id}
+                id={id}
+                item={allItemsMap[id]}
+                onRemove={readonly ? undefined : handleRemoveItem}
+                readonly={readonly}
+                onItemClick={onItemClick}
+                customTooltip={tooltip}
+              />
+            ))}
+          </div>
         )}
       </div>
-    </Tooltip>
+      <ToolsetLoginDialog />
+
+      {isSelectModalOpen && !readonly && (
+        <AgentAndToolsetModal
+          initialSelectedIds={value}
+          allItemsMap={allItemsMap}
+          saveSliderStateInURL
+          onClose={handleCloseModal}
+          onConfirm={handleConfirmSelection}
+        />
+      )}
+    </div>
   );
 };
