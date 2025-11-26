@@ -223,6 +223,9 @@ export const uiSlice = createSlice({
     ) => {
       state.visibleSidebarItems[payload.featureType] = payload.visibleItems;
     },
+    setEditorLoader: (state, { payload }: PayloadAction<boolean>) => {
+      state.isEditorLoader = payload;
+    },
   },
 });
 
