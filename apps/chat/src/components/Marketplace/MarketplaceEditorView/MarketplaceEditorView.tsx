@@ -1,10 +1,4 @@
-import React, {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -23,6 +17,8 @@ import { MarketplaceEditorViewContext } from './marketplaceEditorViewContext';
 interface MarketplaceEditorViewProps {
   leftContent: ReactNode;
   rightContent: ReactNode;
+  previewMode: PreviewMode;
+  onPreviewModeChange: (mode: PreviewMode) => void;
 
   defaultPreviewMode?: PreviewMode;
   onLeftMouseLeave?: () => void;
@@ -34,7 +30,8 @@ interface MarketplaceEditorViewProps {
 export const MarketplaceEditorView = ({
   leftContent,
   rightContent,
-  defaultPreviewMode = PreviewMode.closed,
+  previewMode,
+  onPreviewModeChange,
   onLeftMouseLeave,
   rightQa,
   closedPreviewLabel,
@@ -43,38 +40,31 @@ export const MarketplaceEditorView = ({
   const { t } = useTranslation(Translation.Marketplace);
   const screenState = useScreenState();
 
-  const [previewMode, setPreviewMode] =
-    useState<PreviewMode>(defaultPreviewMode);
-
   const isPreviewClosed = previewMode === PreviewMode.closed;
   const isPreviewHalf = previewMode === PreviewMode.half;
   const isPreviewFull = previewMode === PreviewMode.full;
 
-  const handlePreviewModeChange = useCallback((mode: PreviewMode) => {
-    setPreviewMode(mode);
-  }, []);
-
   const handleOpenPreview = useCallback(() => {
     if (screenState > ScreenState.MD) {
-      handlePreviewModeChange(PreviewMode.half);
+      onPreviewModeChange(PreviewMode.half);
     } else {
-      handlePreviewModeChange(PreviewMode.full);
+      onPreviewModeChange(PreviewMode.full);
     }
-  }, [handlePreviewModeChange, screenState]);
+  }, [onPreviewModeChange, screenState]);
 
   const providerValue = useMemo(
     () => ({
       previewMode,
-      changePreviewMode: handlePreviewModeChange,
+      changePreviewMode: onPreviewModeChange,
     }),
-    [handlePreviewModeChange, previewMode],
+    [onPreviewModeChange, previewMode],
   );
 
   useEffect(() => {
     if (screenState <= ScreenState.MD && isPreviewHalf) {
-      handlePreviewModeChange(PreviewMode.closed);
+      onPreviewModeChange(PreviewMode.closed);
     }
-  }, [handlePreviewModeChange, isPreviewHalf, previewMode, screenState]);
+  }, [onPreviewModeChange, isPreviewHalf, previewMode, screenState]);
 
   return (
     <MarketplaceEditorViewContext.Provider value={providerValue}>
@@ -83,7 +73,7 @@ export const MarketplaceEditorView = ({
           <TabButton
             tabKey={PreviewMode.closed}
             selected={!isPreviewFull}
-            onClick={handlePreviewModeChange}
+            onClick={onPreviewModeChange}
             className="w-full"
           >
             {leftTabLabel}
@@ -91,7 +81,7 @@ export const MarketplaceEditorView = ({
           <TabButton
             tabKey={PreviewMode.full}
             selected={isPreviewFull}
-            onClick={handlePreviewModeChange}
+            onClick={onPreviewModeChange}
             className="w-full"
           >
             {t('Preview')}
