@@ -1234,13 +1234,13 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             of(SettingsActions.setEnabledFeatures(features as Feature[])),
           );
 
-          if (!shouldLogIn && features.includes(Feature.ConversationsSharing)) {
-            actions.push(
-              of(ShareActions.triggerGettingSharedConversationListings()),
-            );
-          }
-
           if (!shouldLogIn) {
+            if (features.includes(Feature.ConversationsSharing)) {
+              actions.push(
+                of(ShareActions.triggerGettingSharedConversationListings()),
+              );
+            }
+
             if (features.includes(Feature.ConversationsPublishing)) {
               actions.push(
                 of(
