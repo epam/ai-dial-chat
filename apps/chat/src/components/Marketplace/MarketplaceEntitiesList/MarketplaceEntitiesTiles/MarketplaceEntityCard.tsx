@@ -27,7 +27,7 @@ import {
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
-import { MarketplaceEntityContextMenuRenderer } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenuRenderer';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
@@ -107,7 +107,7 @@ export const MarketplaceEntityCard = memo(
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
             {!isPreview && (
               <>
-                <MarketplaceEntityContextMenuRenderer
+                <MarketplaceEntityContextMenu
                   isPreview={isPreview}
                   className="xl:invisible group-hover:xl:visible"
                   entity={entity}

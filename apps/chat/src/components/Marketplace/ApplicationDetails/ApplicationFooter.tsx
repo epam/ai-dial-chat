@@ -33,7 +33,7 @@ import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ApplicationDetailsFooterProps } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { MarketplaceEntityContextMenuRenderer } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenuRenderer';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
@@ -105,7 +105,7 @@ export const ApplicationDetailsFooter = ({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <MarketplaceEntityContextMenuRenderer
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}

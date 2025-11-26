@@ -18,7 +18,7 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { DateRenderer } from '@/src/components/Common/DateRenderer';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { MarketplaceEntityContextMenuRenderer } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenuRenderer';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
@@ -132,7 +132,7 @@ export const MarketplaceEntitiesTableRightSideRow: React.FC<
               entity={entity}
               allocatePlace
             />
-            <MarketplaceEntityContextMenuRenderer
+            <MarketplaceEntityContextMenu
               className={isHovered ? 'xl:visible' : 'xl:invisible'}
               entity={entity}
             />

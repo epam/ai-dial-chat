@@ -25,7 +25,7 @@ import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
-import { MarketplaceEntityContextMenuRenderer } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenuRenderer';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
@@ -79,7 +79,7 @@ export function ToolsetDetailsFooter({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <MarketplaceEntityContextMenuRenderer
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}
