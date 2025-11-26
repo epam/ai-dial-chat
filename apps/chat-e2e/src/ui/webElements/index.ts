@@ -84,3 +84,8 @@ export * from './entityEditor/externalApp/externalAppEditorViewForm';
 export * from './entityEditor/externalApp/externalAppEditorContainer';
 export * from './entityEditor/toolset/toolsetEditorViewForm';
 export * from './entityEditor/toolset/toolsetEditorContainer';
+export * from './replaceConfirmationDialog';
+export * from './renameConversationModal';
+export * from './shareModal';
+export * from './settingsModal';
+export * from './promptPreviewModalWindow';
