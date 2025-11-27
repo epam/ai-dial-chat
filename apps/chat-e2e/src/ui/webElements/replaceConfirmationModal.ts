@@ -1,11 +1,12 @@
 import { ImportResolutionOption } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
+import { FolderSelectors } from '@/src/ui/selectors';
 import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Folders } from '@/src/ui/webElements/entityTree/folders';
+import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
-import { FolderSelectors } from '@/src/ui/selectors';
+import { Folders } from '@/src/ui/webElements/entityTree/folders';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -32,7 +33,7 @@ export class ReplaceConfirmationModal extends BaseElement {
 
   private folders!: Folders;
 
-  private getFolders(): Folders {
+  public getFolders(): Folders {
     if (!this.folders) {
       this.folders = new Folders(
         this.page,
@@ -46,7 +47,7 @@ export class ReplaceConfirmationModal extends BaseElement {
 
   private conversations!: EntitiesTree;
 
-  private getConversations(): EntitiesTree {
+  public getConversations(): EntitiesTree {
     if (!this.conversations) {
       this.conversations = new EntitiesTree(
         this.page,
@@ -56,6 +57,15 @@ export class ReplaceConfirmationModal extends BaseElement {
       );
     }
     return this.conversations;
+  }
+
+  private dropdownMenu!: DropdownButtonMenu;
+
+  private getDropdownMenu(): DropdownButtonMenu {
+    if (!this.dropdownMenu) {
+      this.dropdownMenu = new DropdownButtonMenu(this.page);
+    }
+    return this.dropdownMenu;
   }
 
   /** Returns the import resolution dropdown for a specific conversation */
@@ -83,18 +93,12 @@ export class ReplaceConfirmationModal extends BaseElement {
     );
   }
 
-  /** Selects an import resolution option from the dropdown menu */
-  private async selectDropdownOption(option: ImportResolutionOption) {
-    const menuItem = this.page
-      .locator(ReplaceConfirmationModalSelectors.menuItem)
-      .filter({ hasText: option });
-    await menuItem.click();
-  }
-
   /** Sets import resolution option for all items */
   public async setAllItemsOption(option: ImportResolutionOption) {
     await this.getAllItemsDropdown().click();
-    await this.selectDropdownOption(option);
+    await this.getDropdownMenu().selectMenuOption(option, {
+      isHttpMethodTriggered: false,
+    });
   }
 
   /** Sets import resolution option for a specific conversation */
@@ -103,7 +107,9 @@ export class ReplaceConfirmationModal extends BaseElement {
     option: ImportResolutionOption,
   ) {
     await this.getConversationDropdownByName(conversationName).click();
-    await this.selectDropdownOption(option);
+    await this.getDropdownMenu().selectMenuOption(option, {
+      isHttpMethodTriggered: false,
+    });
   }
 
   /** Clicks Continue button and waits for import completion */
@@ -126,47 +132,5 @@ export class ReplaceConfirmationModal extends BaseElement {
     } else {
       await this.continueButton.click();
     }
-  }
-
-  /** Returns conversation element by exact name match */
-  public getConversationByExactName(name: string) {
-    return this.getConversations().getEntityByExactName(name);
-  }
-
-  /** Returns conversation element by name (partial match) */
-  public getConversationByName(name: string, index?: number) {
-    return this.getConversations().getEntityByName(name, index).locator(
-      EntitySelectors.entityName,
-    );
-  }
-
-  /** Returns the icon element for a conversation */
-  public getConversationIcon(conversationName: string, index?: number) {
-    return this.getConversations().getEntityIcon(conversationName, index);
-  }
-
-  /** Returns the expand/collapse arrow icon for a conversation */
-  public getConversationArrowIcon(conversationName: string, index?: number) {
-    return this.getConversations().getEntityArrowIcon(conversationName, index);
-  }
-
-  /** Returns folder element by name (partial match) */
-  public getFolderByName(folderName: string) {
-    return this.getFolders().getFolderByName(folderName);
-  }
-
-  /** Returns folder element by exact name match */
-  public getFolderByExactName(name: string) {
-    return this.getFolders().getFolderByExactName(name);
-  }
-
-  /** Returns the expand/collapse icon for a folder */
-  public getFolderExpandIcon(folderName: string) {
-    return this.getFolders().getFolderExpandIcon(folderName);
-  }
-
-  /** Toggles folder expand/collapse state */
-  public async expandCollapseFolder(folderName: string) {
-    await this.getFolders().expandCollapseFolder(folderName);
   }
 }

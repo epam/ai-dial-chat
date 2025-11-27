@@ -15,8 +15,9 @@ export class ReplaceConfirmationModalAssertion extends BaseAssertion {
     folderName: string,
     expectedState: ElementState,
   ) {
-    const folderLocator =
-      this.replaceConfirmationModal.getFolderByExactName(folderName);
+    const folderLocator = this.replaceConfirmationModal
+      .getFolders()
+      .getFolderByExactName(folderName);
     await super.assertElementState(folderLocator, expectedState);
   }
 
@@ -25,17 +26,17 @@ export class ReplaceConfirmationModalAssertion extends BaseAssertion {
     conversationName: string,
     expectedState: ElementState,
   ) {
-    const conversationLocator =
-      this.replaceConfirmationModal.getConversationByExactName(
-        conversationName,
-      );
+    const conversationLocator = this.replaceConfirmationModal
+      .getConversations()
+      .getEntityByExactName(conversationName);
     await super.assertElementState(conversationLocator, expectedState);
   }
 
   /** Verifies folder is expanded (arrow has rotate-90 class) */
   public async assertFolderExpanded(folderName: string) {
-    const arrowIcon =
-      this.replaceConfirmationModal.getFolderExpandIcon(folderName);
+    const arrowIcon = this.replaceConfirmationModal
+      .getFolders()
+      .getFolderExpandIcon(folderName);
 
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
@@ -47,8 +48,9 @@ export class ReplaceConfirmationModalAssertion extends BaseAssertion {
 
   /** Verifies folder is collapsed (arrow lacks rotate-90 class) */
   public async assertFolderCollapsed(folderName: string) {
-    const arrowIcon =
-      this.replaceConfirmationModal.getFolderExpandIcon(folderName);
+    const arrowIcon = this.replaceConfirmationModal
+      .getFolders()
+      .getFolderExpandIcon(folderName);
 
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
@@ -63,8 +65,9 @@ export class ReplaceConfirmationModalAssertion extends BaseAssertion {
     entityName: string,
     expectedIcon: string,
   ) {
-    const entityIcon =
-      this.replaceConfirmationModal.getConversationIcon(entityName);
+    const entityIcon = this.replaceConfirmationModal
+      .getConversations()
+      .getEntityIcon(entityName);
     await super.assertEntityIcon(entityIcon, expectedIcon);
   }
 

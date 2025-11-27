@@ -11,7 +11,6 @@ import {
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest.only(
   'Export and import chat structure with all conversations with the same names that exist : Mixed option selected',
@@ -212,7 +211,9 @@ dialTest.only(
       for (let i = nestedFolders.length - 1; i >= 0; i--) {
         const folder = nestedFolders[i];
         // Collapse the current folder
-        await replaceConfirmationModal.expandCollapseFolder(folder.name);
+        await replaceConfirmationModal
+          .getFolders()
+          .expandCollapseFolder(folder.name);
         await replaceConfirmationModalAssertion.assertFolderCollapsed(
           folder.name,
         );
@@ -241,7 +242,9 @@ dialTest.only(
       }
 
       // Collapse Folder2 (root level)
-      await replaceConfirmationModal.expandCollapseFolder(folder2.name);
+      await replaceConfirmationModal
+        .getFolders()
+        .expandCollapseFolder(folder2.name);
       await replaceConfirmationModalAssertion.assertFolderCollapsed(
         folder2.name,
       );
@@ -263,7 +266,9 @@ dialTest.only(
       const nestedConversations = [chat7, chat6, chat5, chat4];
 
       // Expand Folder2
-      await replaceConfirmationModal.expandCollapseFolder(folder2.name);
+      await replaceConfirmationModal
+        .getFolders()
+        .expandCollapseFolder(folder2.name);
       await replaceConfirmationModalAssertion.assertFolderExpanded(
         folder2.name,
       );
@@ -281,7 +286,9 @@ dialTest.only(
       for (let i = 0; i < nestedFolders.length; i++) {
         const folder = nestedFolders[i];
         // Expand the current folder
-        await replaceConfirmationModal.expandCollapseFolder(folder.name);
+        await replaceConfirmationModal
+          .getFolders()
+          .expandCollapseFolder(folder.name);
         await replaceConfirmationModalAssertion.assertFolderExpanded(
           folder.name,
         );
