@@ -3,7 +3,8 @@ import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSele
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
-import { Page } from '@playwright/test';
+import { RegexUtil } from '@/src/utils';
+import { Locator, Page } from '@playwright/test';
 
 export class ReplaceConfirmationModalConversations extends EntitiesTree {
   private dropdownMenu!: DropdownButtonMenu;
@@ -12,8 +13,20 @@ export class ReplaceConfirmationModalConversations extends EntitiesTree {
     super(
       page,
       undefined,
+      ReplaceConfirmationModalSelectors.modalContainer,
       EntitySelectors.conversation,
     );
+  }
+
+  /** Override to use proper filtering for modal structure */
+  public getEntityByExactName(name: string): Locator {
+    return this.getChildElementBySelector(this.entitySelector)
+      .getElementLocator()
+      .filter({
+        has: this.page
+          .locator(EntitySelectors.entityName)
+          .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) }),
+      });
   }
 
   private getDropdownMenu(): DropdownButtonMenu {

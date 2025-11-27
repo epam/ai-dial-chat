@@ -45,7 +45,6 @@ export class ReplaceConfirmationModal extends BaseElement {
     if (!this.conversations) {
       this.conversations = new ReplaceConfirmationModalConversations(
         this.page,
-        this.getElementLocator(),
       );
     }
     return this.conversations;
