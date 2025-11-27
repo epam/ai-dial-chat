@@ -14,7 +14,7 @@ export class EntitiesTree extends BaseElement {
 
   constructor(
     page: Page,
-    parentLocator: Locator,
+    parentLocator: Locator | undefined,
     rootSelector: string,
     entitySelector: string,
   ) {

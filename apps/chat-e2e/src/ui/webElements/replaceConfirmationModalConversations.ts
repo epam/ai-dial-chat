@@ -3,16 +3,15 @@ import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSele
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
-import { Locator, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 export class ReplaceConfirmationModalConversations extends EntitiesTree {
   private dropdownMenu!: DropdownButtonMenu;
 
-  constructor(page: Page, parentLocator: Locator) {
+  constructor(page: Page) {
     super(
       page,
-      parentLocator,
-      ReplaceConfirmationModalSelectors.modalContainer,
+      undefined,
       EntitySelectors.conversation,
     );
   }
