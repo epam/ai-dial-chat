@@ -68,7 +68,7 @@ import {
   PublishFileAssertion,
   PublishFolderAssertion,
   PublishingRequestDialogAssertion,
-  ReplaceConfirmationDialogAssertion,
+  ReplaceConfirmationModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
   ShareAppModalAssertion,
@@ -159,7 +159,7 @@ import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { PublishingRequestDialog } from '@/src/ui/webElements/publishingRequestDialog';
 import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
-import { ReplaceConfirmationDialog } from '@/src/ui/webElements/replaceConfirmationDialog';
+import { ReplaceConfirmationModal } from '@/src/ui/webElements/replaceConfirmationModal';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -251,7 +251,7 @@ const dialTest = test.extend<{
   folderDropdownMenu: DropdownMenu;
   promptDropdownMenu: DropdownMenu;
   confirmationDialog: ConfirmationDialog;
-  replaceConfirmationDialog: ReplaceConfirmationDialog;
+  replaceConfirmationModal: ReplaceConfirmationModal;
   promptModalDialog: PromptModalDialog;
   renameConversationModal: RenameConversationModal;
   renameConversationModalAssertion: RenameConversationModalAssertion;
@@ -408,7 +408,7 @@ const dialTest = test.extend<{
   toolsetEditorSettingsPreviewToggleAssertion: EntityEditorPreviewToggleAssertion;
   toolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
   externalAppEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
-  replaceConfirmationDialogAssertion: ReplaceConfirmationDialogAssertion;
+  replaceConfirmationModalAssertion: ReplaceConfirmationModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -835,9 +835,9 @@ const dialTest = test.extend<{
     const confirmationDialog = new ConfirmationDialog(page);
     await use(confirmationDialog);
   },
-  replaceConfirmationDialog: async ({ page }, use) => {
-    const replaceConfirmationDialog = new ReplaceConfirmationDialog(page);
-    await use(replaceConfirmationDialog);
+  replaceConfirmationModal: async ({ page }, use) => {
+    const replaceConfirmationModal = new ReplaceConfirmationModal(page);
+    await use(replaceConfirmationModal);
   },
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);
@@ -1668,13 +1668,13 @@ const dialTest = test.extend<{
     );
     await use(toolsetEditorViewFormAssertion);
   },
-  replaceConfirmationDialogAssertion: async (
-    { replaceConfirmationDialog },
+  replaceConfirmationModalAssertion: async (
+    { replaceConfirmationModal },
     use,
   ) => {
-    const replaceConfirmationDialogAssertion =
-      new ReplaceConfirmationDialogAssertion(replaceConfirmationDialog);
-    await use(replaceConfirmationDialogAssertion);
+    const replaceConfirmationModalAssertion =
+      new ReplaceConfirmationModalAssertion(replaceConfirmationModal);
+    await use(replaceConfirmationModalAssertion);
   },
 });
 

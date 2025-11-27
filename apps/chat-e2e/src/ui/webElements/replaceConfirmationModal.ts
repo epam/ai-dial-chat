@@ -3,12 +3,11 @@ import { Tags } from '@/src/ui/domData';
 import { FolderSelectors } from '@/src/ui/selectors';
 import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
-import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
-export class ReplaceConfirmationDialog extends BaseElement {
+export class ReplaceConfirmationModal extends BaseElement {
   constructor(page: Page, parentLocator?: Locator) {
     super(
       page,

@@ -28,8 +28,8 @@ dialTest.only(
     chat,
     conversationAssertion,
     chatMessagesAssertion,
-    replaceConfirmationDialog,
-    replaceConfirmationDialogAssertion,
+    replaceConfirmationModal,
+    replaceConfirmationModalAssertion,
     toastAssertion,
     toast,
   }) => {
@@ -154,18 +154,18 @@ dialTest.only(
           () => chatBar.importButton.click(),
           false,
         );
-        await replaceConfirmationDialog.waitForState();
+        await replaceConfirmationModal.waitForState();
       },
     );
 
     await dialTest.step('Verify the modal elements', async () => {
       // Verify "All items" has Postfix option selected
-      await replaceConfirmationDialogAssertion.assertAllItemsOption(
+      await replaceConfirmationModalAssertion.assertAllItemsOption(
         ImportResolutionOption.Postfix,
       );
 
       // Verify Empty folder (Folder1) does not exist on the duplicates window
-      await replaceConfirmationDialogAssertion.assertFolderState(
+      await replaceConfirmationModalAssertion.assertFolderState(
         folder1.name,
         'hidden',
       );
@@ -173,11 +173,11 @@ dialTest.only(
       // Verify other folders exist (Folder2 and all nested folders) and folders are initially expanded
       const visibleFolders = [folder2, ...nestedFolders];
       for (const folder of visibleFolders) {
-        await replaceConfirmationDialogAssertion.assertFolderState(
+        await replaceConfirmationModalAssertion.assertFolderState(
           folder.name,
           'visible',
         );
-        await replaceConfirmationDialogAssertion.assertFolderExpanded(
+        await replaceConfirmationModalAssertion.assertFolderExpanded(
           folder.name,
         );
       }
@@ -193,7 +193,7 @@ dialTest.only(
         chat7,
       ];
       for (const conversation of allConversations) {
-        await replaceConfirmationDialogAssertion.assertConversationState(
+        await replaceConfirmationModalAssertion.assertConversationState(
           conversation.name,
           'visible',
         );
@@ -212,20 +212,20 @@ dialTest.only(
       for (let i = nestedFolders.length - 1; i >= 0; i--) {
         const folder = nestedFolders[i];
         // Collapse the current folder
-        await replaceConfirmationDialog.expandCollapseFolder(folder.name);
-        await replaceConfirmationDialogAssertion.assertFolderCollapsed(
+        await replaceConfirmationModal.expandCollapseFolder(folder.name);
+        await replaceConfirmationModalAssertion.assertFolderCollapsed(
           folder.name,
         );
 
         // Verify the conversation in this folder is now hidden
-        await replaceConfirmationDialogAssertion.assertConversationState(
+        await replaceConfirmationModalAssertion.assertConversationState(
           nestedConversations[i].name,
           'hidden',
         );
 
         // Verify all nested folders inside this folder are hidden
         for (let j = i + 1; j < nestedFolders.length; j++) {
-          await replaceConfirmationDialogAssertion.assertFolderState(
+          await replaceConfirmationModalAssertion.assertFolderState(
             nestedFolders[j].name,
             'hidden',
           );
@@ -233,7 +233,7 @@ dialTest.only(
 
         // Verify all conversations in nested folders remain hidden
         for (let j = i + 1; j < nestedConversations.length; j++) {
-          await replaceConfirmationDialogAssertion.assertConversationState(
+          await replaceConfirmationModalAssertion.assertConversationState(
             nestedConversations[j].name,
             'hidden',
           );
@@ -241,16 +241,16 @@ dialTest.only(
       }
 
       // Collapse Folder2 (root level)
-      await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
-      await replaceConfirmationDialogAssertion.assertFolderCollapsed(
+      await replaceConfirmationModal.expandCollapseFolder(folder2.name);
+      await replaceConfirmationModalAssertion.assertFolderCollapsed(
         folder2.name,
       );
       // Verify Chat1 and Chat2 are hidden
-      await replaceConfirmationDialogAssertion.assertConversationState(
+      await replaceConfirmationModalAssertion.assertConversationState(
         chat1.name,
         'hidden',
       );
-      await replaceConfirmationDialogAssertion.assertConversationState(
+      await replaceConfirmationModalAssertion.assertConversationState(
         chat2.name,
         'hidden',
       );
@@ -263,16 +263,16 @@ dialTest.only(
       const nestedConversations = [chat7, chat6, chat5, chat4];
 
       // Expand Folder2
-      await replaceConfirmationDialog.expandCollapseFolder(folder2.name);
-      await replaceConfirmationDialogAssertion.assertFolderExpanded(
+      await replaceConfirmationModal.expandCollapseFolder(folder2.name);
+      await replaceConfirmationModalAssertion.assertFolderExpanded(
         folder2.name,
       );
       // Verify Chat1 and Chat2 are visible
-      await replaceConfirmationDialogAssertion.assertConversationState(
+      await replaceConfirmationModalAssertion.assertConversationState(
         chat1.name,
         'visible',
       );
-      await replaceConfirmationDialogAssertion.assertConversationState(
+      await replaceConfirmationModalAssertion.assertConversationState(
         chat2.name,
         'visible',
       );
@@ -281,31 +281,31 @@ dialTest.only(
       for (let i = 0; i < nestedFolders.length; i++) {
         const folder = nestedFolders[i];
         // Expand the current folder
-        await replaceConfirmationDialog.expandCollapseFolder(folder.name);
-        await replaceConfirmationDialogAssertion.assertFolderExpanded(
+        await replaceConfirmationModal.expandCollapseFolder(folder.name);
+        await replaceConfirmationModalAssertion.assertFolderExpanded(
           folder.name,
         );
 
         // Verify conversation in this folder is visible
-        await replaceConfirmationDialogAssertion.assertConversationState(
+        await replaceConfirmationModalAssertion.assertConversationState(
           nestedConversations[i].name,
           'visible',
         );
 
         // Verify all parent folders remain visible and expanded
         for (let j = 0; j < i; j++) {
-          await replaceConfirmationDialogAssertion.assertFolderState(
+          await replaceConfirmationModalAssertion.assertFolderState(
             nestedFolders[j].name,
             'visible',
           );
-          await replaceConfirmationDialogAssertion.assertFolderExpanded(
+          await replaceConfirmationModalAssertion.assertFolderExpanded(
             nestedFolders[j].name,
           );
         }
 
         // Verify immediate nested folder is visible (if exists)
         if (i < nestedFolders.length - 1) {
-          await replaceConfirmationDialogAssertion.assertFolderState(
+          await replaceConfirmationModalAssertion.assertFolderState(
             nestedFolders[i + 1].name,
             'visible',
           );
@@ -313,7 +313,7 @@ dialTest.only(
 
         // Verify all deeper nested folders are still collapsed (hidden)
         for (let j = i + 2; j < nestedFolders.length; j++) {
-          await replaceConfirmationDialogAssertion.assertFolderState(
+          await replaceConfirmationModalAssertion.assertFolderState(
             nestedFolders[j].name,
             'hidden',
           );
@@ -321,7 +321,7 @@ dialTest.only(
 
         // Verify conversations in deeper nested folders remain hidden
         for (let j = i + 1; j < nestedConversations.length; j++) {
-          await replaceConfirmationDialogAssertion.assertConversationState(
+          await replaceConfirmationModalAssertion.assertConversationState(
             nestedConversations[j].name,
             'hidden',
           );
@@ -336,35 +336,35 @@ dialTest.only(
       async () => {
         // Set individual conversation options
         // Chat1: Replace (will restore original content)
-        await replaceConfirmationDialog.setConversationOption(
+        await replaceConfirmationModal.setConversationOption(
           'Chat1',
           ImportResolutionOption.Replace,
         );
 
         // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
-        await replaceConfirmationDialog.setConversationOption(
+        await replaceConfirmationModal.setConversationOption(
           'Chat2',
           ImportResolutionOption.Postfix,
         );
-        await replaceConfirmationDialog.setConversationOption(
+        await replaceConfirmationModal.setConversationOption(
           'Chat4',
           ImportResolutionOption.Postfix,
         );
-        await replaceConfirmationDialog.setConversationOption(
+        await replaceConfirmationModal.setConversationOption(
           'Chat7',
           ImportResolutionOption.Postfix,
         );
 
         // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
-        await replaceConfirmationDialog.setConversationOption(
+        await replaceConfirmationModal.setConversationOption(
           'Chat3',
           ImportResolutionOption.Ignore,
         );
-        await replaceConfirmationDialog.setConversationOption(
+        await replaceConfirmationModal.setConversationOption(
           'Chat5',
           ImportResolutionOption.Ignore,
         );
-        await replaceConfirmationDialog.setConversationOption(
+        await replaceConfirmationModal.setConversationOption(
           'Chat6',
           ImportResolutionOption.Ignore,
         );
@@ -376,7 +376,7 @@ dialTest.only(
       async () => {
         // After selecting different options for individual conversations,
         // "All items" should show "Mixed" option
-        await replaceConfirmationDialogAssertion.assertAllItemsOption(
+        await replaceConfirmationModalAssertion.assertAllItemsOption(
           ExpectedConstants.mixedImportOption,
         );
       },
@@ -386,7 +386,7 @@ dialTest.only(
       // Click Continue to proceed with import
       // Wait for 4 POST requests: Chat1 (Replace) + Chat2, Chat4, Chat7 (Postfix)
       // Chat3, Chat5, Chat6 are Ignored and don't trigger POST requests
-      await replaceConfirmationDialog.clickContinue({
+      await replaceConfirmationModal.clickContinue({
         expectedPostRequests: 4,
       });
       await dialHomePage.waitForPageLoaded();

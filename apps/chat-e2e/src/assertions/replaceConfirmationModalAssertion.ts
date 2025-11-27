@@ -1,13 +1,13 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
-import { ReplaceConfirmationDialog } from '@/src/ui/webElements';
+import { ReplaceConfirmationModal } from '@/src/ui/webElements';
 
-export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
-  readonly replaceConfirmationDialog: ReplaceConfirmationDialog;
+export class ReplaceConfirmationModalAssertion extends BaseAssertion {
+  readonly replaceConfirmationModal: ReplaceConfirmationModal;
 
-  constructor(replaceConfirmationDialog: ReplaceConfirmationDialog) {
+  constructor(replaceConfirmationModal: ReplaceConfirmationModal) {
     super();
-    this.replaceConfirmationDialog = replaceConfirmationDialog;
+    this.replaceConfirmationModal = replaceConfirmationModal;
   }
 
   /** Verifies folder visibility state in the dialog */
@@ -16,7 +16,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     expectedState: ElementState,
   ) {
     const folderLocator =
-      this.replaceConfirmationDialog.getFolderByExactName(folderName);
+      this.replaceConfirmationModal.getFolderByExactName(folderName);
     await super.assertElementState(folderLocator, expectedState);
   }
 
@@ -26,7 +26,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     expectedState: ElementState,
   ) {
     const conversationLocator =
-      this.replaceConfirmationDialog.getConversationByExactName(
+      this.replaceConfirmationModal.getConversationByExactName(
         conversationName,
       );
     await super.assertElementState(conversationLocator, expectedState);
@@ -35,7 +35,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
   /** Verifies folder is expanded (arrow has rotate-90 class) */
   public async assertFolderExpanded(folderName: string) {
     const arrowIcon =
-      this.replaceConfirmationDialog.getFolderArrowIcon(folderName);
+      this.replaceConfirmationModal.getFolderArrowIcon(folderName);
 
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
@@ -48,7 +48,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
   /** Verifies folder is collapsed (arrow lacks rotate-90 class) */
   public async assertFolderCollapsed(folderName: string) {
     const arrowIcon =
-      this.replaceConfirmationDialog.getFolderArrowIcon(folderName);
+      this.replaceConfirmationModal.getFolderArrowIcon(folderName);
 
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
@@ -64,14 +64,14 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     expectedIcon: string,
   ) {
     const entityIcon =
-      this.replaceConfirmationDialog.getConversationIcon(entityName);
+      this.replaceConfirmationModal.getConversationIcon(entityName);
     await super.assertEntityIcon(entityIcon, expectedIcon);
   }
 
   /** Verifies "All items" dropdown displays the expected option */
   public async assertAllItemsOption(expectedOption: string) {
     await super.assertElementText(
-      this.replaceConfirmationDialog.getAllItemsDropdown(),
+      this.replaceConfirmationModal.getAllItemsDropdown(),
       expectedOption,
       ExpectedMessages.allItemsOptionIsValid(expectedOption),
     );
@@ -83,7 +83,7 @@ export class ReplaceConfirmationDialogAssertion extends BaseAssertion {
     expectedOption: string,
   ) {
     await super.assertElementText(
-      this.replaceConfirmationDialog.getConversationDropdownByName(
+      this.replaceConfirmationModal.getConversationDropdownByName(
         conversationName,
       ),
       expectedOption,
