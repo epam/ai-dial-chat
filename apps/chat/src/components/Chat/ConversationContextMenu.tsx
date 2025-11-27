@@ -254,7 +254,7 @@ export const ConversationContextMenu = ({
   }, [conversation.id, dispatch]);
 
   const handleOpenMoveToModal = useCallback(() => {
-    dispatch(ConversationsActions.setMoveToConversation(conversation));
+    dispatch(ConversationsActions.setMoveToConversationId(conversation.id));
   }, [conversation, dispatch]);
 
   const handleOpenRenameModal = useCallback(() => {

@@ -63,7 +63,7 @@ const initialState: ConversationsState = {
   previewConversationId: null,
   preselectedAction: null,
 
-  moveToConversation: undefined,
+  moveToConversationId: undefined,
 };
 
 export const conversationsSlice = createSlice({
@@ -853,11 +853,11 @@ export const conversationsSlice = createSlice({
     selectAction: (state, { payload }: PayloadAction<string | null>) => {
       state.preselectedAction = payload;
     },
-    setMoveToConversation: (
+    setMoveToConversationId: (
       state,
-      { payload }: PayloadAction<ConversationInfo | undefined>,
+      { payload }: PayloadAction<string | undefined>,
     ) => {
-      state.moveToConversation = payload;
+      state.moveToConversationId = payload;
     },
   },
 });

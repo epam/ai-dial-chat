@@ -26,8 +26,11 @@ function ConversationMoveToDialogComponent() {
 
   const dispatch = useAppDispatch();
 
-  const moveToConversation = useAppSelector(
-    ConversationsSelectors.selectMoveToConversation,
+  const moveToConversationId = useAppSelector(
+    ConversationsSelectors.selectMoveToConversationId,
+  ) as string;
+  const moveToConversation = useAppSelector((state) =>
+    ConversationsSelectors.selectConversationById(state, moveToConversationId),
   ) as ConversationInfo;
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
@@ -90,13 +93,13 @@ function ConversationMoveToDialogComponent() {
           }).id,
         ),
       );
-      dispatch(ConversationsActions.setMoveToConversation());
+      dispatch(ConversationsActions.setMoveToConversationId());
     },
     [allConversations, collapsedSections, moveToConversation, dispatch, t],
   );
 
   const handleClose = useCallback(() => {
-    dispatch(ConversationsActions.setMoveToConversation());
+    dispatch(ConversationsActions.setMoveToConversationId());
   }, [dispatch]);
 
   return (
@@ -110,5 +113,5 @@ function ConversationMoveToDialogComponent() {
 }
 
 export const ConversationMoveToDialog = withRenderWhen(
-  ConversationsSelectors.selectMoveToConversation,
+  ConversationsSelectors.selectMoveToConversationId,
 )(ConversationMoveToDialogComponent);
