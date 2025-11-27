@@ -18,6 +18,10 @@ export class ReplaceConfirmationModalFolders extends Folders {
         );
     }
 
+    getFolderByName(name: string, index?: number) {
+      return this.getElementLocatorByText(name, index);
+    }
+
     private getDropdownMenu(): DropdownButtonMenu {
         if (!this.dropdownMenu) {
             this.dropdownMenu = new DropdownButtonMenu(this.page);
