@@ -200,7 +200,8 @@ export const FileManager: React.FC = () => {
         activeTab: activeTab,
         onTabChange: handleTabChange,
         newActionLabels: {
-          uploadFiles: t('Upload Files'),
+          uploadFiles: t('Upload files'),
+          newFolder: t('New folder'),
         },
       }}
       onCopyFiles={(copiedItems, destinationFolder) => {
@@ -249,6 +250,14 @@ export const FileManager: React.FC = () => {
           FilesActions.uploadFiles({
             files: filesToUpload,
             destinationUrl,
+          }),
+        );
+      }}
+      onCreateFolder={(file, folderPath) => {
+        dispatch(
+          FilesActions.uploadFiles({
+            files: [file],
+            destinationUrl: folderPath,
           }),
         );
       }}
