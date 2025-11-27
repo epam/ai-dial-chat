@@ -85,10 +85,15 @@ export class ReplaceConfirmationModalAssertion extends BaseAssertion {
     conversationName: string,
     expectedOption: string,
   ) {
+    const rootDropdown = this.replaceConfirmationModal
+      .getConversations()
+      .getConversationDropdownByName(conversationName);
+    const folderDropdown = this.replaceConfirmationModal
+      .getFolders()
+      .getConversationDropdownByName(conversationName);
+
     await super.assertElementText(
-      this.replaceConfirmationModal.getConversationDropdownByName(
-        conversationName,
-      ),
+      rootDropdown.or(folderDropdown),
       expectedOption,
       ExpectedMessages.conversationOptionIsValid(
         conversationName,

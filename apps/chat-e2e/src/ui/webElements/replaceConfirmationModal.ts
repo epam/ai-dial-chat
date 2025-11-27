@@ -1,13 +1,9 @@
 import { ImportResolutionOption } from '@/src/testData';
-import { Tags } from '@/src/ui/domData';
-import { FolderSelectors } from '@/src/ui/selectors';
 import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
-import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
-import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
-import { Folders } from '@/src/ui/webElements/entityTree/folders';
-import { RegexUtil } from '@/src/utils';
+import { ReplaceConfirmationModalConversations } from '@/src/ui/webElements/replaceConfirmationModalConversations';
+import { ReplaceConfirmationModalFolders } from '@/src/ui/webElements/replaceConfirmationModalFolders';
 import { Locator, Page } from '@playwright/test';
 
 export class ReplaceConfirmationModal extends BaseElement {
@@ -31,29 +27,25 @@ export class ReplaceConfirmationModal extends BaseElement {
     ReplaceConfirmationModalSelectors.allItemsSelector,
   );
 
-  private folders!: Folders;
+  private folders!: ReplaceConfirmationModalFolders;
 
-  public getFolders(): Folders {
+  public getFolders(): ReplaceConfirmationModalFolders {
     if (!this.folders) {
-      this.folders = new Folders(
+      this.folders = new ReplaceConfirmationModalFolders(
         this.page,
         this.getElementLocator(),
-        FolderSelectors.folder,
-        EntitySelectors.conversation,
       );
     }
     return this.folders;
   }
 
-  private conversations!: EntitiesTree;
+  private conversations!: ReplaceConfirmationModalConversations;
 
-  public getConversations(): EntitiesTree {
+  public getConversations(): ReplaceConfirmationModalConversations {
     if (!this.conversations) {
-      this.conversations = new EntitiesTree(
+      this.conversations = new ReplaceConfirmationModalConversations(
         this.page,
         this.getElementLocator(),
-        ReplaceConfirmationModalSelectors.modalContainer,
-        EntitySelectors.conversation,
       );
     }
     return this.conversations;
@@ -68,24 +60,6 @@ export class ReplaceConfirmationModal extends BaseElement {
     return this.dropdownMenu;
   }
 
-  /** Returns the import resolution dropdown for a specific conversation */
-  public getConversationDropdownByName(conversationName: string) {
-    return this.getConversationRowByName(conversationName).locator(
-      ReplaceConfirmationModalSelectors.dropdownTrigger,
-    );
-  }
-
-  /** Returns conversation row element by name */
-  private getConversationRowByName(conversationName: string) {
-    return this.getChildElementBySelector(EntitySelectors.conversation)
-      .getElementLocator()
-      .filter({
-        has: this.page.locator(EntitySelectors.entityName).filter({
-          hasText: conversationName,
-        }),
-      });
-  }
-
   /** Returns the "All items" dropdown element */
   public getAllItemsDropdown() {
     return this.allItemsLine.getChildElementBySelector(
@@ -96,17 +70,6 @@ export class ReplaceConfirmationModal extends BaseElement {
   /** Sets import resolution option for all items */
   public async setAllItemsOption(option: ImportResolutionOption) {
     await this.getAllItemsDropdown().click();
-    await this.getDropdownMenu().selectMenuOption(option, {
-      isHttpMethodTriggered: false,
-    });
-  }
-
-  /** Sets import resolution option for a specific conversation */
-  public async setConversationOption(
-    conversationName: string,
-    option: ImportResolutionOption,
-  ) {
-    await this.getConversationDropdownByName(conversationName).click();
     await this.getDropdownMenu().selectMenuOption(option, {
       isHttpMethodTriggered: false,
     });
