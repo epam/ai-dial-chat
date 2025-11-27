@@ -7,51 +7,51 @@ import { Folders } from '@/src/ui/webElements/entityTree/folders';
 import { Locator, Page } from '@playwright/test';
 
 export class ReplaceConfirmationModalFolders extends Folders {
-    private dropdownMenu!: DropdownButtonMenu;
+  private dropdownMenu!: DropdownButtonMenu;
 
-    constructor(page: Page, parentLocator: Locator) {
-        super(
-            page,
-            parentLocator,
-            FolderSelectors.folder,
-            EntitySelectors.conversation,
-        );
-    }
+  constructor(page: Page, parentLocator: Locator) {
+    super(
+      page,
+      parentLocator,
+      FolderSelectors.folder,
+      EntitySelectors.conversation,
+    );
+  }
 
-    getFolderByName(name: string, index?: number) {
-      return this.getElementLocatorByText(name, index);
-    }
+  getFolderByName(name: string, index?: number) {
+    return this.getElementLocatorByText(name, index);
+  }
 
-    private getDropdownMenu(): DropdownButtonMenu {
-        if (!this.dropdownMenu) {
-            this.dropdownMenu = new DropdownButtonMenu(this.page);
-        }
-        return this.dropdownMenu;
+  private getDropdownMenu(): DropdownButtonMenu {
+    if (!this.dropdownMenu) {
+      this.dropdownMenu = new DropdownButtonMenu(this.page);
     }
+    return this.dropdownMenu;
+  }
 
-    public getConversationDropdownByName(conversationName: string) {
-        return this.getConversationRowByName(conversationName).locator(
-            ReplaceConfirmationModalSelectors.dropdownTrigger,
-        );
-    }
+  public getConversationDropdownByName(conversationName: string) {
+    return this.getConversationRowByName(conversationName).locator(
+      ReplaceConfirmationModalSelectors.dropdownTrigger,
+    );
+  }
 
-    private getConversationRowByName(conversationName: string) {
-        return this.getChildElementBySelector(FolderSelectors.folder)
-            .locator(EntitySelectors.conversation)
-            .filter({
-                has: this.page.locator(EntitySelectors.entityName).filter({
-                    hasText: conversationName,
-                }),
-            });
-    }
+  private getConversationRowByName(conversationName: string) {
+    return this.getChildElementBySelector(FolderSelectors.folder)
+      .locator(EntitySelectors.conversation)
+      .filter({
+        has: this.page.locator(EntitySelectors.entityName).filter({
+          hasText: conversationName,
+        }),
+      });
+  }
 
-    public async setConversationOption(
-        conversationName: string,
-        option: ImportResolutionOption,
-    ) {
-        await this.getConversationDropdownByName(conversationName).click();
-        await this.getDropdownMenu().selectMenuOption(option, {
-            isHttpMethodTriggered: false,
-        });
-    }
+  public async setConversationOption(
+    conversationName: string,
+    option: ImportResolutionOption,
+  ) {
+    await this.getConversationDropdownByName(conversationName).click();
+    await this.getDropdownMenu().selectMenuOption(option, {
+      isHttpMethodTriggered: false,
+    });
+  }
 }

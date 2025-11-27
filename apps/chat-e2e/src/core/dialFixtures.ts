@@ -69,6 +69,8 @@ import {
   PublishFolderAssertion,
   PublishingRequestDialogAssertion,
   ReplaceConfirmationModalAssertion,
+  ReplaceConfirmationModalConversationsAssertion,
+  ReplaceConfirmationModalFoldersAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
   ShareAppModalAssertion,
@@ -160,6 +162,8 @@ import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModa
 import { PublishingRequestDialog } from '@/src/ui/webElements/publishingRequestDialog';
 import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { ReplaceConfirmationModal } from '@/src/ui/webElements/replaceConfirmationModal';
+import { ReplaceConfirmationModalConversations } from '@/src/ui/webElements/replaceConfirmationModalConversations';
+import { ReplaceConfirmationModalFolders } from '@/src/ui/webElements/replaceConfirmationModalFolders';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -409,6 +413,10 @@ const dialTest = test.extend<{
   toolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
   externalAppEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
   replaceConfirmationModalAssertion: ReplaceConfirmationModalAssertion;
+  replaceConfirmationModalFolders: ReplaceConfirmationModalFolders;
+  replaceConfirmationModalConversations: ReplaceConfirmationModalConversations;
+  replaceConfirmationModalFoldersAssertion: ReplaceConfirmationModalFoldersAssertion;
+  replaceConfirmationModalConversationsAssertion: ReplaceConfirmationModalConversationsAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1675,6 +1683,42 @@ const dialTest = test.extend<{
     const replaceConfirmationModalAssertion =
       new ReplaceConfirmationModalAssertion(replaceConfirmationModal);
     await use(replaceConfirmationModalAssertion);
+  },
+  replaceConfirmationModalFolders: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalFolders =
+      replaceConfirmationModal.getFolders();
+    await use(replaceConfirmationModalFolders);
+  },
+  replaceConfirmationModalConversations: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalConversations =
+      replaceConfirmationModal.getConversations();
+    await use(replaceConfirmationModalConversations);
+  },
+  replaceConfirmationModalFoldersAssertion: async (
+    { replaceConfirmationModalFolders },
+    use,
+  ) => {
+    const replaceConfirmationModalFoldersAssertion =
+      new ReplaceConfirmationModalFoldersAssertion(
+        replaceConfirmationModalFolders,
+      );
+    await use(replaceConfirmationModalFoldersAssertion);
+  },
+  replaceConfirmationModalConversationsAssertion: async (
+    { replaceConfirmationModalConversations },
+    use,
+  ) => {
+    const replaceConfirmationModalConversationsAssertion =
+      new ReplaceConfirmationModalConversationsAssertion(
+        replaceConfirmationModalConversations,
+      );
+    await use(replaceConfirmationModalConversationsAssertion);
   },
 });
 

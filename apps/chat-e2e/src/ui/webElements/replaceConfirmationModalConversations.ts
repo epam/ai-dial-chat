@@ -23,9 +23,9 @@ export class ReplaceConfirmationModalConversations extends EntitiesTree {
     return this.getChildElementBySelector(this.entitySelector)
       .getElementLocator()
       .filter({
-        has: this.page
-          .locator(EntitySelectors.entityName)
-          .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) }),
+        has: this.page.locator(EntitySelectors.entityName).filter({
+          hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`),
+        }),
       });
   }
 
