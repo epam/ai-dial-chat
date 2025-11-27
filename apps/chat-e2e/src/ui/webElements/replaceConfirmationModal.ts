@@ -4,6 +4,7 @@ import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSele
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Folders } from '@/src/ui/webElements/entityTree/folders';
+import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
 import { FolderSelectors } from '@/src/ui/selectors';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
@@ -41,6 +42,20 @@ export class ReplaceConfirmationModal extends BaseElement {
       );
     }
     return this.folders;
+  }
+
+  private conversations!: EntitiesTree;
+
+  private getConversations(): EntitiesTree {
+    if (!this.conversations) {
+      this.conversations = new EntitiesTree(
+        this.page,
+        this.getElementLocator(),
+        ReplaceConfirmationModalSelectors.modalContainer,
+        EntitySelectors.conversation,
+      );
+    }
+    return this.conversations;
   }
 
   /** Returns the import resolution dropdown for a specific conversation */
@@ -115,33 +130,24 @@ export class ReplaceConfirmationModal extends BaseElement {
 
   /** Returns conversation element by exact name match */
   public getConversationByExactName(name: string) {
-    return this.getChildElementBySelector(EntitySelectors.conversation)
-      .getChildElementBySelector(EntitySelectors.entityName)
-      .getElementLocator()
-      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+    return this.getConversations().getEntityByExactName(name);
   }
 
   /** Returns conversation element by name (partial match) */
   public getConversationByName(name: string, index?: number) {
-    return this.getChildElementBySelector(EntitySelectors.conversation)
-      .getChildElementBySelector(EntitySelectors.entityName)
-      .getElementLocatorByText(name, index);
+    return this.getConversations().getEntityByName(name, index).locator(
+      EntitySelectors.entityName,
+    );
   }
 
   /** Returns the icon element for a conversation */
   public getConversationIcon(conversationName: string, index?: number) {
-    return this.getConversationByName(conversationName, index)
-      .locator('..')
-      .locator(ReplaceConfirmationModalSelectors.iconContainer)
-      .locator(Tags.img);
+    return this.getConversations().getEntityIcon(conversationName, index);
   }
 
   /** Returns the expand/collapse arrow icon for a conversation */
   public getConversationArrowIcon(conversationName: string, index?: number) {
-    return this.getConversationByName(conversationName, index)
-      .locator('..')
-      .locator(Tags.svg)
-      .first();
+    return this.getConversations().getEntityArrowIcon(conversationName, index);
   }
 
   /** Returns folder element by name (partial match) */
