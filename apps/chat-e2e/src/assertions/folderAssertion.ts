@@ -436,4 +436,21 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
       expectedMessage,
     );
   }
+
+  public async assertFolderCaretState(
+    folder: TreeEntity,
+    expectedState: 'expanded' | 'collapsed',
+  ) {
+    const isExpanded = await this.folder.isFolderCaretExpanded(
+      folder.name,
+      folder.index,
+    );
+
+    const expectedExpanded = expectedState === 'expanded';
+    const message = expectedExpanded
+      ? ExpectedMessages.caretIsExpanded
+      : ExpectedMessages.caretIsCollapsed;
+
+    this.assertBooleanCondition(isExpanded, expectedExpanded, message);
+  }
 }

@@ -29,6 +29,8 @@ dialTest.only(
     chatMessagesAssertion,
     replaceConfirmationModal,
     replaceConfirmationModalAssertion,
+    replaceConfirmationModalFolders,
+    replaceConfirmationModalConversations,
     replaceConfirmationModalFoldersAssertion,
     replaceConfirmationModalConversationsAssertion,
     toastAssertion,
@@ -178,8 +180,9 @@ dialTest.only(
           { name: folder.name },
           'visible',
         );
-        await replaceConfirmationModalAssertion.assertFolderExpanded(
-          folder.name,
+        await replaceConfirmationModalFoldersAssertion.assertFolderCaretState(
+          { name: folder.name },
+          'expanded',
         );
       }
 
@@ -213,11 +216,10 @@ dialTest.only(
       for (let i = nestedFolders.length - 1; i >= 0; i--) {
         const folder = nestedFolders[i];
         // Collapse the current folder
-        await replaceConfirmationModal
-          .getFolders()
-          .expandCollapseFolder(folder.name);
-        await replaceConfirmationModalFoldersAssertion.assertFolderCollapsed(
-          folder.name,
+        await replaceConfirmationModalFolders.expandCollapseFolder(folder.name);
+        await replaceConfirmationModalFoldersAssertion.assertFolderCaretState(
+          { name: folder.name },
+          'collapsed',
         );
 
         // Verify the conversation in this folder is now hidden
@@ -237,26 +239,25 @@ dialTest.only(
         // Verify all conversations in nested folders remain hidden
         for (let j = i + 1; j < nestedConversations.length; j++) {
           await replaceConfirmationModalConversationsAssertion.assertEntityState(
-            {name: nestedConversations[j].name } ,
+            { name: nestedConversations[j].name },
             'hidden',
           );
         }
       }
 
       // Collapse Folder2 (root level)
-      await replaceConfirmationModal
-        .getFolders()
-        .expandCollapseFolder(folder2.name);
-      await replaceConfirmationModalAssertion.assertFolderCollapsed(
-        folder2.name,
+      await replaceConfirmationModalFolders.expandCollapseFolder(folder2.name);
+      await replaceConfirmationModalFoldersAssertion.assertFolderCaretState(
+        { name: folder2.name },
+        'collapsed',
       );
       // Verify Chat1 and Chat2 are hidden
       await replaceConfirmationModalConversationsAssertion.assertEntityState(
-        chat1.name,
+        { name: chat1.name },
         'hidden',
       );
       await replaceConfirmationModalConversationsAssertion.assertEntityState(
-        chat2.name,
+        { name: chat2.name },
         'hidden',
       );
     });
@@ -268,19 +269,18 @@ dialTest.only(
       const nestedConversations = [chat7, chat6, chat5, chat4];
 
       // Expand Folder2
-      await replaceConfirmationModal
-        .getFolders()
-        .expandCollapseFolder(folder2.name);
-      await replaceConfirmationModalAssertion.assertFolderExpanded(
-        folder2.name,
+      await replaceConfirmationModalFolders.expandCollapseFolder(folder2.name);
+      await replaceConfirmationModalFoldersAssertion.assertFolderCaretState(
+        { name: folder2.name },
+        'expanded',
       );
       // Verify Chat1 and Chat2 are visible
-      await replaceConfirmationModalAssertion.assertConversationState(
-        chat1.name,
+      await replaceConfirmationModalConversationsAssertion.assertEntityState(
+        { name: chat1.name },
         'visible',
       );
-      await replaceConfirmationModalAssertion.assertConversationState(
-        chat2.name,
+      await replaceConfirmationModalConversationsAssertion.assertEntityState(
+        { name: chat2.name },
         'visible',
       );
 
@@ -288,50 +288,50 @@ dialTest.only(
       for (let i = 0; i < nestedFolders.length; i++) {
         const folder = nestedFolders[i];
         // Expand the current folder
-        await replaceConfirmationModal
-          .getFolders()
-          .expandCollapseFolder(folder.name);
-        await replaceConfirmationModalAssertion.assertFolderExpanded(
-          folder.name,
+        await replaceConfirmationModalFolders.expandCollapseFolder(folder.name);
+        await replaceConfirmationModalFoldersAssertion.assertFolderCaretState(
+          { name: folder.name },
+          'expanded',
         );
 
         // Verify conversation in this folder is visible
-        await replaceConfirmationModalAssertion.assertConversationState(
-          nestedConversations[i].name,
+        await replaceConfirmationModalConversationsAssertion.assertEntityState(
+          { name: nestedConversations[i].name },
           'visible',
         );
 
         // Verify all parent folders remain visible and expanded
         for (let j = 0; j < i; j++) {
-          await replaceConfirmationModalAssertion.assertFolderState(
-            nestedFolders[j].name,
+          await replaceConfirmationModalFoldersAssertion.assertFolderState(
+            { name: nestedFolders[j].name },
             'visible',
           );
-          await replaceConfirmationModalAssertion.assertFolderExpanded(
-            nestedFolders[j].name,
+          await replaceConfirmationModalFoldersAssertion.assertFolderCaretState(
+            { name: nestedFolders[j].name },
+            'expanded',
           );
         }
 
         // Verify immediate nested folder is visible (if exists)
         if (i < nestedFolders.length - 1) {
-          await replaceConfirmationModalAssertion.assertFolderState(
-            nestedFolders[i + 1].name,
+          await replaceConfirmationModalFoldersAssertion.assertFolderState(
+            { name: nestedFolders[i + 1].name },
             'visible',
           );
         }
 
         // Verify all deeper nested folders are still collapsed (hidden)
         for (let j = i + 2; j < nestedFolders.length; j++) {
-          await replaceConfirmationModalAssertion.assertFolderState(
-            nestedFolders[j].name,
+          await replaceConfirmationModalFoldersAssertion.assertFolderState(
+            { name: nestedFolders[j].name },
             'hidden',
           );
         }
 
         // Verify conversations in deeper nested folders remain hidden
         for (let j = i + 1; j < nestedConversations.length; j++) {
-          await replaceConfirmationModalAssertion.assertConversationState(
-            nestedConversations[j].name,
+          await replaceConfirmationModalConversationsAssertion.assertEntityState(
+            { name: nestedConversations[j].name },
             'hidden',
           );
         }
@@ -345,35 +345,35 @@ dialTest.only(
       async () => {
         // Set individual conversation options
         // Chat1: Replace (will restore original content)
-        await replaceConfirmationModal.setConversationOption(
+        await replaceConfirmationModalFolders.setConversationOption(
           'Chat1',
           ImportResolutionOption.Replace,
         );
 
         // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
-        await replaceConfirmationModal.setConversationOption(
+        await replaceConfirmationModalFolders.setConversationOption(
           'Chat2',
           ImportResolutionOption.Postfix,
         );
-        await replaceConfirmationModal.setConversationOption(
+        await replaceConfirmationModalFolders.setConversationOption(
           'Chat4',
           ImportResolutionOption.Postfix,
         );
-        await replaceConfirmationModal.setConversationOption(
+        await replaceConfirmationModalFolders.setConversationOption(
           'Chat7',
           ImportResolutionOption.Postfix,
         );
 
         // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
-        await replaceConfirmationModal.setConversationOption(
+        await replaceConfirmationModalConversations.setConversationOption(
           'Chat3',
           ImportResolutionOption.Ignore,
         );
-        await replaceConfirmationModal.setConversationOption(
+        await replaceConfirmationModalFolders.setConversationOption(
           'Chat5',
           ImportResolutionOption.Ignore,
         );
-        await replaceConfirmationModal.setConversationOption(
+        await replaceConfirmationModalFolders.setConversationOption(
           'Chat6',
           ImportResolutionOption.Ignore,
         );

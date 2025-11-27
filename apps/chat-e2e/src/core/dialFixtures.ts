@@ -69,8 +69,6 @@ import {
   PublishFolderAssertion,
   PublishingRequestDialogAssertion,
   ReplaceConfirmationModalAssertion,
-  ReplaceConfirmationModalConversationsAssertion,
-  ReplaceConfirmationModalFoldersAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
   ShareAppModalAssertion,
@@ -415,8 +413,8 @@ const dialTest = test.extend<{
   replaceConfirmationModalAssertion: ReplaceConfirmationModalAssertion;
   replaceConfirmationModalFolders: ReplaceConfirmationModalFolders;
   replaceConfirmationModalConversations: ReplaceConfirmationModalConversations;
-  replaceConfirmationModalFoldersAssertion: ReplaceConfirmationModalFoldersAssertion;
-  replaceConfirmationModalConversationsAssertion: ReplaceConfirmationModalConversationsAssertion;
+  replaceConfirmationModalFoldersAssertion: FolderAssertion<ReplaceConfirmationModalFolders>;
+  replaceConfirmationModalConversationsAssertion: EntityTreeAssertion<ReplaceConfirmationModalConversations>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1705,7 +1703,7 @@ const dialTest = test.extend<{
     use,
   ) => {
     const replaceConfirmationModalFoldersAssertion =
-      new ReplaceConfirmationModalFoldersAssertion(
+      new FolderAssertion<ReplaceConfirmationModalFolders>(
         replaceConfirmationModalFolders,
       );
     await use(replaceConfirmationModalFoldersAssertion);
@@ -1715,7 +1713,7 @@ const dialTest = test.extend<{
     use,
   ) => {
     const replaceConfirmationModalConversationsAssertion =
-      new ReplaceConfirmationModalConversationsAssertion(
+      new EntityTreeAssertion<ReplaceConfirmationModalConversations>(
         replaceConfirmationModalConversations,
       );
     await use(replaceConfirmationModalConversationsAssertion);

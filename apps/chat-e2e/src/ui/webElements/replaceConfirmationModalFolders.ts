@@ -7,7 +7,7 @@ import { Folders } from '@/src/ui/webElements/entityTree/folders';
 import { Locator, Page } from '@playwright/test';
 
 export class ReplaceConfirmationModalFolders extends Folders {
-  private dropdownMenu!: DropdownButtonMenu;
+  private conversationDropdownMenu!: DropdownButtonMenu;
 
   constructor(page: Page, parentLocator: Locator) {
     super(
@@ -22,11 +22,11 @@ export class ReplaceConfirmationModalFolders extends Folders {
     return this.getElementLocatorByText(name, index);
   }
 
-  private getDropdownMenu(): DropdownButtonMenu {
-    if (!this.dropdownMenu) {
-      this.dropdownMenu = new DropdownButtonMenu(this.page);
+  private getConversationDropdownMenu(): DropdownButtonMenu {
+    if (!this.conversationDropdownMenu) {
+      this.conversationDropdownMenu = new DropdownButtonMenu(this.page);
     }
-    return this.dropdownMenu;
+    return this.conversationDropdownMenu;
   }
 
   public getConversationDropdownByName(conversationName: string) {
