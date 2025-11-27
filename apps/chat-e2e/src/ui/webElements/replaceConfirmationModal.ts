@@ -1,9 +1,10 @@
 import { ImportResolutionOption } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { FolderSelectors } from '@/src/ui/selectors';
 import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Folders } from '@/src/ui/webElements/entityTree/folders';
+import { FolderSelectors } from '@/src/ui/selectors';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -27,6 +28,20 @@ export class ReplaceConfirmationModal extends BaseElement {
   public allItemsLine = this.getChildElementBySelector(
     ReplaceConfirmationModalSelectors.allItemsSelector,
   );
+
+  private folders!: Folders;
+
+  private getFolders(): Folders {
+    if (!this.folders) {
+      this.folders = new Folders(
+        this.page,
+        this.getElementLocator(),
+        FolderSelectors.folder,
+        EntitySelectors.conversation,
+      );
+    }
+    return this.folders;
+  }
 
   /** Returns the import resolution dropdown for a specific conversation */
   public getConversationDropdownByName(conversationName: string) {
@@ -131,38 +146,21 @@ export class ReplaceConfirmationModal extends BaseElement {
 
   /** Returns folder element by name (partial match) */
   public getFolderByName(folderName: string) {
-    return this.getChildElementBySelector(FolderSelectors.folder)
-      .getChildElementBySelector(FolderSelectors.folderName)
-      .getElementLocator()
-      .filter({
-        hasText: `${folderName}`,
-      });
+    return this.getFolders().getFolderByName(folderName);
   }
 
   /** Returns folder element by exact name match */
   public getFolderByExactName(name: string) {
-    return this.getChildElementBySelector(FolderSelectors.folder)
-      .getChildElementBySelector(FolderSelectors.folderName)
-      .getElementLocator()
-      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+    return this.getFolders().getFolderByExactName(name);
   }
 
-  /** Returns the expand/collapse arrow icon for a folder */
-  public getFolderArrowIcon(folderName: string) {
-    const folderContainer = this.getChildElementBySelector(
-      FolderSelectors.folder,
-    )
-      .getElementLocator()
-      .filter({
-        hasText: new RegExp(`^${RegexUtil.escapeRegexChars(folderName)}$`),
-      });
-
-    return folderContainer.locator(Tags.svg).first();
+  /** Returns the expand/collapse icon for a folder */
+  public getFolderExpandIcon(folderName: string) {
+    return this.getFolders().getFolderExpandIcon(folderName);
   }
 
   /** Toggles folder expand/collapse state */
   public async expandCollapseFolder(folderName: string) {
-    const folderElement = this.getFolderByExactName(folderName);
-    await folderElement.click();
+    await this.getFolders().expandCollapseFolder(folderName);
   }
 }

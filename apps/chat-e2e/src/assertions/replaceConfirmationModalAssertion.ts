@@ -35,7 +35,7 @@ export class ReplaceConfirmationModalAssertion extends BaseAssertion {
   /** Verifies folder is expanded (arrow has rotate-90 class) */
   public async assertFolderExpanded(folderName: string) {
     const arrowIcon =
-      this.replaceConfirmationModal.getFolderArrowIcon(folderName);
+      this.replaceConfirmationModal.getFolderExpandIcon(folderName);
 
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
@@ -48,7 +48,7 @@ export class ReplaceConfirmationModalAssertion extends BaseAssertion {
   /** Verifies folder is collapsed (arrow lacks rotate-90 class) */
   public async assertFolderCollapsed(folderName: string) {
     const arrowIcon =
-      this.replaceConfirmationModal.getFolderArrowIcon(folderName);
+      this.replaceConfirmationModal.getFolderExpandIcon(folderName);
 
     const classList = await arrowIcon.getAttribute('class');
     this.assertBooleanCondition(
