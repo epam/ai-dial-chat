@@ -45,6 +45,7 @@ import { mergeFeatures } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import {
   ApplicationStatus,
   CustomApplicationModel,
@@ -64,6 +65,7 @@ import {
 } from '@/src/store/actions';
 import {
   ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
   AuthSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -352,7 +354,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   of(
-                    ApplicationActions.updateSuccess(updatedCustomApplication),
+                    ApplicationActions.updateSuccess({
+                      appDetails: updatedCustomApplication,
+                      isExitingAfterSave: payload.isSaveAndExit,
+                    }),
                   ),
                 ];
 
@@ -779,6 +784,13 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
     switchMap(({ payload }) => {
       const returnConversationIds =
         ApplicationSelectors.selectReturnConversationIds(state$.value);
+      const schema =
+        ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema(
+          state$.value,
+        );
+      const hasCustomEditor =
+        !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
+
       const query = parse(window.location.search.slice(1));
       const publicationUrl = query[AppsEditorQuery.PublicationUrl]?.toString();
       const returnUrlQuery = query[AppsEditorQuery.ReturnUrl]?.toString();
@@ -806,6 +818,14 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
       const actions: Observable<AppAction>[] = [];
 
+      if (hasCustomEditor) {
+        actions.push(
+          of(
+            ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+          ),
+        );
+      }
+
       if (route.pathname === Routes.Marketplace) {
         if (payload.shouldSelectApplication && reference) {
           actions.push(
@@ -820,36 +840,36 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
         }
       }
 
-      if (route.pathname === Routes.Chat) {
-        if (publicationUrl) {
-          actions.push(
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: [],
-              }),
-              PublicationActions.setIsApplicationReview(true),
-            ),
-          );
-        } else if (returnConversationIds?.length) {
-          actions.push(
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: returnConversationIds as string[],
-              }),
-            ),
-          );
-        } else {
-          actions.push(
-            of(
-              ConversationsActions.createNewConversations({
-                names: [DEFAULT_CONVERSATION_NAME],
-              }),
-            ),
-          );
-        }
+      if (publicationUrl) {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [],
+            }),
+            PublicationActions.setIsApplicationReview(true),
+          ),
+        );
+      } else if (returnConversationIds?.length) {
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: returnConversationIds as string[],
+            }),
+          ),
+        );
+      } else {
+        actions.push(
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+        );
       }
 
-      return from(router.push(route)).pipe(switchMap(() => concat(...actions)));
+      actions.push(of(UIActions.setEditorLoader(false)));
+
+      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
     }),
   );
 
@@ -883,8 +903,13 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
       ApplicationActions.updateSuccess.type,
       ApplicationActions.createSuccess.type,
     ),
-    switchMap(() => {
-      if (window.location.pathname !== Routes.AppsEditor) return EMPTY;
+    switchMap((action) => {
+      const isExitingAfterSave =
+        action.type === ApplicationActions.updateSuccess.type &&
+        action.payload.isExitingAfterSave;
+
+      if (window.location.pathname !== Routes.AppsEditor || isExitingAfterSave)
+        return EMPTY;
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
