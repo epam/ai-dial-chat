@@ -199,6 +199,9 @@ export const FileManager: React.FC = () => {
         tabs: tabs,
         activeTab: activeTab,
         onTabChange: handleTabChange,
+        newActionLabels: {
+          uploadFiles: t('Upload Files'),
+        },
       }}
       onCopyFiles={(copiedItems, destinationFolder) => {
         if (copiedItems.length === 0) return;
