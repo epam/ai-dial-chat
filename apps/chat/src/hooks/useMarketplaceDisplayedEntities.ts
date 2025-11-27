@@ -67,15 +67,14 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
       ),
     );
 
-    const entitiesForTab =
-      selectedTab === MarketplaceTabs.MY_WORKSPACE
-        ? filteredEntities.filter((entity) =>
-            isInstalledEntity(entity, installedEntitiesIds),
-          )
-        : filteredEntities;
+    const isMyWorkspace = selectedTab === MarketplaceTabs.MY_WORKSPACE;
+    const entitiesForTab = isMyWorkspace
+      ? filteredEntities.filter((entity) =>
+          isInstalledEntity(entity, installedEntitiesIds),
+        )
+      : filteredEntities;
 
-    const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
+    const shouldSuggest = isMyWorkspace && isSomeFilterNotEmpty;
 
     if (selectedViewType === ViewTypes.TABLE) {
       if (shouldSuggest) {
@@ -107,6 +106,7 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
       entitiesToDisplay = entitiesToDisplay.filter((entity) =>
         isInstalledEntity(entity, installedEntitiesIds),
       );
+
       setSuggestedResults(suggestedListWithoutInstalled);
     } else {
       setSuggestedResults([]);
