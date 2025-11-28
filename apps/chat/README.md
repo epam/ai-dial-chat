@@ -178,6 +178,12 @@ AUTH_AUTH0_HOST="..."
 AUTH_AUTH0_AUDIENCE="..."
 ```
 
+Redirect uri will be:
+
+```txt
+{NEXTAUTH_URL}/api/auth/callback/auth0
+```
+
 To add another Auth0 configuration of the same type, use an index right after the provider type:
 
 ```bash
@@ -185,6 +191,12 @@ AUTH_AUTH0_1_CLIENT_ID="..."
 AUTH_AUTH0_1_SECRET="..."
 AUTH_AUTH0_1_HOST="..."
 AUTH_AUTH0_1_AUDIENCE="..."
+```
+
+Redirect uri will be:
+
+```txt
+{NEXTAUTH_URL}/api/auth/callback/auth01
 ```
 
 | Variable                          |                                                            Required                                                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Available Values                                                                                                                | Default values                                  |
