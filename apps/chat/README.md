@@ -155,6 +155,52 @@ The table below presents a list of environment variables you can use to configur
 
 > **NOTE**: to test the DIAL Chat application in an **unauthenticated** mode, do not provide any of these variables. The only required variable to launch the application is `NEXTAUTH_SECRET`.
 
+#### Multiple Configurations per Auth Provider
+
+DIAL Chat supports multiple configurations for the same authentication provider type (for example, multiple Auth0 or Okta tenants).
+
+Environment variables for such providers follow this pattern:
+
+`AUTH_{PROVIDER_TYPE}_{INDEX}_{FIELD_NAME}`
+
+- `PROVIDER_TYPE` – The provider type, e.g. `AUTH0`, `OKTA`, etc.
+- `INDEX` – Optional numeric index for additional configurations:
+  - Omitted for the first configuration.
+  - `1`, `2`, `3`, ... for subsequent configurations (indexes must be sequential).
+- `FIELD_NAME` – The name of the field, e.g. `CLIENT_ID`, `SECRET`, `HOST`, `AUDIENCE`, etc.
+
+Example for a single Auth0 configuration:
+
+```bash
+AUTH_AUTH0_CLIENT_ID="..."
+AUTH_AUTH0_SECRET="..."
+AUTH_AUTH0_HOST="..."
+AUTH_AUTH0_AUDIENCE="..."
+```
+
+Redirect URI:
+
+```txt
+{NEXTAUTH_URL}/api/auth/callback/auth0
+```
+
+Example of an additional Auth0 configuration:
+
+```bash
+AUTH_AUTH0_1_CLIENT_ID="..."
+AUTH_AUTH0_1_SECRET="..."
+AUTH_AUTH0_1_HOST="..."
+AUTH_AUTH0_1_AUDIENCE="..."
+```
+
+Redirect URI:
+
+> Note, that URI of all subsequest configurations for the same authentication provider are appended with an index - `auth01` in this example.
+
+```txt
+{NEXTAUTH_URL}/api/auth/callback/auth01
+```
+
 | Variable                          |                                                            Required                                                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Available Values                                                                                                                | Default values                                  |
 | --------------------------------- | :----------------------------------------------------------------------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `NEXTAUTH_URL`                    |                                    Optional.<br /> Required for **production** deployments.                                    | NextAuth URL                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Any string                                                                                                                      |                                                 |
