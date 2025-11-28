@@ -70,10 +70,10 @@ dialTest(
         );
         await toolsetEditorViewForm.oauthContainer.click();
         //get saved toolset object
-        const allToolsets = await toolsetApiHelper.listToolsets();
-        initialToolset = allToolsets.find(
-          (t) => t.display_name === toolsetEntity.name,
-        )!;
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
       },
     );
 
