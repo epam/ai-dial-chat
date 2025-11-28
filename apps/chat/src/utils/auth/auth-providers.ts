@@ -38,7 +38,7 @@ const getAzureProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getAzureB2CProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.tenantId
@@ -56,7 +56,7 @@ const getAzureB2CProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getGitLabProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret
@@ -71,7 +71,7 @@ const getGitLabProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getGoogleProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret
@@ -87,7 +87,7 @@ const getGoogleProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getAuth0Provider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.host
@@ -105,7 +105,7 @@ const getAuth0Provider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getPingIdProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.host
@@ -122,7 +122,7 @@ const getPingIdProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getKeycloakProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.host
@@ -147,7 +147,7 @@ const getKeycloakProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getCognitoProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.host
@@ -164,7 +164,7 @@ const getCognitoProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getOktaProvider = (config: ProviderConfig) =>
   config.clientId && config.clientSecret && config.issuer
@@ -180,7 +180,7 @@ const getOktaProvider = (config: ProviderConfig) =>
         },
         token: tokenConfig,
       })
-    : null;
+    : undefined;
 
 const getProviderFromConfig = (config: ProviderConfig) => {
   switch (config.provider) {
@@ -201,9 +201,8 @@ const getProviderFromConfig = (config: ProviderConfig) => {
     case SupportedProviders.COGNITO:
       return getCognitoProvider(config);
     case SupportedProviders.OKTA:
-      return getOktaProvider(config);
     default:
-      return null;
+      return getOktaProvider(config);
   }
 };
 
@@ -271,13 +270,11 @@ const getSSOConfigs = () => {
 const getProviders = () => {
   const configs = getSSOConfigs();
 
-  return configs.map(getProviderFromConfig).filter((p) => p !== null);
+  return configs.map(getProviderFromConfig).filter(Boolean) as Provider[];
 };
 
 // TODO: create a validator for providers options
-const allProviders: (Provider | boolean)[] = getProviders();
-
-export const authProviders = allProviders.filter(Boolean) as Provider[];
+export const authProviders = getProviders();
 
 /**
  * Sets the DEFAULT_PROVIDER to the single available provider's ID if:
