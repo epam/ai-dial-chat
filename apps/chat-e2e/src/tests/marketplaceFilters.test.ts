@@ -12,7 +12,6 @@ import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
 
-
 dialTest(
   'Only existed Filters are applied, My workspace is opened for another user if user opens the URL. User has already logged in.\n' +
     'Filters are unselected after logout.\n' +
