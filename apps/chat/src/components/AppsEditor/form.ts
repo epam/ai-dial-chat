@@ -22,6 +22,7 @@ import {
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { DialAIEntityFeatures } from '@/src/types/models';
 import {
   AnyToolset,
   CodeInterpreterToolset,
@@ -546,7 +547,6 @@ const getQuickApp2Toolsets = ({
             });
           } else if (isToolsetId(agentAndToolset)) {
             acc.dialMCPToolsets.push({
-              name: agentAndToolset,
               dial_id: ApiUtils.encodeApiUrl(agentAndToolset),
               type: ToolsetTypes.DialMcp,
             });
@@ -561,7 +561,6 @@ const getQuickApp2Toolsets = ({
           });
         } else {
           acc.dialMCPToolsets.push({
-            name: entity.name,
             dial_id: ApiUtils.encodeApiUrl(entity.id),
             type: ToolsetTypes.DialMcp,
           });
@@ -675,6 +674,9 @@ export const getApplicationPayload = ({
         maxInputAttachments: data.maxInputAttachments
           ? Number(data.maxInputAttachments)
           : undefined,
+        features: {
+          assistant_attachments_in_request_supported: true,
+        } as unknown as DialAIEntityFeatures,
         applicationProperties: {
           orchestrator: {
             deployment: {

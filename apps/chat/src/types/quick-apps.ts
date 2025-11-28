@@ -31,7 +31,7 @@ export interface DialDeploymentToolset {
 }
 
 export interface MCPToolset {
-  name: string;
+  name?: string;
   type?: ToolsetTypes.DialMcp;
   dial_id: string;
   transport?: ToolsetTransportType;
