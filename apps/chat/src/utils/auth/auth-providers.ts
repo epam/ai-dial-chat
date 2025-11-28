@@ -182,39 +182,6 @@ const getOktaProvider = (config: ProviderConfig) =>
       })
     : undefined;
 
-const getProviderFromConfig = (config: ProviderConfig) => {
-  switch (config.provider) {
-    case SupportedProviders.AUTH0:
-      return getAuth0Provider(config);
-    case SupportedProviders.GOOGLE:
-      return getGoogleProvider(config);
-    case SupportedProviders.AZURE_AD:
-      return getAzureProvider(config);
-    case SupportedProviders.AZURE_B2C:
-      return getAzureB2CProvider(config);
-    case SupportedProviders.GITLAB:
-      return getGitLabProvider(config);
-    case SupportedProviders.PING_ID:
-      return getPingIdProvider(config);
-    case SupportedProviders.KEYCLOAK:
-      return getKeycloakProvider(config);
-    case SupportedProviders.COGNITO:
-      return getCognitoProvider(config);
-    case SupportedProviders.OKTA:
-    default:
-      return getOktaProvider(config);
-  }
-};
-
-const getProviderEnv = (
-  provider: SupportedProviders,
-  envName: ProviderConfigFields,
-  index = 0,
-) => {
-  const indexStr = index ? `_${index}` : '';
-  return process.env[`AUTH_${provider}${indexStr}_${envName}`];
-};
-
 const providerNames = {
   [SupportedProviders.AUTH0]: 'auth0',
   [SupportedProviders.AZURE_B2C]: 'azureB2C',
@@ -225,6 +192,31 @@ const providerNames = {
   [SupportedProviders.OKTA]: 'okta',
   [SupportedProviders.GITLAB]: 'gitlab',
   [SupportedProviders.PING_ID]: 'pingId',
+};
+
+const providerConfigMethods = {
+  [SupportedProviders.AUTH0]: getAuth0Provider,
+  [SupportedProviders.AZURE_B2C]: getAzureB2CProvider,
+  [SupportedProviders.AZURE_AD]: getAzureProvider,
+  [SupportedProviders.COGNITO]: getCognitoProvider,
+  [SupportedProviders.GOOGLE]: getGoogleProvider,
+  [SupportedProviders.KEYCLOAK]: getKeycloakProvider,
+  [SupportedProviders.OKTA]: getOktaProvider,
+  [SupportedProviders.GITLAB]: getGitLabProvider,
+  [SupportedProviders.PING_ID]: getPingIdProvider,
+};
+
+const getProviderFromConfig = (config: ProviderConfig) => {
+  return providerConfigMethods[config.provider]?.(config);
+};
+
+const getProviderEnv = (
+  provider: SupportedProviders,
+  envName: ProviderConfigFields,
+  index = 0,
+) => {
+  const indexStr = index ? `_${index}` : '';
+  return process.env[`AUTH_${provider}${indexStr}_${envName}`];
 };
 
 const getProviderConfig = (provider: SupportedProviders, index = 0) => {
