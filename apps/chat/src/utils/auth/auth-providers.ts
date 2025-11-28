@@ -33,8 +33,7 @@ const getAzureProvider = (config: ProviderConfig) =>
         authorization: {
           params: {
             scope:
-              process.env.AUTH_AZURE_AD_SCOPE ||
-              'openid profile user.Read email offline_access',
+              config.scope || 'openid profile user.Read email offline_access',
           },
         },
         token: tokenConfig,
@@ -52,8 +51,7 @@ const getAzureB2CProvider = (config: ProviderConfig) =>
         authorization: {
           params: {
             scope:
-              process.env.AUTH_AZURE_AD_SCOPE ||
-              'openid profile user.Read email offline_access',
+              config.scope || 'openid profile user.Read email offline_access',
           },
         },
         token: tokenConfig,
@@ -84,9 +82,7 @@ const getGoogleProvider = (config: ProviderConfig) =>
         name: config.name ?? DEFAULT_NAME,
         authorization: {
           params: {
-            scope:
-              process.env.AUTH_GOOGLE_SCOPE ||
-              'openid email profile offline_access',
+            scope: config.scope || 'openid email profile offline_access',
           },
         },
         token: tokenConfig,
