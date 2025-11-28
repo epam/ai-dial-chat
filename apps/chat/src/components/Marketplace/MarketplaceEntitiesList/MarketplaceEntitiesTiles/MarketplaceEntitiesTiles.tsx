@@ -7,10 +7,13 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
-import { AgentsListWrapper } from '../AgentsListWrapper';
+import { MarketplaceEntitiesListWrapper } from '../MarketplaceEntitiesListWrapper';
 import { SuggestedMessage } from '../SuggestedMessage';
-import { AgentsListProps } from '../view-props';
-import { ApplicationCard } from './ApplicationCard';
+import {
+  MarketplaceEntitiesListProps,
+  MarketplaceEntitiesListWrapperRef,
+} from '../view-props';
+import { MarketplaceEntityCard } from './MarketplaceEntityCard';
 
 import isString from 'lodash-es/isString';
 import range from 'lodash-es/range';
@@ -35,17 +38,16 @@ const ROWS_INFO: Record<ScreenState, RowInfo> = {
   [ScreenState.XL5]: { height: DEFAULT_WIDTH, minWidth: MIN_CARD_WIDTH_XL5 },
 };
 
-export const AgentsTiles: React.FC<AgentsListProps<MarketplaceEntity>> = ({
+export const MarketplaceEntitiesTiles: React.FC<
+  MarketplaceEntitiesListProps<MarketplaceEntity>
+> = ({
   entities,
   suggestedResults,
   separator,
   onCardClick,
   onBookmarkClick,
 }) => {
-  const wrapperRefs = useRef<{
-    parentRef: React.RefObject<HTMLDivElement>;
-    suggestedRowRef: React.RefObject<HTMLSpanElement>;
-  }>(null);
+  const wrapperRefs = useRef<MarketplaceEntitiesListWrapperRef>(null);
   const dataRef = useRef<HTMLDivElement>(null);
 
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
@@ -121,7 +123,7 @@ export const AgentsTiles: React.FC<AgentsListProps<MarketplaceEntity>> = ({
   return (
     <>
       <SuggestedMessage shouldRender={!entities.length} />
-      <AgentsListWrapper
+      <MarketplaceEntitiesListWrapper
         separatorRowId={separatorRowId}
         rowsHeight={rowsHeight}
         ref={wrapperRefs}
@@ -169,7 +171,7 @@ export const AgentsTiles: React.FC<AgentsListProps<MarketplaceEntity>> = ({
                   }
 
                   return (
-                    <ApplicationCard
+                    <MarketplaceEntityCard
                       key={entity.id}
                       entity={entity}
                       onClick={onCardClick}
@@ -186,7 +188,7 @@ export const AgentsTiles: React.FC<AgentsListProps<MarketplaceEntity>> = ({
             );
           })}
         </div>
-      </AgentsListWrapper>
+      </MarketplaceEntitiesListWrapper>
     </>
   );
 };

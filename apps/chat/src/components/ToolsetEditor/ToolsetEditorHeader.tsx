@@ -35,6 +35,7 @@ export const ToolsetEditorHeader = ({
   onSave,
 }: ToolsetEditorHeaderProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
