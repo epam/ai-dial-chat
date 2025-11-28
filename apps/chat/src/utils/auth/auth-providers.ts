@@ -229,30 +229,25 @@ const providerNames = {
 };
 
 const getProviderConfig = (provider: SupportedProviders, index = 0) => {
+  const getEnv = (name: ProviderConfigFields) =>
+    getProviderEnv(provider, name, index);
+
   const config = {
     provider,
     id: `${providerNames[provider]}${index || ''}`,
-    clientId: getProviderEnv(provider, ProviderConfigFields.CLIENT_ID, index),
+    clientId: getEnv(ProviderConfigFields.CLIENT_ID),
     clientSecret:
-      getProviderEnv(provider, ProviderConfigFields.CLIENT_SECRET, index) ??
-      getProviderEnv(provider, ProviderConfigFields.SECRET, index),
-    name: getProviderEnv(provider, ProviderConfigFields.NAME, index),
-    host: getProviderEnv(provider, ProviderConfigFields.HOST, index),
-    scope: getProviderEnv(provider, ProviderConfigFields.SCOPE, index),
-    audience: getProviderEnv(provider, ProviderConfigFields.AUDIENCE, index),
-    tenantId: getProviderEnv(provider, ProviderConfigFields.TENANT_ID, index),
-    userFlow: getProviderEnv(provider, ProviderConfigFields.USER_FLOW, index),
-    issuer: getProviderEnv(provider, ProviderConfigFields.ISSUER, index),
-    adminRoleNames: getProviderEnv(
-      provider,
-      ProviderConfigFields.ADMIN_ROLE_NAMES,
-      index,
-    ),
-    dialRolesField: getProviderEnv(
-      provider,
-      ProviderConfigFields.DIAL_ROLES_FIELD,
-      index,
-    ),
+      getEnv(ProviderConfigFields.CLIENT_SECRET) ??
+      getEnv(ProviderConfigFields.SECRET),
+    name: getEnv(ProviderConfigFields.NAME),
+    host: getEnv(ProviderConfigFields.HOST),
+    scope: getEnv(ProviderConfigFields.SCOPE),
+    audience: getEnv(ProviderConfigFields.AUDIENCE),
+    tenantId: getEnv(ProviderConfigFields.TENANT_ID),
+    userFlow: getEnv(ProviderConfigFields.USER_FLOW),
+    issuer: getEnv(ProviderConfigFields.ISSUER),
+    adminRoleNames: getEnv(ProviderConfigFields.ADMIN_ROLE_NAMES),
+    dialRolesField: getEnv(ProviderConfigFields.DIAL_ROLES_FIELD),
   };
 
   return providerConfigSchema.safeParse(config).success
