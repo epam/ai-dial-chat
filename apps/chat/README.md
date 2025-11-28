@@ -157,7 +157,7 @@ The table below presents a list of environment variables you can use to configur
 
 #### Multiple Configurations per Auth Provider
 
-DIAL Chat supports multiple configurations for the same  authentication provider type (for example, multiple Auth0 or Okta tenants).
+DIAL Chat supports multiple configurations for the same authentication provider type (for example, multiple Auth0 or Okta tenants).
 
 Environment variables for such providers follow this pattern:
 
