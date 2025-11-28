@@ -132,7 +132,7 @@ dialTest.only(
         await folderConversations.selectFolderEntity(folder2.name, chat1.name, {
           isHttpMethodTriggered: true,
         });
-        await chat.sendRequestWithButton('New request for Chat1');
+        await chat.sendRequestWithButton(`New request for ${chat1.name}`);
 
         // Update Chat4 - need to expand nested folders
         for (const folder of nestedFolders) {
@@ -144,7 +144,7 @@ dialTest.only(
           chat4.name,
           { isHttpMethodTriggered: true },
         );
-        await chat.sendRequestWithButton('New request for Chat4');
+        await chat.sendRequestWithButton(`New request for ${chat4.name}`);
       },
     );
 
@@ -351,32 +351,22 @@ dialTest.only(
         );
 
         // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
-        await replaceConfirmationModalConversations.setConversationOption(
-          chat2.name,
-          ImportResolutionOption.Postfix,
-        );
-        await replaceConfirmationModalConversations.setConversationOption(
-          chat4.name,
-          ImportResolutionOption.Postfix,
-        );
-        await replaceConfirmationModalConversations.setConversationOption(
-          chat7.name,
-          ImportResolutionOption.Postfix,
-        );
+        const postfixConversations = [chat2, chat4, chat7];
+        for (const chat of postfixConversations) {
+          await replaceConfirmationModalConversations.setConversationOption(
+            chat.name,
+            ImportResolutionOption.Postfix,
+          );
+        }
 
         // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
-        await replaceConfirmationModalConversations.setConversationOption(
-          chat3.name,
-          ImportResolutionOption.Ignore,
-        );
-        await replaceConfirmationModalConversations.setConversationOption(
-          chat5.name,
-          ImportResolutionOption.Ignore,
-        );
-        await replaceConfirmationModalConversations.setConversationOption(
-          chat6.name,
-          ImportResolutionOption.Ignore,
-        );
+        const ignoreConversations = [chat3, chat5, chat6];
+        for (const chat of ignoreConversations) {
+          await replaceConfirmationModalConversations.setConversationOption(
+            chat.name,
+            ImportResolutionOption.Ignore,
+          );
+        }
       },
     );
 
@@ -398,7 +388,7 @@ dialTest.only(
       await replaceConfirmationModal.clickContinue({
         expectedPostRequests: 4,
       });
-      await dialHomePage.waitForPageLoaded();
+      await dialHomePage.waitForPageLoaded({ waitForAgentInfo: false });
     });
 
     await dialTest.step(
@@ -413,85 +403,67 @@ dialTest.only(
         // Verify Folder1 (empty folder) exists
         await folderConversations.getFolderByName(folder1.name).waitFor();
 
-        // Verify Folder2 structure with original Chat1 (replaced, no new messages)
-        await chatBarFolderAssertion.assertFolderEntityState(
-          folder2,
+        // Verify Folder2 structure with original Chat1 (replaced), Chat2 1 (postfix), and original Chat2
+        const folder2ExpectedVisible = [
           chat1,
-          'visible',
-        );
-
-        // Verify Chat2 1 was created with postfix in Folder2
-        await chatBarFolderAssertion.assertFolderEntityState(
-          folder2,
-          { name: 'Chat2 1' },
-          'visible',
-        );
-
-        // Verify original Chat2 still exists
-        await chatBarFolderAssertion.assertFolderEntityState(
-          folder2,
+          { name: `${chat2.name} 1` },
           chat2,
-          'visible',
-        );
+        ];
+        for (const entity of folder2ExpectedVisible) {
+          await chatBarFolderAssertion.assertFolderEntityState(
+            folder2,
+            entity,
+            'visible',
+          );
+        }
 
         // Verify Chat3 exists at root and unchanged (no postfix)
         await conversationAssertion.assertEntityState(chat3, 'visible');
         await conversationAssertion.assertEntityState(
-          { name: 'Chat3 1' },
+          { name: `${chat3.name} 1` },
           'hidden',
         );
 
-        // Verify nested folder structure with Chat4 1 (postfix)
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[3],
-          { name: 'Chat4 1' },
-          'visible',
-        );
+        // Verify nested folder structure
+        const nestedFolderExpectations = [
+          {
+            folder: nestedFolders[3],
+            visible: [chat4, { name: `${chat4.name} 1` }],
+            hidden: [],
+          },
+          {
+            folder: nestedFolders[2],
+            visible: [chat5],
+            hidden: [{ name: `${chat5.name} 1` }],
+          },
+          {
+            folder: nestedFolders[1],
+            visible: [chat6],
+            hidden: [{ name: `${chat6.name} 1` }],
+          },
+          {
+            folder: nestedFolders[0],
+            visible: [chat7, { name: `${chat7.name} 1` }],
+            hidden: [],
+          },
+        ];
 
-        // Verify original Chat4 still exists
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[3],
-          chat4,
-          'visible',
-        );
-
-        // Verify Chat5 unchanged (ignored, no postfix)
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[2],
-          chat5,
-          'visible',
-        );
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[2],
-          { name: 'Chat5 1' },
-          'hidden',
-        );
-
-        // Verify Chat6 unchanged (ignored, no postfix)
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[1],
-          chat6,
-          'visible',
-        );
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[1],
-          { name: 'Chat6 1' },
-          'hidden',
-        );
-
-        // Verify Chat7 1 was created with postfix
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[0],
-          { name: 'Chat7 1' },
-          'visible',
-        );
-
-        // Verify original Chat7 still exists
-        await chatBarFolderAssertion.assertFolderEntityState(
-          nestedFolders[0],
-          chat7,
-          'visible',
-        );
+        for (const expectation of nestedFolderExpectations) {
+          for (const entity of expectation.visible) {
+            await chatBarFolderAssertion.assertFolderEntityState(
+              expectation.folder,
+              entity,
+              'visible',
+            );
+          }
+          for (const entity of expectation.hidden) {
+            await chatBarFolderAssertion.assertFolderEntityState(
+              expectation.folder,
+              entity,
+              'hidden',
+            );
+          }
+        }
       },
     );
 
@@ -518,7 +490,7 @@ dialTest.only(
         // Select Chat4 1 and verify it has imported (original) content only
         await folderConversations.selectFolderEntity(
           nestedFolders[3].name,
-          'Chat4 1',
+          `${chat4.name} 1`,
         );
         await chatMessagesAssertion.assertMessagesCount(
           chat4.messages.length,

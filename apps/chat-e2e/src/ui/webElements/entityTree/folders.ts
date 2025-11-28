@@ -131,7 +131,7 @@ export class Folders extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
-  public getFolderByExactName(name: string) {
+  public getFolderByExactNameInDisplayMode(name: string) {
     return this.getChildElementBySelector(FolderSelectors.folder)
       .getElementLocator()
       .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });

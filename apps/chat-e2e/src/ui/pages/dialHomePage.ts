@@ -24,6 +24,7 @@ export class DialHomePage extends BasePage {
     selectedSharedFolderName?: string;
     isPromptShared?: boolean;
     skipSidebars?: boolean;
+    waitForAgentInfo?: boolean;
   }) {
     const appContainer = this.getAppContainer();
     if (!options?.skipSidebars) {
@@ -74,12 +75,12 @@ export class DialHomePage extends BasePage {
       const promptPreviewModal = new PromptPreviewModalWindow(this.page);
       await promptPreviewModal.waitForState();
       await promptPreviewModal.promptName.waitForState();
-    } else {
-      await chat.getAgentInfo().waitForState({ state: 'attached' });
-      await chat.configureSettingsButton.waitForState({
-        state: 'attached',
-      });
-    }
+    } else if (options?.waitForAgentInfo !== false) {
+        await chat.getAgentInfo().waitForState({ state: 'attached' });
+        await chat.configureSettingsButton.waitForState({
+          state: 'attached',
+        });
+      }
   }
 
   async reloadPage() {
