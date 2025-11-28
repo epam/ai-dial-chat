@@ -345,36 +345,36 @@ dialTest.only(
       async () => {
         // Set individual conversation options
         // Chat1: Replace (will restore original content)
-        await replaceConfirmationModalFolders.setConversationOption(
-          'Chat1',
+        await replaceConfirmationModalConversations.setConversationOption(
+          chat1.name,
           ImportResolutionOption.Replace,
         );
 
         // Chat2, Chat4, Chat7: Postfix (will create duplicates with " 1" suffix)
-        await replaceConfirmationModalFolders.setConversationOption(
-          'Chat2',
+        await replaceConfirmationModalConversations.setConversationOption(
+          chat2.name,
           ImportResolutionOption.Postfix,
         );
-        await replaceConfirmationModalFolders.setConversationOption(
-          'Chat4',
+        await replaceConfirmationModalConversations.setConversationOption(
+          chat4.name,
           ImportResolutionOption.Postfix,
         );
-        await replaceConfirmationModalFolders.setConversationOption(
-          'Chat7',
+        await replaceConfirmationModalConversations.setConversationOption(
+          chat7.name,
           ImportResolutionOption.Postfix,
         );
 
         // Chat3, Chat5, Chat6: Ignore (will keep existing, skip import)
         await replaceConfirmationModalConversations.setConversationOption(
-          'Chat3',
+          chat3.name,
           ImportResolutionOption.Ignore,
         );
-        await replaceConfirmationModalFolders.setConversationOption(
-          'Chat5',
+        await replaceConfirmationModalConversations.setConversationOption(
+          chat5.name,
           ImportResolutionOption.Ignore,
         );
-        await replaceConfirmationModalFolders.setConversationOption(
-          'Chat6',
+        await replaceConfirmationModalConversations.setConversationOption(
+          chat6.name,
           ImportResolutionOption.Ignore,
         );
       },

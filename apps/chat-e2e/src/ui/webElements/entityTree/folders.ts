@@ -178,9 +178,9 @@ export class Folders extends BaseElement {
   }
 
   public async isFolderCaretExpanded(name: string, index?: number) {
-    return this.getFolderExpandIcon(name, index)
-      .locator(`.${Attributes.rotated90}`)
-      .isVisible();
+    const icon = this.getFolderExpandIcon(name, index);
+    const classAttribute = await icon.getAttribute('class');
+    return classAttribute?.includes(Attributes.rotated90) ?? false;
   }
 
   public foldersGroup = (parentFolderName: string) => {

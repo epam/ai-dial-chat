@@ -37,6 +37,7 @@ export class ReplaceConfirmationModalFolders extends Folders {
 
   private getConversationRowByName(conversationName: string) {
     return this.getChildElementBySelector(FolderSelectors.folder)
+      .getElementLocator()
       .locator(EntitySelectors.conversation)
       .filter({
         has: this.page.locator(EntitySelectors.entityName).filter({
