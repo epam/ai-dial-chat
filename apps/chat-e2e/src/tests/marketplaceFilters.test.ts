@@ -3,6 +3,7 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   CheckboxState,
   MarketplaceFilterTypes,
+  MarketplaceTabs,
   SourcesFilterOptions,
 } from '@/src/testData';
 import { Attributes, Cursors, ThemeColorAttributes } from '@/src/ui/domData';
@@ -10,6 +11,7 @@ import { DialHomePage, MarketplacePage } from '@/src/ui/pages';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
+
 
 dialTest(
   'Only existed Filters are applied, My workspace is opened for another user if user opens the URL. User has already logged in.\n' +
@@ -40,7 +42,7 @@ dialTest(
         url = marketplaceUrlBuilder
           .withTypes(EntityType.Application)
           .withSources(SourcesFilterOptions.myCustomApps)
-          .withTab('workspace')
+          .withTab(MarketplaceTabs.WORKSPACE)
           .build();
         await marketplacePage.navigateToUrl(url);
         await marketplacePage.waitForPageLoaded();
@@ -78,7 +80,7 @@ dialTest(
         );
         const expectedUrl = marketplaceUrlBuilder
           .withTypes(EntityType.Application)
-          .withTab('workspace')
+          .withTab(MarketplaceTabs.WORKSPACE)
           .withSearch(searchTerm)
           .build();
         baseAssertion.assertValue(page.url(), expectedUrl);
@@ -140,7 +142,7 @@ dialTest(
       .withTypes(EntityType.Application)
       .withSources(SourcesFilterOptions.myCustomApps)
       .withTopics(firstTopic, secondTopic)
-      .withTab('workspace')
+      .withTab(MarketplaceTabs.WORKSPACE)
       .build();
     const username =
       process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];

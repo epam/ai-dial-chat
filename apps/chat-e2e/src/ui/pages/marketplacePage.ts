@@ -5,6 +5,7 @@ import {
   API,
   ExpectedConstants,
   MarketplaceEntitiesTabs,
+  MarketplaceTabs,
   MarketplaceUrlBuilder,
 } from '@/src/testData';
 import { EntityEditorUrlBuilder } from '@/src/testData/marketplace/entityEditorUrlBuilder';
@@ -110,8 +111,9 @@ export class MarketplacePage extends BasePage {
     options: MarketplaceEntityOptions = {},
   ): Promise<void> {
     const mergedOptions = { ...DEFAULT_ENTITY_OPTIONS, ...options };
-    const entityEditorAttributes = this.getEntityEditorAttributes(
+    const entityEditorAttributes = this.getCreateEntityEditorAttributes(
       entityTab,
+      EntityEditSteps.generalInfo,
       appTypeSchema,
     );
     const expectedResponses: ExpectedApiResponse[] = [];
@@ -141,8 +143,9 @@ export class MarketplacePage extends BasePage {
     );
   }
 
-  private getEntityEditorAttributes(
+  private getCreateEntityEditorAttributes(
     entityTab: MarketplaceEntitiesTabs,
+    step: EntityEditSteps,
     appTypeSchema?: ApplicationType | string,
   ): {
     entityEditorPath: string;
@@ -151,6 +154,32 @@ export class MarketplacePage extends BasePage {
       entitiesApi?: string;
     };
   } {
+    const entityConfigs = this.getEntityConfig();
+    const config = entityConfigs[entityTab];
+    if (!config) {
+      throw new Error(`Unsupported entity tab: ${entityTab}`);
+    }
+
+    const returnUrl = this.buildReturnUrl(
+      MarketplaceTabs.WORKSPACE,
+      entityTab,
+      config,
+    );
+
+    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
+      .withReturnUrl(returnUrl)
+      .withIsCreate(true);
+    if (appTypeSchema) {
+      entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
+    }
+
+    return {
+      entityEditorPath: entityEditorUrlBuilder.build(),
+      entityApiHosts: config.apiHosts,
+    };
+  }
+
+  private getEntityConfig() {
     const entityConfigs: Record<MarketplaceEntitiesTabs, EntityConfig> = {
       [MarketplaceEntitiesTabs.AGENTS]: {
         apiHosts: {
@@ -168,33 +197,20 @@ export class MarketplacePage extends BasePage {
         hasEntityTabInReturnUrl: true,
       },
     };
+    return entityConfigs;
+  }
 
-    const config = entityConfigs[entityTab];
-    if (!config) {
-      throw new Error(`Unsupported entity tab: ${entityTab}`);
-    }
-    let returnUrl = new MarketplaceUrlBuilder(false)
-      .withTab('workspace')
-      .build();
-    if (config.hasEntityTabInReturnUrl) {
+  private buildReturnUrl(
+    tab: MarketplaceTabs,
+    entityTab: MarketplaceEntitiesTabs,
+    entityConfig: EntityConfig,
+  ) {
+    let returnUrl = new MarketplaceUrlBuilder(false).withTab(tab).build();
+    if (entityConfig.hasEntityTabInReturnUrl) {
       // Only this specific part should be encoded
       returnUrl += encodeURIComponent(`&entitiesTab=${entityTab}`);
     }
-
-    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(
-      config.route,
-      EntityEditSteps.generalInfo,
-    )
-      .withReturnUrl(returnUrl)
-      .withIsCreate(true);
-    if (appTypeSchema) {
-      entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
-    }
-
-    return {
-      entityEditorPath: entityEditorUrlBuilder.build(),
-      entityApiHosts: config.apiHosts,
-    };
+    return returnUrl;
   }
 
   private buildMarketplaceResponses(

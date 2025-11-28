@@ -692,6 +692,10 @@ export enum EntityEditorAppTypes {
   CodeApp = 'Code App',
 }
 
+export enum MarketplaceTabs {
+  WORKSPACE = 'workspace',
+}
+
 export enum MarketplaceEntitiesTabs {
   AGENTS = 'agents',
   TOOLSETS = 'toolsets',

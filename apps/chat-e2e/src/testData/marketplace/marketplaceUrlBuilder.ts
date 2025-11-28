@@ -1,4 +1,8 @@
-import { BaseUrlBuilder, ExpectedConstants } from '@/src/testData';
+import {
+  BaseUrlBuilder,
+  ExpectedConstants,
+  MarketplaceTabs,
+} from '@/src/testData';
 
 export class MarketplaceUrlBuilder extends BaseUrlBuilder {
   constructor(includeBaseURL = true) {
@@ -20,7 +24,7 @@ export class MarketplaceUrlBuilder extends BaseUrlBuilder {
     return this;
   }
 
-  withTab(tab: string): MarketplaceUrlBuilder {
+  withTab(tab: MarketplaceTabs): MarketplaceUrlBuilder {
     this.addParam('tab', tab);
     return this;
   }
