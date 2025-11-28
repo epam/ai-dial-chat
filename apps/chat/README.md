@@ -155,6 +155,38 @@ The table below presents a list of environment variables you can use to configur
 
 > **NOTE**: to test the DIAL Chat application in an **unauthenticated** mode, do not provide any of these variables. The only required variable to launch the application is `NEXTAUTH_SECRET`.
 
+#### Multiple configurations per auth provider
+
+DIAL Chat supports multiple configurations for the same auth provider type (for example, multiple Auth0 or Okta tenants).
+
+Environment variables for such providers follow this pattern:
+
+`AUTH_{PROVIDER_TYPE}_{INDEX}_{FIELD_NAME}`
+
+- `PROVIDER_TYPE` – the provider type, e.g. `AUTH0`, `OKTA`, etc.
+- `INDEX` – optional numeric index for additional configurations:
+  - omitted for the first configuration,
+  - `1`, `2`, `3`, ... for subsequent configurations (indexes must be sequential).
+- `FIELD_NAME` – the name of the field, e.g. `CLIENT_ID`, `SECRET`, `HOST`, `AUDIENCE`, etc.
+
+For example, a single Auth0 configuration might look like this:
+
+```bash
+AUTH_AUTH0_CLIENT_ID="..."
+AUTH_AUTH0_SECRET="..."
+AUTH_AUTH0_HOST="..."
+AUTH_AUTH0_AUDIENCE="..."
+```
+
+To add another Auth0 configuration of the same type, use an index right after the provider type:
+
+```bash
+AUTH_AUTH0_1_CLIENT_ID="..."
+AUTH_AUTH0_1_SECRET="..."
+AUTH_AUTH0_1_HOST="..."
+AUTH_AUTH0_1_AUDIENCE="..."
+```
+
 | Variable                          |                                                            Required                                                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Available Values                                                                                                                | Default values                                  |
 | --------------------------------- | :----------------------------------------------------------------------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `NEXTAUTH_URL`                    |                                    Optional.<br /> Required for **production** deployments.                                    | NextAuth URL                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Any string                                                                                                                      |                                                 |
