@@ -108,6 +108,9 @@ const selectVisibleSidebarItems = createSelector(
   (state, featureType) => state.visibleSidebarItems[featureType],
 );
 
+const selectIsEditorLoader = (state: RootState) =>
+  rootSelector(state).isEditorLoader;
+
 export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
@@ -134,4 +137,5 @@ export const UISelectors = {
   selectIsNavigationVisible,
   selectCodeEditorTheme,
   selectVisibleSidebarItems,
+  selectIsEditorLoader,
 };
