@@ -185,7 +185,7 @@ const getOktaProvider = (config: ProviderConfig) =>
 const providerNames = {
   [SupportedProviders.AUTH0]: 'auth0',
   [SupportedProviders.AZURE_B2C]: 'azureB2C',
-  [SupportedProviders.AZURE_AD]: 'azure',
+  [SupportedProviders.AZURE_AD]: 'azure-ad',
   [SupportedProviders.COGNITO]: 'cognito',
   [SupportedProviders.GOOGLE]: 'google',
   [SupportedProviders.KEYCLOAK]: 'keycloak',
