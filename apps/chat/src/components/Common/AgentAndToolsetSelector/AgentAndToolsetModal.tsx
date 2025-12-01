@@ -117,11 +117,6 @@ const AgentAndToolsetModalView = ({
   const sliderGridRef = useRef<SliderGridRef>(null);
   const programmaticScroll = useRef(false);
 
-  const currentAppReference =
-    router.route === Routes.AppsEditor
-      ? router.query[AppsEditorQuery.Id]?.toString()
-      : undefined;
-
   const [activeSlide, setActiveSlide] = useState(
     getNumberFromSearchParams(
       searchParams,
@@ -168,6 +163,11 @@ const AgentAndToolsetModalView = ({
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
+  const currentAppReference =
+    router.route === Routes.AppsEditor
+      ? router.query[AppsEditorQuery.Id]?.toString()
+      : undefined;
 
   useLayoutEffect(() => {
     if (footerRef.current) {
@@ -539,6 +539,18 @@ export const AgentAndToolsetModal = ({
     ModelsSelectors.selectAreModelsLoading,
   );
   const isToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
+  const isInstalledToolsetsInitialized = useAppSelector(
+    ToolsetSelectors.selectIsInstalledToolsetsInitialized,
+  );
+
+  const isLoading =
+    isModelsLoading ||
+    isToolsetsLoading ||
+    !isInstalledModelsInitialized ||
+    !isInstalledToolsetsInitialized;
 
   useEffect(() => {
     return () => {
@@ -568,11 +580,7 @@ export const AgentAndToolsetModal = ({
   return (
     <Modal
       portalId="theme-main"
-      state={
-        isModelsLoading || isToolsetsLoading
-          ? ModalState.LOADING
-          : ModalState.OPENED
-      }
+      state={isLoading ? ModalState.LOADING : ModalState.OPENED}
       dataQa="talk-to-agent"
       containerClassName="flex items-center xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}

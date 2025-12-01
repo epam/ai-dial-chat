@@ -297,6 +297,7 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
                   clientSecret: data.clientSecret,
                   authorizationEndpoint: data.authorizationEndpoint,
                   tokenEndpoint: data.tokenEndpoint,
+                  scopesSupported: data.scopes,
                 }),
               },
             },
