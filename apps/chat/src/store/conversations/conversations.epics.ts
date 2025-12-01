@@ -1361,12 +1361,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       }) => {
         const publicationUrl =
           payload.conversation.publicationInfo?.publicationUrl;
-        if (
-          publicationUrl &&
+        const someAttachmentsAreMy =
           payload.message.custom_content?.attachments?.some((attachment) =>
             isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
-          )
-        ) {
+          );
+        if (publicationUrl && someAttachmentsAreMy) {
           return of(
             PublicationActions.updatePublicationConversationAttachmentsAndSendMessage(
               {
