@@ -5,6 +5,7 @@ import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
 import { ToolsetDialogs } from '@/src/components/Common/ToolsetDialogs';
 import { UnshareDialog } from '@/src/components/Common/UnshareDialog';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
+import { DeleteMarketplaceEntityDialog } from '@/src/components/Marketplace/DeleteMarketplaceEntityDialog';
 import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
 
 import { PromptVariablesForApplyDialog } from './ChatInput/PromptVariablesForApplyDialog';
@@ -27,6 +28,7 @@ export function ChatModalsManager() {
       <PublishDialog />
       <AgentDialogs />
       <ToolsetDialogs />
+      <DeleteMarketplaceEntityDialog />
     </>
   );
 }
