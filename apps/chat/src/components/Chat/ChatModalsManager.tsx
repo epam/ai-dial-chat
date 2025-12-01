@@ -1,6 +1,8 @@
+import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { InfoModal } from '@/src/components/Common/InfoModal';
 import { ReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
+import { ToolsetDialogs } from '@/src/components/Common/ToolsetDialogs';
 import { UnshareDialog } from '@/src/components/Common/UnshareDialog';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { PromptModal } from '@/src/components/Promptbar/components/PromptModal';
@@ -23,6 +25,8 @@ export function ChatModalsManager() {
       <PromptModal />
       <SystemDialogs />
       <PublishDialog />
+      <AgentDialogs />
+      <ToolsetDialogs />
     </>
   );
 }

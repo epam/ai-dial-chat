@@ -47,7 +47,6 @@ import { Routes } from '@/src/constants/routes';
 import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import {
   SliderGrid,
@@ -421,8 +420,6 @@ const AgentAndToolsetModalView = ({
           />
         )}
       </div>
-
-      <AgentDialogs />
 
       <div
         ref={footerRef}
