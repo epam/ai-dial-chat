@@ -414,7 +414,9 @@ dialOverlayTest(
       'Open dropdown menu for created app and verify "Shared" option is not available',
       async () => {
         const agentElement =
-          await overlayMarketplaceEntitiesSection.findEntityElement(customAppName);
+          await overlayMarketplaceEntitiesSection.findEntityElement(
+            customAppName,
+          );
         await overlayMarketplaceEntities
           .getEntityElementDotsMenu(agentElement)
           .click();
@@ -467,7 +469,9 @@ dialOverlayTest(
         await overlayNavigationPanel.myWorkspaceButton.click();
         await overlayMarketplacePage.waitForPageLoaded();
         const agentElement =
-          await overlayMarketplaceEntitiesSection.findEntityElement(customAppName);
+          await overlayMarketplaceEntitiesSection.findEntityElement(
+            customAppName,
+          );
         await overlayMarketplaceEntities
           .getEntityElementDotsMenu(agentElement)
           .click();
