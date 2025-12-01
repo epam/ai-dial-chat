@@ -34,7 +34,6 @@ dialTest(
     replaceConfirmationModalFoldersAssertion,
     replaceConfirmationModalConversationsAssertion,
     toastAssertion,
-    toast,
     iconApiHelper,
     baseAssertion,
   }) => {
@@ -413,12 +412,26 @@ dialTest(
     );
 
     await dialTest.step('Continue import', async () => {
-      // Click Continue to proceed with import
-      // Wait for 4 POST requests: Chat1 (Replace) + Chat2, Chat4, Chat7 (Postfix)
-      // Chat3, Chat5, Chat6 are Ignored and don't trigger POST requests
-      await replaceConfirmationModal.clickContinue({
-        expectedPostRequests: 4,
-      });
+      // Wait for requests for: Chat1 (Replace) + Chat2, Chat4, Chat7 (Postfix)
+      // Replace operations use PUT, Postfix operations use POST
+      // Postfix operations append " 1" to the conversation name (URL-encoded)
+      const expectedRequests = new Map<string, string>([
+        [`${chat1.folderId}/${chat1.model.id}__${chat1.name}`, 'PUT'], // Replace triggers PUT
+        [
+          `${chat2.folderId}/${chat2.model.id}__${chat2.name}${encodeURIComponent(' 1')}`,
+          'POST',
+        ], // Postfix triggers POST (creates "Chat2 1")
+        [
+          `${chat4.folderId}/${chat4.model.id}__${chat4.name}${encodeURIComponent(' 1')}`,
+          'POST',
+        ], // Postfix triggers POST (creates "Chat4 1")
+        [
+          `${chat7.folderId}/${chat7.model.id}__${chat7.name}${encodeURIComponent(' 1')}`,
+          'POST',
+        ], // Postfix triggers POST (creates "Chat7 1")
+      ]);
+
+      await replaceConfirmationModal.clickContinue(expectedRequests);
       await dialHomePage.waitForPageLoaded({ waitForAgentInfo: false });
     });
 
@@ -429,7 +442,8 @@ dialTest(
         await toastAssertion.assertToastMessage(
           ExpectedMessages.conversationsImportedSuccessfully,
         );
-        await toast.closeToast();
+        //TODO should be uncommented after the fix of the double toast
+        // await toast.closeToast();
 
         // Verify Folder1 (empty folder) exists
         await folderConversations.getFolderByName(folder1.name).waitFor();

@@ -72,21 +72,25 @@ export class ReplaceConfirmationModal extends BaseElement {
     });
   }
 
-  /** Clicks Continue button and waits for import completion */
-  public async clickContinue({
-    isHttpMethodTriggered = true,
-    expectedPostRequests = 1,
-  }: {
-    isHttpMethodTriggered?: boolean;
-    expectedPostRequests?: number;
-  } = {}) {
-    if (isHttpMethodTriggered) {
+  /**
+   * Clicks Continue button and waits for import completion.
+   * @param expectedRequests - Optional map of partial request paths to HTTP methods.
+   *                          Example: { '/conversations/chat1': 'POST', '/conversations/chat2': 'PUT' }
+   *                          If not provided, the button is clicked without waiting for any requests.
+   */
+  public async clickContinue(expectedRequests?: Map<string, string>) {
+    if (expectedRequests && expectedRequests.size > 0) {
       const responsePromises: Promise<unknown>[] = [];
-      for (let i = 0; i < expectedPostRequests; i++) {
+
+      for (const [partialPath, method] of expectedRequests) {
         responsePromises.push(
-          this.page.waitForResponse((r) => r.request().method() === 'POST'),
+          this.page.waitForResponse(
+            (r) =>
+              r.url().includes(partialPath) && r.request().method() === method,
+          ),
         );
       }
+
       await this.continueButton.click();
       await Promise.all(responsePromises);
     } else {
