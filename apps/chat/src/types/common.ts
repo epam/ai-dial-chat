@@ -142,6 +142,7 @@ export enum PageType {
   Marketplace = 'marketplace',
   ToolsetEditor = 'toolset-editor',
   AppsEditor = 'apps-editor',
+  FileManager = 'file-manager',
 }
 
 export enum ScreenState {

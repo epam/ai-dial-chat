@@ -19,7 +19,6 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
-import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
 import {
@@ -56,7 +55,6 @@ const initEpic: AppEpic = (action$, state$) =>
             featureType: FeatureType.File,
           }),
         ),
-        of(FilesActions.getFiles({ id: getQuickAttachmentsSavingPath() })),
         of(FilesActions.initFinish()),
       ),
     ),

@@ -55,6 +55,12 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
       ];
     case PageType.ToolsetEditor:
       return [of(UIActions.init()), of(ToolsetActions.init())];
+    case PageType.FileManager:
+      return [
+        of(UIActions.init()),
+        of(FilesActions.init()),
+        of(PublicationActions.init()),
+      ];
     case PageType.Chat:
       return [
         of(UIActions.init()),

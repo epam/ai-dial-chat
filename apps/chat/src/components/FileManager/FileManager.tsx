@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   buildFileTree,
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
+import { getFileRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -20,6 +20,7 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileManager, useDialFileManagerTabs } from '@epam/ai-dial-ui-kit';
@@ -40,6 +41,9 @@ export const FileManager: React.FC = () => {
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
   );
+  const initialDataStatus = useAppSelector(
+    SettingsSelectors.selectInitialDataStatus,
+  );
 
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
     my_files: t('My Files'),
@@ -47,18 +51,21 @@ export const FileManager: React.FC = () => {
     organization: t('Organization'),
   });
 
-  const bucketRootId = useMemo(() => {
-    const bucket = BucketService.getBucket();
-    return bucket ? `files/${bucket}` : 'files';
-  }, []);
+  // Get bucket root ID - recalculated on each render after bucket is set
+  const bucketRootId = getFileRootId();
 
   useEffect(() => {
     if (!initialized) {
       dispatch(FilesActions.init());
-      setCurrentPath(bucketRootId);
     }
-    dispatch(FilesActions.getFilesWithFolders({}));
-  }, [dispatch, initialized, bucketRootId]);
+  }, [dispatch, initialized]);
+
+  useEffect(() => {
+    if (initialized && initialDataStatus === UploadStatus.LOADED) {
+      setCurrentPath(bucketRootId);
+      dispatch(FilesActions.getFilesWithFolders({ id: bucketRootId }));
+    }
+  }, [dispatch, initialized, initialDataStatus, bucketRootId]);
 
   useEffect(() => {
     if (currentPath && currentPath !== bucketRootId) {
@@ -133,9 +140,9 @@ export const FileManager: React.FC = () => {
     return paths;
   };
 
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
-    () => new Set(getParentPaths(bucketRootId)),
-  );
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(() => {
+    return new Set(getParentPaths(getFileRootId()));
+  });
 
   useEffect(() => {
     setExpandedPaths((prev) => {
