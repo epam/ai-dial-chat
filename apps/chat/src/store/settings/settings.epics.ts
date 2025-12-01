@@ -58,8 +58,14 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
     case PageType.FileManager:
       return [
         of(UIActions.init()),
+        of(ModelsActions.init()),
+        of(ApplicationActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
+        of(ConversationsActions.initShare()),
+        of(MarketplaceActions.init()),
+        of(ToolsetActions.init()),
       ];
     case PageType.Chat:
       return [
