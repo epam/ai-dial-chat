@@ -2220,40 +2220,41 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
         state,
       ).pipe(
         switchMap(({ updatedPublication, newItemsToSelect }) => {
+          const newSendMessagePayload = {
+            ...sendMessagePayload,
+            message: {
+              ...sendMessagePayload.message,
+              custom_content: {
+                ...sendMessagePayload.message.custom_content,
+                attachments:
+                  sendMessagePayload.message.custom_content?.attachments?.map(
+                    (attachment) => {
+                      const attachmentUrl = ApiUtils.decodeApiUrl(
+                        attachment.url ?? '',
+                      );
+                      const addedResource = updatedPublication.resources.find(
+                        ({ sourceUrl }) => sourceUrl === attachmentUrl,
+                      );
+
+                      if (
+                        !isMyEntity({ id: attachmentUrl }) ||
+                        !addedResource
+                      ) {
+                        return attachment;
+                      }
+
+                      return {
+                        ...attachment,
+                        url: ApiUtils.encodeApiUrl(addedResource.reviewUrl),
+                      };
+                    },
+                  ),
+              },
+            },
+          };
+
           return concat(
-            of(
-              ConversationsActions.sendMessage({
-                ...sendMessagePayload,
-                message: {
-                  ...sendMessagePayload.message,
-                  custom_content: {
-                    ...sendMessagePayload.message.custom_content,
-                    attachments:
-                      sendMessagePayload.message.custom_content?.attachments?.map(
-                        (attachment) => {
-                          const addedResource =
-                            updatedPublication.resources.find(
-                              (resource) =>
-                                resource.sourceUrl === attachment.url,
-                            );
-
-                          if (
-                            !isMyEntity({ id: attachment.url ?? '' }) ||
-                            !addedResource
-                          ) {
-                            return attachment;
-                          }
-
-                          return {
-                            ...attachment,
-                            url: addedResource.reviewUrl,
-                          };
-                        },
-                      ),
-                  },
-                },
-              }),
-            ),
+            of(ConversationsActions.sendMessage(newSendMessagePayload)),
             of(PublicationActions.uploadPublication({ url: publicationUrl })),
             of(
               PublicationActions.setPublicationItems({
