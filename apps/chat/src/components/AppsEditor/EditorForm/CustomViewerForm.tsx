@@ -20,7 +20,10 @@ import { Routes } from '@/src/constants/routes';
 
 import { IframeRenderer } from '@/src/components/IframeRenderer';
 
-import { VisualizerConnectorRequest } from '@epam/ai-dial-shared';
+import {
+  VisualizerConnectorEvents,
+  VisualizerConnectorRequest,
+} from '@epam/ai-dial-shared';
 
 export const CustomViewerForm = () => {
   const providerId = useAppSelector(SettingsSelectors.selectProviderId);
@@ -54,14 +57,21 @@ export const CustomViewerForm = () => {
     (event: MessageEvent<VisualizerConnectorRequest>) => {
       if (event.data?.type?.split('/')[0] !== title) return;
 
-      if (event.data.type === `${title}/UPDATED_APPLICATION_SUCCESS`) {
+      if (
+        event.data.type ===
+        `${title}/${VisualizerConnectorEvents.updatedApplicationSuccess}`
+      ) {
         const { application } = event.data.payload as unknown as {
           application?: ApiApplicationResponse;
         };
         if (application && applicationData) {
           const convertedApplication = convertApplicationFromApi(application);
 
-          dispatch(ApplicationActions.updateSuccess(convertedApplication));
+          dispatch(
+            ApplicationActions.updateSuccess({
+              appDetails: convertedApplication,
+            }),
+          );
           dispatch(
             ModelsActions.updateModel({
               model: convertedApplication,

@@ -378,3 +378,13 @@ export const getEntityBaseId = (id: string): string => {
   }
   return id.substring(0, lastColonIndex);
 };
+
+export const getSafeRedirectUrl = (url: string) => {
+  try {
+    const safeUrl = new URL(url, window.location.origin);
+    if (window.location.origin === safeUrl.origin) return safeUrl;
+  } catch {
+    console.error('Invalid url');
+  }
+  return undefined;
+};

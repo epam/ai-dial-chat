@@ -5,7 +5,6 @@ import {
   MouseEventHandler,
   memo,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -92,9 +91,9 @@ export const PromptComponent = memo(
     const chosenPromptIds = useAppSelector(
       PromptsSelectors.selectSelectedItems,
     );
-    const deletingPrompt = useAppSelector(
-      PromptsSelectors.selectDeletingPrompt,
-    );
+    const deletingPromptId = useAppSelector(
+      PromptsSelectors.selectDeletingPromptId,
+    ) as string;
     const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
     const isConversationBlocksInput = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
@@ -233,7 +232,7 @@ export const PromptComponent = memo(
     }, [dispatch, prompt.id, prompt.sharedWithMe]);
 
     const isHighlighted = !isSelectMode
-      ? !!deletingPrompt || isSelected || isContextMenu
+      ? !!deletingPromptId || isSelected || isContextMenu
       : isChosen;
 
     const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -249,18 +248,6 @@ export const PromptComponent = memo(
       isConversationBlocksInput ||
       !areModelsInstalled ||
       !selectedConversations.length;
-
-    useEffect(() => {
-      if (isSelectMode) {
-        dispatch(PromptsActions.setDeletingPrompt());
-      }
-    }, [dispatch, isSelectMode]);
-
-    useEffect(() => {
-      if (screenState !== ScreenState.SM) {
-        dispatch(PromptsActions.setMoveToPrompt());
-      }
-    }, [dispatch, screenState]);
 
     const handleToggle = useCallback(() => {
       PromptsActions.setChosenPrompts({ ids: [prompt.id] });
@@ -288,7 +275,6 @@ export const PromptComponent = memo(
             }
 
             if (isSelectMode && !isExternal) {
-              dispatch(PromptsActions.setDeletingPrompt());
               dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
             }
           }}
@@ -301,7 +287,7 @@ export const PromptComponent = memo(
         >
           <div
             className={classNames('flex size-full items-center gap-2', {
-              'pr-6 xl:pr-0': !isSelectMode && !deletingPrompt && isSelected,
+              'pr-6 xl:pr-0': !isSelectMode && !deletingPromptId && isSelected,
             })}
             draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
             onDragStart={(e) => handleDragStart(e, prompt)}
@@ -380,7 +366,7 @@ export const PromptComponent = memo(
               </Tooltip>
             </div>
           </div>
-          {!isSelectMode && !deletingPrompt && (
+          {!isSelectMode && !deletingPromptId && (
             <div
               ref={refs.setFloating}
               {...getFloatingProps()}

@@ -137,7 +137,7 @@ dialTest(
           ExpectedConstants.replayAsIsLabel,
         );
         await talkToAgentDialogAssertion.assertElementText(
-          talkToAgents.getAgentDescription(ExpectedConstants.replayAsIsLabel),
+          talkToAgents.getEntityDescription(ExpectedConstants.replayAsIsLabel),
           ExpectedConstants.replayAsIsDescr,
         );
       },
@@ -704,7 +704,6 @@ dialTest(
     sendMessage,
     sendMessageAssertion,
     talkToAgents,
-    marketplaceAgentsAssertion,
   }) => {
     setTestIds('EPMRTC-1328', 'EPMRTC-2839');
     let notAllowedModelConversation: Conversation;
@@ -756,18 +755,18 @@ dialTest(
         await talkToAgentDialogAssertion.assertAgentIsSelected(
           ExpectedConstants.replayAsIsLabel,
         );
-        const actualAgentNames = await talkToAgents.getAgentNames();
+        const actualAgentNames = await talkToAgents.getEntityNames();
         talkToAgentDialogAssertion.assertValue(
           actualAgentNames[0],
           ExpectedConstants.replayAsIsLabel,
         );
-        const replayAsIsModelElement = talkToAgents.getAgent(
+        const replayAsIsModelElement = talkToAgents.getEntity(
           ExpectedConstants.replayAsIsLabel,
         );
-        const replayAsIsDescrElement = talkToAgents.getAgentDescription(
+        const replayAsIsDescrElement = talkToAgents.getEntityDescription(
           replayAsIsModelElement,
         );
-        await marketplaceAgentsAssertion.assertElementText(
+        await talkToAgentDialogAssertion.assertElementText(
           replayAsIsDescrElement,
           ExpectedConstants.replayAsIsDescr,
         );

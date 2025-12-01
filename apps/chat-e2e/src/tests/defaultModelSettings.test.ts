@@ -17,7 +17,6 @@ import { expect } from '@playwright/test';
 let defaultModel: DialAIEntityModel;
 let nonDefaultModel: DialAIEntityModel;
 let recentModelIds: string[];
-let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultAgent()!;
@@ -25,7 +24,6 @@ dialTest.beforeAll(async () => {
     ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
   );
   recentModelIds = ModelsUtil.getRecentModelIds();
-  allEntities = ModelsUtil.getOpenAIEntities();
 });
 
 dialTest(
@@ -46,13 +44,30 @@ dialTest(
     talkToAgents,
     baseAssertion,
     localStorageManager,
+    fileApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
+    let modelWithoutAttachments: DialAIEntityModel;
 
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
+        modelWithoutAttachments = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModelsWithoutAttachment().filter(
+            (m) =>
+              m.features?.temperature !== undefined &&
+              m.features.temperature === true &&
+              m.features.systemPrompt !== undefined &&
+              m.features.systemPrompt === true,
+          ),
+        );
+        await fileApiHelper.updateInstalledDeployments([
+          modelWithoutAttachments,
+        ]);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          modelWithoutAttachments,
+        );
         await localStorageManager.useLastConversationSettingsOnce();
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
@@ -60,7 +75,7 @@ dialTest(
         await chat.changeAgentButton.click();
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(
-          defaultModel.name,
+          modelWithoutAttachments.name,
         );
       },
     );
@@ -68,37 +83,26 @@ dialTest(
     await dialTest.step(
       'Verify the list of recent entities and icons are displayed and valid',
       async () => {
-        const expectedDefaultRecentEntities = [];
-        for (const entity of recentModelIds) {
-          expectedDefaultRecentEntities.push(
-            allEntities.find((e) => e.id === entity)!.name,
-          );
-        }
-
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         expect
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
-          .toEqual(expectedDefaultRecentEntities);
+          .toEqual([modelWithoutAttachments.name]);
 
-        const recentAgentsIcons = await talkToAgents.getAgentsIcons();
+        const recentAgentsIcons = await talkToAgents.getEntityIcons();
         expect
           .soft(
             recentAgentsIcons.length,
             ExpectedMessages.entitiesIconsCountIsValid,
           )
-          .toBe(recentModelIds.length);
+          .toBe(1);
 
-        for (const recentEntityId of recentModelIds) {
-          const entity = ModelsUtil.getOpenAIEntity(recentEntityId)!;
-          const actualRecentEntity = recentAgentsIcons.find(
-            (e) => e.entityId === entity.id,
-          )!;
-          const expectedEntityIcon = iconApiHelper.getEntityIcon(entity);
-          await baseAssertion.assertEntityIcon(
-            actualRecentEntity.iconLocator,
-            expectedEntityIcon,
-          );
-        }
+        const expectedEntityIcon = iconApiHelper.getEntityIcon(
+          modelWithoutAttachments,
+        );
+        await baseAssertion.assertEntityIcon(
+          recentAgentsIcons[0].iconLocator,
+          expectedEntityIcon,
+        );
         await talkToAgentDialog.cancelButton.click();
       },
     );
@@ -272,7 +276,7 @@ dialTest(
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(nonDefaultModel);
 
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         expect
           .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
           .toBe(nonDefaultModel.name);
@@ -405,7 +409,7 @@ dialTest(
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(configApp);
 
-        const recentTalkTo = await talkToAgents.getAgentNames();
+        const recentTalkTo = await talkToAgents.getEntityNames();
         baseAssertion.assertValue(recentTalkTo[0], appName);
         baseAssertion.assertValue(
           recentTalkTo[1],
@@ -423,7 +427,7 @@ dialTest.skip(
     dialHomePage,
     marketplaceContainer,
     marketplaceFilter,
-    marketplaceAgents,
+    marketplaceEntities,
     marketplaceHeader,
     talkToAgentDialog,
     chat,
@@ -456,7 +460,7 @@ dialTest.skip(
       async () => {
         await marketplaceHeader.searchInput.fillInInput(searchTerm);
         const entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
 
         const configModels = await modelApiHelper.getModels();
         const matchedModels = configModels.filter(
@@ -487,19 +491,21 @@ dialTest.skip(
       async () => {
         await marketplaceFilter.checkTypeFilterOption(Types.models);
         let entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(expectedMatchedModelsCount);
 
         await marketplaceFilter.checkTypeFilterOption(Types.assistants);
-        entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
+        entitiesCount =
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(expectedMatchedModelsCount);
 
         await marketplaceFilter.checkTypeFilterOption(Types.applications);
-        entitiesCount = await marketplaceAgents.agentNames.getElementsCount();
+        entitiesCount =
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
@@ -511,7 +517,7 @@ dialTest.skip(
       async () => {
         await marketplaceHeader.searchInput.fillInInput('');
         const entitiesCount =
-          await marketplaceAgents.agentNames.getElementsCount();
+          await marketplaceEntities.entityNames.getElementsCount();
         expect
           .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(

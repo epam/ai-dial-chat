@@ -14,12 +14,12 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
   }
 
   public async assertFolderState(
-    folder: TreeEntity,
+    folder: TreeEntity | string,
     expectedState: ElementState,
   ) {
     const folderLocator = this.folder.getFolderByName(
-      folder.name,
-      folder.index,
+      typeof folder === 'string' ? folder : folder.name,
+      typeof folder === 'string' ? undefined : folder.index,
     );
     await this.assertElementState(folderLocator, expectedState);
   }

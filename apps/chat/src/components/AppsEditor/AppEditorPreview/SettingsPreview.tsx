@@ -22,6 +22,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ConversationsSelectors,
+  MarketplaceSelectors,
   ModelsSelectors,
 } from '@/src/store/selectors';
 
@@ -67,6 +68,9 @@ const ChatPreview = () => {
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
+  const showMarketplaceLoader = useAppSelector(
+    MarketplaceSelectors.selectShowLoader,
+  );
 
   const applicationId = appDetails?.id;
   const modelFromState = appReference ? modelsMap[appReference] : null;
@@ -103,7 +107,7 @@ const ChatPreview = () => {
       className="relative flex size-full min-w-0 grow flex-col"
       data-qa="preview-body"
     >
-      {appLoading === UploadStatus.LOADING && (
+      {appLoading === UploadStatus.LOADING && !showMarketplaceLoader && (
         <div className="absolute flex size-full items-center justify-center bg-layer-2">
           <Spinner size={30} />
         </div>

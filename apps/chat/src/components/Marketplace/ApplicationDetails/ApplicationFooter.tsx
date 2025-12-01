@@ -32,8 +32,9 @@ import { ApplicationSelectors, AuthSelectors } from '@/src/store/selectors';
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
-import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
+import { ApplicationDetailsFooterProps } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -47,21 +48,13 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   }
 };
 
-interface Props {
-  entity: DialAIEntityModel;
-  allVersions: DialAIEntityModel[];
-  onChangeVersion: (entity: DialAIEntityModel) => void;
-  onUseEntity: () => void;
-  onBookmarkClick: (entity: DialAIEntityModel) => void;
-}
-
 export const ApplicationDetailsFooter = ({
   entity,
   allVersions,
   onChangeVersion,
   onUseEntity,
   onBookmarkClick,
-}: Props) => {
+}: ApplicationDetailsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
@@ -112,7 +105,7 @@ export const ApplicationDetailsFooter = ({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <AgentContextMenu
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}
@@ -131,12 +124,14 @@ export const ApplicationDetailsFooter = ({
               ),
             )
           )}
-          <AgentBookmark
-            entity={entity}
-            size={24}
-            className="icon-button group/bookmark"
-            onBookmarkClick={onBookmarkClick}
-          />
+          {onBookmarkClick && (
+            <MarketplaceEntityBookmark
+              entity={entity}
+              size={24}
+              className="icon-button group/bookmark"
+              onBookmarkClick={onBookmarkClick}
+            />
+          )}
         </div>
         <div className="flex w-full min-w-0 items-center justify-end gap-4">
           <ModelVersionSelect

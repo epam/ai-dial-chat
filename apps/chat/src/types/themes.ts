@@ -11,10 +11,9 @@ export interface Theme {
   id: string;
 }
 
+export type ThemesImages = Record<string, string>;
+
 export interface ThemesConfig {
   themes: Theme[];
-  images: {
-    'default-model': string;
-    favicon: string;
-  };
+  images: ThemesImages;
 }

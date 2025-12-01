@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { extractNameFromEmail } from '@/src/utils/app/common';
 import {
   isConversationInfoEntity,
   isLoadedConversationEntity,
@@ -19,18 +20,27 @@ import {
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
-import { constructPath, splitEntityId } from '@/src/utils/app/shared-utils';
+import {
+  constructPath,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { BackendResourceType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
-import { PublicationStatus } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationModel,
+  PublicationStatus,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  AuthSelectors,
   ConversationsSelectors,
   PromptsSelectors,
   PublicationSelectors,
@@ -39,25 +49,17 @@ import {
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { Modal } from '@/src/components/Common/Modal';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-import { PublicationHandler } from './PublicationHandler/PublicationHandler';
+import { CreatePublicationHandler } from './PublicationHandler/CreatePublicationHandler';
 
-import {
-  Conversation,
-  PublishActions,
-  ShareEntity,
-} from '@epam/ai-dial-shared';
+import { Conversation, PublishActions } from '@epam/ai-dial-shared';
 import compact from 'lodash-es/compact';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import flatMapDeep from 'lodash-es/flatMapDeep';
 
 interface PublishDialogContainerProps {
-  entity: ShareEntity & { iconUrl?: string };
-  action: PublishActions;
+  publicationModel: PublicationModel;
   resourceType: BackendResourceType;
-  publishCredentials: boolean;
-  isFolder: boolean;
   filteredConversationFiles: DialFile[];
 }
 
@@ -93,22 +95,21 @@ const transformFoldersFilesIds = (
 };
 
 const PublishDialogContainer = ({
-  entity,
-  action,
+  publicationModel,
   resourceType,
-  publishCredentials,
-  isFolder,
   filteredConversationFiles,
 }: PublishDialogContainerProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
+  const { entity, isFolder, action, publishCredentials } = publicationModel;
   const memoizedEntityArray = useMemo(() => [entity], [entity]);
 
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
+  const userName = useAppSelector(AuthSelectors.selectUserEmail);
   const entities = useAppSelector((state) => {
     if (!isFolder) return memoizedEntityArray;
 
@@ -151,7 +152,7 @@ const PublishDialogContainer = ({
     t,
   ]);
 
-  const publication = useMemo(() => {
+  const publication: Publication = useMemo(() => {
     const baseResources = filteredEntities.map(({ id }) => {
       const url = isFolder
         ? constructPath(
@@ -168,7 +169,7 @@ const PublishDialogContainer = ({
           PUBLIC_URL_PREFIX,
         ),
         reviewUrl: url,
-        publishCredentials,
+        publishCredentials: publishCredentials ?? false,
       };
     });
 
@@ -200,7 +201,11 @@ const PublishDialogContainer = ({
           });
 
     const iconResource = [];
-    if (entity.iconUrl && action !== PublishActions.DELETE) {
+    if (
+      entity.iconUrl &&
+      action !== PublishActions.DELETE &&
+      isMyEntity({ id: entity.iconUrl })
+    ) {
       const decodedIconUrl = ApiUtils.decodeApiUrl(entity.iconUrl);
       const targetIconUrl = transformIdToRootEntityId(decodedIconUrl);
 
@@ -232,6 +237,7 @@ const PublishDialogContainer = ({
       resourceTypes,
       createdAt: entity.createdAt ?? 0,
       publicationStatus: PublicationStatus.PENDING,
+      displayAuthor: extractNameFromEmail(userName),
     };
   }, [
     filteredEntities,
@@ -241,8 +247,9 @@ const PublishDialogContainer = ({
     entity.createdAt,
     action,
     filteredConversationFiles,
-    isFolder,
     resourceType,
+    userName,
+    isFolder,
     publishCredentials,
   ]);
 
@@ -257,31 +264,41 @@ const PublishDialogContainer = ({
     }
   }, [dispatch, publication.resources, publishCredentials]);
 
-  return <PublicationHandler publication={publication} />;
+  return (
+    <CreatePublicationHandler
+      publication={publication}
+      publicationModel={publicationModel}
+    />
+  );
 };
 
-const PublishDialogView = () => {
+interface PublishDialogViewProps {
+  publicationModel: PublicationModel;
+}
+
+const PublishDialogView = ({ publicationModel }: PublishDialogViewProps) => {
   const dispatch = useAppDispatch();
 
-  const { entity, action, isFolder, publishCredentials } = useAppSelector(
-    PublicationSelectors.selectPublishModel,
-  )!;
   const conversationFiles = useAppSelector((state) =>
-    ConversationsSelectors.getAttachments(state, entity.id, NotReplayFilter),
+    ConversationsSelectors.getAttachments(
+      state,
+      publicationModel.entity.id,
+      NotReplayFilter,
+    ),
   );
 
   const filteredConversationFiles = useMemo(() => {
-    return action === PublishActions.DELETE
+    return publicationModel.action === PublishActions.DELETE
       ? conversationFiles.filter((file) => isEntityIdPublic(file))
       : conversationFiles;
-  }, [conversationFiles, action]);
+  }, [conversationFiles, publicationModel.action]);
 
   const handleClose = useCallback(() => {
     dispatch(PublicationActions.setPublishModel());
   }, [dispatch]);
 
   const resourceType = EnumMapper.getBackendResourceTypeByApiKey(
-    splitEntityId(entity.id).apiKey,
+    splitEntityId(publicationModel.entity.id).apiKey,
   );
 
   return (
@@ -293,17 +310,20 @@ const PublishDialogView = () => {
       containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1000px]"
     >
       <PublishDialogContainer
-        entity={entity}
-        action={action}
+        publicationModel={publicationModel}
         resourceType={resourceType}
-        publishCredentials={publishCredentials ?? false}
-        isFolder={!!isFolder}
         filteredConversationFiles={filteredConversationFiles}
       />
     </Modal>
   );
 };
 
-export const PublishDialog = withRenderWhen(
-  PublicationSelectors.selectPublishModel,
-)(PublishDialogView);
+export function PublishDialog() {
+  const publicationModel = useAppSelector(
+    PublicationSelectors.selectPublishModel,
+  );
+
+  if (!publicationModel) return null;
+
+  return <PublishDialogView publicationModel={publicationModel} />;
+}

@@ -22,10 +22,12 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/selectors';
+import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface DocumentFieldProps {
   url?: string;
@@ -79,7 +81,11 @@ const ReviewQuickApp2SectionView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const isCodeInterpreterEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
+  );
 
+  // TODO: when uploading application also upload toolsets from config to get full data
   const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
       config.tool_sets?.reduce<{
@@ -128,7 +134,7 @@ const ReviewQuickApp2SectionView = ({
 
   return (
     <>
-      {isCodeInterpreter && (
+      {isCodeInterpreterEnabled && isCodeInterpreter && (
         <div className="flex gap-4">
           <span className="w-[122px] text-secondary">
             {t('Code Interpreter: ')}

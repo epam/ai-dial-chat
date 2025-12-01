@@ -4,17 +4,14 @@ import {
   IconEdit,
   IconListDetails,
   IconRefresh,
-  IconThumbDown,
-  IconThumbUp,
   IconTrashX,
 } from '@tabler/icons-react';
-import { ButtonHTMLAttributes, FC } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getMessageCustomContent } from '@/src/utils/server/chat';
+import { getMessageCustomContent } from '@/src/utils/app/conversation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -25,32 +22,19 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { Button } from '@/src/components/Common/Button';
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
+import { MessageLikes } from './MessageLikes';
 
-import { Feature, LikeState, Message, Role } from '@epam/ai-dial-shared';
-
-const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
-  children,
-  className,
-  type = 'button',
-  ...props
-}) => {
-  return (
-    <button
-      type={type}
-      className={classNames(
-        '[&:not(:disabled)]:hover:text-accent-primary',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
+import {
+  Feature,
+  Message,
+  Role,
+  onLikeMessageHandler,
+} from '@epam/ai-dial-shared';
 
 interface MessageUserButtonsProps {
   realMessageIndex: number;
@@ -147,7 +131,7 @@ interface MessageAssistantButtonsProps {
   isLikesEnabled: boolean;
   message: Message;
   copyOnClick: () => void;
-  onLike: (likeStatus: LikeState) => void;
+  onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing?: () => void;
 }
@@ -171,6 +155,8 @@ export const MessageAssistantButtons = ({
       realMessageIndex,
     ),
   );
+
+  const hasMessageContent = !!message.content.trim();
 
   return (
     <div
@@ -198,7 +184,7 @@ export const MessageAssistantButtons = ({
           </Button>
         </Tooltip>
       )}
-      {message.content.trim() &&
+      {hasMessageContent &&
         (messageCopied ? (
           <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
             <IconCheck size={18} className="text-secondary" />
@@ -227,60 +213,10 @@ export const MessageAssistantButtons = ({
         </Tooltip>
       )}
       {isLikesEnabled &&
-        (message.content.trim() || !!getMessageCustomContent(message)) && (
+        onLike &&
+        (hasMessageContent || !!getMessageCustomContent(message)) && (
           <div className="flex flex-row gap-2">
-            {message.like !== LikeState.Disliked && (
-              <Tooltip
-                placement="top"
-                isTriggerClickable={message.like !== LikeState.Liked}
-                tooltip={
-                  message.like !== LikeState.Liked ? t('Like') : t('Liked')
-                }
-              >
-                <Button
-                  onClick={() => {
-                    if (message.like !== LikeState.NoState) {
-                      onLike(LikeState.Liked);
-                    }
-                  }}
-                  className={
-                    message.like !== LikeState.Liked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
-                  }
-                  disabled={message.like === LikeState.Liked}
-                  data-qa="like"
-                >
-                  <IconThumbUp size={18} />
-                </Button>
-              </Tooltip>
-            )}
-            {message.like !== LikeState.Liked && (
-              <Tooltip
-                placement="top"
-                isTriggerClickable={message.like !== LikeState.Disliked}
-                tooltip={t(
-                  message.like !== LikeState.Disliked ? 'Dislike' : 'Disliked',
-                )}
-              >
-                <Button
-                  onClick={() => {
-                    if (message.like !== LikeState.NoState) {
-                      onLike(LikeState.Disliked);
-                    }
-                  }}
-                  className={
-                    message.like !== LikeState.Disliked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
-                  }
-                  disabled={message.like === LikeState.Disliked}
-                  data-qa="dislike"
-                >
-                  <IconThumbDown size={18} />
-                </Button>
-              </Tooltip>
-            )}
+            <MessageLikes likeStatus={message.like} onLike={onLike} />
           </div>
         )}
     </div>
@@ -298,7 +234,7 @@ interface MessageMobileButtonsProps {
   isLikesEnabled: boolean;
   isMessageStreaming: boolean;
   isConversationInvalid: boolean;
-  onLike: (likeStatus: LikeState) => void;
+  onLike: onLikeMessageHandler;
   onDelete?: () => void;
   onToggleEditing: (value: boolean) => void;
   onToggleTemplatesEditing: () => void;
@@ -344,6 +280,8 @@ export const MessageMobileButtons = ({
     ),
   );
 
+  const hasMessageContent = !!message.content.trim();
+
   if (isAssistant) {
     return (
       !(isMessageStreaming && isLastMessage) &&
@@ -361,7 +299,7 @@ export const MessageMobileButtons = ({
               }
             />
           ))}
-          {message.content.trim() &&
+          {hasMessageContent &&
             (messageCopied ? (
               <MenuItem
                 item={
@@ -409,69 +347,12 @@ export const MessageMobileButtons = ({
             />
           )}
           {isLikesEnabled &&
-            (message.content.trim() || !!getMessageCustomContent(message)) && (
-              <>
-                {message.like !== LikeState.Disliked && (
-                  <MenuItem
-                    className={classNames(
-                      message.like !== LikeState.Liked &&
-                        'hover:bg-accent-primary-alpha',
-                    )}
-                    item={
-                      <div className="flex items-center gap-3">
-                        <IconThumbUp className="text-secondary" size={18} />
-                        <p
-                          className={classNames(
-                            message.like === LikeState.Liked &&
-                              'text-secondary',
-                          )}
-                        >
-                          {message.like === LikeState.Liked
-                            ? t('Liked')
-                            : t('Like')}
-                        </p>
-                      </div>
-                    }
-                    disabled={message.like === LikeState.Liked}
-                    data-qa="like"
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Liked);
-                      }
-                    }}
-                  />
-                )}
-                {message.like !== LikeState.Liked && (
-                  <MenuItem
-                    disabled={message.like === LikeState.Disliked}
-                    className={classNames(
-                      message.like !== LikeState.Disliked &&
-                        'hover:bg-accent-primary-alpha',
-                    )}
-                    data-qa="dislike"
-                    item={
-                      <div className="flex items-center gap-3">
-                        <IconThumbDown className="text-secondary" size={18} />
-                        <p
-                          className={classNames(
-                            message.like === LikeState.Disliked &&
-                              'text-secondary',
-                          )}
-                        >
-                          {message.like === LikeState.Disliked
-                            ? t('Disliked')
-                            : t('Dislike')}
-                        </p>
-                      </div>
-                    }
-                    onClick={() => {
-                      if (message.like !== LikeState.NoState) {
-                        onLike(LikeState.Disliked);
-                      }
-                    }}
-                  />
-                )}
-              </>
+            (hasMessageContent || !!getMessageCustomContent(message)) && (
+              <MessageLikes
+                likeStatus={message.like}
+                onLike={onLike}
+                isMobile
+              />
             )}
         </>
       )

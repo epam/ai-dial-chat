@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 
 import { MarketplaceActions } from '@/src/store/actions';
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import throttle from 'lodash/throttle';
 
@@ -12,6 +13,10 @@ export const useMarketplaceBannerVisibility = (
 ) => {
   const dispatch = useAppDispatch();
   const prevDataScrollRef = useRef(0);
+
+  const filters = useAppSelector(
+    MarketplaceSelectors.selectSelectedAgentsFilters,
+  );
 
   useEffect(() => {
     if (!dataContainer) return;
@@ -55,7 +60,7 @@ export const useMarketplaceBannerVisibility = (
 
     if (dataContainer) {
       dataContainer.addEventListener('scroll', handleScroll);
-      resizeObserver.observe(document.body);
+      resizeObserver.observe(dataContainer);
     }
 
     return () => {
@@ -66,4 +71,16 @@ export const useMarketplaceBannerVisibility = (
       dispatch(MarketplaceActions.setIsBannerVisible({ isVisible: true }));
     };
   }, [dataContainer, dispatch]);
+
+  useEffect(() => {
+    if (!dataContainer) return;
+
+    if (dataContainer.scrollTop < BANNER_SCROLL_THRESHOLD) {
+      dispatch(
+        MarketplaceActions.setIsBannerVisible({
+          isVisible: true,
+        }),
+      );
+    }
+  }, [filters, dataContainer, dispatch]);
 };

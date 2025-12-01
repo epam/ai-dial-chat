@@ -38,8 +38,8 @@ const initialState: PromptsState = {
   chosenPromptIds: [],
   chosenEmptyFoldersIds: [],
 
-  deletingPrompt: undefined,
-  moveToPrompt: undefined,
+  deletingPromptId: undefined,
+  moveToPromptId: undefined,
 };
 
 export const promptsSlice = createSlice({
@@ -149,7 +149,12 @@ export const promptsSlice = createSlice({
     },
     updatePromptSuccess: (
       state,
-      { payload }: PayloadAction<{ prompt: Partial<Prompt>; id: string }>,
+      {
+        payload,
+      }: PayloadAction<{
+        prompt: Partial<Prompt>;
+        id: string;
+      }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
@@ -161,8 +166,10 @@ export const promptsSlice = createSlice({
 
         return prompt;
       });
-      if (state.isPromptModalOpen) {
-        const isPromptSelected = payload.id === state.selectedPromptId;
+
+      const isPromptSelected = payload.id === state.selectedPromptId;
+
+      if (state.isPromptModalOpen && isPromptSelected) {
         state.selectedPromptId =
           isPromptSelected && payload.prompt.id
             ? payload.prompt.id
@@ -432,17 +439,17 @@ export const promptsSlice = createSlice({
         isApproveRequiredResource?: boolean;
       }>,
     ) => state,
-    setDeletingPrompt: (
+    setDeletingPromptId: (
       state,
-      { payload }: PayloadAction<PromptInfo | undefined>,
+      { payload }: PayloadAction<string | undefined>,
     ) => {
-      state.deletingPrompt = payload;
+      state.deletingPromptId = payload;
     },
-    setMoveToPrompt: (
+    setMoveToPromptId: (
       state,
-      { payload }: PayloadAction<PromptInfo | undefined>,
+      { payload }: PayloadAction<string | undefined>,
     ) => {
-      state.moveToPrompt = payload;
+      state.moveToPromptId = payload;
     },
   },
 });

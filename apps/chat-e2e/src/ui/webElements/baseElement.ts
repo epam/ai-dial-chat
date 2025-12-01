@@ -140,6 +140,10 @@ export class BaseElement {
     await this.rootLocator.scrollIntoViewIfNeeded();
   }
 
+  async getElementInputValue() {
+    return this.rootLocator.inputValue();
+  }
+
   async setElementInputFiles(filesDirectory: string, ...filenames: string[]) {
     await this.rootLocator.setInputFiles(
       filenames.map((filename) => path.join(filesDirectory, filename)),
@@ -228,8 +232,8 @@ export class BaseElement {
     return allIcons;
   }
 
-  public getElementIcon(elementLocator: Locator) {
-    const iconLocator = elementLocator
+  public getElementIcon(elementLocator: Locator | BaseElement) {
+    const iconLocator = BaseElement.getElementLocator(elementLocator)
       .locator(ChatSelectors.iconSelector)
       .first();
     return iconLocator.locator(`${Tags.img}:visible`);

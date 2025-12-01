@@ -1,6 +1,5 @@
 import { Children, ReactNode, memo } from 'react';
-import { Components } from 'react-markdown';
-import { PluggableList } from 'react-markdown/lib/react-markdown';
+import { Components, Options } from 'react-markdown';
 
 import classnames from 'classnames';
 
@@ -27,7 +26,9 @@ import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
-import { isObject, partition } from 'lodash-es';
+import isObject from 'lodash-es/isObject';
+import partition from 'lodash-es/partition';
+import rehypeExternalLinks from 'rehype-external-links';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -52,32 +53,37 @@ const getMDComponents = (
   isInner: boolean,
 ): Components => {
   return {
-    code({ inline, className, children, ...props }) {
-      if (children.length) {
-        if (children[0] == modelCursorSign) {
+    code({ className, children, node, ...props }) {
+      let childrenAsString = String(children);
+
+      if (childrenAsString?.length) {
+        if (childrenAsString[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
 
-        children[0] = (children[0] as string).replace(
+        childrenAsString = `${childrenAsString[0].replace(
           modelCursorSignWithBackquote,
           modelCursorSign,
-        );
+        )}${childrenAsString.slice(1)}`;
       }
 
       const match = /language-(\w+)/.exec(className || '');
+      const isPlaintextCodeBlock =
+        node?.tagName === 'code' &&
+        node.position?.end.line !== node.position?.start.line;
 
-      return !inline ? (
+      return (match && match[1]) || isPlaintextCodeBlock ? (
         <CodeBlock
           key={Math.random()}
           language={(match && match[1]) || ''}
-          value={String(children).replace(/\n$/, '')}
+          value={childrenAsString.replace(/\n$/, '')}
           isInner={isInner}
           isLastMessageStreaming={isShowResponseLoader}
           {...props}
         />
       ) : (
         <code className={className} {...props}>
-          {children}
+          {childrenAsString}
         </code>
       );
     },
@@ -101,14 +107,15 @@ const getMDComponents = (
       );
     },
     p({ children, className }) {
-      if (children.length) {
+      if (typeof children === 'string' && children?.length) {
         if (children[0] == modelCursorSign) {
           return <BlinkingCursor isShowing={isShowResponseLoader} />;
         }
+        if (children?.[0] == modelCursorSignWithBackquote) {
+          children = `${replaceCursor(children[0])}${children.slice(1)}`;
+        }
       }
-      if (children[0] == modelCursorSignWithBackquote) {
-        children[0] = replaceCursor(children[0] as string);
-      }
+
       return (
         <p className={classnames(className, { 'text-sm': isInner })}>
           {children}
@@ -159,11 +166,11 @@ const getMDComponents = (
   };
 };
 
-const remarkPlugins: PluggableList = [
+const remarkPlugins: Options['remarkPlugins'] = [
   remarkGfm,
   [remarkMath, { singleDollarTextMath: true }],
 ];
-const rehypePlugins = [
+const rehypePlugins: Options['rehypePlugins'] = [
   rehypeRaw,
   [rehypeKatex, { output: 'mathml', strict: false }],
   [
@@ -180,7 +187,8 @@ const rehypePlugins = [
       },
     },
   ],
-] as PluggableList;
+  [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+];
 
 export const ChatMDComponent = memo(
   ({
@@ -207,10 +215,8 @@ export const ChatMDComponent = memo(
         className={mdClassNames}
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
-        transformImageUri={transformUri}
-        transformLinkUri={transformUri}
+        urlTransform={transformUri}
       >
         {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
       </MemoizedReactMarkdown>

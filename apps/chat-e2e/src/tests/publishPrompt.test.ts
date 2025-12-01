@@ -208,7 +208,7 @@ dialAdminTest(
           {
             expectedState: 'visible',
             expectedColor: expectedColor,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedColor,
           },
         );
@@ -397,7 +397,7 @@ dialAdminTest(
           {
             expectedState: 'visible',
             expectedColor: expectedColor,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedColor,
           },
         );
@@ -668,7 +668,7 @@ dialAdminTest(
           {
             expectedState: 'visible',
             expectedColor: expectedColor,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedColor,
           },
         );
@@ -794,7 +794,7 @@ dialAdminTest(
       'EPMRTC-6104',
     );
     let prompt: Prompt;
-    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const firstVersion = ExpectedConstants.defaultEntityVersion;
     const secondVersion = '0.0.2';
     const currentDate = DateUtil.getCurrentLocalDate();
     const author = GeneratorUtil.randomString(10);

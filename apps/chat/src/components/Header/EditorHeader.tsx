@@ -79,7 +79,7 @@ export const EditorHeader = <T extends string>({
   return (
     <div
       className={classNames(
-        'z-40 flex w-full border-b border-secondary bg-layer-1',
+        'z-10 flex w-full border-b border-secondary bg-layer-1',
         isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
       )}
       data-qa={dataQa}
@@ -102,7 +102,7 @@ export const EditorHeader = <T extends string>({
             </button>
 
             {menuOpen && (
-              <div className="absolute left-0 top-7 z-10 ml-3 mt-2 w-[168px] overflow-hidden rounded-md bg-layer-3">
+              <div className="absolute left-3 top-10 z-10 w-[calc(100%-1.4rem)] overflow-hidden rounded bg-layer-3">
                 {tabs.map((tab) => {
                   const isDisabled = tab.disabled;
                   const isActive = activeTab === tab.key;
@@ -131,7 +131,7 @@ export const EditorHeader = <T extends string>({
 
           <span
             className="hidden items-center pl-1 text-primary md:flex xl:pl-0"
-            data-qa="action-application-type-title"
+            data-qa="action-entity-type-title"
           >
             {title}
           </span>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
@@ -23,14 +23,26 @@ import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
+export interface ApplicationDetailsFooterProps {
+  entity: DialAIEntityModel;
+  allVersions: DialAIEntityModel[];
+  onChangeVersion: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onUseEntity?: () => void;
+  onRemove?: (entity: DialAIEntityModel) => void;
+}
+
 interface Props {
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
-  isMyAppsTab: boolean;
+  isMyAppsTab?: boolean;
   isSuggested?: boolean;
   onClose: () => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
-  onBookmarkClick: (entity: DialAIEntityModel) => void;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onRemove?: (entity: DialAIEntityModel) => void;
+  FooterComponent?: FC<ApplicationDetailsFooterProps>;
+  isPreview?: boolean;
 }
 
 export function ApplicationDetails({
@@ -41,6 +53,9 @@ export function ApplicationDetails({
   onClose,
   onChangeVersion,
   onBookmarkClick,
+  onRemove,
+  FooterComponent = ApplicationDetailsFooter,
+  isPreview,
 }: Props) {
   const dispatch = useAppDispatch();
 
@@ -104,19 +119,20 @@ export function ApplicationDetails({
     <Modal
       portalId="chat"
       state={ModalState.OPENED}
-      dataQa="marketplace-agent-details"
+      dataQa="marketplace-entity-details"
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader entity={entity} />
+      <ApplicationDetailsHeader entity={entity} isPreview={isPreview} />
       <ApplicationDetailsContent entity={entity} />
-      <ApplicationDetailsFooter
+      <FooterComponent
         onUseEntity={handleUseEntity}
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
         onBookmarkClick={onBookmarkClick}
+        onRemove={onRemove}
       />
     </Modal>
   );

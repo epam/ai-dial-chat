@@ -241,7 +241,7 @@ dialTest(
 
         const firstAppIcon = settingsModal.startChatWithListboxAgentIcon({
           name: firstAppName,
-          version: ExpectedConstants.defaultAppVersion,
+          version: ExpectedConstants.defaultEntityVersion,
         });
         await settingsModalAssertion.assertEntityIcon(
           firstAppIcon,
@@ -485,11 +485,11 @@ dialTest(
         settingsModalAssertion.assertValuesAreEqual(allOptions, [
           {
             name: firstAppName,
-            version: ExpectedConstants.defaultAppVersion,
+            version: ExpectedConstants.defaultEntityVersion,
           },
           {
             name: secondAppName,
-            version: ExpectedConstants.defaultAppVersion,
+            version: ExpectedConstants.defaultEntityVersion,
           },
         ]);
       },
@@ -506,7 +506,7 @@ dialTest(
         settingsModalAssertion.assertValuesAreEqual(allOptions, [
           {
             name: firstAppName,
-            version: ExpectedConstants.defaultAppVersion,
+            version: ExpectedConstants.defaultEntityVersion,
           },
         ]);
       },

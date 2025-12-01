@@ -267,7 +267,7 @@ dialAdminTest(
         );
         await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: conversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminPublishConversationsTreeAssertion.assertTreeEntityIcon(
           { name: conversation.name },
@@ -369,7 +369,7 @@ dialAdminTest(
         await publishingRequestDialog.requestName.fillInInput(requestName);
         await conversationsToPublishTree
           .getEntityVersionInput(conversation.name)
-          .fill(ExpectedConstants.defaultAppVersion);
+          .fill(ExpectedConstants.defaultEntityVersion);
         await publishConversationAssertion.assertElementState(
           conversationsToPublishTree.getEntityVersionErrorIcon(
             conversation.name,
@@ -542,9 +542,6 @@ dialAdminTest(
           playbackPublicationName,
         );
         await adminPublishingApprovalModal.goToEntityReview();
-        for (let i = 1; i <= 2; i++) {
-          await adminChat.getPlaybackControl().playbackNextButton.click();
-        }
         await adminChatHeader.dotsMenu.click();
         await adminConversationDropdownMenuAssertion.assertMenuIncludesOptions(
           MenuOptions.rename,
@@ -615,7 +612,7 @@ dialTest(
     );
     let conversation: Conversation;
     let playbackConversation: Conversation;
-    const firstVersion = ExpectedConstants.defaultAppVersion;
+    const firstVersion = ExpectedConstants.defaultEntityVersion;
     const secondVersion = '0.0.2';
     const currentDate = DateUtil.getCurrentLocalDate();
     const author = GeneratorUtil.randomString(10);

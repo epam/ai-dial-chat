@@ -15,7 +15,7 @@ export class TalkToAgentDialogAssertion extends BaseAssertion {
   public async assertAgentIsSelected(
     expectedAgent: DialAIEntityModel | string,
   ) {
-    const agent = this.talkToAgentDialog.getAgents().getAgent(expectedAgent);
+    const agent = this.talkToAgentDialog.getAgents().getEntity(expectedAgent);
     await this.assertElementAttribute(agent, Attributes.ariaSelected, 'true');
   }
 

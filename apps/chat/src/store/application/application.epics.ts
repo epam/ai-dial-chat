@@ -31,7 +31,7 @@ import {
   regenerateApplicationId,
 } from '@/src/utils/app/application';
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
-import { getLastPathSegment } from '@/src/utils/app/common';
+import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -41,9 +41,11 @@ import {
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
+import { mergeFeatures } from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import {
   ApplicationStatus,
   CustomApplicationModel,
@@ -63,6 +65,7 @@ import {
 } from '@/src/store/actions';
 import {
   ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
   AuthSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -75,6 +78,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
+  MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
@@ -120,8 +124,16 @@ const createApplicationEpic: AppEpic = (action$) =>
       ).pipe(
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(
-            switchMap((application) => {
-              if (application) {
+            switchMap((retrievedApplication) => {
+              if (retrievedApplication) {
+                const featuresRecord: Record<string, boolean | undefined> = {
+                  ...(retrievedApplication.features || {}),
+                };
+
+                const modelData = {
+                  ...retrievedApplication,
+                  features: mergeFeatures(featuresRecord),
+                };
                 return concat(
                   of(
                     ApplicationActions.setEditorStep(
@@ -130,17 +142,17 @@ const createApplicationEpic: AppEpic = (action$) =>
                   ),
                   of(
                     ModelsActions.addModels({
-                      models: [application],
+                      models: [modelData],
                     }),
                   ),
                   of(
                     ModelsActions.addInstalledModels({
-                      references: [application.reference],
+                      references: [retrievedApplication.reference],
                     }),
                   ),
                   of(
                     ApplicationActions.createSuccess({
-                      applicationData: application,
+                      applicationData: retrievedApplication,
                     }),
                   ),
                 );
@@ -227,7 +239,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
             ApplicationActions.edit({
               oldApplication: payload.oldApplication,
               updatedApplication: payload.applicationData,
-              redirectUrl: payload.redirectUrl,
+              redirectUrl: payload.redirectUrl?.toString(),
               schema: payload.schema,
             }),
           ),
@@ -325,18 +337,32 @@ const updateApplicationEpic: AppEpic = (action$) =>
               payload.schema,
             ).pipe(
               switchMap(() => {
-                return concat(
-                  of(
-                    ApplicationActions.updateSuccess(updatedCustomApplication),
-                  ),
+                const featuresRecord: Record<string, boolean | undefined> = {
+                  ...(updatedCustomApplication.features || {}),
+                };
+
+                const modelData = {
+                  ...updatedCustomApplication,
+                  features: mergeFeatures(featuresRecord),
+                };
+
+                const actions: Observable<AppAction>[] = [
                   of(
                     ModelsActions.updateModel({
-                      model: updatedCustomApplication,
+                      model: modelData,
                       oldApplicationId: payload.oldApplication.id,
                     }),
                   ),
-                  iif(
-                    () => !!payload.isSaveAndExit || !!payload.redirectUrl,
+                  of(
+                    ApplicationActions.updateSuccess({
+                      appDetails: updatedCustomApplication,
+                      isExitingAfterSave: payload.isSaveAndExit,
+                    }),
+                  ),
+                ];
+
+                if (payload.isSaveAndExit) {
+                  actions.push(
                     of(
                       ApplicationActions.exitEditor({
                         redirectUrl: payload.redirectUrl,
@@ -344,14 +370,16 @@ const updateApplicationEpic: AppEpic = (action$) =>
                           payload.shouldSelectApplication,
                       }),
                     ),
-                    EMPTY,
-                  ),
-                  iif(
-                    () => !!payload.tabToOpen,
-                    of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
-                    EMPTY,
-                  ),
-                );
+                  );
+                } else {
+                  if (payload.tabToOpen) {
+                    actions.push(
+                      of(ApplicationActions.setEditorStep(payload.tabToOpen!)),
+                    );
+                  }
+                }
+
+                return concat(...actions);
               }),
               catchError((err) => {
                 console.error('Failed to update application:', err);
@@ -384,15 +412,24 @@ const editApplicationEpic: AppEpic = (action$) =>
         payload.updatedApplication,
         payload.schema,
       ).pipe(
-        switchMap(() =>
-          of(
+        switchMap(() => {
+          const featuresRecord: Record<string, boolean | undefined> = {
+            ...(payload.updatedApplication.features || {}),
+          };
+
+          const modelData = {
+            ...payload.updatedApplication,
+            features: mergeFeatures(featuresRecord),
+          };
+
+          return of(
             ApplicationActions.editSuccess(),
             ModelsActions.updateModel({
-              model: payload.updatedApplication,
+              model: modelData,
               oldApplicationId: payload.updatedApplication.id,
             }),
-          ),
-        ),
+          );
+        }),
         tap(() => {
           if (payload.redirectUrl) {
             Router.push({
@@ -722,6 +759,8 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
               ),
               [AppsEditorQuery.PublicationUrl]: payload.publicationUrl,
               [AppsEditorQuery.Step]: MarketplaceEditorSteps.Settings,
+              [AppsEditorQuery.ReturnUrl]:
+                window.location.pathname + window.location.search,
             },
           });
         }),
@@ -743,68 +782,94 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.exitEditor.type),
     switchMap(({ payload }) => {
-      const query = parse(window.location.search.slice(1));
-      const publicationUrl = query[AppsEditorQuery.PublicationUrl];
-      const reference = query[AppsEditorQuery.Id];
+      const returnConversationIds =
+        ApplicationSelectors.selectReturnConversationIds(state$.value);
+      const schema =
+        ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema(
+          state$.value,
+        );
+      const hasCustomEditor =
+        !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
-      if (payload.redirectUrl) {
-        router.push({
-          pathname: payload.redirectUrl,
-          query:
-            payload.redirectUrl === Routes.Marketplace
-              ? {
-                  tab: MarketplaceTabs.MY_WORKSPACE,
-                }
-              : undefined,
-        });
-      } else if (publicationUrl) {
-        router.push({
-          pathname: Routes.Chat,
-        });
-        return concat(
+      const query = parse(window.location.search.slice(1));
+      const publicationUrl = query[AppsEditorQuery.PublicationUrl]?.toString();
+      const returnUrlQuery = query[AppsEditorQuery.ReturnUrl]?.toString();
+      const reference = query[AppsEditorQuery.Id]?.toString();
+      const returnUrl = returnUrlQuery
+        ? getSafeRedirectUrl(decodeURIComponent(returnUrlQuery))
+        : undefined;
+      const redirectUrl = payload.redirectUrl
+        ? getSafeRedirectUrl(payload.redirectUrl.toString())
+        : undefined;
+
+      const route =
+        redirectUrl ??
+        returnUrl ??
+        (publicationUrl
+          ? { pathname: Routes.Chat }
+          : {
+              pathname: Routes.Marketplace,
+              query: {
+                [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
+                [MarketplaceQueryParams.entitiesTab]:
+                  MarketplaceEntitiesTabs.AGENTS,
+              },
+            });
+
+      const actions: Observable<AppAction>[] = [];
+
+      if (hasCustomEditor) {
+        actions.push(
+          of(
+            ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+          ),
+        );
+      }
+
+      if (route.pathname === Routes.Marketplace) {
+        if (payload.shouldSelectApplication && reference) {
+          actions.push(
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: reference as string,
+                type: MarketplaceEntitiesTabs.AGENTS,
+                isSuggested: false,
+              }),
+            ),
+          );
+        }
+      }
+
+      if (publicationUrl) {
+        actions.push(
           of(
             ConversationsActions.selectConversations({
               conversationIds: [],
             }),
+            PublicationActions.setIsApplicationReview(true),
           ),
-          of(PublicationActions.setIsApplicationReview(true)),
+        );
+      } else if (returnConversationIds?.length) {
+        actions.push(
           of(
-            MarketplaceActions.setDetailsEntity(
-              payload.redirectUrl === Routes.Marketplace &&
-                !!payload.shouldSelectApplication &&
-                reference
-                ? {
-                    reference: reference.toString(),
-                    type: MarketplaceEntitiesTabs.AGENTS,
-                    isSuggested: false,
-                  }
-                : undefined,
-            ),
+            ConversationsActions.selectConversations({
+              conversationIds: returnConversationIds as string[],
+            }),
           ),
         );
       } else {
-        router.push({
-          pathname: Routes.Marketplace,
-          query: { tab: MarketplaceTabs.MY_WORKSPACE },
-        });
-      }
-      const returnConversationIds =
-        ApplicationSelectors.selectReturnConversationIds(state$.value);
-      if (returnConversationIds?.length) {
-        return concat(
+        actions.push(
           of(
-            ConversationsActions.selectConversations({
-              conversationIds: returnConversationIds,
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
             }),
           ),
-          of(ApplicationActions.setReturnConversationIds(undefined)),
         );
       }
-      return of(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-        }),
-      );
+
+      actions.push(of(UIActions.setEditorLoader(false)));
+
+      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
     }),
   );
 
@@ -838,8 +903,13 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
       ApplicationActions.updateSuccess.type,
       ApplicationActions.createSuccess.type,
     ),
-    switchMap(() => {
-      if (window.location.pathname !== Routes.AppsEditor) return EMPTY;
+    switchMap((action) => {
+      const isExitingAfterSave =
+        action.type === ApplicationActions.updateSuccess.type &&
+        action.payload.isExitingAfterSave;
+
+      if (window.location.pathname !== Routes.AppsEditor || isExitingAfterSave)
+        return EMPTY;
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;

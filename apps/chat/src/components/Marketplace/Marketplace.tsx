@@ -1,5 +1,5 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -12,10 +12,14 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
   ModelsSelectors,
+  ToolsetSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
-import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
+import {
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -35,7 +39,21 @@ export const Marketplace = () => {
     UISelectors.selectShowMarketplaceFilterbar,
   );
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isLoading = useAppSelector(ModelsSelectors.selectAreModelsLoading);
+  const isModelsLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
+  const isToolsetsEntitiesLoading = useAppSelector(
+    ModelsSelectors.selectAreModelsLoading,
+  );
+  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
+
+  const isInstalledToolsetsInitialized = useAppSelector(
+    ToolsetSelectors.selectIsInstalledToolsetsInitialized,
+  );
+
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );
@@ -47,7 +65,32 @@ export const Marketplace = () => {
     MarketplaceSelectors.selectSelectedEntitiesTab,
   );
 
+  const isMarketplaceLoading = useAppSelector(
+    MarketplaceSelectors.selectShowLoader,
+  );
+
   const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
+  const isLoading = useMemo(() => {
+    const isWorkspaceTab = selectedTab === MarketplaceTabs.MY_WORKSPACE;
+    const isAgentsLoading = isWorkspaceTab
+      ? isModelsLoading || !isInstalledModelsInitialized
+      : isModelsLoading;
+
+    const isToolsetsLoading = isWorkspaceTab
+      ? isToolsetsEntitiesLoading || !isInstalledToolsetsInitialized
+      : isToolsetsEntitiesLoading;
+    const showLoader = isAgentsTab ? isAgentsLoading : isToolsetsLoading;
+    return showLoader || isMarketplaceLoading;
+  }, [
+    isAgentsTab,
+    isInstalledModelsInitialized,
+    isInstalledToolsetsInitialized,
+    isMarketplaceLoading,
+    isModelsLoading,
+    isToolsetsEntitiesLoading,
+    selectedTab,
+  ]);
 
   const screenState = useScreenState();
 

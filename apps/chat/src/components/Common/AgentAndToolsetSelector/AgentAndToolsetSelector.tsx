@@ -2,13 +2,17 @@ import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useSearchParams } from 'next/navigation';
 
 import classNames from 'classnames';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
 import { AgentAndToolsetModal } from './AgentAndToolsetModal';
@@ -30,6 +34,7 @@ interface AgentAndToolsetSelectorProps {
   addBtnTooltip?: string;
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   tooltip?: string;
+  onItemClick?: (id: string) => void;
 }
 
 export const AgentAndToolsetSelector: React.FC<
@@ -41,10 +46,15 @@ export const AgentAndToolsetSelector: React.FC<
   tooltip,
   allItemsMap,
   onChange,
+  onItemClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
-  const [isSelectModalOpen, setSelectModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const [isSelectModalOpen, setSelectModalOpen] = useState(
+    searchParams.get(AgentsAndToolsetsModalQueryParams.Modal) === '1',
+  );
 
   const handleOpenSelectModal = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -55,60 +65,70 @@ export const AgentAndToolsetSelector: React.FC<
     setSelectModalOpen(false);
   }, []);
 
-  const handleRemoveItem = (idToRemove: string) => {
-    onChange(value.filter((id) => id !== idToRemove));
-  };
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      onChange(value.filter((id) => id !== idToRemove));
+    },
+    [onChange, value],
+  );
 
-  const handleConfirmSelection = (newItems: MarketplaceEntity[]) => {
-    onChange(newItems.map((item) => item.id));
-    setSelectModalOpen(false);
-  };
+  const handleConfirmSelection = useCallback(
+    (newIds: string[]) => {
+      onChange(newIds);
+      setSelectModalOpen(false);
+    },
+    [onChange],
+  );
 
   return (
-    <Tooltip tooltip={tooltip}>
-      <div className="relative grow space-y-4">
-        <div className="flex flex-col">
-          <div className="absolute right-0 top-[-22px]">
-            <Tooltip tooltip={addBtnTooltip ?? t('Add Agents and Toolsets')}>
-              <button
-                disabled={readonly}
-                className={classNames(
-                  'flex items-center text-accent-primary',
-                  readonly && 'cursor-not-allowed',
-                )}
-                onClick={handleOpenSelectModal}
-              >
-                <IconPlus size={18} />
-                <p className="ml-2">{t('Add')}</p>
-              </button>
-            </Tooltip>
-          </div>
-          {!value.length ? (
-            <NoAgentsAndToolsets />
-          ) : (
-            <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
-              {value.map((id) => (
-                <AgentAndToolsetChip
-                  key={id}
-                  id={id}
-                  item={allItemsMap[id]}
-                  onRemove={readonly ? undefined : handleRemoveItem}
-                  readonly={readonly}
-                />
-              ))}
-            </div>
-          )}
+    <div className="relative grow space-y-4">
+      <div className="flex flex-col">
+        <div className="absolute right-0 top-[-22px]">
+          <Tooltip
+            tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
+          >
+            <button
+              disabled={readonly}
+              className={classNames(
+                'flex items-center text-accent-primary',
+                readonly && 'cursor-not-allowed',
+              )}
+              onClick={handleOpenSelectModal}
+            >
+              <IconPlus size={18} />
+              <p className="ml-2">{t('Add')}</p>
+            </button>
+          </Tooltip>
         </div>
-
-        {isSelectModalOpen && !readonly && (
-          <AgentAndToolsetModal
-            initialSelectedIds={value}
-            allItemsMap={allItemsMap}
-            onClose={handleCloseModal}
-            onConfirm={handleConfirmSelection}
-          />
+        {!value.length ? (
+          <NoAgentsAndToolsets />
+        ) : (
+          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+            {value.map((id) => (
+              <AgentAndToolsetChip
+                key={id}
+                id={id}
+                item={allItemsMap[id]}
+                onRemove={readonly ? undefined : handleRemoveItem}
+                readonly={readonly}
+                onItemClick={onItemClick}
+                customTooltip={tooltip}
+              />
+            ))}
+          </div>
         )}
       </div>
-    </Tooltip>
+      <ToolsetLoginDialog />
+
+      {isSelectModalOpen && !readonly && (
+        <AgentAndToolsetModal
+          initialSelectedIds={value}
+          allItemsMap={allItemsMap}
+          saveSliderStateInURL
+          onClose={handleCloseModal}
+          onConfirm={handleConfirmSelection}
+        />
+      )}
+    </div>
   );
 };
