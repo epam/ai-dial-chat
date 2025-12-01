@@ -7,15 +7,17 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   OverlaySandboxUrls,
+  PseudoModel,
 } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 const conversationName = 'overlayConversationName';
-const expectedConversationId = `conversations/public/playback__${ExpectedConstants.playbackConversation}${conversationName}__${ExpectedConstants.defaultEntityVersion}`;
+const expectedPlaybackConversationName =
+  ExpectedConstants.playbackConversation.concat(conversationName);
+const expectedConversationId = `conversations/public/${PseudoModel.playback}__${expectedPlaybackConversationName}__${ExpectedConstants.defaultEntityVersion}`;
 
 dialOverlayTest(
   '[Overlay] Exact conversation is set in Overlay. Playback chat with Plotly graph',
@@ -34,6 +36,8 @@ dialOverlayTest(
     overlayPublicationApiHelper,
     adminPublicationApiHelper,
     publishRequestBuilder,
+    overlayChatBar,
+    overlayOrganizationConversations,
   }) => {
     setTestIds('EPMRTC-4835');
     let plotlyConversation: Conversation;
@@ -103,22 +107,20 @@ dialOverlayTest(
           await localStorageManager.getSelectedConversationIds(
             process.env.NEXT_PUBLIC_OVERLAY_HOST,
           );
-        expect
-          .soft(
-            selectedConversationIds[0],
-            ExpectedMessages.conversationIsSelected,
-          )
-          .toBe(expectedConversationId);
+        overlayBaseAssertion.assertValue(
+          selectedConversationIds[0],
+          expectedConversationId,
+          ExpectedMessages.conversationIsSelected,
+        );
 
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
-        // await overlayHeader.leftPanelToggle.click();
-        // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedEntity(
-        //     ExpectedConstants.playbackConversation.concat(conversationName),
-        //   ),
-        //   'visible',
-        // );
-        // await overlayHeader.leftPanelToggle.click();
+        await overlayHeader.leftPanelToggle.click();
+        await overlayBaseAssertion.assertElementState(
+          overlayOrganizationConversations.selectedEntity(
+            expectedPlaybackConversationName,
+          ),
+          'visible',
+        );
+        await overlayChatBar.closeButton.click();
       },
     );
 
@@ -135,12 +137,11 @@ dialOverlayTest(
             2,
             Attachment.plotlyName,
           );
-        expect
-          .soft(
-            expandAttachmentResponse?.status(),
-            ExpectedMessages.attachmentIsExpanded,
-          )
-          .toBe(200);
+        overlayBaseAssertion.assertValue(
+          expandAttachmentResponse?.status(),
+          200,
+          ExpectedMessages.attachmentIsExpanded,
+        );
         await overlayBaseAssertion.assertElementState(
           overlayChatMessages.getMessagePlotlyAttachment(2),
           'visible',
@@ -161,21 +162,19 @@ dialOverlayTest(
           await localStorageManager.getSelectedConversationIds(
             process.env.NEXT_PUBLIC_OVERLAY_HOST,
           );
-        expect
-          .soft(
-            selectedConversationIds[0],
-            ExpectedMessages.conversationIsSelected,
-          )
-          .toBe(expectedConversationId);
+        overlayBaseAssertion.assertValue(
+          selectedConversationIds[0],
+          expectedConversationId,
+          ExpectedMessages.conversationIsSelected,
+        );
 
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
-        // await overlayHeader.leftPanelToggle.click();
-        // await overlayBaseAssertion.assertElementState(
-        //   overlayOrganizationConversations.selectedEntity(
-        //     ExpectedConstants.playbackConversation.concat(conversationName),
-        //   ),
-        //   'visible',
-        // );
+        await overlayHeader.leftPanelToggle.click();
+        await overlayBaseAssertion.assertElementState(
+          overlayOrganizationConversations.selectedEntity(
+            expectedPlaybackConversationName,
+          ),
+          'visible',
+        );
       },
     );
   },

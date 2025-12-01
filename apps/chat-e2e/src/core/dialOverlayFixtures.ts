@@ -12,7 +12,7 @@ import {
   DropdownMenu,
   FileDropArea,
   Marketplace,
-  MarketplaceAgents,
+  MarketplaceEntities,
   MarketplaceFilter,
   MarketplaceHeader,
   MarketplaceSidebar,
@@ -63,7 +63,7 @@ import {
 import { ReportAnIssueModal } from '@/src/ui/webElements/footer/reportAnIssueModal';
 import { RequestApiKeyModal } from '@/src/ui/webElements/footer/requestApiKeyModal';
 import { Header } from '@/src/ui/webElements/header';
-import { MarketplaceAgentsSection } from '@/src/ui/webElements/marketplace/marketplaceAgentsSection';
+import { MarketplaceEntitiesSection } from '@/src/ui/webElements/marketplace/marketplaceEntitiesSection';
 import { NavigationPanel } from '@/src/ui/webElements/navigationPanel';
 import { Actions } from '@/src/ui/webElements/overlay/actions';
 import { Configuration } from '@/src/ui/webElements/overlay/configuration';
@@ -153,8 +153,8 @@ const dialOverlayTest = test.extend<{
   overlayDialog: Dialog;
   overlayMarketplaceSidebar: MarketplaceSidebar;
   overlayMarketplaceFilter: MarketplaceFilter;
-  overlayMarketplaceAgentsSection: MarketplaceAgentsSection;
-  overlayMarketplaceAgents: MarketplaceAgents;
+  overlayMarketplaceEntitiesSection: MarketplaceEntitiesSection;
+  overlayMarketplaceEntities: MarketplaceEntities;
   overlayAgentDropdownMenu: DropdownMenu;
 }>({
   // eslint-disable-next-line no-empty-pattern
@@ -549,18 +549,18 @@ const dialOverlayTest = test.extend<{
       overlayMarketplaceSidebar.getMarketplaceFilter();
     await use(overlayMarketplaceFilter);
   },
-  overlayMarketplaceAgentsSection: async ({ overlayMarketplace }, use) => {
-    const overlayMarketplaceAgentsSection =
-      overlayMarketplace.getMarketplaceAgentsSection();
-    await use(overlayMarketplaceAgentsSection);
+  overlayMarketplaceEntitiesSection: async ({ overlayMarketplace }, use) => {
+    const overlayMarketplaceEntitiesSection =
+      overlayMarketplace.getMarketplaceEntitiesSection();
+    await use(overlayMarketplaceEntitiesSection);
   },
-  overlayMarketplaceAgents: async (
-    { overlayMarketplaceAgentsSection },
+  overlayMarketplaceEntities: async (
+    { overlayMarketplaceEntitiesSection },
     use,
   ) => {
-    const overlayMarketplaceAgents =
-      overlayMarketplaceAgentsSection.getAgents();
-    await use(overlayMarketplaceAgents);
+    const overlayMarketplaceEntities =
+      overlayMarketplaceEntitiesSection.getEntities();
+    await use(overlayMarketplaceEntities);
   },
   overlayAgentDropdownMenu: async ({ page, overlayMarketplacePage }, use) => {
     const overlayAgentDropdownMenu = new DropdownMenu(

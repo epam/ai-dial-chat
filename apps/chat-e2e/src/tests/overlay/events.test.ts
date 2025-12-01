@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendResourceType } from '@/chat/types/common';
 import { Publication } from '@/chat/types/publication';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
@@ -10,7 +11,7 @@ import {
   PseudoModel,
   ThemeId,
 } from '@/src/testData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { SortingUtil } from '@/src/utils/sortingUtil';
 import {
   ConversationInfo,
@@ -229,6 +230,7 @@ dialOverlayTest(
     overlayHomePage,
     overlayActions,
     overlayDialog,
+    overlayPublicationApiHelper,
     conversationData,
     overlayChatHeader,
     overlayBaseAssertion,
@@ -309,44 +311,45 @@ dialOverlayTest(
           conversations: expectedConversationsArray,
         };
 
-        //build expected conversations published with user
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
-        // const actualPublishedConversationsList =
-        //   await overlayPublicationApiHelper.listPublishedConversations();
-        // for (const actualPublishedConversation of actualPublishedConversationsList.items!) {
-        //   const conversation =
-        //     await overlayPublicationApiHelper.getPublishedConversation(
-        //       actualPublishedConversation.url,
-        //     );
-        //   const permissions = conversation.permissions;
-        //   const isPlayback = conversation.playback?.isPlayback;
-        //   const isReplay = conversation.replay?.isReplay;
-        //   const parentPath = actualPublishedConversation.parentPath;
-        //   expectedConversationsArray.push({
-        //     model: isPlayback
-        //       ? { id: PseudoModel.playback }
-        //       : isReplay
-        //         ? { id: PseudoModel.replay }
-        //         : conversation.model,
-        //     name: conversation.name,
-        //     isPlayback: isPlayback ?? false,
-        //     isReplay: isReplay ?? false,
-        //     publicationInfo: {
-        //       version: actualPublishedConversation.name.substring(
-        //         actualPublishedConversation.name.lastIndexOf(
-        //           ItemUtil.conversationIdSeparator,
-        //         ) + ItemUtil.conversationIdSeparator.length,
-        //       ),
-        //     },
-        //     id: conversation.id,
-        //     folderId: conversation.folderId,
-        //     publishedWithMe: !parentPath,
-        //     updatedAt: actualPublishedConversation.updatedAt,
-        //     bucket: actualPublishedConversation.bucket,
-        //     ...(parentPath && { parentPath }),
-        //    ...(permissions && { permissions }),
-        //   });
-        // }
+        //build expected conversations published to user
+        const actualPublishedConversationsList =
+          await overlayPublicationApiHelper.listPublishedResources(
+            BackendResourceType.CONVERSATION,
+          );
+        for (const actualPublishedConversation of actualPublishedConversationsList.items!) {
+          const conversation =
+            await overlayPublicationApiHelper.getPublishedConversation(
+              actualPublishedConversation.url,
+            );
+          const permissions = conversation.permissions;
+          const isPlayback = conversation.playback?.isPlayback;
+          const isReplay = conversation.replay?.isReplay;
+          const parentPath = actualPublishedConversation.parentPath;
+          expectedConversationsArray.push({
+            model: isPlayback
+              ? { id: PseudoModel.playback }
+              : isReplay
+                ? { id: PseudoModel.replay }
+                : conversation.model,
+            name: conversation.name,
+            isPlayback: isPlayback ?? false,
+            isReplay: isReplay ?? false,
+            publicationInfo: {
+              version: actualPublishedConversation.name.substring(
+                actualPublishedConversation.name.lastIndexOf(
+                  ItemUtil.entityIdSeparator,
+                ) + ItemUtil.entityIdSeparator.length,
+              ),
+            },
+            id: conversation.id,
+            folderId: conversation.folderId,
+            publishedWithMe: !parentPath,
+            updatedAt: actualPublishedConversation.updatedAt,
+            bucket: actualPublishedConversation.bucket,
+            ...(parentPath && { parentPath }),
+            ...(permissions && { permissions }),
+          });
+        }
 
         //build expected conversations created by user
         let actualConversationsList = await overlayItemApiHelper.listItems(
@@ -462,12 +465,13 @@ dialOverlayTest(
         }
 
         //compare conversations from bucket storage
-        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
-        // expect(actualConversationsModels.conversations.length).toBe(
-        //   expectedConversationsModel.conversations.length + 1,
-        // );
-        expect(actualConversationsModels.conversations).toEqual(
-          expect.arrayContaining(expectedConversationsModel.conversations),
+        overlayBaseAssertion.assertValue(
+          actualConversationsModels.conversations.length,
+          expectedConversationsModel.conversations.length + 1,
+        );
+        overlayBaseAssertion.assertValuesAreEqual(
+          actualConversationsModels.conversations,
+          expectedConversationsModel.conversations,
         );
 
         //check newly created 'New conversation 1' is displayed
@@ -478,11 +482,11 @@ dialOverlayTest(
         actualConversationsModels.conversations.find(
           (c) => c.id === selectedConversationIds[0],
         );
-        expect(
+        overlayBaseAssertion.assertValueIsNotUndefined(
           actualConversationsModels.conversations.find(
             (c) => c.id === selectedConversationIds[0],
           ),
-        ).toBeDefined();
+        );
         await overlayDialog.closeButton.click();
       },
     );
@@ -501,9 +505,10 @@ dialOverlayTest(
         const actualConversationModel = JSON.parse(
           actualConversation,
         ) as OverlayConversation;
-        expect
-          .soft(actualConversationModel)
-          .toStrictEqual(expectedSelectedConversation.conversation);
+        overlayBaseAssertion.assertValuesAreEqual(
+          actualConversationModel,
+          expectedSelectedConversation.conversation,
+        );
         await overlayDialog.closeButton.click();
 
         await overlayBaseAssertion.assertElementText(

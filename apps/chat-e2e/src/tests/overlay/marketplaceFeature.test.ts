@@ -106,19 +106,18 @@ dialOverlayTest(
           overlayNavigationPanel.myWorkspaceButtonIcon,
           expectedColor,
         );
-        //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/2929
         addApp = overlayMarketplaceHeader.addAppButton;
-        // await overlayBaseAssertion.assertElementState(addApp, 'visible');
+        await overlayBaseAssertion.assertElementState(addApp, 'visible');
       },
     );
 
-    //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/2929
-    await dialOverlayTest.step.skip(
+    await dialOverlayTest.step(
       'Expand "Add app" button and verify only "Custom app" option is available',
       async () => {
         await addApp.click();
         await overlayAppsDropdownMenuAssertion.assertMenuIncludesOptions(
           AddAppMenuOptions.customApp,
+          AddAppMenuOptions.externalApp,
         );
         await overlayAppsDropdownMenuAssertion.assertMenuExcludesOptions(
           AddAppMenuOptions.codeApp,
@@ -354,8 +353,8 @@ dialOverlayTest(
     adminShareApiHelper,
     overlayMarketplaceSidebar,
     overlayMarketplaceFilter,
-    overlayMarketplaceAgentsSection,
-    overlayMarketplaceAgents,
+    overlayMarketplaceEntitiesSection,
+    overlayMarketplaceEntities,
     overlayAgentDropdownMenu,
     setTestIds,
   }) => {
@@ -415,9 +414,9 @@ dialOverlayTest(
       'Open dropdown menu for created app and verify "Shared" option is not available',
       async () => {
         const agentElement =
-          await overlayMarketplaceAgentsSection.findAgentElement(customAppName);
-        await overlayMarketplaceAgents
-          .getAgentElementDotsMenu(agentElement)
+          await overlayMarketplaceEntitiesSection.findEntityElement(customAppName);
+        await overlayMarketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
           .click();
         const actualMenuOptions =
           await overlayAgentDropdownMenu.getAllMenuOptions();
@@ -440,8 +439,8 @@ dialOverlayTest(
     overlayNavigationPanel,
     customApplicationBuilder,
     overlayApplicationApiHelper,
-    overlayMarketplaceAgentsSection,
-    overlayMarketplaceAgents,
+    overlayMarketplaceEntitiesSection,
+    overlayMarketplaceEntities,
     overlayAgentDropdownMenu,
     setTestIds,
   }) => {
@@ -468,9 +467,9 @@ dialOverlayTest(
         await overlayNavigationPanel.myWorkspaceButton.click();
         await overlayMarketplacePage.waitForPageLoaded();
         const agentElement =
-          await overlayMarketplaceAgentsSection.findAgentElement(customAppName);
-        await overlayMarketplaceAgents
-          .getAgentElementDotsMenu(agentElement)
+          await overlayMarketplaceEntitiesSection.findEntityElement(customAppName);
+        await overlayMarketplaceEntities
+          .getEntityElementDotsMenu(agentElement)
           .click();
         const actualMenuOptions =
           await overlayAgentDropdownMenu.getAllMenuOptions();
