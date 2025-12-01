@@ -519,6 +519,13 @@ export class Folders extends BaseElement {
     return iconElement.getComputedStyleProperty(Styles.color);
   }
 
+  public getFolderIcon(name: string, index?: number) {
+    return this.getFolderByName(name, index)
+      .locator(FolderSelectors.iconContainer)
+      .locator(Tags.svg)
+      .first();
+  }
+
   public getFolderEntityArrowIcon(
     folderName: string,
     entityName: string,

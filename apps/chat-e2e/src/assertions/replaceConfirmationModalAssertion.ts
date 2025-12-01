@@ -1,5 +1,5 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ElementState, ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages } from '@/src/testData';
 import { ReplaceConfirmationModal } from '@/src/ui/webElements';
 
 export class ReplaceConfirmationModalAssertion extends BaseAssertion {

@@ -76,11 +76,11 @@ export class DialHomePage extends BasePage {
       await promptPreviewModal.waitForState();
       await promptPreviewModal.promptName.waitForState();
     } else if (options?.waitForAgentInfo !== false) {
-        await chat.getAgentInfo().waitForState({ state: 'attached' });
-        await chat.configureSettingsButton.waitForState({
-          state: 'attached',
-        });
-      }
+      await chat.getAgentInfo().waitForState({ state: 'attached' });
+      await chat.configureSettingsButton.waitForState({
+        state: 'attached',
+      });
+    }
   }
 
   async reloadPage() {

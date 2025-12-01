@@ -10,9 +10,9 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialTest.only(
+dialTest(
   'Export and import chat structure with all conversations with the same names that exist : Mixed option selected',
   async ({
     dialHomePage,
@@ -35,6 +35,8 @@ dialTest.only(
     replaceConfirmationModalConversationsAssertion,
     toastAssertion,
     toast,
+    iconApiHelper,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3024');
     let exportedData: UploadDownloadData;
@@ -204,8 +206,37 @@ dialTest.only(
       }
     });
 
-    // TODO: Verify icons near folders is like on chat panel
-    // TODO: Verify icons for the chats are the same as model icons on chat panel
+    await dialTest.step('Verify folder and conversation icons', async () => {
+      // Verify folder icons - folders use standard SVG folder icons
+      const visibleFolders = [folder2, ...nestedFolders];
+      for (const folder of visibleFolders) {
+        const folderIcon = replaceConfirmationModalFolders.getFolderIcon(
+          folder.name,
+        );
+        // For folders, we just verify the icon is visible
+        await folderIcon.waitFor({ state: 'visible' });
+      }
+
+      // Verify conversation icons - conversations should have model icons
+      const allConversations = [
+        chat1,
+        chat2,
+        chat3,
+        chat4,
+        chat5,
+        chat6,
+        chat7,
+      ];
+      for (const conversation of allConversations) {
+        const conversationIcon =
+          replaceConfirmationModalConversations.getEntityIcon(
+            conversation.name,
+          );
+        const modelEntity = ModelsUtil.getOpenAIEntity(conversation.model.id);
+        const expectedIcon = iconApiHelper.getEntityIcon(modelEntity!);
+        await baseAssertion.assertEntityIcon(conversationIcon, expectedIcon);
+      }
+    });
 
     await dialTest.step('Verify folders can be collapsed', async () => {
       // Collapse folders from deepest to shallowest
