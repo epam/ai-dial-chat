@@ -1,5 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendChatEntity } from '@/chat/types/common';
+import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
 import {
   Publication,
   PublicationRequestModel,
@@ -896,6 +896,8 @@ dialOverlayTest(
     overlayFolderConversations,
     overlaySharedWithMeConversations,
     overlayHeader,
+    overlayOrganizationConversations,
+    overlayPublicationApiHelper,
     overlayBaseAssertion,
     overlayChatBar,
     overlayDataInjector,
@@ -1117,36 +1119,35 @@ dialOverlayTest(
       },
     );
 
-    //TODO: 'organization' type is blocked by https://github.com/epam/ai-dial-chat/issues/2929
-    // await testSelectedConversation(
-    //   `Select conversation from "Organization" section, click on "Get selected conversations" btn and verify dialog with conversation json is displayed`,
-    //   'organization',
-    //   async () => {
-    //     await overlayHeader.leftPanelToggle.click();
-    //     await overlayOrganizationConversations.selectEntity(
-    //       publishedConversation.name,
-    //       { isHttpMethodTriggered: true },
-    //     );
-    //   },
-    //   async () => {
-    //     const apiPublishedConversationsList =
-    //       await overlayPublicationApiHelper.listPublishedResources(
-    //         BackendResourceType.CONVERSATION,
-    //       )!;
-    //     const apiPublishedConversationFromList =
-    //       apiPublishedConversationsList.items!.find((i) =>
-    //         i.name.includes(publishedConversation.name),
-    //       )!;
-    //     const apiPublishedConversation =
-    //       await overlayPublicationApiHelper.getPublishedConversation(
-    //         apiPublishedConversationFromList.url,
-    //       );
-    //     return {
-    //       conversation: apiPublishedConversation,
-    //       conversationFromList: apiPublishedConversationFromList,
-    //     };
-    //   },
-    // );
+    await testSelectedConversation(
+      `Select conversation from "Organization" section, click on "Get selected conversations" btn and verify dialog with conversation json is displayed`,
+      'organization',
+      async () => {
+        await overlayHeader.leftPanelToggle.click();
+        await overlayOrganizationConversations.selectEntity(
+          publishedConversation.name,
+          { isHttpMethodTriggered: true },
+        );
+      },
+      async () => {
+        const apiPublishedConversationsList =
+          await overlayPublicationApiHelper.listPublishedResources(
+            BackendResourceType.CONVERSATION,
+          )!;
+        const apiPublishedConversationFromList =
+          apiPublishedConversationsList.items!.find((i) =>
+            i.name.includes(publishedConversation.name),
+          )!;
+        const apiPublishedConversation =
+          await overlayPublicationApiHelper.getPublishedConversation(
+            apiPublishedConversationFromList.url,
+          );
+        return {
+          conversation: apiPublishedConversation,
+          conversationFromList: apiPublishedConversationFromList,
+        };
+      },
+    );
   },
 );
 
@@ -1373,8 +1374,10 @@ dialOverlayTest(
         playbackRequestResponse,
         additionalProps,
       );
-
-      expect.soft(actualConversationModel).toEqual(expectedConversationModel);
+      overlayBaseAssertion.assertValuesAreEqual(
+        actualConversationModel,
+        expectedConversationModel,
+      );
       await overlayDialog.closeButton.click();
     };
 
@@ -1392,7 +1395,6 @@ dialOverlayTest(
           ExpectedConstants.playbackConversation.concat(
             folderConversation.conversations[0].name,
           );
-
         await testPlaybackConversation(
           folderConversation.conversations[0].id,
           expectedNameSuffix,
@@ -1405,19 +1407,13 @@ dialOverlayTest(
       },
     );
 
-    //TODO: blocked by https://github.com/epam/ai-dial-chat/issues/2929
-    await dialOverlayTest.step.skip(
+    await dialOverlayTest.step(
       'Set published conversation id in the field, click on "Create playback conversation by source conversation ID" btn and verify playback json is displayed on the modal',
       async () => {
         const publishedConversationId = publication.resources.find((r) =>
           r.targetUrl.includes(publishedConversation.name),
         )!.targetUrl;
-
-        const expectedNameSuffix = ExpectedConstants.playbackConversation
-          .concat(publishedConversation.name)
-          .concat(ItemUtil.entityIdSeparator)
-          .concat(ExpectedConstants.defaultAppVersion);
-
+        const expectedNameSuffix = `${ExpectedConstants.playbackConversation}${publishedConversation.name}${ItemUtil.entityIdSeparator}${ExpectedConstants.defaultEntityVersion}`;
         await testPlaybackConversation(
           publishedConversationId,
           expectedNameSuffix,
@@ -1440,7 +1436,6 @@ dialOverlayTest(
           ExpectedConstants.playbackConversation.concat(
             sharedConversation.name,
           );
-
         await testPlaybackConversation(
           sharedConversation.id,
           expectedNameSuffix,
