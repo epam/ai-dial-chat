@@ -15,6 +15,7 @@ export const ExpectedMessages = {
   sendMessageButtonIsNotVisible:
     'Send message button is not visible in chat input',
   conversationsCountIsValid: 'Conversations count is valid',
+  conversationsListIsValid: 'Conversations list is valid',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
   folderIsNotVisible: 'Folder is not visible in chat bar',

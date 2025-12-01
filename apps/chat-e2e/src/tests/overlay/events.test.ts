@@ -5,6 +5,7 @@ import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
   API,
   ExpectedConstants,
+  ExpectedMessages,
   FolderConversation,
   MockedChatApiResponseBodies,
   OverlaySandboxUrls,
@@ -469,9 +470,10 @@ dialOverlayTest(
           actualConversationsModels.conversations.length,
           expectedConversationsModel.conversations.length + 1,
         );
-        overlayBaseAssertion.assertValuesAreEqual(
+        overlayBaseAssertion.assertArrayIncludesAll(
           actualConversationsModels.conversations,
           expectedConversationsModel.conversations,
+          ExpectedMessages.conversationsListIsValid,
         );
 
         //check newly created 'New conversation 1' is displayed
