@@ -77,6 +77,7 @@ export const ToolsetEditor = () => {
             clientSecret: data.clientSecret,
             authorizationEndpoint: data.authorizationEndpoint,
             tokenEndpoint: data.tokenEndpoint,
+            scopesSupported: data.scopes,
           },
         },
         toolsetDetails,
