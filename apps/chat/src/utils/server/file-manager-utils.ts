@@ -118,9 +118,11 @@ export function encodeUrlSlugs(url: string): string {
 }
 
 export function buildApiUrl(endpoint: string, slugs?: string): string {
+  const host = process.env.DIAL_API_HOST as string;
+
   const path = slugs
-    ? constructPath(process.env.DIAL_API_HOST as string, endpoint, slugs)
-    : constructPath(process.env.DIAL_API_HOST as string, endpoint);
+    ? constructPath(host, endpoint, slugs)
+    : constructPath(host, endpoint);
 
   return sanitizeUri(path);
 }

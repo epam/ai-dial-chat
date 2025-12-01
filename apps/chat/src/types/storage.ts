@@ -164,6 +164,8 @@ export interface DialStorage {
 
   deleteFiles(data: { files: DialDeletedItem[] }): Observable<void>;
 
+  uploadArchive(data: { file: File; destinationUrl: string }): Observable<void>;
+
   // Application methods
   createApplication(
     application: CustomApplicationModel,

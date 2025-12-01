@@ -202,6 +202,7 @@ export const FileManager: React.FC = () => {
         newActionLabels: {
           uploadFiles: t('Upload files'),
           newFolder: t('New folder'),
+          uploadArchive: t('Upload archive'),
         },
       }}
       onCopyFiles={(copiedItems, destinationFolder) => {
@@ -258,6 +259,16 @@ export const FileManager: React.FC = () => {
           FilesActions.uploadFiles({
             files: [file],
             destinationUrl: folderPath,
+          }),
+        );
+      }}
+      onUploadArchive={(archiveFile, name, destinationUrl) => {
+        if (!archiveFile) return;
+        dispatch(
+          FilesActions.uploadArchive({
+            archive: archiveFile,
+            name,
+            destinationUrl,
           }),
         );
       }}

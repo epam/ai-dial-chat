@@ -309,6 +309,29 @@ export class ApiStorage implements DialStorage {
     });
   }
 
+  uploadArchive(data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    const encodedDestination = encodeURIComponent(data.destinationUrl);
+
+    return from(
+      fetch(`/api/files/upload-archive?destination=${encodedDestination}`, {
+        method: HTTPMethod.POST,
+        body: data.file,
+      }).then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            const message = text || 'Failed to upload archive';
+            throw new Error(message);
+          });
+        }
+
+        return undefined;
+      }),
+    );
+  }
+
   createApplication(
     application: CustomApplicationModel,
     schema: ApiDetailedApplicationTypeSchema,

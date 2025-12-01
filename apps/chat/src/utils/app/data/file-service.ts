@@ -288,4 +288,11 @@ export class FileService {
       throw new Error(`Error downloading files: ${error}`);
     }
   }
+
+  public static uploadArchive(data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    return DataService.getDataStorage().uploadArchive(data);
+  }
 }

@@ -687,6 +687,17 @@ export const filesSlice = createSlice({
     ) => state,
     uploadFilesSuccess: (state) => state,
     uploadFilesFail: (state) => state,
+
+    uploadArchive: (
+      state,
+      _action: PayloadAction<{
+        archive: File;
+        name: string;
+        destinationUrl: string;
+      }>,
+    ) => state,
+    uploadArchiveSuccess: (state) => state,
+    uploadArchiveFail: (state) => state,
   },
 });
 

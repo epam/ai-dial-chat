@@ -409,6 +409,13 @@ export class BrowserStorage implements DialStorage {
     throw new Error('BrowserStorage.deleteFiles not implemented');
   }
 
+  uploadArchive(_data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    throw new Error('BrowserStorage.uploadArchive not implemented');
+  }
+
   createApplication(
     _application: CustomApplicationModel,
   ): Observable<ApplicationInfo> {

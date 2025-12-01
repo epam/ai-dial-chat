@@ -566,6 +566,36 @@ const uploadFilesEpic: AppEpic = (action$) =>
     }),
   );
 
+const uploadArchiveEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.uploadArchive.type),
+    switchMap(({ payload }) => {
+      return FileService.uploadArchive({
+        file: payload.archive,
+        destinationUrl: `${payload.destinationUrl}/${payload.name}`,
+      }).pipe(
+        switchMap(() =>
+          of(
+            FilesActions.uploadArchiveSuccess(),
+            FilesActions.getFilesWithFolders({
+              id: payload.destinationUrl,
+            }),
+          ),
+        ),
+        catchError(() =>
+          of(
+            UIActions.showErrorToast(
+              translate('Failed to upload archive. Please try again later.', {
+                ns: Translation.Files,
+              }),
+            ),
+            FilesActions.uploadArchiveFail(),
+          ),
+        ),
+      );
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -590,4 +620,5 @@ export const FilesEpics = combineEpics(
   deleteFilesEpic,
   downloadFilesAsArchiveEpic,
   uploadFilesEpic,
+  uploadArchiveEpic,
 );
