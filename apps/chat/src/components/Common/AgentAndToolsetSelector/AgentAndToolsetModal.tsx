@@ -61,6 +61,10 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
+type DisplayedMarketplaceEntity = MarketplaceEntity & {
+  allVersions?: MarketplaceEntity[];
+};
+
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
   tab: MarketplaceTabs;
@@ -76,9 +80,7 @@ function ScopeTabButton({
   onSetTab,
 }: ScopeTabButtonProps) {
   const { t } = useTranslation(Translation.Chat);
-
   const buttonText = textMap[tab] || tab;
-
   return (
     <TabButton
       tabKey={tab}
@@ -90,6 +92,7 @@ function ScopeTabButton({
     </TabButton>
   );
 }
+
 interface AgentAndToolsetModalViewProps {
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
@@ -106,14 +109,14 @@ const AgentAndToolsetModalView = ({
   onConfirm,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
-
   const sliderGridRef = useRef<SliderGridRef>(null);
+  const programmaticScroll = useRef(false);
+
   const currentAppReference =
     router.route === Routes.AppsEditor
       ? router.query[AppsEditorQuery.Id]?.toString()
@@ -147,6 +150,9 @@ const AgentAndToolsetModalView = ({
   const [selectedIds, setSelectedIds] = useState<string[]>(
     initialSelectedIds ?? [],
   );
+  const [activeVersionOverride, setActiveVersionOverride] = useState<
+    string | null
+  >(null);
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -197,12 +203,46 @@ const AgentAndToolsetModalView = ({
 
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
-      setSelectedIds((prevIds) => {
-        if (prevIds.includes(itemToToggle.id)) {
-          return prevIds.filter((id) => id !== itemToToggle.id);
+      const baseId = getEntityBaseId(itemToToggle.id);
+      const isGroupSelected = selectedIds.some(
+        (id) => getEntityBaseId(id) === baseId,
+      );
+
+      if (isGroupSelected) {
+        setSelectedIds((prevIds) =>
+          prevIds.filter((id) => getEntityBaseId(id) !== baseId),
+        );
+      } else {
+        setSelectedIds((prevIds) => [...prevIds, itemToToggle.id]);
+      }
+      setActiveVersionOverride(null);
+    },
+    [selectedIds],
+  );
+
+  const handleSetVersion = useCallback(
+    (oldVersionId: string, newVersionId: string) => {
+      setSelectedIds((currentIds) => {
+        const index = currentIds.findIndex((id) => id === oldVersionId);
+        if (index !== -1) {
+          const newIds = [...currentIds];
+          newIds[index] = newVersionId;
+          return newIds;
         }
-        return [...prevIds, itemToToggle.id];
+
+        const baseId = getEntityBaseId(newVersionId);
+        const anotherVersionIndex = currentIds.findIndex(
+          (id) => getEntityBaseId(id) === baseId,
+        );
+        if (anotherVersionIndex !== -1) {
+          const newIds = [...currentIds];
+          newIds[anotherVersionIndex] = newVersionId;
+          return newIds;
+        }
+
+        return currentIds;
       });
+      setActiveVersionOverride(null);
     },
     [],
   );
@@ -222,6 +262,7 @@ const AgentAndToolsetModalView = ({
 
   const handleRemoveItem = useCallback((idToRemove: string) => {
     setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
+    setActiveVersionOverride(null);
   }, []);
 
   const searchedAgents = useFuseSearch(
@@ -240,38 +281,43 @@ const AgentAndToolsetModalView = ({
     [selectedIds],
   );
 
-  const sliderItemProps = useMemo(
-    () => ({
-      selectedBaseIdsSet,
-      onToggleSelectItem: handleToggleSelectItem,
-    }),
-    [selectedBaseIdsSet, handleToggleSelectItem],
-  );
-
   const installedSet = useMemo(
     () => new Set([...installedAgentsSet, ...installedToolsetsSet]),
     [installedAgentsSet, installedToolsetsSet],
   );
 
-  const displayedItems = useMemo(() => {
-    const getSelectedItemFromGroup = (
-      entities: MarketplaceEntity[],
-    ): MarketplaceEntity => {
-      const reversedSelectedIds = selectedIds.toReversed();
-      const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
-        entities.some((entity) => entity.id === id),
-      );
+  const displayedItems: DisplayedMarketplaceEntity[] = useMemo(() => {
+    const getSelectedItemFromGroup = ({
+      entities,
+    }: {
+      entities: MarketplaceEntity[];
+    }): DisplayedMarketplaceEntity | null => {
+      if (!entities.length) return null;
+      let activeVersion: MarketplaceEntity | undefined;
 
-      if (lastSelectedIdInGroup) {
-        const selectedEntity = entities.find(
-          (entity) => entity.id === lastSelectedIdInGroup,
+      if (activeVersionOverride) {
+        activeVersion = entities.find(
+          (entity) => entity.id === activeVersionOverride,
         );
-        if (selectedEntity) {
-          return selectedEntity;
+      }
+
+      if (!activeVersion) {
+        const reversedSelectedIds = selectedIds.toReversed();
+        const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
+          entities.some((entity) => entity.id === id),
+        );
+        if (lastSelectedIdInGroup) {
+          activeVersion = entities.find(
+            (entity) => entity.id === lastSelectedIdInGroup,
+          );
         }
       }
 
-      return sortItemsVersions(entities)[0];
+      if (!activeVersion) {
+        activeVersion = sortItemsVersions(entities)[0];
+      }
+
+      return { ...activeVersion!, allVersions: entities };
     };
 
     const groupedAndOrderedAgents = groupMarketplaceEntityAndSaveOrder(
@@ -281,16 +327,16 @@ const AgentAndToolsetModalView = ({
           !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
           entity.reference !== currentAppReference,
       ),
-    ).map(({ entities }) => getSelectedItemFromGroup(entities));
+    ).map(getSelectedItemFromGroup);
 
     const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
       searchedToolsets,
-    ).map(({ entities }) => getSelectedItemFromGroup(entities));
+    ).map(getSelectedItemFromGroup);
 
     const allGroupedItems = [
       ...groupedAndOrderedAgents,
       ...groupedAndOrderedToolsets,
-    ];
+    ].filter((item): item is DisplayedMarketplaceEntity => !!item);
 
     if (!isMyWorkspace) {
       return allGroupedItems;
@@ -307,17 +353,62 @@ const AgentAndToolsetModalView = ({
     selectedIds,
     widgetsSchemaIds,
     installedSet,
+    activeVersionOverride,
   ]);
 
   const handleItemClick = useCallback(
     (id: string) => {
-      const isDisplayed = displayedItems.some((item) => item.id === id);
+      setSearchTerm('');
+      const isAlreadyDisplayed = displayedItems.some((item) => item.id === id);
+      programmaticScroll.current = true;
 
-      if (isDisplayed && sliderGridRef.current) {
-        sliderGridRef.current.scrollToItem(id);
+      if (isAlreadyDisplayed) {
+        sliderGridRef.current?.scrollToItem(id);
+      } else {
+        const item = allItemsMap[id];
+        if (isMyWorkspace && item && !isInstalledEntity(item, installedSet)) {
+          handleSetScopeTab(MarketplaceTabs.HOME);
+          setActiveVersionOverride(id);
+        } else {
+          setActiveVersionOverride(id);
+        }
       }
     },
-    [displayedItems],
+    [
+      displayedItems,
+      allItemsMap,
+      isMyWorkspace,
+      installedSet,
+      handleSetScopeTab,
+      setSearchTerm,
+    ],
+  );
+
+  useEffect(() => {
+    if (
+      activeVersionOverride &&
+      displayedItems.some((item) => item.id === activeVersionOverride)
+    ) {
+      sliderGridRef.current?.scrollToItem(activeVersionOverride);
+    }
+    setTimeout(() => {
+      programmaticScroll.current = false;
+    }, 0);
+  }, [activeVersionOverride, displayedItems]);
+
+  useEffect(() => {
+    if (!programmaticScroll.current) {
+      setActiveVersionOverride(null);
+    }
+  }, [activeSlide, scopeTab, searchTerm]);
+
+  const sliderItemProps = useMemo(
+    () => ({
+      selectedBaseIdsSet,
+      onToggleSelectItem: handleToggleSelectItem,
+      onSetVersion: handleSetVersion,
+    }),
+    [selectedBaseIdsSet, handleToggleSelectItem, handleSetVersion],
   );
 
   const sliderResetDependencies = useMemo(
@@ -384,13 +475,12 @@ const AgentAndToolsetModalView = ({
               </span>
             )}
           </div>
-
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
             {t('All')}
           </span>
         </div>
         <SliderGrid<
-          MarketplaceEntity,
+          DisplayedMarketplaceEntity,
           Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
         >
           ref={sliderGridRef}
@@ -414,9 +504,7 @@ const AgentAndToolsetModalView = ({
           onSetPrevActiveSlide={setPrevActiveSlide}
         />
       </div>
-
       <AgentDialogs />
-
       <div
         ref={footerRef}
         className="absolute bottom-0 flex w-full justify-end gap-3 border-t border-tertiary px-6 py-[14px]"
