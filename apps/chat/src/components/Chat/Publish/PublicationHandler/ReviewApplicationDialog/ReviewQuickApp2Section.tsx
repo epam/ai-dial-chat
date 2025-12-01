@@ -88,7 +88,7 @@ const ReviewQuickApp2SectionView = ({
   // TODO: when uploading application also upload toolsets from config to get full data
   const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
-      config.tool_sets?.reduce<{
+      (config.tool_sets ?? []).reduce<{
         agents: (DialDeploymentSimpleTool & { name: string })[];
         toolsets: MCPToolset[];
         isCodeInterpreter: boolean;
@@ -220,7 +220,7 @@ const ReviewQuickApp2SectionView = ({
                 item={{
                   id: toolset.dial_id,
                   description: toolset.description,
-                  name: toolset.name,
+                  name: toolset.name ?? splitEntityId(toolset.dial_id).name,
                   type: EntityType.Toolset,
                   reference: toolset.dial_id,
                   isDefault: false,
