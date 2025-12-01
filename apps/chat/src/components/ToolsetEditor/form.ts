@@ -24,6 +24,7 @@ export const ToolsetLoginFormSchema = zodValidation
     clientSecret: zodValidation.string().optional(),
     authorizationEndpoint: zodValidation.string().optional(),
     tokenEndpoint: zodValidation.string().optional(),
+    scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.authenticationType === ToolsetAuthTypes.API_KEY) {
@@ -121,6 +122,7 @@ export const getDefaultLoginFormData = (
           toolset?.authSettings?.clientId
             ? true
             : (prevData?.includeOAuthFields ?? false),
+        scopes: toolset?.authSettings?.scopesSupported,
       };
     case ToolsetAuthTypes.NONE:
     default:
