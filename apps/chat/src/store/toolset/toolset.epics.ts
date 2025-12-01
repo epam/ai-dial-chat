@@ -3,13 +3,13 @@ import {
   Observable,
   catchError,
   concat,
+  concatMap,
   defer,
   filter,
   forkJoin,
   from,
   iif,
   map,
-  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -301,6 +301,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
                         newToolset: savedUpdatedToolset,
+                        isExitingAfterSave: payload.exitAfterSave,
                       }),
                     ),
                   ];
@@ -796,8 +797,16 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
       ToolsetActions.getToolsetDetailsSuccess.type,
       ToolsetActions.updateToolsetSuccess.type,
     ),
-    switchMap(() => {
-      if (window.location.pathname !== Routes.ToolsetEditor) return EMPTY;
+    switchMap((action) => {
+      const isExitingAfterSave =
+        action.type === ToolsetActions.updateToolsetSuccess.type &&
+        action.payload.isExitingAfterSave;
+
+      if (
+        window.location.pathname !== Routes.ToolsetEditor ||
+        isExitingAfterSave
+      )
+        return EMPTY;
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
@@ -890,26 +899,24 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
         }
       }
 
-      if (route.pathname === Routes.Chat) {
-        if (!publicationUrl) {
-          actions.push(
-            of(
-              ConversationsActions.createNewConversations({
-                names: [DEFAULT_CONVERSATION_NAME],
-              }),
-            ),
-          );
-        } else {
-          actions.push(
-            of(
-              ConversationsActions.selectConversations({ conversationIds: [] }),
-            ),
-            of(PublicationActions.setIsToolsetReview(true)),
-          );
-        }
+      if (!publicationUrl) {
+        actions.push(
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+        );
+      } else {
+        actions.push(
+          of(ConversationsActions.selectConversations({ conversationIds: [] })),
+          of(PublicationActions.setIsToolsetReview(true)),
+        );
       }
 
-      return from(router.push(route)).pipe(mergeMap(() => concat(...actions)));
+      actions.push(of(UIActions.setEditorLoader(false)));
+
+      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
     }),
   );
 

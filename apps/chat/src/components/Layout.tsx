@@ -17,6 +17,7 @@ import {
   AuthSelectors,
   MarketplaceSelectors,
   SettingsSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
 
@@ -52,6 +53,7 @@ export function Layout({
   const isApplyingModel = useAppSelector(
     MarketplaceSelectors.selectIsApplyingModel,
   );
+  const isEditorLoader = useAppSelector(UISelectors.selectIsEditorLoader);
 
   const [loading, setLoading] = useState(isApplyingModel);
 
@@ -134,7 +136,7 @@ export function Layout({
           <NavigationWrapper>{children}</NavigationWrapper>
         </main>
       )}
-      {loading && (
+      {(loading || isEditorLoader) && (
         <Loader containerClassName="absolute bg-blackout size-full top-0 z-50" />
       )}
     </>
