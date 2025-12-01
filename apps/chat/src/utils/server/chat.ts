@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { getMessageCustomContent } from '@/src/utils/app/conversation';
+
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -88,7 +90,7 @@ export function limitMessagesByTokens({
 
 export const hardLimitMessages = (messages: Message[]) => {
   let userMessageFound = false;
-  return messages
+  return [...messages]
     .reverse()
     .filter((message) => message.role !== Role.Assistant)
     .reduce((acc, current) => {
@@ -102,39 +104,19 @@ export const hardLimitMessages = (messages: Message[]) => {
     }, [] as Message[]);
 };
 
-export function getMessageCustomContent(
-  message: Message,
-): Partial<Message> | undefined {
-  return message.custom_content?.state ||
-    message.custom_content?.attachments?.length ||
-    message.custom_content?.form_value ||
-    message.custom_content?.form_schema
-    ? {
-        custom_content: {
-          attachments:
-            message.role !== Role.Assistant &&
-            message.custom_content?.attachments?.length
-              ? message.custom_content?.attachments
-              : undefined,
-          state: message.custom_content?.state,
-          form_value: message.custom_content?.form_value,
-          form_schema: message.custom_content?.form_schema,
-        },
-      }
-    : undefined;
-}
-
 export function getUserMessageCustomContent(
   message: Message,
+  allowAssistantAttachments = false,
 ): Partial<Message> | undefined {
   if (
+    !allowAssistantAttachments &&
     message.role === Role.Assistant &&
     !message.custom_content?.state &&
     !message.custom_content?.form_schema
   ) {
     return;
   }
-  return getMessageCustomContent(message);
+  return getMessageCustomContent(message, allowAssistantAttachments);
 }
 
 const getResponseBody = (
@@ -160,6 +142,7 @@ const ERROR_CONFIG: Record<
   '429': { status: 429, messageKey: 429 },
   '504': { status: 504, messageKey: 'timeoutError' },
   content_filter: { status: 400, messageKey: 'contentFiltering' },
+  '410': { status: 410, messageKey: 'ModelDeprecated' },
   ModelDeprecated: { status: 410, messageKey: 'ModelDeprecated' },
 };
 

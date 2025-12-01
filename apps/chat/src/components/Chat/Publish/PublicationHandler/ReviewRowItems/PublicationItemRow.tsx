@@ -1,5 +1,6 @@
 import { IconDownload } from '@tabler/icons-react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -30,6 +31,10 @@ import { PublicationSelectors } from '@/src/store/selectors';
 import { DEFAULT_VERSION, NA_VERSION } from '@/src/constants/publication';
 
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
+import {
+  PublicationRequestFormData,
+  PublishRequestFieldsNames,
+} from '@/src/components/Chat/Publish/form';
 import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
 
@@ -56,7 +61,9 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
-  const publishToUrl = useAppSelector(PublicationSelectors.selectPublishToUrl);
+
+  const { watch } = useFormContext<PublicationRequestFormData>();
+  const publishToUrl = watch(PublishRequestFieldsNames.PUBLISH_TO_URL);
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
@@ -209,6 +216,7 @@ interface PublicationRowProps {
   item: ShareEntity;
   dataQa: string;
   itemTypeName: BackendResourceTypeName;
+  publicationUrl: string;
 }
 
 export const PublicationItemRow: React.FC<PublicationRowProps> = ({
@@ -217,6 +225,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   item,
   dataQa,
   itemTypeName,
+  publicationUrl,
 }) => {
   const dispatch = useAppDispatch();
 
@@ -224,17 +233,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
     PublicationSelectors.selectPublishModel,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
   const entityEditState = useAppSelector((state) =>
     PublicationSelectors.selectEntityEditStateByReviewUrl(state, item.id),
   );
-  const selectedPublicationItems = useAppSelector(
-    PublicationSelectors.selectSelectedPublicationItems,
+  const selectedPublicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedPublicationItems(state, publicationUrl),
   );
-  const selectedCredentialsItems = useAppSelector(
-    PublicationSelectors.selectSelectedCredentialsItems,
+  const selectedCredentialsItems = useAppSelector((state) =>
+    PublicationSelectors.selectSelectedCredentialsItems(state, publicationUrl),
   );
   const editState = useAppSelector(
     PublicationSelectors.selectEntitiesEditState,
@@ -292,12 +298,12 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const handleSelect = useCallback(() => {
     dispatch(
       PublicationActions.selectPublicationItems({
-        publicationUrl: selectedPublication?.url ?? '',
+        publicationUrl,
         ids: [item.id],
       }),
     );
 
-    if (isToolsetId(item.id)) {
+    if (isToolsetId(item.id) && item.publicationInfo?.publishCredentials) {
       if (
         (!selectedCredentialsItems.includes(item.id) &&
           !selectedPublicationItems.includes(item.id)) ||
@@ -306,7 +312,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       ) {
         dispatch(
           PublicationActions.selectCredentialsItems({
-            publicationUrl: selectedPublication?.url ?? '',
+            publicationUrl,
             ids: [item.id],
           }),
         );
@@ -315,8 +321,9 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   }, [
     dispatch,
     item.id,
+    item.publicationInfo?.publishCredentials,
     selectedCredentialsItems,
-    selectedPublication?.url,
+    publicationUrl,
     selectedPublicationItems,
   ]);
 
@@ -330,6 +337,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       )}
       onFocus={() => setIsFocused(true)}
       onBlur={() => setIsFocused(false)}
+      data-qa={'entity-publication-row'}
     >
       <span
         className="relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center gap-2 truncate rounded px-4"
@@ -360,6 +368,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
           )}
           tooltipIconClassName="right-5"
           errors={errors}
+          dataQA="entity-input"
         />
       </span>
       <PublicationVersionInfo item={item} />

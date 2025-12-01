@@ -1,7 +1,7 @@
 export const safeParseJSON = (
   jsonData: string | undefined,
   errorMessage: string,
-  logger: { error: (...args: any[]) => void },
+  logger: { error: (...args: unknown[]) => void },
 ) => {
   try {
     if (!jsonData) {

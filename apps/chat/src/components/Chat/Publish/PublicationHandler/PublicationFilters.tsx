@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -11,8 +12,7 @@ import {
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
@@ -21,12 +21,14 @@ import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { RuleListItem } from '../RuleListItem';
+import { PublicationRequestFormData, PublishRequestFieldsNames } from '../form';
 
 interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
   newRules: PublicationRule[];
   publication: Publication;
   isRulesLoading: boolean;
+  editedPublishToUrl: string;
 }
 
 const showNoRulesLabel = (
@@ -50,21 +52,20 @@ export function PublicationFilters({
   newRules,
   publication,
   isRulesLoading,
+  editedPublishToUrl,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
-
-  const dispatch = useAppDispatch();
 
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-  const rulesOnEdit = useAppSelector(PublicationSelectors.selectRulesOnEdit);
-  const editedPublishToUrl = useAppSelector(
-    PublicationSelectors.selectPublishToUrl,
-  );
 
   const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
+
+  const { setValue, watch } = useFormContext<PublicationRequestFormData>();
+
+  const rulesOnEdit = watch(PublishRequestFieldsNames.RULES);
 
   const filters = useMemo(
     () => rulesOnEdit?.map(mapRuleToFilter) ?? [],
@@ -73,16 +74,18 @@ export function PublicationFilters({
 
   const handleFilterUpdate = useCallback(
     (newFilters: TargetAudienceFilter[]) => {
-      dispatch(
-        PublicationActions.setRulesOnEdit(newFilters.map(mapFilterToRule)),
+      setValue(
+        PublishRequestFieldsNames.RULES,
+        newFilters.map(mapFilterToRule),
       );
     },
-    [dispatch],
+    [setValue],
   );
 
-  const targetFolder = publicationModel
-    ? editedPublishToUrl
-    : publication.targetFolder;
+  const targetFolder =
+    isEditMode || publicationModel
+      ? editedPublishToUrl
+      : publication.targetFolder;
   const isRootTarget = targetFolder.split('/').length === 1;
 
   if (isRulesLoading) {
@@ -105,7 +108,7 @@ export function PublicationFilters({
       {showNoRulesLabel(
         rulesOnEdit.length,
         isNoRulesToDisplay,
-        publicationModel ? editedPublishToUrl : undefined,
+        isEditMode || publicationModel ? editedPublishToUrl : undefined,
       ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
           {t(

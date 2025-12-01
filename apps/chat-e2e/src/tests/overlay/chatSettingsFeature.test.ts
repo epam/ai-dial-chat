@@ -52,6 +52,7 @@ dialOverlayTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithAttachment,
             true,
+            undefined,
             imageUrl,
           );
         await overlayDataInjector.createConversations([attachmentConversation]);
@@ -146,6 +147,7 @@ dialOverlayTest(
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithAttachment,
             true,
+            undefined,
           );
         await overlayDataInjector.createConversations([attachmentConversation]);
       },

@@ -107,7 +107,7 @@ dialAdminTest(
         );
         await adminPublishConversationsTreeAssertion.assertEntityVersion(
           { name: conversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminPublishConversationsTreeAssertion.assertTreeEntityIcon(
           { name: conversation.name },

@@ -748,19 +748,27 @@ const selectIsSelectedConversationBlocksInput = createSelector(
   [
     selectSelectedConversations,
     PublicationSelectors.selectResourcesToReview,
-    ChatSelectors.selectIsConfigurationBlocksInput,
     selectIsNotAllowed,
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
+    (state: RootState) => state,
   ],
   (
     conversations,
     resourcesToReview,
-    isConfigurationBlocksInput,
     isNotAllowedModels,
     areReadOnly,
     isAdmin,
+    state,
   ) => {
+    const conversationsModelsIds = conversations.map(
+      (conversation) => conversation.model.id,
+    );
+    const isConfigurationBlocksInput =
+      ChatSelectors.selectIsConfigurationBlocksInput(
+        state,
+        conversationsModelsIds,
+      );
     const isReviewEntity = conversations.some((conversation) =>
       resourcesToReview.some(
         (resource) => resource.reviewUrl === conversation.id,
@@ -795,6 +803,9 @@ const selectIsSelectedConversationsWithSchema = createSelector(
 
 const selectAction = (state: RootState) =>
   rootSelector(state).preselectedAction;
+
+const selectMoveToConversationId = (state: RootState) =>
+  rootSelector(state).moveToConversationId;
 
 export const ConversationsSelectors = {
   selectConversations,
@@ -873,4 +884,5 @@ export const ConversationsSelectors = {
   selectAction,
   selectIsNotAllowed,
   selectNotAllowedItemsForDisplay,
+  selectMoveToConversationId,
 };

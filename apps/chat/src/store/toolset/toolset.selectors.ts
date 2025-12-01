@@ -95,6 +95,9 @@ const selectToolsetsTopics = createSelector([selectToolsets], (toolsets) => {
   );
 });
 
+const selectIsInstalledToolsetsInitialized = (state: RootState) =>
+  rootSelector(state).isInstalledToolsetsInitialized;
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -106,6 +109,7 @@ export const ToolsetSelectors = {
   selectToolsetDetailsStatus,
   selectIsToolsetDetailsLoading,
   selectInstalledToolsets,
+  selectIsInstalledToolsetsInitialized,
   selectInstalledToolsetsSet,
   selectEditorStep,
   selectPublishRequestToolsets,

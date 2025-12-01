@@ -477,10 +477,10 @@ dialTest(
     localStorageManager,
     talkToAgentDialog,
     navigationPanel,
-    agentDetailsModal,
+    entityDetailsModal,
     confirmationDialog,
     chatHeader,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
   }) => {
     setTestIds('EPMRTC-5506', 'EPMRTC-5507');
     const prompt = promptData.prepareDefaultPrompt();
@@ -537,9 +537,9 @@ dialTest(
         await chatHeader.chatModelIcon.click();
         await talkToAgentDialog.goToMyWorkspace();
         const agentElement =
-          await marketplaceAgentsSection.findAgentElement(initialModel);
+          await marketplaceEntitiesSection.findEntityElement(initialModel);
         await agentElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm();
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },

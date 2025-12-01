@@ -19,7 +19,7 @@ export function EntityDetailsContent({ entity }: Props) {
 
   const entityInfo = useMemo(
     () => ({
-      author: entity?.author ? entity.author : t('Unknown'),
+      author: entity?.author ?? t('Unknown'),
       createdAt: entity?.createdAt,
     }),
     [entity.author, entity?.createdAt, t],
@@ -28,10 +28,10 @@ export function EntityDetailsContent({ entity }: Props) {
   return (
     <div
       className="divide-y divide-tertiary overflow-auto"
-      data-qa="application-content"
+      data-qa="entity-content"
     >
       {!!getModelDescription(entity) && (
-        <section className="px-3 py-4 md:p-6" data-qa="application-description">
+        <section className="px-3 py-4 md:p-6" data-qa="entity-description">
           <div className="flex flex-col gap-4">
             <EntityMarkdownDescription className="!text-sm !leading-[21px]">
               {getModelDescription(entity) ?? ''}
@@ -41,7 +41,7 @@ export function EntityDetailsContent({ entity }: Props) {
       )}
       <section
         className="flex flex-col gap-3 overflow-auto px-3 py-4 md:px-6"
-        data-qa="application-information"
+        data-qa="entity-information"
       >
         <EntityInfo entityInfo={entityInfo} />
       </section>

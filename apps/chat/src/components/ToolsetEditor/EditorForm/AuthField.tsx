@@ -68,21 +68,25 @@ enum WithLogin {
 interface AuthTypeSectionProps {
   type: ToolsetAuthTypes;
   isSelected: boolean;
+  isDisabled?: boolean;
+  tooltip?: string;
+  withLogin?: WithLogin;
   onClick: (type: ToolsetAuthTypes) => void;
   onWithLoginChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onLogout?: () => void;
   onLogin?: (data: ToolsetLoginFormType) => void;
-  withLogin?: WithLogin;
 }
 
 const AuthTypeSection = ({
   type,
   isSelected,
+  isDisabled,
+  tooltip,
+  withLogin = WithLogin.WithoutLogin,
   onClick,
   onWithLoginChange,
   onLogout,
   onLogin,
-  withLogin = WithLogin.WithoutLogin,
 }: AuthTypeSectionProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -96,20 +100,24 @@ const AuthTypeSection = ({
     if (!isSignedIn) onClick(type);
   }, [isSignedIn, onClick, type]);
 
+  const isSectionDisabled = isSelected || isDisabled || isSignedIn;
+
   return (
     <Tooltip
-      hideTooltip={!isSignedIn || isSelected}
-      tooltip={t('Log out before changing authentication type')}
+      hideTooltip={(!isSignedIn && !isDisabled) || isSelected}
+      tooltip={tooltip ?? t('Log out before changing authentication type')}
       triggerClassName="w-full"
     >
       <div className="overflow-hidden rounded bg-layer-3">
-        <div
+        <button
           onClick={handleOnClick}
           className={classNames(
-            'flex gap-3 border-l p-4',
+            'flex w-full gap-3 border-l p-4',
             isSelected ? 'border-accent-primary' : 'border-transparent',
-            !isSelected && !isSignedIn && 'cursor-pointer',
+            isSectionDisabled && 'cursor-not-allowed',
           )}
+          disabled={isSectionDisabled}
+          data-qa={type.toString().toLowerCase()}
         >
           <Icon
             size={18}
@@ -123,13 +131,17 @@ const AuthTypeSection = ({
               'text-sm font-semibold',
               isSelected ? 'text-accent-primary' : 'text-primary',
             )}
+            data-qa={type.toString().toLowerCase().concat('-label')}
           >
             {name}
           </span>
-        </div>
+        </button>
 
         {isSelected && type !== ToolsetAuthTypes.NONE && (
-          <div className="flex flex-col gap-4 border-t border-tertiary p-4">
+          <div
+            className="flex flex-col gap-4 border-t border-tertiary p-4"
+            data-qa="auth-details-container"
+          >
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
               <RadioButton
                 id={WithLogin.WithLogin}
@@ -138,6 +150,8 @@ const AuthTypeSection = ({
                 onChange={onWithLoginChange}
                 value={WithLogin.WithLogin}
                 checked={withLogin === WithLogin.WithLogin}
+                disabled={isDisabled}
+                tooltip={tooltip}
               />
 
               {type === ToolsetAuthTypes.OAUTH && (
@@ -148,19 +162,23 @@ const AuthTypeSection = ({
                   onChange={onWithLoginChange}
                   value={WithLogin.WithConfig}
                   checked={withLogin === WithLogin.WithConfig}
-                  disabled={isSignedIn}
+                  disabled={isSignedIn || isDisabled}
+                  tooltip={tooltip}
                 />
               )}
 
-              <RadioButton
-                id={WithLogin.WithoutLogin}
-                name="with-auth"
-                caption={t(WithLogin.WithoutLogin)}
-                onChange={onWithLoginChange}
-                value={WithLogin.WithoutLogin}
-                checked={withLogin === WithLogin.WithoutLogin}
-                disabled={isSignedIn}
-              />
+              {type !== ToolsetAuthTypes.OAUTH && (
+                <RadioButton
+                  id={WithLogin.WithoutLogin}
+                  name="with-auth"
+                  caption={t(WithLogin.WithoutLogin)}
+                  onChange={onWithLoginChange}
+                  value={WithLogin.WithoutLogin}
+                  checked={withLogin === WithLogin.WithoutLogin}
+                  disabled={isSignedIn || isDisabled}
+                  tooltip={tooltip}
+                />
+              )}
             </div>
 
             {withLogin !== WithLogin.WithoutLogin && (
@@ -169,6 +187,8 @@ const AuthTypeSection = ({
                 type={type}
                 toolset={toolsetDetails}
                 onLogout={onLogout}
+                disabled={isDisabled}
+                fieldsTooltip={tooltip}
               />
             )}
           </div>
@@ -188,7 +208,12 @@ const getWithLoginInitialValue = (formData: ToolsetEditorForm) => {
   return WithLogin.WithLogin;
 };
 
-export const AuthField = () => {
+interface AuthFieldProps {
+  isDisabled?: boolean;
+  tooltip?: string;
+}
+
+export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
   const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
 
@@ -213,6 +238,7 @@ export const AuthField = () => {
       }
       setValue('includeOAuthFields', value === WithLogin.WithConfig, {
         shouldDirty: false,
+        shouldValidate: true,
       });
     },
     [clearErrors, setValue],
@@ -260,7 +286,7 @@ export const AuthField = () => {
           const newToolset = getToolsetPayload(
             {
               ...toolsetDetails,
-              endpoint,
+              endpoint: endpoint.trim(),
               transport,
               allowedTools,
               authSettings: {
@@ -293,13 +319,14 @@ export const AuthField = () => {
   );
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" data-qa="auth-container">
       <Controller
         name="authenticationType"
         control={control}
         render={({ field }) => (
           <>
             <AuthTypeSection
+              isDisabled={isDisabled}
               type={ToolsetAuthTypes.OAUTH}
               isSelected={field.value === ToolsetAuthTypes.OAUTH}
               onClick={handleSelectAuthType}
@@ -307,8 +334,10 @@ export const AuthField = () => {
               onLogout={handleLogoutClick}
               onLogin={handleLogIn}
               withLogin={withLogin}
+              tooltip={tooltip}
             />
             <AuthTypeSection
+              isDisabled={isDisabled}
               type={ToolsetAuthTypes.API_KEY}
               isSelected={field.value === ToolsetAuthTypes.API_KEY}
               onClick={handleSelectAuthType}
@@ -316,12 +345,15 @@ export const AuthField = () => {
               onLogout={handleLogoutClick}
               onLogin={handleLogIn}
               withLogin={withLogin}
+              tooltip={tooltip}
             />
             <AuthTypeSection
+              isDisabled={isDisabled}
               type={ToolsetAuthTypes.NONE}
               isSelected={field.value === ToolsetAuthTypes.NONE}
               onClick={handleSelectAuthType}
               onWithLoginChange={handleWithLoginChange}
+              tooltip={tooltip}
             />
           </>
         )}

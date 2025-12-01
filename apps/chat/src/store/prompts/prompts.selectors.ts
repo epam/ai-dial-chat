@@ -341,11 +341,11 @@ const selectInitialized = (state: RootState) => rootSelector(state).initialized;
 const selectPromptWithVariablesForApply = (state: RootState) =>
   rootSelector(state).promptWithVariablesForApply;
 
-const selectDeletingPrompt = (state: RootState) =>
-  rootSelector(state).deletingPrompt;
+const selectDeletingPromptId = (state: RootState) =>
+  rootSelector(state).deletingPromptId;
 
-const selectMoveToPrompt = (state: RootState) =>
-  rootSelector(state).moveToPrompt;
+const selectMoveToPromptId = (state: RootState) =>
+  rootSelector(state).moveToPromptId;
 
 export const PromptsSelectors = {
   selectPrompts,
@@ -385,6 +385,6 @@ export const PromptsSelectors = {
   selectIsFolderEmpty,
   selectInitialized,
   selectPromptWithVariablesForApply,
-  selectDeletingPrompt,
-  selectMoveToPrompt,
+  selectDeletingPromptId,
+  selectMoveToPromptId,
 };

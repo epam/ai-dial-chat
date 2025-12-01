@@ -11,8 +11,10 @@ export class EditInputActions extends BaseElement {
     );
   }
 
+  public tickButton = this.getChildElementBySelector(EditSelectors.confirmEdit);
+
   public async clickTickButton() {
-    await this.getChildElementBySelector(EditSelectors.confirmEdit).click();
+    await this.tickButton.click();
   }
 
   public async clickCancelButton() {

@@ -10,13 +10,10 @@ import {
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import {
   isPlaybackConversation,
   isReplayConversation,
-  regenerateConversationId,
 } from '@/src/utils/app/conversation';
-import { getParentAndCurrentFolderIdsById } from '@/src/utils/app/folders';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
@@ -34,18 +31,13 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
-  ConversationsSelectors,
   ModelsSelectors,
   PublicationSelectors,
-  UISelectors,
 } from '@/src/store/selectors';
-
-import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ExportModal } from '@/src/components/Chatbar/ExportModal';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
-import { MoveToDialog } from '@/src/components/Common/MoveToDialog';
 
 import {
   ConversationInfo,
@@ -82,10 +74,6 @@ export const ConversationContextMenu = ({
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-
-  const allConversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(
       state,
@@ -93,14 +81,6 @@ export const ConversationContextMenu = ({
     ),
   );
 
-  const collapsedSectionsSelector = useMemo(
-    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
-    [],
-  );
-
-  const collapsedSections = useAppSelector(collapsedSectionsSelector);
-
-  const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUnshared, setIsUnshared] = useState(false);
   const [isShowExportModal, setIsShowExportModal] = useState(false);
@@ -144,13 +124,6 @@ export const ConversationContextMenu = ({
     setIsShowExportModal(false);
   }, []);
 
-  useEffect(() => {
-    if (screenState !== ScreenState.SM) {
-      setIsShowMoveToModal(false);
-      handleCloseExportModal();
-    }
-  }, [handleCloseExportModal, screenState]);
-
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
     useCallback((e) => {
       e.stopPropagation();
@@ -175,66 +148,6 @@ export const ConversationContextMenu = ({
       }),
     );
   }, [conversation, dispatch]);
-
-  const handleMoveToFolder = useCallback(
-    (folderId: string) => {
-      if (
-        !isEntityNameOnSameLevelUnique(
-          conversation.name,
-          { ...conversation, folderId },
-          allConversations,
-        )
-      ) {
-        dispatch(
-          UIActions.showErrorToast(
-            t(
-              'Conversation with name "{{name}}" already exists in this folder.',
-              {
-                ns: Translation.Chat,
-                name: conversation.name,
-              },
-            ),
-          ),
-        );
-
-        return;
-      }
-
-      dispatch(
-        UIActions.setCollapsedSections({
-          featureType: FeatureType.Chat,
-          collapsedSections: collapsedSections.filter(
-            (section) => section !== PINNED_CONVERSATIONS_SECTION_NAME,
-          ),
-        }),
-      );
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { folderId },
-        }),
-      );
-      dispatch(
-        UIActions.setOpenedFoldersIds({
-          openedFolderIds: getParentAndCurrentFolderIdsById(folderId),
-          featureType: FeatureType.Chat,
-        }),
-      );
-      dispatch(
-        UIActions.setScrollToEntityId(
-          regenerateConversationId({
-            ...conversation,
-            folderId,
-          }).id,
-        ),
-      );
-    },
-    [allConversations, collapsedSections, conversation, dispatch, t],
-  );
-
-  const handleCloseMoveTo = useCallback(() => {
-    setIsShowMoveToModal(false);
-  }, []);
 
   const handleCompare: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -340,6 +253,10 @@ export const ConversationContextMenu = ({
     setIsDeleting(false);
   }, [conversation.id, dispatch]);
 
+  const handleOpenMoveToModal = useCallback(() => {
+    dispatch(ConversationsActions.setMoveToConversationId(conversation.id));
+  }, [conversation, dispatch]);
+
   const handleOpenRenameModal = useCallback(() => {
     dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
@@ -399,7 +316,7 @@ export const ConversationContextMenu = ({
           entity={conversation}
           isEmptyConversation={!isReplay && !isPlayback && isEmptyConversation}
           featureType={FeatureType.Chat}
-          onOpenMoveToModal={() => setIsShowMoveToModal(true)}
+          onOpenMoveToModal={handleOpenMoveToModal}
           onDelete={handleOpenDeleteModal}
           onRename={handleOpenRenameModal}
           onExport={handleExport}
@@ -431,15 +348,6 @@ export const ConversationContextMenu = ({
           hideTriggerIcon={!isHeaderMenu && isMobileOrTablet}
         />
       </button>
-
-      {isShowMoveToModal && (
-        <MoveToDialog
-          entity={conversation}
-          featureType={FeatureType.Chat}
-          onClose={handleCloseMoveTo}
-          onSelect={handleMoveToFolder}
-        />
-      )}
 
       {isShowExportModal && (
         <ExportModal onExport={handleExport} onClose={handleCloseExportModal} />

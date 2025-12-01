@@ -39,7 +39,7 @@ const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
 };
 
 interface Props {
-  children: ReactNode[];
+  children: ReactNode[] | ReactNode;
   isLastMessageStreaming: boolean;
 }
 

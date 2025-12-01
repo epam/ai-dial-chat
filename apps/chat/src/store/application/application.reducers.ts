@@ -29,6 +29,7 @@ const initialState: ApplicationState = {
   publicFolders: [],
   logsEntityId: undefined,
   editorStep: MarketplaceEditorSteps.General,
+  shouldTriggerEditorAutoUpdate: false,
 };
 
 export const applicationSlice = createSlice({
@@ -65,7 +66,7 @@ export const applicationSlice = createSlice({
     delete: (state, _action: PayloadAction<DialAIEntityModel>) => {
       state.appLoading = UploadStatus.LOADING;
     },
-    deleteSuccess: (state, _action: PayloadAction<void>) => {
+    deleteSuccess: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
     deleteFail: (state) => {
@@ -103,7 +104,7 @@ export const applicationSlice = createSlice({
       }: PayloadAction<{
         oldApplication: CustomApplicationModel;
         applicationData: CustomApplicationModel;
-        redirectUrl?: string;
+        redirectUrl?: URL | string;
         schema?: ApiDetailedApplicationTypeSchema;
         publicationUrl?: string;
         tabToOpen?: MarketplaceEditorSteps;
@@ -120,6 +121,12 @@ export const applicationSlice = createSlice({
     ) => {
       state.appDetails = payload.oldApplication;
       state.appLoading = UploadStatus.FAILED;
+    },
+    setShouldTriggerEditorAutoUpdate: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.shouldTriggerEditorAutoUpdate = payload;
     },
     get: (
       state,
@@ -189,8 +196,14 @@ export const applicationSlice = createSlice({
     updateComplete: (state) => {
       state.appLoading = UploadStatus.LOADED;
     },
-    updateSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
-      state.appDetails = action.payload;
+    updateSuccess: (
+      state,
+      action: PayloadAction<{
+        appDetails: CustomApplicationModel;
+        isExitingAfterSave?: boolean;
+      }>,
+    ) => {
+      state.appDetails = action.payload.appDetails;
     },
     setAppDetails: (
       state,
@@ -215,7 +228,7 @@ export const applicationSlice = createSlice({
     exitEditor: (
       state,
       _action: PayloadAction<{
-        redirectUrl?: string;
+        redirectUrl?: URL | string;
         shouldSelectApplication?: boolean;
       }>,
     ) => state,

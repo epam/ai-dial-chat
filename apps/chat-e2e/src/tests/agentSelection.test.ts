@@ -30,7 +30,7 @@ dialTest(
     setTestIds,
     localStorageManager,
     iconApiHelper,
-    agentDetailsModal,
+    entityDetailsModal,
     navigationPanel,
     confirmationDialog,
     talkToAgentDialogAssertion,
@@ -39,7 +39,7 @@ dialTest(
     dataInjector,
     chatAssertion,
     localStorageAssertion,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     toast,
   }) => {
     dialTest.slow();
@@ -143,7 +143,7 @@ dialTest(
     await dialTest.step(
       'Click "Use model" for the second model and verify recentModelsIds is updated',
       async () => {
-        await marketplaceAgentsSection.findAndUseAgent(initialModel2);
+        await marketplaceEntitiesSection.findAndUseAgent(initialModel2);
         await dialHomePage.waitForPageLoaded();
         await localStorageAssertion.assertRecentModels([
           initialModel2.id,
@@ -176,7 +176,7 @@ dialTest(
         await dialHomePage.goToMarketplace();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(addedModel.name);
-        await marketplaceAgentsSection.findAndUseAgent(addedModel, {
+        await marketplaceEntitiesSection.findAndUseAgent(addedModel, {
           isInstalledDeploymentsUpdated: true,
         });
         await dialHomePage.waitForPageLoaded();
@@ -195,9 +195,9 @@ dialTest(
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(addedModel.name);
         const addedModelElement =
-          await marketplaceAgentsSection.findAgentElement(addedModel);
+          await marketplaceEntitiesSection.findEntityElement(addedModel);
         await addedModelElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
       },
@@ -623,13 +623,13 @@ dialTest(
     agentInfoAssertion,
     setTestIds,
     localStorageManager,
-    agentDetailsModal,
+    entityDetailsModal,
     confirmationDialog,
     localStorageAssertion,
     chatAssertion,
     sendMessage,
     sendMessageAssertion,
-    marketplaceAgentsSection,
+    marketplaceEntitiesSection,
     talkToAgentDialogAssertion,
   }) => {
     setTestIds('EPMRTC-4356', 'EPMRTC-5113');
@@ -658,9 +658,9 @@ dialTest(
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
         const firstModelElement =
-          await marketplaceAgentsSection.findAgentElement(firstModel);
+          await marketplaceEntitiesSection.findEntityElement(firstModel);
         await firstModelElement.click();
-        await agentDetailsModal.removeBookmarkIcon.click();
+        await entityDetailsModal.removeBookmarkIcon.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
         await navigationPanel.backToChat({ isHttpMethodTriggered: false });
         await dialHomePage.waitForPageLoaded();

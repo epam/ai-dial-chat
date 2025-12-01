@@ -26,7 +26,7 @@ import {
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { IconButton } from '@/src/components/Common/IconButton';
-import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
 import { ReviewExternalAppSection } from './ReviewExternalAppSection';
@@ -128,7 +128,7 @@ export function ReviewApplicationDialogView({
             <span className="w-[122px] text-secondary">{t('Topics: ')}</span>
             <div className="flex max-w-[414px] flex-wrap gap-1">
               {application.topics.map((topic) => (
-                <ApplicationTopic key={topic} topic={topic} />
+                <MarketplaceEntityTopic key={topic} topic={topic} />
               ))}
             </div>
           </div>
@@ -191,7 +191,10 @@ export function ReviewApplicationDialogView({
         {application.completionUrl &&
           isEmpty(application.function?.mapping) && (
             <div className="flex gap-4">
-              <span className="w-[122px] text-secondary">
+              <span
+                className="w-[122px] text-secondary"
+                data-qa="app-completion-url-label"
+              >
                 {t('Completion URL:')}
               </span>
               <span

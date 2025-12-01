@@ -163,7 +163,7 @@ dialOverlayTest(
         );
         const agents = await overlayTalkToAgentDialog
           .getAgents()
-          .getAgentNames();
+          .getEntityNames();
         expect
           .soft(agents[0], ExpectedMessages.recentEntitiesIsOnTop)
           .toBe(expectedModel.name);

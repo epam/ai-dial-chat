@@ -1,13 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { doesMarketplaceEntityMatchFilters } from '@/src/utils/marketplace';
+import {
+  doesMarketplaceEntityMatchFilters,
+  getDetailsEntity,
+  getFilters,
+  getLinkErrorMessage,
+  getTableSort,
+  getTabs,
+} from '@/src/utils/marketplace';
 
 import { ApplicationType } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { DetailsEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetModel } from '@/src/types/toolsets';
 
-import { FilterTypes, SourceType } from '@/src/constants/marketplace';
+import {
+  FilterTypes,
+  MarketplaceEntitiesTabs,
+  MarketplaceTabs,
+  SourceType,
+  TableColumnSortKeys,
+} from '@/src/constants/marketplace';
 
 import {
   getApplicationType,
@@ -17,6 +31,8 @@ import {
 } from '../application';
 import { pluralizeDisplayName } from '../application-type-schema';
 import { isMyApplication, isMyToolset } from '../id';
+
+import { ParsedUrlQuery } from 'querystring';
 
 // Mock dependencies
 vi.mock('../application', () => ({
@@ -211,6 +227,168 @@ describe('doesMarketplaceEntityMatchFilters', () => {
 
       const result = doesMarketplaceEntityMatchFilters(mockToolset, filters);
       expect(result).toBe(false);
+    });
+  });
+});
+
+//epic utils
+describe('Marketplace epic utils', () => {
+  const mockModel: DialAIEntityModel = {
+    type: EntityType.Application,
+    reference: 'model-ref',
+    isDefault: false,
+    id: 'applications/test-app',
+    name: 'test-app',
+  };
+
+  const mockToolset: ToolsetModel = {
+    type: EntityType.Toolset,
+    reference: 'toolset-ref',
+  } as ToolsetModel;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('getDetailsEntity', () => {
+    it('returns model entity info when model query param matches', () => {
+      const result = getDetailsEntity({
+        entitiesMap: { [mockModel.reference]: mockModel },
+        reference: mockModel.reference,
+        type: MarketplaceEntitiesTabs.AGENTS,
+      });
+      expect(result).toEqual({
+        reference: mockModel.reference,
+        isSuggested: false,
+        type: MarketplaceEntitiesTabs.AGENTS,
+      });
+    });
+
+    it('returns toolset entity info when toolset query param matches', () => {
+      const result = getDetailsEntity({
+        entitiesMap: { [mockToolset.reference]: mockToolset },
+        reference: mockToolset.reference,
+        type: MarketplaceEntitiesTabs.TOOLSETS,
+      });
+      expect(result).toEqual({
+        reference: mockToolset.reference,
+        isSuggested: false,
+        type: MarketplaceEntitiesTabs.TOOLSETS,
+      });
+    });
+
+    it('returns undefined if neither model nor toolset found', () => {
+      expect(
+        getDetailsEntity({
+          entitiesMap: { [mockModel.reference]: mockModel },
+          reference: 'bad-ref',
+          type: MarketplaceEntitiesTabs.AGENTS,
+        }),
+      ).toBeUndefined();
+    });
+  });
+
+  describe('getTabs', () => {
+    it('returns MY_WORKSPACE tab when query.tab matches', () => {
+      const query: ParsedUrlQuery = {
+        tab: 'workspace',
+        entitiesTab: 'toolsets',
+      };
+      const result = getTabs(query);
+      expect(result.selectedTab).toBe(MarketplaceTabs.MY_WORKSPACE);
+      expect(result.selectedEntitiesTab).toBe(MarketplaceEntitiesTabs.TOOLSETS);
+    });
+
+    it('defaults to HOME/AGENTS when query params missing', () => {
+      const result = getTabs({});
+      expect(result.selectedTab).toBe(MarketplaceTabs.HOME);
+      expect(result.selectedEntitiesTab).toBe(MarketplaceEntitiesTabs.AGENTS);
+    });
+  });
+
+  describe('getFilters', () => {
+    it('filters topics, types, and sources correctly', () => {
+      const query: ParsedUrlQuery = {
+        topics: 'Analysis,Development',
+        types: 'application',
+        sources: `${SourceType.MyCodeApps},Public`,
+      };
+      const existingTopics = ['Analysis'];
+      const sourceTypes: SourceType[] = [
+        SourceType.MyCodeApps,
+        SourceType.Public,
+      ];
+
+      const result = getFilters(query, existingTopics, sourceTypes);
+      expect(result.Topics).toEqual(['Analysis']);
+      expect(result.Type).toEqual(['application']);
+      expect(result.Sources).toEqual([
+        SourceType.MyCodeApps,
+        SourceType.Public,
+      ]);
+    });
+
+    it('returns empty arrays when no matches', () => {
+      const result = getFilters({}, [], []);
+      expect(result.Topics).toEqual([]);
+      expect(result.Type).toEqual([]);
+      expect(result.Sources).toEqual([]);
+    });
+  });
+
+  describe('getTableSort', () => {
+    it('parses valid table sort param', () => {
+      const query: ParsedUrlQuery = {
+        tableSort: `${TableColumnSortKeys.OWNER}-desc`,
+      };
+      const result = getTableSort(query);
+      expect(result).toEqual({
+        column: TableColumnSortKeys.OWNER,
+        order: 'desc',
+      });
+    });
+
+    it('falls back to NAME & asc if invalid column or order', () => {
+      const query: ParsedUrlQuery = { tableSort: 'invalid-badorder' };
+      const result = getTableSort(query);
+      expect(result).toEqual({
+        column: TableColumnSortKeys.NAME,
+        order: 'asc',
+      });
+    });
+
+    it('returns defaults if no tableSort query', () => {
+      expect(getTableSort({})).toEqual({
+        column: TableColumnSortKeys.NAME,
+        order: 'asc',
+      });
+    });
+  });
+
+  describe('getLinkErrorMessage', () => {
+    it('returns agent not found message when isAgentsTab true and ref present', () => {
+      const msg = getLinkErrorMessage(true, 'ref123', undefined);
+      expect(msg).toBe('Agent by this link not found');
+    });
+
+    it('returns toolset not found message when isAgentsTab false and ref present', () => {
+      const msg = getLinkErrorMessage(false, 'ref123', undefined);
+      expect(msg).toBe('Toolset by this link not found');
+    });
+
+    it('returns undefined if detailsEntity exists', () => {
+      const detailsEntity: DetailsEntity = {
+        reference: 'ref',
+        isSuggested: false,
+        type: MarketplaceEntitiesTabs.TOOLSETS,
+      };
+      const msg = getLinkErrorMessage(true, 'ref', detailsEntity);
+      expect(msg).toBeUndefined();
+    });
+
+    it('returns undefined if no reference and no detailsEntity', () => {
+      const msg = getLinkErrorMessage(false, undefined, undefined);
+      expect(msg).toBeUndefined();
     });
   });
 });

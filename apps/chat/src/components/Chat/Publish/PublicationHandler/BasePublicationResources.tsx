@@ -23,6 +23,8 @@ import { PublicationSelectors } from '@/src/store/selectors';
 
 import { PublicationFolderRow } from '@/src/components/Chat/Publish/PublicationHandler/ReviewRowItems/PublicationFolderRow';
 
+import { PublicationItemProps } from './ReviewRowItems/view-props';
+
 import {
   PublishActions,
   ShareEntity,
@@ -32,12 +34,14 @@ import uniq from 'lodash-es/uniq';
 
 interface Props {
   resources: PublicationResource[];
-  ItemComponent: React.FC<{ item: ShareEntity; level: number }>;
+  ItemComponent: React.FC<PublicationItemProps>;
+  publicationUrl: string;
 }
 
 export const BasePublicationResources = ({
   resources,
   ItemComponent,
+  publicationUrl,
 }: Props) => {
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
@@ -51,14 +55,17 @@ export const BasePublicationResources = ({
   const entities: ShareEntity[] = useMemo(
     () =>
       resources.map(({ reviewUrl, action, publishCredentials }) => {
-        const { name } = parseEntityApiKey(splitEntityId(reviewUrl).name, {
-          parseVersion:
-            !publicationModel ||
-            publicationModel.action === PublishActions.DELETE ||
-            isApplicationId(reviewUrl) ||
-            isToolsetId(reviewUrl),
-          parseModel: isConversationId(reviewUrl),
-        });
+        const { name, version } = parseEntityApiKey(
+          splitEntityId(reviewUrl).name,
+          {
+            parseVersion:
+              !publicationModel ||
+              publicationModel.action === PublishActions.DELETE ||
+              isApplicationId(reviewUrl) ||
+              isToolsetId(reviewUrl),
+            parseModel: isConversationId(reviewUrl),
+          },
+        );
 
         return {
           id: reviewUrl,
@@ -68,6 +75,7 @@ export const BasePublicationResources = ({
             isNotExist: currentPublicationInvalidEntities.includes(reviewUrl),
             action,
             publishCredentials,
+            version,
           },
         };
       }),
@@ -111,6 +119,7 @@ export const BasePublicationResources = ({
     <>
       {rootFolders.map((folder) => (
         <PublicationFolderRow
+          publicationUrl={publicationUrl}
           key={folder.id}
           currentFolder={folder}
           allFolders={folders}
@@ -120,7 +129,12 @@ export const BasePublicationResources = ({
         />
       ))}
       {rootEntities.map((item) => (
-        <ItemComponent key={item.id} item={item} level={0} />
+        <ItemComponent
+          key={item.id}
+          item={item}
+          level={0}
+          publicationUrl={publicationUrl}
+        />
       ))}
     </>
   );

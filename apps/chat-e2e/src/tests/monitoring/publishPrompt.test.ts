@@ -129,7 +129,7 @@ dialAdminTest(
         );
         await adminPublishPromptsTreeAssertion.assertEntityVersion(
           { name: prompt.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminPublishPromptsTreeAssertion.assertElementState(
           adminPromptsToApproveTree.promptIcon(prompt.name),

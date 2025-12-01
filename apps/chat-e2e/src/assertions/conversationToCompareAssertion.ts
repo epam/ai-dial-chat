@@ -10,7 +10,14 @@ export class ConversationToCompareAssertion extends BaseAssertion {
     this.conversationToCompare = conversationToCompare;
   }
 
-  public async assertConversationToCompareState(expectedState: ElementState) {
-    await this.assertElementState(this.conversationToCompare, expectedState);
+  public async assertConversationToCompareState(
+    expectedState: ElementState,
+    expectedMessage?: string,
+  ) {
+    await this.assertElementState(
+      this.conversationToCompare,
+      expectedState,
+      expectedMessage,
+    );
   }
 }

@@ -7,22 +7,75 @@ import {
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { PageType } from '@/src/types/common';
-import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
+import { EntityType, PageType, SortOrder } from '@/src/types/common';
+import {
+  DetailsEntity,
+  MarketplaceEntity,
+  MarketplaceFilters,
+} from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+
+import {
+  MarketplaceState,
+  TableSort,
+} from '@/src/store/marketplace/marketplace.types';
 
 import {
   ApplicationTypeToSourceType,
+  ENTITY_TYPES,
   FilterTypes,
   MarketplaceEntitiesTabs,
   MarketplaceQueryParams,
+  MarketplaceTabs,
   SourceType,
+  TableColumnSortKeys,
 } from '@/src/constants/marketplace';
 
 import { pluralizeDisplayName } from './app/application-type-schema';
+import { parseCommaSeparatedList } from './app/common';
+import { isToolsetEntityModel, isToolsetSignedIn } from './app/toolsets';
+import { translate } from './app/translation';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
+import { ParsedUrlQuery } from 'querystring';
+
+export interface EntityStatus {
+  isInvalid: boolean;
+  isLoggedOut: boolean;
+  isError: boolean;
+}
+
+export const getEntityStatus = (
+  entity: MarketplaceEntity | undefined,
+): EntityStatus => {
+  const isInvalid = !entity;
+
+  if (isInvalid) {
+    return { isInvalid, isLoggedOut: false, isError: true };
+  }
+
+  if (
+    isToolsetEntityModel(entity) &&
+    entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE
+  ) {
+    const isSignedInGlobal = isToolsetSignedIn(entity);
+    const isSignedInUser = isToolsetSignedIn(
+      entity,
+      ToolsetCredentialsLevel.USER,
+    );
+    const isLoggedOut = !isSignedInGlobal && !isSignedInUser;
+
+    return {
+      isInvalid,
+      isLoggedOut,
+      isError: isLoggedOut,
+    };
+  }
+
+  return { isInvalid, isLoggedOut: false, isError: false };
+};
 
 // Filter checkers
 const checkEntityTypeFilter = (
@@ -111,3 +164,97 @@ export const isInstalledEntity = (
   entity: { reference: string },
   installedEntitiesSet: Set<string>,
 ) => installedEntitiesSet.has(entity.reference);
+
+//epics utils
+export const getDetailsEntity = ({
+  entitiesMap,
+  reference,
+  type,
+}: {
+  entitiesMap:
+    | Partial<Record<string, DialAIEntityModel>>
+    | Partial<Record<string, ToolsetModel>>;
+  reference: string | undefined;
+  type: MarketplaceEntitiesTabs;
+}) => {
+  const entity =
+    typeof reference === 'string' ? entitiesMap[reference] : undefined;
+
+  return entity
+    ? {
+        reference: entity.reference,
+        isSuggested: false,
+        type,
+      }
+    : undefined;
+};
+
+export const getTabs = (query: ParsedUrlQuery): Partial<MarketplaceState> => {
+  return {
+    selectedTab:
+      query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE
+        ? MarketplaceTabs.MY_WORKSPACE
+        : MarketplaceTabs.HOME,
+    selectedEntitiesTab:
+      query[MarketplaceQueryParams.entitiesTab] ===
+      MarketplaceEntitiesTabs.TOOLSETS
+        ? MarketplaceEntitiesTabs.TOOLSETS
+        : MarketplaceEntitiesTabs.AGENTS,
+  };
+};
+
+export const getFilters = (
+  query: ParsedUrlQuery,
+  existingTopics: string[],
+  sourceTypes: SourceType[],
+) => {
+  const topics = parseCommaSeparatedList(
+    query[MarketplaceQueryParams.topics] as string,
+  ).filter((topic) => topic && existingTopics.includes(topic));
+
+  const types = parseCommaSeparatedList(
+    query[MarketplaceQueryParams.types] as string,
+  ).filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
+
+  const sources = parseCommaSeparatedList(
+    query[MarketplaceQueryParams.sources] as string,
+  ).filter((type) => type && sourceTypes.includes(type as SourceType));
+
+  return { Type: types, Topics: topics, Sources: sources };
+};
+
+export const getTableSort = (query: ParsedUrlQuery) => {
+  const tableSortQuery = query[MarketplaceQueryParams.tableSort];
+  if (typeof tableSortQuery === 'string') {
+    const splittedTableSortQuery = tableSortQuery.split('-');
+    const tableSortColumn =
+      splittedTableSortQuery[0] in TableColumnSortKeys
+        ? (splittedTableSortQuery[0] as TableColumnSortKeys)
+        : TableColumnSortKeys.NAME;
+    const tableSortOrder: SortOrder =
+      splittedTableSortQuery[1] === 'desc' ? 'desc' : 'asc';
+    return {
+      column: tableSortColumn,
+      order: tableSortOrder,
+    };
+  }
+
+  const defaultTableSort: TableSort = {
+    column: TableColumnSortKeys.NAME,
+    order: 'asc',
+  };
+
+  return defaultTableSort;
+};
+
+export const getLinkErrorMessage = (
+  isAgentsTab: boolean,
+  reference: string | undefined,
+  detailsEntity: DetailsEntity | undefined,
+) => {
+  if (!detailsEntity && reference) {
+    return translate(
+      `${isAgentsTab ? 'Agent' : 'Toolset'} by this link not found`,
+    );
+  }
+};

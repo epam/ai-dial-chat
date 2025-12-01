@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -8,16 +8,11 @@ import { getToolsetPayload } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
-import {
-  MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
@@ -31,28 +26,25 @@ import {
 
 import { zodResolver } from '@hookform/resolvers/zod';
 
-const marketplaceRoute = {
-  pathname: Routes.Marketplace,
-  query: {
-    [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
-    [MarketplaceQueryParams.entitiesTab]: MarketplaceEntitiesTabs.TOOLSETS,
-  },
-};
-
 export const ToolsetEditor = () => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
 
-  const { [ToolsetEditorQuery.Id]: idQuery } = router.query;
-  const isCreateRef = useRef(!idQuery);
-
+  const {
+    [ToolsetEditorQuery.Id]: idQuery,
+    [ToolsetEditorQuery.IsCreate]: isCreateQuery,
+  } = router.query;
+  const isCreateRef = useRef(!idQuery || !!isCreateQuery);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
 
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
-  const saveAndExitRef = useRef<Routes.Chat | Routes.Marketplace | null>(null);
+  const saveAndExitRef = useRef(false);
+  const redirectToChatRef = useRef(false);
+
+  const [isExiting, setIsExiting] = useState(false);
 
   const formMethods = useForm<ToolsetEditorForm>({
     defaultValues: getDefaultFormData(toolsetDetails, toolsets),
@@ -71,7 +63,7 @@ export const ToolsetEditor = () => {
       const payloadToolset = getToolsetPayload(
         {
           name: data.name,
-          endpoint: data.endpoint,
+          endpoint: data.endpoint.trim(),
           iconUrl: data.iconUrl,
           transport: data.protocol,
           description: data.description,
@@ -96,7 +88,8 @@ export const ToolsetEditor = () => {
             oldToolset: toolsetDetails,
             newToolset: payloadToolset,
             tabToOpen: changeEditorTabRef.current ?? undefined,
-            redirectUrl: saveAndExitRef.current ?? undefined,
+            redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
+            exitAfterSave: saveAndExitRef.current,
             shouldSelectToolset: isCreateRef.current,
           }),
         );
@@ -109,7 +102,8 @@ export const ToolsetEditor = () => {
       }
 
       changeEditorTabRef.current = null;
-      saveAndExitRef.current = null;
+      saveAndExitRef.current = false;
+      redirectToChatRef.current = false;
       formMethods.reset(formMethods.getValues(), {
         keepIsValid: true,
         keepErrors: true,
@@ -141,7 +135,7 @@ export const ToolsetEditor = () => {
             .then(() => cb?.());
         } else {
           changeEditorTabRef.current = null;
-          saveAndExitRef.current = null;
+          saveAndExitRef.current = false;
           cb?.();
         }
       });
@@ -151,29 +145,23 @@ export const ToolsetEditor = () => {
 
   const handleSaveAndExit = useCallback(
     (saveDraft = false, redirectToChat = false) => {
-      const chatUrl =
-        (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
-
+      setIsExiting(true);
       if ((!isDirty && toolsetDetails) || !toolsetDetails) {
-        void router.push(chatUrl || marketplaceRoute);
         dispatch(
-          MarketplaceActions.setDetailsEntity(
-            isCreateRef.current && toolsetDetails?.reference
-              ? {
-                  reference: toolsetDetails?.reference,
-                  type: MarketplaceEntitiesTabs.TOOLSETS,
-                  isSuggested: false,
-                }
-              : undefined,
-          ),
+          ToolsetActions.exitEditor({
+            redirectUrl: redirectToChat ? Routes.Chat : undefined,
+            shouldSelectToolset: isCreateRef.current,
+          }),
         );
         return;
       }
 
-      saveAndExitRef.current = chatUrl || Routes.Marketplace;
+      saveAndExitRef.current = true;
+      redirectToChatRef.current = redirectToChat;
+      dispatch(UIActions.setEditorLoader(true));
       handleSubmit(undefined, saveDraft);
     },
-    [dispatch, handleSubmit, isDirty, router, toolsetDetails],
+    [dispatch, handleSubmit, isDirty, toolsetDetails],
   );
 
   const handleTabClick = useCallback(
@@ -225,6 +213,7 @@ export const ToolsetEditor = () => {
           currentStep={editorStep}
           onNextClick={handleNextClick}
           currentToolset={toolsetDetails}
+          disableLoader={isExiting}
         />
       </div>
     </FormProvider>

@@ -1,10 +1,11 @@
 import { FeatureType } from '@/src/types/common';
-import { Theme } from '@/src/types/themes';
+import { Theme, ThemesImages } from '@/src/types/themes';
 
 export interface UIState {
   initialized: boolean;
   theme: string;
   availableThemes: Theme[];
+  themesImages: ThemesImages;
   showChatbar: boolean;
   showPromptbar: boolean;
   showMarketplaceFilterbar: boolean;
@@ -26,4 +27,5 @@ export interface UIState {
     [FeatureType.Chat]: number;
     [FeatureType.Prompt]: number;
   };
+  isEditorLoader?: boolean;
 }

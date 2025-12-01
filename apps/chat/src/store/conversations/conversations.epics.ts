@@ -133,6 +133,7 @@ import {
   ConversationInfo,
   CustomVisualizerData,
   Feature,
+  LikeState,
   Message,
   MessageSettings,
   Role,
@@ -1088,6 +1089,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           ConversationsActions.rateMessageFail({
+            ...payload,
             error: translate(
               'No conversation exists for rating with provided conversation id',
             ),
@@ -1100,6 +1102,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!message || !message.responseId) {
         return of(
           ConversationsActions.rateMessageFail({
+            ...payload,
             error: translate('Message cannot be rated'),
           }),
         );
@@ -1111,6 +1114,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         id: conversation.id,
         reference: conversation.reference,
         value: payload.rate > 0,
+        comment: payload.comment,
       };
 
       return fromFetch('/api/rate', {
@@ -1126,10 +1130,11 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        map(() => ConversationsActions.rateMessageSuccess(payload)),
+        switchMap(() => EMPTY),
         catchError((e: Response) => {
           return of(
             ConversationsActions.rateMessageFail({
+              ...payload,
               error: e,
             }),
           );
@@ -1278,7 +1283,7 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
 
 const rateMessageSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    ofType(ConversationsActions.rateMessageSuccess.type),
+    ofType(ConversationsActions.rateMessage.type),
     switchMap(({ payload }) => {
       return of(
         ConversationsActions.updateMessage({
@@ -1288,6 +1293,25 @@ const rateMessageSuccessEpic: AppEpic = (action$) =>
             like: payload.rate,
           },
         }),
+      );
+    }),
+  );
+
+const rateMessageFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ConversationsActions.rateMessageFail.type),
+    switchMap(({ payload }) => {
+      return concat(
+        of(
+          ConversationsActions.updateMessage({
+            conversationId: payload.conversationId,
+            messageIndex: payload.messageIndex,
+            values: {
+              like: LikeState.NoState,
+            },
+          }),
+        ),
+        of(UIActions.showErrorToast(payload.error.toString())),
       );
     }),
   );
@@ -2473,7 +2497,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
         });
       }
 
-      const uploadedConversations$ = zip(
+      const uploadConversations$ = zip(
         conversationIds.map((id) =>
           getOrUploadConversation({ id }, state$.value).pipe(
             map((result) => result.conversation),
@@ -2486,18 +2510,35 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       );
 
       return forkJoin({
-        uploadedConversations: uploadedConversations$,
+        uploadedConversations: uploadConversations$,
         setIds: of(new Set(conversationIds)),
         showLoader: of(showLoader),
       });
     }),
-    map(({ uploadedConversations, setIds, showLoader }) =>
-      ConversationsActions.uploadConversationsByIdsSuccess({
+    map(({ uploadedConversations, setIds, showLoader }) => {
+      const selectedPublicationUrl =
+        PublicationSelectors.selectSelectedPublicationUrl(state$.value);
+      return ConversationsActions.uploadConversationsByIdsSuccess({
         setIds,
-        conversations: uploadedConversations.filter(Boolean) as Conversation[],
+        conversations: uploadedConversations
+          .filter((conv) => conv !== null)
+          .map((conv) => {
+            if (selectedPublicationUrl && conv.playback) {
+              return {
+                ...conv,
+                messages: conv.playback.messagesStack ?? [],
+                playback: {
+                  ...conv.playback,
+                  activePlaybackIndex: conv.playback.messagesStack.length,
+                },
+              };
+            }
+
+            return conv;
+          }),
         showLoader,
-      }),
-    ),
+      });
+    }),
   );
 
 const saveConversationEpic: AppEpic = (action$, state$) =>
@@ -3583,6 +3624,7 @@ export const ConversationsEpics = combineEpics(
   regenerateLastMessageEpic,
   rateMessageEpic,
   rateMessageSuccessEpic,
+  rateMessageFailEpic,
   sendMessageEpic,
   sendMessagesEpic,
   stopStreamMessageEpic,

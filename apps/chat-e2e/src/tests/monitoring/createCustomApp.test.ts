@@ -1,9 +1,10 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   AddAppMenuOptions,
-  AppEditorAppTypes,
-  AppMenuActions,
+  EntityEditorAppTypes,
+  EntityMenuActions,
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
@@ -18,20 +19,20 @@ dialTest(
     marketplacePage,
     marketplaceHeader,
     addAppDropdownMenu,
-    appEditorPage,
-    appEditorGeneralForm,
+    entityEditorPage,
+    entityEditorGeneralForm,
     customAppEditorViewForm,
-    appEditorHeader,
-    marketplaceAgentsSection,
-    agentDetailsModal,
+    entityEditorHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
     baseAssertion,
-    appEditorHeaderAssertion,
+    entityEditorHeaderAssertion,
     dialHomePage,
     chat,
     chatMessagesAssertion,
     localStorageManager,
     agentInfoAssertion,
-    agentDetailsModalAssertion,
+    entityDetailsModalAssertion,
     customAppEditorAppSettingsPreview,
     customAppEditorAppSettingsPreviewBody,
     navigationPanel,
@@ -40,7 +41,7 @@ dialTest(
     const longDescription = GeneratorUtil.randomLongDescription();
     const appEntity = {
       name: `${GeneratorUtil.randomApplicationName()}${ExpectedConstants.allowedSpecialChars}`,
-      version: GeneratorUtil.randomApplicationVersion(),
+      version: GeneratorUtil.randomEntityVersion(),
       description: `${shortDescription}\n\n${longDescription}`,
     } as DialAIEntityModel;
     let agentElement: BaseElement;
@@ -66,10 +67,12 @@ dialTest(
       async () => {
         await marketplaceHeader.addAppButton.click();
         await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.customApp);
-        await appEditorPage.waitForPageLoaded(AppEditorAppTypes.CustomApp);
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.CustomApp,
+        );
 
-        await appEditorHeaderAssertion.assertActionTitle(
-          `${AppMenuActions.add(AddAppMenuOptions.customApp)}`,
+        await entityEditorHeaderAssertion.assertActionTitle(
+          `${EntityMenuActions.addApp(AddAppMenuOptions.customApp)}`,
         );
         await baseAssertion.assertElementState(
           navigationPanel,
@@ -82,27 +85,30 @@ dialTest(
     await dialTest.step(
       'App editor General Info step is opened, header features are valid, step titles in the header marked as not completed',
       async () => {
-        await baseAssertion.assertElementState(appEditorGeneralForm, 'visible');
+        await baseAssertion.assertElementState(
+          entityEditorGeneralForm,
+          'visible',
+        );
 
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
+        const generalInfoStep = entityEditorHeader.getGeneralInfoStep();
+        const appSettingsStep = entityEditorHeader.getAppSettingsStep();
         await baseAssertion.assertElementState(generalInfoStep);
         await baseAssertion.assertElementState(appSettingsStep);
-        await appEditorHeaderAssertion.assertStepState(
+        await entityEditorHeaderAssertion.assertStepState(
           generalInfoStep,
           'visible',
           Cursors.pointer,
         );
-        await appEditorHeaderAssertion.assertStepState(
+        await entityEditorHeaderAssertion.assertStepState(
           appSettingsStep,
           'visible',
           Cursors.default,
         );
-        await appEditorHeaderAssertion.assertStepIsSelected(
+        await entityEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
           true,
         );
-        await appEditorHeaderAssertion.assertStepIsSelected(
+        await entityEditorHeaderAssertion.assertStepIsSelected(
           appSettingsStep,
           false,
         );
@@ -112,12 +118,17 @@ dialTest(
     await dialTest.step(
       'Fill in inputs of Name, Version and click Next, verify side/navigation panels are hidden',
       async () => {
-        await appEditorGeneralForm.fillInAppFields({
+        await entityEditorGeneralForm.fillInEntityFields({
           name: appEntity.name,
           version: appEntity.version,
           description: appEntity.description,
         });
-        await appEditorGeneralForm.goNext();
+        await entityEditorGeneralForm.goNext({
+          hostsArray: [
+            API.applicationCreateHost,
+            API.installedDeploymentsHost(),
+          ],
+        });
         await baseAssertion.assertElementState(
           customAppEditorAppSettingsPreview,
           'visible',
@@ -142,8 +153,8 @@ dialTest(
           'visible',
         );
 
-        const generalInfoStep = appEditorHeader.getGeneralInfoStep();
-        const appSettingsStep = appEditorHeader.getAppSettingsStep();
+        const generalInfoStep = entityEditorHeader.getGeneralInfoStep();
+        const appSettingsStep = entityEditorHeader.getAppSettingsStep();
 
         await baseAssertion.assertElementActionabilityState(
           generalInfoStep,
@@ -154,11 +165,11 @@ dialTest(
           'enabled',
         );
 
-        await appEditorHeaderAssertion.assertStepIsSelected(
+        await entityEditorHeaderAssertion.assertStepIsSelected(
           generalInfoStep,
           false,
         );
-        await appEditorHeaderAssertion.assertStepIsSelected(
+        await entityEditorHeaderAssertion.assertStepIsSelected(
           appSettingsStep,
           true,
         );
@@ -169,8 +180,8 @@ dialTest(
       'Input Chat completion URL, click Save and Exit link, verify navigation panel is visible',
       async () => {
         await customAppEditorViewForm.fillInAppFields();
-        await appEditorHeader.focusOn({ isHttpMethodTriggered: false });
-        await appEditorHeader.saveAndExitButton.click();
+        await entityEditorHeader.focusOn();
+        await entityEditorHeader.saveAndExitButton.click();
         await baseAssertion.assertElementState(
           customAppEditorViewForm,
           'hidden',
@@ -189,7 +200,7 @@ dialTest(
       async () => {
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
         agentElement =
-          await marketplaceAgentsSection.findAgentElement(appEntity);
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
       },
     );
@@ -198,8 +209,8 @@ dialTest(
       'Click on the found card again to open details',
       async () => {
         await agentElement.click();
-        await baseAssertion.assertElementState(agentDetailsModal, 'visible');
-        await agentDetailsModalAssertion.assertDescription(
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+        await entityDetailsModalAssertion.assertDescription(
           appEntity.description!,
         );
       },
@@ -208,7 +219,7 @@ dialTest(
     await dialTest.step(
       'Click "Use application" button and perform assertions',
       async () => {
-        await agentDetailsModal.clickUseButton({
+        await entityDetailsModal.clickUseButton({
           isInstalledDeploymentsUpdated: false,
         });
         await dialHomePage.waitForPageLoaded();

@@ -131,8 +131,16 @@ export const PlaybackControls = ({
       getMessageFormValue(currentMessage) ??
       getConfigurationValue(currentMessage);
     const message = attachments.length
-      ? { content, custom_content: { attachments, form_value } }
-      : { content, custom_content: { form_value } };
+      ? {
+          content,
+          custom_content: { attachments, form_value },
+          modelId: currentMessage?.model?.id,
+        }
+      : {
+          content,
+          custom_content: { form_value },
+          modelId: currentMessage?.model?.id,
+        };
     return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
 
@@ -265,6 +273,7 @@ export const PlaybackControls = ({
             ChatActions.setFormValue({
               property,
               value: value as MessageFormValueType,
+              modelId: activeMessage?.modelId ?? '',
             }),
           );
         },
@@ -272,13 +281,18 @@ export const PlaybackControls = ({
     } else if (phase === PlaybackPhases.EMPTY) {
       dispatch(ChatActions.resetFormValue());
     }
-  }, [activeMessage?.custom_content?.form_value, dispatch, phase]);
+  }, [
+    activeMessage?.custom_content.form_value,
+    activeMessage?.modelId,
+    dispatch,
+    phase,
+  ]);
 
   return (
     <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
       <div
         className={classNames(
-          'relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
+          'relative mx-2 mb-2 flex flex-row md:mx-4 md:mb-0 md:last:mb-6',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
         )}
         data-qa="playback-control"

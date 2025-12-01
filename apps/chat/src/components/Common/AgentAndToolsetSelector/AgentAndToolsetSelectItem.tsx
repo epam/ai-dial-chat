@@ -26,7 +26,7 @@ export const AgentAndToolsetSelectItem: React.FC<
       onClick={onToggleSelectItem}
       hasContextMenu={isToolsetEntityModel(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}
-      className="bg-layer-2 hover:bg-layer-3 active:border-accent-primary"
+      className="bg-layer-2 hover:bg-layer-3"
     />
   );
 };

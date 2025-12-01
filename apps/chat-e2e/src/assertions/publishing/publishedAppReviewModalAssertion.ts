@@ -1,5 +1,6 @@
 import { BaseAssertion } from '@/src/assertions';
 import { PublishingExpectedMessages } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
 
 export class PublishedAppReviewModalAssertion extends BaseAssertion {
@@ -30,6 +31,7 @@ export class PublishedAppReviewModalAssertion extends BaseAssertion {
     expectedAttachmentTypes?: string[];
     expectedMaxAttachmentNumbers?: number;
     expectedCompletionUrl?: string;
+    expectedExternalUrl?: string;
   }) {
     if (attributesToVerify.expectedName) {
       await this.assertElementText(
@@ -77,9 +79,33 @@ export class PublishedAppReviewModalAssertion extends BaseAssertion {
       );
     }
     if (attributesToVerify.expectedCompletionUrl) {
+      await this.assertElementState(
+        this.publishedApplicationReviewModal.completionUrlLabel,
+        'visible',
+      );
       await this.assertElementText(
         this.publishedApplicationReviewModal.completionUrl,
         attributesToVerify.expectedCompletionUrl,
+      );
+    }
+    if (attributesToVerify.expectedExternalUrl) {
+      await this.assertElementState(
+        this.publishedApplicationReviewModal.externalUrlLabel,
+        'visible',
+      );
+      await this.assertElementAttribute(
+        this.publishedApplicationReviewModal.externalUrl,
+        Attributes.href,
+        attributesToVerify.expectedExternalUrl,
+      );
+      await this.assertElementAttribute(
+        this.publishedApplicationReviewModal.externalUrl,
+        Attributes.target,
+        Attributes.blank,
+      );
+      await this.assertElementState(
+        this.publishedApplicationReviewModal.externalUrlIcon,
+        'visible',
       );
     }
   }
