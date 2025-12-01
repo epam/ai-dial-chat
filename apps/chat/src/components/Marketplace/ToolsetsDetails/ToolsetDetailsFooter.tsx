@@ -25,10 +25,9 @@ import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
-import { ToolsetContextMenu } from '@/src/components/Marketplace/EntityContextMenu/ToolsetContextMenu';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
-
-import { AgentBookmark } from '../AgentBookmark';
 
 export function ToolsetDetailsFooter({
   entity,
@@ -37,7 +36,9 @@ export function ToolsetDetailsFooter({
   onBookmarkClick,
 }: ToolsetDetailsFooterProps) {
   const { t } = useTranslation(Translation.Marketplace);
+
   const screenState = useScreenState();
+
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const { handleLogin } = useToolsetMenuActions(entity);
@@ -78,7 +79,7 @@ export function ToolsetDetailsFooter({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <ToolsetContextMenu
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}
@@ -98,7 +99,7 @@ export function ToolsetDetailsFooter({
           )}
 
           {onBookmarkClick && (
-            <AgentBookmark
+            <MarketplaceEntityBookmark
               entity={entity}
               size={24}
               className="icon-button group/bookmark"

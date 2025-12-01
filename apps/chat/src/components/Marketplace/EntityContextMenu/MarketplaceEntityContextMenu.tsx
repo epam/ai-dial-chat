@@ -1,53 +1,121 @@
-import { useMemo } from 'react';
-
 import classNames from 'classnames';
 
-import { FeatureType } from '@/src/types/common';
+import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
+import { useToolsetMenuItems } from '@/src/hooks/useToolsetMenuItems';
+
+import { isDialAiEntityModel } from '@/src/utils/app/application';
+
+import { ApplicationContextMenuDisabledActions } from '@/src/types/applications';
+import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { DialAIEntityModel } from '@/src/types/models';
+import {
+  ToolsetContextMenuDisabledActions,
+  ToolsetModel,
+} from '@/src/types/toolsets';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
-interface Props<T, D> {
-  entity: T;
+import { FeatureType } from '@epam/ai-dial-shared';
+
+interface MarketplaceEntityContextMenuComponentProps {
   featureType: FeatureType;
-  disabledActions?: D;
-  className?: string;
-  isPreview?: boolean;
-  triggerIconSize?: number;
-  useMenuItems: (params: {
-    entity: T;
-    disabledActions?: D;
-    isPreview?: boolean;
-  }) => DisplayMenuItemProps[];
+  menuItems: DisplayMenuItemProps[];
+  triggerIconSize: number;
+  className: string;
 }
 
-export function MarketplaceEntityContextMenu<T, D>({
-  entity,
-  featureType,
-  disabledActions = {} as D,
-  className,
-  isPreview = false,
-  triggerIconSize = 18,
-  useMenuItems,
-}: Props<T, D>) {
-  const params = useMemo(
-    () => ({
-      entity,
-      disabledActions,
-      isPreview,
-    }),
-    [disabledActions, entity, isPreview],
-  );
+function MarketplaceEntityContextMenuComponent(
+  props: MarketplaceEntityContextMenuComponentProps,
+) {
+  return <ContextMenu {...props} triggerIconHighlight />;
+}
 
-  const menuItems = useMenuItems(params);
+interface ToolsetContextMenuProps {
+  entity: ToolsetModel;
+  triggerIconSize: number;
+  className: string;
+  disabledActions?: ToolsetContextMenuDisabledActions;
+  isPreview?: boolean;
+}
+
+function ToolsetContextMenu({
+  entity,
+  disabledActions,
+  isPreview,
+  ...props
+}: ToolsetContextMenuProps) {
+  const menuItems = useToolsetMenuItems({ entity, disabledActions, isPreview });
 
   return (
-    <ContextMenu
+    <MarketplaceEntityContextMenuComponent
       menuItems={menuItems}
-      featureType={featureType}
-      triggerIconHighlight
+      featureType={FeatureType.Toolset}
+      {...props}
+    />
+  );
+}
+
+interface AgentContextMenuProps {
+  entity: DialAIEntityModel;
+  triggerIconSize: number;
+  className: string;
+  disabledActions?: ApplicationContextMenuDisabledActions;
+  isPreview?: boolean;
+}
+
+function AgentContextMenu({
+  entity,
+  disabledActions,
+  isPreview,
+  ...props
+}: AgentContextMenuProps) {
+  const menuItems = useAgentMenuItems({ entity, disabledActions, isPreview });
+
+  return (
+    <MarketplaceEntityContextMenuComponent
+      menuItems={menuItems}
+      featureType={FeatureType.Application}
+      {...props}
+    />
+  );
+}
+
+interface Props {
+  entity: MarketplaceEntity;
+  isPreview?: boolean;
+  className?: string;
+  disabledActions?:
+    | ApplicationContextMenuDisabledActions
+    | ToolsetContextMenuDisabledActions;
+  triggerIconSize?: number;
+}
+
+export function MarketplaceEntityContextMenu({
+  entity,
+  className,
+  triggerIconSize = 18,
+  ...props
+}: Props) {
+  const contextMenuClassName = classNames('m-0', className);
+
+  if (isDialAiEntityModel(entity)) {
+    return (
+      <AgentContextMenu
+        className={contextMenuClassName}
+        entity={entity}
+        triggerIconSize={triggerIconSize}
+        {...props}
+      />
+    );
+  }
+
+  return (
+    <ToolsetContextMenu
+      className={contextMenuClassName}
+      entity={entity}
       triggerIconSize={triggerIconSize}
-      className={classNames('m-0', className)}
+      {...props}
     />
   );
 }

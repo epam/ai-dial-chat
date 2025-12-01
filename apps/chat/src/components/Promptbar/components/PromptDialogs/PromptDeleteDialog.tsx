@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,11 +12,19 @@ import { PromptsSelectors } from '@/src/store/selectors';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
+import { PromptInfo } from '@epam/ai-dial-shared';
+
 const PromptDeleteDialogComponent = () => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 
-  const deletingPrompt = useAppSelector(PromptsSelectors.selectDeletingPrompt);
+  const deletingPromptId = useAppSelector(
+    PromptsSelectors.selectDeletingPromptId,
+  ) as string;
+  const deletingPrompt = useAppSelector((state) =>
+    PromptsSelectors.selectPrompt(state, deletingPromptId),
+  ) as PromptInfo;
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
 
   const dialogProps = useMemo(() => {
     if (!deletingPrompt) {
@@ -59,10 +67,16 @@ const PromptDeleteDialogComponent = () => {
         dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
       }
 
-      dispatch(PromptsActions.setDeletingPrompt());
+      dispatch(PromptsActions.setDeletingPromptId());
     },
     [deletingPrompt, dispatch],
   );
+
+  useEffect(() => {
+    if (isSelectMode) {
+      dispatch(PromptsActions.setDeletingPromptId());
+    }
+  }, [dispatch, isSelectMode]);
 
   if (!dialogProps) {
     return null;
@@ -81,5 +95,5 @@ const PromptDeleteDialogComponent = () => {
 };
 
 export const PromptDeleteDialog = withRenderWhen(
-  PromptsSelectors.selectDeletingPrompt,
+  PromptsSelectors.selectDeletingPromptId,
 )(PromptDeleteDialogComponent);
