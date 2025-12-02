@@ -399,6 +399,11 @@ dialTest(
       'Select options for individual conversations',
       async () => {
         // Set individual conversation options
+        // NOTE: Due to a current bug, all conversations are rendered at root level
+        // in the modal (not inside folders), so we use replaceConfirmationModalConversations
+        // for all conversations. When the bug is fixed, we should use
+        // replaceConfirmationModalFolders.setConversationOption() for folder conversations.
+
         // Chat1: Replace (will restore original content)
         await replaceConfirmationModalConversations.setConversationOption(
           chat1.name,

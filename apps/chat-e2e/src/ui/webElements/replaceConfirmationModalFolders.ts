@@ -54,7 +54,7 @@ export class ReplaceConfirmationModalFolders extends Folders {
       folderName,
       conversationName,
     ).click();
-    await this.getDropdownMenu().selectMenuOption(option, {
+    await this.getConversationDropdownMenu().selectMenuOption(option, {
       isHttpMethodTriggered: false,
     });
   }
