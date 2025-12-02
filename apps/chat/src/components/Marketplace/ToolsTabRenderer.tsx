@@ -15,8 +15,6 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
-import { ToolsetDialogs } from '@/src/components/Common/ToolsetDialogs';
-
 import { ResultsView, ResultsViewProps } from './TabResults';
 import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
 
@@ -141,8 +139,6 @@ export function ToolsTabRenderer() {
           isSuggested={detailsToolset?.isSuggested}
         />
       )}
-
-      <ToolsetDialogs />
     </>
   );
 }
