@@ -1,5 +1,4 @@
 import { Routes } from '@/chat/constants/routes';
-import { ServerSlugs } from '@/chat/types/slugs-types';
 import config from '@/config/chat.playwright.config';
 import { API, OAuthQueryParams } from '@/src/testData';
 import {
@@ -88,8 +87,6 @@ export class OAuthMockHelper {
     };
   }
 
-  private static pageLoadingTimeout = 2000;
-
   async setupMocks(): Promise<void> {
     await this.setupToolsetRoutes();
     await this.setupSignInRoute();
@@ -109,15 +106,19 @@ export class OAuthMockHelper {
   }
 
   /**
-   * Navigate to the OAuth callback URL '/auth/toolset-signin'
+   * Navigate to the OAuth callback URL '/auth/toolset-signin' and wait for the response
    */
   async navigateToCallback(): Promise<void> {
     if (!this.state.callbackUrl) {
       throw new Error('Callback URL has not been captured yet');
     }
+    const respPromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.toolsetSignInHost()),
+    );
     await this.page.goto(this.state.callbackUrl, {
       waitUntil: 'domcontentloaded',
     });
+    await respPromise;
   }
 
   /**
@@ -143,26 +144,6 @@ export class OAuthMockHelper {
 
   getAuthorizationCode(): string {
     return this.authorizationCode;
-  }
-
-  /**
-   * Wait for OAuth redirect to be captured
-   */
-  async waitForOAuthRedirect(): Promise<void> {
-    while (this.state.capturedOAuthUrl === null) {
-      // eslint-disable-next-line playwright/no-wait-for-timeout
-      await this.page.waitForTimeout(OAuthMockHelper.pageLoadingTimeout);
-    }
-  }
-
-  /**
-   * Wait for sign-in API to be called
-   */
-  async waitForSignInApiCall(): Promise<void> {
-    while (!this.state.isSignedIn) {
-      // eslint-disable-next-line playwright/no-wait-for-timeout
-      await this.page.waitForTimeout(OAuthMockHelper.pageLoadingTimeout);
-    }
   }
 
   async cleanup(): Promise<void> {
@@ -221,9 +202,8 @@ export class OAuthMockHelper {
   }
 
   public async setupSignInRoute(): Promise<void> {
-    const signInUrl = `**${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`;
     let requestBody;
-    await this.page.route(signInUrl, async (route, request) => {
+    await this.page.route(API.toolsetSignInHost(), async (route, request) => {
       // Intercept '/api/ops/toolset/signin' call
       if (request.method() === 'POST') {
         const expectedCode = this.expectedStatusCodes.backendSigInCode;

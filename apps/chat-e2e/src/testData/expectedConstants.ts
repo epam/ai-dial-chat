@@ -2,6 +2,7 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
+import { ServerSlugs } from '@/chat/types/slugs-types';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
@@ -526,6 +527,7 @@ export const API = {
   toolsetCreateHost: () => `${API.api}/toolsets`,
   authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
+  toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
 };
 
 export const Import = {

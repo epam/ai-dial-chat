@@ -91,8 +91,9 @@ dialTest(
       async () => {
         // need to enable mocking before clicking 'Log In'
         oauthMockHelper.enableMocking();
-        await toolsetEditorViewForm.signInButton.click();
-        await oauthMockHelper.waitForOAuthRedirect();
+        await toolsetEditorViewForm.clickSignInButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        );
       },
     );
 
@@ -129,7 +130,6 @@ dialTest(
       'Navigate to OAuth callback and wait for sign-in API was called',
       async () => {
         await oauthMockHelper.navigateToCallback();
-        await oauthMockHelper.waitForSignInApiCall();
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
