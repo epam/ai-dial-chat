@@ -64,7 +64,8 @@ export const AppsEditorHeader = ({
   } = useRouter();
 
   // 1 stands for true
-  const isCreatingApp = typeof isCreating === 'string' && isCreating === '1';
+  const isCreatingApp =
+    !id || (typeof isCreating === 'string' && isCreating === '1');
 
   const { t } = useTranslation(Translation.Marketplace);
 

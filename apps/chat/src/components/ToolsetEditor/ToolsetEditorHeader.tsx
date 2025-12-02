@@ -41,13 +41,16 @@ export const ToolsetEditorHeader = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const {
-    query: { [ToolsetEditorQuery.IsCreating]: isCreating },
+    query: {
+      [ToolsetEditorQuery.Id]: idQuery,
+      [ToolsetEditorQuery.IsCreating]: isCreating,
+    },
   } = useRouter();
 
   const dispatch = useAppDispatch();
 
   const isCreatingToolset =
-    typeof isCreating === 'string' && isCreating === '1';
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
   const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
