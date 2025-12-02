@@ -52,7 +52,6 @@ import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import { SliderGrid } from '@/src/components/Common/SliderGrid/SliderGrid';
 import { TalkToNotFound } from '@/src/components/Common/TalkToNotFound';
@@ -388,8 +387,6 @@ const TalkToModalView = ({
           {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
         </Link>
       )}
-
-      <AgentDialogs />
     </>
   );
 };

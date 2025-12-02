@@ -31,10 +31,10 @@ export interface DialDeploymentToolset {
 }
 
 export interface MCPToolset {
-  name: string;
-  type: ToolsetTypes.DialMcp;
+  name?: string;
+  type?: ToolsetTypes.DialMcp;
   dial_id: string;
-  transport: ToolsetTransportType;
+  transport?: ToolsetTransportType;
   description?: string;
 }
 
