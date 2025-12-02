@@ -19,7 +19,7 @@ const headerItems = [
   { label: 'Released', size: 86, sortKey: TableColumnSortKeys.RELEASED },
 ];
 
-export const AgentsTableHeader = forwardRef<
+export const MarketplaceEntitiesTableHeader = forwardRef<
   {
     leftColumnHeaderRef: React.RefObject<HTMLDivElement | null>;
     rightColumnHeaderRef: React.RefObject<HTMLDivElement | null>;
@@ -103,4 +103,4 @@ export const AgentsTableHeader = forwardRef<
     </div>
   );
 });
-AgentsTableHeader.displayName = 'AgentsTableHeader';
+MarketplaceEntitiesTableHeader.displayName = 'MarketplaceEntitiesTableHeader';

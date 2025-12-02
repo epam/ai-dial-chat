@@ -3,7 +3,6 @@ import { useFormContext } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
-import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isApplicationType } from '@/src/utils/app/application';
@@ -14,12 +13,7 @@ import { ApplicationType } from '@/src/types/applications';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationTypesSchemasActions,
-  ConversationsActions,
-  PublicationActions,
-} from '@/src/store/actions';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -28,7 +22,6 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -51,8 +44,6 @@ const applicationTypeNames = {
   [ApplicationType.CUSTOM_APP]: 'Custom app',
 };
 
-const anyRouteExceptAppEditorRegex = /^(?!\/apps-editor(?:\/|$)).*/;
-
 const generalStepFields = ['name', 'version'];
 
 interface AppsEditorHeaderProps {
@@ -68,10 +59,11 @@ export const AppsEditorHeader = ({
     query: {
       [AppsEditorQuery.Id]: id = '',
       [AppsEditorQuery.Schema]: schemaId = '',
-      [AppsEditorQuery.PublicationUrl]: publicationUrl,
     },
   } = useRouter();
+
   const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const { formState, trigger } = useFormContext<AppsEditorFormType>();
@@ -88,14 +80,9 @@ export const AppsEditorHeader = ({
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const isEditing = !!appDetails;
-
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const returnConversationIds = useAppSelector(
-    ApplicationSelectors.selectReturnConversationIds,
-  );
-
   const isSchemaApplicationType = !isApplicationType(
     decodeURIComponent(schemaId.toString()),
   );
@@ -199,36 +186,6 @@ export const AppsEditorHeader = ({
     [dispatch, errorSteps, onSave, redirectToChat],
   );
 
-  const handleCustomViewerExit = useCallback(() => {
-    if (hasCustomEditor) {
-      dispatch(
-        ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
-      );
-
-      if (publicationUrl) {
-        dispatch(
-          ConversationsActions.selectConversations({
-            conversationIds: [],
-          }),
-        );
-        dispatch(PublicationActions.setIsApplicationReview(true));
-      } else if (returnConversationIds?.length) {
-        dispatch(
-          ConversationsActions.selectConversations({
-            conversationIds: returnConversationIds,
-          }),
-        );
-        dispatch(ApplicationActions.setReturnConversationIds(undefined));
-      } else {
-        dispatch(
-          ConversationsActions.createNewConversations({
-            names: [DEFAULT_CONVERSATION_NAME],
-          }),
-        );
-      }
-    }
-  }, [dispatch, hasCustomEditor, publicationUrl, returnConversationIds]);
-
   const getMobileLabelText = useCallback(
     (tabKey: MarketplaceEditorSteps) => {
       const capitalizedAppType = capitalize(applicationTypeDisplayName);
@@ -246,8 +203,6 @@ export const AppsEditorHeader = ({
     isEditing && !hasCustomEditor && (agent ? !isEntityIdPublic(agent) : false)
       ? 'Save and exit'
       : 'Exit';
-
-  useBeforeRedirect(handleCustomViewerExit, anyRouteExceptAppEditorRegex);
 
   return (
     <>
