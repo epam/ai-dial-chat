@@ -14,8 +14,11 @@ export const useMarketplaceBannerVisibility = (
   const dispatch = useAppDispatch();
   const prevDataScrollRef = useRef(0);
 
-  const filters = useAppSelector(
+  const agentsFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedAgentsFilters,
+  );
+  const toolsetsFilters = useAppSelector(
+    MarketplaceSelectors.selectSelectedToolsetsFilters,
   );
 
   useEffect(() => {
@@ -82,5 +85,5 @@ export const useMarketplaceBannerVisibility = (
         }),
       );
     }
-  }, [filters, dataContainer, dispatch]);
+  }, [agentsFilters, toolsetsFilters, dataContainer, dispatch]);
 };
