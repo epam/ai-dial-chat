@@ -188,21 +188,27 @@ dialTest(
       }
 
       // Verify all conversations exist
-      const allConversations = [
-        chat1,
-        chat2,
-        chat3,
-        chat4,
-        chat5,
-        chat6,
-        chat7,
+      // Folder conversations with their parent folders
+      const folderConversationPairs = [
+        { folder: folder2, conversation: chat1 },
+        { folder: folder2, conversation: chat2 },
+        { folder: nestedFolders[3], conversation: chat4 },
+        { folder: nestedFolders[2], conversation: chat5 },
+        { folder: nestedFolders[1], conversation: chat6 },
+        { folder: nestedFolders[0], conversation: chat7 },
       ];
-      for (const conversation of allConversations) {
-        await replaceConfirmationModalConversationsAssertion.assertEntityState(
-          { name: conversation.name },
+      for (const pair of folderConversationPairs) {
+        await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+          { name: pair.folder.name },
+          { name: pair.conversation.name },
           'visible',
         );
       }
+      // Root conversation: Chat3
+      await replaceConfirmationModalConversationsAssertion.assertEntityState(
+        { name: chat3.name },
+        'visible',
+      );
     });
 
     await dialTest.step('Verify folder and conversation icons', async () => {
@@ -217,24 +223,35 @@ dialTest(
       }
 
       // Verify conversation icons - conversations should have model icons
-      const allConversations = [
-        chat1,
-        chat2,
-        chat3,
-        chat4,
-        chat5,
-        chat6,
-        chat7,
+      // Folder conversations with their parent folders
+      const folderConversationPairs = [
+        { folder: folder2, conversation: chat1 },
+        { folder: folder2, conversation: chat2 },
+        { folder: nestedFolders[3], conversation: chat4 },
+        { folder: nestedFolders[2], conversation: chat5 },
+        { folder: nestedFolders[1], conversation: chat6 },
+        { folder: nestedFolders[0], conversation: chat7 },
       ];
-      for (const conversation of allConversations) {
+      for (const pair of folderConversationPairs) {
         const conversationIcon =
-          replaceConfirmationModalConversations.getEntityIcon(
-            conversation.name,
+          replaceConfirmationModalFolders.getFolderEntityIcon(
+            pair.folder.name,
+            pair.conversation.name,
           );
-        const modelEntity = ModelsUtil.getOpenAIEntity(conversation.model.id);
+        const modelEntity = ModelsUtil.getOpenAIEntity(
+          pair.conversation.model.id,
+        );
         const expectedIcon = iconApiHelper.getEntityIcon(modelEntity!);
         await baseAssertion.assertEntityIcon(conversationIcon, expectedIcon);
       }
+
+      // Root conversation: Chat3
+      const chat3Icon = replaceConfirmationModalConversations.getEntityIcon(
+        chat3.name,
+      );
+      const chat3ModelEntity = ModelsUtil.getOpenAIEntity(chat3.model.id);
+      const chat3ExpectedIcon = iconApiHelper.getEntityIcon(chat3ModelEntity!);
+      await baseAssertion.assertEntityIcon(chat3Icon, chat3ExpectedIcon);
     });
 
     await dialTest.step('Verify folders can be collapsed', async () => {
@@ -253,7 +270,8 @@ dialTest(
         );
 
         // Verify the conversation in this folder is now hidden
-        await replaceConfirmationModalConversationsAssertion.assertEntityState(
+        await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+          { name: folder.name },
           { name: nestedConversations[i].name },
           'hidden',
         );
@@ -268,7 +286,8 @@ dialTest(
 
         // Verify all conversations in nested folders remain hidden
         for (let j = i + 1; j < nestedConversations.length; j++) {
-          await replaceConfirmationModalConversationsAssertion.assertEntityState(
+          await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[j].name },
             { name: nestedConversations[j].name },
             'hidden',
           );
@@ -282,11 +301,13 @@ dialTest(
         'collapsed',
       );
       // Verify Chat1 and Chat2 are hidden
-      await replaceConfirmationModalConversationsAssertion.assertEntityState(
+      await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+        { name: folder2.name },
         { name: chat1.name },
         'hidden',
       );
-      await replaceConfirmationModalConversationsAssertion.assertEntityState(
+      await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+        { name: folder2.name },
         { name: chat2.name },
         'hidden',
       );
@@ -305,11 +326,13 @@ dialTest(
         'expanded',
       );
       // Verify Chat1 and Chat2 are visible
-      await replaceConfirmationModalConversationsAssertion.assertEntityState(
+      await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+        { name: folder2.name },
         { name: chat1.name },
         'visible',
       );
-      await replaceConfirmationModalConversationsAssertion.assertEntityState(
+      await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+        { name: folder2.name },
         { name: chat2.name },
         'visible',
       );
@@ -325,7 +348,8 @@ dialTest(
         );
 
         // Verify conversation in this folder is visible
-        await replaceConfirmationModalConversationsAssertion.assertEntityState(
+        await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+          { name: folder.name },
           { name: nestedConversations[i].name },
           'visible',
         );
@@ -360,7 +384,8 @@ dialTest(
 
         // Verify conversations in deeper nested folders remain hidden
         for (let j = i + 1; j < nestedConversations.length; j++) {
-          await replaceConfirmationModalConversationsAssertion.assertEntityState(
+          await replaceConfirmationModalFoldersAssertion.assertFolderEntityState(
+            { name: nestedFolders[j].name },
             { name: nestedConversations[j].name },
             'hidden',
           );
@@ -432,7 +457,6 @@ dialTest(
       ]);
 
       await replaceConfirmationModal.clickContinue(expectedRequests);
-      await dialHomePage.waitForPageLoaded({ waitForAgentInfo: false });
     });
 
     await dialTest.step(
@@ -444,6 +468,7 @@ dialTest(
         );
         //TODO should be uncommented after the fix of the double toast
         // await toast.closeToast();
+        await dialHomePage.waitForPageLoaded({ waitForAgentInfo: false });
 
         // Verify Folder1 (empty folder) exists
         await folderConversations.getFolderByName(folder1.name).waitFor();

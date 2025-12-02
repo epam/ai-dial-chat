@@ -3,8 +3,7 @@ import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSele
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree/entitiesTree';
-import { RegexUtil } from '@/src/utils';
-import { Locator, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 export class ReplaceConfirmationModalConversations extends EntitiesTree {
   private dropdownMenu!: DropdownButtonMenu;
