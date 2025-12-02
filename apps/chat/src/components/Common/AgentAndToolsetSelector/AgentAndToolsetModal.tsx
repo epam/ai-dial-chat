@@ -12,6 +12,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
+import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isExternalApp } from '@/src/utils/app/application';
@@ -61,6 +62,8 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
+const SESSION_STORAGE_KEY = 'agent-toolset-temporary-selection';
+
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
   tab: MarketplaceTabs;
@@ -76,9 +79,7 @@ function ScopeTabButton({
   onSetTab,
 }: ScopeTabButtonProps) {
   const { t } = useTranslation(Translation.Chat);
-
   const buttonText = textMap[tab] || tab;
-
   return (
     <TabButton
       tabKey={tab}
@@ -106,7 +107,6 @@ const AgentAndToolsetModalView = ({
   onConfirm,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -139,7 +139,8 @@ const AgentAndToolsetModalView = ({
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
   );
-  const [selectedIds, setSelectedIds] = useState<string[]>(
+  const [selectedIds, setSelectedIds] = useSessionStorageState<string[]>(
+    SESSION_STORAGE_KEY,
     initialSelectedIds ?? [],
   );
 
@@ -197,14 +198,13 @@ const AgentAndToolsetModalView = ({
 
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
-      setSelectedIds((prevIds) => {
-        if (prevIds.includes(itemToToggle.id)) {
-          return prevIds.filter((id) => id !== itemToToggle.id);
-        }
-        return [...prevIds, itemToToggle.id];
-      });
+      setSelectedIds((prevIds) =>
+        prevIds.includes(itemToToggle.id)
+          ? prevIds.filter((id) => id !== itemToToggle.id)
+          : [...prevIds, itemToToggle.id],
+      );
     },
-    [],
+    [setSelectedIds],
   );
 
   const handleSetScopeTab = useCallback(
@@ -220,9 +220,12 @@ const AgentAndToolsetModalView = ({
     setShouldResetSliderState(true);
   };
 
-  const handleRemoveItem = useCallback((idToRemove: string) => {
-    setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
-  }, []);
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
+    },
+    [setSelectedIds],
+  );
 
   const searchedAgents = useFuseSearch(
     allAgents,
@@ -384,7 +387,6 @@ const AgentAndToolsetModalView = ({
               </span>
             )}
           </div>
-
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
             {t('All')}
           </span>
@@ -464,6 +466,19 @@ export const AgentAndToolsetModal = ({
     !isInstalledModelsInitialized ||
     !isInstalledToolsetsInitialized;
 
+  const handleClose = useCallback(() => {
+    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    onClose();
+  }, [onClose]);
+
+  const handleConfirm = useCallback(
+    (selectedIds: string[]) => {
+      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      onConfirm(selectedIds);
+    },
+    [onConfirm],
+  );
+
   useEffect(() => {
     return () => {
       const queryParamsToNull = [
@@ -495,12 +510,12 @@ export const AgentAndToolsetModal = ({
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
       dataQa="talk-to-agent"
       containerClassName="flex items-center xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
-      onClose={onClose}
+      onClose={handleClose}
       heading
     >
       <AgentAndToolsetModalView
-        onClose={onClose}
-        onConfirm={onConfirm}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
         initialSelectedIds={initialSelectedIds}
         allItemsMap={allItemsMap}
         saveSliderStateInURL={saveSliderStateInURL}
