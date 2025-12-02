@@ -547,18 +547,25 @@ export const FileManagerModal = memo(
       [],
     );
 
+    const canSelectFolders =
+      !hideFolderCheckbox &&
+      (canAttachFolders || canAttachFiles || forceShowSelectCheckBox);
+
     const additionalItemData: AdditionalItemData = useMemo(
       () => ({
         selectedFilesIds,
-        selectedFolderIds,
-        partialSelectedFolderIds: partiallySelectedFolderIds,
+        selectedFolderIds: canSelectFolders ? selectedFolderIds : [],
+        partialSelectedFolderIds: canSelectFolders
+          ? partiallySelectedFolderIds
+          : [],
         canAttachFiles: canAttachFiles || forceShowSelectCheckBox,
       }),
       [
-        canAttachFiles,
-        partiallySelectedFolderIds,
         selectedFilesIds,
+        canSelectFolders,
         selectedFolderIds,
+        partiallySelectedFolderIds,
+        canAttachFiles,
         forceShowSelectCheckBox,
       ],
     );
@@ -575,10 +582,6 @@ export const FileManagerModal = memo(
     );
     const isDeleteDisabled =
       somePublicFileSelected || someReviewBucketFileSelected;
-
-    const canSelectFolders =
-      !hideFolderCheckbox &&
-      (canAttachFolders || canAttachFiles || forceShowSelectCheckBox);
 
     return (
       <Modal
