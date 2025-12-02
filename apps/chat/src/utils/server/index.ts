@@ -106,13 +106,11 @@ export const OpenAIStream = async ({
     if (res.status !== 200) {
       let result: DialAIErrorResponse;
       try {
-        result = (await res.json()) as DialAIErrorResponse;
+        result = JSON.parse(await res.text()) as DialAIErrorResponse;
       } catch (e) {
-        throw new DialAIError(
-          `Chat Server error: ${res.statusText}`,
-          res.status,
-          url,
-        );
+        throw new DialAIError(res.statusText, res.status, url, {
+          displayMessage: res.statusText,
+        });
       }
 
       if (!result.error) {
