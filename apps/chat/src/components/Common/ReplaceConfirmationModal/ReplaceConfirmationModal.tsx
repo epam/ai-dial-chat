@@ -196,7 +196,8 @@ export function ReplaceConfirmationModalView() {
           />
         </div>
       </div>
-      <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
+      <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6"
+      data-qa="main-folder-tree">
         {conversations && (
           <ConversationsList
             conversationsToReplace={conversations}

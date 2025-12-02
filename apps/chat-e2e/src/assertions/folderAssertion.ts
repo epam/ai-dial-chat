@@ -1,5 +1,10 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementCaretState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { TreeEntity } from '@/src/testData/types';
 import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
@@ -439,7 +444,7 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
 
   public async assertFolderCaretState(
     folder: TreeEntity,
-    expectedState: 'expanded' | 'collapsed',
+    expectedState: ElementCaretState,
   ) {
     const isExpanded = await this.folder.isFolderCaretExpanded(
       folder.name,

@@ -18,17 +18,6 @@ export class ReplaceConfirmationModalConversations extends EntitiesTree {
     );
   }
 
-  /** Override to use proper filtering for modal structure */
-  public getEntityByExactName(name: string): Locator {
-    return this.getChildElementBySelector(this.entitySelector)
-      .getElementLocator()
-      .filter({
-        has: this.page.locator(EntitySelectors.entityName).filter({
-          hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`),
-        }),
-      });
-  }
-
   private getDropdownMenu(): DropdownButtonMenu {
     if (!this.dropdownMenu) {
       this.dropdownMenu = new DropdownButtonMenu(this.page);
@@ -37,7 +26,7 @@ export class ReplaceConfirmationModalConversations extends EntitiesTree {
   }
 
   public getConversationDropdownByName(conversationName: string) {
-    return this.getConversationRowByName(conversationName).locator(
+    return this.getEntityByExactName(conversationName).locator(
       ReplaceConfirmationModalSelectors.dropdownTrigger,
     );
   }

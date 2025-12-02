@@ -1,5 +1,4 @@
 import { ImportResolutionOption } from '@/src/testData';
-import { FolderSelectors } from '@/src/ui/selectors';
 import { ReplaceConfirmationModalSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
@@ -13,13 +12,9 @@ export class ReplaceConfirmationModalFolders extends Folders {
     super(
       page,
       parentLocator,
-      FolderSelectors.folder,
+      ReplaceConfirmationModalSelectors.mainFolderTree,
       EntitySelectors.conversation,
     );
-  }
-
-  getFolderByName(name: string, index?: number) {
-    return this.getElementLocatorByText(name, index);
   }
 
   private getConversationDropdownMenu(): DropdownButtonMenu {
@@ -29,28 +24,36 @@ export class ReplaceConfirmationModalFolders extends Folders {
     return this.conversationDropdownMenu;
   }
 
-  public getConversationDropdownByName(conversationName: string) {
-    return this.getConversationRowByName(conversationName).locator(
+  /**
+   * Gets the dropdown element for a conversation within a specific folder.
+   * @param folderName - Name of the folder containing the conversation
+   * @param conversationName - Name of the conversation
+   * @returns Locator for the conversation's dropdown trigger
+   */
+  public getConversationDropdownByName(
+    folderName: string,
+    conversationName: string,
+  ) {
+    return this.getFolderEntity(folderName, conversationName).locator(
       ReplaceConfirmationModalSelectors.dropdownTrigger,
     );
   }
 
-  private getConversationRowByName(conversationName: string) {
-    return this.getChildElementBySelector(FolderSelectors.folder)
-      .getElementLocator()
-      .locator(EntitySelectors.conversation)
-      .filter({
-        has: this.page.locator(EntitySelectors.entityName).filter({
-          hasText: conversationName,
-        }),
-      });
-  }
-
+  /**
+   * Sets the import resolution option for a conversation within a specific folder.
+   * @param folderName - Name of the folder containing the conversation
+   * @param conversationName - Name of the conversation
+   * @param option - Import resolution option (Replace, Postfix, or Ignore)
+   */
   public async setConversationOption(
+    folderName: string,
     conversationName: string,
     option: ImportResolutionOption,
   ) {
-    await this.getConversationDropdownByName(conversationName).click();
+    await this.getConversationDropdownByName(
+      folderName,
+      conversationName,
+    ).click();
     await this.getDropdownMenu().selectMenuOption(option, {
       isHttpMethodTriggered: false,
     });

@@ -367,6 +367,7 @@ export const InformationModalSelectors = {
 
 export const ReplaceConfirmationModalSelectors = {
   modalContainer: '[data-qa="replace-confirmation-modal"]',
+  mainFolderTree: '[data-qa="main-folder-tree"]',
   allItemsSelector: '[data-qa="all-items-selector"]',
   cancelButton: '[data-qa="cancel-import"]',
   continueButton: '[data-qa="continue-import"]',

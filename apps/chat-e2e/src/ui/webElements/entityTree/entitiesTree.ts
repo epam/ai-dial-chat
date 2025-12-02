@@ -90,7 +90,11 @@ export class EntitiesTree extends BaseElement {
   getEntityByExactName(name: string): Locator {
     return this.getChildElementBySelector(this.entitySelector)
       .getElementLocator()
-      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+      .filter({
+        has: this.page.locator(EntitySelectors.entityName).filter({
+          hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`),
+        }),
+      });
   }
 
   getEntityName(name: string, index?: number) {
