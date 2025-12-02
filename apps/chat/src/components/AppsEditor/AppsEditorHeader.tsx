@@ -27,8 +27,8 @@ import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
-import { capitalize } from 'lodash';
 import omit from 'lodash-es/omit';
+import capitalize from 'lodash/capitalize';
 
 const tabKeysInfo = {
   [MarketplaceEditorSteps.General]: {
@@ -59,8 +59,12 @@ export const AppsEditorHeader = ({
     query: {
       [AppsEditorQuery.Id]: id = '',
       [AppsEditorQuery.Schema]: schemaId = '',
+      [AppsEditorQuery.IsCreating]: isCreating,
     },
   } = useRouter();
+
+  // 1 stands for true
+  const isCreatingApp = typeof isCreating === 'string' && isCreating === '1';
 
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -82,7 +86,7 @@ export const AppsEditorHeader = ({
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const isEditing = !!appDetails;
+  const isExistingApp = !!appDetails;
   const isSchemaApplicationType = !isApplicationType(
     decodeURIComponent(schemaId.toString()),
   );
@@ -107,10 +111,10 @@ export const AppsEditorHeader = ({
       {
         key: MarketplaceEditorSteps.Settings,
         label: t(tabKeysInfo[MarketplaceEditorSteps.Settings].label),
-        disabled: !isEditing,
+        disabled: !isExistingApp,
       },
     ],
-    [isEditing, t],
+    [isExistingApp, t],
   );
 
   const errorSteps = useMemo(() => {
@@ -127,7 +131,7 @@ export const AppsEditorHeader = ({
     return steps;
   }, [errors, isValid]);
 
-  const title = `${t(isEditing ? 'Edit' : 'Add')} ${applicationTypeDisplayName}`;
+  const title = `${t(isCreatingApp ? 'Add' : 'Edit')} ${applicationTypeDisplayName}`;
 
   const handleTabClick = useCallback(
     (tab: { key: MarketplaceEditorSteps; disabled: boolean }) => {
@@ -140,7 +144,7 @@ export const AppsEditorHeader = ({
   const handleLogoClick = useCallback(
     async (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
-      if (isEditing) {
+      if (isExistingApp) {
         const isValid = await trigger();
 
         if (!isValid) {
@@ -151,11 +155,11 @@ export const AppsEditorHeader = ({
       }
       onSave(false, true);
     },
-    [isEditing, trigger, onSave],
+    [isExistingApp, trigger, onSave],
   );
 
   const handleSaveAndRedirect = useCallback(async () => {
-    if (isEditing) {
+    if (isExistingApp) {
       const isValid = await trigger();
 
       if (!isValid) {
@@ -164,7 +168,7 @@ export const AppsEditorHeader = ({
       }
     }
     onSave();
-  }, [isEditing, onSave, trigger]);
+  }, [isExistingApp, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
@@ -200,7 +204,9 @@ export const AppsEditorHeader = ({
   );
 
   const saveLabel =
-    isEditing && !hasCustomEditor && (agent ? !isEntityIdPublic(agent) : false)
+    isExistingApp &&
+    !hasCustomEditor &&
+    (agent ? !isEntityIdPublic(agent) : false)
       ? 'Save and exit'
       : 'Exit';
 
@@ -210,7 +216,7 @@ export const AppsEditorHeader = ({
         tabs={tabs}
         activeTab={currentStep}
         errorTabsSet={errorSteps}
-        isEditing={isEditing}
+        isEditing={isExistingApp}
         onTabClick={handleTabClick}
         getMobileTabLabel={getMobileLabelText}
         title={title}
