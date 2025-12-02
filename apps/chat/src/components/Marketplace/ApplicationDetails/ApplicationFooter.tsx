@@ -146,6 +146,7 @@ export const ApplicationDetailsFooter = ({
               !isExecutableApp(entity) ||
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
+            triggerClassName="shrink-0"
             tooltip={t(
               isPublicApp && !isAdmin
                 ? 'Ask your administrator to deploy this application to be able to use it'
