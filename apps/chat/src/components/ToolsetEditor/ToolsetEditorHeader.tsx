@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
-import { AppsEditorQuery } from '@/src/constants/applications';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
@@ -41,7 +41,7 @@ export const ToolsetEditorHeader = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const {
-    query: { [AppsEditorQuery.IsCreating]: isCreating = '' },
+    query: { [ToolsetEditorQuery.IsCreating]: isCreating },
   } = useRouter();
 
   const dispatch = useAppDispatch();
