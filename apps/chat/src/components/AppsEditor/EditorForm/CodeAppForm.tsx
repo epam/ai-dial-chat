@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
@@ -11,9 +13,14 @@ import { FileFolderInterface } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors, FilesSelectors } from '@/src/store/selectors';
+import {
+  ApplicationSelectors,
+  AuthSelectors,
+  FilesSelectors,
+} from '@/src/store/selectors';
 
 import {
+  AppsEditorQuery,
   CONFIRM_SOURCE_FOLDER_VALUES,
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
@@ -60,11 +67,17 @@ const getActualSource = (value: string) =>
 
 export const CodeAppForm = () => {
   const { t } = useTranslation(Translation.Marketplace);
+  const router = useRouter();
+
+  const { [AppsEditorQuery.PublicationUrl]: publicationUrlQuery = '' } =
+    router.query;
 
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const folders = useAppSelector(FilesSelectors.selectFolders);
+  const publicationUrl = publicationUrlQuery.toString();
 
   const { control, formState, setError, clearErrors, watch, setValue } =
     useFormContext<CodeAppFormType>();
@@ -75,6 +88,7 @@ export const CodeAppForm = () => {
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppShared = !!appDetails?.isShared;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
+  const isAdminReviewing = isAdmin && (isAppPublic || publicationUrl);
 
   useEffect(() => {
     const isFolderLoaded = checkIsTargetFolderLoaded(folders, sources);
@@ -156,7 +170,7 @@ export const CodeAppForm = () => {
           />
         )}
       />
-      {!!sources && filesLoaded && (
+      {!!sources && (filesLoaded || isAdminReviewing) && (
         <FormCodeEditor
           disabled={isAppPublic}
           sourcesFolderId={getActualSource(sources)}
