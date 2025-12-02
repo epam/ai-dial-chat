@@ -11,6 +11,7 @@ import {
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
+import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -21,6 +22,7 @@ import {
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
+import { DialAIEntityFeatures } from '@/src/types/models';
 import {
   AnyToolset,
   CodeInterpreterToolset,
@@ -537,7 +539,20 @@ const getQuickApp2Toolsets = ({
     }>(
       (acc, agentAndToolset) => {
         const entity = allEntitiesMap[agentAndToolset];
-        if (!entity) return acc;
+        if (!entity) {
+          if (isApplicationId(agentAndToolset)) {
+            acc.dialDeploymentsToolsets.push({
+              type: DialDeploymentToolsetToolTypes.DialDeploymentSimple,
+              deployment_id: ApiUtils.encodeApiUrl(agentAndToolset),
+            });
+          } else if (isToolsetId(agentAndToolset)) {
+            acc.dialMCPToolsets.push({
+              dial_id: ApiUtils.encodeApiUrl(agentAndToolset),
+              type: ToolsetTypes.DialMcp,
+            });
+          }
+          return acc;
+        }
 
         if (isDialAiEntityModel(entity)) {
           acc.dialDeploymentsToolsets.push({
@@ -546,11 +561,8 @@ const getQuickApp2Toolsets = ({
           });
         } else {
           acc.dialMCPToolsets.push({
-            name: entity.name,
             dial_id: ApiUtils.encodeApiUrl(entity.id),
-            description: entity.description,
             type: ToolsetTypes.DialMcp,
-            transport: entity.transport,
           });
         }
 
@@ -662,6 +674,9 @@ export const getApplicationPayload = ({
         maxInputAttachments: data.maxInputAttachments
           ? Number(data.maxInputAttachments)
           : undefined,
+        features: {
+          assistant_attachments_in_request_supported: true,
+        } as unknown as DialAIEntityFeatures,
         applicationProperties: {
           orchestrator: {
             deployment: {
