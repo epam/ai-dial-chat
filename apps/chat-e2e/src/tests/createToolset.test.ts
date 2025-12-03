@@ -13,11 +13,16 @@ import {
   MenuOptions,
   ToggleState,
 } from '@/src/testData';
+import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { Attributes, Cursors, StyleValues, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
-import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
+import {
+  Toolset,
+  ToolsetAuthTypes,
+  ToolsetTransportType,
+} from '@epam/ai-dial-shared';
 
 let toolsetForCleanup: BackendEntity | undefined;
 const defaultToolsetNamePattern = new RegExp(
@@ -709,15 +714,18 @@ dialTest(
     customAppEditorAppSettingsPreviewBody,
     entityEditorGeneralForm,
     tooltipAssertion,
+    page,
   }) => {
     setTestIds('EPMRTC-7312', 'EPMRTC-6996', 'EPMRTC-6890');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: ExpectedConstants.defaultEntityVersion,
-      endpoint: ExpectedConstants.mcpServerUrl,
+      endpoint: GeneratorUtil.randomUrl(),
     };
+    let initialToolset: Toolset;
     let checkedOption: string;
     let toolsetElement: BaseElement;
+    let oauthMockHelper: OAuthMockHelper;
 
     await dialTest.step(
       `Precondition: Create toolset via API to make filter's panel available`,
@@ -773,17 +781,36 @@ dialTest(
           customAppEditorAppSettingsPreviewBody.previewSpinner,
           'hidden',
         );
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
       },
     );
 
     await dialTest.step(
-      'Set Endpoint field value that do not support OAuth, select "OAuth" authentication, click "Log in" and verify error toast is shown',
+      'Mock update toolset response to return 400 error code',
+      async () => {
+        oauthMockHelper = new OAuthMockHelper(
+          page,
+          initialToolset,
+          toolsetEntity.endpoint,
+          { expectedStatusCodes: { updateToolsetCode: 400 } },
+        );
+        await oauthMockHelper.setupToolsetRoutes();
+        oauthMockHelper.enableMocking();
+      },
+    );
+
+    await dialTest.step(
+      'Set Endpoint field value, select "OAuth" authentication, click "Log in" and verify error toast is shown',
       async () => {
         await toolsetEditorViewForm.endpoint.fillInInput(
           toolsetEntity.endpoint,
         );
         await toolsetEditorViewForm.oauthContainer.click();
-        await toolsetEditorViewForm.clickSignInButton();
+        await toolsetEditorViewForm.signInButton.click();
+        await oauthMockHelper.cleanup();
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(
           ExpectedConstants.oAuthNotSupportedError,

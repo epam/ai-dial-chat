@@ -51,6 +51,7 @@ export enum AppsEditorQuery {
   Schema = 'schema',
   PublicationUrl = 'publicationUrl',
   ReturnUrl = 'returnUrl',
+  IsCreating = 'isCreating',
 }
 
 export const PUBLIC_APP_TOOLTIP = translate(
