@@ -318,7 +318,8 @@ export const AssistantMessage = memo(function AssistantMessage({
             messageCopied={messageCopied}
             onLike={onLike}
             onRegenerate={onRegenerate}
-            onToggleEditing={!isPlaybackConversation(conversation) &&
+            onToggleEditing={
+              !isPlaybackConversation(conversation) &&
               (isAllLastMessageEnabled ||
                 (isLastMessage && isEditLastMessageEnabled)) &&
               (!isReadOnlyConversation || isPublishingConversation)
