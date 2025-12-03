@@ -139,8 +139,8 @@ const getMDComponents = (
       return (
         <details
           className={classnames(
-            'my-4 rounded bg-layer-3',
-            ' [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b',
+            'my-4 rounded bg-layer-3 [&>div>details>div>details]:bg-layer-3 [&>div>details]:bg-layer-1',
+            ' [&>div>details>div>details>summary]:border-tertiary [&>div>details>summary]:border-secondary [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b',
           )}
           {...props}
         >
@@ -153,7 +153,7 @@ const getMDComponents = (
       return (
         <summary
           className={classnames(
-            'flex items-center justify-between gap-3 border-tertiary p-3 text-sm',
+            'flex items-center justify-between gap-3 p-3 text-sm',
             'cursor-pointer [&::marker]:hidden',
           )}
           {...props}
