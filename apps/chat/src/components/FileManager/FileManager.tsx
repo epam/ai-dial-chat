@@ -23,7 +23,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialFileManager, useDialFileManagerTabs } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonVariant,
+  DialFileManager,
+  useDialFileManagerTabs,
+} from '@epam/ai-dial-ui-kit';
 
 export const FileManager: React.FC = () => {
   const [currentPath, setCurrentPath] = useState<string | undefined>();
@@ -206,6 +210,7 @@ export const FileManager: React.FC = () => {
         tabs: tabs,
         activeTab: activeTab,
         onTabChange: handleTabChange,
+        newButtonVariant: ButtonVariant.Primary,
         newActionLabels: {
           uploadFiles: t('Upload files'),
           newFolder: t('New folder'),
