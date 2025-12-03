@@ -517,6 +517,7 @@ dialTest(
       async () => {
         await marketplacePage.openMyWorkspacePage({
           updateInstalledDeployments: false,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
@@ -1124,6 +1125,7 @@ dialTest(
       chatMessages,
       conversationAssertion,
       entityDetailsModal,
+      navigationPanel,
       entityDetailsModalAssertion,
       localStorageManager,
     },
@@ -1158,6 +1160,7 @@ dialTest(
     const attachmentTypeToSet = 'image/png';
     const updatedAppNameForStepperTest = `${appEntity.name}-stepper-update`; // New name for EPMRTC-5928
     await localStorageManager.setShowSideBarPanels();
+    await localStorageManager.setRecentModelsIdsAndUseLastModel();
 
     await dialTest.step('Open create a custom app page', async () => {
       await marketplacePage.openCreateCustomAppPage();
@@ -1663,14 +1666,10 @@ dialTest(
       await entityDetailsModal.closeButton.click();
     });
 
-    //TODO: enable the step when fixed https://github.com/epam/ai-dial-chat/issues/5124
-    await dialTest.step.skip(
+    await dialTest.step(
       'Click back to chat - created on preview form chat is not visible on DIAL main screen, created app is applied on a new conversation',
       async () => {
-        await marketplacePage
-          .getMarketplaceContainer()
-          .getNavigationPanel()
-          .backToChatButton.click();
+        await navigationPanel.backToChat();
         await dialHomePage.waitForPageLoaded();
         await conversationAssertion.assertEntityState(
           { name: previewChatMessage },

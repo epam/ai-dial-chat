@@ -280,6 +280,7 @@ export const EntityEditorGeneralInfoPreviewSelectors = {
   description: '[data-qa="entity-description"]',
   version: '[data-qa="version"]',
   releaseDate: '[data-qa="created-at"]',
+  credsLabel: '[data-qa="creds-label"]',
 };
 
 export const EntityEditorEntitySettingsPreviewSelectors = {

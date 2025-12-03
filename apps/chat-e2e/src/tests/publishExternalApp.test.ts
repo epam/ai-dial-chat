@@ -215,6 +215,7 @@ dialAdminTest(
       async () => {
         await adminMarketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
+          updateInstalledToolsets: false,
         });
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appEntity.name);
@@ -263,6 +264,7 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);

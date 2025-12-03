@@ -440,7 +440,9 @@ dialSharedWithMeTest(
       async () => {
         await additionalUserFileApiHelper.updateInstalledDeployments([]);
         await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel();
-        await additionalShareUserMarketplacePage.openMarketplacePage();
+        await additionalShareUserMarketplacePage.openMarketplacePage({
+          updateInstalledToolsets: false,
+        });
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         const sourceFilterOptions =
           await additionalShareUserMarketplaceFilter.filterByPropertyOptionLabels(
