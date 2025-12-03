@@ -464,9 +464,13 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
 
       const deletedToolsetsSet = new Set(
         toolsets
-          .filter((toolset) =>
-            toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset)),
-          )
+          .filter((toolset) => {
+            if (isMyEntity(toolset)) {
+              return payload.references.includes(toolset.reference);
+            }
+
+            return toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset));
+          })
           .map((toolset) => toolset.reference),
       );
       const newInstalledToolsets = installedToolsets.filter(

@@ -16,7 +16,7 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
-import { ToolsetLoginFormType } from './form';
+import { ToolsetLoginFormType, WithLogin } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
@@ -62,10 +62,12 @@ export const ToolsetLoginForm = ({
   const errors = formState.errors;
   const isValid = formState.isValid;
 
-  const includeOAuthFields = useWatch({
-    name: 'includeOAuthFields',
+  const withLogin = useWatch({
+    name: 'withLogin',
     control,
   });
+
+  const includeOAuthFields = withLogin === WithLogin.WithConfig;
 
   const handleSubmit = useCallback(() => {
     if (isSignedIn) {
@@ -175,7 +177,7 @@ export const ToolsetLoginForm = ({
           isSignedIn ? 'button-secondary' : 'button-primary',
         )}
         data-qa="sign-in-button"
-        disabled={disabled || !isValid}
+        disabled={disabled || (!isValid && !isSignedIn)}
         onClick={handleSubmit}
       >
         {isSignedIn ? (

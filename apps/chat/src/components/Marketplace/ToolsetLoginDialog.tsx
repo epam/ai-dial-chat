@@ -20,6 +20,7 @@ import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginFor
 import {
   ToolsetLoginFormSchema,
   ToolsetLoginFormType,
+  WithLogin,
   getDefaultLoginFormData,
 } from '@/src/components/ToolsetEditor/form';
 
@@ -38,7 +39,7 @@ export const ToolsetLoginDialogView = () => {
 
   const formMethods = useForm<ToolsetLoginFormType>({
     defaultValues: getDefaultLoginFormData(authType, entity, {
-      includeOAuthFields: false,
+      withLogin: WithLogin.WithLogin,
     }),
     mode: 'onChange',
     reValidateMode: 'onChange',
