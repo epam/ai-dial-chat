@@ -139,8 +139,8 @@ const getMDComponents = (
       return (
         <details
           className={classnames(
-            'my-4 rounded bg-layer-3 [&>div>details>div>details]:bg-layer-3 [&>div>details]:bg-layer-1',
-            ' [&>div>details>div>details>summary]:border-tertiary [&>div>details>summary]:border-secondary [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b',
+            'my-4 rounded bg-layer-3 [&_details]:bg-layer-1 [&_details_details]:bg-layer-3',
+            ' [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_details>summary]:border-secondary [&_details_details>summary]:border-tertiary',
           )}
           {...props}
         >
