@@ -30,16 +30,6 @@ export class ReplaceConfirmationModalConversations extends EntitiesTree {
     );
   }
 
-  private getConversationRowByName(conversationName: string) {
-    return this.getChildElementBySelector(EntitySelectors.conversation)
-      .getElementLocator()
-      .filter({
-        has: this.page.locator(EntitySelectors.entityName).filter({
-          hasText: conversationName,
-        }),
-      });
-  }
-
   public async setConversationOption(
     conversationName: string,
     option: ImportResolutionOption,
