@@ -40,7 +40,7 @@ export function AddToolsButton() {
               query: {
                 [ToolsetEditorQuery.ReturnUrl]:
                   window.location.pathname + window.location.search,
-                [ToolsetEditorQuery.IsCreate]: true,
+                [ToolsetEditorQuery.IsCreating]: '1',
               },
             });
           },
