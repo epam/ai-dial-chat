@@ -23,6 +23,7 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
     expectedAuthor?: string;
     expectedTopics?: string[];
     expectedIcon?: string | BaseElement;
+    expectedCredsLabel?: string;
   }) {
     if (attributesToVerify.expectedName !== undefined) {
       await this.assertElementText(
@@ -67,6 +68,12 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
             attributesToVerify.expectedIcon,
             'visible',
           );
+    }
+    if (attributesToVerify.expectedCredsLabel !== undefined) {
+      await this.assertElementText(
+        this.entityDetailsModal.credsLabel,
+        attributesToVerify.expectedCredsLabel,
+      );
     }
   }
 

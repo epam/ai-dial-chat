@@ -37,6 +37,10 @@ export class EntityEditorPreviewCard extends BaseElement {
     EntityEditorGeneralInfoPreviewSelectors.releaseDate,
   );
 
+  public credsLabel = this.getChildElementBySelector(
+    EntityEditorGeneralInfoPreviewSelectors.credsLabel,
+  );
+
   public previewTopicsContainer = this.getChildElementBySelector(
     EntityEditorGeneralInfoPreviewSelectors.previewTopicsContainer,
   );

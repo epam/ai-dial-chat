@@ -248,6 +248,7 @@ export const MenuComponent = forwardRef<
         data-open={isOpen ? '' : undefined}
         data-nested={isNested ? '' : undefined}
         data-focus-inside={hasFocusInside ? '' : undefined}
+        data-qa="dropdown-trigger"
         className={classNames(
           isNested && menuItemClassNames,
           isNested ? 'h-[34px] w-full px-3' : 'h-full px-0',
@@ -351,6 +352,7 @@ export const MenuItem = forwardRef<
         ref={useMergeRefs([item.ref, forwardedRef])}
         type="button"
         role="menuitem"
+        data-qa="menu-item"
         className={classNames(
           menuItemClassNames,
           'h-[34px] w-full px-3',

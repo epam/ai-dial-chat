@@ -388,6 +388,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     (publicationModel && publicationModel.action !== PublishActions.DELETE);
   const doesInvalidPublishApplicationIconExist =
     !isReview &&
+    publicationModel.action !== PublishActions.DELETE &&
     doesIncludeMarketplaceEntity &&
     isFileId(publicationModel.entity.iconUrl) &&
     !isMyEntity({ id: publicationModel.entity.iconUrl ?? '' });
