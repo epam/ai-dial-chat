@@ -321,19 +321,21 @@ export const MessageMobileButtons = ({
                 onClick={onCopy}
               />
             ))}
-          {(isAllLastMessageEnabled ||
-            (isLastMessage && isEditLastMessageEnabled)) && (
-            <MenuItem
-              item={
-                <div className="flex items-center gap-3">
-                  <IconEdit className="text-secondary" size={18} />
-                  {t('Edit')}
-                </div>
-              }
-              data-qa="edit"
-              onClick={() => onToggleEditing(true)}
-            />
-          )}
+          {!editDisabled &&
+            onToggleEditing &&
+            (isAllLastMessageEnabled ||
+              (isLastMessage && isEditLastMessageEnabled)) && (
+              <MenuItem
+                item={
+                  <div className="flex items-center gap-3">
+                    <IconEdit className="text-secondary" size={18} />
+                    {t('Edit')}
+                  </div>
+                }
+                data-qa="edit"
+                onClick={() => onToggleEditing(true)}
+              />
+            )}
           {onRegenerate && (
             <MenuItem
               item={
@@ -360,6 +362,7 @@ export const MessageMobileButtons = ({
   }
 
   return (
+    !editDisabled &&
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>
