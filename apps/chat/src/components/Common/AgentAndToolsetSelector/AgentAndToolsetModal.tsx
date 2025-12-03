@@ -368,10 +368,9 @@ const AgentAndToolsetModalView = ({
         const item = allItemsMap[id];
         if (isMyWorkspace && item && !isInstalledEntity(item, installedSet)) {
           handleSetScopeTab(MarketplaceTabs.HOME);
-          setScrollToItemId(id);
-        } else {
-          setScrollToItemId(id);
         }
+
+        setScrollToItemId(id);
       }
     },
     [
