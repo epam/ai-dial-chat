@@ -83,8 +83,8 @@ const selectAllGroupToolsetsKeySet = (
   return new Set(
     references
       .map((reference) => toolsetsMap[reference])
-      .filter(Boolean)
-      .map((toolset) => getGroupMarketplaceEntityKey(toolset!)),
+      .filter((toolset) => !!toolset)
+      .map((toolset) => getGroupMarketplaceEntityKey(toolset)),
   );
 };
 

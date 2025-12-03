@@ -100,8 +100,8 @@ const selectAllGroupModelKeySet = (state: RootState, references: string[]) => {
   return new Set(
     references
       .map((reference) => modelsMap[reference])
-      .filter(Boolean)
-      .map((model) => getGroupMarketplaceEntityKey(model!)),
+      .filter((model) => !!model)
+      .map((model) => getGroupMarketplaceEntityKey(model)),
   );
 };
 
