@@ -321,7 +321,7 @@ export const MessageMobileButtons = ({
                 onClick={onCopy}
               />
             ))}
-          {(isAllLastMessageEnabled ||
+          {!editDisabled && onToggleEditing && (isAllLastMessageEnabled ||
             (isLastMessage && isEditLastMessageEnabled)) && (
             <MenuItem
               item={
