@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useCallback, useMemo, useRef } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -13,6 +13,7 @@ import { ConversationDialogs } from '@/src/components/Chatbar/ConversationDialog
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
 import { PromptDialogs } from '@/src/components/Promptbar/components/PromptDialogs';
+import { ChatInputContext } from '@/src/components/contexts/chat-input-context';
 
 import { Navigation } from './Navigation';
 
@@ -24,6 +25,7 @@ interface NavigationWrapperProps {
 
 export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   const router = useRouter();
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -37,28 +39,42 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
       router.route === Routes.Widgets ||
       router.route === Routes.SelectedWidget);
 
+  const handleChatInputFocus = useCallback(() => {
+    chatInputRef.current?.focus();
+  }, []);
+
+  const chatInputContextValue = useMemo(
+    () => ({
+      chatInputRef,
+      focusChatInput: handleChatInputFocus,
+    }),
+    [handleChatInputFocus],
+  );
+
   return (
-    <div className="size-full">
-      <div className="flex size-full flex-col md:flex-row ">
-        {shouldShowNavigation && <Navigation />}
-        {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.ConversationsSection) && (
-            <>
-              <Chatbar />
-              <ConversationDialogs />
-            </>
-          )}
-        {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
-        <div className="grow overflow-hidden">{children}</div>
-        {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.PromptsSection) && (
-            <>
-              <Promptbar />
-              <PromptDialogs />
-            </>
-          )}
+    <ChatInputContext.Provider value={chatInputContextValue}>
+      <div className="size-full">
+        <div className="flex size-full flex-col md:flex-row ">
+          {shouldShowNavigation && <Navigation />}
+          {router.route === Routes.Chat &&
+            enabledFeatures.has(Feature.ConversationsSection) && (
+              <>
+                <Chatbar />
+                <ConversationDialogs />
+              </>
+            )}
+          {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
+          <div className="grow overflow-hidden">{children}</div>
+          {router.route === Routes.Chat &&
+            enabledFeatures.has(Feature.PromptsSection) && (
+              <>
+                <Promptbar />
+                <PromptDialogs />
+              </>
+            )}
+        </div>
+        <ChatModalsManager />
       </div>
-      <ChatModalsManager />
-    </div>
+    </ChatInputContext.Provider>
   );
 };

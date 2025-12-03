@@ -13,7 +13,7 @@ import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
+import { useMarketplaceEditorView } from '@/src/components/contexts/marketplace-editor-view-context';
 
 const previewModeIcons = {
   [PreviewMode.full]: IconArrowsMaximize,
