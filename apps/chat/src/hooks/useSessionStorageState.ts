@@ -12,7 +12,7 @@ export function useSessionStorageState<T>(
       const item = window.sessionStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error(`Error reading sessionStorage key “${key}”:`, error);
+      console.error('Error reading sessionStorage key “%s”:', key, error);
       return initialValue;
     }
   });
@@ -28,7 +28,7 @@ export function useSessionStorageState<T>(
         window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      console.error(`Error setting sessionStorage key “${key}”:`, error);
+      console.error('Error setting sessionStorage key:', key, error);
     }
   };
 
