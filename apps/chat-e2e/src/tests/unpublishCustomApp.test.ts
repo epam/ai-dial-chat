@@ -357,6 +357,7 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
           getInstalledDeployments: true,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
@@ -500,6 +501,7 @@ dialAdminTest(
         await adminMarketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
           getInstalledDeployments: true,
+          updateInstalledToolsets: false,
         });
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);

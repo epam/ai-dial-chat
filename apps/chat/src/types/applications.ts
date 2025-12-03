@@ -159,3 +159,15 @@ export enum Toolsets {
   WebApiToolset = 'webApiToolset',
   McpToolset = 'mcpToolset',
 }
+
+export type ApplicationContextMenuDisabledActions = Partial<{
+  copyLink: boolean;
+  deploy: boolean;
+  edit: boolean;
+  share: boolean;
+  unshare: boolean;
+  publish: boolean;
+  unpublish: boolean;
+  logs: boolean;
+  delete: boolean;
+}>;

@@ -2,6 +2,7 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
+import { ServerSlugs } from '@/chat/types/slugs-types';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
@@ -283,7 +284,7 @@ export const ExpectedConstants = {
     "Input the MIME type and press 'Enter' to add",
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
-  agentNotFoundToastError: 'Not found',
+  agentNotFoundToastError: 'Not Found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
   informationModalTitle: 'Information',
   informationModalLastUpdatedLabel: 'Last updated:',
@@ -352,6 +353,7 @@ export const ExpectedConstants = {
     'The list of tools will be available after filling in the definition and authentication section',
   oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
   mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
+  mixedImportOption: 'Mixed',
 };
 
 export enum Types {
@@ -525,6 +527,9 @@ export const API = {
   publicFilesHost: () => `${API.api}/${API.filesHostSegment}/${API.public}`,
   toolsetEditorHost: '/en/toolset-editor.json',
   toolsetCreateHost: () => `${API.api}/toolsets`,
+  authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
+  tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
+  toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
 };
 
 export const Import = {
@@ -689,4 +694,28 @@ export enum EntityEditorAppTypes {
   QuickApp = 'Quick app',
   QuickApp2 = 'Quick app2',
   CodeApp = 'Code App',
+}
+
+export enum MarketplaceTabs {
+  WORKSPACE = 'workspace',
+}
+
+export enum MarketplaceEntitiesTabs {
+  AGENTS = 'agents',
+  TOOLSETS = 'toolsets',
+}
+
+export enum OAuthQueryParams {
+  responseType = 'response_type',
+  codeChallengeMethod = 'code_challenge_method',
+  clientId = 'client_id',
+  redirectUri = 'redirect_uri',
+  scope = 'scope',
+  state = 'state',
+  code = 'code',
+}
+
+export enum Creds {
+  myCreds = 'MY CREDS',
+  orgCreds = 'ORG CREDS',
 }

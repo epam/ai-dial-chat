@@ -1,6 +1,6 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { useCallback } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -12,10 +12,16 @@ import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { Field } from '@/src/components/Common/Forms/Field';
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
+import { withLabel } from '@/src/components/Common/Forms/Label';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
-import { ToolsetLoginFormType } from './form';
+import { ToolsetLoginFormType, WithLogin } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+
+const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
+const getItemLabel = (item: unknown): string => item as string;
 
 const fields = [
   'keyHeader',
@@ -56,10 +62,12 @@ export const ToolsetLoginForm = ({
   const errors = formState.errors;
   const isValid = formState.isValid;
 
-  const includeOAuthFields = useWatch({
-    name: 'includeOAuthFields',
+  const withLogin = useWatch({
+    name: 'withLogin',
     control,
   });
+
+  const includeOAuthFields = withLogin === WithLogin.WithConfig;
 
   const handleSubmit = useCallback(() => {
     if (isSignedIn) {
@@ -138,6 +146,27 @@ export const ToolsetLoginForm = ({
             disabled={disabled}
             tooltip={fieldsTooltip}
           />
+          <Controller
+            name="scopes"
+            control={control}
+            render={({ field }) => (
+              <ComboBoxField
+                label={t('Supported scopes')}
+                info={t('Type in scope and press ENTER to add')}
+                initialSelectedItems={field.value}
+                getItemLabel={getItemLabel}
+                getItemValue={getItemLabel}
+                onChangeSelectedItems={field.onChange}
+                placeholder={t('Enter one or more supported scopes')}
+                id="scopes"
+                className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 hover:border-primary md:max-w-full"
+                hasDeleteAll
+                hideSuggestions
+                itemHeightClassName="h-[31px]"
+                dataQa="combobox"
+              />
+            )}
+          />
         </>
       )}
 
@@ -148,7 +177,7 @@ export const ToolsetLoginForm = ({
           isSignedIn ? 'button-secondary' : 'button-primary',
         )}
         data-qa="sign-in-button"
-        disabled={disabled || !isValid}
+        disabled={disabled || (!isValid && !isSignedIn)}
         onClick={handleSubmit}
       >
         {isSignedIn ? (

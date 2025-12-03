@@ -851,7 +851,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Find shared app on "DIAL Marketplace", open card dropdown menu and select "Unshare" option',
       async () => {
-        await additionalShareUserMarketplacePage.openMarketplacePage();
+        await additionalShareUserMarketplacePage.openMarketplacePage({
+          updateInstalledToolsets: false,
+        });
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
           appData.name,

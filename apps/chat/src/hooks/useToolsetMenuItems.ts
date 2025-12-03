@@ -25,7 +25,10 @@ import {
 } from '@/src/utils/app/toolsets';
 
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { ToolsetModel } from '@/src/types/toolsets';
+import {
+  ToolsetContextMenuDisabledActions,
+  ToolsetModel,
+} from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -37,16 +40,7 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 
 interface Props {
   entity: ToolsetModel;
-  disabledActions?: Partial<{
-    copyLink: boolean;
-    edit: boolean;
-    share: boolean;
-    unshare: boolean;
-    publish: boolean;
-    unpublish: boolean;
-    delete: boolean;
-    login: boolean;
-  }>;
+  disabledActions?: ToolsetContextMenuDisabledActions;
   isPreview?: boolean;
   triggerIconSize?: number;
 }
