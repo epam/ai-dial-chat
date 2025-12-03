@@ -54,6 +54,6 @@
     "format": {},
     "format:fix": {}
   },
-  "tags": [],
+  "tags": ["example"],
   "implicitDependencies": ["chat"]
 }
