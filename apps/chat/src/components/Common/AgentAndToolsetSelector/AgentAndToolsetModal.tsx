@@ -149,9 +149,7 @@ const AgentAndToolsetModalView = ({
   const [selectedIds, setSelectedIds] = useState<string[]>(
     initialSelectedIds ?? [],
   );
-  const [activeVersionOverride, setActiveVersionOverride] = useState<
-    string | null
-  >(null);
+  const [scrollToItemId, setScrollToItemId] = useState<string | null>(null);
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -219,7 +217,7 @@ const AgentAndToolsetModalView = ({
       } else {
         setSelectedIds((prevIds) => [...prevIds, itemToToggle.id]);
       }
-      setActiveVersionOverride(null);
+      setScrollToItemId(null);
     },
     [selectedIds],
   );
@@ -246,7 +244,7 @@ const AgentAndToolsetModalView = ({
 
         return currentIds;
       });
-      setActiveVersionOverride(null);
+      setScrollToItemId(null);
     },
     [],
   );
@@ -266,7 +264,7 @@ const AgentAndToolsetModalView = ({
 
   const handleRemoveItem = useCallback((idToRemove: string) => {
     setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
-    setActiveVersionOverride(null);
+    setScrollToItemId(null);
   }, []);
 
   const searchedAgents = useFuseSearch(
@@ -299,10 +297,8 @@ const AgentAndToolsetModalView = ({
       if (!entities.length) return null;
       let activeVersion: MarketplaceEntity | undefined;
 
-      if (activeVersionOverride) {
-        activeVersion = entities.find(
-          (entity) => entity.id === activeVersionOverride,
-        );
+      if (scrollToItemId) {
+        activeVersion = entities.find((entity) => entity.id === scrollToItemId);
       }
 
       if (!activeVersion) {
@@ -350,14 +346,14 @@ const AgentAndToolsetModalView = ({
       isInstalledEntity(item, installedSet),
     );
   }, [
-    currentAppReference,
     searchedAgents,
     searchedToolsets,
     isMyWorkspace,
+    scrollToItemId,
     selectedIds,
     widgetsSchemaIds,
+    currentAppReference,
     installedSet,
-    activeVersionOverride,
   ]);
 
   const handleItemClick = useCallback(
@@ -372,9 +368,9 @@ const AgentAndToolsetModalView = ({
         const item = allItemsMap[id];
         if (isMyWorkspace && item && !isInstalledEntity(item, installedSet)) {
           handleSetScopeTab(MarketplaceTabs.HOME);
-          setActiveVersionOverride(id);
+          setScrollToItemId(id);
         } else {
-          setActiveVersionOverride(id);
+          setScrollToItemId(id);
         }
       }
     },
@@ -390,19 +386,19 @@ const AgentAndToolsetModalView = ({
 
   useEffect(() => {
     if (
-      activeVersionOverride &&
-      displayedItems.some((item) => item.id === activeVersionOverride)
+      scrollToItemId &&
+      displayedItems.some((item) => item.id === scrollToItemId)
     ) {
-      sliderGridRef.current?.scrollToItem(activeVersionOverride);
+      sliderGridRef.current?.scrollToItem(scrollToItemId);
     }
     setTimeout(() => {
       programmaticScroll.current = false;
     }, 0);
-  }, [activeVersionOverride, displayedItems]);
+  }, [scrollToItemId, displayedItems]);
 
   useEffect(() => {
     if (!programmaticScroll.current) {
-      setActiveVersionOverride(null);
+      setScrollToItemId(null);
     }
   }, [activeSlide, scopeTab, searchTerm]);
 
