@@ -185,7 +185,10 @@ export function ReplaceConfirmationModalView() {
             'Add a postfix, ignore or replace existing items with importing ones.',
           )}
         </p>
-        <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b border-tertiary pl-3">
+        <div
+          className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b border-tertiary pl-3"
+          data-qa="all-items-selector"
+        >
           <span>{t('All items')}</span>
           <ReplaceSelector
             selectedOption={actionForAllItems}
@@ -193,7 +196,10 @@ export function ReplaceConfirmationModalView() {
           />
         </div>
       </div>
-      <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
+      <div
+        className="flex shrink flex-col overflow-y-scroll px-3 md:px-6"
+        data-qa="main-folder-tree"
+      >
         {conversations && (
           <ConversationsList
             conversationsToReplace={conversations}
@@ -221,12 +227,14 @@ export function ReplaceConfirmationModalView() {
         <button
           onClick={handleCancel}
           className="button button-secondary h-[38px] rounded px-3 py-0"
+          data-qa="cancel-import"
         >
           {t('Cancel')}
         </button>
         <button
           onClick={handleContinueImport}
           className="button button-primary h-[38px] rounded px-3 py-0"
+          data-qa="continue-import"
         >
           {t('Continue')}
         </button>

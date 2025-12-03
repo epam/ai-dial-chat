@@ -24,6 +24,7 @@ export class DialHomePage extends BasePage {
     selectedSharedFolderName?: string;
     isPromptShared?: boolean;
     skipSidebars?: boolean;
+    waitForAgentInfo?: boolean;
   }) {
     const appContainer = this.getAppContainer();
     if (!options?.skipSidebars) {
@@ -74,7 +75,7 @@ export class DialHomePage extends BasePage {
       const promptPreviewModal = new PromptPreviewModalWindow(this.page);
       await promptPreviewModal.waitForState();
       await promptPreviewModal.promptName.waitForState();
-    } else {
+    } else if (options?.waitForAgentInfo !== false) {
       await chat.getAgentInfo().waitForState({ state: 'attached' });
       await chat.configureSettingsButton.waitForState({
         state: 'attached',
@@ -98,17 +99,22 @@ export class DialHomePage extends BasePage {
   async importFile<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
+    isHttpMethodTriggered = true,
   ) {
-    const respPromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'POST',
-    );
-    await this.uploadData(uploadData, method);
-    await respPromise;
-    await this.getAppContainer()
-      .getImportExportLoader()
-      .waitForState({ state: 'hidden' });
-    await this.getAppContainer().waitForAppLoaded(loadingTimeout);
-    await this.page.waitForLoadState('domcontentloaded');
+    if (isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (r) => r.request().method() === 'POST',
+      );
+      await this.uploadData(uploadData, method);
+      await respPromise;
+      await this.getAppContainer()
+        .getImportExportLoader()
+        .waitForState({ state: 'hidden' });
+      await this.getAppContainer().waitForAppLoaded(loadingTimeout);
+      await this.page.waitForLoadState('domcontentloaded');
+    } else {
+      await this.uploadData(uploadData, method);
+    }
   }
 
   public async addInitScript<Arg>(
