@@ -48,7 +48,6 @@ import { Routes } from '@/src/constants/routes';
 import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import {
   SliderGrid,
@@ -126,9 +125,14 @@ const AgentAndToolsetModalView = ({
       AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
     ),
   );
+
   const [shouldResetSliderState, setShouldResetSliderState] = useState(false);
-  const [footerHeight, setFooterHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [footerHeight, setFooterHeight] = useState<number | undefined>(
+    undefined,
+  );
+  const [headerHeight, setHeaderHeight] = useState<number | undefined>(
+    undefined,
+  );
   const [scopeTab, setScopeTab] = useState<MarketplaceTabs>(
     getStringFromSearchParams<MarketplaceTabs>(
       searchParams,
@@ -391,33 +395,33 @@ const AgentAndToolsetModalView = ({
             {t('All')}
           </span>
         </div>
-        <SliderGrid<
-          MarketplaceEntity,
-          Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
-        >
-          ref={sliderGridRef}
-          items={displayedItems}
-          SliderItem={AgentAndToolsetSelectItem}
-          notFound={
-            <TalkToNotFound
-              isMyWorkspace={isMyWorkspace}
-              onOpenMarketplaceTab={handleSetScopeTab}
-              isSearchMode={!!searchTerm}
-            />
-          }
-          sliderResetDependencies={sliderResetDependencies}
-          itemProps={sliderItemProps}
-          modalHeaderHeight={headerHeight}
-          modalFooterHeight={footerHeight}
-          sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
-          activeSlide={activeSlide}
-          prevActiveSlide={prevActiveSlide}
-          onSetActiveSlide={setActiveSlide}
-          onSetPrevActiveSlide={setPrevActiveSlide}
-        />
+        {!!(headerHeight && footerHeight) && (
+          <SliderGrid<
+            MarketplaceEntity,
+            Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
+          >
+            ref={sliderGridRef}
+            items={displayedItems}
+            SliderItem={AgentAndToolsetSelectItem}
+            notFound={
+              <TalkToNotFound
+                isMyWorkspace={isMyWorkspace}
+                onOpenMarketplaceTab={handleSetScopeTab}
+                isSearchMode={!!searchTerm}
+              />
+            }
+            sliderResetDependencies={sliderResetDependencies}
+            itemProps={sliderItemProps}
+            modalHeaderHeight={headerHeight}
+            modalFooterHeight={footerHeight}
+            sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
+            activeSlide={activeSlide}
+            prevActiveSlide={prevActiveSlide}
+            onSetActiveSlide={setActiveSlide}
+            onSetPrevActiveSlide={setPrevActiveSlide}
+          />
+        )}
       </div>
-
-      <AgentDialogs />
 
       <div
         ref={footerRef}

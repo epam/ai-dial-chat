@@ -15,8 +15,6 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
-import { AgentDialogs } from '@/src/components//Common/AgentDialogs';
-
 import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
 import { ResultsView, ResultsViewProps } from './TabResults';
 
@@ -141,8 +139,6 @@ export function AgentsTabRenderer() {
           isSuggested={detailsModel?.isSuggested}
         />
       )}
-
-      <AgentDialogs />
     </>
   );
 }
