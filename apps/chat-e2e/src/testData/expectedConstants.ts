@@ -352,6 +352,8 @@ export const ExpectedConstants = {
   allowedToolsLabelSubtitle:
     'The list of tools will be available after filling in the definition and authentication section',
   oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
+  mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
+  mixedImportOption: 'Mixed',
 };
 
 export enum Types {

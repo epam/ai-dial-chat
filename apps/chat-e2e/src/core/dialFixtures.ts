@@ -68,6 +68,7 @@ import {
   PublishFileAssertion,
   PublishFolderAssertion,
   PublishingRequestDialogAssertion,
+  ReplaceConfirmationModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
   ShareAppModalAssertion,
@@ -158,6 +159,9 @@ import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { PublishingRequestDialog } from '@/src/ui/webElements/publishingRequestDialog';
 import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
+import { ReplaceConfirmationModal } from '@/src/ui/webElements/replaceConfirmationModal';
+import { ReplaceConfirmationModalConversations } from '@/src/ui/webElements/replaceConfirmationModalConversations';
+import { ReplaceConfirmationModalFolders } from '@/src/ui/webElements/replaceConfirmationModalFolders';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -249,6 +253,7 @@ const dialTest = test.extend<{
   folderDropdownMenu: DropdownMenu;
   promptDropdownMenu: DropdownMenu;
   confirmationDialog: ConfirmationDialog;
+  replaceConfirmationModal: ReplaceConfirmationModal;
   promptModalDialog: PromptModalDialog;
   renameConversationModal: RenameConversationModal;
   renameConversationModalAssertion: RenameConversationModalAssertion;
@@ -405,6 +410,11 @@ const dialTest = test.extend<{
   toolsetEditorSettingsPreviewToggleAssertion: EntityEditorPreviewToggleAssertion;
   toolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
   externalAppEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
+  replaceConfirmationModalAssertion: ReplaceConfirmationModalAssertion;
+  replaceConfirmationModalFolders: ReplaceConfirmationModalFolders;
+  replaceConfirmationModalConversations: ReplaceConfirmationModalConversations;
+  replaceConfirmationModalFoldersAssertion: FolderAssertion<ReplaceConfirmationModalFolders>;
+  replaceConfirmationModalConversationsAssertion: EntityTreeAssertion<ReplaceConfirmationModalConversations>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -830,6 +840,10 @@ const dialTest = test.extend<{
   confirmationDialog: async ({ page }, use) => {
     const confirmationDialog = new ConfirmationDialog(page);
     await use(confirmationDialog);
+  },
+  replaceConfirmationModal: async ({ page }, use) => {
+    const replaceConfirmationModal = new ReplaceConfirmationModal(page);
+    await use(replaceConfirmationModal);
   },
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);
@@ -1659,6 +1673,50 @@ const dialTest = test.extend<{
       toolsetEditorViewForm,
     );
     await use(toolsetEditorViewFormAssertion);
+  },
+  replaceConfirmationModalAssertion: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalAssertion =
+      new ReplaceConfirmationModalAssertion(replaceConfirmationModal);
+    await use(replaceConfirmationModalAssertion);
+  },
+  replaceConfirmationModalFolders: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalFolders =
+      replaceConfirmationModal.getFolders();
+    await use(replaceConfirmationModalFolders);
+  },
+  replaceConfirmationModalConversations: async (
+    { replaceConfirmationModal },
+    use,
+  ) => {
+    const replaceConfirmationModalConversations =
+      replaceConfirmationModal.getConversations();
+    await use(replaceConfirmationModalConversations);
+  },
+  replaceConfirmationModalFoldersAssertion: async (
+    { replaceConfirmationModalFolders },
+    use,
+  ) => {
+    const replaceConfirmationModalFoldersAssertion =
+      new FolderAssertion<ReplaceConfirmationModalFolders>(
+        replaceConfirmationModalFolders,
+      );
+    await use(replaceConfirmationModalFoldersAssertion);
+  },
+  replaceConfirmationModalConversationsAssertion: async (
+    { replaceConfirmationModalConversations },
+    use,
+  ) => {
+    const replaceConfirmationModalConversationsAssertion =
+      new EntityTreeAssertion<ReplaceConfirmationModalConversations>(
+        replaceConfirmationModalConversations,
+      );
+    await use(replaceConfirmationModalConversationsAssertion);
   },
 });
 
