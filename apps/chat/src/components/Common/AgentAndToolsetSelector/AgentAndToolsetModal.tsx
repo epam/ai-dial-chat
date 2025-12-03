@@ -61,8 +61,6 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
-const SESSION_STORAGE_KEY = 'agent-toolset-temporary-selection';
-
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
   tab: MarketplaceTabs;
@@ -94,6 +92,7 @@ interface AgentAndToolsetModalViewProps {
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   saveSliderStateInURL: boolean;
+  sessionKey: string;
   onClose: () => void;
   onConfirm: (selectedIds: string[]) => void;
 }
@@ -102,6 +101,7 @@ const AgentAndToolsetModalView = ({
   initialSelectedIds,
   allItemsMap,
   saveSliderStateInURL,
+  sessionKey,
   onClose,
   onConfirm,
 }: AgentAndToolsetModalViewProps) => {
@@ -144,7 +144,7 @@ const AgentAndToolsetModalView = ({
     searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
   );
   const [selectedIds, setSelectedIds] = useSessionStorageState<string[]>(
-    SESSION_STORAGE_KEY,
+    sessionKey,
     initialSelectedIds ?? [],
   );
 
@@ -453,6 +453,37 @@ export const AgentAndToolsetModal = ({
   onClose,
   onConfirm,
 }: Props) => {
+  const router = useRouter();
+  const sessionKey = useMemo(() => {
+    const { pathname, query, isReady } = router;
+
+    if (!isReady) {
+      return 'agent-toolset-temporary-selection-loading';
+    }
+
+    let contextId: string | undefined = undefined;
+
+    if (pathname.startsWith(Routes.AppsEditor)) {
+      const id = query[AppsEditorQuery.Id];
+      if (typeof id === 'string') {
+        contextId = id;
+      }
+    } else if (pathname.startsWith(Routes.Chat)) {
+      const chatId = query.chatId;
+      if (typeof chatId === 'string') {
+        contextId = chatId;
+      } else if (Array.isArray(chatId) && chatId.length > 0) {
+        contextId = chatId[chatId.length - 1];
+      }
+    }
+
+    if (contextId) {
+      return `agent-toolset-temporary-selection-${contextId}`;
+    }
+
+    return 'agent-toolset-temporary-selection-fallback';
+  }, [router]);
+
   const isModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
@@ -471,16 +502,16 @@ export const AgentAndToolsetModal = ({
     !isInstalledToolsetsInitialized;
 
   const handleClose = useCallback(() => {
-    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    window.sessionStorage.removeItem(sessionKey);
     onClose();
-  }, [onClose]);
+  }, [onClose, sessionKey]);
 
   const handleConfirm = useCallback(
     (selectedIds: string[]) => {
-      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      window.sessionStorage.removeItem(sessionKey);
       onConfirm(selectedIds);
     },
-    [onConfirm],
+    [onConfirm, sessionKey],
   );
 
   useEffect(() => {
@@ -523,6 +554,7 @@ export const AgentAndToolsetModal = ({
         initialSelectedIds={initialSelectedIds}
         allItemsMap={allItemsMap}
         saveSliderStateInURL={saveSliderStateInURL}
+        sessionKey={sessionKey}
       />
     </Modal>
   );
