@@ -15,7 +15,7 @@ import { TableIconSizes } from '@/src/constants/marketplace';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
-import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 
 interface Props<T> {
   entity: T;
@@ -26,7 +26,9 @@ interface Props<T> {
   onBookmarkClick?: (entity: T) => void;
 }
 
-export const AgentsTableLeftSideRow: React.FC<Props<MarketplaceEntity>> = memo(
+export const MarketplaceEntitiesTableLeftSideRow: React.FC<
+  Props<MarketplaceEntity>
+> = memo(
   ({
     entity,
     isHovered,
@@ -53,7 +55,7 @@ export const AgentsTableLeftSideRow: React.FC<Props<MarketplaceEntity>> = memo(
           <div className="flex items-center gap-2 md:gap-4">
             {(screenState === ScreenState.MD ||
               screenState === ScreenState.SM) && (
-              <AgentBookmark
+              <MarketplaceEntityBookmark
                 entity={entity}
                 onBookmarkClick={onBookmarkClick}
                 allocatePlace
@@ -86,4 +88,5 @@ export const AgentsTableLeftSideRow: React.FC<Props<MarketplaceEntity>> = memo(
   },
 );
 
-AgentsTableLeftSideRow.displayName = 'AgentsTableLeftSideRow';
+MarketplaceEntitiesTableLeftSideRow.displayName =
+  'MarketplaceEntitiesTableLeftSideRow';

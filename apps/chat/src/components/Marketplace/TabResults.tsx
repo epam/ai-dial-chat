@@ -17,8 +17,8 @@ import {
 
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
-import { AgentsTable } from './AgentsList/AgentsTable/AgentsTable';
-import { AgentsTiles } from './AgentsList/AgentsTiles/AgentsTiles';
+import { MarketplaceEntitiesTable } from './MarketplaceEntitiesList/MarketplaceEntitiesTable/MarketplaceEntitiesTable';
+import { MarketplaceEntitiesTiles } from './MarketplaceEntitiesList/MarketplaceEntitiesTiles/MarketplaceEntitiesTiles';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -77,14 +77,15 @@ export const ResultsView = memo(
     const selectedEntitiesTab = useAppSelector(
       MarketplaceSelectors.selectSelectedEntitiesTab,
     );
-    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
 
     if (entities.length || suggestedResults.length) {
-      const AgentsListComponent =
-        selectedViewType === ViewTypes.TABLE ? AgentsTable : AgentsTiles;
+      const MarketplaceEntitiesListComponent =
+        selectedViewType === ViewTypes.TABLE
+          ? MarketplaceEntitiesTable
+          : MarketplaceEntitiesTiles;
 
       return (
-        <AgentsListComponent
+        <MarketplaceEntitiesListComponent
           entities={entities}
           suggestedResults={suggestedResults}
           separator="Suggested results from DIAL Marketplace"
@@ -94,6 +95,8 @@ export const ResultsView = memo(
     }
 
     if (areAllFiltersEmpty) {
+      const isAgentsTab =
+        selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
       const Icon = isAgentsTab ? IconMessage2 : IconBlocks;
       return (
         <NoMarketplaceEntitiesFound

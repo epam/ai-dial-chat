@@ -84,15 +84,23 @@ const ModelIconTemplate = memo(
 
     const ref = useRef<HTMLImageElement>(null);
 
+    const entityTypeForFallback = useMemo(() => {
+      if (entity) {
+        return entity.type;
+      }
+      return isToolsetId(entityId) ? EntityType.Toolset : EntityType.Model;
+    }, [entity, entityId]);
+
     const fallbackUrl = useMemo(() => {
       const defaultImageName =
-        entity?.type === EntityType.Toolset
+        entityTypeForFallback === EntityType.Toolset
           ? DEFAULT_TOOLSET_IMAGE
           : DEFAULT_MODEL_IMAGE;
+
       return themesImages[defaultImageName]
         ? getThemeIconUrl(themesImages[defaultImageName])
         : null;
-    }, [entity?.type, themesImages]);
+    }, [entityTypeForFallback, themesImages]);
 
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
@@ -167,7 +175,7 @@ const ModelIconTemplate = memo(
           style={{ height: `${size}px`, width: `${size}px` }}
         ></div>
         {showFallback ? (
-          <FallbackIcon entityType={entity?.type} size={size} />
+          <FallbackIcon entityType={entityTypeForFallback} size={size} />
         ) : (
           <img
             key={entityId}

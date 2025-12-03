@@ -47,7 +47,6 @@ import { Routes } from '@/src/constants/routes';
 import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
-import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { Modal } from '@/src/components/Common/Modal';
 import {
   SliderGrid,
@@ -112,12 +111,7 @@ const AgentAndToolsetModalView = ({
 
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
-
   const sliderGridRef = useRef<SliderGridRef>(null);
-  const currentAppReference =
-    router.route === Routes.AppsEditor
-      ? router.query[AppsEditorQuery.Id]?.toString()
-      : undefined;
 
   const [activeSlide, setActiveSlide] = useState(
     getNumberFromSearchParams(
@@ -131,9 +125,14 @@ const AgentAndToolsetModalView = ({
       AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
     ),
   );
+
   const [shouldResetSliderState, setShouldResetSliderState] = useState(false);
-  const [footerHeight, setFooterHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [footerHeight, setFooterHeight] = useState<number | undefined>(
+    undefined,
+  );
+  const [headerHeight, setHeaderHeight] = useState<number | undefined>(
+    undefined,
+  );
   const [scopeTab, setScopeTab] = useState<MarketplaceTabs>(
     getStringFromSearchParams<MarketplaceTabs>(
       searchParams,
@@ -162,6 +161,11 @@ const AgentAndToolsetModalView = ({
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
+  const currentAppReference =
+    router.route === Routes.AppsEditor
+      ? router.query[AppsEditorQuery.Id]?.toString()
+      : undefined;
 
   useLayoutEffect(() => {
     if (footerRef.current) {
@@ -389,33 +393,33 @@ const AgentAndToolsetModalView = ({
             {t('All')}
           </span>
         </div>
-        <SliderGrid<
-          MarketplaceEntity,
-          Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
-        >
-          ref={sliderGridRef}
-          items={displayedItems}
-          SliderItem={AgentAndToolsetSelectItem}
-          notFound={
-            <TalkToNotFound
-              isMyWorkspace={isMyWorkspace}
-              onOpenMarketplaceTab={handleSetScopeTab}
-              isSearchMode={!!searchTerm}
-            />
-          }
-          sliderResetDependencies={sliderResetDependencies}
-          itemProps={sliderItemProps}
-          modalHeaderHeight={headerHeight}
-          modalFooterHeight={footerHeight}
-          sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
-          activeSlide={activeSlide}
-          prevActiveSlide={prevActiveSlide}
-          onSetActiveSlide={setActiveSlide}
-          onSetPrevActiveSlide={setPrevActiveSlide}
-        />
+        {!!(headerHeight && footerHeight) && (
+          <SliderGrid<
+            MarketplaceEntity,
+            Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
+          >
+            ref={sliderGridRef}
+            items={displayedItems}
+            SliderItem={AgentAndToolsetSelectItem}
+            notFound={
+              <TalkToNotFound
+                isMyWorkspace={isMyWorkspace}
+                onOpenMarketplaceTab={handleSetScopeTab}
+                isSearchMode={!!searchTerm}
+              />
+            }
+            sliderResetDependencies={sliderResetDependencies}
+            itemProps={sliderItemProps}
+            modalHeaderHeight={headerHeight}
+            modalFooterHeight={footerHeight}
+            sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
+            activeSlide={activeSlide}
+            prevActiveSlide={prevActiveSlide}
+            onSetActiveSlide={setActiveSlide}
+            onSetPrevActiveSlide={setPrevActiveSlide}
+          />
+        )}
       </div>
-
-      <AgentDialogs />
 
       <div
         ref={footerRef}
@@ -451,6 +455,18 @@ export const AgentAndToolsetModal = ({
     ModelsSelectors.selectAreModelsLoading,
   );
   const isToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
+  const isInstalledToolsetsInitialized = useAppSelector(
+    ToolsetSelectors.selectIsInstalledToolsetsInitialized,
+  );
+
+  const isLoading =
+    isModelsLoading ||
+    isToolsetsLoading ||
+    !isInstalledModelsInitialized ||
+    !isInstalledToolsetsInitialized;
 
   useEffect(() => {
     return () => {
@@ -480,11 +496,7 @@ export const AgentAndToolsetModal = ({
   return (
     <Modal
       portalId="theme-main"
-      state={
-        isModelsLoading || isToolsetsLoading
-          ? ModalState.LOADING
-          : ModalState.OPENED
-      }
+      state={isLoading ? ModalState.LOADING : ModalState.OPENED}
       dataQa="talk-to-agent"
       containerClassName="flex items-center xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
