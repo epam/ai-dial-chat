@@ -280,6 +280,7 @@ export const EntityEditorGeneralInfoPreviewSelectors = {
   description: '[data-qa="entity-description"]',
   version: '[data-qa="version"]',
   releaseDate: '[data-qa="created-at"]',
+  credsLabel: '[data-qa="creds-label"]',
 };
 
 export const EntityEditorEntitySettingsPreviewSelectors = {
@@ -363,4 +364,16 @@ export const InformationModalSelectors = {
   createdDateValue: '[data-qa="created-at-value"]',
   authorLabel: '[data-qa="author-label"]',
   authorValue: '[data-qa="author-value"]',
+};
+
+export const ReplaceConfirmationModalSelectors = {
+  modalContainer: '[data-qa="replace-confirmation-modal"]',
+  mainFolderTree: '[data-qa="main-folder-tree"]',
+  allItemsSelector: '[data-qa="all-items-selector"]',
+  cancelButton: '[data-qa="cancel-import"]',
+  continueButton: '[data-qa="continue-import"]',
+  dropdownTrigger: '[data-qa="dropdown-trigger"]',
+  dropdownMenu: '[data-qa="dropdown-menu"]',
+  menuItem: '[data-qa="menu-item"]',
+  iconContainer: '[data-qa="icon-container"]',
 };

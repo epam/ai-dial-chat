@@ -48,6 +48,7 @@ export const MarketplaceDetailsModal = {
   versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   useButton: '[data-qa="use-button"]',
   icon: '[data-qa="entity-icon"]',
+  credsLabel: '[data-qa="creds-label"]',
   // editButton: '[data-qa="application-edit"]',
   // deleteButton: '[data-qa="application-delete"]',
   editButton: '[data-qa="edit"]',
