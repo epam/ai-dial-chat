@@ -18,6 +18,7 @@ export const Badge = ({ label, type, className }: BadgeProps) => (
       },
       className,
     )}
+    data-qa="creds-label"
   >
     {label}
   </span>

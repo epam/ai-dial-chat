@@ -321,7 +321,6 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
           })
           .map((model: DialAIEntityModel) => model.reference),
       );
-
       const newInstalledModels = installedModels.filter(
         (model) => !deletedReferences.has(model.id),
       );
