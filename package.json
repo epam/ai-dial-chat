@@ -6,7 +6,7 @@
     "nx": "nx",
     "postinstall": "patch-package && node tools/patch-nextjs.js",
     "graph": "nx graph",
-    "build": "nx run-many -t build --projects=tag:production --exclude=tag:e2e --exclude=tag:example",
+    "build": "nx run-many -t build --projects=tag:production",
     "build:all": "nx run-many -t build",
     "build:publishable": "nx run-many -t build --projects=tag:publishable",
     "build:examples": "nx run-many -t build --projects=tag:example",
