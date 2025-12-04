@@ -22,8 +22,8 @@ export class EntityEditorUrlBuilder extends BaseUrlBuilder {
     return this;
   }
 
-  withIsCreate(isCreate = true): EntityEditorUrlBuilder {
-    this.addParam('isCreate', isCreate.toString());
+  withIsCreating(isCreating = 1): EntityEditorUrlBuilder {
+    this.addParam('isCreating', isCreating);
     return this;
   }
 
