@@ -33,9 +33,10 @@ export const ToolsetEditor = () => {
 
   const {
     [ToolsetEditorQuery.Id]: idQuery,
-    [ToolsetEditorQuery.IsCreate]: isCreateQuery,
+    [ToolsetEditorQuery.IsCreating]: isCreating,
   } = router.query;
-  const isCreateRef = useRef(!idQuery || !!isCreateQuery);
+  const isCreatingToolset =
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
@@ -91,7 +92,7 @@ export const ToolsetEditor = () => {
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
             exitAfterSave: saveAndExitRef.current,
-            shouldSelectToolset: isCreateRef.current,
+            shouldSelectToolset: isCreatingToolset,
           }),
         );
       } else {
@@ -111,7 +112,7 @@ export const ToolsetEditor = () => {
       });
       lastSubmittedValuesRef.current = getDefaultFormData(payloadToolset);
     },
-    [dispatch, formMethods, toolsetDetails],
+    [dispatch, formMethods, isCreatingToolset, toolsetDetails],
   );
 
   const handleSubmit = useCallback(
@@ -151,7 +152,7 @@ export const ToolsetEditor = () => {
         dispatch(
           ToolsetActions.exitEditor({
             redirectUrl: redirectToChat ? Routes.Chat : undefined,
-            shouldSelectToolset: isCreateRef.current,
+            shouldSelectToolset: isCreatingToolset,
           }),
         );
         return;
@@ -162,7 +163,7 @@ export const ToolsetEditor = () => {
       dispatch(UIActions.setEditorLoader(true));
       handleSubmit(undefined, saveDraft);
     },
-    [dispatch, handleSubmit, isDirty, toolsetDetails],
+    [dispatch, handleSubmit, isCreatingToolset, isDirty, toolsetDetails],
   );
 
   const handleTabClick = useCallback(

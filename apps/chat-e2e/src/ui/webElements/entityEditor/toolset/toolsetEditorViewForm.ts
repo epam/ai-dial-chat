@@ -70,15 +70,14 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   );
   public allowedTools = new Combobox(this.page, this.rootLocator);
 
-  public async clickSignInButton({
-    isHttpMethodTriggered = true,
-  }: { isHttpMethodTriggered?: boolean } = {}) {
-    if (isHttpMethodTriggered) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'GET' && resp.ok(),
-      );
+  public async clickSignInButton(triggeredHttpHost?: string) {
+    if (triggeredHttpHost) {
+      const eventPromise = this.page.waitForEvent('requestfailed', {
+        predicate: (request) =>
+          request.url().startsWith(triggeredHttpHost.toLowerCase()),
+      });
       await this.signInButton.click();
-      return respPromise;
+      return eventPromise;
     }
     await this.signInButton.click();
   }

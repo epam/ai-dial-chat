@@ -10,4 +10,5 @@ export const FolderSelectors = {
   folderNameWithContent: () => `${FolderSelectors.folderName} > ${Tags.span}`,
   folderCheckbox: '[data-item-checkbox="true"]',
   folderInput: '[data-qa="folder-input"]',
+  iconContainer: '[data-qa="icon-container"]',
 };

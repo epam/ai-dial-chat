@@ -140,10 +140,14 @@ export class ChatMessagesAssertion extends BaseAssertion {
     await this.assertEntityIcon(messageIcon, expectedIcon);
   }
 
-  public async assertMessagesCount(expectedCount: number) {
+  public async assertMessagesCount(
+    expectedCount: number,
+    expectedMessage?: string,
+  ) {
     await super.assertElementsCount(
       this.chatMessages.chatMessages,
       expectedCount,
+      expectedMessage,
     );
   }
 
