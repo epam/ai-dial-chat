@@ -34,7 +34,7 @@ import { GeneralPreview } from '@/src/components/AppsEditor/AppEditorPreview/Gen
 import { Chat } from '@/src/components/Chat/Chat';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
-import { useMarketplaceEditorView } from '@/src/components/contexts/marketplace-editor-view-context';
+import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 

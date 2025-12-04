@@ -22,7 +22,6 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { useChatInputContext } from '@/src/components/contexts/chat-input-context';
 
 interface CreateNewEntityButtonProps {
   iconSize: number;
@@ -82,7 +81,6 @@ interface Props {
 
 export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
   const dispatch = useAppDispatch();
-  const { focusChatInput } = useChatInputContext();
 
   const areConversationsLoaded = useAppSelector(
     ConversationsSelectors.areConversationsUploaded,
@@ -104,16 +102,10 @@ export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
     );
     dispatch(ConversationsActions.resetSearch());
     dispatch(ConversationsActions.setIsStartedCustomViewerConversation(false));
-    focusChatInput();
     if (selectedPublicationUrl) {
       dispatch(PublicationActions.selectPublication(null));
     }
-  }, [
-    areConversationsLoaded,
-    dispatch,
-    focusChatInput,
-    selectedPublicationUrl,
-  ]);
+  }, [areConversationsLoaded, dispatch, selectedPublicationUrl]);
 
   return (
     <CreateNewEntityButton

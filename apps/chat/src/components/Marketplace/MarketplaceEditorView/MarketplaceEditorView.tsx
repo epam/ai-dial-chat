@@ -11,7 +11,8 @@ import { Translation } from '@/src/types/translation';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
-import { MarketplaceEditorViewContext } from '@/src/components/contexts/marketplace-editor-view-context';
+
+import { MarketplaceEditorViewContext } from './marketplaceEditorViewContext';
 
 interface MarketplaceEditorViewProps {
   leftContent: ReactNode;

@@ -56,7 +56,6 @@ import { ChatStarters } from '@/src/components/Chat/ChatStarters';
 import { CustomChatViewer } from '@/src/components/Chat/CustomChatViewer';
 import { Loader } from '@/src/components/Common/Loader';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
-import { useChatInputContext } from '@/src/components/contexts/chat-input-context';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
@@ -186,8 +185,6 @@ const ChatView = memo(() => {
     checkIsWideLayout(mergedMessages.length, isCompareMode),
   );
 
-  const { focusChatInput, chatInputRef: textareaRef } = useChatInputContext();
-
   const handleTalkToConversationId = useCallback(
     (conversationId: string | null) => {
       dispatch(ConversationsActions.setTalkToConversationId(conversationId));
@@ -199,6 +196,7 @@ const ChatView = memo(() => {
     Record<string, ConversationsTemporarySettings>
   >({});
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<
@@ -512,8 +510,7 @@ const ChatView = memo(() => {
 
   const handleTalkToClose = useCallback(() => {
     handleTalkToConversationId(null);
-    focusChatInput();
-  }, [focusChatInput, handleTalkToConversationId]);
+  }, [handleTalkToConversationId]);
 
   const handleToggleApproveRequiredInput = useCallback(() => {
     setIsApproveRequiredInput(!isApproveRequiredInput);
@@ -630,10 +627,13 @@ const ChatView = memo(() => {
   }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
-    if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
-      focusChatInput();
+    if (
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
+      textareaRef.current
+    ) {
+      textareaRef.current.focus();
     }
-  }, [enabledFeatures, focusChatInput]);
+  }, [enabledFeatures]);
 
   useEffect(() => {
     setIsApproveRequiredInput(false);
