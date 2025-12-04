@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -157,6 +157,24 @@ export const FileManager: React.FC = () => {
     });
   }, [currentPath, bucketRootId]);
 
+  const getDestinationFolderCopyHeader = useCallback(
+    (count: number, name: string | undefined) => {
+      return count === 1 && name
+        ? t('Copy "{{name}}" to', { name })
+        : t('Copy {{count}} items to', { count });
+    },
+    [t],
+  );
+
+  const getDestinationFolderMoveHeader = useCallback(
+    (count: number, name: string | undefined) => {
+      return count === 1 && name
+        ? t('Move "{{name}}" to', { name })
+        : t('Move {{count}} items to', { count });
+    },
+    [t],
+  );
+
   return (
     <DialFileManager
       path={currentPath || bucketRootId}
@@ -165,13 +183,17 @@ export const FileManager: React.FC = () => {
       rootItem={rootFolder}
       filesLoading={areFilesLoading || areFoldersLoading}
       bulkActionsToolbarOptions={{
-        selectionLabel: t('files selected'),
         actionLabels: {
           duplicate: t('Duplicate'),
           copy: t('Copy to'),
           move: t('Move to'),
           delete: t('Delete'),
           download: t('Download'),
+        },
+        getSelectionLabel(selectedCount) {
+          return selectedCount === 1
+            ? t('{{count}} item selected', { count: selectedCount })
+            : t('{{count}} items selected', { count: selectedCount });
         },
       }}
       treeOptions={{
@@ -256,6 +278,8 @@ export const FileManager: React.FC = () => {
       destinationFolderPopupOptions={{
         destinationFolderPath: destinationPath,
         setDestinationFolderPath: setDestinationPath,
+        getCopyHeader: getDestinationFolderCopyHeader,
+        getMoveHeader: getDestinationFolderMoveHeader,
       }}
       onUploadFiles={(filesToUpload, destinationUrl) => {
         if (filesToUpload.length === 0) return;
