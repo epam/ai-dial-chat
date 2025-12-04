@@ -12,6 +12,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
+import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isExternalApp } from '@/src/utils/app/application';
@@ -75,9 +76,7 @@ function ScopeTabButton({
   onSetTab,
 }: ScopeTabButtonProps) {
   const { t } = useTranslation(Translation.Chat);
-
   const buttonText = textMap[tab] || tab;
-
   return (
     <TabButton
       tabKey={tab}
@@ -93,6 +92,7 @@ interface AgentAndToolsetModalViewProps {
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   saveSliderStateInURL: boolean;
+  sessionKey: string;
   onClose: () => void;
   onConfirm: (selectedIds: string[]) => void;
 }
@@ -101,11 +101,11 @@ const AgentAndToolsetModalView = ({
   initialSelectedIds,
   allItemsMap,
   saveSliderStateInURL,
+  sessionKey,
   onClose,
   onConfirm,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -143,7 +143,8 @@ const AgentAndToolsetModalView = ({
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
   );
-  const [selectedIds, setSelectedIds] = useState<string[]>(
+  const [selectedIds, setSelectedIds] = useSessionStorageState<string[]>(
+    sessionKey,
     initialSelectedIds ?? [],
   );
 
@@ -201,14 +202,13 @@ const AgentAndToolsetModalView = ({
 
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
-      setSelectedIds((prevIds) => {
-        if (prevIds.includes(itemToToggle.id)) {
-          return prevIds.filter((id) => id !== itemToToggle.id);
-        }
-        return [...prevIds, itemToToggle.id];
-      });
+      setSelectedIds((prevIds) =>
+        prevIds.includes(itemToToggle.id)
+          ? prevIds.filter((id) => id !== itemToToggle.id)
+          : [...prevIds, itemToToggle.id],
+      );
     },
-    [],
+    [setSelectedIds],
   );
 
   const handleSetScopeTab = useCallback(
@@ -224,9 +224,12 @@ const AgentAndToolsetModalView = ({
     setShouldResetSliderState(true);
   };
 
-  const handleRemoveItem = useCallback((idToRemove: string) => {
-    setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
-  }, []);
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
+    },
+    [setSelectedIds],
+  );
 
   const searchedAgents = useFuseSearch(
     allAgents,
@@ -388,7 +391,6 @@ const AgentAndToolsetModalView = ({
               </span>
             )}
           </div>
-
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
             {t('All')}
           </span>
@@ -451,6 +453,37 @@ export const AgentAndToolsetModal = ({
   onClose,
   onConfirm,
 }: Props) => {
+  const router = useRouter();
+  const sessionKey = useMemo(() => {
+    const { pathname, query, isReady } = router;
+
+    if (!isReady) {
+      return 'agent-toolset-temporary-selection-loading';
+    }
+
+    let contextId: string | undefined = undefined;
+
+    if (pathname.startsWith(Routes.AppsEditor)) {
+      const id = query[AppsEditorQuery.Id];
+      if (typeof id === 'string') {
+        contextId = id;
+      }
+    } else if (pathname.startsWith(Routes.Chat)) {
+      const chatId = query.chatId;
+      if (typeof chatId === 'string') {
+        contextId = chatId;
+      } else if (Array.isArray(chatId) && chatId.length > 0) {
+        contextId = chatId[chatId.length - 1];
+      }
+    }
+
+    if (contextId) {
+      return `agent-toolset-temporary-selection-${contextId}`;
+    }
+
+    return 'agent-toolset-temporary-selection-fallback';
+  }, [router]);
+
   const isModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
@@ -467,6 +500,19 @@ export const AgentAndToolsetModal = ({
     isToolsetsLoading ||
     !isInstalledModelsInitialized ||
     !isInstalledToolsetsInitialized;
+
+  const handleClose = useCallback(() => {
+    window.sessionStorage.removeItem(sessionKey);
+    onClose();
+  }, [onClose, sessionKey]);
+
+  const handleConfirm = useCallback(
+    (selectedIds: string[]) => {
+      window.sessionStorage.removeItem(sessionKey);
+      onConfirm(selectedIds);
+    },
+    [onConfirm, sessionKey],
+  );
 
   useEffect(() => {
     return () => {
@@ -499,15 +545,16 @@ export const AgentAndToolsetModal = ({
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
       dataQa="talk-to-agent"
       containerClassName="flex items-center xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
-      onClose={onClose}
+      onClose={handleClose}
       heading
     >
       <AgentAndToolsetModalView
-        onClose={onClose}
-        onConfirm={onConfirm}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
         initialSelectedIds={initialSelectedIds}
         allItemsMap={allItemsMap}
         saveSliderStateInURL={saveSliderStateInURL}
+        sessionKey={sessionKey}
       />
     </Modal>
   );
