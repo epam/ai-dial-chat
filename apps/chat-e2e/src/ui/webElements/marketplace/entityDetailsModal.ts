@@ -119,6 +119,9 @@ export class EntityDetailsModal extends BaseElement {
     this.openInNewTabButton.getChildElementBySelector(
       IconSelectors.externalAppIcon,
     );
+  public credsLabel = this.getChildElementBySelector(
+    MarketplaceDetailsModal.credsLabel,
+  );
 
   public async clickUseButton({
     isInstalledDeploymentsUpdated = false,

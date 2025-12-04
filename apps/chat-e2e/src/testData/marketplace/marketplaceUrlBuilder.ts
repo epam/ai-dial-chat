@@ -1,84 +1,47 @@
-import config from '@/config/chat.playwright.config';
-import { ExpectedConstants } from '@/src/testData';
+import {
+  BaseUrlBuilder,
+  ExpectedConstants,
+  MarketplaceTabs,
+} from '@/src/testData';
 
-export class MarketplaceUrlBuilder {
-  private readonly baseUrl: string = config.use!.baseURL!.concat(
-    ExpectedConstants.marketplacePath,
-  );
-  private types: string[] = [];
-  private sources: string[] = [];
-  private topics: string[] = [];
-  private tab: string | null = null;
-  private search: string | null = null;
-  private model: string | null = null;
+export class MarketplaceUrlBuilder extends BaseUrlBuilder {
+  constructor(includeBaseURL = true) {
+    super(ExpectedConstants.marketplacePath, includeBaseURL);
+  }
 
   withTypes(...types: string[]): MarketplaceUrlBuilder {
-    this.types = types;
+    this.addArrayParam('types', types);
     return this;
   }
 
   withSources(...sources: string[]): MarketplaceUrlBuilder {
-    this.sources = sources;
+    this.addArrayParam('sources', sources);
     return this;
   }
 
   withTopics(...topics: string[]): MarketplaceUrlBuilder {
-    this.topics = topics;
+    this.addArrayParam('topics', topics);
     return this;
   }
 
-  withTab(tab: string): MarketplaceUrlBuilder {
-    this.tab = tab;
+  withTab(tab: MarketplaceTabs): MarketplaceUrlBuilder {
+    this.addParam('tab', tab);
     return this;
   }
 
   withSearch(search: string): MarketplaceUrlBuilder {
-    this.search = search;
+    this.addParam('search', search);
     return this;
   }
 
   withModel(model: string): MarketplaceUrlBuilder {
-    this.model = model;
+    this.addParam('model', model);
     return this;
   }
 
   build(): string {
-    const queryParams = [];
-
-    if (this.types.length > 0) {
-      queryParams.push(`types=${this.types.join(',')}`);
-    }
-
-    if (this.sources.length > 0) {
-      queryParams.push(`sources=${this.sources.join(',')}`);
-    }
-
-    if (this.topics.length > 0) {
-      queryParams.push(`topics=${this.topics.join(',')}`);
-    }
-
-    if (this.tab) {
-      queryParams.push(`tab=${this.tab}`);
-    }
-
-    if (this.search) {
-      queryParams.push(`search=${this.search}`);
-    }
-
-    if (this.model) {
-      queryParams.push(`model=${this.model}`);
-    }
-
-    const url = `${this.baseUrl}?${queryParams.join('&')}`;
+    const url = this.baseUrl + this.buildQueryString();
     this.resetParams();
     return url;
-  }
-
-  private resetParams(): void {
-    this.types = [];
-    this.sources = [];
-    this.topics = [];
-    this.tab = null;
-    this.search = null;
   }
 }
