@@ -18,12 +18,15 @@ import {
 } from '@/src/store/selectors';
 
 import {
+  AUDIO_TYPES_SET,
   IMAGE_TYPES_SET,
   PLOTLY_CONTENT_TYPE,
+  VIDEO_TYPES_SET,
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
+import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -41,22 +44,52 @@ interface AttachmentDataRendererProps {
   isInner?: boolean;
 }
 
+const getSourceDataUrl = (attachment: Attachment): string | undefined => {
+  if (attachment.url) {
+    return getMappedAttachmentUrl(attachment.url);
+  }
+  if (attachment.data) {
+    return `data:${attachment.type};base64,${attachment.data}`;
+  }
+};
+
+const AttachmentSourceRenderer = ({
+  attachment,
+}: AttachmentDataRendererProps) => {
+  return <source src={getSourceDataUrl(attachment)} type={attachment.type} />;
+};
+
 const AttachmentDataRenderer = ({
   attachment,
   isInner,
 }: AttachmentDataRendererProps) => {
-  if (!attachment.data) {
-    return null;
+  if (AUDIO_TYPES_SET.has(attachment.type)) {
+    return (
+      <audio controls>
+        <AttachmentSourceRenderer attachment={attachment} />
+      </audio>
+    );
+  }
+  if (VIDEO_TYPES_SET.has(attachment.type)) {
+    return (
+      <video width="100%" controls>
+        <AttachmentSourceRenderer attachment={attachment} />
+      </video>
+    );
   }
 
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
       <img
-        src={`data:${attachment.type};base64,${attachment.data}`}
+        src={getSourceDataUrl(attachment)}
         className="m-0 aspect-auto w-full"
         alt="Attachment image"
       />
     );
+  }
+
+  if (!attachment.data) {
+    return null;
   }
 
   if (attachment.type === 'text/html') {
@@ -91,32 +124,6 @@ const AttachmentDataRenderer = ({
   }
   if (attachment.type === PLOTLY_CONTENT_TYPE) {
     return <PlotlyStringDataRenderer plotlyStringData={attachment.data} />;
-  }
-
-  return null;
-};
-
-interface AttachmentUrlRendererProps {
-  attachmentUrl: string | undefined;
-  attachmentType: MIMEType;
-}
-
-const AttachmentUrlRenderer = ({
-  attachmentUrl,
-  attachmentType,
-}: AttachmentUrlRendererProps) => {
-  if (!attachmentUrl) {
-    return null;
-  }
-
-  if (IMAGE_TYPES_SET.has(attachmentType)) {
-    return (
-      <img
-        src={attachmentUrl}
-        className="m-0 aspect-auto w-full"
-        alt="Attachment image"
-      />
-    );
   }
 
   return null;
@@ -174,47 +181,50 @@ interface Props {
   isInner?: boolean;
 }
 
-interface AttachmentUrlRendererComponentProps {
-  mappedAttachmentUrl: string;
-  attachmentType: string;
-}
-
-const AttachmentUrlRendererComponent = ({
-  mappedAttachmentUrl,
-  attachmentType,
-}: AttachmentUrlRendererComponentProps) => {
-  const mappedVisualizers = useAppSelector(
-    SettingsSelectors.selectMappedVisualizers,
-  );
-  const selectIsCustomAttachmentTypeSelector = useMemo(
-    () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
-    [attachmentType],
-  );
-  const isCustomAttachmentType = useAppSelector(
-    selectIsCustomAttachmentTypeSelector,
-  );
-
-  if (mappedVisualizers && isCustomAttachmentType) {
-    return (
-      <VisualizerRenderer
-        attachmentUrl={mappedAttachmentUrl}
-        renderer={mappedVisualizers[attachmentType][0]}
-        mimeType={attachmentType}
-      />
+const AttachmentRendererComponent = withErrorBoundary(
+  ({ attachment, isInner }: AttachmentDataRendererProps) => {
+    const attachmentType: MIMEType = attachment.type;
+    const mappedAttachmentUrl = useMemo(
+      () => getSourceDataUrl(attachment),
+      [attachment],
     );
-  }
+    const mappedVisualizers = useAppSelector(
+      SettingsSelectors.selectMappedVisualizers,
+    );
+    const selectIsCustomAttachmentTypeSelector = useMemo(
+      () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
+      [attachmentType],
+    );
+    const isCustomAttachmentType = useAppSelector(
+      selectIsCustomAttachmentTypeSelector,
+    );
 
-  if (attachmentType === PLOTLY_CONTENT_TYPE) {
-    return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
-  }
+    if (
+      mappedVisualizers &&
+      isCustomAttachmentType &&
+      attachment.url &&
+      mappedAttachmentUrl
+    ) {
+      return (
+        <VisualizerRenderer
+          attachmentUrl={mappedAttachmentUrl}
+          renderer={mappedVisualizers[attachmentType][0]}
+          mimeType={attachmentType}
+        />
+      );
+    }
 
-  return (
-    <AttachmentUrlRenderer
-      attachmentUrl={mappedAttachmentUrl}
-      attachmentType={attachmentType}
-    />
-  );
-};
+    if (
+      attachmentType === PLOTLY_CONTENT_TYPE &&
+      attachment.url &&
+      mappedAttachmentUrl
+    ) {
+      return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+    }
+
+    return <AttachmentDataRenderer attachment={attachment} isInner={isInner} />;
+  },
+);
 
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -265,15 +275,22 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     attachment.data ||
     (attachment.url && IMAGE_TYPES_SET.has(attachment.type)) ||
     attachment.type === PLOTLY_CONTENT_TYPE ||
+    (attachment.url && VIDEO_TYPES_SET.has(attachment.type)) ||
+    (attachment.url && AUDIO_TYPES_SET.has(attachment.type)) ||
     isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
-    () => getMappedAttachmentUrl(attachment.url),
-    [attachment.url],
+    () => getSourceDataUrl(attachment),
+    [attachment],
   );
   const mappedAttachmentReferenceUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.reference_url),
     [attachment.reference_url],
   );
+
+  const isDownloadable =
+    IMAGE_TYPES_SET.has(attachment.type) ||
+    VIDEO_TYPES_SET.has(attachment.type) ||
+    AUDIO_TYPES_SET.has(attachment.type);
 
   return (
     <div
@@ -333,7 +350,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           </span>
           {isOpenable && !isFolder ? (
             <div className="flex gap-2">
-              {IMAGE_TYPES_SET.has(attachment.type) && (
+              {isDownloadable && (
                 <a
                   download={attachment.title}
                   href={mappedAttachmentUrl}
@@ -373,15 +390,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
           ref={anchorRef}
         >
-          {attachment.data && (
-            <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
-          )}
-          {mappedAttachmentUrl && (
-            <AttachmentUrlRendererComponent
-              attachmentType={attachment.type}
-              mappedAttachmentUrl={mappedAttachmentUrl}
-            />
-          )}
+          <AttachmentRendererComponent
+            attachment={attachment}
+            isInner={isInner}
+          />
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}

@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getAppEditorRoute } from '@/src/utils/app/route';
+import { getAppEditorCreateModeRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -48,7 +48,7 @@ export function AddAppButton() {
 
   const openEditor = useCallback(
     (type: string) => {
-      void router.push(getAppEditorRoute(type));
+      void router.push(getAppEditorCreateModeRoute(type));
       dispatch(ApplicationActions.setAppDetails(undefined));
       dispatch(
         ApplicationActions.setEditorStep(MarketplaceEditorSteps.General),
@@ -111,7 +111,7 @@ export function AddAppButton() {
   return (
     <AddMarketplaceEntityButton
       dataQa="add-app"
-      label="App"
+      label="app"
       menuItems={menuItems}
     />
   );

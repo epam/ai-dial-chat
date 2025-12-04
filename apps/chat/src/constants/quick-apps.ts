@@ -18,3 +18,11 @@ export enum ToolsetTypes {
 export enum DialDeploymentToolsetToolTypes {
   DialDeploymentSimple = 'dial-deployment-simple',
 }
+
+export enum AgentsAndToolsetsModalQueryParams {
+  Modal = 'agentsAndToolsetsModal',
+  ScopeTab = 'agentsAndToolsetsScopeTab',
+  SearchTerm = 'agentsAndToolsetsSearchTerm',
+  SliderActiveSlide = 'agentsAndToolsetsSliderActiveSlide',
+  SliderPrevActiveSlide = 'agentsAndToolsetsSliderPrevActiveSlide',
+}

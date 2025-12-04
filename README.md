@@ -1,26 +1,58 @@
-# DIAL Chat
+<h1 align="center">
+         DIAL Chat
+    </h1>
+    <p align="center">
+        <p align="center">
+        <a href="https://dialx.ai/">
+          <img src="https://dialx.ai/dialx_logo.svg" alt="About DIALX">
+        </a>
+    </p>
+<h4 align="center">
+    <a href="https://discord.gg/ukzj9U9tEe">
+        <img src="https://img.shields.io/static/v1?label=DIALX%20Community%20on&message=Discord&color=blue&logo=Discord&style=flat-square" alt="Discord">
+    </a>
+</h4>
 
-DIAL Chat is a default UI for [AI DIAL](https://epam-rail.com). AI DIAL can be used as headless system, but UI is recommended to learn the capability.
+- [Overview](#overview)
+- [Documentations](#documentations-)
+- [Development](#development-)
+  - [Install](#install)
+  - [Build](#build)
+  - [Serve](#serve)
+  - [Tests](#tests)
+  - [Publish](#publish)
+  - [Dry Mode](#dry-mode)
 
-Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as various IDP support, model side-by-side compare, [DIAL extensions](https://epam-rail.com/extension-framework) support, conversation replays, branding and many more.
-
-![ai-dial-chat](./docs/ai-dial-chat.png)
+---
 
 ## Overview
 
-This repository is managed as monorepo by [NX](https://nx.dev/) tools.
+**DIAL Chat** is a default UI for [DIAL](https://dialx.ai). DIAL can be used as headless system, but UI is recommended to learn the capability.
 
-## Docs
+Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as various IDP support, model side-by-side compare, [DIAL extensions](https://dialx.ai/extension-framework) support, conversation replays, branding and many more.
+
+![ai-dial-chat](./docs/ai-dial-chat.png)
+
+> [!IMPORTANT]
+> This repository is managed as monorepo by [NX](https://nx.dev/) tools.
+
+---
+
+## Documentations 📄
 
 - `DIAL Chat` documentation placed [here](./apps/chat/README.md).
 - `DIAL Chat Theming` documentation is placed [here](./docs/THEME-CUSTOMIZATION.md).
 - `DIAL Overlay` documentation is placed [here](./libs/overlay/README.md).
 - `DIAL Chat Visualizer Connector` documentation is placed [here](./libs/chat-visualizer-connector/README.md).
 - `DIAL Visualizer Connector` documentation is placed [here](./libs/visualizer-connector/README.md).
+- `DIAL Custom Viewers` documentation is placed [here](./docs/CUSTOM-VIEWERS.md).
 
-> In [AI DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/tutorials/0.user-guide.md), you can find a user guide for the AI DIAL Chat application.
+> [!TIP]
+> In [DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/tutorials/0.user-guide.md), you can find a user guide for the DIAL Chat application.
 
-## Development
+---
+
+## Development 🛠️
 
 To work with this repo we are using NX.
 
@@ -86,3 +118,5 @@ or
 ```bash
 npm run publish:dry
 ```
+
+---

@@ -6,7 +6,7 @@ import {
   isInstalledEntity,
 } from '@/src/utils/marketplace';
 
-import { MarketplaceEntity } from '@/src/types/marketplace';
+import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
 
 import { useAppSelector } from '@/src/store/hooks';
 import {
@@ -16,7 +16,6 @@ import {
 
 import {
   FilterTypes,
-  MarketplaceEntitiesTabs,
   MarketplaceTabs,
   ViewTypes,
 } from '@/src/constants/marketplace';
@@ -29,17 +28,13 @@ import uniqBy from 'lodash-es/uniqBy';
 export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
   allEntities: T[],
   installedEntitiesIds: Set<string>,
+  selectedFilters: MarketplaceFilters,
 ) => {
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
-  const selectedEntitiesTab = useAppSelector(
-    MarketplaceSelectors.selectSelectedEntitiesTab,
-  );
-  const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
-  );
+
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
@@ -49,30 +44,20 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
 
   const [suggestedResults, setSuggestedResults] = useState<T[]>([]);
 
-  const isSelectedAgentsTab =
-    selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
-
   const searchedEntities = useFuseSearch<T>(
     allEntities,
     searchTerm,
     MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
-  const isSomeAgentsFilterNotEmpty =
-    searchTerm.length ||
-    selectedFilters[FilterTypes.ENTITY_TYPE].length ||
-    selectedFilters[FilterTypes.TOPICS].length ||
-    selectedFilters[FilterTypes.SOURCES].length;
-  const isSomeToolsetsFilterNotEmpty =
-    searchTerm.length || selectedFilters[FilterTypes.TOPICS].length;
-  const isSomeFilterNotEmpty = isSelectedAgentsTab
-    ? isSomeAgentsFilterNotEmpty
-    : isSomeToolsetsFilterNotEmpty;
+  const isSomeFilterNotEmpty =
+    !!searchTerm.length ||
+    !!selectedFilters[FilterTypes.ENTITY_TYPE].length ||
+    !!selectedFilters[FilterTypes.TOPICS].length ||
+    !!selectedFilters[FilterTypes.SOURCES].length;
 
   const displayedEntities = useMemo(() => {
-    const filters = isSelectedAgentsTab
-      ? selectedFilters
-      : { [FilterTypes.TOPICS]: selectedFilters[FilterTypes.TOPICS] };
+    const filters = selectedFilters;
 
     const filteredEntities = searchedEntities.filter((entity) =>
       doesMarketplaceEntityMatchFilters(
@@ -82,15 +67,14 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
       ),
     );
 
-    const entitiesForTab =
-      selectedTab === MarketplaceTabs.MY_WORKSPACE
-        ? filteredEntities.filter((entity) =>
-            isInstalledEntity(entity, installedEntitiesIds),
-          )
-        : filteredEntities;
+    const isMyWorkspace = selectedTab === MarketplaceTabs.MY_WORKSPACE;
+    const entitiesForTab = isMyWorkspace
+      ? filteredEntities.filter((entity) =>
+          isInstalledEntity(entity, installedEntitiesIds),
+        )
+      : filteredEntities;
 
-    const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
+    const shouldSuggest = isMyWorkspace && isSomeFilterNotEmpty;
 
     if (selectedViewType === ViewTypes.TABLE) {
       if (shouldSuggest) {
@@ -122,6 +106,7 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
       entitiesToDisplay = entitiesToDisplay.filter((entity) =>
         isInstalledEntity(entity, installedEntitiesIds),
       );
+
       setSuggestedResults(suggestedListWithoutInstalled);
     } else {
       setSuggestedResults([]);
@@ -133,7 +118,6 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     selectedTab,
     isSomeFilterNotEmpty,
     selectedViewType,
-    isSelectedAgentsTab,
     selectedFilters,
     applicationTypeSchemas,
     installedEntitiesIds,

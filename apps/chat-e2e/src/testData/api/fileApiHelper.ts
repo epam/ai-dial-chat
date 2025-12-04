@@ -98,7 +98,7 @@ export class FileApiHelper extends BaseApiHelper {
       url: publication.url,
       resources: resources,
       targetFolder: ExpectedConstants.rootPublicationFolder,
-      displayAuthor: '',
+      displayAuthor: publication.displayAuthor ?? '',
       rules: [],
     };
 
@@ -123,7 +123,7 @@ export class FileApiHelper extends BaseApiHelper {
     await this.putStringAsFile(
       API.installedDeploymentsFile,
       installedDeploymentsJson,
-      { parentPath: API.installedDeploymentsFolder },
+      { parentPath: API.installedEntityFolder },
     );
   }
 

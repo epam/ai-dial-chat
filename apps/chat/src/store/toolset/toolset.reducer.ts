@@ -106,7 +106,9 @@ export const toolsetSlice = createSlice({
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
         tabToOpen?: ToolsetEditorSteps;
-        redirectUrl?: string;
+        redirectUrl?: URL | string;
+        exitAfterSave?: boolean;
+        shouldSelectToolset?: boolean;
         auth?: {
           apiKey?: string;
           authLevel?: ToolsetCredentialsLevel;
@@ -134,6 +136,7 @@ export const toolsetSlice = createSlice({
       }: PayloadAction<{
         oldToolset: ToolsetModel;
         newToolset: ToolsetModel;
+        isExitingAfterSave?: boolean;
       }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
@@ -250,6 +253,13 @@ export const toolsetSlice = createSlice({
         payload.toolsets,
       );
     },
+    exitEditor: (
+      state,
+      _action: PayloadAction<{
+        redirectUrl?: URL | string;
+        shouldSelectToolset?: boolean;
+      }>,
+    ) => state,
   },
 });
 

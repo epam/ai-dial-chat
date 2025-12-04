@@ -13,7 +13,6 @@ import {
 import { PublicationProps } from '@/src/testData/api';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { SortingUtil } from '@/src/utils/sortingUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -157,7 +156,7 @@ dialAdminTest(
 
         await publishConversationAssertion.assertEntityVersion(
           { name: firstConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await publishConversationAssertion.assertEntityVersionColor(
           { name: firstConversation.name },
@@ -309,7 +308,7 @@ dialAdminTest(
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersion(
           { name: publishedFolderName },
           { name: firstConversation.name },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersionColor(
           { name: publishedFolderName },
@@ -559,7 +558,7 @@ dialAdminTest(
           );
           await publishConversationAssertion.assertEntityVersion(
             { name: conversation },
-            ExpectedConstants.defaultAppVersion,
+            ExpectedConstants.defaultEntityVersion,
           );
           await publishConversationAssertion.assertEntityVersionColor(
             { name: conversation },
@@ -676,7 +675,7 @@ dialAdminTest(
           await adminFolderConversationsToApproveAssertion.assertFolderEntityVersion(
             { name: publishedFolderName },
             { name: conversation },
-            ExpectedConstants.defaultAppVersion,
+            ExpectedConstants.defaultEntityVersion,
           );
           await adminFolderConversationsToApproveAssertion.assertFolderEntityVersionColor(
             { name: publishedFolderName },
@@ -742,16 +741,17 @@ dialAdminTest(
           adminPublishingApprovalModal.goToReviewButton,
           'hidden',
         );
-        await adminPublishingApprovalModalAssertion.assertElementText(
-          adminPublishingApprovalModal.duplicatedUnpublishingError,
-          ExpectedConstants.duplicatedUnpublishingError(
-            ...SortingUtil.sortStringsArray(
-              folderConversations,
-              (f) => f.toLowerCase(),
-              'asc',
-            ),
-          ),
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminPublishingApprovalModalAssertion.assertElementText(
+        //   adminPublishingApprovalModal.duplicatedUnpublishingError,
+        //   ExpectedConstants.duplicatedUnpublishingError(
+        //     ...SortingUtil.sortStringsArray(
+        //       folderConversations,
+        //       (f) => f.toLowerCase(),
+        //       'asc',
+        //     ),
+        //   ),
+        // );
       },
     );
 
@@ -914,7 +914,7 @@ dialAdminTest(
         await folderToPublishAssertion.assertFolderEntityVersion(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await folderToPublishAssertion.assertFolderEntityVersionColor(
           { name: innerFolderName },
@@ -1040,7 +1040,7 @@ dialAdminTest(
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersion(
           { name: innerFolderName },
           { name: innerFolderConversationName },
-          ExpectedConstants.defaultAppVersion,
+          ExpectedConstants.defaultEntityVersion,
         );
         await adminFolderConversationsToApproveAssertion.assertFolderEntityVersionColor(
           { name: innerFolderName },

@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
 
-import { GetServerSideProps } from 'next';
-import { getServerSession } from 'next-auth/next';
 import { useRouter } from 'next/router';
 
 import { decodeToolsetRedirectState } from '@/src/utils/app/toolsets';
-import { isServerSessionValid } from '@/src/utils/auth/session';
+import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import {
   ToolsetCredentialsLevel,
@@ -14,8 +12,6 @@ import {
 
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -63,21 +59,4 @@ export default function ToolsetSignin() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getServerSession(req, res, authOptions);
-
-  if (!isServerSessionValid(session, true)) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: '/signin',
-      },
-    };
-  }
-
-  return {
-    props: {
-      isSessionValid: false,
-    },
-  };
-};
+export const getServerSideProps = getCommonPageProps;

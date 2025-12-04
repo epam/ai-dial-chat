@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -20,9 +20,11 @@ import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginFor
 import {
   ToolsetLoginFormSchema,
   ToolsetLoginFormType,
+  WithLogin,
   getDefaultLoginFormData,
 } from '@/src/components/ToolsetEditor/form';
 
+import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 export const ToolsetLoginDialogView = () => {
@@ -33,12 +35,12 @@ export const ToolsetLoginDialogView = () => {
     MarketplaceSelectors.selectLoginEntity,
   ) as ToolsetModel;
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const authType = entity.authSettings.authenticationType;
 
   const formMethods = useForm<ToolsetLoginFormType>({
-    defaultValues: getDefaultLoginFormData(
-      entity.authSettings.authenticationType,
-      entity,
-    ),
+    defaultValues: getDefaultLoginFormData(authType, entity, {
+      withLogin: WithLogin.WithLogin,
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetLoginFormSchema),
@@ -86,6 +88,12 @@ export const ToolsetLoginDialogView = () => {
     handleClose,
     authLevel,
   ]);
+
+  useEffect(() => {
+    if (authType === ToolsetAuthTypes.OAUTH) {
+      void formMethods.trigger();
+    }
+  }, [authType, formMethods]);
 
   return (
     <Modal

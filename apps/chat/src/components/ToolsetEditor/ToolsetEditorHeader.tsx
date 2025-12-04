@@ -1,25 +1,22 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
-
-import { Feature } from '@epam/ai-dial-shared';
 
 const stepFields: {
   step: ToolsetEditorSteps;
@@ -42,21 +39,23 @@ export const ToolsetEditorHeader = ({
   onSave,
 }: ToolsetEditorHeaderProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const {
+    query: {
+      [ToolsetEditorQuery.Id]: idQuery,
+      [ToolsetEditorQuery.IsCreating]: isCreating,
+    },
+  } = useRouter();
+
   const dispatch = useAppDispatch();
+
+  const isCreatingToolset =
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
   const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const areConversationsLoaded = useAppSelector(
-    ConversationsSelectors.areConversationsUploaded,
-  );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
-  const isNewConversationDisabled = enabledFeatures.has(
-    Feature.HideNewConversation,
-  );
 
-  const isEditing = !!currentToolset;
+  const isExistingToolset = !!currentToolset;
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
@@ -87,26 +86,16 @@ export const ToolsetEditorHeader = ({
       {
         label: ToolsetEditorSteps.Settings,
         key: ToolsetEditorSteps.Settings,
-        disabled: !isEditing,
+        disabled: !isExistingToolset,
       },
     ],
-    [isEditing],
+    [isExistingToolset],
   );
-
-  const createNewConversation = useCallback(() => {
-    if (!areConversationsLoaded || isNewConversationDisabled) return;
-    dispatch(
-      ConversationsActions.createNewConversations({
-        names: [DEFAULT_CONVERSATION_NAME],
-      }),
-    );
-    dispatch(ConversationsActions.resetSearch());
-  }, [areConversationsLoaded, dispatch, isNewConversationDisabled]);
 
   const handleLogoClick = useCallback(
     async (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
-      if (isEditing) {
+      if (isExistingToolset) {
         const isValid = await trigger();
 
         if (!isValid) {
@@ -115,10 +104,9 @@ export const ToolsetEditorHeader = ({
           return;
         }
       }
-      createNewConversation();
       onSave(false, true);
     },
-    [createNewConversation, isEditing, onSave, trigger],
+    [isExistingToolset, onSave, trigger],
   );
 
   const handleTabClick = useCallback(
@@ -130,7 +118,7 @@ export const ToolsetEditorHeader = ({
   );
 
   const handleSaveClick = useCallback(async () => {
-    if (isEditing) {
+    if (isExistingToolset) {
       const isValid = await trigger();
 
       if (!isValid) {
@@ -139,13 +127,12 @@ export const ToolsetEditorHeader = ({
       }
     }
     onSave();
-  }, [isEditing, onSave, trigger]);
+  }, [isExistingToolset, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
       setSaveDraftDialog(false);
       if (result && redirectToChat) {
-        createNewConversation();
         onSave(true, true);
         return;
       } else if (result) {
@@ -159,7 +146,7 @@ export const ToolsetEditorHeader = ({
         dispatch(ToolsetActions.setEditorStep(invalidStep));
       }
     },
-    [createNewConversation, dispatch, errorSteps, onSave, redirectToChat],
+    [dispatch, errorSteps, onSave, redirectToChat],
   );
 
   return (
@@ -168,12 +155,13 @@ export const ToolsetEditorHeader = ({
         tabs={tabs}
         activeTab={currentStep}
         errorTabsSet={errorSteps}
-        isEditing={isEditing}
+        isEditing={isExistingToolset}
         onTabClick={handleTabClick}
-        title={t(isEditing ? 'Edit toolset' : 'Add toolset')}
-        saveLabel={isEditing ? 'Save and exit' : 'Exit'}
+        title={t(isCreatingToolset ? 'Add toolset' : 'Edit toolset')}
+        saveLabel={isExistingToolset ? 'Save and exit' : 'Exit'}
         onSave={handleSaveClick}
         onLogoClick={handleLogoClick}
+        dataQa="entity-editor-header"
       />
 
       <ConfirmDialog

@@ -15,8 +15,6 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
-import { AgentDialogs } from '@/src/components//Common/AgentDialogs';
-
 import { ApplicationDetails } from './ApplicationDetails/ApplicationDetails';
 import { ResultsView, ResultsViewProps } from './TabResults';
 
@@ -32,7 +30,7 @@ export function AgentsTabRenderer() {
   );
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
   const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
+    MarketplaceSelectors.selectSelectedAgentsFilters,
   );
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
@@ -51,7 +49,11 @@ export function AgentsTabRenderer() {
     !selectedFilters[FilterTypes.SOURCES].length;
 
   const { displayedEntities, suggestedResults } =
-    useMarketplaceDisplayedEntities(allModels, installedModelIds);
+    useMarketplaceDisplayedEntities(
+      allModels,
+      installedModelIds,
+      selectedFilters,
+    );
 
   const handleSetDetailsModel = useCallback(
     (model: DialAIEntityModel) => {
@@ -137,8 +139,6 @@ export function AgentsTabRenderer() {
           isSuggested={detailsModel?.isSuggested}
         />
       )}
-
-      <AgentDialogs />
     </>
   );
 }

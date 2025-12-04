@@ -1,0 +1,59 @@
+{
+  "name": "custom-viewer-test",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/custom-viewer-test",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "defaultConfiguration": "production",
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/custom-viewer-test"
+      },
+      "configurations": {
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run chat:serve",
+          "nx run custom-viewer-test:serve:custom-viewer-test"
+        ],
+        "parallel": true
+      }
+    },
+    "serve:custom-viewer-test": {
+      "executor": "@nx/next:server",
+      "options": {
+        "buildTarget": "custom-viewer-test:build:development",
+        "dev": true,
+        "port": 5500
+      }
+    },
+    "serve:sandbox:production": {
+      "executor": "@nx/next:server",
+      "dependsOn": ["custom-viewer-test:build"],
+      "options": {
+        "dev": false,
+        "buildTarget": "custom-viewer-test:build:production",
+        "port": 5500
+      }
+    },
+    "serve-chat": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx run chat:serve"],
+        "readyWhen": "Ready"
+      }
+    },
+    "lint": {},
+    "lint:fix": {},
+    "format": {},
+    "format:fix": {}
+  },
+  "tags": ["example"],
+  "implicitDependencies": ["chat"]
+}

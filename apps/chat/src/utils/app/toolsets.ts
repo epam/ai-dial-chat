@@ -1,9 +1,10 @@
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
 import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
 
-import { EntityType, PartialBy } from '@/src/types/common';
+import { EntityType, PartialBy, ScreenState } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import {
   ToolsetCredentialsLevel,
@@ -12,6 +13,7 @@ import {
 } from '@/src/types/toolsets';
 
 import { Routes } from '@/src/constants/routes';
+import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import {
   Toolset,
@@ -114,7 +116,7 @@ export const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
 };
 
 export const convertToolsetModelToApi = (data: ToolsetModel): Toolset => ({
-  endpoint: data.endpoint ?? '',
+  endpoint: data.endpoint?.trim() ?? '',
   transport: data.transport,
   allowed_tools: data.allowedTools,
   display_version: data.version,
@@ -188,12 +190,16 @@ export const decodeToolsetRedirectState = (
 export const getToolsetRedirectUri = () =>
   `${window.location.origin}${Routes.ToolsetSignIn}`;
 
+export const isToolsetWithAuth = (toolset: ToolsetModel) => {
+  return toolset.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
+};
+
 export const isToolsetSignedIn = (
   toolset: ToolsetModel,
   level = ToolsetCredentialsLevel.GLOBAL,
 ) => {
   return (
-    toolset.authSettings.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
+    toolset.authSettings?.authStatus?.[level] === ToolsetAuthStatus.SIGNED_IN
   );
 };
 
@@ -237,4 +243,34 @@ export const getToolsetPayload = (
     version: newToolset.version,
     authSettings,
   };
+};
+
+export const getToolsetAuthAction = (
+  entity: ToolsetModel,
+  isAdmin?: boolean,
+) => {
+  const isPublic = isMarketplaceEntityPublic(entity);
+  const isSignedInGlobal = isToolsetSignedIn(entity);
+  const isSignedInUser = isToolsetSignedIn(
+    entity,
+    ToolsetCredentialsLevel.USER,
+  );
+
+  if (isPublic && !isAdmin && !isSignedInUser)
+    return ToolsetAuthAction.LoginWithMyCreds;
+  if (!isSignedInGlobal && !isSignedInUser) return ToolsetAuthAction.LogIn;
+
+  return ToolsetAuthAction.LogOut;
+};
+
+export const getToolsetAuthActionLabel = (
+  action: ToolsetAuthAction,
+  screenState?: ScreenState,
+) => {
+  if (
+    action === ToolsetAuthAction.LoginWithMyCreds &&
+    screenState === ScreenState.SM
+  )
+    return 'Log in';
+  return action as string;
 };

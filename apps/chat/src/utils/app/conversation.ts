@@ -4,9 +4,9 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import {
+  getChosenFormButtons,
   getConfigurationSchema,
   getConfigurationValue,
-  getFormValueDefinitions,
   isConversationWithFormSchema,
 } from '@/src/utils/app/form-schema';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -45,7 +45,7 @@ export const isSettingsChanged = (
   conversation: Conversation,
   newSettings: MessageSettings,
 ): boolean => {
-  const isChanged = Object.keys(newSettings).some((key) => {
+  return Object.keys(newSettings).some((key) => {
     const convSetting = conversation[key as keyof Conversation];
     const newSetting = newSettings[key as keyof MessageSettings];
 
@@ -68,8 +68,6 @@ export const isSettingsChanged = (
       newSettings[key as keyof MessageSettings]
     );
   });
-
-  return isChanged;
 };
 
 export const getNewConversationName = (
@@ -89,7 +87,7 @@ export const getNewConversationName = (
 
     return prepareEntityName(!title && reference_url ? reference_url : title);
   } else if (formValue && configurationSchema) {
-    const definitions = getFormValueDefinitions(formValue, configurationSchema);
+    const definitions = getChosenFormButtons(formValue, configurationSchema);
 
     if (definitions.length) return prepareEntityName(definitions[0].title);
   }
@@ -220,18 +218,14 @@ export const isChosenConversationValidForCompare = (
     (message) => message.role === Role.User,
   );
 
-  if (convUserMessages.length !== selectedConvUserMessages.length) {
-    return false;
-  }
-
-  return true;
+  return convUserMessages.length === selectedConvUserMessages.length;
 };
 
 export const getOpenAIEntityFullName = (model: { name?: string; id: string }) =>
   model.name || model.id;
 
 export const addPausedError = (
-  conversation: Conversation,
+  _conversation: Conversation,
   models: DialAIEntityModel[],
   messages: Message[],
 ): Message[] => {
@@ -393,3 +387,31 @@ export const isLoadedConversationEntity = (
   entity: ShareEntity,
 ): entity is Conversation =>
   isConversationInfoEntity(entity) && entity.status === UploadStatus.LOADED;
+
+export function getMessageCustomContent(
+  message: Message,
+  allowAssistantAttachments = false,
+): Partial<Message> | undefined {
+  return message.custom_content?.state ||
+    message.custom_content?.attachments?.length ||
+    message.custom_content?.form_value ||
+    message.custom_content?.form_schema
+    ? {
+        custom_content: {
+          ...((allowAssistantAttachments || message.role !== Role.Assistant) &&
+            message.custom_content?.attachments?.length && {
+              attachments: message.custom_content?.attachments,
+            }),
+          ...(message.custom_content?.state && {
+            state: message.custom_content.state,
+          }),
+          ...(message.custom_content?.form_value && {
+            form_value: message.custom_content?.form_value,
+          }),
+          ...(message.custom_content?.form_schema && {
+            form_schema: message.custom_content?.form_schema,
+          }),
+        },
+      }
+    : undefined;
+}

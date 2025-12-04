@@ -12,17 +12,45 @@ const selectInputContent = (state: RootState) =>
 
 const selectChatFormValue = (state: RootState) => rootSelector(state).formValue;
 
-const selectConfigurationSchema = (state: RootState) =>
-  rootSelector(state).configurationSchema;
+const selectUploadedConfigurationSchemas = (state: RootState) =>
+  rootSelector(state).configurationSchemas;
 
-const selectIsConfigurationSchemaLoading = (state: RootState) =>
-  rootSelector(state).isConfigurationSchemaLoading;
+const selectConfigurationSchemaByModelId = createSelector(
+  [selectUploadedConfigurationSchemas, (_state, modelId: string) => modelId],
+  (configurationSchemas, modelId) =>
+    configurationSchemas.find((schema) => schema.modelId === modelId)?.schema,
+);
+
+const selectConfigurationSchemaByModelIds = createSelector(
+  [
+    selectUploadedConfigurationSchemas,
+    (_state, modelIds: string[]) => modelIds,
+  ],
+  (configurationSchemas, modelIds) =>
+    configurationSchemas
+      .filter((schema) => modelIds.includes(schema.modelId))
+      .map((schema) => schema.schema),
+);
+
+const selectLoadingConfigurationSchemas = (state: RootState) =>
+  rootSelector(state).configurationSchemasLoadingIds;
+
+const selectIsConfigurationSchemaLoading = createSelector(
+  [selectLoadingConfigurationSchemas, (_state, modelId: string) => modelId],
+  (configurationSchemasLoadingIds, modelId) =>
+    configurationSchemasLoadingIds.includes(modelId),
+);
 
 const selectIsConfigurationBlocksInput = createSelector(
-  [selectConfigurationSchema],
-  (configurationSchema) =>
-    configurationSchema?.[DialSchemaProperties.DialChatMessageInputDisabled] ??
-    false,
+  [
+    (_state, modelId: string[]) =>
+      selectConfigurationSchemaByModelIds(_state, modelId),
+  ],
+  (configurationSchemas) =>
+    configurationSchemas.some(
+      (schema) =>
+        schema?.[DialSchemaProperties.DialChatMessageInputDisabled] ?? false,
+    ),
 );
 
 const selectShouldFocusAndScroll = (state: RootState) =>
@@ -40,13 +68,13 @@ const selectInfoModalOpened = (state: RootState) =>
 const selectSelectedEntityInfo = (state: RootState) =>
   rootSelector(state).selectedEntityInfo;
 
-const selectLastLoadedConfigurationSchemaModelId = (state: RootState) =>
-  rootSelector(state).lastLoadedConfigurationSchemaModelId;
-
 export const ChatSelectors = {
   selectInputContent,
   selectChatFormValue,
-  selectConfigurationSchema,
+  selectUploadedConfigurationSchemas,
+  selectConfigurationSchemaByModelId,
+  selectConfigurationSchemaByModelIds,
+  selectLoadingConfigurationSchemas,
   selectIsConfigurationSchemaLoading,
   selectIsConfigurationBlocksInput,
   selectShouldFocusAndScroll,
@@ -54,5 +82,4 @@ export const ChatSelectors = {
   selectNotAvailableEntityType,
   selectInfoModalOpened,
   selectSelectedEntityInfo,
-  selectLastLoadedConfigurationSchemaModelId,
 };

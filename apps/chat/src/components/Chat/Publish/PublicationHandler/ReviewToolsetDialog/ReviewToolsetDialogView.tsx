@@ -14,7 +14,7 @@ import { ToolsetSelectors } from '@/src/store/selectors';
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
-import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
 function ReviewToolsetDialogContent() {
   const { t } = useTranslation(Translation.Chat);
@@ -72,7 +72,7 @@ function ReviewToolsetDialogContent() {
             <span className="w-[135px] text-secondary">{t('Topics: ')}</span>
             <div className="flex max-w-[414px] flex-wrap gap-1">
               {toolset.topics.map((topic) => (
-                <ApplicationTopic key={topic} topic={topic} />
+                <MarketplaceEntityTopic key={topic} topic={topic} />
               ))}
             </div>
           </div>

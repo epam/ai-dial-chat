@@ -15,6 +15,9 @@ const selectThemeState = (state: RootState) => rootSelector(state).theme;
 const selectAvailableThemes = (state: RootState) =>
   rootSelector(state).availableThemes;
 
+const selectThemesImages = (state: RootState) =>
+  rootSelector(state).themesImages;
+
 const selectCodeEditorTheme = createSelector(
   [selectThemeState, selectAvailableThemes],
   (theme, availableThemes) => {
@@ -105,6 +108,9 @@ const selectVisibleSidebarItems = createSelector(
   (state, featureType) => state.visibleSidebarItems[featureType],
 );
 
+const selectIsEditorLoader = (state: RootState) =>
+  rootSelector(state).isEditorLoader;
+
 export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
@@ -117,6 +123,7 @@ export const UISelectors = {
   selectOpenedFoldersIds,
   selectTextOfClosedAnnouncement,
   selectAvailableThemes,
+  selectThemesImages,
   selectChatbarWidth,
   selectPromptbarWidth,
   selectIsChatFullWidth,
@@ -130,4 +137,5 @@ export const UISelectors = {
   selectIsNavigationVisible,
   selectCodeEditorTheme,
   selectVisibleSidebarItems,
+  selectIsEditorLoader,
 };

@@ -25,10 +25,8 @@ import {
   isConversationWithFormSchema,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
-import { isEntityIdExternal } from '@/src/utils/app/id';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
-import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import {
   Conversation,
@@ -72,7 +70,7 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { ChatPublicationControls } from './Publish/PublicationControls/ChatPublicationControls';
-import { PublicationHandler } from './Publish/PublicationHandler/PublicationHandler';
+import { ReviewPublicationHandler } from './Publish/PublicationHandler/ReviewPublicationHandler';
 import { TalkToModal } from './TalkTo/TalkToModal';
 
 import {
@@ -157,11 +155,9 @@ const ChatView = memo(() => {
   const notAvailableEntityType = useAppSelector(
     ChatSelectors.selectNotAvailableEntityType,
   );
-  const isConfigurationSchemaLoading = useAppSelector(
-    ChatSelectors.selectIsConfigurationSchemaLoading,
-  );
-  const configurationSchema = useAppSelector(
-    ChatSelectors.selectConfigurationSchema,
+
+  const configurationSchemas = useAppSelector(
+    ChatSelectors.selectUploadedConfigurationSchemas,
   );
   const isApproveRequiredEntity = useAppSelector((state) =>
     PublicationSelectors.selectIsApproveRequiredEntity(
@@ -203,7 +199,9 @@ const ChatView = memo(() => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
-  const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const disableAutoScrollTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const lastScrollTop = useRef(0);
 
   const showReplayControls = useMemo(() => {
@@ -237,12 +235,18 @@ const ChatView = memo(() => {
   }, [dispatch, isNotAllowed]);
 
   const handleLike = useCallback(
-    (index: number, conversation: Conversation, rate: LikeState) => {
+    (
+      index: number,
+      conversation: Conversation,
+      rate: LikeState,
+      comment?: string,
+    ) => {
       dispatch(
         ConversationsActions.rateMessage({
           conversationId: conversation.id,
           messageIndex: index,
           rate,
+          comment,
         }),
       );
     },
@@ -250,7 +254,10 @@ const ChatView = memo(() => {
   );
 
   const setAutoScroll = () => {
-    clearTimeout(disableAutoScrollTimeoutRef.current);
+    if (disableAutoScrollTimeoutRef.current !== null) {
+      clearTimeout(disableAutoScrollTimeoutRef.current);
+    }
+
     setAutoScrollEnabled(true);
     setShowScrollDownButton(false);
   };
@@ -291,7 +298,9 @@ const ChatView = memo(() => {
         setAutoScrollEnabled(false);
         setShowScrollDownButton(true);
       } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
-        clearTimeout(disableAutoScrollTimeoutRef.current);
+        if (disableAutoScrollTimeoutRef.current !== null) {
+          clearTimeout(disableAutoScrollTimeoutRef.current);
+        }
 
         disableAutoScrollTimeoutRef.current = setTimeout(() => {
           setAutoScrollEnabled(false);
@@ -547,11 +556,23 @@ const ChatView = memo(() => {
     (conv) => !conv.messages.length,
   );
 
-  const isConversationWithSchema = selectedConversations.some(
+  const selectedConversationSchemas = useMemo(
+    () =>
+      selectedConversations
+        .map((conversation) =>
+          configurationSchemas.find(
+            (schema) => schema.modelId === conversation.model.id,
+          ),
+        )
+        .filter((schema) => schema !== undefined),
+    [configurationSchemas, selectedConversations],
+  );
+  const isSomeConversationWithSchema = selectedConversations.some(
     (conv) =>
-      (!isConfigurationSchemaLoading &&
-        configurationSchema &&
-        isFormSchemaValid(configurationSchema)) ||
+      (selectedConversationSchemas.length &&
+        selectedConversationSchemas
+          .map(({ schema }) => schema)
+          .some(isFormSchemaValid)) ||
       isConversationWithFormSchema(conv),
   );
 
@@ -566,7 +587,7 @@ const ChatView = memo(() => {
       !isReadOnly &&
       !isApproveRequiredEntity &&
       (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
-      !(isConversationWithSchema && selectedConversations.length > 1)) ||
+      !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
   const applicationTypeSchemas = useAppSelector(
@@ -577,6 +598,14 @@ const ChatView = memo(() => {
     const model = modelsMap[selectedConversations[0]?.model?.id];
 
     if (!model) return;
+
+    if (model.viewerUrl) {
+      return {
+        viewerUrl: model.viewerUrl,
+        title: model.name,
+        applicationId: model.id,
+      };
+    }
 
     if (
       model.applicationTypeSchemaId &&
@@ -655,7 +684,7 @@ const ChatView = memo(() => {
                       : 'w-full',
                   )}
                   data-qa={
-                    isCompareMode ? 'compare-mode' : 'app-settings-chat-mode'
+                    isCompareMode ? 'compare-mode' : 'entity-settings-chat-mode'
                   }
                 >
                   <div
@@ -822,8 +851,7 @@ const ChatView = memo(() => {
                                               enabledFeatures.has(
                                                 Feature.Likes,
                                               ) &&
-                                              (!isEntityReadOnly(conv) ||
-                                                !isEntityIdExternal(conv) ||
+                                              ((!isReadOnly && !isPlayback) ||
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={
@@ -911,8 +939,8 @@ const ChatView = memo(() => {
                               isNotEmptyConversations={isNotEmptyConversations}
                               showReplayControls={showReplayControls}
                               isChatReadyForInput={isChatReadyForInput}
-                              isConversationWithSchema={
-                                isConversationWithSchema
+                              isSomeConversationWithSchema={
+                                isSomeConversationWithSchema
                               }
                               showScrollDownButton={isScrollDownButton}
                               onScrollDown={handleScrollDown}
@@ -1099,14 +1127,12 @@ export function Chat({ isPreview }: ChatProps) {
   const isInstalledModelsInitialized = useAppSelector(
     ModelsSelectors.selectIsInstalledModelsInitialized,
   );
-  const isConfigurationSchemaLoading = useAppSelector(
-    ChatSelectors.selectIsConfigurationSchemaLoading,
+  const loadingConfigurationSchemas = useAppSelector(
+    ChatSelectors.selectLoadingConfigurationSchemas,
   );
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
-
-  const configurationLoadedRef = useRef(false);
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1117,35 +1143,25 @@ export function Chat({ isPreview }: ChatProps) {
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
-    configurationLoadedRef.current = false;
-  }, [selectedConversationsIds]);
-
-  useEffect(() => {
-    if (configurationLoadedRef.current) return;
-
-    const configurationAppReference = selectedConversations.find((conv) =>
-      doesModelHaveConfiguration(modelsMap[conv.model.id]),
-    )?.model?.id;
-    const configurationAppId = configurationAppReference
-      ? modelsMap[configurationAppReference]?.id
-      : undefined;
-
-    if (configurationAppId && isNoMessages) {
-      if (!configurationLoadedRef.current) {
-        configurationLoadedRef.current = true;
-        dispatch(
-          ChatActions.getConfigurationSchema({ modelId: configurationAppId }),
-        );
-      }
-    } else {
-      dispatch(ChatActions.resetConfigurationSchema());
+    const configurationAppReference = selectedConversations
+      .filter((conv) => doesModelHaveConfiguration(modelsMap[conv.model.id]))
+      .map((conv) => conv.model.id);
+    const configurationAppIds = configurationAppReference
+      .map((reference) => modelsMap[reference]?.id)
+      .filter((id) => id !== undefined);
+    if (configurationAppIds.length && isNoMessages) {
+      configurationAppIds.forEach((modelId) => {
+        dispatch(ChatActions.getConfigurationSchema({ modelId }));
+      });
     }
   }, [dispatch, isNoMessages, modelsMap, selectedConversations]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
       <>
-        <PublicationHandler publication={selectedPublication} />
+        <div className="w-full grow">
+          <ReviewPublicationHandler publication={selectedPublication} />
+        </div>
         <ChatInputFooter />
       </>
     );
@@ -1165,7 +1181,7 @@ export function Chat({ isPreview }: ChatProps) {
   if (
     !areSelectedConversationsLoaded ||
     !isInstalledModelsInitialized ||
-    isConfigurationSchemaLoading ||
+    loadingConfigurationSchemas.length ||
     isPublicationUpdating
   ) {
     return <Loader />;

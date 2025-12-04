@@ -2,7 +2,9 @@ import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import { EntityType } from '@/chat/types/common';
+import { ServerSlugs } from '@/chat/types/slugs-types';
 import { ItemUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -217,8 +219,9 @@ export const ExpectedConstants = {
   unpublishFromLabel: 'Unpublish from',
   noPublishNameTooltip: 'Enter a valid name for the publish request',
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
-  defaultAppVersion: '0.0.1',
+  defaultEntityVersion: '0.0.1',
   defaultAppName: 'Untitled app',
+  defaultToolsetName: 'Untitled toolset',
   rootPublicationFolder: 'public/',
   duplicatedPublicationErrorMessage: (targetUrl: string) =>
     `Target resource already exists: ${targetUrl}`,
@@ -255,9 +258,12 @@ export const ExpectedConstants = {
   workspacePath: () =>
     `${ExpectedConstants.marketplacePath}?${ExpectedConstants.workspaceTab}`,
   createCustomAppPath: '/apps-editor?step=General&schema=custom_app',
-  noWorkspaceAgentsFoundMessage:
+  noWorkspaceEntitiesFoundMessage:
     'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-  noMarketplaceAgentsFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  noMarketplaceEntitiesFoundMessage: `Sorry, we couldn't find any results for your search.`,
+  addAppButtonTitle: 'Add app',
+  addToolsetButtonTitle: 'Add toolset',
+  openInNewTabButtonTitle: 'Open in New Tab',
   versionPrefix: 'Version: ',
   addToMyWorkspaceTooltip: 'Add to My workspace',
   removeFromMyWorkspaceTooltip: 'Remove from My workspace',
@@ -278,7 +284,7 @@ export const ExpectedConstants = {
     "Input the MIME type and press 'Enter' to add",
   notFoundHeader: '404',
   notFoundTitle: 'Page not found',
-  agentNotFoundToastError: 'Not found',
+  agentNotFoundToastError: 'Not Found',
   notFoundDescription: `It seems like the page you're looking for doesn't exist or you don't have access.`,
   informationModalTitle: 'Information',
   informationModalLastUpdatedLabel: 'Last updated:',
@@ -299,7 +305,7 @@ export const ExpectedConstants = {
   lastUsedAgentLabel: 'Last used agent',
   publicAuthorTooltip: `This name will be displayed instead of the author's name for this publication.`,
   noAvailableItemsLabel: 'No available items',
-  appDefaultCompletionUrl: 'http://test.example.com',
+  defaultEntityUrl: 'http://test.example.com',
   appRateEndpointDefaultFeature: 'http://application1/rate',
   leadingDotErrorToast: 'Using a dot at the start of a name is not permitted.',
   promptEditConfirmationDialogTitle: 'Unsaved changes',
@@ -328,6 +334,26 @@ export const ExpectedConstants = {
   exportedArchiveImageRootFolder: 'res',
   replayConversationById: (conversationId: string) =>
     `${conversationId.substring(0, conversationId.lastIndexOf('/'))}/${PseudoModel.replay}${ItemUtil.entityIdSeparator}${ExpectedConstants.replayConversation}${conversationId.substring(conversationId.indexOf(ItemUtil.entityIdSeparator) + ItemUtil.entityIdSeparator.length)}`,
+  externalAppTooltip: 'External application',
+  addToolsetHeaderTitle: 'Add toolset',
+  noToolsetsHeader: 'No toolsets',
+  noToolsetsLabel: `You don't have any toolsets.`,
+  definitionLabel: 'Definition',
+  endpointLabel: 'Endpoint',
+  endpointPlaceholder: 'Enter endpoint',
+  transportProtocol: 'Transport protocol',
+  authenticationLabel: 'Authentication',
+  authenticationLabelSubtitle:
+    'Select one of the methods below that will be used to authenticate',
+  oAuthLabel: 'OAuth',
+  apiKeyLabel: 'API Key',
+  withoutAuthLabel: 'Without authentication',
+  allowedToolsLabel: 'Allowed tools',
+  allowedToolsLabelSubtitle:
+    'The list of tools will be available after filling in the definition and authentication section',
+  oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
+  mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
+  mixedImportOption: 'Mixed',
 };
 
 export enum Types {
@@ -366,6 +392,7 @@ export enum MenuOptions {
   info = 'Info',
   copyLink = 'Copy link',
   removeAccess = 'Remove access',
+  loginWithMyCreds = 'Login with my creds',
 }
 
 export enum FilterMenuOptions {
@@ -390,10 +417,10 @@ export enum ExampleURLs {
 export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
-  quickApp = 'Quick app',
+  externalApp = 'External app',
 }
 
-export enum AppEditorGeneralFormFields {
+export enum EntityEditorGeneralFormFields {
   name = 'Name',
   version = 'Version',
   icon = 'Icon',
@@ -401,11 +428,12 @@ export enum AppEditorGeneralFormFields {
   topics = 'Topics',
 }
 
-export enum AppEditorViewFormFields {
+export enum EntityEditorViewFormFields {
   featuresData = 'Features data',
   attachmentTypes = 'Attachment types',
   maxAttachmentsNumber = 'Max. attachments number',
   chatCompletionUrl = 'Chat completion URL',
+  externalUrl = 'External URL',
 }
 
 export enum EditPromptFormFields {
@@ -414,9 +442,15 @@ export enum EditPromptFormFields {
   promptContent = 'Prompt',
 }
 
-export const AppMenuActions = {
-  add: (app: AddAppMenuOptions) => `Add ${app}`,
-  edit: (app: AddAppMenuOptions) => `Edit ${app}`,
+export enum EntityEditorToolsetTypes {
+  Toolset = 'toolset',
+}
+
+export const EntityMenuActions = {
+  addApp: (app: AddAppMenuOptions) => `Add ${app}`,
+  editApp: (app: AddAppMenuOptions) => `Edit ${app}`,
+  addToolset: `Add ${EntityEditorToolsetTypes.Toolset}`,
+  editToolset: `Edit ${EntityEditorToolsetTypes.Toolset}`,
 };
 
 export const Chronology = {
@@ -430,11 +464,13 @@ export const Chronology = {
 
 export const API = {
   api: '/api',
+  public: 'public',
   modelsHost: '/api/models',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: '/api/themes/image',
-  defaultModelIconHost: () => `${API.themeUrl}/default-model`,
+  defaultModelIconHost: () =>
+    `${API.themeUrl}/${ThemesUtil.getImages()['default-model']}`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   themesListingHost: '/api/themes/listing',
@@ -442,6 +478,7 @@ export const API = {
   conversationsMetadataHost: `/api/metadata/conversations`,
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
+  toolsetsHost: () => `${API.api}/toolsets-listing`,
   filesHostSegment: 'files',
   filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
   fileHost: () => `/api/${API.filesHostSegment}`,
@@ -456,10 +493,13 @@ export const API = {
   shareEntityHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
-  installedDeploymentsFolder: 'clientdata',
+  installedEntityFolder: 'clientdata',
   installedDeploymentsFile: 'installed_deployments.json',
+  installedToolsetsFile: 'installed_toolsets.json',
   installedDeploymentsHost: () =>
-    `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
+    `${API.installedEntityFolder}/${API.installedDeploymentsFile}`,
+  installedToolsetsHost: () =>
+    `${API.installedEntityFolder}/${API.installedToolsetsFile}`,
   configurationHost: '/configuration',
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/ops/publication/create',
@@ -482,7 +522,14 @@ export const API = {
   publishedApplicationsHost: () =>
     `${API.publishedApplications}?recursive=true`,
   pagePropsHost: '/en.json',
-  appSchemasHost: 'api/application-type-schemas/schemas',
+  appSchemasHost: '/api/application-type-schemas/schemas',
+  themeStylesHost: '/api/themes/styles',
+  publicFilesHost: () => `${API.api}/${API.filesHostSegment}/${API.public}`,
+  toolsetEditorHost: '/en/toolset-editor.json',
+  toolsetCreateHost: () => `${API.api}/toolsets`,
+  authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
+  tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
+  toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
 };
 
 export const Import = {
@@ -639,4 +686,36 @@ export enum E2EUserRole {
   qa = 'QA',
   developer = 'Developer',
   manager = 'Manager',
+}
+
+export enum EntityEditorAppTypes {
+  CustomApp = 'Custom app',
+  ExternalApp = 'External app',
+  QuickApp = 'Quick app',
+  QuickApp2 = 'Quick app2',
+  CodeApp = 'Code App',
+}
+
+export enum MarketplaceTabs {
+  WORKSPACE = 'workspace',
+}
+
+export enum MarketplaceEntitiesTabs {
+  AGENTS = 'agents',
+  TOOLSETS = 'toolsets',
+}
+
+export enum OAuthQueryParams {
+  responseType = 'response_type',
+  codeChallengeMethod = 'code_challenge_method',
+  clientId = 'client_id',
+  redirectUri = 'redirect_uri',
+  scope = 'scope',
+  state = 'state',
+  code = 'code',
+}
+
+export enum Creds {
+  myCreds = 'MY CREDS',
+  orgCreds = 'ORG CREDS',
 }

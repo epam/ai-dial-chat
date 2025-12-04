@@ -17,12 +17,12 @@ dialAdminTest(
     {
       marketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
-      agentDetailsModal,
-      agentDetailsModalAssertion,
+      baseAssertion,
+      marketplaceEntitiesSection,
+      entityDetailsModal,
+      entityDetailsModalAssertion,
       customApplicationBuilder,
       applicationApiHelper,
-      adminMarketplaceAgentsAssertion,
       publishingRequestDialog,
       selectFolderModal,
       selectFolders,
@@ -56,7 +56,7 @@ dialAdminTest(
   ) => {
     setTestIds('EPMRTC-4450', 'EPMRTC-4496', 'EPMRTC-5858', 'EPMRTC-5736');
     const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const orgFolder = GeneratorUtil.randomString(7);
     const publicationPath = `${PublishPath.Organization}/${orgFolder}`;
 
@@ -118,13 +118,14 @@ dialAdminTest(
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appEntity);
+        appElement =
+          await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModal.publishButton.click();
+        await entityDetailsModal.publishButton.click();
         await publishingRequestDialogAssertion.assertElementState(
           publishingRequestDialog,
           'visible',
@@ -198,7 +199,9 @@ dialAdminTest(
       await adminPublishedApplicationReviewModal
         .getPublicationReviewControl()
         .backToPublicationRequest();
-      await adminPublishingApprovalModal.approveRequest();
+      await adminPublishingApprovalModal.approveRequest({
+        isModelsListRetrieved: true,
+      });
       await adminApproveRequiredConversationsAssertion.assertFolderState(
         { name: requestName },
         'hidden',
@@ -215,17 +218,15 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
           getInstalledDeployments: true,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appEntity.name);
-        appElement = await marketplaceAgentsSection.findAgentElement(
+        appElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
-          { isWorkspaceAgent: false, isEditable: false },
+          { isWorkspaceEntity: false, isEditable: false },
         );
-        await adminMarketplaceAgentsAssertion.assertElementState(
-          appElement,
-          'visible',
-        );
+        await baseAssertion.assertElementState(appElement, 'visible');
       },
     );
 
@@ -233,16 +234,16 @@ dialAdminTest(
       'Click on the found card and verify the details',
       async () => {
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModalAssertion.assertEntityIcon(
-          agentDetailsModal.icon,
+        await entityDetailsModalAssertion.assertEntityIcon(
+          entityDetailsModal.icon,
           expectedPublishedIconUrl,
         );
-        await agentDetailsModalAssertion.assertApplicationAuthor(defaultAuthor);
-        await agentDetailsModal.closeButton.click();
+        await entityDetailsModalAssertion.assertEntityAuthor(defaultAuthor);
+        await entityDetailsModal.closeButton.click();
       },
     );
 
@@ -257,7 +258,7 @@ dialAdminTest(
           'visible',
         );
         await attachFilesModal
-          .getOrganizationFoldersTree()
+          .getOrganizationFolderFiles()
           .expandFolder(orgFolder);
         await organizationFoldersAssertion.assertFolderEntityState(
           { name: orgFolder },

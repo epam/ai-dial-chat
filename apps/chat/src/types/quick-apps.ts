@@ -31,10 +31,10 @@ export interface DialDeploymentToolset {
 }
 
 export interface MCPToolset {
-  name: string;
-  type: ToolsetTypes.DialMcp;
+  name?: string;
+  type?: ToolsetTypes.DialMcp;
   dial_id: string;
-  transport: ToolsetTransportType;
+  transport?: ToolsetTransportType;
   description?: string;
 }
 
@@ -64,6 +64,8 @@ export interface QuickApp2Config {
   };
   contexts: FileContext[];
   tool_sets: AnyToolset[];
+  input_attachment_types?: string[];
+  max_input_attachments?: number;
 }
 
 export function isDialDeploymentToolset(

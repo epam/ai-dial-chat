@@ -12,9 +12,15 @@ import { z as zodValidation } from 'zod';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
+export enum WithLogin {
+  WithLogin = 'With login',
+  WithoutLogin = 'Without login',
+  WithConfig = 'With login & config',
+}
+
 export const ToolsetLoginFormSchema = zodValidation
   .object({
-    includeOAuthFields: zodValidation.boolean().optional(),
+    withLogin: zodValidation.enum(WithLogin),
     authenticationType: zodValidation.enum(ToolsetAuthTypes),
     // API_KEY
     keyHeader: zodValidation.string().optional(),
@@ -24,9 +30,13 @@ export const ToolsetLoginFormSchema = zodValidation
     clientSecret: zodValidation.string().optional(),
     authorizationEndpoint: zodValidation.string().optional(),
     tokenEndpoint: zodValidation.string().optional(),
+    scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.authenticationType === ToolsetAuthTypes.API_KEY) {
+    if (
+      data.authenticationType === ToolsetAuthTypes.API_KEY &&
+      data.withLogin === WithLogin.WithLogin
+    ) {
       if (!data.keyHeader?.trim()) {
         ctx.addIssue({
           code: 'custom',
@@ -42,15 +52,18 @@ export const ToolsetLoginFormSchema = zodValidation
         });
       }
     }
-    if (data.authenticationType === ToolsetAuthTypes.OAUTH) {
-      if (!data.clientId && data.includeOAuthFields) {
+    if (
+      data.authenticationType === ToolsetAuthTypes.OAUTH &&
+      data.withLogin === WithLogin.WithConfig
+    ) {
+      if (!data.clientId) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientId'],
           message: 'Client ID is required',
         });
       }
-      if (!data.clientSecret && data.includeOAuthFields) {
+      if (!data.clientSecret) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientSecret'],
@@ -67,6 +80,7 @@ export const ToolsetEditorFormSchema = zodValidation
   .object({
     endpoint: zodValidation
       .string()
+      .trim()
       .nonempty(formErrors.required)
       .regex(/^(https?|sse):\/\//, {
         error: urlErrors.notValidProtocol,
@@ -97,12 +111,13 @@ export type ToolsetEditorForm = zodValidation.infer<
 export const getDefaultLoginFormData = (
   authenticationType: ToolsetAuthTypes,
   toolset?: ToolsetModel,
-  prevData?: ToolsetLoginFormType,
+  prevData?: Partial<ToolsetLoginFormType>,
 ): ToolsetLoginFormType => {
   switch (authenticationType) {
     case ToolsetAuthTypes.API_KEY:
       return {
         authenticationType,
+        withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
         keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
         apiKey: prevData?.apiKey ?? '',
       };
@@ -114,11 +129,18 @@ export const getDefaultLoginFormData = (
         authorizationEndpoint:
           toolset?.authSettings?.authorizationEndpoint ?? '',
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
-        includeOAuthFields: prevData?.includeOAuthFields ?? false,
+        withLogin:
+          !prevData &&
+          toolset?.authSettings?.clientSecret &&
+          toolset?.authSettings?.clientId
+            ? WithLogin.WithConfig
+            : (prevData?.withLogin ?? WithLogin.WithLogin),
+        scopes: toolset?.authSettings?.scopesSupported,
       };
     case ToolsetAuthTypes.NONE:
     default:
       return {
+        withLogin: WithLogin.WithoutLogin,
         authenticationType,
       };
   }

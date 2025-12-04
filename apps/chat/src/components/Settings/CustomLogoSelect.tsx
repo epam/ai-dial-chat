@@ -127,6 +127,7 @@ export const CustomLogoSelect = ({
         <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onClickAddHandler}
               className="text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
               disabled={disabled}
@@ -136,6 +137,7 @@ export const CustomLogoSelect = ({
             </button>
             {localLogo && (
               <button
+                type="button"
                 onClick={handleDeleteLogo}
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={disabled}
@@ -159,6 +161,7 @@ export const CustomLogoSelect = ({
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
+          hideFolderCheckbox
         />
       )}
 

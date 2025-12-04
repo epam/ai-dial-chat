@@ -12,7 +12,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export const commonOverlayProps = {
-  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
+  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST ?? '',
   requestTimeout: 20000,
   loaderStyles: {
     background: 'white',
@@ -136,8 +136,8 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   }, [conversationIdInputValue, conversationNewName, handleDisplayInformation]);
 
   useEffect(() => {
-    if (!overlay.current) {
-      overlay.current = new ChatOverlay(containerRef.current!, {
+    if (!overlay.current && containerRef.current) {
+      overlay.current = new ChatOverlay(containerRef.current, {
         ...overlayOptions,
         hostDomain: window.location.origin,
       });
@@ -158,8 +158,10 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
       async (info) => {
         console.info('Conversation selected - ');
-        const { messages } = await overlay.current!.getMessages();
-        console.info('messages', messages);
+        if (overlay.current) {
+          const { messages } = await overlay.current.getMessages();
+          console.info('messages', messages);
+        }
 
         console.info(JSON.stringify(info, null, 2));
       },
@@ -476,9 +478,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 <select
                   className="max-w-[70%] shrink"
                   value={conversationIdInputValue}
-                  onChange={(e) =>
-                    setConversationIdInputValue((e.target as any).value)
-                  }
+                  onChange={(e) => setConversationIdInputValue(e.target.value)}
                 >
                   {conversations.map((conv) => (
                     <option className="truncate" key={conv.id} value={conv.id}>

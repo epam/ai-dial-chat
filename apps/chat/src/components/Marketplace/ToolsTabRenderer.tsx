@@ -15,8 +15,6 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
-import { ToolsetDialogs } from '@/src/components/Common/ToolsetDialogs';
-
 import { ResultsView, ResultsViewProps } from './TabResults';
 import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
 
@@ -42,7 +40,7 @@ export function ToolsTabRenderer() {
   );
 
   const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
+    MarketplaceSelectors.selectSelectedToolsetsFilters,
   );
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
@@ -55,19 +53,25 @@ export function ToolsTabRenderer() {
     : undefined;
 
   const { displayedEntities: displayedToolsets, suggestedResults } =
-    useMarketplaceDisplayedEntities(allToolsets, installedToolsetsSet);
+    useMarketplaceDisplayedEntities(
+      allToolsets,
+      installedToolsetsSet,
+      selectedFilters,
+    );
 
   const handleSetDetailsToolset = useCallback(
     (toolset: ToolsetModel) => {
       dispatch(
         MarketplaceActions.setDetailsEntity({
           reference: toolset.reference,
-          isSuggested: false,
+          isSuggested: suggestedResults
+            .map((item) => item.reference)
+            .includes(toolset.reference),
           type: MarketplaceEntitiesTabs.TOOLSETS,
         }),
       );
     },
-    [dispatch],
+    [dispatch, suggestedResults],
   );
 
   const handleBookmarkClick = useCallback(
@@ -132,10 +136,9 @@ export function ToolsTabRenderer() {
           onClose={handleCloseDetailsDialog}
           onChangeVersion={handleSetVersion}
           onBookmarkClick={handleBookmarkClick}
+          isSuggested={detailsToolset?.isSuggested}
         />
       )}
-
-      <ToolsetDialogs />
     </>
   );
 }

@@ -25,7 +25,7 @@ export interface ToolsetModel extends ShareEntity {
   reference: string;
   description: string;
   topics: string[];
-  type: EntityType;
+  type: EntityType.Toolset;
 
   endpoint?: string;
   iconUrl?: string;
@@ -88,3 +88,14 @@ export interface PublishRequestDialAIEntityModel extends ToolsetModel {
   folderId: string;
   publicationInfo: EntityPublicationInfo;
 }
+
+export type ToolsetContextMenuDisabledActions = Partial<{
+  copyLink: boolean;
+  edit: boolean;
+  share: boolean;
+  unshare: boolean;
+  publish: boolean;
+  unpublish: boolean;
+  delete: boolean;
+  login: boolean;
+}>;

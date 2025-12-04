@@ -4,15 +4,21 @@ import { EMPTY, concat, filter, iif, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
-import { isDialAiEntityModel } from '@/src/utils/app/application';
-import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import {
+  getDetailsEntity,
+  getFilters,
+  getLinkErrorMessage,
+  getTableSort,
+  getTabs,
+} from '@/src/utils/marketplace';
 
-import { EntityType, SortOrder } from '@/src/types/common';
+import { DetailsEntity } from '@/src/types/marketplace';
 import { AppEpic } from '@/src/types/store';
 
 import {
   MarketplaceActions,
   ModelsActions,
+  ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import {
@@ -23,13 +29,11 @@ import {
 } from '@/src/store/selectors';
 
 import {
-  ENTITY_TYPES,
   FilterTypes,
   MarketplaceEntitiesTabs,
   MarketplaceQueryParams,
   MarketplaceTabs,
   SourceType,
-  TableColumnSortKeys,
   ViewTypes,
 } from '@/src/constants/marketplace';
 
@@ -94,7 +98,8 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedTab.type,
       MarketplaceActions.setSelectedEntitiesTab.type,
       MarketplaceActions.setDetailsEntity.type,
-      MarketplaceActions.setSelectedFilters.type,
+      MarketplaceActions.setSelectedAgentsFilters.type,
+      MarketplaceActions.setSelectedToolsetsFilters.type,
       MarketplaceActions.setState.type,
       MarketplaceActions.setSearchTerm.type,
       MarketplaceActions.setSelectedView.type,
@@ -107,6 +112,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       const pathname = window.location.pathname;
       // workspace tab
       const selectedTab = MarketplaceSelectors.selectSelectedTab(state);
+
       addToQuery(
         query,
         MarketplaceQueryParams.tab,
@@ -117,22 +123,31 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       // entities tab
       const selectedEntitiesTab =
         MarketplaceSelectors.selectSelectedEntitiesTab(state);
+
+      const isAgentsTab =
+        selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
       addToQuery(
         query,
         MarketplaceQueryParams.entitiesTab,
-        selectedEntitiesTab === MarketplaceEntitiesTabs.TOOLSETS
-          ? MarketplaceEntitiesTabs.TOOLSETS
-          : undefined,
+        isAgentsTab ? undefined : MarketplaceEntitiesTabs.TOOLSETS,
       );
       // application link
       const detailsEntity = MarketplaceSelectors.selectDetailsEntity(state);
       const referenceQuery =
-        detailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
-          ? MarketplaceQueryParams.toolset
-          : MarketplaceQueryParams.model;
+        detailsEntity?.type === MarketplaceEntitiesTabs.AGENTS || isAgentsTab
+          ? MarketplaceQueryParams.model
+          : MarketplaceQueryParams.toolset;
       addToQuery(query, referenceQuery, detailsEntity?.reference);
+
       // filters
-      const filters = MarketplaceSelectors.selectSelectedFilters(state);
+      const agentsFilters =
+        MarketplaceSelectors.selectSelectedAgentsFilters(state);
+      const toolsetsFilters =
+        MarketplaceSelectors.selectSelectedToolsetsFilters(state);
+
+      const filters = isAgentsTab ? agentsFilters : toolsetsFilters;
+
       addToQuery(
         query,
         MarketplaceQueryParams.types,
@@ -195,103 +210,95 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       const query = parse(window.location.search.slice(1));
       const state = state$.value;
 
-      const updatedMarketplaceState: Partial<MarketplaceState> = {};
+      // selected tabs
+      const { selectedTab, selectedEntitiesTab } = getTabs(query);
+      const isAgentsTab =
+        selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+
       // application link
       const modelReference = query[MarketplaceQueryParams.model]?.toString();
       const toolsetReference =
         query[MarketplaceQueryParams.toolset]?.toString();
-      const modelsMap = ModelsSelectors.selectModelsMap(state);
-      const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
-      const model =
-        typeof modelReference === 'string'
-          ? modelsMap[modelReference]
-          : undefined;
-      const toolset =
-        typeof toolsetReference === 'string'
-          ? toolsetsMap[toolsetReference]
-          : undefined;
 
-      const detailsEntity =
-        (modelReference && model) || (toolsetReference && toolset) || undefined;
-
-      updatedMarketplaceState.detailsEntity = detailsEntity
-        ? {
-            reference: detailsEntity.reference,
-            isSuggested: false,
-            type: isDialAiEntityModel(detailsEntity)
-              ? MarketplaceEntitiesTabs.AGENTS
-              : MarketplaceEntitiesTabs.TOOLSETS,
-          }
-        : undefined;
-      // workspace tab
-      const workSpaceTab =
-        query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
-      updatedMarketplaceState.selectedTab = workSpaceTab
-        ? MarketplaceTabs.MY_WORKSPACE
-        : MarketplaceTabs.HOME;
-      // entities tab
-      const toolsetsTab =
-        query[MarketplaceQueryParams.entitiesTab] ===
-        MarketplaceEntitiesTabs.TOOLSETS;
-      updatedMarketplaceState.selectedEntitiesTab = toolsetsTab
-        ? MarketplaceEntitiesTabs.TOOLSETS
-        : MarketplaceEntitiesTabs.AGENTS;
-
+      let detailsEntity: DetailsEntity | undefined;
       // filters
-      const existingTopics = ModelsSelectors.selectModelTopics(state);
-      const topics = parseCommaSeparatedList(
-        query[MarketplaceQueryParams.topics] as string,
-      ).filter((topic) => topic && existingTopics.includes(topic));
-
-      const types = parseCommaSeparatedList(
-        query[MarketplaceQueryParams.types] as string,
-      ).filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
-      const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
-      const sources = parseCommaSeparatedList(
-        query[MarketplaceQueryParams.sources] as string,
-      ).filter((type) => type && sourceTypes.includes(type as SourceType));
-
-      updatedMarketplaceState.selectedFilters = {
-        [FilterTypes.ENTITY_TYPE]: types,
-        [FilterTypes.TOPICS]: topics,
-        [FilterTypes.SOURCES]: sources,
+      let filters: {
+        [FilterTypes.ENTITY_TYPE]: string[];
+        [FilterTypes.TOPICS]: string[];
+        [FilterTypes.SOURCES]: string[];
+      } = {
+        Type: [],
+        Topics: [],
+        Sources: [],
       };
-      // search
-      updatedMarketplaceState.searchTerm =
-        (query[MarketplaceQueryParams.search] as string) ?? '';
-      // viewType
-      updatedMarketplaceState.selectedView =
-        (query[MarketplaceQueryParams.viewType] as ViewTypes) ?? ViewTypes.CARD;
-      // table sort
-      const tableSortQuery = query[MarketplaceQueryParams.tableSort];
-      if (typeof tableSortQuery === 'string') {
-        const splittedTableSortQuery = tableSortQuery.split('-');
-        const tableSortColumn = (
-          splittedTableSortQuery[0] in TableColumnSortKeys
-            ? splittedTableSortQuery[0]
-            : TableColumnSortKeys.NAME
-        ) as TableColumnSortKeys;
-        const tableSortOrder: SortOrder =
-          splittedTableSortQuery[1] === 'desc' ? 'desc' : 'asc';
-        updatedMarketplaceState.tableSort = {
-          column: tableSortColumn,
-          order: tableSortOrder,
-        };
+      let statePropertyName: keyof MarketplaceState = 'selectedAgentsFilters';
+
+      if (isAgentsTab) {
+        // set model details
+        const modelsMap = ModelsSelectors.selectModelsMap(state);
+        detailsEntity = getDetailsEntity({
+          entitiesMap: modelsMap,
+          reference: modelReference,
+          type: selectedEntitiesTab,
+        });
+
+        // agents filters
+        statePropertyName = 'selectedAgentsFilters';
+        const existingAgentsTopics = ModelsSelectors.selectModelTopics(state);
+        const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
+
+        filters = getFilters(query, existingAgentsTopics, sourceTypes);
+      } else {
+        // set toolset details
+
+        const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
+        detailsEntity = getDetailsEntity({
+          entitiesMap: toolsetsMap,
+          reference: toolsetReference,
+          type: selectedEntitiesTab!,
+        });
+
+        // toolsets filters
+        statePropertyName = 'selectedToolsetsFilters';
+        const existingToolsetsTopics =
+          ToolsetSelectors.selectToolsetsTopics(state);
+        const toolsetSourceTypes =
+          MarketplaceSelectors.selectToolsetSourceTypes(state);
+
+        filters = getFilters(query, existingToolsetsTopics, toolsetSourceTypes);
       }
+
+      const updatedMarketplaceState: Partial<MarketplaceState> = {
+        detailsEntity,
+        selectedTab,
+        selectedEntitiesTab,
+        [statePropertyName]: { ...filters },
+        // search
+        searchTerm: (query[MarketplaceQueryParams.search] as string) ?? '',
+        // viewType
+        selectedView:
+          (query[MarketplaceQueryParams.viewType] as ViewTypes) ??
+          ViewTypes.CARD,
+        tableSort: getTableSort(query),
+        // hide loader
+        showLoader: false,
+      };
+      const linkErrorMessage = getLinkErrorMessage(
+        isAgentsTab,
+        modelReference ?? toolsetReference,
+        detailsEntity,
+      );
 
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
-        modelReference && !model
-          ? of(UIActions.showErrorToast('Agent by this link not found'))
-          : EMPTY,
-        toolsetReference && !toolset
-          ? of(UIActions.showErrorToast('Toolset by this link not found'))
+        linkErrorMessage
+          ? of(UIActions.showErrorToast(linkErrorMessage))
           : EMPTY,
       );
     }),
   );
 
-const updateFiltersEpic: AppEpic = (action$, state$) =>
+const updateAgentsFiltersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ModelsActions.deleteModels.type, ModelsActions.updateModel.type),
     switchMap(() => {
@@ -299,7 +306,7 @@ const updateFiltersEpic: AppEpic = (action$, state$) =>
 
       const existingTopics = ModelsSelectors.selectModelTopics(state);
       const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
-      const filters = MarketplaceSelectors.selectSelectedFilters(state);
+      const filters = MarketplaceSelectors.selectSelectedAgentsFilters(state);
       const updatedFilters = { ...filters };
       updatedFilters.Topics = filters.Topics.filter((topic) =>
         existingTopics.includes(topic),
@@ -313,7 +320,7 @@ const updateFiltersEpic: AppEpic = (action$, state$) =>
       ) {
         return of(
           MarketplaceActions.setState({
-            selectedFilters: updatedFilters,
+            selectedAgentsFilters: updatedFilters,
           }),
         );
       }
@@ -322,9 +329,53 @@ const updateFiltersEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const updateToolsetsFiltersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(
+      ToolsetActions.deleteToolset.type,
+      ToolsetActions.updateToolset.type,
+    ),
+    switchMap(() => {
+      const state = state$.value;
+
+      const existingTopics = ToolsetSelectors.selectToolsetsTopics(state);
+      const sourceTypes = MarketplaceSelectors.selectToolsetSourceTypes(state);
+      const filters = MarketplaceSelectors.selectSelectedToolsetsFilters(state);
+      const updatedFilters = { ...filters };
+      updatedFilters.Topics = filters.Topics.filter((topic) =>
+        existingTopics.includes(topic),
+      );
+      updatedFilters.Sources = filters.Sources.filter((source) =>
+        sourceTypes.includes(source as SourceType),
+      );
+      if (
+        updatedFilters.Topics.length !== filters.Topics.length ||
+        updatedFilters.Sources.length !== filters.Sources.length
+      ) {
+        return of(
+          MarketplaceActions.setState({
+            selectedToolsetsFilters: updatedFilters,
+          }),
+        );
+      }
+
+      return EMPTY;
+    }),
+  );
+
+const showLoaderEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ModelsActions.getModels.type, ToolsetActions.getToolsets.type),
+    switchMap(() => {
+      return of(MarketplaceActions.setShowLoader(true));
+    }),
+  );
+
 export const MarketplaceEpics = combineEpics(
   initEpic,
   initQueryParamsEpic,
   setQueryParamsEpic,
-  updateFiltersEpic,
+  updateAgentsFiltersEpic,
+  updateToolsetsFiltersEpic,
+  showLoaderEpic,
 );

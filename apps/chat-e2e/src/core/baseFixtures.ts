@@ -5,8 +5,10 @@ import {
   ConversationData,
   PromptData,
   PublishRequestBuilder,
+  ToolsetBuilder,
 } from '@/src/testData';
-import { CustomApplicationBuilder } from '@/src/testData/customApplications/customApplicationBuilder';
+import { CustomApplicationBuilder } from '@/src/testData/applications/customApplicationBuilder';
+import { ExternalApplicationBuilder } from '@/src/testData/applications/externalApplicationBuilder';
 import { MarketplaceUrlBuilder } from '@/src/testData/marketplace/marketplaceUrlBuilder';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
 import { AzureADLogin } from '@/src/ui/actions/azureADLogin';
@@ -55,7 +57,9 @@ const test = base.extend<
     promptData: PromptData;
     publishRequestBuilder: PublishRequestBuilder;
     customApplicationBuilder: CustomApplicationBuilder;
+    externalApplicationBuilder: ExternalApplicationBuilder;
     marketplaceUrlBuilder: MarketplaceUrlBuilder;
+    toolsetBuilder: ToolsetBuilder;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -220,9 +224,19 @@ const test = base.extend<
     await use(customApplicationBuilder);
   },
   // eslint-disable-next-line no-empty-pattern
+  externalApplicationBuilder: async ({}, use) => {
+    const externalApplicationBuilder = new ExternalApplicationBuilder();
+    await use(externalApplicationBuilder);
+  },
+  // eslint-disable-next-line no-empty-pattern
   marketplaceUrlBuilder: async ({}, use) => {
     const marketplaceUrlBuilder = new MarketplaceUrlBuilder();
     await use(marketplaceUrlBuilder);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  toolsetBuilder: async ({}, use) => {
+    const toolsetBuilder = new ToolsetBuilder();
+    await use(toolsetBuilder);
   },
 });
 

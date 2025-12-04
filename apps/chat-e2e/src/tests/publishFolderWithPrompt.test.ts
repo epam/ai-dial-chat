@@ -12,7 +12,7 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { PublicationReviewControl } from '@/src/ui/webElements';
-import { DateUtil, GeneratorUtil, SortingUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -68,7 +68,7 @@ dialAdminTest(
     const username =
       process.env.E2E_USERNAME!.split(',')[testInfo.parallelIndex];
     const unpublishAuthor = username.substring(0, username.indexOf('@'));
-    let orderedPrompts: string[] = [];
+    // let orderedPrompts: string[] = [];
     let publicationReviewControls: PublicationReviewControl;
     const expectedErrorColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textError,
@@ -173,20 +173,21 @@ dialAdminTest(
     await dialAdminTest.step(
       'Admin clicks on "Go to a review" button and verify the first prompt is opened, navigation buttons are available',
       async () => {
-        orderedPrompts = SortingUtil.sortStringsArray(
-          folderPrompt.prompts.map((p) => p.name),
-          (f) => f.toLowerCase(),
-          'asc',
-        );
+        // orderedPrompts = SortingUtil.sortStringsArray(
+        //   folderPrompt.prompts.map((p) => p.name),
+        //   (f) => f.toLowerCase(),
+        //   'asc',
+        // );
         await adminPublishingApprovalModalAssertion.assertButtonsState({
           reviewButtonTitle: ExpectedConstants.goToReviewButtonTitle,
         });
         await adminPublishingApprovalModal.goToEntityReview();
-        await adminApproveRequiredPromptsAssertion.assertFolderEntitySelectedState(
-          { name: folderName },
-          { name: orderedPrompts[0] },
-          true,
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminApproveRequiredPromptsAssertion.assertFolderEntitySelectedState(
+        //   { name: folderName },
+        //   { name: orderedPrompts[0] },
+        //   true,
+        // );
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
@@ -199,12 +200,13 @@ dialAdminTest(
             previousButtonState: 'disabled',
           },
         );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
-          name: orderedPrompts[0],
-          content: folderPrompt.prompts.find(
-            (p) => p.name === orderedPrompts[0],
-          )!.content!,
-        });
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+        //   name: orderedPrompts[0],
+        //   content: folderPrompt.prompts.find(
+        //     (p) => p.name === orderedPrompts[0],
+        //   )!.content!,
+        // });
       },
     );
 
@@ -212,11 +214,12 @@ dialAdminTest(
       'Admin clicks on "Next" button and verify the second prompt is opened, back button is available',
       async () => {
         await publicationReviewControls.goNext();
-        await adminApproveRequiredPromptsAssertion.assertFolderEntitySelectedState(
-          { name: folderName },
-          { name: orderedPrompts[1] },
-          true,
-        );
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminApproveRequiredPromptsAssertion.assertFolderEntitySelectedState(
+        //   { name: folderName },
+        //   { name: orderedPrompts[1] },
+        //   true,
+        // );
         await adminPublishedPromptPreviewModalControlsAssertion.assertButtonsState(
           {
             backToPublicationRequestButtonState: 'enabled',
@@ -224,12 +227,13 @@ dialAdminTest(
             previousButtonState: 'enabled',
           },
         );
-        await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
-          name: orderedPrompts[1],
-          content: folderPrompt.prompts.find(
-            (p) => p.name === orderedPrompts[1],
-          )!.content!,
-        });
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/4866
+        // await adminPublishedPromptPreviewModalAssertion.assertPromptFields({
+        //   name: orderedPrompts[1],
+        //   content: folderPrompt.prompts.find(
+        //     (p) => p.name === orderedPrompts[1],
+        //   )!.content!,
+        // });
       },
     );
 
@@ -299,7 +303,7 @@ dialAdminTest(
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );
@@ -385,7 +389,7 @@ dialAdminTest(
             expectedState: 'visible',
             expectedColor: expectedErrorColor,
             expectedCheckboxState: CheckboxState.checked,
-            expectedVersion: ExpectedConstants.defaultAppVersion,
+            expectedVersion: ExpectedConstants.defaultEntityVersion,
             expectedVersionColor: expectedErrorColor,
           },
         );

@@ -60,6 +60,7 @@ export enum SourcesFilterOptions {
   public = 'Public',
   sharedWithMe = 'Shared with me',
   myCustomApps = 'My Custom apps',
+  myExternalApps = 'My External apps',
   myQuickApps = 'My Quick apps',
   myCodeApps = 'My Code apps',
 }
@@ -67,4 +68,10 @@ export enum SourcesFilterOptions {
 export enum ApplicationTypes {
   CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
+}
+
+export enum ImportResolutionOption {
+  Replace = 'Replace',
+  Postfix = 'Postfix',
+  Ignore = 'Ignore',
 }

@@ -10,7 +10,8 @@ concurrency:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@2.6.2
+    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@2.8.1
     secrets: inherit
     with:
-      node-version: 22
+      node-version: 24
+      maximize-build-space: true

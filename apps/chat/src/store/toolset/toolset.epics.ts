@@ -3,8 +3,11 @@ import {
   Observable,
   catchError,
   concat,
+  concatMap,
+  defer,
   filter,
   forkJoin,
+  from,
   iif,
   map,
   of,
@@ -13,6 +16,7 @@ import {
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
@@ -34,6 +38,8 @@ import {
 } from '@/src/types/toolsets';
 
 import {
+  ApplicationActions,
+  ConversationsActions,
   MarketplaceActions,
   PublicationActions,
   UIActions,
@@ -41,6 +47,7 @@ import {
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import {
   MarketplaceEntitiesTabs,
@@ -51,7 +58,7 @@ import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
-import { uniq } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 import { parse } from 'querystring';
 
 const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
@@ -62,6 +69,24 @@ const isToolsetEditorStep = (step: string): step is ToolsetEditorSteps => {
     default:
       return false;
   }
+};
+
+const getMyWorkspaceUrl = (
+  params?: Partial<Record<MarketplaceQueryParams, unknown>>,
+) => {
+  const route = new URL(Routes.Marketplace);
+  route.searchParams.append(
+    MarketplaceQueryParams.tab,
+    MarketplaceTabs.MY_WORKSPACE,
+  );
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      route.searchParams.append(key, value as string);
+    });
+  }
+
+  return route;
 };
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -205,7 +230,7 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
     }),
   );
 
-const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
+const updateToolsetEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.updateToolset.type),
     switchMap(({ payload }) => {
@@ -270,41 +295,35 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                       ),
                     );
                   }
-                  if (payload.redirectUrl) {
-                    void router.push({
-                      pathname: payload.redirectUrl,
-                      ...(payload.redirectUrl === Routes.Marketplace && {
-                        query: {
-                          [MarketplaceQueryParams.tab]:
-                            MarketplaceTabs.MY_WORKSPACE,
-                          [MarketplaceQueryParams.entitiesTab]:
-                            MarketplaceEntitiesTabs.TOOLSETS,
-                        },
-                      }),
-                    });
-                  }
 
-                  return concat(
+                  const actions: Observable<AppAction>[] = [
                     of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
                         newToolset: savedUpdatedToolset,
+                        isExitingAfterSave: payload.exitAfterSave,
                       }),
                     ),
-                    iif(
-                      () =>
-                        payload.redirectUrl === Routes.Chat &&
-                        !!router.query.publicationUrl,
-                      of(PublicationActions.setIsToolsetReview(true)),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.tabToOpen,
-                      of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
-                      EMPTY,
-                    ),
-                    iif(
-                      () => !!payload.auth,
+                  ];
+
+                  if (payload.exitAfterSave) {
+                    actions.push(
+                      of(
+                        ToolsetActions.exitEditor({
+                          redirectUrl: payload.redirectUrl,
+                          shouldSelectToolset: payload.shouldSelectToolset,
+                        }),
+                      ),
+                    );
+                  } else {
+                    if (payload.tabToOpen) {
+                      actions.push(
+                        of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
+                      );
+                    }
+                  }
+                  if (payload.auth) {
+                    actions.push(
                       of(
                         ToolsetActions.startSignInProcess({
                           authLevel:
@@ -314,9 +333,10 @@ const updateToolsetEpic: AppEpic = (action$, _state$, { router }) =>
                           toolset: savedUpdatedToolset,
                         }),
                       ),
-                      EMPTY,
-                    ),
-                  );
+                    );
+                  }
+
+                  return concat(...actions);
                 }),
               ),
             ),
@@ -444,9 +464,13 @@ const removeFromInstalledToolsetsEpic: AppEpic = (action$, state$) =>
 
       const deletedToolsetsSet = new Set(
         toolsets
-          .filter((toolset) =>
-            toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset)),
-          )
+          .filter((toolset) => {
+            if (isMyEntity(toolset)) {
+              return payload.references.includes(toolset.reference);
+            }
+
+            return toolsetsGroupKeys.has(getGroupMarketplaceEntityKey(toolset));
+          })
           .map((toolset) => toolset.reference),
       );
       const newInstalledToolsets = installedToolsets.filter(
@@ -608,17 +632,25 @@ const startSignInProcessEpic: AppEpic = (action$) =>
             : of(undefined),
       }).pipe(
         switchMap(() => {
+          const autoUpdateAction$ =
+            window.location.pathname === Routes.AppsEditor
+              ? of(ApplicationActions.setShouldTriggerEditorAutoUpdate(true))
+              : EMPTY;
+
           if (
             authSettings?.authenticationType === ToolsetAuthTypes.API_KEY &&
             payload.apiKey
           ) {
-            return of(
-              ToolsetActions.logInToolset({
-                toolsetId: payload.toolset.id,
-                authLevel: payload.authLevel,
-                authType: ToolsetAuthTypes.API_KEY,
-                apiKey: payload.apiKey,
-              }),
+            return concat(
+              autoUpdateAction$,
+              of(
+                ToolsetActions.logInToolset({
+                  toolsetId: payload.toolset.id,
+                  authLevel: payload.authLevel,
+                  authType: ToolsetAuthTypes.API_KEY,
+                  apiKey: payload.apiKey,
+                }),
+              ),
             );
           }
           if (
@@ -657,7 +689,13 @@ const startSignInProcessEpic: AppEpic = (action$) =>
               );
             }
 
-            window.location.assign(url.toString());
+            return concat(
+              autoUpdateAction$,
+              defer(() => {
+                window.location.assign(url.toString());
+                return EMPTY;
+              }),
+            );
           }
 
           return EMPTY;
@@ -670,7 +708,7 @@ const startSignInProcessEpic: AppEpic = (action$) =>
     }),
   );
 
-const logInToolsetEpic: AppEpic = (action$, state$) =>
+const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ToolsetActions.logInToolset.type),
     switchMap(({ payload }) => {
@@ -701,7 +739,8 @@ const logInToolsetEpic: AppEpic = (action$, state$) =>
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
-            window.location.href = callbackUrl;
+            void router.push(new URL(callbackUrl));
+
             return EMPTY;
           }
 
@@ -710,19 +749,20 @@ const logInToolsetEpic: AppEpic = (action$, state$) =>
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
           if (payload.authType === ToolsetAuthTypes.OAUTH) {
-            window.location.href = callbackUrl;
+            void router.push(new URL(callbackUrl));
           }
-          return concat(
-            of(ToolsetActions.logInToolsetFail()),
-            of(
-              UIActions.showErrorToast(
-                translate(errorsMessages.toolsetSignInFailed),
-              ),
-            ),
-          );
+          return concat(of(ToolsetActions.logInToolsetFail()));
         }),
       );
     }),
+  );
+
+const loginToolsetFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.logInToolsetFail.type),
+    map(() =>
+      UIActions.showErrorToast(translate(errorsMessages.toolsetSignInFailed)),
+    ),
   );
 
 const logOutToolsetEpic: AppEpic = (action$, state$) =>
@@ -761,8 +801,16 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
       ToolsetActions.getToolsetDetailsSuccess.type,
       ToolsetActions.updateToolsetSuccess.type,
     ),
-    switchMap(() => {
-      if (window.location.pathname !== Routes.ToolsetEditor) return EMPTY;
+    switchMap((action) => {
+      const isExitingAfterSave =
+        action.type === ToolsetActions.updateToolsetSuccess.type &&
+        action.payload.isExitingAfterSave;
+
+      if (
+        window.location.pathname !== Routes.ToolsetEditor ||
+        isExitingAfterSave
+      )
+        return EMPTY;
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
@@ -805,6 +853,77 @@ const initQueryParamsEpic: AppEpic = (action$) =>
     }),
   );
 
+const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
+  action$.pipe(
+    ofType(ToolsetActions.exitEditor.type),
+    switchMap(({ payload }) => {
+      const query = parse(window.location.search.slice(1));
+      const publicationUrl =
+        query[ToolsetEditorQuery.PublicationUrl]?.toString();
+      const returnUrlQuery = query[ToolsetEditorQuery.ReturnUrl]?.toString();
+      const reference = query[ToolsetEditorQuery.Id]?.toString();
+      const returnUrl = returnUrlQuery
+        ? getSafeRedirectUrl(decodeURIComponent(returnUrlQuery))
+        : undefined;
+      const redirectUrl = payload.redirectUrl
+        ? getSafeRedirectUrl(payload.redirectUrl.toString())
+        : undefined;
+
+      const route =
+        redirectUrl ??
+        returnUrl ??
+        (publicationUrl
+          ? new URL(Routes.Chat)
+          : getMyWorkspaceUrl({
+              [MarketplaceQueryParams.entitiesTab]:
+                MarketplaceEntitiesTabs.TOOLSETS,
+            }));
+
+      if (
+        route.pathname === Routes.Marketplace &&
+        payload.shouldSelectToolset &&
+        reference
+      ) {
+        route.searchParams.append(MarketplaceQueryParams.toolset, reference);
+      }
+
+      const actions: Observable<AppAction>[] = [];
+
+      if (route.pathname === Routes.Marketplace) {
+        if (payload.shouldSelectToolset && reference) {
+          actions.push(
+            of(
+              MarketplaceActions.setDetailsEntity({
+                reference: reference as string,
+                type: MarketplaceEntitiesTabs.TOOLSETS,
+                isSuggested: false,
+              }),
+            ),
+          );
+        }
+      }
+
+      if (!publicationUrl) {
+        actions.push(
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+        );
+      } else {
+        actions.push(
+          of(ConversationsActions.selectConversations({ conversationIds: [] })),
+          of(PublicationActions.setIsToolsetReview(true)),
+        );
+      }
+
+      actions.push(of(UIActions.setEditorLoader(false)));
+
+      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
+    }),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -815,6 +934,7 @@ export const ToolsetEpics = combineEpics(
   updateToolsetEpic,
   setQueryParamsEpic,
   initQueryParamsEpic,
+  exitEditorEpic,
 
   //Delete
   deleteToolsetEpic,
@@ -829,6 +949,7 @@ export const ToolsetEpics = combineEpics(
   //Signin
   startSignInProcessEpic,
   logInToolsetEpic,
+  loginToolsetFailEpic,
   logOutToolsetEpic,
   logOutToolsetFailEpic,
 );

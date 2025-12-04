@@ -21,6 +21,7 @@ export interface ExpectedApiResponse {
   apiMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
   urlPattern?: string | RegExp;
   status?: number;
+  requestBodyPattern?: string | RegExp;
 }
 
 export interface FileMetadata {
@@ -92,6 +93,7 @@ export class BasePage {
         { apiMethod: 'GET', urlPattern: API.modelsHost },
         { apiMethod: 'GET', urlPattern: API.bucketHost },
         { apiMethod: 'GET', urlPattern: API.themesListingHost },
+        { apiMethod: 'GET', urlPattern: API.appSchemasHost },
       ];
     } else {
       expectedApiResponses = [
@@ -641,7 +643,15 @@ export class BasePage {
               ? urlPattern.test(responseUrl)
               : responseUrl.includes(urlPattern)
             : true;
-          return methodMatch && statusMatch && urlMatch;
+          const requestBodyPattern = expectedResponse.requestBodyPattern;
+          const requestBody = response.request().postData();
+          const bodyMatch =
+            requestBodyPattern && requestBody
+              ? requestBodyPattern instanceof RegExp
+                ? requestBodyPattern.test(requestBody)
+                : requestBody.includes(requestBodyPattern)
+              : true;
+          return methodMatch && statusMatch && urlMatch && bodyMatch;
         },
         { timeout: timeout },
       );
@@ -661,6 +671,7 @@ export class BasePage {
           method: expectedResponse.apiMethod || 'ANY',
           urlPattern: expectedResponse.urlPattern?.toString() || 'ANY',
           expectedStatus: expectedResponse.status ?? defaultStatus,
+          body: expectedResponse.requestBodyPattern?.toString() ?? 'ANY',
           timeout: timeout,
           error: (error as Error).message,
         });

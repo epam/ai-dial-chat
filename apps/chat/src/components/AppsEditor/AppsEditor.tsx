@@ -1,10 +1,13 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import {
   getQuickAppDocumentUrl,
+  isApplicationDeployed,
   isApplicationType,
 } from '@/src/utils/app/application';
 import { arraysHaveSameElements } from '@/src/utils/app/common';
@@ -16,8 +19,13 @@ import {
   MarketplaceEditorSteps,
   MarketplaceEntity,
 } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, ShareActions } from '@/src/store/actions';
+import {
+  ApplicationActions,
+  ShareActions,
+  UIActions,
+} from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -28,11 +36,6 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
-import {
-  MarketplaceEntitiesTabs,
-  MarketplaceQueryParams,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
@@ -46,14 +49,6 @@ import {
 
 import { FeatureType } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-const marketplaceRoute = {
-  pathname: Routes.Marketplace,
-  query: {
-    [MarketplaceQueryParams.tab]: MarketplaceTabs.MY_WORKSPACE,
-    [MarketplaceQueryParams.entitiesTab]: MarketplaceEntitiesTabs.AGENTS,
-  },
-};
 
 const checkShouldRevokeAccess = ({
   newApp,
@@ -80,12 +75,15 @@ const checkShouldRevokeAccess = ({
 export const AppsEditor = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { t } = useTranslation(Translation.Marketplace);
 
   const {
     [AppsEditorQuery.Schema]: typeQuery = '',
     [AppsEditorQuery.PublicationUrl]: publicationUrl = '',
+    [AppsEditorQuery.Id]: id,
   } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
+  const isCreateRef = useRef(!id);
 
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
@@ -101,9 +99,14 @@ export const AppsEditor = () => {
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const isSchemaApplicationType = !isApplicationType(type);
+  const shouldTriggerEditorAutoUpdate = useAppSelector(
+    ApplicationSelectors.selectShouldTriggerEditorAutoUpdate,
+  );
 
   const changeEditorTabRef = useRef<MarketplaceEditorSteps | null>(null);
-  const saveAndExitRef = useRef<Routes.Chat | Routes.Marketplace | null>(null);
+  const saveAndExitRef = useRef(false);
+  const redirectToChatRef = useRef(false);
+
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
   const modelsWithFolder = useMemo(
@@ -142,6 +145,7 @@ export const AppsEditor = () => {
   );
   const modelFromState = appDetails ? modelsMap[appDetails.reference] : null;
   const isShared = modelFromState?.isShared ?? false;
+  const isAppDeployed = modelFromState && isApplicationDeployed(modelFromState);
 
   const submitHandler = useCallback(
     (data: AppsEditorFormType) => {
@@ -177,6 +181,13 @@ export const AppsEditor = () => {
             }),
           );
         }
+        if (isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
         dispatch(
           ApplicationActions.update({
             oldApplication: appDetails,
@@ -192,13 +203,16 @@ export const AppsEditor = () => {
               ? decodeURIComponent(publicationUrl.toString())
               : undefined,
             tabToOpen: changeEditorTabRef.current ?? undefined,
-            redirectUrl: saveAndExitRef.current ?? undefined,
+            redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
+            isSaveAndExit: saveAndExitRef.current,
+            shouldSelectApplication: isCreateRef.current,
           }),
         );
       }
 
       changeEditorTabRef.current = null;
-      saveAndExitRef.current = null;
+      saveAndExitRef.current = false;
+      redirectToChatRef.current = false;
       formMethods.reset(formMethods.getValues(), {
         keepIsValid: true,
         keepErrors: true,
@@ -209,11 +223,13 @@ export const AppsEditor = () => {
       appDetails,
       dispatch,
       formMethods,
+      isAppDeployed,
       isSchemaApplicationType,
       isShared,
       marketplaceEntities,
       publicationUrl,
       schema,
+      t,
     ],
   );
 
@@ -245,7 +261,7 @@ export const AppsEditor = () => {
           .then(() => cb?.());
       } else {
         changeEditorTabRef.current = null;
-        saveAndExitRef.current = null;
+        saveAndExitRef.current = false;
         cb?.();
       }
     },
@@ -254,18 +270,23 @@ export const AppsEditor = () => {
 
   const handleSaveAndExit = useCallback(
     (saveDraft = false, redirectToChat = false) => {
-      const chatUrl =
-        (redirectToChat || !!router.query.publicationUrl) && Routes.Chat;
-
       if ((!isDirty && appDetails) || !appDetails || isAppPublic) {
-        void router.push(chatUrl || marketplaceRoute);
+        dispatch(
+          ApplicationActions.exitEditor({
+            redirectUrl: redirectToChat ? Routes.Chat : undefined,
+            shouldSelectApplication: isCreateRef.current,
+          }),
+        );
         return;
       }
 
-      saveAndExitRef.current = chatUrl || Routes.Marketplace;
-      handleSubmit(undefined, saveDraft);
+      saveAndExitRef.current = true;
+      redirectToChatRef.current = redirectToChat;
+      dispatch(UIActions.setEditorLoader(true));
+
+      void handleSubmit(undefined, saveDraft);
     },
-    [isDirty, appDetails, isAppPublic, handleSubmit, router],
+    [isDirty, appDetails, isAppPublic, handleSubmit, dispatch],
   );
 
   const handleTabClick = useCallback(
@@ -276,13 +297,13 @@ export const AppsEditor = () => {
         return;
       }
       if (!isDirty && appDetails) {
-        handleSubmit(
+        void handleSubmit(
           () => dispatch(ApplicationActions.setEditorStep(tab)),
           true,
         );
       } else {
         changeEditorTabRef.current = tab;
-        handleSubmit(undefined, true);
+        void handleSubmit(undefined, true);
       }
     },
     [appDetails, dispatch, editorStep, handleSubmit, isAppPublic, isDirty],
@@ -296,21 +317,28 @@ export const AppsEditor = () => {
       return;
     }
     if (!isDirty && appDetails) {
-      handleSubmit(() =>
+      void handleSubmit(() =>
         dispatch(
           ApplicationActions.setEditorStep(MarketplaceEditorSteps.Settings),
         ),
       );
     } else {
       changeEditorTabRef.current = MarketplaceEditorSteps.Settings;
-      handleSubmit(undefined, !!appDetails);
+      void handleSubmit(undefined, !!appDetails);
     }
   }, [isAppPublic, isDirty, appDetails, dispatch, handleSubmit]);
 
   const handleAutoSave = useCallback(() => {
     if (editorStep === MarketplaceEditorSteps.General || isAppPublic) return;
-    handleSubmit(undefined, true, true);
+    void handleSubmit(undefined, true, true);
   }, [editorStep, handleSubmit, isAppPublic]);
+
+  useEffect(() => {
+    if (shouldTriggerEditorAutoUpdate && !isAppPublic) {
+      void handleSubmit(undefined, true, true);
+      dispatch(ApplicationActions.setShouldTriggerEditorAutoUpdate(false));
+    }
+  }, [shouldTriggerEditorAutoUpdate, isAppPublic, handleSubmit, dispatch]);
 
   return (
     <FormProvider {...formMethods}>

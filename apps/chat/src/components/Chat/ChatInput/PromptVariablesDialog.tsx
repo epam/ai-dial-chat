@@ -202,7 +202,9 @@ export const PromptVariablesDialog: FC<Props> = ({
             </div>
 
             <textarea
-              ref={(el) => (inputsRefs.current[index] = el)}
+              ref={(el) => {
+                inputsRefs.current[index] = el;
+              }}
               className={inputClassName}
               style={{ resize: 'none' }}
               required

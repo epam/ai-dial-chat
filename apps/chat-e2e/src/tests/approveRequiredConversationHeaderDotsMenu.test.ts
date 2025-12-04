@@ -37,6 +37,8 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     adminPublishingApprovalModal,
     adminChat,
+    adminChatAssertion,
+    adminChatMessagesAssertion,
     adminChatHeaderDropdownMenu,
     adminChatHeader,
     downloadAssertion,
@@ -71,6 +73,7 @@ dialAdminTest(
       GeneratorUtil.randomPublicationRequestName();
     const publications: Publication[] = [];
     let expectedTodayConversationId: string;
+    let encodedExpectedTodayConversationId: string;
     let expectedPlaybackConversationId: string;
     let expectedEncodedPlaybackConversationId: string;
     let exportedData: UploadDownloadData;
@@ -155,6 +158,9 @@ dialAdminTest(
     await dialSharedWithMeTest.step(
       'Import the file and verify review conversation is created as a user conversation',
       async () => {
+        encodedExpectedTodayConversationId = ItemUtil.getEncodedItemId(
+          expectedTodayConversationId,
+        );
         await adminDialHomePage.waitForExpectedResponses(
           () =>
             adminDialHomePage.importFile(exportedData, () =>
@@ -163,11 +169,11 @@ dialAdminTest(
           [
             {
               apiMethod: 'POST',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
             {
               apiMethod: 'GET',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
           ],
         );
@@ -225,7 +231,7 @@ dialAdminTest(
           [
             {
               apiMethod: 'POST',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
             {
               apiMethod: 'POST',
@@ -233,7 +239,7 @@ dialAdminTest(
             },
             {
               apiMethod: 'GET',
-              urlPattern: expectedTodayConversationId,
+              urlPattern: encodedExpectedTodayConversationId,
             },
           ],
         );
@@ -353,9 +359,18 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModal.goToEntityReview();
-        for (let i = 1; i <= 2; i++) {
-          await adminChat.getPlaybackControl().playbackNextButton.click();
-        }
+        const playbackControl = adminChat.getPlaybackControl();
+        await adminChatAssertion.assertElementActionabilityState(
+          playbackControl.playbackNextButton,
+          'disabled',
+        );
+        await adminChatAssertion.assertElementActionabilityState(
+          playbackControl.playbackPreviousButton,
+          'enabled',
+        );
+        await adminChatMessagesAssertion.assertMessagesCount(
+          playbackConversation.playback?.messagesStack?.length ?? 0,
+        );
         await adminChatHeader.dotsMenu.click();
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await adminDialHomePage.downloadData(

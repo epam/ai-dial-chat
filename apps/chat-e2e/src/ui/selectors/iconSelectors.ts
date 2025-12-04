@@ -15,4 +15,13 @@ export const IconSelectors = {
   dotCircleIcon: '.tabler-icon-circle-dot',
   filledPointIcon: '.tabler-icon-point-filled',
   exclamationCircleIcon: '.tabler-icon-exclamation-circle',
+  externalAppIcon: '.tabler-icon-external-link',
+  defaultToolsetIcon: '.tabler-icon-blocks.text-primary.dark\\:invert',
+  noToolsetIcon: '.tabler-icon.tabler-icon-blocks',
+  arrowsMaximizeIcon: '.tabler-icon-arrows-maximize',
+  arrowsMinimizeIcon: '.tabler-icon-arrows-minimize',
+  plusIcon: '.tabler-icon-plus',
+  oauthIcon: '.tabler-icon-brand-oauth',
+  keyIcon: '.tabler-icon-key',
+  lockOffIcon: '.tabler-icon-lock-off',
 };

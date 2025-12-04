@@ -81,6 +81,7 @@ import {
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   ConversationsActions,
@@ -98,6 +99,7 @@ import {
   PromptsSelectors,
   PublicationSelectors,
   SettingsSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -241,7 +243,6 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                 getRootFolderIdFromEntityId(r.reviewUrl),
               ),
             );
-
             return forkJoin({
               publication: of(publication),
               uploadedUnpublishIdsSet: from(rootFolderPaths).pipe(
@@ -986,6 +987,36 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             });
           }
 
+          const toolsetResourcesToPublish =
+            selectedPublication.resources.filter((r) =>
+              isToolsetId(r.targetUrl),
+            );
+
+          if (toolsetResourcesToPublish.length) {
+            const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
+            const toolsetsToReplace = toolsetResourcesToPublish
+              .map((r) =>
+                toolsetsMap[r.reviewUrl]
+                  ? ({
+                      ...toolsetsMap[r.reviewUrl],
+                      id: r.targetUrl,
+                    } as ToolsetModel)
+                  : undefined,
+              )
+              .filter((t) => !!t);
+
+            actions.push(
+              ...toolsetsToReplace.map((t) =>
+                of(
+                  ToolsetActions.deleteToolsetSuccess({
+                    reference: t.reference,
+                  }),
+                ),
+              ),
+              of(ToolsetActions.setToolsets(toolsetsToReplace)),
+            );
+          }
+
           return concat(
             ...actions,
             of(
@@ -1371,7 +1402,10 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
           );
 
           const selectedPublicationItems =
-            PublicationSelectors.selectSelectedPublicationItems(state);
+            PublicationSelectors.selectSelectedPublicationItems(
+              state,
+              payload.publicationUrl,
+            );
 
           return concat(
             updateEntityAction$,
@@ -1406,7 +1440,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const publication = PublicationSelectors.selectPublicationByUrl(
         state$.value,
-        payload.publicationUrl as string,
+        payload.publicationUrl,
       );
 
       if (!publication || !publication?.resources || !payload.publicationUrl) {
@@ -1442,7 +1476,10 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           const state = state$.value;
 
           const selectedPublicationItems =
-            PublicationSelectors.selectSelectedPublicationItems(state);
+            PublicationSelectors.selectSelectedPublicationItems(
+              state,
+              payload.publicationUrl,
+            );
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
@@ -1538,7 +1575,10 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           };
 
           const selectedPublicationItems =
-            PublicationSelectors.selectSelectedPublicationItems(state);
+            PublicationSelectors.selectSelectedPublicationItems(
+              state,
+              payload.publicationUrl,
+            );
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
@@ -2015,9 +2055,15 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
       }
 
       const selectedPublicationItems =
-        PublicationSelectors.selectSelectedPublicationItems(state);
+        PublicationSelectors.selectSelectedPublicationItems(
+          state,
+          selectedPublication.url,
+        );
       const selectedCredentialsItems =
-        PublicationSelectors.selectSelectedCredentialsItems(state);
+        PublicationSelectors.selectSelectedCredentialsItems(
+          state,
+          selectedPublication.url,
+        );
       const filteredResources = selectedPublication.resources
         .filter(({ reviewUrl }) => selectedPublicationItems.includes(reviewUrl))
         .map((resource) => ({
@@ -2174,40 +2220,41 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
         state,
       ).pipe(
         switchMap(({ updatedPublication, newItemsToSelect }) => {
+          const newSendMessagePayload = {
+            ...sendMessagePayload,
+            message: {
+              ...sendMessagePayload.message,
+              custom_content: {
+                ...sendMessagePayload.message.custom_content,
+                attachments:
+                  sendMessagePayload.message.custom_content?.attachments?.map(
+                    (attachment) => {
+                      const attachmentUrl = ApiUtils.decodeApiUrl(
+                        attachment.url ?? '',
+                      );
+                      const addedResource = updatedPublication.resources.find(
+                        ({ sourceUrl }) => sourceUrl === attachmentUrl,
+                      );
+
+                      if (
+                        !isMyEntity({ id: attachmentUrl }) ||
+                        !addedResource
+                      ) {
+                        return attachment;
+                      }
+
+                      return {
+                        ...attachment,
+                        url: ApiUtils.encodeApiUrl(addedResource.reviewUrl),
+                      };
+                    },
+                  ),
+              },
+            },
+          };
+
           return concat(
-            of(
-              ConversationsActions.sendMessage({
-                ...sendMessagePayload,
-                message: {
-                  ...sendMessagePayload.message,
-                  custom_content: {
-                    ...sendMessagePayload.message.custom_content,
-                    attachments:
-                      sendMessagePayload.message.custom_content?.attachments?.map(
-                        (attachment) => {
-                          const addedResource =
-                            updatedPublication.resources.find(
-                              (resource) =>
-                                resource.sourceUrl === attachment.url,
-                            );
-
-                          if (
-                            !isMyEntity({ id: attachment.url ?? '' }) ||
-                            !addedResource
-                          ) {
-                            return attachment;
-                          }
-
-                          return {
-                            ...attachment,
-                            url: addedResource.reviewUrl,
-                          };
-                        },
-                      ),
-                  },
-                },
-              }),
-            ),
+            of(ConversationsActions.sendMessage(newSendMessagePayload)),
             of(PublicationActions.uploadPublication({ url: publicationUrl })),
             of(
               PublicationActions.setPublicationItems({
@@ -2229,9 +2276,8 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.selectPublication.type),
     switchMap(() => {
-      const publication = PublicationSelectors.selectSelectedPublication(
-        state$.value,
-      );
+      const state = state$.value;
+      const publication = PublicationSelectors.selectSelectedPublication(state);
       const resources = publication?.resources;
 
       if (!publication) {
@@ -2240,7 +2286,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
       }
 
       const selectedPublicationItems =
-        PublicationSelectors.selectAllSelectedPublicationItems(state$.value);
+        PublicationSelectors.selectAllSelectedPublicationItems(state);
 
       if (selectedPublicationItems[publication.url] !== undefined) {
         return EMPTY;
@@ -2248,7 +2294,7 @@ const onSelectPublicationEffectEpic: AppEpic = (action$, state$) =>
 
       return of(
         PublicationActions.setPublicationItems({
-          publicationUrl: publication?.url ?? '',
+          publicationUrl: publication.url,
           ids: resources?.map(({ reviewUrl }) => reviewUrl) ?? [],
         }),
       );

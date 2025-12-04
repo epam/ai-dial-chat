@@ -44,6 +44,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
     folder_attachments?: boolean;
     allow_resume?: boolean;
     configuration?: boolean;
+    tools?: boolean;
   };
   application_type_schema_id?: string;
   tokenizer_model?: TokenizerModel;
@@ -52,16 +53,20 @@ export interface CoreAIEntity<T = EntityType.Model> {
   function?: {
     status: ApplicationStatus;
   };
+  viewer_url?: string;
+  editor_url?: string;
 }
 
 export interface DialAIEntityFeatures {
-  truncatePrompt?: boolean;
+  truncatePrompt: boolean;
   systemPrompt: boolean;
   temperature: boolean;
-  urlAttachments?: boolean;
-  folderAttachments?: boolean;
-  allowResume?: boolean;
-  configuration?: boolean;
+  urlAttachments: boolean;
+  folderAttachments: boolean;
+  allowResume: boolean;
+  configuration: boolean;
+  tools: boolean;
+  assistantAttachmentsInRequest: boolean;
 }
 
 export interface DialAIEntity {
@@ -100,6 +105,9 @@ export interface DialAIEntityModel
 
   functionStatus?: ApplicationStatus;
   applicationTypeSchemaId?: string;
+
+  viewerUrl?: string;
+  editorUrl?: string;
 }
 
 export interface InstalledModel {

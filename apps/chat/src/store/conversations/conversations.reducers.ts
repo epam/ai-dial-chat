@@ -62,6 +62,8 @@ const initialState: ConversationsState = {
   isStartedCustomViewerConversation: false,
   previewConversationId: null,
   preselectedAction: null,
+
+  moveToConversationId: undefined,
 };
 
 export const conversationsSlice = createSlice({
@@ -502,19 +504,16 @@ export const conversationsSlice = createSlice({
         conversationId: string;
         messageIndex: number;
         rate: LikeState;
-      }>,
-    ) => state,
-    rateMessageSuccess: (
-      state,
-      _action: PayloadAction<{
-        conversationId: string;
-        messageIndex: number;
-        rate: LikeState;
+        comment?: string;
       }>,
     ) => state,
     rateMessageFail: (
       state,
-      _action: PayloadAction<{ error: Response | string }>,
+      _action: PayloadAction<{
+        conversationId: string;
+        messageIndex: number;
+        error: Response | string;
+      }>,
     ) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,
     sendMessages: (state, _action: PayloadAction<SendMessagesPayload>) => state,
@@ -853,6 +852,12 @@ export const conversationsSlice = createSlice({
     ) => state,
     selectAction: (state, { payload }: PayloadAction<string | null>) => {
       state.preselectedAction = payload;
+    },
+    setMoveToConversationId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.moveToConversationId = payload;
     },
   },
 });

@@ -28,8 +28,8 @@ dialAdminTest(
     {
       marketplacePage,
       marketplaceHeader,
-      marketplaceAgentsSection,
-      marketplaceAgents,
+      marketplaceEntitiesSection,
+      marketplaceEntities,
       publishingRequestDialog,
       publishingRequestDialogAssertion,
       publishingRulesAssertion,
@@ -46,7 +46,7 @@ dialAdminTest(
       adminPublishedAppReviewModalAssertion,
       adminPublishedAppReviewModalControlsAssertion,
       setTestIds,
-      marketplaceAgentsAssertion,
+      baseAssertion,
       adminCustomApplicationPublishingUtil,
       publishRequestBuilder,
       customApplicationBuilder,
@@ -66,7 +66,7 @@ dialAdminTest(
       'EPMRTC-5827',
     );
     const appName = GeneratorUtil.randomApplicationName();
-    const appVersion = GeneratorUtil.randomApplicationVersion();
+    const appVersion = GeneratorUtil.randomEntityVersion();
     const appDescription = GeneratorUtil.randomString(10);
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);
@@ -128,14 +128,17 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: false,
-          isEditable: false,
-        });
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: false,
+            isEditable: false,
+          },
+        );
         await appElement.hoverOver();
-        await marketplaceAgents.getAgentElementDotsMenu(appElement).click();
-        await marketplaceAgents
-          .getAgentDropdownMenu()
+        await marketplaceEntities.getEntityElementDotsMenu(appElement).click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.unpublish);
       },
     );
@@ -312,7 +315,7 @@ dialAdminTest(
           expectedFeatures: features,
           expectedAttachmentTypes: [attachmentType],
           expectedMaxAttachmentNumbers: maxAttachments,
-          expectedCompletionUrl: ExpectedConstants.appDefaultCompletionUrl,
+          expectedCompletionUrl: ExpectedConstants.defaultEntityUrl,
         });
         await adminPublishedAppReviewModalControlsAssertion.assertButtonsState({
           backToPublicationRequestButtonState: 'enabled',
@@ -333,7 +336,9 @@ dialAdminTest(
           reviewButtonTitle: ExpectedConstants.continueReviewButtonTitle,
           approveButtonState: 'enabled',
         });
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         //TODO: enable when rollback the temp solution https://github.com/epam/ai-dial-chat/pull/2649
         // await adminApproveRequiredConversationsAssertion.assertFolderState(
         //   { name: requestName },
@@ -352,20 +357,21 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
           getInstalledDeployments: true,
+          updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: true,
-          isEditable: true,
-        });
-        await marketplaceAgentsAssertion.assertElementState(
-          appElement,
-          'visible',
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: true,
+            isEditable: true,
+          },
         );
+        await baseAssertion.assertElementState(appElement, 'visible');
 
-        const actualAgents = await marketplaceAgentsSection.getAllAgents();
-        marketplaceAgentsAssertion.assertValue(
+        const actualAgents = await marketplaceEntitiesSection.getAllEntities();
+        baseAssertion.assertValue(
           actualAgents.length,
           1,
           ExpectedMessages.elementsCountIsValid,
@@ -399,14 +405,14 @@ dialAdminTest(
   async ({
     adminMarketplacePage,
     adminMarketplaceHeader,
-    adminMarketplaceAgentsSection,
-    adminMarketplaceAgents,
+    adminMarketplaceEntitiesSection,
+    adminMarketplaceEntities,
     adminPublishingRequestDialog,
     adminPublishingRequestDialogAssertion,
     baseAssertion,
     adminAppToPublishAssertion,
-    adminAgentDetailsModal,
-    adminAgentDetailsModalAssertion,
+    adminEntityDetailsModal,
+    adminEntityDetailsModalAssertion,
     adminLocalStorageManager,
     adminApproveRequiredPromptsAssertion,
     adminDialHomePage,
@@ -438,8 +444,8 @@ dialAdminTest(
     setTestIds('EPMRTC-5785', 'EPMRTC-5891');
     const appName = GeneratorUtil.randomApplicationName();
     const sortedAppVersions = SortingUtil.sortVersionsArray([
-      GeneratorUtil.randomApplicationVersion(),
-      GeneratorUtil.randomApplicationVersion(),
+      GeneratorUtil.randomEntityVersion(),
+      GeneratorUtil.randomEntityVersion(),
     ]);
     let appElement: BaseElement;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
@@ -495,22 +501,23 @@ dialAdminTest(
         await adminMarketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
           getInstalledDeployments: true,
+          updateInstalledToolsets: false,
         });
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await adminMarketplaceAgentsSection.findAgentElement(
+        appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
-            isWorkspaceAgent: false,
+            isWorkspaceEntity: false,
             isEditable: false,
           },
         );
         await appElement.hoverOver();
-        await adminMarketplaceAgents
-          .getAgentElementDotsMenu(appElement)
+        await adminMarketplaceEntities
+          .getEntityElementDotsMenu(appElement)
           .click();
-        await adminMarketplaceAgents
-          .getAgentDropdownMenu()
+        await adminMarketplaceEntities
+          .getEntityDropdownMenu()
           .selectMenuOption(MenuOptions.unpublish);
       },
     );
@@ -580,7 +587,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Approve the request and then find the app in the "Marketplace"',
       async () => {
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: requestName },
           'hidden',
@@ -593,10 +602,10 @@ dialAdminTest(
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
         await adminMarketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await adminMarketplaceAgentsSection.findAgentElement(
+        appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
-            isWorkspaceAgent: false,
+            isWorkspaceEntity: false,
             isEditable: false,
           },
         );
@@ -607,15 +616,15 @@ dialAdminTest(
       'Open the app card and verify only the minor version is displayed',
       async () => {
         await appElement.click();
-        await adminAgentDetailsModalAssertion.assertElementState(
-          adminAgentDetailsModal,
+        await adminEntityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal,
           'visible',
         );
-        await adminAgentDetailsModalAssertion.assertApplicationVersion(
+        await adminEntityDetailsModalAssertion.assertEntityVersion(
           sortedAppVersions[1],
         );
-        await adminAgentDetailsModalAssertion.assertElementState(
-          adminAgentDetailsModal.getVersionDropdownMenu(),
+        await adminEntityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal.getVersionDropdownMenu(),
           'hidden',
         );
       },
@@ -652,9 +661,9 @@ dialAdminTest(
   async ({
     marketplacePage,
     marketplaceHeader,
-    marketplaceAgentsSection,
-    agentDetailsModal,
-    marketplaceAgents,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    marketplaceEntities,
     publishingRequestDialog,
     publishingRequestDialogAssertion,
     appToPublishAssertion,
@@ -668,8 +677,8 @@ dialAdminTest(
     adminPublishedApplicationReviewModal,
     adminPublishedAppReviewModalAssertion,
     setTestIds,
-    marketplaceAgentsAssertion,
-    agentDetailsModalAssertion,
+    baseAssertion,
+    entityDetailsModalAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
     setTestIds('EPMRTC-5786', 'EPMRTC-5942');
@@ -707,16 +716,19 @@ dialAdminTest(
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: false,
-          isEditable: false,
-        });
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: false,
+            isEditable: false,
+          },
+        );
         await appElement.click();
-        await agentDetailsModal.versionMenuTrigger.click();
-        await agentDetailsModal
+        await entityDetailsModal.versionMenuTrigger.click();
+        await entityDetailsModal
           .getVersionDropdownMenu()
           .selectMenuOption(sortedAppVersions[1]);
-        await agentDetailsModal.unpublishButton.click();
+        await entityDetailsModal.unpublishButton.click();
       },
     );
 
@@ -786,7 +798,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Approve the request and then find the app in the "Marketplace"',
       async () => {
-        await adminPublishingApprovalModal.approveRequest();
+        await adminPublishingApprovalModal.approveRequest({
+          isModelsListRetrieved: true,
+        });
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: requestName },
           'hidden',
@@ -794,12 +808,15 @@ dialAdminTest(
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.searchInput.fillInInput(appName);
-        appElement = await marketplaceAgentsSection.findAgentElement(appName, {
-          isWorkspaceAgent: false,
-          isEditable: false,
-        });
-        await marketplaceAgentsAssertion.assertElementText(
-          marketplaceAgents.getAgentVersion(appElement),
+        appElement = await marketplaceEntitiesSection.findEntityElement(
+          appName,
+          {
+            isWorkspaceEntity: false,
+            isEditable: false,
+          },
+        );
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityVersion(appElement),
           sortedAppVersions[0],
         );
       },
@@ -809,15 +826,15 @@ dialAdminTest(
       'Open the app card and verify only the major version is displayed',
       async () => {
         await appElement.click();
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal,
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
           'visible',
         );
-        await agentDetailsModalAssertion.assertApplicationVersion(
+        await entityDetailsModalAssertion.assertEntityVersion(
           sortedAppVersions[0],
         );
-        await agentDetailsModalAssertion.assertElementState(
-          agentDetailsModal.getVersionDropdownMenu(),
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.getVersionDropdownMenu(),
           'hidden',
         );
       },

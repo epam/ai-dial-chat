@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import { OverflowContainer } from '@/src/components/Common/OverflowContainer';
 import { OverflowIndicator } from '@/src/components/Common/OverflowIndicator';
 
-import { ApplicationTopic } from './ApplicationTopic';
+import { MarketplaceEntityTopic } from './MarketplaceEntityTopic';
 
 interface TopicsListProps {
   topics: string[];
@@ -23,13 +23,9 @@ export const TopicsList = ({
     (hiddenItems: { topic: string }[]) => (
       <OverflowIndicator
         count={hiddenItems.length}
-        tooltipContent={
-          <>
-            {hiddenItems.map((item) => (
-              <ApplicationTopic key={item.topic} topic={item.topic} />
-            ))}
-          </>
-        }
+        tooltipContent={hiddenItems.map((item) => (
+          <MarketplaceEntityTopic key={item.topic} topic={item.topic} />
+        ))}
         placement="top"
         displayDelay={100}
         dataQA="hidden-topics"
@@ -43,10 +39,10 @@ export const TopicsList = ({
       items={items}
       getKey={getKey}
       overflowIndicatorWidth={COUNTER_WIDTH + counterMarginRight}
-      renderItem={ApplicationTopic}
+      renderItem={MarketplaceEntityTopic}
       renderOverflow={renderOverflow}
       className="flex w-full gap-2"
-      dataQA="app-topics"
+      dataQA="entity-topics"
     />
   );
 };

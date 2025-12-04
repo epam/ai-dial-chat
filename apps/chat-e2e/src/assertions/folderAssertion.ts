@@ -1,5 +1,10 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementCaretState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { TreeEntity } from '@/src/testData/types';
 import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
@@ -14,12 +19,12 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
   }
 
   public async assertFolderState(
-    folder: TreeEntity,
+    folder: TreeEntity | string,
     expectedState: ElementState,
   ) {
     const folderLocator = this.folder.getFolderByName(
-      folder.name,
-      folder.index,
+      typeof folder === 'string' ? folder : folder.name,
+      typeof folder === 'string' ? undefined : folder.index,
     );
     await this.assertElementState(folderLocator, expectedState);
   }
@@ -435,5 +440,22 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
       expectedCount,
       expectedMessage,
     );
+  }
+
+  public async assertFolderCaretState(
+    folder: TreeEntity,
+    expectedState: ElementCaretState,
+  ) {
+    const isExpanded = await this.folder.isFolderCaretExpanded(
+      folder.name,
+      folder.index,
+    );
+
+    const expectedExpanded = expectedState === 'expanded';
+    const message = expectedExpanded
+      ? ExpectedMessages.caretIsExpanded
+      : ExpectedMessages.caretIsCollapsed;
+
+    this.assertBooleanCondition(isExpanded, expectedExpanded, message);
   }
 }
