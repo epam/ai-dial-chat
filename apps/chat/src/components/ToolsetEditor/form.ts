@@ -33,10 +33,7 @@ export const ToolsetLoginFormSchema = zodValidation
     scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
-    if (
-      data.authenticationType === ToolsetAuthTypes.API_KEY &&
-      data.withLogin === WithLogin.WithLogin
-    ) {
+    if (data.authenticationType === ToolsetAuthTypes.API_KEY) {
       if (!data.keyHeader?.trim()) {
         ctx.addIssue({
           code: 'custom',
@@ -44,7 +41,7 @@ export const ToolsetLoginFormSchema = zodValidation
           message: 'Key name is required',
         });
       }
-      if (!data.apiKey?.trim()) {
+      if (!data.apiKey?.trim() && data.withLogin === WithLogin.WithLogin) {
         ctx.addIssue({
           code: 'custom',
           path: ['apiKey'],

@@ -1,15 +1,13 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import { isToolsetSignedIn, isToolsetWithAuth } from '@/src/utils/app/toolsets';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { Badge } from '@/src/components/Badge';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-
-import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
 interface CredentialsStatusIndicatorProps {
   entity: ToolsetModel;
@@ -31,7 +29,7 @@ export const CredentialsStatusIndicator = ({
   const loginLabel = isSignedInUser || !isPublic ? 'MY CREDS' : 'ORG CREDS';
   const label = isSignedIn ? loginLabel : 'LOGGED OUT';
 
-  if (entity.authSettings.authenticationType === ToolsetAuthTypes.NONE) {
+  if (!isToolsetWithAuth(entity)) {
     return null;
   }
 
