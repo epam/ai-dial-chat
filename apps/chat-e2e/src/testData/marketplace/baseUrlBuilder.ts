@@ -2,7 +2,7 @@ import config from '@/config/chat.playwright.config';
 
 export abstract class BaseUrlBuilder {
   protected readonly baseUrl: string;
-  protected queryParams = new Map<string, string | string[]>();
+  protected queryParams = new Map<string, string | string[] | number>();
 
   protected constructor(basePath = '', includeBaseURL = true) {
     this.baseUrl = includeBaseURL ? config.use!.baseURL! + basePath : basePath;
@@ -10,13 +10,16 @@ export abstract class BaseUrlBuilder {
 
   protected addParam(
     key: string,
-    value: string | string[] | null | undefined,
+    value: string | string[] | number | null | undefined,
   ): this {
     if (!value) return this;
 
     if (Array.isArray(value) && value.length > 0) {
       this.queryParams.set(key, value);
-    } else if (typeof value === 'string' && value.trim()) {
+    } else if (
+      (typeof value === 'string' && value.trim()) ||
+      typeof value === 'number'
+    ) {
       this.queryParams.set(key, value);
     }
     return this;

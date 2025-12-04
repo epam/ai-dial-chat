@@ -12,6 +12,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
+import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isExternalApp } from '@/src/utils/app/application';
@@ -96,6 +97,7 @@ interface AgentAndToolsetModalViewProps {
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   saveSliderStateInURL: boolean;
+  sessionKey: string;
   onClose: () => void;
   onConfirm: (selectedIds: string[]) => void;
 }
@@ -104,6 +106,7 @@ const AgentAndToolsetModalView = ({
   initialSelectedIds,
   allItemsMap,
   saveSliderStateInURL,
+  sessionKey,
   onClose,
   onConfirm,
 }: AgentAndToolsetModalViewProps) => {
@@ -146,7 +149,8 @@ const AgentAndToolsetModalView = ({
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
   );
-  const [selectedIds, setSelectedIds] = useState<string[]>(
+  const [selectedIds, setSelectedIds] = useSessionStorageState<string[]>(
+    sessionKey,
     initialSelectedIds ?? [],
   );
   const [scrollToItemId, setScrollToItemId] = useState<string | null>(null);
@@ -219,7 +223,7 @@ const AgentAndToolsetModalView = ({
       }
       setScrollToItemId(null);
     },
-    [selectedIds],
+    [selectedIds, setSelectedIds],
   );
 
   const handleSetVersion = useCallback(
@@ -246,7 +250,7 @@ const AgentAndToolsetModalView = ({
       });
       setScrollToItemId(null);
     },
-    [],
+    [setSelectedIds],
   );
 
   const handleSetScopeTab = useCallback(
@@ -262,10 +266,13 @@ const AgentAndToolsetModalView = ({
     setShouldResetSliderState(true);
   };
 
-  const handleRemoveItem = useCallback((idToRemove: string) => {
-    setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
-    setScrollToItemId(null);
-  }, []);
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
+      setScrollToItemId(null);
+    },
+    [setSelectedIds],
+  );
 
   const searchedAgents = useFuseSearch(
     allAgents,
@@ -536,6 +543,37 @@ export const AgentAndToolsetModal = ({
   onClose,
   onConfirm,
 }: Props) => {
+  const router = useRouter();
+  const sessionKey = useMemo(() => {
+    const { pathname, query, isReady } = router;
+
+    if (!isReady) {
+      return 'agent-toolset-temporary-selection-loading';
+    }
+
+    let contextId: string | undefined = undefined;
+
+    if (pathname.startsWith(Routes.AppsEditor)) {
+      const id = query[AppsEditorQuery.Id];
+      if (typeof id === 'string') {
+        contextId = id;
+      }
+    } else if (pathname.startsWith(Routes.Chat)) {
+      const chatId = query.chatId;
+      if (typeof chatId === 'string') {
+        contextId = chatId;
+      } else if (Array.isArray(chatId) && chatId.length > 0) {
+        contextId = chatId[chatId.length - 1];
+      }
+    }
+
+    if (contextId) {
+      return `agent-toolset-temporary-selection-${contextId}`;
+    }
+
+    return 'agent-toolset-temporary-selection-fallback';
+  }, [router]);
+
   const isModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
@@ -552,6 +590,19 @@ export const AgentAndToolsetModal = ({
     isToolsetsLoading ||
     !isInstalledModelsInitialized ||
     !isInstalledToolsetsInitialized;
+
+  const handleClose = useCallback(() => {
+    window.sessionStorage.removeItem(sessionKey);
+    onClose();
+  }, [onClose, sessionKey]);
+
+  const handleConfirm = useCallback(
+    (selectedIds: string[]) => {
+      window.sessionStorage.removeItem(sessionKey);
+      onConfirm(selectedIds);
+    },
+    [onConfirm, sessionKey],
+  );
 
   useEffect(() => {
     return () => {
@@ -584,15 +635,16 @@ export const AgentAndToolsetModal = ({
       state={isLoading ? ModalState.LOADING : ModalState.OPENED}
       dataQa="talk-to-agent"
       containerClassName="flex items-center xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
-      onClose={onClose}
+      onClose={handleClose}
       heading
     >
       <AgentAndToolsetModalView
-        onClose={onClose}
-        onConfirm={onConfirm}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
         initialSelectedIds={initialSelectedIds}
         allItemsMap={allItemsMap}
         saveSliderStateInURL={saveSliderStateInURL}
+        sessionKey={sessionKey}
       />
     </Modal>
   );
