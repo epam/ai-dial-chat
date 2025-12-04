@@ -168,7 +168,7 @@ export class MarketplacePage extends BasePage {
 
     let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
       .withReturnUrl(returnUrl)
-      .withIsCreate(true);
+      .withIsCreating();
     if (appTypeSchema) {
       entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
     }
