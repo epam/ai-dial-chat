@@ -42,6 +42,8 @@ export function withRenderWhenNot(selector: (state: RootState) => unknown) {
 export function withRenderWhenFeature(feature: Feature) {
   return function <T extends object>(WrappedComponent: ComponentType<T>) {
     const ComponentWithRenderWhen = (props: T) => {
+      'use no memo';
+
       const shouldRender = useAppSelector((state) =>
         SettingsSelectors.isFeatureEnabled(state, feature),
       );
