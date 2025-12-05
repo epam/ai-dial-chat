@@ -279,7 +279,7 @@ dialTest(
         await toolsetEditorViewFormAssertion.assertToolsetEditorViewFormAttributes(
           {
             endpoint: '',
-            transportProtocol: ToolsetTransportType.SSE,
+            transportProtocol: ToolsetTransportType.HTTP,
             availableAuthTypes: Object.values(ToolsetAuthTypes),
             selectedAuthType: ToolsetAuthTypes.NONE,
             allowedTools: [],
