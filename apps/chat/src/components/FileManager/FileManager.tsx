@@ -93,7 +93,7 @@ export const FileManager: React.FC = () => {
     }
   }, [dispatch, currentPath, bucketRootId, destinationPath, folders]);
 
-  const { fileTreeItems, rootFolder } = useMemo(() => {
+  const { fileTreeItems, rootFolder, loadedFoldersPaths } = useMemo(() => {
     let filteredFiles = files;
     let filteredFolders = folders;
     let breadcrumbLabel = t('My Files');
@@ -124,14 +124,14 @@ export const FileManager: React.FC = () => {
         break;
     }
 
-    const { rootFolder, items } = buildFileTree(
+    const { rootFolder, items, loadedFoldersPaths } = buildFileTree(
       filteredFiles,
       filteredFolders,
       bucketRootId,
       breadcrumbLabel,
     );
 
-    return { rootFolder, fileTreeItems: items };
+    return { rootFolder, fileTreeItems: items, loadedFoldersPaths };
   }, [files, folders, bucketRootId, activeTab, t]);
 
   const getParentPaths = (path: string | undefined): string[] => {
@@ -200,6 +200,7 @@ export const FileManager: React.FC = () => {
         expandedPaths,
         collapsed: treeCollapsedState,
         onCollapseChange: setTreeCollapsedState,
+        loadedPaths: loadedFoldersPaths,
         actionLabels: {
           duplicate: t('Duplicate'),
           copy: t('Copy to'),

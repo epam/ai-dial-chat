@@ -3,6 +3,7 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileNodeType,
   DialFileResourceType,
@@ -113,11 +114,19 @@ export const buildFileTree = (
   folders: FileFolderInterface[],
   rootPath: string = getFileRootId(),
   breadcrumbLabel?: string,
-): { rootFolder: DialRootFolder; items: UIKitDialFile[] } => {
+): {
+  rootFolder: DialRootFolder;
+  items: UIKitDialFile[];
+  loadedFoldersPaths: Set<string>;
+} => {
   const uikitFiles = files.map(convertToUIKitFile);
 
   const folderMap = new Map<string, UIKitDialFile>();
   const rootItems: UIKitDialFile[] = [];
+
+  const loadedFoldersPaths = new Set(
+    folders.filter((f) => f.status === UploadStatus.LOADED).map((f) => f.id),
+  );
 
   const sortedFolders = [...folders].sort((a, b) => {
     const depthA = a.id.split('/').length;
@@ -176,5 +185,5 @@ export const buildFileTree = (
     breadcrumbLabel: breadcrumbLabel || 'Files',
   };
 
-  return { rootFolder, items: [rootFolder] };
+  return { rootFolder, items: [rootFolder], loadedFoldersPaths };
 };
