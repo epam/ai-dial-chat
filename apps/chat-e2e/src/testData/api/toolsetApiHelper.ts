@@ -7,7 +7,7 @@ import { Toolset } from '@epam/ai-dial-shared';
 export class ToolsetApiHelper extends BaseApiHelper {
   public async createToolset(toolsetModel: Toolset) {
     const url = `${API.toolsetCreateHost()}/${this.userBucket ?? BucketUtil.getBucket()}/${toolsetModel.display_name}${ItemUtil.entityIdSeparator}${toolsetModel.display_version}`;
-    const response = await this.request.post(
+    const response = await this.request.put(
       this.getHost(ItemUtil.getEncodedItemId(url)),
       {
         data: toolsetModel,

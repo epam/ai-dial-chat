@@ -1,3 +1,5 @@
+import { OAuthOptions } from '@/src/testData';
+import { Attributes, Tags } from '@/src/ui/domData';
 import {
   AddToolsetSettingsFormSelector,
   IconSelectors,
@@ -41,6 +43,12 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   public authDetailsContainer = this.getChildElementBySelector(
     AddToolsetSettingsFormSelector.authDetailsContainer,
   );
+  public oAuthOptions = this.authDetailsContainer
+    .getChildElementBySelector(Tags.label)
+    .getElementLocator()
+    .filter({ has: this.page.getByRole('radio') });
+  public oAuthOption = (loginOption: OAuthOptions) =>
+    this.oAuthOptions.locator(`[${Attributes.id}="${loginOption}"]`);
   public signInButton = this.authDetailsContainer.getChildElementBySelector(
     AddToolsetSettingsFormSelector.signInButton,
   );

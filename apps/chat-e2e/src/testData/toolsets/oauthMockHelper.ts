@@ -1,4 +1,6 @@
 import { Routes } from '@/chat/constants/routes';
+import { ServerSlugs } from '@/chat/types/slugs-types';
+import { ToolsetAuthPayloadBase } from '@/chat/types/toolsets';
 import config from '@/config/chat.playwright.config';
 import { API, OAuthQueryParams } from '@/src/testData';
 import {
@@ -22,11 +24,12 @@ export interface OAuthState {
   callbackUrl: string | null;
   enableMocking: boolean;
   signInRequest: ToolsetSignInRequest | null;
+  signOutRequest: ToolsetAuthPayloadBase | null;
 }
 
 export class OAuthMockHelper {
   private page: Page;
-  private readonly initialToolset: Toolset;
+  private initialToolset: Toolset;
   private readonly toolsetEndpoint: string;
   private readonly mockConfig: OAuthMockConfig;
   private readonly authorizationCode: string;
@@ -41,6 +44,7 @@ export class OAuthMockHelper {
     callbackUrl: null,
     enableMocking: false,
     signInRequest: null,
+    signOutRequest: null,
   };
 
   constructor(
@@ -91,6 +95,7 @@ export class OAuthMockHelper {
     await this.setupToolsetRoutes();
     await this.setupSignInRoute();
     await this.setupOAuthRedirectRoute();
+    await this.setupSignOutRoute();
   }
 
   enableMocking(): void {
@@ -103,6 +108,14 @@ export class OAuthMockHelper {
 
   getSignInRequest(): ToolsetSignInRequest | null {
     return this.state.signInRequest;
+  }
+
+  getSignOutRequest(): ToolsetAuthPayloadBase | null {
+    return this.state.signOutRequest;
+  }
+
+  getInitialToolset(): Toolset {
+    return this.initialToolset;
   }
 
   /**
@@ -150,7 +163,15 @@ export class OAuthMockHelper {
     await this.page.unrouteAll({ behavior: 'ignoreErrors' });
   }
 
-  public async setupToolsetRoutes(): Promise<void> {
+  public async setupUpdatedToolsetRoutes(
+    updatedToolsetProps: Partial<Toolset>,
+  ): Promise<void> {
+    const mergedOptions = { ...this.initialToolset, ...updatedToolsetProps };
+    return this.setupToolsetRoutes(mergedOptions);
+  }
+
+  public async setupToolsetRoutes(updatedToolset?: Toolset): Promise<void> {
+    this.initialToolset = updatedToolset ?? this.initialToolset;
     await this.page.route(
       `**${API.api}/${this.initialToolset.id}`,
       async (route, request) => {
@@ -244,6 +265,23 @@ export class OAuthMockHelper {
       this.state.callbackUrl = `${redirectUri}?${OAuthQueryParams.code}=${this.authorizationCode}&${OAuthQueryParams.state}=${this.state.capturedState}`;
       // Abort the redirect
       await route.abort('aborted');
+    });
+  }
+
+  public async setupSignOutRoute(): Promise<void> {
+    const signOutUrl = `**${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_OUT}`;
+    // Intercept OAuth redirect
+    await this.page.route(signOutUrl, async (route, request) => {
+      this.state.isSignedIn = false;
+      this.state.signOutRequest = request.postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'Sign-out successful',
+        }),
+      });
     });
   }
 }

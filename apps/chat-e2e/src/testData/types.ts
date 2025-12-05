@@ -75,3 +75,8 @@ export enum ImportResolutionOption {
   Postfix = 'Postfix',
   Ignore = 'Ignore',
 }
+
+export enum OAuthOptions {
+  WithLogin = 'With login',
+  WithConfig = 'With login & config',
+}
