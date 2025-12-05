@@ -176,7 +176,8 @@ const AuthTypeSection = ({
               )}
             </div>
 
-            {withLogin !== WithLogin.WithoutLogin && (
+            {(withLogin !== WithLogin.WithoutLogin ||
+              type === ToolsetAuthTypes.API_KEY) && (
               <ToolsetLoginForm
                 onLogin={onLogin}
                 type={type}
