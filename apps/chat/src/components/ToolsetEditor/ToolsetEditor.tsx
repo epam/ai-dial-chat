@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 
 import { getValidFormFields } from '@/src/utils/app/forms';
-import { getToolsetPayload } from '@/src/utils/app/toolsets';
+import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
@@ -199,6 +199,10 @@ export const ToolsetEditor = () => {
       formMethods.resetField('authenticationType', {
         defaultValue: toolsetDetails.authSettings.authenticationType,
         keepDirty: false,
+      });
+      formMethods.setValue('isLoggedIn', isToolsetSignedIn(toolsetDetails), {
+        shouldDirty: false,
+        shouldValidate: false,
       });
     }
   }, [formMethods, toolsetDetails]);
