@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -60,7 +54,7 @@ export const FileManager: React.FC = () => {
     shared: t('Shared with Me'),
     organization: t('Organization'),
   });
-  const previousActiveTab = useDeferredValue(activeTab);
+  const previousActiveTabRef = useRef(activeTab);
 
   const bucketRootId = useMemo(
     () => getFileRootId(getEntityBucket({ id: currentPath ?? '' })),
@@ -139,12 +133,16 @@ export const FileManager: React.FC = () => {
       breadcrumbLabel,
     );
 
-    if (bucketRootId !== rootFolder.id || activeTab !== previousActiveTab) {
+    if (
+      bucketRootId !== rootFolder.id ||
+      activeTab !== previousActiveTabRef.current
+    ) {
       setCurrentPath(rootFolder.id);
+      previousActiveTabRef.current = activeTab;
     }
 
     return { rootFolder, fileTreeItems: items, loadedFoldersPaths };
-  }, [t, files, folders, activeTab, previousActiveTab, bucketRootId]);
+  }, [t, files, folders, activeTab, previousActiveTabRef, bucketRootId]);
 
   const getParentPaths = (path: string | undefined): string[] => {
     if (!path) return [];
