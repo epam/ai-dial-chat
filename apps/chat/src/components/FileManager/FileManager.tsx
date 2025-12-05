@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -7,7 +13,7 @@ import {
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
-import { getFileRootId } from '@/src/utils/app/id';
+import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -54,9 +60,12 @@ export const FileManager: React.FC = () => {
     shared: t('Shared with Me'),
     organization: t('Organization'),
   });
+  const previousActiveTab = useDeferredValue(activeTab);
 
-  // Get bucket root ID - recalculated on each render after bucket is set
-  const bucketRootId = getFileRootId();
+  const bucketRootId = useMemo(
+    () => getFileRootId(getEntityBucket({ id: currentPath ?? '' })),
+    [currentPath],
+  );
 
   useEffect(() => {
     if (!initialized) {
@@ -127,12 +136,15 @@ export const FileManager: React.FC = () => {
     const { rootFolder, items, loadedFoldersPaths } = buildFileTree(
       filteredFiles,
       filteredFolders,
-      bucketRootId,
       breadcrumbLabel,
     );
 
+    if (bucketRootId !== rootFolder.id || activeTab !== previousActiveTab) {
+      setCurrentPath(rootFolder.id);
+    }
+
     return { rootFolder, fileTreeItems: items, loadedFoldersPaths };
-  }, [files, folders, bucketRootId, activeTab, t]);
+  }, [t, files, folders, activeTab, previousActiveTab, bucketRootId]);
 
   const getParentPaths = (path: string | undefined): string[] => {
     if (!path) return [];

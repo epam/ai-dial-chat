@@ -1,4 +1,4 @@
-import { getFileRootId } from '@/src/utils/app/id';
+import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
@@ -112,7 +112,6 @@ export const convertToUIKitFolder = (
 export const buildFileTree = (
   files: DialFile[],
   folders: FileFolderInterface[],
-  rootPath: string = getFileRootId(),
   breadcrumbLabel?: string,
 ): {
   rootFolder: DialRootFolder;
@@ -174,10 +173,14 @@ export const buildFileTree = (
     }
   });
 
+  const rootId = getFileRootId(
+    getEntityBucket({ id: rootItems?.[0]?.id || '' }),
+  );
+
   const rootFolder: DialRootFolder = {
-    id: rootPath,
+    id: rootId,
     name: 'Files',
-    path: rootPath,
+    path: rootId,
     folderId: '',
     nodeType: DialFileNodeType.FOLDER,
     items: rootItems,
