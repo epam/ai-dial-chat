@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { isExecutableApp } from '@/src/utils/app/application';
 import { getEntityBaseId } from '@/src/utils/app/common';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
@@ -19,12 +20,16 @@ export const AgentAndToolsetSelectItem: React.FC<
   const currentBaseId = getEntityBaseId(groupItem.id);
   const isSelected = selectedBaseIdsSet.has(currentBaseId);
 
+  const hasEntityContextMenu = (entity: MarketplaceEntity): boolean => {
+    return isToolsetEntityModel(entity) || isExecutableApp(entity);
+  };
+
   return (
     <ItemCardView
       entity={groupItem}
       isSelected={isSelected}
       onClick={onToggleSelectItem}
-      hasContextMenu={isToolsetEntityModel(groupItem)}
+      hasContextMenu={hasEntityContextMenu(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}
       className="bg-layer-2 hover:bg-layer-3"
     />
