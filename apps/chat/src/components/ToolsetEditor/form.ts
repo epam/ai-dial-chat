@@ -156,7 +156,7 @@ export const getDefaultFormData = (
       toolset?.name ??
       getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
     endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
-    protocol: toolset?.transport ?? ToolsetTransportType.SSE,
+    protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
