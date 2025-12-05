@@ -1,4 +1,5 @@
 import { getNextDefaultName } from '@/src/utils/app/folders';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
@@ -22,6 +23,7 @@ export const ToolsetLoginFormSchema = zodValidation
   .object({
     withLogin: zodValidation.enum(WithLogin),
     authenticationType: zodValidation.enum(ToolsetAuthTypes),
+    isLoggedIn: zodValidation.boolean(),
     // API_KEY
     keyHeader: zodValidation.string().optional(),
     apiKey: zodValidation.string().optional(),
@@ -33,10 +35,8 @@ export const ToolsetLoginFormSchema = zodValidation
     scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
-    if (
-      data.authenticationType === ToolsetAuthTypes.API_KEY &&
-      data.withLogin === WithLogin.WithLogin
-    ) {
+    if (data.isLoggedIn) return;
+    if (data.authenticationType === ToolsetAuthTypes.API_KEY) {
       if (!data.keyHeader?.trim()) {
         ctx.addIssue({
           code: 'custom',
@@ -44,7 +44,7 @@ export const ToolsetLoginFormSchema = zodValidation
           message: 'Key name is required',
         });
       }
-      if (!data.apiKey?.trim()) {
+      if (!data.apiKey?.trim() && data.withLogin === WithLogin.WithLogin) {
         ctx.addIssue({
           code: 'custom',
           path: ['apiKey'],
@@ -117,6 +117,7 @@ export const getDefaultLoginFormData = (
     case ToolsetAuthTypes.API_KEY:
       return {
         authenticationType,
+        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
         withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
         keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
         apiKey: prevData?.apiKey ?? '',
@@ -124,6 +125,7 @@ export const getDefaultLoginFormData = (
     case ToolsetAuthTypes.OAUTH:
       return {
         authenticationType,
+        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
         clientId: toolset?.authSettings?.clientId ?? '',
         clientSecret: toolset?.authSettings?.clientSecret ?? '',
         authorizationEndpoint:
@@ -140,6 +142,7 @@ export const getDefaultLoginFormData = (
     case ToolsetAuthTypes.NONE:
     default:
       return {
+        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
         withLogin: WithLogin.WithoutLogin,
         authenticationType,
       };
