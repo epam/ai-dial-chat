@@ -42,6 +42,8 @@ import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/Entit
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
+export type DisabledActions = Record<string, boolean>;
+
 interface ItemCardViewProps<T extends MarketplaceEntity> {
   entity: T;
   isSelected: boolean;
@@ -52,28 +54,8 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
   hasContextMenu?: boolean;
   className?: string;
   selectedBaseIdsSet?: Set<string>;
+  overrideDisabledActions?: Partial<DisabledActions>;
 }
-
-const agentDisabledActions = {
-  copyLink: true,
-  edit: true,
-  share: true,
-  unshare: true,
-  publish: true,
-  unpublish: true,
-  logs: true,
-  delete: true,
-};
-
-const toolsetDisabledActions = {
-  copyLink: true,
-  edit: true,
-  share: true,
-  unshare: true,
-  publish: true,
-  unpublish: true,
-  delete: true,
-};
 
 export const ItemCardView = <T extends MarketplaceEntity>({
   entity,
@@ -85,6 +67,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   hasContextMenu = true,
   className,
   selectedBaseIdsSet,
+  overrideDisabledActions,
 }: ItemCardViewProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -104,6 +87,28 @@ export const ItemCardView = <T extends MarketplaceEntity>({
     isLoggedOut ||
     (isDialAiEntityModel(entity) &&
       entity.functionStatus !== ApplicationStatus.DEPLOYED);
+
+  const disabledActions = useMemo(() => {
+    const baseActions: DisabledActions = isDialAiEntityModel(entity)
+      ? {
+          copyLink: true,
+          unpublish: true,
+        }
+      : {
+          copyLink: true,
+          edit: true,
+          share: true,
+          unshare: true,
+          publish: true,
+          unpublish: true,
+          delete: true,
+        };
+
+    return {
+      ...baseActions,
+      ...overrideDisabledActions,
+    };
+  }, [entity, overrideDisabledActions]);
 
   const versionsToSelect = useMemo(() => {
     const sourceList = isDialAiEntityModel(entity)
@@ -159,11 +164,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
           <MarketplaceEntityContextMenu
             className="xl:invisible group-hover:xl:visible"
             entity={entity}
-            disabledActions={
-              isDialAiEntityModel(entity)
-                ? agentDisabledActions
-                : toolsetDisabledActions
-            }
+            disabledActions={disabledActions}
           />
         </div>
       )}

@@ -20,6 +20,15 @@ export const AgentAndToolsetSelectItem: React.FC<
   const currentBaseId = getEntityBaseId(groupItem.id);
   const isSelected = selectedBaseIdsSet.has(currentBaseId);
 
+  const disabledAgentActions = {
+    edit: true,
+    share: true,
+    unshare: true,
+    publish: true,
+    logs: true,
+    delete: true,
+  };
+
   const hasEntityContextMenu = (entity: MarketplaceEntity): boolean => {
     return isToolsetEntityModel(entity) || isExecutableApp(entity);
   };
@@ -32,6 +41,7 @@ export const AgentAndToolsetSelectItem: React.FC<
       hasContextMenu={hasEntityContextMenu(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}
       className="bg-layer-2 hover:bg-layer-3"
+      overrideDisabledActions={disabledAgentActions}
     />
   );
 };
