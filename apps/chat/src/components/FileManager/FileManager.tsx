@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useFileManagerActionLabels } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -185,6 +186,9 @@ export const FileManager: React.FC = () => {
     [t],
   );
 
+  const { bulkActionLabels, treeActionLabels, gridActionLabels } =
+    useFileManagerActionLabels(activeTab, t);
+
   return (
     <DialFileManager
       path={currentPath || bucketRootId}
@@ -193,13 +197,7 @@ export const FileManager: React.FC = () => {
       rootItem={rootFolder}
       filesLoading={areFilesLoading || areFoldersLoading}
       bulkActionsToolbarOptions={{
-        actionLabels: {
-          duplicate: t('Duplicate'),
-          copy: t('Copy to'),
-          move: t('Move to'),
-          delete: t('Delete'),
-          download: t('Download'),
-        },
+        actionLabels: bulkActionLabels,
         getSelectionLabel(selectedCount) {
           return selectedCount === 1
             ? t('{{count}} item selected', { count: selectedCount })
@@ -211,14 +209,7 @@ export const FileManager: React.FC = () => {
         collapsed: treeCollapsedState,
         onCollapseChange: setTreeCollapsedState,
         loadedPaths: loadedFoldersPaths,
-        actionLabels: {
-          duplicate: t('Duplicate'),
-          copy: t('Copy to'),
-          move: t('Move to'),
-          delete: t('Delete'),
-          download: t('Download'),
-          rename: t('Rename'),
-        },
+        actionLabels: treeActionLabels,
       }}
       navigationPanelOptions={{
         searchable: true,
@@ -231,13 +222,7 @@ export const FileManager: React.FC = () => {
           month: 'short',
           day: '2-digit',
         },
-        actionLabels: {
-          duplicate: t('Duplicate'),
-          copy: t('Copy to'),
-          move: t('Move to'),
-          delete: t('Delete'),
-          download: t('Download'),
-        },
+        actionLabels: gridActionLabels,
       }}
       toolbarOptions={{
         tabs: tabs,
