@@ -206,6 +206,16 @@ export const FileManager: React.FC = () => {
   const { bulkActionLabels, treeActionLabels, gridActionLabels } =
     useFileManagerActionLabels(activeTab, t);
 
+  const renderDeleteConfirmationTitle = useCallback(
+    (files: string[]) => {
+      const count = files.length;
+      return count === 1
+        ? t('Confirm Deleting Item')
+        : t('Confirm Deleting Items');
+    },
+    [t],
+  );
+
   return (
     <DialFileManager
       path={currentPath || bucketRootId}
@@ -294,6 +304,9 @@ export const FileManager: React.FC = () => {
         setDestinationFolderPath: setDestinationPath,
         getCopyHeader: getDestinationFolderCopyHeader,
         getMoveHeader: getDestinationFolderMoveHeader,
+      }}
+      deleteConfirmationOptions={{
+        titleRenderer: renderDeleteConfirmationTitle,
       }}
       onUploadFiles={(filesToUpload, destinationUrl) => {
         if (filesToUpload.length === 0) return;

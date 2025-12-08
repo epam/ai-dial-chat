@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 
 import { TranslationOptions } from '@/src/types/translation';
 
-import { DialFileManagerTabs } from '@epam/ai-dial-ui-kit';
+import {
+  DialFileManagerActions,
+  DialFileManagerTabs,
+} from '@epam/ai-dial-ui-kit';
 
 type TranslationFn = (key: string, options?: TranslationOptions) => string;
 
@@ -19,9 +22,16 @@ const ACTION_LABELS = {
 type FileAction = keyof typeof ACTION_LABELS;
 
 const TAB_ACTIONS: Record<DialFileManagerTabs, FileAction[]> = {
-  my_files: ['duplicate', 'copy', 'move', 'delete', 'download'],
-  shared: ['download'],
-  organization: ['download'],
+  my_files: [
+    DialFileManagerActions.Duplicate,
+    DialFileManagerActions.Copy,
+    DialFileManagerActions.Move,
+    DialFileManagerActions.Delete,
+    DialFileManagerActions.Download,
+    DialFileManagerActions.Rename,
+  ],
+  shared: [DialFileManagerActions.Download],
+  organization: [DialFileManagerActions.Download],
 };
 
 const buildLabelMap = (actions: FileAction[], t: TranslationFn) =>
