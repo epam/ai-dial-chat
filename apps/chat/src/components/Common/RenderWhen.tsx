@@ -8,7 +8,6 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { curry } from 'lodash-es';
 
 export function getComponentDisplayName<T extends object>(
   WrappedComponent: ComponentType<T>,
@@ -57,11 +56,8 @@ export function withRenderWhenFeature(feature: Feature) {
   };
 }
 
-export const withRenderWhenEntities = curry(function withRenderWhenEntities<
-  T extends object,
->(
+export function withRenderWhenEntities<T extends object>(
   propsMap: Record<keyof T, (state: RootState) => T[keyof T] | undefined>,
-  Component: ComponentType<T>,
 ) {
   const propsMapEntries = Object.entries(propsMap) as [
     keyof T,
@@ -80,18 +76,25 @@ export const withRenderWhenEntities = curry(function withRenderWhenEntities<
     },
   );
 
-  const Wrapper = (props: T) => {
-    const entityProps = useAppSelector(selector);
+  return (Component: ComponentType<T>) => {
+    const Wrapper = (props: T) => {
+      const entityProps = useAppSelector(selector);
 
-    if (Object.values(entityProps).some((v) => v === undefined || v === null)) {
-      return null;
-    }
+      if (
+        Object.values(entityProps).some((v) => v === undefined || v === null)
+      ) {
+        return null;
+      }
 
-    return (
-      <Component {...props} {...(entityProps as Record<keyof T, T[keyof T]>)} />
-    );
+      return (
+        <Component
+          {...props}
+          {...(entityProps as Record<keyof T, T[keyof T]>)}
+        />
+      );
+    };
+
+    Wrapper.displayName = `withRenderWhenEntities(${getComponentDisplayName(Component)})`;
+    return Wrapper;
   };
-
-  Wrapper.displayName = 'WithRenderWhenEntities';
-  return Wrapper;
-});
+}
