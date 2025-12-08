@@ -28,6 +28,16 @@ export class ToolsetApiHelper extends BaseApiHelper {
     return toolsets.data as Toolset[];
   }
 
+  public async getToolset(name: string, version?: string) {
+    const allToolsets = await this.listToolsets();
+    return allToolsets.find(
+      (t) =>
+        t.display_name === name &&
+        t.display_version ===
+          (version ?? ExpectedConstants.defaultEntityVersion),
+    );
+  }
+
   public async deleteAllToolsets() {
     const allToolsets = await this.listToolsets();
     const e2eToolsets = Object.values(allToolsets).filter(

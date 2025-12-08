@@ -34,6 +34,7 @@ import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginFor
 import {
   ToolsetEditorForm,
   ToolsetLoginFormType,
+  WithLogin,
 } from '@/src/components/ToolsetEditor/form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
@@ -58,12 +59,6 @@ const authTypeOptions: Record<
     Icon: IconLockOff,
   },
 };
-
-enum WithLogin {
-  WithLogin = 'With login',
-  WithoutLogin = 'Without login',
-  WithConfig = 'With login & config',
-}
 
 interface AuthTypeSectionProps {
   type: ToolsetAuthTypes;
@@ -181,7 +176,8 @@ const AuthTypeSection = ({
               )}
             </div>
 
-            {withLogin !== WithLogin.WithoutLogin && (
+            {(withLogin !== WithLogin.WithoutLogin ||
+              type === ToolsetAuthTypes.API_KEY) && (
               <ToolsetLoginForm
                 onLogin={onLogin}
                 type={type}
@@ -198,16 +194,6 @@ const AuthTypeSection = ({
   );
 };
 
-const getWithLoginInitialValue = (formData: ToolsetEditorForm) => {
-  if (
-    formData.authenticationType === ToolsetAuthTypes.OAUTH &&
-    formData.includeOAuthFields
-  ) {
-    return WithLogin.WithConfig;
-  }
-  return WithLogin.WithLogin;
-};
-
 interface AuthFieldProps {
   isDisabled?: boolean;
   tooltip?: string;
@@ -218,25 +204,21 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
   const dispatch = useAppDispatch();
 
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
-  const { control, trigger, clearErrors, setValue, getValues } =
+  const { control, trigger, clearErrors, setValue } =
     useFormContext<ToolsetEditorForm>();
-  const [endpoint, transport, allowedTools] = useWatch({
-    name: ['endpoint', 'protocol', 'allowedTools'],
+  const [endpoint, transport, allowedTools, withLogin] = useWatch({
+    name: ['endpoint', 'protocol', 'allowedTools', 'withLogin'],
     control,
   });
 
   const [logoutModal, setLogoutModal] = useState(false);
-  const [withLogin, setWithLogin] = useState(
-    getWithLoginInitialValue(getValues()),
-  );
 
   const updateWithLogin = useCallback(
     (value: WithLogin) => {
-      setWithLogin(value);
       if (value !== WithLogin.WithConfig) {
         clearErrors(['clientId', 'clientSecret']);
       }
-      setValue('includeOAuthFields', value === WithLogin.WithConfig, {
+      setValue('withLogin', value, {
         shouldDirty: false,
         shouldValidate: true,
       });
@@ -292,7 +274,7 @@ export const AuthField = ({ isDisabled, tooltip }: AuthFieldProps) => {
               authSettings: {
                 authenticationType: data.authenticationType,
                 apiKeyHeader: data.keyHeader,
-                ...(data.includeOAuthFields && {
+                ...(data.withLogin === WithLogin.WithConfig && {
                   clientId: data.clientId,
                   clientSecret: data.clientSecret,
                   authorizationEndpoint: data.authorizationEndpoint,

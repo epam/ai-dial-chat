@@ -1566,8 +1566,8 @@ dialTest(
         const requestsData = await chat.sendRequestInCompareMode(
           'repeat the same response',
           {
-            rightEntity: firstFolderConversation.conversations[0].model.id,
-            leftEntity: secondFolderConversation.conversations[0].model.id,
+            rightEntity: firstFolderConversation.conversations[0].id,
+            leftEntity: secondFolderConversation.conversations[0].id,
           },
         );
         baseAssertion.assertValue(
