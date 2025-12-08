@@ -38,6 +38,7 @@ export interface BackendDataEntity {
   url: string;
   permissions?: SharePermission[];
   updatedAt?: number;
+  author?: string;
 }
 
 export interface BackendEntity extends BackendDataEntity {

@@ -589,12 +589,14 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.me,
+            includeUserInfo: true,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.others,
+            includeUserInfo: true,
           }),
         ),
       );
@@ -644,6 +646,7 @@ const getSharedListingEpic: AppEpic = (action$) =>
           EnumMapper.getBackendResourceTypeByFeatureType(payload.featureType),
         ],
         with: payload.sharedWith,
+        includeUserInfo: payload.includeUserInfo,
       }).pipe(
         switchMap((entities) => {
           return of(

@@ -11,7 +11,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 
 export interface DialRootFolder extends UIKitDialFile {
-  breadcrumbLabel: string;
+  label: string;
 }
 
 const isChildOfFolders = (
@@ -83,7 +83,7 @@ export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
     contentLength: file.contentLength,
     contentType: file.contentType,
     updatedAt: file.updatedAt ? String(file.updatedAt) : undefined,
-    author: undefined, // TODO: Map from file metadata when available
+    author: file.author,
     parentPath,
     extension: file.name.includes('.') ? file.name.split('.').pop() : undefined,
   };
@@ -185,7 +185,7 @@ export const buildFileTree = (
     nodeType: DialFileNodeType.FOLDER,
     items: rootItems,
     parentPath: null,
-    breadcrumbLabel: breadcrumbLabel || 'Files',
+    label: breadcrumbLabel || 'Files',
   };
 
   return { rootFolder, items: [rootFolder], loadedFoldersPaths };

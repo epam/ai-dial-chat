@@ -27,6 +27,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
   DialFileManager,
+  FileManagerColumnKey,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 
@@ -97,53 +98,69 @@ export const FileManager: React.FC = () => {
     }
   }, [dispatch, currentPath, bucketRootId, destinationPath, folders]);
 
-  const { fileTreeItems, rootFolder, loadedFoldersPaths } = useMemo(() => {
-    let filteredFiles = files;
-    let filteredFolders = folders;
-    let breadcrumbLabel = t('My Files');
+  const { fileTreeItems, rootFolder, loadedFoldersPaths, visibleColumns } =
+    useMemo(() => {
+      let filteredFiles = files;
+      let filteredFolders = folders;
+      let breadcrumbLabel = t('My Files');
+      const visibleColumns: FileManagerColumnKey[] = [
+        FileManagerColumnKey.Name,
+        FileManagerColumnKey.UpdatedAt,
+        FileManagerColumnKey.Size,
+        FileManagerColumnKey.Actions,
+      ];
 
-    switch (activeTab) {
-      case 'my_files':
-        filteredFiles = filterFilesByFilters(files, defaultMyItemsFilters);
-        filteredFolders = filterFoldersByFilters(
-          folders,
-          defaultMyItemsFilters,
-        );
-        breadcrumbLabel = t('My Files');
-        break;
-      case 'shared':
-        filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
-        filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
-        breadcrumbLabel = t('Shared with Me');
-        break;
-      case 'organization':
-        filteredFiles = filterFilesByFilters(files, PublishedWithMeFilter);
-        filteredFolders = filterFoldersByFilters(
-          folders,
-          PublishedWithMeFilter,
-        );
-        breadcrumbLabel = t('Organization');
-        break;
-      default:
-        break;
-    }
+      switch (activeTab) {
+        case 'my_files':
+          filteredFiles = filterFilesByFilters(files, defaultMyItemsFilters);
+          filteredFolders = filterFoldersByFilters(
+            folders,
+            defaultMyItemsFilters,
+          );
+          breadcrumbLabel = t('My Files');
+          break;
+        case 'shared':
+          filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
+          filteredFolders = filterFoldersByFilters(
+            folders,
+            SharedWithMeFilters,
+          );
+          breadcrumbLabel = t('Shared with Me');
+          visibleColumns.push(FileManagerColumnKey.Author);
+          break;
+        case 'organization':
+          filteredFiles = filterFilesByFilters(files, PublishedWithMeFilter);
+          filteredFolders = filterFoldersByFilters(
+            folders,
+            PublishedWithMeFilter,
+          );
+          breadcrumbLabel = t('Organization');
+          break;
+        default:
+          break;
+      }
 
-    const { rootFolder, items, loadedFoldersPaths } = buildFileTree(
-      filteredFiles,
-      filteredFolders,
-      breadcrumbLabel,
-    );
+      const { rootFolder, items, loadedFoldersPaths } = buildFileTree(
+        filteredFiles,
+        filteredFolders,
+        breadcrumbLabel,
+      );
 
-    if (
-      bucketRootId !== rootFolder.id ||
-      activeTab !== previousActiveTabRef.current
-    ) {
-      setCurrentPath(rootFolder.id);
-      previousActiveTabRef.current = activeTab;
-    }
+      if (
+        bucketRootId !== rootFolder.id ||
+        activeTab !== previousActiveTabRef.current
+      ) {
+        setCurrentPath(rootFolder.id);
+        previousActiveTabRef.current = activeTab;
+      }
 
-    return { rootFolder, fileTreeItems: items, loadedFoldersPaths };
-  }, [t, files, folders, activeTab, previousActiveTabRef, bucketRootId]);
+      return {
+        rootFolder,
+        fileTreeItems: items,
+        loadedFoldersPaths,
+        visibleColumns,
+      };
+    }, [t, files, folders, activeTab, previousActiveTabRef, bucketRootId]);
 
   const getParentPaths = (path: string | undefined): string[] => {
     if (!path) return [];
@@ -223,6 +240,7 @@ export const FileManager: React.FC = () => {
           day: '2-digit',
         },
         actionLabels: gridActionLabels,
+        visibleColumns: visibleColumns,
       }}
       toolbarOptions={{
         tabs: tabs,
