@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
 
+import { createSelector } from '@reduxjs/toolkit';
+
 import { RootState } from '@/src/types/store';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -52,4 +54,39 @@ export function withRenderWhenFeature(feature: Feature) {
 
     return ComponentWithRenderWhen;
   };
+}
+
+export function withRenderWhenEntities<T extends object>(
+  Component: ComponentType<T>,
+  propsMap: Record<keyof T, (state: RootState) => T[keyof T] | undefined>,
+) {
+  const propsMapEntries = Object.entries(propsMap) as [
+    keyof T,
+    (state: RootState) => T[keyof T] | undefined,
+  ][];
+
+  const selector = createSelector(
+    propsMapEntries.map(([, s]) => s),
+    (...selectorResults) => {
+      return propsMapEntries.reduce<
+        Partial<Record<keyof T, T[keyof T] | undefined>>
+      >((acc, [key], i) => {
+        acc[key] = selectorResults[i];
+        return acc;
+      }, {});
+    },
+  );
+
+  const Wrapper = (props: T) => {
+    const entityProps = useAppSelector(selector);
+
+    if (Object.values(entityProps).some((v) => v === undefined || v === null)) {
+      return null;
+    }
+
+    return <Component {...props} {...entityProps} />;
+  };
+
+  Wrapper.displayName = 'WithRenderWhenEntities';
+  return Wrapper;
 }
