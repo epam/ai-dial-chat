@@ -8,6 +8,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { curry } from 'lodash-es';
 
 export function getComponentDisplayName<T extends object>(
   WrappedComponent: ComponentType<T>,
@@ -56,9 +57,11 @@ export function withRenderWhenFeature(feature: Feature) {
   };
 }
 
-export function withRenderWhenEntities<T extends object>(
-  Component: ComponentType<T>,
+export const withRenderWhenEntities = curry(function withRenderWhenEntities<
+  T extends object,
+>(
   propsMap: Record<keyof T, (state: RootState) => T[keyof T] | undefined>,
+  Component: ComponentType<T>,
 ) {
   const propsMapEntries = Object.entries(propsMap) as [
     keyof T,
@@ -84,9 +87,11 @@ export function withRenderWhenEntities<T extends object>(
       return null;
     }
 
-    return <Component {...props} {...entityProps} />;
+    return (
+      <Component {...props} {...(entityProps as Record<keyof T, T[keyof T]>)} />
+    );
   };
 
   Wrapper.displayName = 'WithRenderWhenEntities';
   return Wrapper;
-}
+});
