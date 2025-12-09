@@ -220,6 +220,33 @@ export const FileManager: React.FC = () => {
     [t],
   );
 
+  const renderDeleteConfirmationContent = useCallback(
+    (files: string[]) => {
+      return (
+        <div className="px-6 py-3 text-sm">
+          <p className="mb-3 text-secondary">
+            {files.length === 1 ? (
+              <>
+                {t('Are you sure you want to delete')}{' '}
+                <span className="break-all text-primary">
+                  “{files[0].split('/').pop()}”?
+                </span>
+              </>
+            ) : (
+              <>
+                {t('Do you want to delete the following')}{' '}
+                <span className="text-primary">
+                  {files.length} {t('items?')}
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+      );
+    },
+    [t],
+  );
+
   const moveToFileHandler = useCallback(
     (
       movedItems: DialCopiedItem[],
@@ -330,6 +357,7 @@ export const FileManager: React.FC = () => {
         }}
         deleteConfirmationOptions={{
           titleRenderer: renderDeleteConfirmationTitle,
+          contentRenderer: renderDeleteConfirmationContent,
         }}
         onUploadFiles={(filesToUpload, destinationUrl) => {
           if (filesToUpload.length === 0) return;
