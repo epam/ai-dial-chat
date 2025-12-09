@@ -26,18 +26,23 @@ import { ConversationsSelectors } from '@/src/store/selectors';
 import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
-function RenameConversationView() {
+import { ConversationInfo } from '@epam/ai-dial-shared';
+
+interface RenameConversationViewProps {
+  renamingConversation: ConversationInfo;
+}
+
+function RenameConversationView({
+  renamingConversation,
+}: RenameConversationViewProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
-  );
-  const renamingConversation = useAppSelector(
-    ConversationsSelectors.selectRenamingConversation,
   );
 
   const [newConversationName, setNewConversationName] = useState('');
@@ -46,17 +51,12 @@ function RenameConversationView() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (renamingConversation) {
-      setNewConversationName(renamingConversation.name || '');
-      setOriginConversationName(renamingConversation.name || '');
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      });
-    } else {
-      setNewConversationName('');
-      setOriginConversationName('');
-    }
+    setNewConversationName(renamingConversation.name || '');
+    setOriginConversationName(renamingConversation.name || '');
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
   }, [renamingConversation]);
 
   const newName = useMemo(
@@ -65,8 +65,6 @@ function RenameConversationView() {
   );
 
   const handleRename = useCallback(() => {
-    if (!renamingConversation) return;
-
     if (
       !isEntityNameOnSameLevelUnique(
         newName,
@@ -177,6 +175,7 @@ function RenameConversationView() {
   );
 }
 
-export const RenameConversationModal = withRenderWhen(
-  ConversationsSelectors.selectRenamingConversation,
-)(RenameConversationView);
+export const RenameConversationModal =
+  withRenderWhenEntities<RenameConversationViewProps>({
+    renamingConversation: ConversationsSelectors.selectRenamingConversation,
+  })(RenameConversationView);

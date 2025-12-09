@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { FC, useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -15,7 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { AuthSelectors, MarketplaceSelectors } from '@/src/store/selectors';
 
 import { Modal } from '@/src/components/Common/Modal';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
 import {
   ToolsetLoginFormSchema,
@@ -27,13 +27,16 @@ import {
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-export const ToolsetLoginDialogView = () => {
+interface ToolsetLoginDialogProps {
+  entity: ToolsetModel;
+}
+
+export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
+  entity,
+}) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
-  const entity = useAppSelector(
-    MarketplaceSelectors.selectLoginEntity,
-  ) as ToolsetModel;
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const authType = entity.authSettings.authenticationType;
 
@@ -136,6 +139,7 @@ export const ToolsetLoginDialogView = () => {
   );
 };
 
-export const ToolsetLoginDialog = withRenderWhen(
-  MarketplaceSelectors.selectLoginEntity,
-)(ToolsetLoginDialogView);
+export const ToolsetLoginDialog =
+  withRenderWhenEntities<ToolsetLoginDialogProps>({
+    entity: MarketplaceSelectors.selectLoginEntity,
+  })(ToolsetLoginDialogView);
