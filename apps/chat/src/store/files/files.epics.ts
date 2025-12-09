@@ -441,6 +441,19 @@ const copyFilesEpic: AppEpic = (action$) =>
             ),
           );
         }),
+        catchError(() => {
+          return of(
+            FilesActions.copyFilesFail({
+              files: payload.files,
+              destinationFolder: payload.destinationFolder,
+            }),
+            UIActions.showErrorToast(
+              translate('Failed to copy files. Please try again later.', {
+                ns: Translation.Files,
+              }),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -459,6 +472,18 @@ const moveFilesEpic: AppEpic = (action$) =>
               }),
             ),
             of(FilesActions.getFilesWithFolders({ id: payload.sourceFolder })),
+          );
+        }),
+        catchError(() => {
+          return of(
+            FilesActions.moveFilesFail({
+              files: payload.files,
+            }),
+            UIActions.showErrorToast(
+              translate('Failed to move files. Please try again later.', {
+                ns: Translation.Files,
+              }),
+            ),
           );
         }),
       );
@@ -484,8 +509,17 @@ const deleteFilesEpic: AppEpic = (action$) =>
             ),
           );
         }),
-        catchError((error) => {
-          return of(FilesActions.deleteFilesFail(error));
+        catchError(() => {
+          return of(
+            FilesActions.deleteFilesFail({
+              files: payload.files,
+            }),
+            UIActions.showErrorToast(
+              translate('Failed to delete files. Please try again later.', {
+                ns: Translation.Files,
+              }),
+            ),
+          );
         }),
       );
     }),

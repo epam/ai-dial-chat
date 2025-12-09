@@ -17,4 +17,11 @@ export interface FilesState {
   newAddedFolderId?: string;
   lastRenamedParentFolder?: { oldId: string; newId: string };
   sharedFileIds: string[];
+
+  isCopyingFiles: boolean;
+  isMovingFiles: boolean;
+  isDeletingFiles: boolean;
+  isDownloadingArchive: boolean;
+  isUploadingFiles: boolean;
+  isUploadingArchive: boolean;
 }

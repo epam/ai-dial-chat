@@ -27,6 +27,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
   DialFileManager,
+  DialLoader,
   FileManagerColumnKey,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
@@ -49,6 +50,9 @@ export const FileManager: React.FC = () => {
   );
   const initialDataStatus = useAppSelector(
     SettingsSelectors.selectInitialDataStatus,
+  );
+  const isAnyOperationInProgress = useAppSelector(
+    FilesSelectors.selectIsAnyFileOperationInProgress,
   );
 
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
@@ -217,124 +221,131 @@ export const FileManager: React.FC = () => {
   );
 
   return (
-    <DialFileManager
-      path={currentPath || bucketRootId}
-      onPathChange={setCurrentPath}
-      items={fileTreeItems}
-      rootItem={rootFolder}
-      filesLoading={areFilesLoading || areFoldersLoading}
-      bulkActionsToolbarOptions={{
-        actionLabels: bulkActionLabels,
-        getSelectionLabel(selectedCount) {
-          return selectedCount === 1
-            ? t('{{count}} item selected', { count: selectedCount })
-            : t('{{count}} items selected', { count: selectedCount });
-        },
-      }}
-      treeOptions={{
-        expandedPaths,
-        collapsed: treeCollapsedState,
-        onCollapseChange: setTreeCollapsedState,
-        loadedPaths: loadedFoldersPaths,
-        actionLabels: treeActionLabels,
-      }}
-      navigationPanelOptions={{
-        searchable: true,
-      }}
-      gridOptions={{
-        filterable: false,
-        dateLocale: 'en-US',
-        dateOptions: {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
-        },
-        actionLabels: gridActionLabels,
-        visibleColumns: visibleColumns,
-      }}
-      toolbarOptions={{
-        tabs: tabs,
-        activeTab: activeTab,
-        onTabChange: handleTabChange,
-        newButtonVariant: ButtonVariant.Primary,
-        newActionLabels: {
-          uploadFiles: t('Upload files'),
-          newFolder: t('New folder'),
-          uploadArchive: t('Upload archive'),
-        },
-      }}
-      onCopyFiles={(copiedItems, destinationFolder) => {
-        if (copiedItems.length === 0) return;
-        dispatch(
-          FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
-        );
-      }}
-      onMoveToFiles={(movedItems, sourceFolder, destinationFolder) => {
-        if (movedItems.length === 0) return;
-        dispatch(
-          FilesActions.moveFiles({
-            files: movedItems,
-            sourceFolder,
-            destinationFolder,
-          }),
-        );
-      }}
-      onDeleteFiles={(deletedItems, folderUrl) => {
-        if (deletedItems.length === 0) return;
-        dispatch(
-          FilesActions.deleteFiles({
-            files: deletedItems,
-            folderUrl,
-          }),
-        );
-      }}
-      onDownloadFiles={(filesToDownload) => {
-        if (filesToDownload.length === 0) return;
-        dispatch(
-          FilesActions.downloadFilesAsArchive({
-            files: filesToDownload as DialFile[],
-          }),
-        );
-      }}
-      onTableFileClick={(row) => {
-        void row;
-      }}
-      destinationFolderPopupOptions={{
-        destinationFolderPath: destinationPath,
-        setDestinationFolderPath: setDestinationPath,
-        getCopyHeader: getDestinationFolderCopyHeader,
-        getMoveHeader: getDestinationFolderMoveHeader,
-      }}
-      deleteConfirmationOptions={{
-        titleRenderer: renderDeleteConfirmationTitle,
-      }}
-      onUploadFiles={(filesToUpload, destinationUrl) => {
-        if (filesToUpload.length === 0) return;
-        dispatch(
-          FilesActions.uploadFiles({
-            files: filesToUpload,
-            destinationUrl,
-          }),
-        );
-      }}
-      onCreateFolder={(file, folderPath) => {
-        dispatch(
-          FilesActions.uploadFiles({
-            files: [file],
-            destinationUrl: folderPath,
-          }),
-        );
-      }}
-      onUploadArchive={(archiveFile, name, destinationUrl) => {
-        if (!archiveFile) return;
-        dispatch(
-          FilesActions.uploadArchive({
-            archive: archiveFile,
-            name,
-            destinationUrl,
-          }),
-        );
-      }}
-    />
+    <div className="relative size-full">
+      <DialFileManager
+        path={currentPath || bucketRootId}
+        onPathChange={setCurrentPath}
+        items={fileTreeItems}
+        rootItem={rootFolder}
+        filesLoading={areFilesLoading || areFoldersLoading}
+        bulkActionsToolbarOptions={{
+          actionLabels: bulkActionLabels,
+          getSelectionLabel(selectedCount) {
+            return selectedCount === 1
+              ? t('{{count}} item selected', { count: selectedCount })
+              : t('{{count}} items selected', { count: selectedCount });
+          },
+        }}
+        treeOptions={{
+          expandedPaths,
+          collapsed: treeCollapsedState,
+          onCollapseChange: setTreeCollapsedState,
+          loadedPaths: loadedFoldersPaths,
+          actionLabels: treeActionLabels,
+        }}
+        navigationPanelOptions={{
+          searchable: true,
+        }}
+        gridOptions={{
+          filterable: false,
+          dateLocale: 'en-US',
+          dateOptions: {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+          },
+          actionLabels: gridActionLabels,
+          visibleColumns: visibleColumns,
+        }}
+        toolbarOptions={{
+          tabs: tabs,
+          activeTab: activeTab,
+          onTabChange: handleTabChange,
+          newButtonVariant: ButtonVariant.Primary,
+          newActionLabels: {
+            uploadFiles: t('Upload files'),
+            newFolder: t('New folder'),
+            uploadArchive: t('Upload archive'),
+          },
+        }}
+        onCopyFiles={(copiedItems, destinationFolder) => {
+          if (copiedItems.length === 0) return;
+          dispatch(
+            FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
+          );
+        }}
+        onMoveToFiles={(movedItems, sourceFolder, destinationFolder) => {
+          if (movedItems.length === 0) return;
+          dispatch(
+            FilesActions.moveFiles({
+              files: movedItems,
+              sourceFolder,
+              destinationFolder,
+            }),
+          );
+        }}
+        onDeleteFiles={(deletedItems, folderUrl) => {
+          if (deletedItems.length === 0) return;
+          dispatch(
+            FilesActions.deleteFiles({
+              files: deletedItems,
+              folderUrl,
+            }),
+          );
+        }}
+        onDownloadFiles={(filesToDownload) => {
+          if (filesToDownload.length === 0) return;
+          dispatch(
+            FilesActions.downloadFilesAsArchive({
+              files: filesToDownload as DialFile[],
+            }),
+          );
+        }}
+        onTableFileClick={(row) => {
+          void row;
+        }}
+        destinationFolderPopupOptions={{
+          destinationFolderPath: destinationPath,
+          setDestinationFolderPath: setDestinationPath,
+          getCopyHeader: getDestinationFolderCopyHeader,
+          getMoveHeader: getDestinationFolderMoveHeader,
+        }}
+        deleteConfirmationOptions={{
+          titleRenderer: renderDeleteConfirmationTitle,
+        }}
+        onUploadFiles={(filesToUpload, destinationUrl) => {
+          if (filesToUpload.length === 0) return;
+          dispatch(
+            FilesActions.uploadFiles({
+              files: filesToUpload,
+              destinationUrl,
+            }),
+          );
+        }}
+        onCreateFolder={(file, folderPath) => {
+          dispatch(
+            FilesActions.uploadFiles({
+              files: [file],
+              destinationUrl: folderPath,
+            }),
+          );
+        }}
+        onUploadArchive={(archiveFile, name, destinationUrl) => {
+          if (!archiveFile) return;
+          dispatch(
+            FilesActions.uploadArchive({
+              archive: archiveFile,
+              name,
+              destinationUrl,
+            }),
+          );
+        }}
+      />
+      {isAnyOperationInProgress && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
+          <DialLoader size={48} ariaLabel={t('Processing files...')} />
+        </div>
+      )}
+    </div>
   );
 };

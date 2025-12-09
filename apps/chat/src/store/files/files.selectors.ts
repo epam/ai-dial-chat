@@ -203,6 +203,20 @@ const selectChosenFolderIds = createSelector(
   },
 );
 
+const selectIsAnyFileOperationInProgress = createSelector(
+  [rootSelector],
+  (state) => {
+    return (
+      state.isCopyingFiles ||
+      state.isMovingFiles ||
+      state.isDeletingFiles ||
+      state.isDownloadingArchive ||
+      state.isUploadingFiles ||
+      state.isUploadingArchive
+    );
+  },
+);
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -228,4 +242,5 @@ export const FilesSelectors = {
   selectEmptyFolderIds,
   selectChosenEmptyFolderIds,
   selectChosenFolderIds,
+  selectIsAnyFileOperationInProgress,
 };

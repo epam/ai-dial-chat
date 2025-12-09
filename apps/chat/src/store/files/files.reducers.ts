@@ -47,6 +47,13 @@ const initialState: FilesState = {
 
   filesStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
+
+  isCopyingFiles: false,
+  isMovingFiles: false,
+  isDeletingFiles: false,
+  isDownloadingArchive: false,
+  isUploadingFiles: false,
+  isUploadingArchive: false,
 };
 
 export const filesSlice = createSlice({
@@ -611,20 +618,26 @@ export const filesSlice = createSlice({
         files: DialCopiedItem[];
         destinationFolder: string;
       }>,
-    ) => state,
+    ) => {
+      state.isCopyingFiles = true;
+    },
     copyFilesSuccess: (
       state,
       _action: PayloadAction<{
         files: MoveModel[];
       }>,
-    ) => state,
+    ) => {
+      state.isCopyingFiles = false;
+    },
     copyFilesFail: (
       state,
       _action: PayloadAction<{
         files: DialCopiedItem[];
         destinationFolder: string;
       }>,
-    ) => state,
+    ) => {
+      state.isCopyingFiles = false;
+    },
 
     moveFiles: (
       state,
@@ -633,19 +646,25 @@ export const filesSlice = createSlice({
         sourceFolder: string;
         destinationFolder: string;
       }>,
-    ) => state,
+    ) => {
+      state.isMovingFiles = true;
+    },
     moveFilesSuccess: (
       state,
       _action: PayloadAction<{
         files: MoveModel[];
       }>,
-    ) => state,
+    ) => {
+      state.isMovingFiles = false;
+    },
     moveFilesFail: (
       state,
       _action: PayloadAction<{
         files: DialCopiedItem[];
       }>,
-    ) => state,
+    ) => {
+      state.isMovingFiles = false;
+    },
 
     deleteFiles: (
       state,
@@ -653,30 +672,42 @@ export const filesSlice = createSlice({
         files: DialDeletedItem[];
         folderUrl: string;
       }>,
-    ) => state,
+    ) => {
+      state.isDeletingFiles = true;
+    },
     deleteFilesSuccess: (
       state,
       _action: PayloadAction<{
         files: DialDeletedItem[];
       }>,
-    ) => state,
+    ) => {
+      state.isDeletingFiles = false;
+    },
     deleteFilesFail: (
       state,
       _action: PayloadAction<{
         files: DialDeletedItem[];
       }>,
-    ) => state,
+    ) => {
+      state.isDeletingFiles = false;
+    },
 
     downloadFilesAsArchive: (
       state,
       _action: PayloadAction<{
         files: DialFile[];
       }>,
-    ) => state,
+    ) => {
+      state.isDownloadingArchive = true;
+    },
 
-    downloadFilesAsArchiveSuccess: (state) => state,
+    downloadFilesAsArchiveSuccess: (state) => {
+      state.isDownloadingArchive = false;
+    },
 
-    downloadFilesAsArchiveFail: (state) => state,
+    downloadFilesAsArchiveFail: (state) => {
+      state.isDownloadingArchive = false;
+    },
 
     uploadFiles: (
       state,
@@ -684,9 +715,15 @@ export const filesSlice = createSlice({
         files: DialUploadFileItem[];
         destinationUrl: string;
       }>,
-    ) => state,
-    uploadFilesSuccess: (state) => state,
-    uploadFilesFail: (state) => state,
+    ) => {
+      state.isUploadingFiles = true;
+    },
+    uploadFilesSuccess: (state) => {
+      state.isUploadingFiles = false;
+    },
+    uploadFilesFail: (state) => {
+      state.isUploadingFiles = false;
+    },
 
     uploadArchive: (
       state,
@@ -695,9 +732,15 @@ export const filesSlice = createSlice({
         name: string;
         destinationUrl: string;
       }>,
-    ) => state,
-    uploadArchiveSuccess: (state) => state,
-    uploadArchiveFail: (state) => state,
+    ) => {
+      state.isUploadingArchive = true;
+    },
+    uploadArchiveSuccess: (state) => {
+      state.isUploadingArchive = false;
+    },
+    uploadArchiveFail: (state) => {
+      state.isUploadingArchive = false;
+    },
   },
 });
 
