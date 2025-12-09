@@ -198,15 +198,27 @@ export const filesSlice = createSlice({
           : { ...file },
       );
 
-      state.files = mappedFiles.concat(
-        state.files.filter(
-          (stateFile) =>
-            //remove all files from loaded folder to have latest folder update
-            !payload.foldersSet.has(stateFile.folderId) ||
-            stateFile.publishedWithMe ||
-            stateFile.sharedWithMe,
-        ),
+      const prevById: Record<string, DialFile> = Object.fromEntries(
+        state.files.map((f) => [f.id, f]),
       );
+
+      const mergedMappedFiles: DialFile[] = mappedFiles.map((newFile) => {
+        const oldFile = prevById[newFile.id];
+        if (!oldFile) return newFile;
+
+        const merged: DialFile = {
+          ...oldFile,
+          ...newFile,
+        };
+
+        return merged;
+      });
+
+      const otherFiles = state.files.filter(
+        (f) => !payload.foldersSet.has(f.folderId),
+      );
+
+      state.files = [...mergedMappedFiles, ...otherFiles];
       state.filesStatus = UploadStatus.LOADED;
 
       if (!isRootId(parentFolderId)) {
