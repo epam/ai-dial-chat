@@ -132,19 +132,21 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
         isTriggerClickable
         tooltip={
           <>
-            <div className="max-w-[440px] px-2 pt-1">
-              {customTooltip && (
-                <StatusMessage
-                  id={id}
-                  item={item}
-                  isInvalid={isInvalid}
-                  isLoggedOut={isLoggedOut}
-                  isInSelectionList={isInSelectionList}
-                  readonly={readonly}
-                />
-              )}
-            </div>
-            {customTooltip && <div className="px-2 pt-1">{customTooltip}</div>}
+            {customTooltip && (
+              <div className="px-2 pt-1">
+                {readonly && (
+                  <StatusMessage
+                    id={id}
+                    item={item}
+                    isInvalid={isInvalid}
+                    isLoggedOut={isLoggedOut}
+                    isInSelectionList={isInSelectionList}
+                    readonly={readonly}
+                  />
+                )}
+                <span>{customTooltip}</span>
+              </div>
+            )}
             <ChipTooltipContent
               id={id}
               item={item}
