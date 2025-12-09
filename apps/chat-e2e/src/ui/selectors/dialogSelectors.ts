@@ -344,7 +344,7 @@ export const AddToolsetSettingsFormSelector = {
   oauthLabel: '[data-qa="oauth-label"]',
   authDetailsContainer: '[data-qa="auth-details-container"]',
   authLoginOption: '#auth-login-option',
-  loginButton: '[data-qa="sign-in-button"]',
+  loginButton: '[data-qa="log-in-button"]',
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',
