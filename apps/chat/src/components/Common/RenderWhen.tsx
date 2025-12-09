@@ -56,20 +56,24 @@ export function withRenderWhenFeature(feature: Feature) {
   };
 }
 
-export function withRenderWhenEntities<T extends object>(
-  propsMap: Record<keyof T, (state: RootState) => T[keyof T] | undefined>,
+type EntitiesProps<T> = {
+  [K in keyof T]: T[K];
+};
+export function withRenderWhenEntities<T extends EntitiesProps<T>>(
+  propsMap: Record<keyof T, (s: RootState) => T[keyof T] | undefined | null>,
 ) {
+  type InjectedProps = EntitiesProps<T>;
+  type ExternalProps = Omit<T, keyof InjectedProps>;
+
   const propsMapEntries = Object.entries(propsMap) as [
-    keyof T,
-    (state: RootState) => T[keyof T] | undefined,
+    keyof InjectedProps,
+    (state: RootState) => InjectedProps[keyof InjectedProps],
   ][];
 
   const selector = createSelector(
     propsMapEntries.map(([, s]) => s),
     (...selectorResults) => {
-      return propsMapEntries.reduce<
-        Partial<Record<keyof T, T[keyof T] | undefined>>
-      >((acc, [key], i) => {
+      return propsMapEntries.reduce<Partial<InjectedProps>>((acc, [key], i) => {
         acc[key] = selectorResults[i];
         return acc;
       }, {});
@@ -77,7 +81,7 @@ export function withRenderWhenEntities<T extends object>(
   );
 
   return (Component: ComponentType<T>) => {
-    const Wrapper = (props: T) => {
+    const Wrapper = (props: ExternalProps) => {
       const entityProps = useAppSelector(selector);
 
       if (
@@ -86,12 +90,7 @@ export function withRenderWhenEntities<T extends object>(
         return null;
       }
 
-      return (
-        <Component
-          {...props}
-          {...(entityProps as Record<keyof T, T[keyof T]>)}
-        />
-      );
+      return <Component {...props} {...(entityProps as InjectedProps)} />;
     };
 
     Wrapper.displayName = `withRenderWhenEntities(${getComponentDisplayName(Component)})`;
