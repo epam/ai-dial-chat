@@ -135,11 +135,9 @@ Config files used for CI pipeline: `chat.playwright.config.ts` and `overlay.play
 
 `nx e2e chat-e2e --configuration=production` command is used to trigger tests on CI.
 
-Generated Allure report is attached as a job artifact.
-To view CI Allure report:
+To view CI Allure report it is necessary to download and extract the job artifact containing the report and use the `allure open` command to serve the report (Allure should be installed on the local machine following the [guide](https://docs.qameta.io/allure/#_get_started)):
 
-- for Chrome: open report in browser instance started with command `"[PATH_TO_CHROME]\chrome.exe" --disable-web-security --disable-gpu --user-data-dir=%LOCALAPPDATA%\Google\chromeTemp`
-- for FireFox: open `about:config` in browser and set `security.fileuri.strict_origin_policy` to false.
+`./allure-${ALLURE_VERSION}/bin/allure open ./path/to/allure-report`
 
 CI report includes screenshots for failed tests.
 
