@@ -533,16 +533,23 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
       (action: ReturnType<typeof FilesActions.downloadFilesAsArchive>) => {
         const { files } = action.payload;
 
-        // If downloading a single file (not a folder), download it directly instead of as archive
         if (files.length === 1 && files[0].nodeType === DialFileNodeType.ITEM) {
           const file = files[0];
-          // Use file.path or file.id for download
           const filePath = file.path || file.id;
+          if (!filePath) {
+            return of(
+              UIActions.showErrorToast(
+                translate('Failed to download file. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+              FilesActions.downloadFilesAsArchiveFail(),
+            );
+          }
           triggerDownload(`/api/${ApiUtils.encodeApiUrl(filePath)}`, file.name);
           return of(FilesActions.downloadFilesAsArchiveSuccess());
         }
 
-        // Otherwise, download as archive
         return from(FileService.downloadFilesAsArchive(files)).pipe(
           map(() => FilesActions.downloadFilesAsArchiveSuccess()),
           catchError(() => {
