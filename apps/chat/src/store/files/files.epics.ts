@@ -43,6 +43,7 @@ import {
 import { FilesSelectors, UISelectors } from '@/src/store/selectors';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -528,21 +529,35 @@ const deleteFilesEpic: AppEpic = (action$) =>
 const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.downloadFilesAsArchive.type),
-    switchMap(({ payload }) => {
-      return from(FileService.downloadFilesAsArchive(payload.files)).pipe(
-        map(() => FilesActions.downloadFilesAsArchiveSuccess()),
-        catchError(() => {
-          return of(
-            UIActions.showErrorToast(
-              translate('Failed to download files. Please try again later.', {
-                ns: Translation.Files,
-              }),
-            ),
-            FilesActions.downloadFilesAsArchiveFail(),
-          );
-        }),
-      );
-    }),
+    switchMap(
+      (action: ReturnType<typeof FilesActions.downloadFilesAsArchive>) => {
+        const { files } = action.payload;
+
+        // If downloading a single file (not a folder), download it directly instead of as archive
+        if (files.length === 1 && files[0].nodeType === DialFileNodeType.ITEM) {
+          const file = files[0];
+          // Use file.path or file.id for download
+          const filePath = file.path || file.id;
+          triggerDownload(`/api/${ApiUtils.encodeApiUrl(filePath)}`, file.name);
+          return of(FilesActions.downloadFilesAsArchiveSuccess());
+        }
+
+        // Otherwise, download as archive
+        return from(FileService.downloadFilesAsArchive(files)).pipe(
+          map(() => FilesActions.downloadFilesAsArchiveSuccess()),
+          catchError(() => {
+            return of(
+              UIActions.showErrorToast(
+                translate('Failed to download files. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+              FilesActions.downloadFilesAsArchiveFail(),
+            );
+          }),
+        );
+      },
+    ),
   );
 
 const uploadFilesEpic: AppEpic = (action$) =>

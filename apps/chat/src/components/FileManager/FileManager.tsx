@@ -15,7 +15,6 @@ import {
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
 
-import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/files/files.reducers';
@@ -297,7 +296,7 @@ export const FileManager: React.FC = () => {
           if (filesToDownload.length === 0) return;
           dispatch(
             FilesActions.downloadFilesAsArchive({
-              files: filesToDownload as DialFile[],
+              files: filesToDownload,
             }),
           );
         }}

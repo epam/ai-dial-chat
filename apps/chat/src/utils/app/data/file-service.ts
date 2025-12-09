@@ -22,7 +22,11 @@ import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
 
-import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
+import {
+  DialCopiedItem,
+  DialDeletedItem,
+  DialFile as UIKitDialFile,
+} from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
 
 const mapFileToDial = (file: BackendFile): DialFile => {
@@ -238,7 +242,9 @@ export class FileService {
     return DataService.getDataStorage().deleteFiles(data);
   }
 
-  public static async downloadFilesAsArchive(files: DialFile[]): Promise<void> {
+  public static async downloadFilesAsArchive(
+    files: UIKitDialFile[],
+  ): Promise<void> {
     try {
       const archiveName = files.length === 1 ? files[0].name : 'files';
 

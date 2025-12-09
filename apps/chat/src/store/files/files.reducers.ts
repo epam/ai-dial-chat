@@ -30,6 +30,7 @@ import {
   DialCopiedItem,
   DialDeletedItem,
   DialUploadFileItem,
+  DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
@@ -707,7 +708,7 @@ export const filesSlice = createSlice({
     downloadFilesAsArchive: (
       state,
       _action: PayloadAction<{
-        files: DialFile[];
+        files: UIKitDialFile[];
       }>,
     ) => {
       state.isDownloadingArchive = true;
