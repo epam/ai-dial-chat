@@ -282,6 +282,8 @@ export const FileManager: React.FC = () => {
               destinationFolder,
             }),
           );
+
+          setCurrentPath(undefined);
         }}
         onDeleteFiles={(deletedItems, folderUrl) => {
           if (deletedItems.length === 0) return;
