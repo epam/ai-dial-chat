@@ -29,7 +29,7 @@ export interface OAuthState {
 
 export class OAuthMockHelper {
   private page: Page;
-  private initialToolset: Toolset;
+  private toolset: Toolset;
   private readonly toolsetEndpoint: string;
   private readonly mockConfig: OAuthMockConfig;
   private readonly authorizationCode: string;
@@ -54,8 +54,8 @@ export class OAuthMockHelper {
     options: OAuthMockOptions = {},
   ) {
     this.page = page;
-    this.initialToolset = initialToolset;
-    this.initialToolset.endpoint = toolsetEndpoint;
+    this.toolset = initialToolset;
+    this.toolset.endpoint = toolsetEndpoint;
     this.toolsetEndpoint = toolsetEndpoint;
 
     const baseConfig = { ...DEFAULT_OAUTH_CONFIG };
@@ -114,8 +114,8 @@ export class OAuthMockHelper {
     return this.state.signOutRequest;
   }
 
-  getInitialToolset(): Toolset {
-    return this.initialToolset;
+  getToolset(): Toolset {
+    return this.toolset;
   }
 
   /**
@@ -163,17 +163,23 @@ export class OAuthMockHelper {
     await this.page.unrouteAll({ behavior: 'ignoreErrors' });
   }
 
+  /**
+   * Updates the toolset routes with partial toolset properties.
+   * Merges the provided properties with the current toolset state.
+   * Note: Subsequent calls will merge with the already-modified toolset.
+   * @param updatedToolsetProps - Partial toolset properties to merge
+   */
   public async setupUpdatedToolsetRoutes(
     updatedToolsetProps: Partial<Toolset>,
   ): Promise<void> {
-    const mergedOptions = { ...this.initialToolset, ...updatedToolsetProps };
+    const mergedOptions = { ...this.toolset, ...updatedToolsetProps };
     return this.setupToolsetRoutes(mergedOptions);
   }
 
   public async setupToolsetRoutes(updatedToolset?: Toolset): Promise<void> {
-    this.initialToolset = updatedToolset ?? this.initialToolset;
+    this.toolset = updatedToolset ?? this.toolset;
     await this.page.route(
-      `**${API.api}/${this.initialToolset.id}`,
+      `**${API.api}/${this.toolset.id}`,
       async (route, request) => {
         const method = request.method();
         // Allow initial GET to go through unmocked
@@ -195,7 +201,7 @@ export class OAuthMockHelper {
           // Intercepted GET request
         } else if (method === 'GET') {
           const enrichedToolset: Toolset = {
-            ...this.initialToolset,
+            ...this.toolset,
             auth_settings: {
               authentication_type: ToolsetAuthTypes.OAUTH,
               redirect_uri: `${config.use!.baseURL}${Routes.ToolsetSignIn}`,
@@ -270,10 +276,15 @@ export class OAuthMockHelper {
 
   public async setupSignOutRoute(): Promise<void> {
     const signOutUrl = `**${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_OUT}`;
-    // Intercept OAuth redirect
+    // Intercept OAuth sign-out call
     await this.page.route(signOutUrl, async (route, request) => {
       this.state.isSignedIn = false;
-      this.state.signOutRequest = request.postDataJSON();
+      const requestData = request.postDataJSON();
+      if (requestData === null) {
+        throw new Error('Failed to parse sign-out request body');
+      } else {
+        this.state.signOutRequest = requestData;
+      }
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

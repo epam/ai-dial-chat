@@ -78,5 +78,5 @@ export enum ImportResolutionOption {
 
 export enum OAuthOptions {
   WithLogin = 'With login',
-  WithConfig = 'With login & config',
+  WithLoginAndConfig = 'With login & config',
 }

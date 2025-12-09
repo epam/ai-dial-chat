@@ -27,6 +27,7 @@ dialTest(
     entityDetailsModal,
     setTestIds,
     baseAssertion,
+    toolsetAuthAssertion,
     toolsetEditorViewForm,
     toolsetEditorViewFormAssertion,
     toolsetEditorSettingsPreviewCard,
@@ -105,7 +106,7 @@ dialTest(
       async () => {
         // need to enable mocking before clicking 'Log In'
         oauthMockHelper.enableMocking();
-        await toolsetEditorViewForm.clickSignInButton(
+        await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
         );
       },
@@ -178,7 +179,7 @@ dialTest(
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
         );
         await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.signInButton,
+          toolsetEditorViewForm.loginButton,
           SignInButtonTitles.logOut,
         );
       },
@@ -220,7 +221,7 @@ dialTest(
 
     await dialTest.step('Update toolset name and click Next', async () => {
       //get real toolset object from BE
-      const toolsetId = oauthMockHelper.getInitialToolset().id!;
+      const toolsetId = oauthMockHelper.getToolset().id!;
       realToolset = await itemApiHelper.getItem<Toolset>(toolsetId);
 
       //intercept toolset routes with a new name
@@ -249,7 +250,7 @@ dialTest(
     await dialTest.step(
       'Click on "Log out" btn and verify preview card label is changed',
       async () => {
-        await toolsetEditorViewForm.clickSignInButton();
+        await toolsetEditorViewForm.clickLoginButton();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.logOutDialogTitle,
         );
@@ -265,7 +266,7 @@ dialTest(
           { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
         );
         await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.signInButton,
+          toolsetEditorViewForm.loginButton,
           SignInButtonTitles.logIn,
         );
       },
@@ -287,14 +288,26 @@ dialTest(
     await dialTest.step(
       "Click on 'Login in' button again and verify toolset is successfully logged-in",
       async () => {
-        await verifySuccessfulLogin();
+        await toolsetEditorViewForm.clickLoginButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        );
+        await oauthMockHelper.navigateToCallback();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        await toolsetAuthAssertion.assertAuthState(
+          oauthMockHelper.getSignInRequest()!,
+          updatedId,
+          Creds.myCreds,
+          SignInButtonTitles.logOut,
+        );
       },
     );
 
     await dialTest.step(
       'Click on "Log out" btn and proceed to "General Info" step',
       async () => {
-        await toolsetEditorViewForm.clickSignInButton();
+        await toolsetEditorViewForm.clickLoginButton();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
           { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
@@ -338,14 +351,26 @@ dialTest(
     await dialTest.step(
       "Click on 'Login in' button again and verify toolset is successfully logged-in",
       async () => {
-        await verifySuccessfulLogin();
+        await toolsetEditorViewForm.clickLoginButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        );
+        await oauthMockHelper.navigateToCallback();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        await toolsetAuthAssertion.assertAuthState(
+          oauthMockHelper.getSignInRequest()!,
+          updatedId,
+          Creds.myCreds,
+          SignInButtonTitles.logOut,
+        );
       },
     );
 
     await dialTest.step(
       'Click on "Log out" btn and set a new endpoint value',
       async () => {
-        await toolsetEditorViewForm.clickSignInButton();
+        await toolsetEditorViewForm.clickLoginButton();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
           { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
@@ -368,32 +393,25 @@ dialTest(
         //update real toolset endpoint
         realToolset.endpoint = updatedEndpoint;
         await toolsetApiHelper.createToolset(realToolset);
-        await verifySuccessfulLogin();
+        await toolsetEditorViewForm.clickLoginButton(
+          oauthMockHelper.getMockConfig().authorization_endpoint,
+        );
+        await oauthMockHelper.navigateToCallback();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorToolsetTypes.Toolset,
+        );
+        await toolsetAuthAssertion.assertAuthState(
+          oauthMockHelper.getSignInRequest()!,
+          updatedId,
+          Creds.myCreds,
+          SignInButtonTitles.logOut,
+        );
       },
     );
 
     await dialTest.step('Cleanup mocking', async () => {
       await oauthMockHelper.cleanup();
     });
-
-    async function verifySuccessfulLogin() {
-      await toolsetEditorViewForm.clickSignInButton(
-        oauthMockHelper.getMockConfig().authorization_endpoint,
-      );
-      await oauthMockHelper.navigateToCallback();
-      await entityEditorPage.waitForPageLoadedForEdit(
-        EntityEditorToolsetTypes.Toolset,
-      );
-      const signInRequest = oauthMockHelper.getSignInRequest()!;
-      baseAssertion.assertValue(signInRequest.url, updatedId);
-      await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
-        { expectedCredsLabel: Creds.myCreds },
-      );
-      await toolsetEditorViewFormAssertion.assertElementText(
-        toolsetEditorViewForm.signInButton,
-        SignInButtonTitles.logOut,
-      );
-    }
   },
 );
 
@@ -470,7 +488,7 @@ dialTest(
       async () => {
         await toolsetEditorViewFormAssertion.assertElementText(
           toolsetEditorViewForm.oAuthOptions,
-          [OAuthOptions.WithLogin, OAuthOptions.WithConfig],
+          [OAuthOptions.WithLogin, OAuthOptions.WithLoginAndConfig],
         );
         await toolsetEditorViewFormAssertion.assertElementAttribute(
           toolsetEditorViewForm.oAuthOption(OAuthOptions.WithLogin),
@@ -518,7 +536,7 @@ dialTest(
 
         await oauthMockHelper.setupMocks();
 
-        await toolsetEditorViewForm.clickSignInButton(
+        await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
         );
         await oauthMockHelper.navigateToCallback();
@@ -529,14 +547,14 @@ dialTest(
           { expectedCredsLabel: Creds.myCreds },
         );
         await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.signInButton,
+          toolsetEditorViewForm.loginButton,
           SignInButtonTitles.logOut,
         );
       },
     );
 
     await dialTest.step('Log-out the toolset', async () => {
-      await toolsetEditorViewForm.clickSignInButton();
+      await toolsetEditorViewForm.clickLoginButton();
       await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
       await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
         {
@@ -549,7 +567,7 @@ dialTest(
     await dialTest.step(
       'Login the toolset again and verify it is successful',
       async () => {
-        await toolsetEditorViewForm.clickSignInButton(
+        await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
         );
         await oauthMockHelper.navigateToCallback();
@@ -560,7 +578,7 @@ dialTest(
           { expectedCredsLabel: Creds.myCreds },
         );
         await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.signInButton,
+          toolsetEditorViewForm.loginButton,
           SignInButtonTitles.logOut,
         );
       },

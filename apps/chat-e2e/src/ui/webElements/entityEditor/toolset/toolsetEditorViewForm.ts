@@ -1,5 +1,5 @@
 import { OAuthOptions } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
+import { Attributes } from '@/src/ui/domData';
 import {
   AddToolsetSettingsFormSelector,
   IconSelectors,
@@ -44,13 +44,13 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     AddToolsetSettingsFormSelector.authDetailsContainer,
   );
   public oAuthOptions = this.authDetailsContainer
-    .getChildElementBySelector(Tags.label)
+    .getChildElementBySelector(AddToolsetSettingsFormSelector.authLoginOption)
     .getElementLocator()
     .filter({ has: this.page.getByRole('radio') });
   public oAuthOption = (loginOption: OAuthOptions) =>
     this.oAuthOptions.locator(`[${Attributes.id}="${loginOption}"]`);
-  public signInButton = this.authDetailsContainer.getChildElementBySelector(
-    AddToolsetSettingsFormSelector.signInButton,
+  public loginButton = this.authDetailsContainer.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.loginButton,
   );
   public apiKeyContainer = this.authContainer.getChildElementBySelector(
     AddToolsetSettingsFormSelector.apiKeyContainer,
@@ -78,15 +78,15 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   );
   public allowedTools = new Combobox(this.page, this.rootLocator);
 
-  public async clickSignInButton(triggeredHttpHost?: string) {
+  public async clickLoginButton(triggeredHttpHost?: string) {
     if (triggeredHttpHost) {
       const eventPromise = this.page.waitForEvent('requestfailed', {
         predicate: (request) =>
           request.url().startsWith(triggeredHttpHost.toLowerCase()),
       });
-      await this.signInButton.click();
+      await this.loginButton.click();
       return eventPromise;
     }
-    await this.signInButton.click();
+    await this.loginButton.click();
   }
 }
