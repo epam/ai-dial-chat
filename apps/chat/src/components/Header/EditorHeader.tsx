@@ -18,6 +18,8 @@ import { Logo } from '@/src/components/Header/Logo';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 interface EditorHeaderTab<T extends string> {
   label: string;
   key: T;
@@ -60,6 +62,9 @@ export const EditorHeader = <T extends string>({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
+  );
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
   );
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -163,9 +168,11 @@ export const EditorHeader = <T extends string>({
             <IconLogout size={14} />
             <span>{t(saveLabel ?? 'Save and exit')}</span>
           </button>
-          <div className="h-full max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
-            <User />
-          </div>
+          {!enabledFeatures.has(Feature.HideUserMenu) && (
+            <div className="h-full max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
+              <User />
+            </div>
+          )}
         </div>
       </div>
 
