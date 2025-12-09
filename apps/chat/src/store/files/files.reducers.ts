@@ -294,9 +294,15 @@ export const filesSlice = createSlice({
     ) => {
       state.loadingFolderId = undefined;
       state.foldersStatus = UploadStatus.LOADED;
+
+      const incomingIds = new Set(payload.folders.map((f) => f.id));
+      const filteredState = state.folders.filter(
+        (f) => f.folderId !== payload.folderId || incomingIds.has(f.id),
+      );
+
       state.folders = combineEntities(
         payload.folders,
-        state.folders.map((f) =>
+        filteredState.map((f) =>
           f.id === payload.folderId ? { ...f, status: UploadStatus.LOADED } : f,
         ),
       );
