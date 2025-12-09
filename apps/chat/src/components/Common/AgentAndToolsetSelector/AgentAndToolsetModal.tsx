@@ -15,7 +15,10 @@ import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isExternalApp } from '@/src/utils/app/application';
+import {
+  isDialAiEntityModel,
+  isExternalApp,
+} from '@/src/utils/app/application';
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
@@ -274,13 +277,13 @@ const AgentAndToolsetModalView = ({
     [setSelectedIds],
   );
 
-  const searchedAgents = useFuseSearch(
-    allAgents,
-    searchTerm,
-    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
+  const allItems = useMemo(
+    () => [...allAgents, ...allToolsets],
+    [allAgents, allToolsets],
   );
-  const searchedToolsets = useFuseSearch(
-    allToolsets,
+
+  const searchedItems = useFuseSearch(
+    allItems,
     searchTerm,
     MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
@@ -327,23 +330,21 @@ const AgentAndToolsetModalView = ({
       return { ...activeVersion!, allVersions: entities };
     };
 
-    const groupedAndOrderedAgents = groupMarketplaceEntityAndSaveOrder(
-      searchedAgents.filter(
-        (entity) =>
+    const filteredItems = searchedItems.filter((entity) => {
+      if (isDialAiEntityModel(entity)) {
+        return (
           !isExternalApp(entity) &&
           !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
-          entity.reference !== currentAppReference,
-      ),
-    ).map(getSelectedItemFromGroup);
+          entity.reference !== currentAppReference
+        );
+      }
+      return true;
+    });
 
-    const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
-      searchedToolsets,
-    ).map(getSelectedItemFromGroup);
-
-    const allGroupedItems = [
-      ...groupedAndOrderedAgents,
-      ...groupedAndOrderedToolsets,
-    ].filter((item): item is DisplayedMarketplaceEntity => !!item);
+    const allGroupedItems = groupMarketplaceEntityAndSaveOrder(filteredItems)
+      .map(getSelectedItemFromGroup)
+      .filter((item): item is DisplayedMarketplaceEntity => !!item)
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     if (!isMyWorkspace) {
       return allGroupedItems;
@@ -353,8 +354,7 @@ const AgentAndToolsetModalView = ({
       isInstalledEntity(item, installedSet),
     );
   }, [
-    searchedAgents,
-    searchedToolsets,
+    searchedItems,
     isMyWorkspace,
     scrollToItemId,
     selectedIds,
