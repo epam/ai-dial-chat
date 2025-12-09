@@ -32,7 +32,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -465,15 +465,23 @@ const moveFilesEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return FileService.moveFiles(payload).pipe(
         switchMap((response) => {
-          return concat(
-            of(FilesActions.moveFilesSuccess({ files: response })),
-            of(
-              FilesActions.getFilesWithFolders({
-                id: payload.destinationFolder,
-              }),
-            ),
-            of(FilesActions.getFilesWithFolders({ id: payload.sourceFolder })),
+          const actions: AppAction[] = [
+            FilesActions.moveFilesSuccess({ files: response }),
+          ];
+
+          if (payload.destinationFolder !== payload.sourceFolder) {
+            actions.push(
+              FilesActions.getFilesWithFolders({ id: payload.sourceFolder }),
+            );
+          }
+
+          actions.push(
+            FilesActions.getFilesWithFolders({
+              id: payload.destinationFolder,
+            }),
           );
+
+          return from(actions);
         }),
         catchError(() => {
           return of(

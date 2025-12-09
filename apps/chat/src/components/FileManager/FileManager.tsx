@@ -25,6 +25,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
+  DialCopiedItem,
   DialFileManager,
   DialLoader,
   FileManagerColumnKey,
@@ -219,6 +220,33 @@ export const FileManager: React.FC = () => {
     [t],
   );
 
+  const moveToFileHandler = useCallback(
+    (
+      movedItems: DialCopiedItem[],
+      sourceFolder: string,
+      destinationFolder: string,
+    ) => {
+      if (movedItems.length === 0) return;
+
+      dispatch(
+        FilesActions.moveFiles({
+          files: movedItems,
+          sourceFolder,
+          destinationFolder,
+        }),
+      );
+
+      const movedCurrent = movedItems.find(
+        (item) => item.sourceUrl === currentPath,
+      );
+
+      if (movedCurrent) {
+        setCurrentPath(undefined);
+      }
+    },
+    [dispatch, currentPath],
+  );
+
   return (
     <div className="relative size-full">
       <DialFileManager
@@ -273,16 +301,7 @@ export const FileManager: React.FC = () => {
             FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
           );
         }}
-        onMoveToFiles={(movedItems, sourceFolder, destinationFolder) => {
-          if (movedItems.length === 0) return;
-          dispatch(
-            FilesActions.moveFiles({
-              files: movedItems,
-              sourceFolder,
-              destinationFolder,
-            }),
-          );
-        }}
+        onMoveToFiles={moveToFileHandler}
         onDeleteFiles={(deletedItems, folderUrl) => {
           if (deletedItems.length === 0) return;
           dispatch(
