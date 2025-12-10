@@ -8,7 +8,6 @@ import { ApplicationDetailsFooterProps } from './ApplicationDetails';
 
 export const SimpleApplicationDetailsFooter = ({
   entity,
-  allVersions,
   onChangeVersion,
   onRemove,
 }: ApplicationDetailsFooterProps) => {
@@ -22,7 +21,7 @@ export const SimpleApplicationDetailsFooter = ({
     <div className="flex items-center justify-end gap-4 p-4">
       <ModelVersionSelect
         className="h-max"
-        entities={allVersions}
+        entities={[entity]}
         showVersionPrefix
         onSelect={onChangeVersion}
         currentEntity={entity}
