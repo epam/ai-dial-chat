@@ -1,4 +1,6 @@
 import { Routes } from '@/chat/constants/routes';
+import { ServerSlugs } from '@/chat/types/slugs-types';
+import { ToolsetAuthPayloadBase } from '@/chat/types/toolsets';
 import config from '@/config/chat.playwright.config';
 import { API, OAuthQueryParams } from '@/src/testData';
 import {
@@ -22,11 +24,12 @@ export interface OAuthState {
   callbackUrl: string | null;
   enableMocking: boolean;
   signInRequest: ToolsetSignInRequest | null;
+  signOutRequest: ToolsetAuthPayloadBase | null;
 }
 
 export class OAuthMockHelper {
   private page: Page;
-  private readonly initialToolset: Toolset;
+  private toolset: Toolset;
   private readonly toolsetEndpoint: string;
   private readonly mockConfig: OAuthMockConfig;
   private readonly authorizationCode: string;
@@ -41,6 +44,7 @@ export class OAuthMockHelper {
     callbackUrl: null,
     enableMocking: false,
     signInRequest: null,
+    signOutRequest: null,
   };
 
   constructor(
@@ -50,8 +54,8 @@ export class OAuthMockHelper {
     options: OAuthMockOptions = {},
   ) {
     this.page = page;
-    this.initialToolset = initialToolset;
-    this.initialToolset.endpoint = toolsetEndpoint;
+    this.toolset = initialToolset;
+    this.toolset.endpoint = toolsetEndpoint;
     this.toolsetEndpoint = toolsetEndpoint;
 
     const baseConfig = { ...DEFAULT_OAUTH_CONFIG };
@@ -91,6 +95,7 @@ export class OAuthMockHelper {
     await this.setupToolsetRoutes();
     await this.setupSignInRoute();
     await this.setupOAuthRedirectRoute();
+    await this.setupSignOutRoute();
   }
 
   enableMocking(): void {
@@ -103,6 +108,14 @@ export class OAuthMockHelper {
 
   getSignInRequest(): ToolsetSignInRequest | null {
     return this.state.signInRequest;
+  }
+
+  getSignOutRequest(): ToolsetAuthPayloadBase | null {
+    return this.state.signOutRequest;
+  }
+
+  getToolset(): Toolset {
+    return this.toolset;
   }
 
   /**
@@ -150,9 +163,23 @@ export class OAuthMockHelper {
     await this.page.unrouteAll({ behavior: 'ignoreErrors' });
   }
 
-  public async setupToolsetRoutes(): Promise<void> {
+  /**
+   * Updates the toolset routes with partial toolset properties.
+   * Merges the provided properties with the current toolset state.
+   * Note: Subsequent calls will merge with the already-modified toolset.
+   * @param updatedToolsetProps - Partial toolset properties to merge
+   */
+  public async setupUpdatedToolsetRoutes(
+    updatedToolsetProps: Partial<Toolset>,
+  ): Promise<void> {
+    const mergedOptions = { ...this.toolset, ...updatedToolsetProps };
+    return this.setupToolsetRoutes(mergedOptions);
+  }
+
+  public async setupToolsetRoutes(updatedToolset?: Toolset): Promise<void> {
+    this.toolset = updatedToolset ?? this.toolset;
     await this.page.route(
-      `**${API.api}/${this.initialToolset.id}`,
+      `**${API.api}/${this.toolset.id}`,
       async (route, request) => {
         const method = request.method();
         // Allow initial GET to go through unmocked
@@ -174,7 +201,7 @@ export class OAuthMockHelper {
           // Intercepted GET request
         } else if (method === 'GET') {
           const enrichedToolset: Toolset = {
-            ...this.initialToolset,
+            ...this.toolset,
             auth_settings: {
               authentication_type: ToolsetAuthTypes.OAUTH,
               redirect_uri: `${config.use!.baseURL}${Routes.ToolsetSignIn}`,
@@ -244,6 +271,28 @@ export class OAuthMockHelper {
       this.state.callbackUrl = `${redirectUri}?${OAuthQueryParams.code}=${this.authorizationCode}&${OAuthQueryParams.state}=${this.state.capturedState}`;
       // Abort the redirect
       await route.abort('aborted');
+    });
+  }
+
+  public async setupSignOutRoute(): Promise<void> {
+    const signOutUrl = `**${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_OUT}`;
+    // Intercept OAuth sign-out call
+    await this.page.route(signOutUrl, async (route, request) => {
+      this.state.isSignedIn = false;
+      const requestData = request.postDataJSON();
+      if (requestData === null) {
+        throw new Error('Failed to parse sign-out request body');
+      } else {
+        this.state.signOutRequest = requestData;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'Sign-out successful',
+        }),
+      });
     });
   }
 }

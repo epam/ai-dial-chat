@@ -116,7 +116,7 @@ dialOverlayTest(
         await overlayBaseAssertion.assertElementState(overlayDialog, 'visible');
         const actualMessagesString =
           await overlayDialog.content.getElementInnerContent();
-        const expectedItem = await overlayItemApiHelper.getItem(
+        const expectedItem = await overlayItemApiHelper.getItem<Conversation>(
           secondRequest.id,
         );
         const { messages } = JSON.parse(
@@ -359,7 +359,7 @@ dialOverlayTest(
           );
         for (let i = 0; i < actualConversationsList.length; i++) {
           let expectedConversation: OverlayConversation | Conversation;
-          const conversation = await overlayItemApiHelper.getItem(
+          const conversation = await overlayItemApiHelper.getItem<Conversation>(
             actualConversationsList[i].url,
           );
           const actualConversation = actualConversationsList[i];
@@ -438,7 +438,7 @@ dialOverlayTest(
         const actualSharedConversationsList =
           await overlayShareApiHelper.listSharedWithMeConversations();
         for (const actualSharedConversation of actualSharedConversationsList.resources) {
-          const conversation = await overlayItemApiHelper.getItem(
+          const conversation = await overlayItemApiHelper.getItem<Conversation>(
             actualSharedConversation.url,
           );
           const permissions = conversation.permissions;
