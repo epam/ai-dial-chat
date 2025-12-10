@@ -220,6 +220,19 @@ export const importExportSlice = createSlice({
       state.isShowReplaceDialog = false;
       state.mappedActions = payload.mappedActions;
     },
+    handleImportStop: (
+      state,
+      _action: PayloadAction<
+        | {
+            itemsToUpload: Conversation[];
+            featureType: FeatureType.Chat;
+          }
+        | {
+            itemsToUpload: Prompt[];
+            featureType: FeatureType.Prompt;
+          }
+      >,
+    ) => state,
   },
 });
 
