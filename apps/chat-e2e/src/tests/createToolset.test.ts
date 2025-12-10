@@ -809,7 +809,7 @@ dialTest(
           toolsetEntity.endpoint,
         );
         await toolsetEditorViewForm.oauthContainer.click();
-        await toolsetEditorViewForm.signInButton.click();
+        await toolsetEditorViewForm.loginButton.click();
         await oauthMockHelper.cleanup();
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(
