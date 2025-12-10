@@ -63,8 +63,8 @@ export const EditorHeader = <T extends string>({
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isUserMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
   );
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -168,7 +168,7 @@ export const EditorHeader = <T extends string>({
             <IconLogout size={14} />
             <span>{t(saveLabel ?? 'Save and exit')}</span>
           </button>
-          {!enabledFeatures.has(Feature.HideUserMenu) && (
+          {!isUserMenuHidden && (
             <div className="h-full max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
               <User />
             </div>

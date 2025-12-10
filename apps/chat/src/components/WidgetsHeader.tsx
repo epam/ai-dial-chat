@@ -25,8 +25,8 @@ export const WidgetsHeader = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isUserMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
   );
 
   const handleClose = useCallback(() => {
@@ -55,7 +55,7 @@ export const WidgetsHeader = () => {
         ) : undefined
       }
       RightItems={
-        !enabledFeatures.has(Feature.HideUserMenu) && (
+        !isUserMenuHidden && (
           <>
             <div className="w-[48px] md:w-auto">
               <User />
