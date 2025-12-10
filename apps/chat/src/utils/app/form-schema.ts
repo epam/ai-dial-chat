@@ -7,6 +7,7 @@ import {
   DialSchemaProperties,
   FormSchemaButtonOption,
   FormSchemaDefinition,
+  FormSchemaPropertyWidget,
   Message,
   MessageFormSchema,
   MessageFormValue,
@@ -158,18 +159,24 @@ export const getFormSchemaPropertyType = (
   property: string,
 ) => {
   if (
+    schema.properties[property]?.[DialSchemaProperties.DialWidget] ===
+    FormSchemaPropertyWidget.buttons
+  ) {
+    return FormSchemaPropertyType.Button;
+  } else if (
     schema.properties[property]?.uniqueItems &&
     schema.properties[property]?.items?.$ref
   ) {
     return FormSchemaPropertyType.Checkbox;
   }
-  return FormSchemaPropertyType.Button;
+  return FormSchemaPropertyType.Unknown;
 };
 
 export const getSortedFormSchemaProperties = (schema: MessageFormSchema) => {
   const priorityByType = {
     [FormSchemaPropertyType.Checkbox]: 0,
     [FormSchemaPropertyType.Button]: 1,
+    [FormSchemaPropertyType.Unknown]: 2,
   };
 
   return Object.entries(schema.properties).sort(
