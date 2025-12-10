@@ -26,7 +26,7 @@ import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/Toolsets
 
 export const SimpleToolsetDetailsFooter: React.FC<
   ToolsetDetailsFooterProps
-> = ({ entity, allVersions, onChangeVersion, onRemove }) => {
+> = ({ entity, onChangeVersion, onRemove }) => {
   const { t } = useTranslation(Translation.Marketplace);
   const screenState = useScreenState();
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
@@ -42,15 +42,13 @@ export const SimpleToolsetDetailsFooter: React.FC<
   return (
     <div className="flex items-center justify-end gap-4 p-4">
       <div className="flex items-center">
-        {allVersions.length > 1 && (
-          <ModelVersionSelect
-            className="h-max"
-            entities={allVersions}
-            onSelect={onChangeVersion}
-            currentEntity={entity}
-            showVersionPrefix
-          />
-        )}
+        <ModelVersionSelect
+          className="h-max"
+          entities={[entity]}
+          onSelect={onChangeVersion}
+          currentEntity={entity}
+          showVersionPrefix
+        />
       </div>
 
       <div className="flex items-center gap-2">
