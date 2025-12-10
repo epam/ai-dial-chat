@@ -76,6 +76,7 @@ import {
   SideBarAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
+  ToolsetAuthAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
@@ -415,6 +416,7 @@ const dialTest = test.extend<{
   replaceConfirmationModalConversations: ReplaceConfirmationModalConversations;
   replaceConfirmationModalFoldersAssertion: FolderAssertion<ReplaceConfirmationModalFolders>;
   replaceConfirmationModalConversationsAssertion: EntityTreeAssertion<ReplaceConfirmationModalConversations>;
+  toolsetAuthAssertion: ToolsetAuthAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1717,6 +1719,16 @@ const dialTest = test.extend<{
         replaceConfirmationModalConversations,
       );
     await use(replaceConfirmationModalConversationsAssertion);
+  },
+  toolsetAuthAssertion: async (
+    { toolsetEditorViewForm, toolsetEditorSettingsPreviewCard },
+    use,
+  ) => {
+    const toolsetOAuthAssertion = new ToolsetAuthAssertion(
+      toolsetEditorSettingsPreviewCard,
+      toolsetEditorViewForm,
+    );
+    await use(toolsetOAuthAssertion);
   },
 });
 
