@@ -356,6 +356,9 @@ export const ExpectedConstants = {
   oAuthNotSupportedError: 'MCP server does not support OAuth authentication',
   mcpServerUrl: 'https://mcp.deepwiki.com/mcp',
   mixedImportOption: 'Mixed',
+  logOutDialogTitle: 'Logging out',
+  logOutDialogMessage: 'Are you sure you want to log out?',
+  logOutDialogButtonLabel: 'Log out',
 };
 
 export enum Types {
@@ -720,4 +723,10 @@ export enum OAuthQueryParams {
 export enum Creds {
   myCreds = 'MY CREDS',
   orgCreds = 'ORG CREDS',
+  loggedOut = 'LOGGED OUT',
+}
+
+export enum SignInButtonTitles {
+  logIn = 'Log in',
+  logOut = 'Log out',
 }

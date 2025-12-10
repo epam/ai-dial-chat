@@ -565,8 +565,8 @@ dialTest(
         const requestsData = await chat.sendRequestInCompareMode(
           'how are you?',
           {
-            rightEntity: firstConversation.model.id,
-            leftEntity: secondConversation.model.id,
+            rightEntity: firstConversation.id,
+            leftEntity: secondConversation.id,
           },
           true,
         );

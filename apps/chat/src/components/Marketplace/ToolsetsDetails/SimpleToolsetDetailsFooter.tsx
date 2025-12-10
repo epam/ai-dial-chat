@@ -40,7 +40,7 @@ export const SimpleToolsetDetailsFooter: React.FC<
   );
 
   return (
-    <div className="flex items-center justify-between p-4">
+    <div className="flex items-center justify-end gap-4 p-4">
       <div className="flex items-center">
         {allVersions.length > 1 && (
           <ModelVersionSelect
