@@ -27,6 +27,7 @@ export const RadioButton = ({
   return (
     <Tooltip tooltip={tooltip} triggerClassName="w-fit">
       <label
+        id="auth-login-option"
         htmlFor={id}
         className={classNames(
           'group flex select-none items-center justify-start gap-2',
