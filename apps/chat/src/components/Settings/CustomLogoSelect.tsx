@@ -10,10 +10,9 @@ import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { Label } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
-
-import { Label } from '../Common/Forms/Label';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
