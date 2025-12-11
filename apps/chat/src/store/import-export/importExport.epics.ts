@@ -3,7 +3,6 @@ import {
   Observable,
   catchError,
   concat,
-  concatMap,
   filter,
   forkJoin,
   from,
@@ -466,7 +465,7 @@ const importPromptsEpic: AppEpic = (action$) =>
 const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ImportExportActions.uploadImportedConversations.type),
-    concatMap(({ payload }) => {
+    switchMap(({ payload }) => {
       const import$ = from(
         ConversationService.setConversations(payload.itemsToUpload),
       ).pipe(
