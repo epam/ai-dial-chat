@@ -67,6 +67,7 @@ export enum Feature {
   // User settings
   HideUserSettings = 'hide-user-settings', // Hide user settings
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
+  HideUserMenu = 'hide-user-menu', // Hide user menu button from top header
 
   // Applications
   CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
