@@ -27,6 +27,7 @@ import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/Toggle
 
 import { CustomLogoSelect } from './CustomLogoSelect';
 import { DefaultModelSelect } from './DefaultModelSelect';
+import { EnterType, EnterTypeSelectLabeled } from './EnterTypeSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -56,6 +57,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
   );
+
+  const [enterType, setEnterType] = useState(EnterType.Enter);
 
   const screenState = useScreenState();
 
@@ -166,7 +169,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="mb-4 text-base font-bold">{t('Settings')}</div>
-      <div className="mb-4 flex flex-col gap-5">
+      <div className="mb-4 flex flex-col gap-4">
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
@@ -192,16 +195,23 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         />
 
         {screenState !== ScreenState.SM && (
-          <ToggleSwitchLabel
-            label={t('Chat width')}
-            isOn={isChatFullWidthLocal}
-            labelText={t('Show chat full screen width')}
-            labelClassName="grow"
-            handleSwitch={onChangeHandlerFullWidth}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
-            isLabelOnRight
-          />
+          <>
+            <ToggleSwitchLabel
+              label={t('Chat width')}
+              isOn={isChatFullWidthLocal}
+              labelText={t('Show chat full screen width')}
+              labelClassName="grow"
+              handleSwitch={onChangeHandlerFullWidth}
+              switchOnText={t('ON')}
+              switchOFFText={t('OFF')}
+              isLabelOnRight
+            />
+            <EnterTypeSelectLabeled
+              label={t('Keyboard shortcuts')}
+              value={enterType}
+              onValueChange={(e) => setEnterType(e.target.value as EnterType)}
+            />
+          </>
         )}
       </div>
 

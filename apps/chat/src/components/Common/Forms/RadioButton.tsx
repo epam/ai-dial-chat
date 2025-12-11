@@ -1,5 +1,5 @@
 import { IconCircle } from '@tabler/icons-react';
-import { InputHTMLAttributes, useId } from 'react';
+import React, { InputHTMLAttributes, useId } from 'react';
 
 import classNames from 'classnames';
 
@@ -9,7 +9,7 @@ import IconCircleChecked from '@/public/images/icons/radio-checked.svg';
 
 interface RadioButtonProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  caption?: string;
+  caption?: string | React.ReactNode;
   className?: string;
   tooltip?: string;
 }
