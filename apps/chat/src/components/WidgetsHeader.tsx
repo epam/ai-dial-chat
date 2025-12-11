@@ -15,6 +15,8 @@ import { BaseHeader } from '@/src/components/Header/BaseHeader';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 export const WidgetsHeader = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -23,6 +25,9 @@ export const WidgetsHeader = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isUserMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
+  );
 
   const handleClose = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -50,13 +55,15 @@ export const WidgetsHeader = () => {
         ) : undefined
       }
       RightItems={
-        <>
-          <div className="w-[48px] md:w-auto">
-            <User />
-          </div>
+        !isUserMenuHidden && (
+          <>
+            <div className="w-[48px] md:w-auto">
+              <User />
+            </div>
 
-          <SettingDialog open={isUserSettingsOpen} onClose={handleClose} />
-        </>
+            <SettingDialog open={isUserSettingsOpen} onClose={handleClose} />
+          </>
+        )
       }
     />
   );

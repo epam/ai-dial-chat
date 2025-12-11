@@ -16,6 +16,8 @@ import { BaseHeader } from '@/src/components/Header/BaseHeader';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 export const MarketplaceHeader = () => {
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
@@ -24,6 +26,9 @@ export const MarketplaceHeader = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isUserMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
+  );
 
   const dispatch = useAppDispatch();
 
@@ -55,13 +60,15 @@ export const MarketplaceHeader = () => {
         />
       }
       RightItems={
-        <>
-          <div className="w-[48px] md:w-auto">
-            <User />
-          </div>
+        !isUserMenuHidden && (
+          <>
+            <div className="w-[48px] md:w-auto">
+              <User />
+            </div>
 
-          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-        </>
+            <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+          </>
+        )
       }
     />
   );
