@@ -17,6 +17,7 @@ const ACTION_LABELS = {
   download: (t: TranslationFn) => t('Download'),
   rename: (t: TranslationFn) => t('Rename'),
   unshare: (t: TranslationFn) => t('Unshare'),
+  info: (t: TranslationFn) => t('Info'),
 } as const;
 
 type FileAction = keyof typeof ACTION_LABELS;
@@ -29,9 +30,10 @@ const TAB_ACTIONS: Record<DialFileManagerTabs, FileAction[]> = {
     DialFileManagerActions.Delete,
     DialFileManagerActions.Download,
     DialFileManagerActions.Rename,
+    DialFileManagerActions.Info,
   ],
-  shared: [DialFileManagerActions.Download],
-  organization: [DialFileManagerActions.Download],
+  shared: [DialFileManagerActions.Download, DialFileManagerActions.Info],
+  organization: [DialFileManagerActions.Download, DialFileManagerActions.Info],
 };
 
 const buildLabelMap = (actions: FileAction[], t: TranslationFn) =>

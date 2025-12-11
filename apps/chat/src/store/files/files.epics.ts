@@ -239,6 +239,22 @@ const getFilesEpic: AppEpic = (action$) =>
     ),
   );
 
+const getFileMetadataEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.getFileMetadata.type),
+    switchMap(({ payload }) =>
+      FileService.getFileMetadata(payload.fileId).pipe(
+        map((metadata) => {
+          if (!metadata) {
+            return FilesActions.getFileMetadataFail();
+          }
+          return FilesActions.getFileMetadataSuccess({ metadata });
+        }),
+        catchError(() => of(FilesActions.getFileMetadataFail())),
+      ),
+    ),
+  );
+
 const getFileFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFolders.type),
@@ -665,6 +681,7 @@ export const FilesEpics = combineEpics(
   uploadFilesSuccessEpic,
   getFileFoldersEpic,
   getFilesEpic,
+  getFileMetadataEpic,
   reuploadFileEpic,
   renameFolderEpic,
   renameFolderFailEpic,

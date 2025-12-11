@@ -49,6 +49,9 @@ const initialState: FilesState = {
   filesStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
 
+  loadingFileMetadata: false,
+  fileMetadata: null,
+
   isCopyingFiles: false,
   isMovingFiles: false,
   isDeletingFiles: false,
@@ -265,6 +268,34 @@ export const filesSlice = createSlice({
     },
     getFilesFail: (state) => {
       state.filesStatus = UploadStatus.FAILED;
+    },
+    getFileMetadata: (
+      state,
+      _action: PayloadAction<{
+        fileId: string;
+      }>,
+    ) => {
+      state.loadingFileMetadata = true;
+      state.fileMetadata = null;
+    },
+    getFileMetadataSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        metadata: UIKitDialFile;
+      }>,
+    ) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = payload.metadata as UIKitDialFile;
+    },
+    getFileMetadataFail: (state) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = null;
+    },
+    clearFileMetadata: (state) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = null;
     },
     getFolders: (
       state,

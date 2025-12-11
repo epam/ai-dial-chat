@@ -41,6 +41,11 @@ export const FileManager: React.FC = () => {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
+  const isFileMetadataLoading = useAppSelector(
+    FilesSelectors.selectLoadingFileMetadata,
+  );
+  const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
+
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const initialized = useAppSelector(FilesSelectors.selectInitialized);
@@ -297,6 +302,16 @@ export const FileManager: React.FC = () => {
           loadedPaths: loadedFoldersPaths,
           actionLabels: treeActionLabels,
         }}
+        fileMetadataPopupOptions={{
+          title: t('Information'),
+          nameLabel: t('Name: '),
+          pathLabel: t('Path: '),
+          modifiedDateLabel: t('Modified: '),
+          sizeLabel: t('Size: '),
+          authorLabel: t('Author: '),
+          loading: isFileMetadataLoading,
+          fileMetadata: fileMetadata ?? undefined,
+        }}
         navigationPanelOptions={{
           searchable: true,
         }}
@@ -327,6 +342,10 @@ export const FileManager: React.FC = () => {
           dispatch(
             FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
           );
+        }}
+        onGetInfo={(item) => {
+          if (!item) return;
+          dispatch(FilesActions.getFileMetadata({ fileId: item.path }));
         }}
         onMoveToFiles={moveToFileHandler}
         onDeleteFiles={(deletedItems, folderUrl) => {

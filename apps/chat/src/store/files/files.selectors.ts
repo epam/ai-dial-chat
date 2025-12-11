@@ -217,6 +217,12 @@ const selectIsAnyFileOperationInProgress = createSelector(
   },
 );
 
+const selectLoadingFileMetadata = (state: RootState) =>
+  rootSelector(state).loadingFileMetadata;
+
+const selectFileMetadata = (state: RootState) =>
+  rootSelector(state).fileMetadata;
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -243,4 +249,6 @@ export const FilesSelectors = {
   selectChosenEmptyFolderIds,
   selectChosenFolderIds,
   selectIsAnyFileOperationInProgress,
+  selectLoadingFileMetadata,
+  selectFileMetadata,
 };

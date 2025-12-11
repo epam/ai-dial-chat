@@ -5,6 +5,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApiKeys,
+  BackendChatEntity,
   BackendDataNodeType,
   FeatureType,
   MoveModel,
@@ -25,6 +26,7 @@ import { getFileRootId } from '../id';
 import {
   DialCopiedItem,
   DialDeletedItem,
+  DialFileNodeType,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
@@ -218,6 +220,41 @@ export class FileService {
 
   public static getFileContent<T>(path: string): Observable<T> {
     return ApiUtils.request(path);
+  }
+
+  public static getFileMetadata(
+    fileId: string,
+  ): Observable<UIKitDialFile | null> {
+    return ApiUtils.request(
+      `/api/metadata/${ApiUtils.encodeApiUrl(fileId)}`,
+    ).pipe(
+      map((metadata: BackendChatEntity) => {
+        const relativePath = metadata.parentPath
+          ? ApiUtils.decodeApiUrl(metadata.parentPath)
+          : undefined;
+
+        const decodedUrl = ApiUtils.decodeApiUrl(metadata.url);
+
+        const uiKitFile: UIKitDialFile = {
+          ...metadata,
+          nodeType: DialFileNodeType.ITEM,
+          resourceType:
+            metadata.resourceType as unknown as UIKitDialFile['resourceType'],
+          path: metadata.url,
+          folderId: constructPath(getFileRootId(metadata.bucket), relativePath),
+          id: decodedUrl,
+          permissions: metadata.permissions as UIKitDialFile['permissions'],
+          createdAt: metadata.createdAt
+            ? new Date(metadata.createdAt).toISOString()
+            : undefined,
+          updatedAt: metadata.updatedAt
+            ? new Date(metadata.updatedAt).toISOString()
+            : undefined,
+        };
+
+        return uiKitFile;
+      }),
+    );
   }
 
   public static moveFile(moveModel: MoveModel): Observable<MoveModel> {
