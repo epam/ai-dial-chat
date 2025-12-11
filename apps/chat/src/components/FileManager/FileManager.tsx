@@ -8,7 +8,7 @@ import {
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
-import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
+import { getFileRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -27,29 +27,18 @@ import {
   ButtonVariant,
   DialCopiedItem,
   DialFileManager,
-  DialFileManagerTabs,
   DialLoader,
   FileManagerColumnKey,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 
 export const FileManager: React.FC = () => {
-  const [currentPath, setCurrentPath] = useState<string | undefined>();
-  const [destinationPath, setDestinationPath] = useState<string | undefined>();
-  const [treeCollapsedState, setTreeCollapsedState] = useState<
-    boolean | undefined
-  >(true);
-  const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
+  const { t } = useTranslation(Translation.SideBar);
 
   const isFileMetadataLoading = useAppSelector(
     FilesSelectors.selectLoadingFileMetadata,
   );
-  const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
-
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const folders = useAppSelector(FilesSelectors.selectFolders);
-  const initialized = useAppSelector(FilesSelectors.selectInitialized);
   const areFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
@@ -61,6 +50,16 @@ export const FileManager: React.FC = () => {
     FilesSelectors.selectIsAnyFileOperationInProgress,
   );
 
+  const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
+  const files = useAppSelector(FilesSelectors.selectFiles);
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+
+  const [currentPath, setCurrentPath] = useState<string | undefined>();
+  const [destinationPath, setDestinationPath] = useState<string | undefined>();
+  const [treeCollapsedState, setTreeCollapsedState] = useState<
+    boolean | undefined
+  >(true);
+
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
     my_files: t('My Files'),
     shared: t('Shared with Me'),
@@ -68,54 +67,33 @@ export const FileManager: React.FC = () => {
   });
   const previousActiveTabRef = useRef(activeTab);
 
-  const bucketRootId = useMemo(
-    () => getFileRootId(getEntityBucket({ id: currentPath ?? '' })),
-    [currentPath],
-  );
-
   useEffect(() => {
-    if (!initialized) {
-      dispatch(FilesActions.init());
+    if (initialDataStatus === UploadStatus.LOADED) {
+      dispatch(FilesActions.getFilesWithFolders({}));
     }
-  }, [dispatch, initialized]);
+  }, [initialDataStatus]);
 
   useEffect(() => {
-    if (
-      initialized &&
-      initialDataStatus === UploadStatus.LOADED &&
-      bucketRootId !== 'files'
-    ) {
-      setCurrentPath(bucketRootId);
-      dispatch(
-        FilesActions.getFilesWithFolders({
-          id:
-            activeTab !== DialFileManagerTabs.Shared ? bucketRootId : undefined,
-        }),
-      );
-    }
-  }, [dispatch, initialized, initialDataStatus, bucketRootId, activeTab]);
-
-  useEffect(() => {
-    if (currentPath && currentPath !== bucketRootId) {
+    if (currentPath && !isRootId(currentPath)) {
       const folder = folders.find((folder) => folder.id === currentPath);
       if (folder?.status !== UploadStatus.LOADED) {
         dispatch(FilesActions.getFilesWithFolders({ id: currentPath }));
       }
     }
-  }, [dispatch, currentPath, bucketRootId, folders]);
+  }, [dispatch, currentPath, folders]);
 
   useEffect(() => {
     if (
       destinationPath &&
-      destinationPath !== bucketRootId &&
-      destinationPath !== currentPath
+      destinationPath !== currentPath &&
+      !isRootId(destinationPath)
     ) {
       const folder = folders.find((folder) => folder.id === destinationPath);
       if (folder?.status !== UploadStatus.LOADED) {
         dispatch(FilesActions.getFilesWithFolders({ id: destinationPath }));
       }
     }
-  }, [dispatch, currentPath, bucketRootId, destinationPath, folders]);
+  }, [dispatch, currentPath, destinationPath, folders]);
 
   const { fileTreeItems, rootFolder, loadedFoldersPaths, visibleColumns } =
     useMemo(() => {
@@ -165,10 +143,7 @@ export const FileManager: React.FC = () => {
         breadcrumbLabel,
       );
 
-      if (
-        bucketRootId !== rootFolder.id ||
-        activeTab !== previousActiveTabRef.current
-      ) {
+      if (activeTab !== previousActiveTabRef.current) {
         setCurrentPath(rootFolder.id);
         previousActiveTabRef.current = activeTab;
       }
@@ -179,7 +154,7 @@ export const FileManager: React.FC = () => {
         loadedFoldersPaths,
         visibleColumns,
       };
-    }, [t, files, folders, activeTab, previousActiveTabRef, bucketRootId]);
+    }, [t, files, folders, activeTab, previousActiveTabRef]);
 
   const getParentPaths = (path: string | undefined): string[] => {
     if (!path) return [];
@@ -197,12 +172,12 @@ export const FileManager: React.FC = () => {
 
   useEffect(() => {
     setExpandedPaths((prev) => {
-      const newPaths = getParentPaths(currentPath || bucketRootId);
+      const newPaths = getParentPaths(currentPath);
       const updated = new Set(prev);
       newPaths.forEach((p) => updated.add(p));
       return updated;
     });
-  }, [currentPath, bucketRootId]);
+  }, [currentPath]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
@@ -292,7 +267,7 @@ export const FileManager: React.FC = () => {
   return (
     <div className="relative size-full">
       <DialFileManager
-        path={currentPath || bucketRootId}
+        path={currentPath}
         onPathChange={setCurrentPath}
         items={fileTreeItems}
         rootItem={rootFolder}
