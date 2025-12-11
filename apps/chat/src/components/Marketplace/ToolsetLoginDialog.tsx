@@ -113,6 +113,14 @@ export const ToolsetLoginDialogView = () => {
         </h4>
       </div>
 
+      {!isSignedIn && authType === ToolsetAuthTypes.API_KEY && (
+        <div className="text-sm leading-5 text-primary">
+          {t('Enter your API key value for ')}
+          <span className="font-bold">{entity.authSettings.apiKeyHeader}</span>
+          {t(' header')}
+        </div>
+      )}
+
       <FormProvider {...formMethods}>
         <ToolsetLoginForm
           credentialsLevel={authLevel}
@@ -121,6 +129,7 @@ export const ToolsetLoginDialogView = () => {
           buttonClassName="ml-auto"
           onLogin={handleLogin}
           onLogout={handleLogout}
+          hideConfigFields
         />
       </FormProvider>
     </Modal>

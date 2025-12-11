@@ -179,9 +179,10 @@ dialAdminTest(
         );
         await adminToast.closeToast();
 
-        const exportedConversation = await adminUserItemApiHelper.getItem(
-          expectedTodayConversationId,
-        );
+        const exportedConversation =
+          await adminUserItemApiHelper.getItem<Conversation>(
+            expectedTodayConversationId,
+          );
         baseAssertion.assertValueIsNotUndefined(exportedConversation);
 
         const expectedReviewImage = exportedConversation.messages
@@ -406,7 +407,9 @@ dialAdminTest(
         await adminToast.closeToast();
 
         const exportedPlaybackConversation =
-          await adminUserItemApiHelper.getItem(expectedPlaybackConversationId);
+          await adminUserItemApiHelper.getItem<Conversation>(
+            expectedPlaybackConversationId,
+          );
         baseAssertion.assertValueIsNotUndefined(exportedPlaybackConversation);
 
         const expectedPlaybackReviewImage =

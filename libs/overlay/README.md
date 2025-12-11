@@ -74,6 +74,8 @@ const run = async () => {
       autoSignIn: true,
       //provider which will be used for the sign in
       signInProvider: 'provider_name',
+      // optional, use this in case one of multiple active accounts needs to be selected for automatic sign in
+      logInHint: 'account@example.com',
       //optional, should be true if provider page couldn't be open in iframe and hostDomain and DIAL have different providers or application id within one provider
       signInInNewWindow: true,
     },

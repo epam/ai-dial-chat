@@ -53,7 +53,7 @@ export class ItemApiHelper extends BaseApiHelper {
     return (await response.json()) as BackendChatEntity[];
   }
 
-  public async getItem(id: string) {
+  public async getItem<T>(id: string) {
     const response = await this.request.get(this.getHost(`${API.api}/${id}`));
     const statusCode = response.status();
     expect
@@ -62,7 +62,7 @@ export class ItemApiHelper extends BaseApiHelper {
         ExpectedMessages.apiItemReceived(statusCode, await response.text()),
       )
       .toBe(200);
-    return (await response.json()) as Conversation;
+    return (await response.json()) as T;
   }
 
   public async deleteBackendItem(...items: BackendEntity[]) {
