@@ -1,4 +1,4 @@
-import { RefObject } from 'react';
+import { KeyboardEvent, RefObject } from 'react';
 import {
   FieldErrors,
   FieldValues,
@@ -196,4 +196,11 @@ export const getVersionValidationErrors = (
   }
 
   return errors;
+};
+
+export const preventEnterDown = (e: KeyboardEvent<HTMLFormElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 };
