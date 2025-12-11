@@ -119,7 +119,7 @@ export const getDefaultLoginFormData = (
         authenticationType,
         isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
         withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
-        keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
+        keyHeader: toolset?.authSettings?.apiKeyHeader ?? '',
         apiKey: prevData?.apiKey ?? '',
       };
     case ToolsetAuthTypes.OAUTH:
