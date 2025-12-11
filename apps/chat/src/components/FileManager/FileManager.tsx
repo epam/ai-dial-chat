@@ -27,6 +27,7 @@ import {
   ButtonVariant,
   DialCopiedItem,
   DialFileManager,
+  DialFileManagerTabs,
   DialLoader,
   FileManagerColumnKey,
   useDialFileManagerTabs,
@@ -79,11 +80,20 @@ export const FileManager: React.FC = () => {
   }, [dispatch, initialized]);
 
   useEffect(() => {
-    if (initialized && initialDataStatus === UploadStatus.LOADED) {
+    if (
+      initialized &&
+      initialDataStatus === UploadStatus.LOADED &&
+      bucketRootId !== 'files'
+    ) {
       setCurrentPath(bucketRootId);
-      dispatch(FilesActions.getFilesWithFolders({ id: bucketRootId }));
+      dispatch(
+        FilesActions.getFilesWithFolders({
+          id:
+            activeTab !== DialFileManagerTabs.Shared ? bucketRootId : undefined,
+        }),
+      );
     }
-  }, [dispatch, initialized, initialDataStatus, bucketRootId]);
+  }, [dispatch, initialized, initialDataStatus, bucketRootId, activeTab]);
 
   useEffect(() => {
     if (currentPath && currentPath !== bucketRootId) {
