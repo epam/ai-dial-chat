@@ -21,6 +21,7 @@ import {
 
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
+import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Modal } from '@/src/components/Common/Modal';
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
 
@@ -29,6 +30,8 @@ import { DefaultModelSelect } from './DefaultModelSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
+
+const ToggleSwitchLabel = withLabel(ToggleSwitchLabeled);
 
 interface Props {
   open: boolean;
@@ -155,7 +158,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[500px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[400px] md:p-6"
+      containerClassName="inline-block w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[509px] md:p-6"
       dataQa="settings-modal"
       state={open ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
@@ -179,6 +182,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
                   customLogoLocalStoreName)
             }
             title={t('Custom logo')}
+            isFormView
           />
         )}
 
@@ -188,13 +192,15 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         />
 
         {screenState !== ScreenState.SM && (
-          <ToggleSwitchLabeled
+          <ToggleSwitchLabel
+            label={t('Chat width')}
             isOn={isChatFullWidthLocal}
-            labelText={t('Full width chat')}
-            labelClassName="basis-1/3 md:basis-1/4"
+            labelText={t('Show chat full screen width')}
+            labelClassName="grow"
             handleSwitch={onChangeHandlerFullWidth}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
+            isLabelOnRight
           />
         )}
       </div>
