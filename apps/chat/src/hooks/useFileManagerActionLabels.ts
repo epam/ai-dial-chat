@@ -32,7 +32,11 @@ const TAB_ACTIONS: Record<DialFileManagerTabs, FileAction[]> = {
     DialFileManagerActions.Rename,
     DialFileManagerActions.Info,
   ],
-  shared: [DialFileManagerActions.Download, DialFileManagerActions.Info],
+  shared: [
+    DialFileManagerActions.Download,
+    DialFileManagerActions.Unshare,
+    DialFileManagerActions.Info,
+  ],
   organization: [DialFileManagerActions.Download, DialFileManagerActions.Info],
 };
 

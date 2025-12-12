@@ -17,12 +17,13 @@ import {
 
 import { Translation } from '@/src/types/translation';
 
+import { ShareActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
   DialCopiedItem,
@@ -388,6 +389,15 @@ export const FileManager: React.FC = () => {
               archive: archiveFile,
               name,
               destinationUrl,
+            }),
+          );
+        }}
+        onUnshareFile={(file) => {
+          dispatch(
+            ShareActions.discardSharedWithMe({
+              resourceIds: [file.path],
+              featureType: FeatureType.File,
+              isFolder: file.nodeType === 'folder',
             }),
           );
         }}
