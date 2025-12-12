@@ -832,6 +832,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
           type: ToastType.Success,
           title: translate('Items {{verb}} successfully', {
             ns: Translation.Common,
+            verb: verbPast,
           }),
           message: translate('{{count}} items {{verb}} from {{folder}}', {
             ns: Translation.Files,
@@ -860,7 +861,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
 
         return UIActions.showToast({
           type: ToastType.Error,
-          title: translate('Items deletion successfully', {
+          title: translate('Items deleting failed', {
             ns: Translation.Common,
           }),
           message: translate(
