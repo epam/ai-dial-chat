@@ -32,6 +32,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/actions';
@@ -355,14 +356,21 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !isTyping && e.shiftKey) {
+      if (
+        e.key === 'Enter' &&
+        !isTyping &&
+        !e.shiftKey &&
+        (enterType !== EnterType.CtrlEnter || e.ctrlKey)
+      ) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [formValue, handleEditMessage, isTyping, messageContent],
+    [enterType, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleUnselectFile = useCallback(

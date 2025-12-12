@@ -21,7 +21,11 @@ import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
+import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
 
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
@@ -108,16 +112,22 @@ export const PromptVariablesDialog: FC<Props> = ({
     [],
   );
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Enter' && e.shiftKey) {
+      if (
+        e.key === 'Enter' &&
+        !e.shiftKey &&
+        (enterType === EnterType.Enter || e.ctrlKey)
+      ) {
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
         onClose();
       }
     },
-    [handleSubmit, onClose],
+    [enterType, handleSubmit, onClose],
   );
 
   useEffect(() => {

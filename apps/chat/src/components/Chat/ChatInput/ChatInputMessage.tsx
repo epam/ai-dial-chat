@@ -24,6 +24,7 @@ import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
+import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -347,6 +348,8 @@ export const ChatInputMessage = Inversify.register(
       onRegenerate,
     ]);
 
+    const enterType = useAppSelector(UISelectors.selectEnterType);
+
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (showPromptList && filteredPrompts.length > 0) {
@@ -355,7 +358,8 @@ export const ChatInputMessage = Inversify.register(
           e.key === 'Enter' &&
           !isTyping &&
           !isMobile() &&
-          e.shiftKey
+          !e.shiftKey &&
+          (enterType !== EnterType.CtrlEnter || e.ctrlKey)
         ) {
           e.preventDefault();
           if (isReplay || messageIsStreaming) {
@@ -371,6 +375,7 @@ export const ChatInputMessage = Inversify.register(
         showPromptList,
         filteredPrompts.length,
         isTyping,
+        enterType,
         handleKeyDownIfShown,
         isReplay,
         messageIsStreaming,

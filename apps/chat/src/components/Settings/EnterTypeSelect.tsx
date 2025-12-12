@@ -1,14 +1,10 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { RadioButton } from '@/src/components/Common/Forms/RadioButton';
-
-export enum EnterType {
-  Enter = 'Enter',
-  CtrlEnter = 'CtrlEnter',
-}
 
 interface EnterTypeSelectProps {
   value: EnterType;

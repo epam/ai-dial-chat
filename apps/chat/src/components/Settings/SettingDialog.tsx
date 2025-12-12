@@ -8,6 +8,7 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ScreenState } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
+import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { ModelsActions, UIActions } from '@/src/store/actions';
@@ -27,7 +28,7 @@ import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/Toggle
 
 import { CustomLogoSelect } from './CustomLogoSelect';
 import { DefaultModelSelect } from './DefaultModelSelect';
-import { EnterType, EnterTypeSelectLabeled } from './EnterTypeSelect';
+import { EnterTypeSelectLabeled } from './EnterTypeSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -53,18 +54,23 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const savedDefaultModelReference = useAppSelector(
     ModelsSelectors.selectDefaultModelOption,
   );
+  const savedEnterType = useAppSelector(UISelectors.selectEnterType);
 
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
   );
 
-  const [enterType, setEnterType] = useState(EnterType.Enter);
+  const [enterType, setEnterType] = useState(savedEnterType);
 
   const screenState = useScreenState();
 
   useEffect(() => {
     setDefaultModelReference(savedDefaultModelReference);
   }, [savedDefaultModelReference]);
+
+  useEffect(() => {
+    setEnterType(savedEnterType);
+  }, [savedEnterType]);
 
   const customLogoLocalStoreName = useMemo(() => {
     return getCustomLogoLocalStoreName(customLogoId);
@@ -94,8 +100,15 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setLocalLogoFile(undefined);
     setDeleteLogo(false);
     setDefaultModelReference(savedDefaultModelReference);
+    setEnterType(savedEnterType);
     onClose();
-  }, [theme, isChatFullWidth, onClose, savedDefaultModelReference]);
+  }, [
+    theme,
+    isChatFullWidth,
+    savedDefaultModelReference,
+    savedEnterType,
+    onClose,
+  ]);
 
   useEffect(() => {
     setLocalTheme(theme);
@@ -134,6 +147,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
     dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
+    dispatch(UIActions.setEnterType(enterType));
     if (localLogoFile && !deleteLogo) {
       dispatch(UIActions.setCustomLogo({ logo: localLogoFile.id }));
     }
@@ -148,6 +162,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     dispatch,
     localTheme,
     isChatFullWidthLocal,
+    enterType,
     localLogoFile,
     deleteLogo,
     defaultModelReference,
