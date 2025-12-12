@@ -71,7 +71,6 @@ export const ApplicationDetailsFooter = ({
 
   const screenState = useScreenState();
   const isScreenSmall = screenState === ScreenState.SM;
-  const isScreenMedium = screenState === ScreenState.MD;
 
   const showContextMenu = entity.reference !== entity.id && isScreenSmall;
 

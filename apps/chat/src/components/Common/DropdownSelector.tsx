@@ -10,7 +10,7 @@ import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from './Tooltip';
 
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 type Props = SelectProps<DropdownSelectorOption, true> & {
   tooltip?: string;

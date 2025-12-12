@@ -3,8 +3,6 @@ import { MouseEvent, useCallback, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';

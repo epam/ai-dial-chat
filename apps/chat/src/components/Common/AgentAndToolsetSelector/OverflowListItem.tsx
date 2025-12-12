@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import React, { useCallback, useState } from 'react';
 
 import classNames from 'classnames';

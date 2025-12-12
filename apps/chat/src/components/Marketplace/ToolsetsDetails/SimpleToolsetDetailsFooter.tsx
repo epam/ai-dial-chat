@@ -1,8 +1,6 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
-import classNames from 'classnames';
-
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
 import { useTranslation } from '@/src/hooks/useTranslation';

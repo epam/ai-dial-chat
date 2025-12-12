@@ -1,4 +1,4 @@
-import { IconFile, IconTrashX } from '@tabler/icons-react';
+import { IconFile } from '@tabler/icons-react';
 import {
   ChangeEvent,
   useCallback,

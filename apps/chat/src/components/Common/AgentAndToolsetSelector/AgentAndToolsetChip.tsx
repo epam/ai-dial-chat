@@ -13,11 +13,7 @@ import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 import { StatusMessage } from './StatusMessage';
 
-import {
-  DialButton,
-  DialCloseButton,
-  DialRemoveButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;

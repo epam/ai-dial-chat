@@ -1,4 +1,4 @@
-import { IconPlus, IconTrashX } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import {
   FieldArray,

@@ -1,5 +1,5 @@
 import { useId } from '@floating-ui/react';
-import { IconDownload, IconTrashX } from '@tabler/icons-react';
+import { IconDownload } from '@tabler/icons-react';
 import {
   ChangeEvent,
   memo,
@@ -9,8 +9,6 @@ import {
   useRef,
   useState,
 } from 'react';
-
-import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 import { useTranslation } from '@/src/hooks/useTranslation';
