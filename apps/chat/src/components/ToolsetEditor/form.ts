@@ -119,7 +119,7 @@ export const getDefaultLoginFormData = (
         authenticationType,
         isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
         withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
-        keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
+        keyHeader: toolset?.authSettings?.apiKeyHeader ?? '',
         apiKey: prevData?.apiKey ?? '',
       };
     case ToolsetAuthTypes.OAUTH:
@@ -159,7 +159,7 @@ export const getDefaultFormData = (
       toolset?.name ??
       getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
     endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
-    protocol: toolset?.transport ?? ToolsetTransportType.SSE,
+    protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
