@@ -721,20 +721,7 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           : { apiKey: payload.apiKey as string }),
       };
 
-      let callbackUrl = '/';
-      if (payload.authType === ToolsetAuthTypes.OAUTH) {
-        try {
-          const url = new URL(
-            payload.callbackUrl ?? '',
-            window.location.origin,
-          );
-          if (url.origin === window.location.origin) {
-            callbackUrl = url.href;
-          }
-        } catch {
-          console.error('Invalid callback url');
-        }
-      }
+      const callbackUrl = payload.callbackUrl ?? '/';
 
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {

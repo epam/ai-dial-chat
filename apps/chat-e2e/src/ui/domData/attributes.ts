@@ -23,4 +23,5 @@ export enum Attributes {
   ariaDetails = 'aria-details',
   ariaColcount = 'aria-colcount',
   blank = '_blank',
+  checked = 'checked',
 }

@@ -279,7 +279,7 @@ dialTest(
         await toolsetEditorViewFormAssertion.assertToolsetEditorViewFormAttributes(
           {
             endpoint: '',
-            transportProtocol: ToolsetTransportType.SSE,
+            transportProtocol: ToolsetTransportType.HTTP,
             availableAuthTypes: Object.values(ToolsetAuthTypes),
             selectedAuthType: ToolsetAuthTypes.NONE,
             allowedTools: [],
@@ -809,7 +809,7 @@ dialTest(
           toolsetEntity.endpoint,
         );
         await toolsetEditorViewForm.oauthContainer.click();
-        await toolsetEditorViewForm.signInButton.click();
+        await toolsetEditorViewForm.loginButton.click();
         await oauthMockHelper.cleanup();
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(

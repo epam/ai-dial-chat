@@ -226,7 +226,7 @@ export const getToolsetPayload = (
       oldToolset.authSettings),
     ...pickBy(newToolset.authSettings, Boolean),
     ...(authType === ToolsetAuthTypes.API_KEY && {
-      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? 'api_key',
+      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? '',
     }),
     ...(authType === ToolsetAuthTypes.OAUTH && {
       redirectUri: getToolsetRedirectUri(),

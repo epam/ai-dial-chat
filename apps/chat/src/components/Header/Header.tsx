@@ -143,9 +143,11 @@ export const Header = Inversify.register('Header', () => {
       }
       RightItems={
         <>
-          <div className="flex w-[48px] items-center justify-center md:w-auto">
-            <User />
-          </div>
+          {!enabledFeatures.has(Feature.HideUserMenu) && (
+            <div className="flex w-[48px] items-center justify-center md:w-auto">
+              <User />
+            </div>
+          )}
           {enabledFeatures.has(Feature.PromptsSection) && (
             <ToggleSidebarButton
               iconSize={headerIconSize}
@@ -157,7 +159,9 @@ export const Header = Inversify.register('Header', () => {
               isOverlay={isOverlay}
             />
           )}
-          <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+          {!enabledFeatures.has(Feature.HideUserMenu) && (
+            <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+          )}
         </>
       }
     />
