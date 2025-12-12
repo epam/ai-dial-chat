@@ -1,37 +1,20 @@
-import { TalkToNotFound } from '../TalkToNotFound';
+import { IconSearch } from '@tabler/icons-react';
 import {
-  AgentAndToolsetSelectItem,
-  AgentAndToolsetSelectItemProps,
-} from './AgentAndToolsetSelectItem';
-import { SelectedItemsContainer } from './SelectedItemsContainer';
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
-import { TabButton } from '@/src/components/Buttons/TabButton';
-import { Modal } from '@/src/components/Common/Modal';
-import {
-  SliderGrid,
-  SliderGridRef,
-} from '@/src/components/Common/SliderGrid/SliderGrid';
-import { AppsEditorQuery } from '@/src/constants/applications';
-import {
-  ChangeMarketplaceTabs,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
-import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
-import { Routes } from '@/src/constants/routes';
-import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/router';
+
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
-import { useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsSelectors,
-  SettingsSelectors,
-  ToolsetSelectors,
-  WidgetsSelectors,
-} from '@/src/store/selectors';
-import { MarketplaceEntity } from '@/src/types/marketplace';
-import { ModalState } from '@/src/types/modal';
-import { Translation } from '@/src/types/translation';
+
 import {
   isDialAiEntityModel,
   isExternalApp,
@@ -45,18 +28,43 @@ import {
   updateQueryParams,
 } from '@/src/utils/app/url/query-params';
 import { isInstalledEntity } from '@/src/utils/marketplace';
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
-import { IconSearch } from '@tabler/icons-react';
-import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/router';
+
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ModalState } from '@/src/types/modal';
+import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
 import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+  ModelsSelectors,
+  SettingsSelectors,
+  ToolsetSelectors,
+  WidgetsSelectors,
+} from '@/src/store/selectors';
+
+import { AppsEditorQuery } from '@/src/constants/applications';
+import {
+  ChangeMarketplaceTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
+import { Routes } from '@/src/constants/routes';
+import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
+
+import { TabButton } from '@/src/components/Buttons/TabButton';
+import { Modal } from '@/src/components/Common/Modal';
+import {
+  SliderGrid,
+  SliderGridRef,
+} from '@/src/components/Common/SliderGrid/SliderGrid';
+
+import { TalkToNotFound } from '../TalkToNotFound';
+import {
+  AgentAndToolsetSelectItem,
+  AgentAndToolsetSelectItemProps,
+} from './AgentAndToolsetSelectItem';
+import { SelectedItemsContainer } from './SelectedItemsContainer';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 type DisplayedMarketplaceEntity = MarketplaceEntity & {
   allVersions?: MarketplaceEntity[];

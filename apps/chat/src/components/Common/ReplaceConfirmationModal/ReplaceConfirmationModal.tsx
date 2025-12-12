@@ -1,15 +1,14 @@
-import { ConversationsList } from './ConversationsList';
-import { FilesList } from './FilesList';
-import { PromptsList } from './PromptsList';
-import { ReplaceSelector } from './ReplaceSelector';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Modal } from '@/src/components/Common/Modal';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
-import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import { useTranslation } from '@/src/hooks/useTranslation';
-import { ImportExportActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportSelectors } from '@/src/store/selectors';
+
+import {
+  getChildAndCurrentFoldersIdsById,
+  getEntitiesFoldersFromEntities,
+} from '@/src/utils/app/folders';
+import { isRootId } from '@/src/utils/app/id';
+import { getMappedActions } from '@/src/utils/app/import-export';
+
 import {
   FeatureType,
   MappedReplaceActions,
@@ -17,14 +16,22 @@ import {
 } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
-import {
-  getChildAndCurrentFoldersIdsById,
-  getEntitiesFoldersFromEntities,
-} from '@/src/utils/app/folders';
-import { isRootId } from '@/src/utils/app/id';
-import { getMappedActions } from '@/src/utils/app/import-export';
+
+import { ImportExportActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportSelectors } from '@/src/store/selectors';
+
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+
+import { Modal } from '@/src/components/Common/Modal';
+import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+
+import { ConversationsList } from './ConversationsList';
+import { FilesList } from './FilesList';
+import { PromptsList } from './PromptsList';
+import { ReplaceSelector } from './ReplaceSelector';
+
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function ReplaceConfirmationModalView() {
   const { t } = useTranslation(Translation.Chat);

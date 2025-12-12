@@ -1,17 +1,24 @@
-import { AgentAndToolsetChip } from './AgentAndToolsetChip';
-import { AgentAndToolsetModal } from './AgentAndToolsetModal';
+import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
+import { MouseEvent, useCallback, useState } from 'react';
+
+import { useSearchParams } from 'next/navigation';
+
+import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
+
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
-import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
-import { useTranslation } from '@/src/hooks/useTranslation';
-import { MarketplaceEntity } from '@/src/types/marketplace';
-import { Translation } from '@/src/types/translation';
+
+import { AgentAndToolsetChip } from './AgentAndToolsetChip';
+import { AgentAndToolsetModal } from './AgentAndToolsetModal';
+
 import { DialButton } from '@epam/ai-dial-ui-kit';
-import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import classNames from 'classnames';
-import { useSearchParams } from 'next/navigation';
-import { MouseEvent, useCallback, useState } from 'react';
 
 const NoAgentsAndToolsets: React.FC = () => {
   const { t } = useTranslation(Translation.Common);

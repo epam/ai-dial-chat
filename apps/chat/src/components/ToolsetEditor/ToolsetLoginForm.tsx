@@ -1,19 +1,25 @@
-import { ToolsetLoginFormType, WithLogin } from './form';
+import { IconLogin, IconLogout } from '@tabler/icons-react';
+import { useCallback } from 'react';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
+
+import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
-import { useTranslation } from '@/src/hooks/useTranslation';
-import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
-import { Translation } from '@/src/types/translation';
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+
+import { ToolsetLoginFormType, WithLogin } from './form';
+
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
-import { IconLogin, IconLogout } from '@tabler/icons-react';
-import classNames from 'classnames';
-import { useCallback } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const getItemLabel = (item: unknown): string => item as string;
