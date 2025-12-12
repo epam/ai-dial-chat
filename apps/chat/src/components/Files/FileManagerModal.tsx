@@ -66,6 +66,11 @@ import { PreUploadDialog } from './PreUploadModal';
 import { ReviewBucketFilesSection } from './ReviewBucketFilesSection';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import {
+  ButtonVariant,
+  DialButton,
+  DialRemoveButton,
+} from '@epam/ai-dial-ui-kit';
 import uniq from 'lodash-es/uniq';
 
 const sectionWrapperToggleClasses = 'sticky top-0 z-10 bg-layer-3';
@@ -838,48 +843,52 @@ export const FileManagerModal = memo(
         <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6 md:py-4">
           <div className="flex items-center justify-center gap-2">
             {selectedFilesIds.length > 0 && (
-              <button
-                onClick={handleStartDeleteMultipleFiles}
-                disabled={isDeleteDisabled}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
-                data-qa="delete-files"
+              <Tooltip
+                tooltip={t(
+                  somePublicFileSelected
+                    ? 'It is forbidden to delete files from Organization'
+                    : someReviewBucketFileSelected
+                      ? 'It is forbidden to delete files from the "Review files" section'
+                      : 'Delete files',
+                )}
+                isTriggerClickable
               >
-                <Tooltip
-                  tooltip={t(
-                    somePublicFileSelected
-                      ? 'It is forbidden to delete files from Organization'
-                      : someReviewBucketFileSelected
-                        ? 'It is forbidden to delete files from the "Review files" section'
-                        : 'Delete files',
-                  )}
-                  isTriggerClickable
-                >
-                  <IconTrashX size={24} />
-                </Tooltip>
-              </button>
+                <DialRemoveButton
+                  onClick={handleStartDeleteMultipleFiles}
+                  disabled={isDeleteDisabled}
+                  className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:enabled:text-accent-primary disabled:hover:bg-transparent"
+                  data-qa="delete-files"
+                  iconClassName="size-[24px]"
+                />
+              </Tooltip>
             )}
             {selectedFilesIds.length > 0 && (
-              <button
+              <DialButton
                 onClick={handleDownloadMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
                 data-qa="download-files"
-              >
-                <Tooltip tooltip={t('Download files')} isTriggerClickable>
-                  <IconDownload size={24} />
-                </Tooltip>
-              </button>
+                iconBefore={
+                  <Tooltip tooltip={t('Download files')} isTriggerClickable>
+                    <IconDownload />
+                  </Tooltip>
+                }
+              />
             )}
             {selectedFilesIds.length === 0 &&
               selectedFolderIds.length === 0 && (
-                <button
+                <DialButton
                   onClick={handleNewFolder}
                   className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
                   data-qa="new-folder"
-                >
-                  <Tooltip tooltip={t('Create new folder')} isTriggerClickable>
-                    <FolderPlus height={24} width={24} />
-                  </Tooltip>
-                </button>
+                  iconBefore={
+                    <Tooltip
+                      tooltip={t('Create new folder')}
+                      isTriggerClickable
+                    >
+                      <FolderPlus width={24} height={24} />
+                    </Tooltip>
+                  }
+                />
               )}
             <HiddenItemsToggler
               onClick={handleToggleHiddenItems}
@@ -887,28 +896,27 @@ export const FileManagerModal = memo(
             />
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <DialButton
               onClick={handleStartUploadFiles}
-              className={classNames(
-                'button',
-                customButtonLabel ? 'button-secondary' : 'button-primary',
-              )}
+              variant={
+                customButtonLabel
+                  ? ButtonVariant.Secondary
+                  : ButtonVariant.Primary
+              }
               data-qa="upload-from-device"
-            >
-              {t('Upload from device')}
-            </button>
+              label={t('Upload from device')}
+            />
             {customButtonLabel && (
-              <button
+              <DialButton
                 onClick={handleAttachFiles}
-                className="button button-primary"
+                label={customButtonLabel}
+                variant={ButtonVariant.Primary}
                 disabled={
                   selectedFilesIds.length === 0 &&
                   selectedFolderIds.length === 0
                 }
                 data-qa="attach-files"
-              >
-                {customButtonLabel}
-              </button>
+              />
             )}
           </div>
         </div>

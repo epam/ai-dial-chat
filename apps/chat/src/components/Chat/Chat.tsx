@@ -83,6 +83,7 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
@@ -1064,9 +1065,14 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
             </div>
 
             <div className="flex w-full flex-col items-center pt-3 md:pt-5">
-              <button
-                className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-                data-qa="start-working"
+              <DialButton
+                className="mb-2 flex items-center md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                variant={ButtonVariant.Primary}
+                label={t('Start working with the {{viewerTitle}}', {
+                  ns: Translation.Chat,
+                  viewerTitle: customViewer.title,
+                })}
+                iconBefore={<IconPlayerPlay size={18} />}
                 onClick={() =>
                   dispatch(
                     ConversationsActions.setIsStartedCustomViewerConversation(
@@ -1074,13 +1080,7 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
                     ),
                   )
                 }
-              >
-                <IconPlayerPlay size={18} />
-                <span>
-                  {t('Start working with the')}
-                  {` ${customViewer.title}`}
-                </span>
-              </button>
+              />
             </div>
           </div>
         ))}

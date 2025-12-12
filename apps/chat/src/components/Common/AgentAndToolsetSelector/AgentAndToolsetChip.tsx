@@ -1,5 +1,3 @@
-import { IconX } from '@tabler/icons-react';
-
 import classNames from 'classnames';
 
 import { getEntityNameFromId } from '@/src/utils/app/id';
@@ -13,6 +11,12 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
+
+import {
+  DialButton,
+  DialCloseButton,
+  DialRemoveButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -41,16 +45,15 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
   isError,
   onRemove,
 }) => (
-  <button
+  <DialCloseButton
     className={classNames(
       'mr-1 p-1 text-secondary',
-      isError ? 'hover:text-error' : 'hover:text-accent-primary',
+      isError && 'hover:enabled:text-error',
     )}
-    onClick={() => onRemove?.(id)}
+    onClose={() => onRemove?.(id)}
     aria-label="Remove item"
-  >
-    <IconX size={14} />
-  </button>
+    size={14}
+  />
 );
 
 interface ChipBodyProps {

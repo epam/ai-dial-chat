@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
@@ -20,6 +19,8 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
+
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface SourceFilesEditorProps {
   value?: string;
@@ -120,24 +121,20 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
           </Tooltip>
           <Tooltip tooltip={tooltip}>
             <div className="flex items-center gap-3">
-              <button
-                className="h-full cursor-pointer text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              <DialButton
+                className=" text-accent-primary"
                 data-qa="change-button"
-                type="button"
+                textClassName="font-normal"
                 disabled={disabled}
                 onClick={handleToggleFileManager}
-              >
-                {value ? t('Change') : t('Add')}
-              </button>
+                label={value ? t('Change') : t('Add')}
+              />
               {value && (
-                <button
-                  type="button"
-                  onClick={handleDelete}
+                <DialCloseButton
+                  onClose={handleDelete}
                   disabled={disabled}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                >
-                  <IconX size={18} />
-                </button>
+                  size={18}
+                />
               )}
             </div>
           </Tooltip>

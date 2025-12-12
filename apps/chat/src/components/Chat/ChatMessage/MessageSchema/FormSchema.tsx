@@ -35,6 +35,7 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import intersection from 'lodash-es/intersection';
 
 interface HiddenButtonsPropertyProps {
@@ -185,17 +186,18 @@ const HiddenButtonsProperty = ({
       )}
     >
       {options.map((option) => (
-        <button
+        <DialButton
           key={`${option.const}`}
           className={classNames('chat-button', buttonClassName)}
           disabled
-        >
-          {option.title}
-        </button>
+          label={option.title}
+        />
       ))}
-      <button ref={dotsButtonRef} className="chat-button">
-        <IconDotsVertical size={18} />
-      </button>
+      <DialButton
+        ref={dotsButtonRef}
+        className="chat-button"
+        iconBefore={<IconDotsVertical size={18} />}
+      />
     </div>
   );
 };
@@ -278,7 +280,7 @@ const ButtonsProperty = ({
         ))}
 
         {hiddenOptions.length > 0 && (
-          <button
+          <DialButton
             onClick={() => setHiddenOptionsModal(true)}
             className={classNames(
               'chat-button',
@@ -289,9 +291,8 @@ const ButtonsProperty = ({
                 ).length &&
                 'button-accent-primary',
             )}
-          >
-            <IconDotsVertical size={18} />
-          </button>
+            iconBefore={<IconDotsVertical size={18} />}
+          />
         )}
       </div>
 

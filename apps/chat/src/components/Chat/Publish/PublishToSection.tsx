@@ -1,9 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/shared-utils';
+
+import { Translation } from '@/src/types/translation';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
@@ -12,13 +14,15 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChangePathDialog } from '../ChangePathDialog';
 import { PublicationRequestFormData, PublishRequestFieldsNames } from './form';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 interface Props {
   maxDepth: number;
   displayPublishToUrl: string;
 }
 
 export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(Translation.Chat);
 
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
@@ -68,13 +72,12 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
             {displayPublishToUrl}
           </Tooltip>
 
-          <button
-            className="h-full cursor-pointer text-accent-primary"
+          <DialButton
+            className="h-full text-accent-primary"
             data-qa="change-button"
             onClick={handleFolderChange}
-          >
-            {t('Change')}
-          </button>
+            label={t('Change')}
+          />
         </div>
       </div>
       {isChangeFolderModalOpened && (

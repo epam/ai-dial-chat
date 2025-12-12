@@ -28,6 +28,8 @@ import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 function RenameConversationView() {
   const { t } = useTranslation(Translation.Chat);
 
@@ -154,24 +156,23 @@ function RenameConversationView() {
         autoComplete="off"
       />
       <div className="relative flex justify-end gap-3">
-        <button
-          className="button button-secondary py-2"
+        <DialButton
           onClick={handleClose}
           data-qa="cancel"
-        >
-          {t('Cancel')}
-        </button>
-        <button
-          className="button button-primary py-2 disabled:cursor-not-allowed"
+          label={t('Cancel')}
+          variant={ButtonVariant.Secondary}
+        />
+
+        <DialButton
+          label={t('Save')}
+          variant={ButtonVariant.Primary}
           onClick={handleRename}
           data-qa="save"
           disabled={
             !newConversationName.trim() ||
             newConversationName === originConversationName
           }
-        >
-          {t('Save')}
-        </button>
+        />
       </div>
     </Modal>
   );

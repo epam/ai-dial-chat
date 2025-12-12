@@ -6,6 +6,8 @@ import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 
 import { ApplicationDetailsFooterProps } from './ApplicationDetails';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 export const SimpleApplicationDetailsFooter = ({
   entity,
   allVersions,
@@ -27,13 +29,12 @@ export const SimpleApplicationDetailsFooter = ({
         onSelect={onChangeVersion}
         currentEntity={entity}
       />
-      <button
-        className="button button-secondary py-2"
+      <DialButton
         onClick={handleRemove}
         data-qa="remove"
-      >
-        {t('Remove')}
-      </button>
+        label={t('Remove')}
+        variant={ButtonVariant.Secondary}
+      />
     </div>
   );
 };

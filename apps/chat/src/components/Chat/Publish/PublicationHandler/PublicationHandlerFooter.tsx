@@ -1,11 +1,10 @@
 import { IconExclamationCircle, IconPencil } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isEntityNameValid,
@@ -70,6 +69,7 @@ import {
   PublishActions,
   ShareEntity,
 } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
@@ -495,18 +495,16 @@ export const PublicationHandlerFooter = ({
       ) : (
         !isOnlyFilesPublication &&
         !!resourcesToReview.length && (
-          <button
+          <DialButton
             className="text-accent-primary"
             onClick={handlePublicationReview}
             data-qa="go-to-review"
-            type="button"
-          >
-            {t(
+            label={t(
               resourcesToReview.some((r) => r.reviewed)
                 ? 'Continue review'
                 : 'Go to a review',
             )}
-          </button>
+          />
         )
       )}
       <div className="flex items-center gap-3">
@@ -522,8 +520,9 @@ export const PublicationHandlerFooter = ({
                     Icon={IconPencil}
                   />
                 )}
-                <button
-                  className="button button-secondary"
+                <DialButton
+                  label={t('Reject')}
+                  variant={ButtonVariant.Secondary}
                   onClick={() =>
                     dispatch(
                       PublicationActions.rejectPublication({
@@ -531,38 +530,34 @@ export const PublicationHandlerFooter = ({
                       }),
                     )
                   }
-                  type="button"
                   data-qa="reject"
-                >
-                  {t('Reject')}
-                </button>
+                />
               </>
             )}
             <Tooltip
               hideTooltip={!isApproveOrSendDisabled}
               tooltip={t(getSubmitTooltipText())}
             >
-              <button
-                className="button button-primary whitespace-nowrap disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={isApproveOrSendDisabled}
-                type={publishModel ? 'submit' : 'button'}
+              <DialButton
+                label={t(getSubmitBtnText())}
+                variant={ButtonVariant.Primary}
+                textClassName="whitespace-nowrap"
                 onClick={publishModel ? undefined : handleApprovePublication}
+                type={publishModel ? 'submit' : 'button'}
+                disabled={isApproveOrSendDisabled}
                 data-qa="submit"
-              >
-                {t(getSubmitBtnText())}
-              </button>
+              />
             </Tooltip>
           </>
         ) : (
           <>
-            <button
-              className="button button-secondary"
+            <DialButton
+              label={t('Cancel')}
+              variant={ButtonVariant.Secondary}
               onClick={handleToggleEditMode}
               data-qa="cancel"
-              type="button"
-            >
-              {t('Cancel')}
-            </button>
+            />
+
             <Tooltip
               hideTooltip={!isEditDisabled}
               tooltip={t(
@@ -571,14 +566,14 @@ export const PublicationHandlerFooter = ({
                   : 'Make any changes to update the request',
               )}
             >
-              <button
-                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              <DialButton
+                label={t('Update request')}
+                variant={ButtonVariant.Primary}
+                textClassName="whitespace-nowrap"
                 disabled={isEditDisabled}
                 type="submit"
                 data-qa="update"
-              >
-                {t('Update request')}
-              </button>
+              />
             </Tooltip>
           </>
         )}

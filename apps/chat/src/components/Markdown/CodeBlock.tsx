@@ -25,6 +25,7 @@ import { UISelectors } from '@/src/store/selectors';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import Download from '@/public/images/icons/download.svg';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   language: string;
@@ -110,28 +111,28 @@ export const CodeBlock: FC<Props> = memo(
               data-no-context-menu
               className="flex items-center gap-3 text-secondary"
             >
-              <button
+              <DialButton
                 className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
                 onClick={copyToClipboard}
                 disabled={isCopied}
-              >
-                {isCopied ? (
-                  <Tooltip tooltip={t('Copied!')}>
-                    <IconCheck size={18} />
-                  </Tooltip>
-                ) : (
-                  <Tooltip isTriggerClickable tooltip={t('Copy code')}>
-                    <IconCopy size={18} />
-                  </Tooltip>
-                )}
-              </button>
+                iconBefore={
+                  isCopied ? (
+                    <Tooltip tooltip={t('Copied!')}>
+                      <IconCheck size={18} />
+                    </Tooltip>
+                  ) : (
+                    <Tooltip isTriggerClickable tooltip={t('Copy code')}>
+                      <IconCopy size={18} />
+                    </Tooltip>
+                  )
+                }
+              />
               <Tooltip isTriggerClickable tooltip={t('Download')}>
-                <button
+                <DialButton
                   className="flex items-center rounded bg-none hover:text-accent-primary"
                   onClick={downloadAsFile}
-                >
-                  <Download width={18} height={18} />
-                </button>
+                  iconBefore={<Download width={18} height={18} />}
+                />
               </Tooltip>
             </div>
           )}

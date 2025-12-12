@@ -7,6 +7,8 @@ import { Provider } from 'next-auth/providers';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import {
@@ -17,6 +19,8 @@ import {
   isClientSessionValid,
   isServerSessionValid,
 } from '@/src/utils/auth/session';
+
+import { Translation } from '@/src/types/translation';
 
 import { SettingsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -36,6 +40,7 @@ export default function Signin({
 }: PageProps) {
   const dispatch = useAppDispatch();
   const { status, ...session } = useSession();
+  const { t } = useTranslation(Translation.Common);
   const router = useRouter();
   const logoImgSrc = useMemo(() => {
     if (themesHostDefined) {
@@ -138,7 +143,9 @@ export default function Signin({
                 />
               </span>
               <div className="flex flex-wrap content-center">
-                <span className="text-lg">Sign in with {provider.name}</span>
+                <span className="text-lg">
+                  {t(`Sign in with ${provider.name}`)}
+                </span>
               </div>
             </button>
           ))}

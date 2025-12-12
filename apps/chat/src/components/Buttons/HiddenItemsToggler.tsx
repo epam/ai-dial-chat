@@ -9,6 +9,8 @@ import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 interface HiddenItemsTogglerProps {
   onClick: () => void;
   areItemsVisible: boolean;
@@ -33,17 +35,18 @@ export const HiddenItemsToggler = ({
   );
 
   return (
-    <button
+    <DialButton
       onClick={onClick}
       className={classNames(
         'flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary',
         className,
       )}
       data-qa={dataQa}
-    >
-      <Tooltip tooltip={t(tooltip)} isTriggerClickable>
-        <Icon height={24} width={24} />
-      </Tooltip>
-    </button>
+      iconBefore={
+        <Tooltip tooltip={t(tooltip)} isTriggerClickable>
+          <Icon height={24} width={24} />
+        </Tooltip>
+      }
+    />
   );
 };

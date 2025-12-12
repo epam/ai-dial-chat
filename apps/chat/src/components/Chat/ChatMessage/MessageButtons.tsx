@@ -22,7 +22,6 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
-import { Button } from '@/src/components/Common/Button';
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -35,6 +34,7 @@ import {
   Role,
   onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
+import { DialButton, DialRemoveButton } from '@epam/ai-dial-ui-kit';
 
 interface MessageUserButtonsProps {
   realMessageIndex: number;
@@ -91,32 +91,28 @@ export const MessageUserButtons = ({
               isTriggerClickable
               tooltip={t('Set message template')}
             >
-              <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+              <DialButton
+                className="text-secondary hover:text-accent-primary"
                 onClick={onToggleTemplatesEditing}
-              >
-                <IconListDetails size={18} />
-              </button>
+                iconBefore={<IconListDetails size={18} />}
+              />
             </Tooltip>
           )}
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-              <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+              <DialButton
+                className="text-secondary hover:text-accent-primary"
                 onClick={onToggleEditing}
-              >
-                <IconEdit size={18} />
-              </button>
+                iconBefore={<IconEdit size={18} />}
+              />
             </Tooltip>
           )}
           {onDelete && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-              <button
-                className="text-secondary hover:text-accent-primary"
+              <DialRemoveButton
+                iconClassName="text-secondary hover:text-accent-primary"
                 onClick={onDelete}
-              >
-                <IconTrashX size={18} />
-              </button>
+              />
             </Tooltip>
           )}
         </>
@@ -175,13 +171,12 @@ export const MessageAssistantButtons = ({
       ))}
       {onRegenerate && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
-          <Button
+          <DialButton
             onClick={onRegenerate}
             data-qa="regenerate"
-            className="text-secondary"
-          >
-            <IconRefresh size={18} />
-          </Button>
+            className="text-secondary hover:text-accent-primary"
+            iconBefore={<IconRefresh size={18} />}
+          />
         </Tooltip>
       )}
       {hasMessageContent &&
@@ -196,20 +191,21 @@ export const MessageAssistantButtons = ({
             isTriggerClickable
             tooltip={t('Copy text')}
           >
-            <Button className="text-secondary" onClick={copyOnClick}>
-              <IconCopy size={18} />
-            </Button>
+            <DialButton
+              onClick={copyOnClick}
+              className="text-secondary hover:text-accent-primary"
+              iconBefore={<IconCopy size={18} />}
+            />
           </Tooltip>
         ))}
       {onToggleEditing && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-          <Button
+          <DialButton
             onClick={onToggleEditing}
             data-qa="edit"
-            className="text-secondary"
-          >
-            <IconEdit size={18} />
-          </Button>
+            className="text-secondary hover:text-accent-primary"
+            iconBefore={<IconEdit size={18} />}
+          />
         </Tooltip>
       )}
       {isLikesEnabled &&

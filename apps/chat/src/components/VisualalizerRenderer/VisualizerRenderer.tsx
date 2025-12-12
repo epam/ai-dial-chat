@@ -29,6 +29,7 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
@@ -198,13 +199,12 @@ export const VisualizerRenderer = ({
       <div className="mb-2 flex flex-row justify-between">
         <h2>{visualizerTitle}</h2>
 
-        <button
-          className="flex gap-2 text-accent-primary"
+        <DialButton
+          className="flex text-accent-primary"
           onClick={() => visualizer.current && sendMessage(visualizer.current)}
-        >
-          <IconRefresh size={18} />
-          <span>{t('Refresh')}</span>
-        </button>
+          iconBefore={<IconRefresh size={18} />}
+          label={t('Refresh')}
+        />
       </div>
       <div
         ref={iframeContainerRef}

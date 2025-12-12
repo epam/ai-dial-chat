@@ -2,7 +2,6 @@ import {
   IconDotsVertical,
   IconEraser,
   IconSettings,
-  IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -48,6 +47,7 @@ import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   conversation: Conversation;
@@ -242,22 +242,18 @@ export const ChatHeader = Inversify.register(
                       />
                     }
                   >
-                    <button
-                      className={classNames(
-                        isMessageStreaming &&
-                          !isChangeAgentDisallowed &&
-                          'cursor-not-allowed',
-                      )}
+                    <DialButton
                       disabled={isMessageStreaming || disallowChangeAgent}
                       onClick={() => onModelClick(conversation.id)}
-                    >
-                      <ModelIcon
-                        entityId={conversation.model.id}
-                        entity={model}
-                        size={iconSize}
-                        isCustomTooltip
-                      />
-                    </button>
+                      iconBefore={
+                        <ModelIcon
+                          entityId={conversation.model.id}
+                          entity={model}
+                          size={iconSize}
+                          isCustomTooltip
+                        />
+                      }
+                    />
                   </Tooltip>
                 </span>
               </>
@@ -288,14 +284,13 @@ export const ChatHeader = Inversify.register(
                     />
                   }
                 >
-                  <button
+                  <DialButton
                     className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                     onClick={() => setShowSettings(!isShowSettings)}
                     data-qa="conversation-setting"
                     disabled={isMessageStreaming || disallowChangeSettings}
-                  >
-                    <IconSettings size={iconSize} />
-                  </button>
+                    iconBefore={<IconSettings size={iconSize} />}
+                  />
                 </Tooltip>
               )}
 
@@ -306,14 +301,13 @@ export const ChatHeader = Inversify.register(
                     isTriggerClickable={!isMessageStreaming}
                     tooltip={t('Clear conversation messages')}
                   >
-                    <button
-                      className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    <DialButton
+                      className="text-secondary hover:text-accent-primary"
                       onClick={() => setIsClearConversationModalOpen(true)}
                       data-qa="clear-conversation"
                       disabled={isMessageStreaming}
-                    >
-                      <IconEraser size={iconSize} />
-                    </button>
+                      iconBefore={<IconEraser size={iconSize} />}
+                    />
                   </Tooltip>
                 )}
 
@@ -331,15 +325,16 @@ export const ChatHeader = Inversify.register(
               )}
 
               {isPlayback && !isExternal && (
-                <button
-                  className="cursor-pointer text-accent-primary"
+                <DialButton
+                  className="text-accent-primary"
                   onClick={onCancelPlaybackMode}
                   data-qa="cancel-playback-mode"
-                >
-                  {screenState === ScreenState.SM
-                    ? t('Stop')
-                    : t('Stop playback')}
-                </button>
+                  label={
+                    screenState === ScreenState.SM
+                      ? t('Stop')
+                      : t('Stop playback')
+                  }
+                />
               )}
 
               {isCompareMode && selectedConversationIds.length > 1 && (
@@ -347,14 +342,12 @@ export const ChatHeader = Inversify.register(
                   isTriggerClickable
                   tooltip={t('Delete conversation from compare mode')}
                 >
-                  <button
-                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                    onClick={() => onUnselectConversation(conversation.id)}
+                  <DialCloseButton
+                    onClose={() => onUnselectConversation(conversation.id)}
                     disabled={isMessageStreaming}
                     data-qa="delete-from-compare"
-                  >
-                    <IconX size={18} />
-                  </button>
+                    size={18}
+                  />
                 </Tooltip>
               )}
             </div>

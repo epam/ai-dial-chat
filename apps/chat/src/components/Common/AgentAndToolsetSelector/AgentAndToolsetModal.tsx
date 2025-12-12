@@ -61,6 +61,8 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
   tab: MarketplaceTabs;
@@ -421,12 +423,16 @@ const AgentAndToolsetModalView = ({
         ref={footerRef}
         className="absolute bottom-0 flex w-full justify-end gap-3 border-t border-tertiary px-6 py-[14px]"
       >
-        <button className="button button-secondary" onClick={onClose}>
-          {t('Cancel')}
-        </button>
-        <button className="button button-primary" onClick={handleConfirm}>
-          {t('Confirm')}
-        </button>
+        <DialButton
+          label={t('Cancel')}
+          variant={ButtonVariant.Secondary}
+          onClick={onClose}
+        />
+        <DialButton
+          label={t('Confirm')}
+          variant={ButtonVariant.Primary}
+          onClick={handleConfirm}
+        />
       </div>
     </>
   );

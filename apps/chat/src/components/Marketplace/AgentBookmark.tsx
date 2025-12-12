@@ -82,12 +82,12 @@ export const AgentBookmark = <T extends MarketplaceEntity>({
         )}
         isTriggerClickable
       >
-        <button data-qa={dataQa}>
+        <div data-qa={dataQa}>
           <Bookmark
             className="rounded text-secondary hover:text-accent-primary group-hover/bookmark:text-accent-primary"
             size={size}
           />
-        </button>
+        </div>
       </Tooltip>
     </div>
   );

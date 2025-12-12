@@ -38,6 +38,7 @@ import {
   Feature,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -302,17 +303,16 @@ export const PlaybackControls = ({
           asChild
           isTriggerClickable
         >
-          <button
+          <DialButton
             data-qa="playback-prev"
             onClick={handlePrevMessage}
             disabled={
               isDisabledPlaybackControls ||
               (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE)
             }
-            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-          >
-            <IconPlayerPlay size={20} className="rotate-180" />
-          </button>
+            className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
+            iconBefore={<IconPlayerPlay size={20} className="rotate-180" />}
+          />
         </Tooltip>
         <div
           ref={nextMessageBoxRef}
@@ -352,18 +352,17 @@ export const PlaybackControls = ({
                     isTriggerClickable
                     asChild
                   >
-                    <button
+                    <DialButton
                       data-qa="playback-next"
                       onClick={handlePlayNextMessage}
-                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                      className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:text-controls-disable"
                       disabled={
                         isDisabledPlaybackControls ||
                         isMessageStreaming ||
                         !isNextMessageInStack
                       }
-                    >
-                      <IconPlayerPlay size={20} className="shrink-0" />
-                    </button>
+                      iconBefore={<IconPlayerPlay size={20} />}
+                    />
                   </Tooltip>
                 </>
               )}

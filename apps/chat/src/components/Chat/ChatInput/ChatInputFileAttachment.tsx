@@ -2,7 +2,6 @@ import {
   IconExclamationCircle,
   IconFile,
   IconReload,
-  IconX,
 } from '@tabler/icons-react';
 
 import classNames from 'classnames';
@@ -10,6 +9,7 @@ import classNames from 'classnames';
 import { DialFile } from '@/src/types/files';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
@@ -58,23 +58,23 @@ export const ChatInputFileAttachment = ({
         </div>
         <div className="flex gap-3">
           {onRetryFile && file.status === UploadStatus.FAILED && (
-            <button data-qa="retry-upload" onClick={() => onRetryFile(file.id)}>
-              <IconReload
-                className="shrink-0 text-secondary hover:text-accent-primary"
-                size={18}
-              />
-            </button>
+            <DialButton
+              data-qa="retry-upload"
+              onClick={() => onRetryFile(file.id)}
+              iconBefore={
+                <IconReload
+                  className="shrink-0 text-secondary hover:text-accent-primary"
+                  size={18}
+                />
+              }
+            />
           )}
           {onUnselectFile && (
-            <button
-              onClick={() => onUnselectFile(file.id)}
+            <DialCloseButton
+              onClose={() => onUnselectFile(file.id)}
               data-qa="remove-file"
-            >
-              <IconX
-                className="shrink-0 text-secondary hover:text-accent-primary"
-                size={18}
-              />
-            </button>
+              size={18}
+            />
           )}
         </div>
       </div>

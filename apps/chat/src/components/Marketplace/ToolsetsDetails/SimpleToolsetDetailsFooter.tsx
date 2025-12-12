@@ -1,12 +1,11 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getToolsetAuthAction,
@@ -23,6 +22,8 @@ import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 export const SimpleToolsetDetailsFooter: React.FC<
   ToolsetDetailsFooterProps
@@ -55,28 +56,26 @@ export const SimpleToolsetDetailsFooter: React.FC<
 
       <div className="flex items-center gap-2">
         {onRemove && (
-          <button
-            className="button button-secondary py-2"
+          <DialButton
             onClick={() => onRemove(entity)}
             data-qa="remove-from-details"
-          >
-            {t('Remove')}
-          </button>
+            label={t('Remove')}
+            variant={ButtonVariant.Secondary}
+          />
         )}
 
         {withAuth && (
-          <button
+          <DialButton
             onClick={handleLogin}
-            className={classNames('button flex items-center gap-2 py-2', {
-              'button-primary':
-                authAction === ToolsetAuthAction.LogIn ||
-                authAction === ToolsetAuthAction.LoginWithMyCreds,
-              'button-secondary': authAction === ToolsetAuthAction.LogOut,
-            })}
-          >
-            <LoginIcon size={18} />
-            {t(getToolsetAuthActionLabel(authAction, screenState))}
-          </button>
+            variant={
+              authAction === ToolsetAuthAction.LogIn ||
+              authAction === ToolsetAuthAction.LoginWithMyCreds
+                ? ButtonVariant.Primary
+                : ButtonVariant.Secondary
+            }
+            iconBefore={<LoginIcon size={18} />}
+            label={t(getToolsetAuthActionLabel(authAction, screenState))}
+          />
         )}
       </div>
     </div>

@@ -16,6 +16,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+
 interface ListItemContentProps {
   id: string;
   item?: MarketplaceEntity;
@@ -54,12 +56,11 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
         <ModelIcon entityId={id} entity={item} size={18} />
         <ChipTitle name={name} version={version} isError={isError} />
       </div>
-      <button
-        className="shrink-0 text-secondary hover:text-primary"
-        onClick={handleRemove}
-      >
-        <IconX size={18} />
-      </button>
+      <DialCloseButton
+        className="text-secondary hover:text-primary"
+        onClose={handleRemove}
+        size={18}
+      />
     </div>
   );
 };

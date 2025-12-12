@@ -24,6 +24,8 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+
 export interface DynamicField extends SelectOption<string, string> {
   editableKey?: boolean;
   static?: boolean;
@@ -150,18 +152,12 @@ export const DynamicFormFields = <
               </div>
             </div>
 
-            <button
-              type="button"
+            <DialCloseButton
               disabled={field.static || disabled}
-              className={classNames(
-                'flex items-center self-center rounded border border-transparent text-secondary outline-none',
-                field.static && 'invisible',
-                disabled ? 'cursor-not-allowed' : 'hover:text-accent-primary',
-              )}
-              onClick={() => remove(i)}
-            >
-              <IconTrashX size={18} />
-            </button>
+              className={classNames(field.static && 'invisible')}
+              onClose={() => remove(i)}
+              size={18}
+            />
           </div>
         ))}
 
@@ -170,21 +166,16 @@ export const DynamicFormFields = <
             isTriggerEnabled={!disabled}
             className="max-w-[150px]"
             trigger={
-              <button
-                type="button"
-                className={classNames(
-                  'flex items-center gap-2 rounded text-accent-primary',
-                  disabled && 'cursor-not-allowed',
-                )}
+              <DialButton
+                className={classNames('flex items-center text-accent-primary')}
                 onClick={
                   !filteredOptions.length && creatable
                     ? () => handleAdd()
                     : undefined
                 }
-              >
-                <IconPlus size={18} />
-                {t(addLabel ?? 'Add')}
-              </button>
+                iconBefore={<IconPlus size={18} />}
+                label={t(addLabel ?? 'Add')}
+              />
             }
           >
             <div className="w-full bg-layer-3">

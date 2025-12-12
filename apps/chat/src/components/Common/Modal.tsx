@@ -8,7 +8,6 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react';
-import { IconX } from '@tabler/icons-react';
 import {
   FormEvent,
   FormHTMLAttributes,
@@ -25,6 +24,8 @@ import { ModalState } from '@/src/types/modal';
 
 import { Spinner } from './Spinner';
 import { Tooltip } from './Tooltip';
+
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
@@ -116,14 +117,10 @@ function ModalView({
               {...(form && { ...form })}
             >
               {!hideClose && (
-                <button
-                  type="button"
-                  role="button"
-                  className="absolute right-2 top-2 z-50 rounded text-secondary hover:text-accent-primary"
-                  onClick={handleClose}
-                >
-                  <IconX height={24} width={24} />
-                </button>
+                <DialCloseButton
+                  onClose={handleClose}
+                  className="absolute right-2 top-2 z-50"
+                />
               )}
               {heading && typeof heading === 'string' ? (
                 <h4

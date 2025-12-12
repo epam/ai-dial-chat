@@ -12,6 +12,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   iconSize: number;
@@ -46,23 +47,24 @@ export const ToggleSidebarButton: React.FC<Props> = ({
 
   return (
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
-      <button
+      <DialButton
         className={classNames(
           'flex h-full items-center justify-center px-3',
           isOverlay ? 'md:px-3' : 'md:px-5',
         )}
         data-qa={dataQa}
         onClick={handleToggle}
-      >
-        <Icon
-          className={classNames(
-            'text-secondary hover:text-accent-primary',
-            rightSide && 'rotate-180',
-          )}
-          width={iconSize}
-          height={iconSize}
-        />
-      </button>
+        iconBefore={
+          <Icon
+            className={classNames(
+              'text-secondary hover:text-accent-primary',
+              rightSide && 'rotate-180',
+            )}
+            width={iconSize}
+            height={iconSize}
+          />
+        }
+      />
     </Tooltip>
   );
 };

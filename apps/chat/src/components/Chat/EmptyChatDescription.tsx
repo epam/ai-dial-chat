@@ -35,6 +35,7 @@ import { PlaybackIcon } from './Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
@@ -244,22 +245,20 @@ const EmptyChatDescriptionView = ({
       {(!isReadOnly || !isExternal) && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           {!isEmptyChatChangeAgentHidden && (
-            <button
-              className="text-left text-accent-primary"
+            <DialButton
+              textClassName="text-accent-primary font-normal"
               data-qa="change-agent"
               onClick={handleOpenChangeModel}
-            >
-              {t('Change agent')}
-            </button>
+              label={t('Change agent')}
+            />
           )}
           {!isReplayAsIs && !isPlayback && isEmptyChatSettingsEnabled && (
-            <button
-              className="pl-3 text-left text-accent-primary"
+            <DialButton
+              textClassName="pl-3 text-accent-primary font-normal"
               data-qa="configure-settings"
               onClick={handleOpenSettings}
-            >
-              {t('Configure settings')}
-            </button>
+              label={t('Configure settings')}
+            />
           )}
         </div>
       )}

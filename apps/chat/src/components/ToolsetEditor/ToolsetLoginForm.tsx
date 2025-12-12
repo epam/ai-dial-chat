@@ -16,6 +16,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { ToolsetLoginFormType } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const fields = [
   'keyHeader',
@@ -141,23 +142,21 @@ export const ToolsetLoginForm = ({
         </>
       )}
 
-      <button
-        className={classNames(
-          'button flex w-fit items-center gap-2 py-2',
-          buttonClassName,
-          isSignedIn ? 'button-secondary' : 'button-primary',
-        )}
+      <DialButton
+        className="w-fit"
+        variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
         data-qa="sign-in-button"
         disabled={disabled || !isValid}
         onClick={handleSubmit}
-      >
-        {isSignedIn ? (
-          <IconLogout className="text-secondary" size={18} />
-        ) : (
-          <IconLogin size={18} />
-        )}
-        {t(isSignedIn ? 'Log out' : 'Log in')}
-      </button>
+        iconBefore={
+          isSignedIn ? (
+            <IconLogout className="text-secondary" size={18} />
+          ) : (
+            <IconLogin size={18} />
+          )
+        }
+        label={t(isSignedIn ? 'Log out' : 'Log in')}
+      />
     </div>
   );
 };
