@@ -41,6 +41,7 @@ interface ToolsetLoginFormProps {
   onLogout?: () => void;
   onLogin?: (data: ToolsetLoginFormType) => void;
   hideConfigFields?: boolean;
+  fieldsInfo?: Partial<Record<keyof ToolsetLoginFormType, string>>;
 }
 
 export const ToolsetLoginForm = ({
@@ -54,6 +55,7 @@ export const ToolsetLoginForm = ({
   onLogout,
   onLogin,
   hideConfigFields = false,
+  fieldsInfo,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -107,6 +109,7 @@ export const ToolsetLoginForm = ({
               error={errors.apiKey?.message}
               disabled={disabled}
               tooltip={fieldsTooltip}
+              info={fieldsInfo?.['apiKey']}
             />
           )}
         </>

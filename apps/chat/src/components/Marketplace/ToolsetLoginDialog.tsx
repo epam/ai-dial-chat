@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -85,6 +85,15 @@ export const ToolsetLoginDialogView = () => {
 
   const isOrganizationView = isAdmin && isPublic;
   const isSignedIn = isToolsetSignedIn(entity, authLevel);
+
+  const fieldsInfo = useMemo(
+    () => ({
+      apiKey: t('Enter your API key value for "{{header}}" header', {
+        header: entity.authSettings.apiKeyHeader,
+      }),
+    }),
+    [entity.authSettings.apiKeyHeader, t],
+  );
 
   const handleClose = useCallback(() => {
     dispatch(MarketplaceActions.setLoginEntity());
@@ -208,6 +217,7 @@ export const ToolsetLoginDialogView = () => {
               onLogin={handleLogin}
               onLogout={handleLogout}
               hideConfigFields
+              fieldsInfo={fieldsInfo}
             />
           </FormProvider>
         </div>

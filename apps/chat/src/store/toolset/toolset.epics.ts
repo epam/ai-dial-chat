@@ -10,6 +10,7 @@ import {
   from,
   iif,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -21,8 +22,9 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
-import { isMyEntity } from '@/src/utils/app/id';
+import { getEntityNameFromId, isMyEntity } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   encodeToolsetRedirectState,
   getToolsetRedirectUri,
@@ -44,6 +46,7 @@ import {
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
+import { AuthSelectors } from '@/src/store/selectors';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
@@ -87,6 +90,37 @@ const getMyWorkspaceUrl = (
   }
 
   return route;
+};
+
+const getLoginSuccessMessage = (
+  isAdminAndPublic: boolean,
+  authLevel: ToolsetCredentialsLevel,
+) => {
+  switch (authLevel) {
+    case ToolsetCredentialsLevel.GLOBAL:
+      return isAdminAndPublic
+        ? 'Successful login\nYou have successfully logged into the "{{name}}" with organizational credentials.'
+        : 'Successful login\nYou have successfully logged into the "{{name}}" toolset.';
+    case ToolsetCredentialsLevel.USER:
+      return 'Successful login\nYou have successfully logged into the "{{name}}" with personal credentials.';
+    default:
+      return '';
+  }
+};
+const getLogoutSuccessMessage = (
+  isAdminAndPublic: boolean,
+  authLevel: ToolsetCredentialsLevel,
+) => {
+  switch (authLevel) {
+    case ToolsetCredentialsLevel.GLOBAL:
+      return isAdminAndPublic
+        ? 'Successful logout\nYou have successfully logged out of the "{{name}}" using organizational credentials.'
+        : 'Successful logout\nYou have successfully logged out of the "{{name}}" toolset.';
+    case ToolsetCredentialsLevel.USER:
+      return 'Successful logout\nYou have successfully logged out of the "{{name}}" using your personal credentials.';
+    default:
+      return '';
+  }
 };
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -725,13 +759,30 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
 
       return ToolsetService.signIn(data).pipe(
         switchMap(() => {
+          const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+          const isPublic = isEntityIdPublic({ id: payload.toolsetId });
+          const name = getEntityNameFromId(payload.toolsetId, {
+            removeVersion: true,
+          });
+
+          const toastAction$ = of(
+            UIActions.showSuccessToast(
+              translate(
+                getLoginSuccessMessage(isAdmin && isPublic, payload.authLevel),
+                { name },
+              ),
+            ),
+          );
+
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
             void router.push(new URL(callbackUrl));
 
-            return EMPTY;
+            return toastAction$;
           }
 
-          return refreshToolset$(payload.toolsetId, state$.value);
+          return refreshToolset$(payload.toolsetId, state$.value).pipe(
+            mergeMap((actions) => concat(of(actions), toastAction$)),
+          );
         }),
         catchError((err) => {
           console.error('Failed to sign in toolset', err);
@@ -762,7 +813,30 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
         credentialsLevel: payload.authLevel,
       }).pipe(
         switchMap(() => {
-          return refreshToolset$(payload.toolsetId, state$.value);
+          const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+          const isPublic = isEntityIdPublic({ id: payload.toolsetId });
+          const name = getEntityNameFromId(payload.toolsetId, {
+            removeVersion: true,
+          });
+
+          return refreshToolset$(payload.toolsetId, state$.value).pipe(
+            mergeMap((actions) =>
+              concat(
+                of(actions),
+                of(
+                  UIActions.showSuccessToast(
+                    translate(
+                      getLogoutSuccessMessage(
+                        isAdmin && isPublic,
+                        payload.authLevel,
+                      ),
+                      { name },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
         }),
         catchError((err) => {
           console.error('Failed to sign out toolset', err);

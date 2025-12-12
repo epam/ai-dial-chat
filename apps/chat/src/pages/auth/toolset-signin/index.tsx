@@ -13,11 +13,13 @@ import {
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { getLayout } from '@/src/pages/_app';
+
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
-export default function ToolsetSignin() {
+function ToolsetSignin() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -72,5 +74,9 @@ export default function ToolsetSignin() {
     </div>
   );
 }
+
+ToolsetSignin.getLayout = getLayout;
+
+export default ToolsetSignin;
 
 export const getServerSideProps = getCommonPageProps;
