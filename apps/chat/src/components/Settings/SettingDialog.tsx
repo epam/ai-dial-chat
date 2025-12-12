@@ -220,7 +220,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         <button
           type="button"
           ref={saveBtnRef}
-          className="button button-primary py-2"
+          className="button button-primary"
           data-qa="save"
           onClick={handleSave}
         >
