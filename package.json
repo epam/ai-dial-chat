@@ -65,7 +65,7 @@
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
     "nanoid": "^5.1.5",
-    "next": "15.5.7",
+    "next": "15.5.9",
     "next-auth": "4.24.12",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
