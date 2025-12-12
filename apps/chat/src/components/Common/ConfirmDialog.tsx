@@ -93,7 +93,7 @@ export const ConfirmDialog = ({
             label={confirmLabel}
             variant={ButtonVariant.Primary}
             onClick={handleConfirm}
-            data-qa="dialog"
+            data-qa="confirm"
           />
         </div>
       </div>

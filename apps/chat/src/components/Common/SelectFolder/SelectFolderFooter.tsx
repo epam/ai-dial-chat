@@ -49,6 +49,7 @@ export const SelectFolderFooter = ({
           label={t(selectBtnText)}
           variant={ButtonVariant.Primary}
           disabled={disableSelect}
+          data-qa="select-folder"
         />
       </div>
     </div>
