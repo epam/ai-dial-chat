@@ -164,7 +164,6 @@ export const filesSlice = createSlice({
       state.files = state.files.map((file) => {
         return file.id === payload.apiResult.id ? payload.apiResult : file;
       });
-      // Инвалидируем кэш поиска для этого bucket
       invalidateSearchCacheForFile(state, payload.apiResult.id);
     },
     uploadFileTick: (
@@ -332,7 +331,6 @@ export const filesSlice = createSlice({
     ) => {
       state.isLoadingSearchListing = false;
 
-      // Добавляем/обновляем файлы в общем массиве
       const existingFileIds = new Set(state.files.map((f) => f.id));
       const newFiles = payload.files.filter((f) => !existingFileIds.has(f.id));
 
@@ -340,7 +338,6 @@ export const filesSlice = createSlice({
         state.files = [...state.files, ...newFiles];
       }
 
-      // Помечаем папку как полностью загруженную
       state.searchListingMetadata[payload.folderPath] = {
         loadedAt: Date.now(),
         isFullyLoaded: true,
