@@ -1,4 +1,4 @@
-import { ToastOptions, toast } from 'react-hot-toast';
+import { Renderable, ToastOptions, toast } from 'react-hot-toast';
 
 import {
   EMPTY,
@@ -31,6 +31,7 @@ import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 import { errorsMessages } from '@/src/constants/errors';
 import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
+import { TitledToastMessage } from '../../components/Toasts/TitledToastMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -275,21 +276,28 @@ const showToastEpic: AppEpic = (action$) =>
         icon: payload.icon,
       };
 
+      let content: Renderable = message;
+      if (payload.title) {
+        content = (
+          <TitledToastMessage title={payload.title} message={message} />
+        );
+      }
+
       switch (payload.type) {
         case ToastType.Error:
-          toast.error(message, { ...toastConfig, id: ToastType.Error });
+          toast.error(content, { ...toastConfig, id: ToastType.Error });
           break;
         case ToastType.Success:
-          toast.success(message, { ...toastConfig, id: ToastType.Success });
+          toast.success(content, { ...toastConfig, id: ToastType.Success });
           break;
         case ToastType.Warning:
-          toast.loading(message, { ...toastConfig, id: ToastType.Warning });
+          toast.loading(content, { ...toastConfig, id: ToastType.Warning });
           break;
         case ToastType.Loading:
-          toast.loading(message, { ...toastConfig, id: ToastType.Loading });
+          toast.loading(content, { ...toastConfig, id: ToastType.Loading });
           break;
         default:
-          toast.loading(message, { ...toastConfig, id: ToastType.Info });
+          toast.loading(content, { ...toastConfig, id: ToastType.Info });
           break;
       }
     }),

@@ -125,6 +125,7 @@ export const uiSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string | null;
+        title?: string;
         type?: ToastType;
         response?: Response;
         icon?: JSX.Element;

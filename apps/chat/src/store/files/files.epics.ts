@@ -33,6 +33,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -723,27 +724,37 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
           const destinationUrl = results[0].data.destinationUrl;
           const { parentPath, name } = splitEntityId(destinationUrl);
 
-          return UIActions.showSuccessToast(
-            translate('“{{fileName}}” {{verb}} to {{folder}}', {
+          return UIActions.showToast({
+            type: ToastType.Success,
+            title: translate('Items {{verb}} successfully', {
+              ns: Translation.Common,
+              verb: verbPast,
+            }),
+            message: translate('“{{fileName}}” {{verb}} to {{folder}}', {
               ns: Translation.Files,
               fileName: name,
               folder: parentPath,
               verb: verbPast,
             }),
-          );
+          });
         }
 
         const destinationUrl = results[0].data.destinationUrl;
         const { parentPath } = splitEntityId(destinationUrl);
 
-        return UIActions.showSuccessToast(
-          translate('{{count}} items {{verb}} to {{folder}}', {
+        return UIActions.showToast({
+          type: ToastType.Success,
+          title: translate('Items {{verb}} successfully', {
+            ns: Translation.Common,
+            verb: verbPast,
+          }),
+          message: translate('{{count}} items {{verb}} to {{folder}}', {
             ns: Translation.Files,
             count: results.length,
             folder: parentPath,
             verb: verbPast,
           }),
-        );
+        });
       }
 
       if (errors && errors.length > 0) {
@@ -762,14 +773,22 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
               })
             : '';
 
-        return UIActions.showErrorToast(
-          translate('{{files}}{{rest}} were not {{verb}}. Please try again.', {
-            ns: Translation.Files,
-            files: fileNames,
-            rest: restText,
-            verb: verbPast,
+        return UIActions.showToast({
+          type: ToastType.Error,
+          title: translate('Items {{verb}} failed', {
+            ns: Translation.Common,
+            verb: isCopy ? 'copying' : 'moving',
           }),
-        );
+          message: translate(
+            '{{files}}{{rest}} were not {{verb}}. Please try again.',
+            {
+              ns: Translation.Files,
+              files: fileNames,
+              rest: restText,
+              verb: verbPast,
+            },
+          ),
+        });
       }
 
       return null;
@@ -791,27 +810,36 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
           const path = results[0].data;
           const { parentPath, name } = splitEntityId(path);
 
-          return UIActions.showSuccessToast(
-            translate('“{{fileName}}” {{verb}} from {{folder}}', {
+          return UIActions.showToast({
+            type: ToastType.Success,
+            title: translate('Items {{verb}} successfully', {
+              ns: Translation.Common,
+              verb: verbPast,
+            }),
+            message: translate('“{{fileName}}” {{verb}} from {{folder}}', {
               ns: Translation.Files,
               fileName: name,
               folder: parentPath,
               verb: verbPast,
             }),
-          );
+          });
         }
 
         const path = results[0].data;
         const { parentPath } = splitEntityId(path);
 
-        return UIActions.showSuccessToast(
-          translate('{{count}} items {{verb}} from {{folder}}', {
+        return UIActions.showToast({
+          type: ToastType.Success,
+          title: translate('Items {{verb}} successfully', {
+            ns: Translation.Common,
+          }),
+          message: translate('{{count}} items {{verb}} from {{folder}}', {
             ns: Translation.Files,
             count: results.length,
             folder: parentPath,
             verb: verbPast,
           }),
-        );
+        });
       }
 
       if (errors && errors.length > 0) {
@@ -830,14 +858,21 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
               })
             : '';
 
-        return UIActions.showErrorToast(
-          translate('{{files}}{{rest}} were not {{verb}}. Please try again.', {
-            ns: Translation.Files,
-            files: fileNames,
-            rest: restText,
-            verb: verbPast,
+        return UIActions.showToast({
+          type: ToastType.Error,
+          title: translate('Items deletion successfully', {
+            ns: Translation.Common,
           }),
-        );
+          message: translate(
+            '{{files}}{{rest}} were not {{verb}}. Please try again.',
+            {
+              ns: Translation.Files,
+              files: fileNames,
+              rest: restText,
+              verb: verbPast,
+            },
+          ),
+        });
       }
 
       return null;
