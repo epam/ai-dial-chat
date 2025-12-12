@@ -20,6 +20,7 @@ import {
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { BackendChatEntity, FeatureType, MoveModel } from '@/src/types/common';
+import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import {
@@ -397,15 +398,21 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
 
-  copyFiles(_data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+  copyFiles(_data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationsResult<MoveModel>> {
     throw new Error('BrowserStorage.copyFiles not implemented');
   }
 
-  moveFiles(_data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+  moveFiles(_data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationsResult<MoveModel>> {
     throw new Error('BrowserStorage.moveFiles not implemented');
   }
 
-  deleteFiles(_data: { files: DialCopiedItem[] }): Observable<void> {
+  deleteFiles(_data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationsResult<string>> {
     throw new Error('BrowserStorage.deleteFiles not implemented');
   }
 

@@ -478,7 +478,7 @@ const copyFilesEpic: AppEpic = (action$) =>
       return FileService.copyFiles(payload).pipe(
         switchMap((response) => {
           return concat(
-            of(FilesActions.copyFilesSuccess({ files: response })),
+            of(FilesActions.copyFilesSuccess({ result: response })),
             of(
               FilesActions.getFilesWithFolders({
                 id: payload.destinationFolder,
@@ -510,7 +510,7 @@ const moveFilesEpic: AppEpic = (action$) =>
       return FileService.moveFiles(payload).pipe(
         switchMap((response) => {
           const actions: AppAction[] = [
-            FilesActions.moveFilesSuccess({ files: response }),
+            FilesActions.moveFilesSuccess({ result: response }),
           ];
 
           if (payload.destinationFolder !== payload.sourceFolder) {
@@ -548,11 +548,12 @@ const deleteFilesEpic: AppEpic = (action$) =>
     ofType(FilesActions.deleteFiles.type),
     switchMap(({ payload }) => {
       return FileService.deleteFiles({ files: payload.files }).pipe(
-        switchMap(() => {
+        switchMap((response) => {
           return concat(
             of(
               FilesActions.deleteFilesSuccess({
-                files: payload.files,
+                deletedItems: payload.files,
+                result: response,
               }),
             ),
             of(

@@ -18,7 +18,11 @@ import {
 import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType, MoveModel } from '@/src/types/common';
-import { DialFile, FileFolderInterface } from '@/src/types/files';
+import {
+  DialFile,
+  FileFolderInterface,
+  FileOperationsResult,
+} from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -739,7 +743,7 @@ export const filesSlice = createSlice({
     copyFilesSuccess: (
       state,
       _action: PayloadAction<{
-        files: MoveModel[];
+        result: FileOperationsResult<MoveModel>;
       }>,
     ) => {
       state.isCopyingFiles = false;
@@ -769,13 +773,13 @@ export const filesSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        files: MoveModel[];
+        result: FileOperationsResult<MoveModel>;
       }>,
     ) => {
       state.isMovingFiles = false;
-      payload.files.forEach((file) => {
-        invalidateSearchCacheForFile(state, file.sourceUrl);
-        invalidateSearchCacheForFile(state, file.destinationUrl);
+      payload.result.results.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.data.sourceUrl);
+        invalidateSearchCacheForFile(state, file.data.destinationUrl);
       });
     },
     moveFilesFail: (
@@ -801,11 +805,12 @@ export const filesSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        files: DialDeletedItem[];
+        deletedItems: DialDeletedItem[];
+        result: FileOperationsResult<string>;
       }>,
     ) => {
       state.isDeletingFiles = false;
-      payload.files.forEach((file) => {
+      payload.deletedItems.forEach((file) => {
         invalidateSearchCacheForFile(state, file.sourceUrl);
       });
     },
