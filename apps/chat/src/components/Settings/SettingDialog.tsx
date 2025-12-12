@@ -205,6 +205,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               switchOnText={t('ON')}
               switchOFFText={t('OFF')}
               isLabelOnRight
+              className="mt-1"
             />
             <EnterTypeSelectLabeled
               label={t('Keyboard shortcuts')}
@@ -219,7 +220,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         <button
           type="button"
           ref={saveBtnRef}
-          className="button button-primary"
+          className="button button-primary py-2"
           data-qa="save"
           onClick={handleSave}
         >

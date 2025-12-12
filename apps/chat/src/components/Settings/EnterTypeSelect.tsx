@@ -21,7 +21,7 @@ export const EnterTypeSelect = ({
 }: EnterTypeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
   return (
-    <div className="flex flex-col gap-3">
+    <div className="mt-1 flex flex-col gap-3">
       <RadioButton
         id={EnterType.Enter}
         name="enter-type-select"
