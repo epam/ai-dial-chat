@@ -14,24 +14,24 @@ export interface AgentAndToolsetSelectItemProps {
   onToggleSelectItem: (item: MarketplaceEntity) => void;
 }
 
+const disabledAgentActions = {
+  edit: true,
+  share: true,
+  unshare: true,
+  publish: true,
+  logs: true,
+  delete: true,
+};
+
+const hasEntityContextMenu = (entity: MarketplaceEntity): boolean => {
+  return isToolsetEntityModel(entity) || isExecutableApp(entity);
+};
+
 export const AgentAndToolsetSelectItem: React.FC<
   AgentAndToolsetSelectItemProps
 > = ({ groupItem, selectedBaseIdsSet, onToggleSelectItem }) => {
   const currentBaseId = getEntityBaseId(groupItem.id);
   const isSelected = selectedBaseIdsSet.has(currentBaseId);
-
-  const disabledAgentActions = {
-    edit: true,
-    share: true,
-    unshare: true,
-    publish: true,
-    logs: true,
-    delete: true,
-  };
-
-  const hasEntityContextMenu = (entity: MarketplaceEntity): boolean => {
-    return isToolsetEntityModel(entity) || isExecutableApp(entity);
-  };
 
   return (
     <ItemCardView
