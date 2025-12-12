@@ -15,7 +15,7 @@ import {
   BackendFileFolder,
   DialFile,
   FileFolderInterface,
-  FileOperationResult,
+  FileOperationsResult,
 } from '@/src/types/files';
 import { HTTPMethod } from '@/src/types/http';
 
@@ -294,19 +294,19 @@ export class FileService {
 
   public static copyFiles(data: {
     files: DialCopiedItem[];
-  }): Observable<FileOperationResult<MoveModel>> {
+  }): Observable<FileOperationsResult<MoveModel>> {
     return DataService.getDataStorage().copyFiles(data);
   }
 
   public static moveFiles(data: {
     files: DialCopiedItem[];
-  }): Observable<FileOperationResult<MoveModel>> {
+  }): Observable<FileOperationsResult<MoveModel>> {
     return DataService.getDataStorage().moveFiles(data);
   }
 
   public static deleteFiles(data: {
     files: DialDeletedItem[];
-  }): Observable<FileOperationResult<string>> {
+  }): Observable<FileOperationsResult<string>> {
     return DataService.getDataStorage().deleteFiles(data);
   }
 

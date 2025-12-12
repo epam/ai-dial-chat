@@ -65,7 +65,7 @@ export interface OperationDataError<T> extends OperationData<T> {
   error: string;
 }
 
-export interface FileOperationResult<T> {
+export interface FileOperationsResult<T> {
   success: boolean;
   succeeded: number;
   failed: number;

@@ -21,7 +21,7 @@ import { FeatureType, MoveModel } from '@/src/types/common';
 import {
   DialFile,
   FileFolderInterface,
-  FileOperationResult,
+  FileOperationsResult,
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
@@ -743,7 +743,7 @@ export const filesSlice = createSlice({
     copyFilesSuccess: (
       state,
       _action: PayloadAction<{
-        result: FileOperationResult<MoveModel>;
+        result: FileOperationsResult<MoveModel>;
       }>,
     ) => {
       state.isCopyingFiles = false;
@@ -773,7 +773,7 @@ export const filesSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        result: FileOperationResult<MoveModel>;
+        result: FileOperationsResult<MoveModel>;
       }>,
     ) => {
       state.isMovingFiles = false;
@@ -806,7 +806,7 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         deletedItems: DialDeletedItem[];
-        result: FileOperationResult<string>;
+        result: FileOperationsResult<string>;
       }>,
     ) => {
       state.isDeletingFiles = false;

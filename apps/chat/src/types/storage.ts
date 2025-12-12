@@ -9,7 +9,7 @@ import {
   CustomApplicationModel,
 } from './applications';
 import { BackendChatEntity, MoveModel } from './common';
-import { FileOperationResult } from './files';
+import { FileOperationsResult } from './files';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 import { ToolsetInfo, ToolsetModel } from './toolsets';
@@ -161,15 +161,15 @@ export interface DialStorage {
 
   copyFiles(data: {
     files: DialCopiedItem[];
-  }): Observable<FileOperationResult<MoveModel>>;
+  }): Observable<FileOperationsResult<MoveModel>>;
 
   moveFiles(data: {
     files: DialCopiedItem[];
-  }): Observable<FileOperationResult<MoveModel>>;
+  }): Observable<FileOperationsResult<MoveModel>>;
 
   deleteFiles(data: {
     files: DialDeletedItem[];
-  }): Observable<FileOperationResult<string>>;
+  }): Observable<FileOperationsResult<string>>;
 
   uploadArchive(data: { file: File; destinationUrl: string }): Observable<void>;
 

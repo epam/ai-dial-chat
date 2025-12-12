@@ -10,7 +10,7 @@ import {
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
-import { FileOperationResult } from '@/src/types/files';
+import { FileOperationsResult } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -79,7 +79,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
 
-    const response: FileOperationResult<string> = {
+    const response: FileOperationsResult<string> = {
       success: errors.length === 0,
       total: allFilesToDelete.length,
       succeeded: succeeded.length,

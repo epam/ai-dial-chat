@@ -31,7 +31,7 @@ import {
   BackendResourceType,
   MoveModel,
 } from '@/src/types/common';
-import { FileOperationResult } from '@/src/types/files';
+import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -291,7 +291,7 @@ export class ApiStorage implements DialStorage {
 
   copyFiles(data: {
     files: DialCopiedItem[];
-  }): Observable<FileOperationResult<MoveModel>> {
+  }): Observable<FileOperationsResult<MoveModel>> {
     return ApiUtils.request('/api/files/copy', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),
@@ -300,7 +300,7 @@ export class ApiStorage implements DialStorage {
 
   moveFiles(data: {
     files: DialCopiedItem[];
-  }): Observable<FileOperationResult<MoveModel>> {
+  }): Observable<FileOperationsResult<MoveModel>> {
     return ApiUtils.request('/api/files/move', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),
@@ -309,7 +309,7 @@ export class ApiStorage implements DialStorage {
 
   deleteFiles(data: {
     files: DialCopiedItem[];
-  }): Observable<FileOperationResult<string>> {
+  }): Observable<FileOperationsResult<string>> {
     return ApiUtils.request('/api/files/delete', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),

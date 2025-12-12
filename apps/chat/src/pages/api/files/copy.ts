@@ -11,7 +11,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { MoveModel } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
-import { FileOperationResult } from '@/src/types/files';
+import { FileOperationsResult } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -91,7 +91,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
 
-    const response: FileOperationResult<MoveModel> = {
+    const response: FileOperationsResult<MoveModel> = {
       success: errors.length === 0,
       total: allFilesToCopy.length,
       succeeded: succeeded.length,
