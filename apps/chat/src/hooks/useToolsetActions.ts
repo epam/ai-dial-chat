@@ -5,7 +5,11 @@ import { useRouter } from 'next/router';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 import { getToolsetLink } from '@/src/utils/marketplace';
 
-import { ToolsetEditorSteps, ToolsetModel } from '@/src/types/toolsets';
+import {
+  ToolsetCredentialsLevel,
+  ToolsetEditorSteps,
+  ToolsetModel,
+} from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -130,6 +134,19 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, toolset],
   );
 
+  const handleLogout = useCallback(
+    (authLevel: ToolsetCredentialsLevel) => {
+      dispatch(
+        ToolsetActions.logOutToolset({
+          authLevel,
+          authType: toolset.authSettings.authenticationType,
+          toolsetId: toolset.id,
+        }),
+      );
+    },
+    [dispatch, toolset.authSettings.authenticationType, toolset.id],
+  );
+
   return {
     handleCopy,
     handleEdit,
@@ -139,5 +156,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     handleOpenSharing,
     handleOpenUnshare,
     handleLogin,
+    handleLogout,
   };
 };
