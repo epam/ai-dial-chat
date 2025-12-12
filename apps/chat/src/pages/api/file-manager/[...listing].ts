@@ -100,7 +100,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       } while (currentToken);
 
       let result = allItems;
-
       if (filter) {
         result = result.filter((item) => item.nodeType === filter);
       }

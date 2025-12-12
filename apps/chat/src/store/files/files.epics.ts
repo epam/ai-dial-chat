@@ -255,6 +255,34 @@ const getFileMetadataEpic: AppEpic = (action$) =>
     ),
   );
 
+const getFullListingEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.getFullListing.type),
+    switchMap(({ payload }) => {
+      const folderPath = payload.folderPath || '';
+
+      const metadata = state$.value.files.searchListingMetadata[folderPath];
+      const cacheAge = metadata ? Date.now() - metadata.loadedAt : Infinity;
+      const CACHE_TTL = 5 * 60 * 1000;
+
+      if (metadata?.isFullyLoaded && cacheAge < CACHE_TTL) {
+        return EMPTY;
+      }
+
+      return FileService.getFullListing(folderPath).pipe(
+        map((files) =>
+          FilesActions.getFullListingSuccess({
+            folderPath,
+            files,
+          }),
+        ),
+        catchError((error) => {
+          return of(FilesActions.getFullListingFail());
+        }),
+      );
+    }),
+  );
+
 const getFileFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.getFolders.type),
@@ -682,6 +710,7 @@ export const FilesEpics = combineEpics(
   getFileFoldersEpic,
   getFilesEpic,
   getFileMetadataEpic,
+  getFullListingEpic,
   reuploadFileEpic,
   renameFolderEpic,
   renameFolderFailEpic,

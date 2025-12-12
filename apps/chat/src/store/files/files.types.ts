@@ -3,6 +3,12 @@ import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFile as UIKitDialFile } from '@epam/ai-dial-ui-kit';
 
+export interface SearchListingMetadata {
+  loadedAt: number;
+  isFullyLoaded: boolean;
+  folderPath: string;
+}
+
 export interface FilesState {
   initialized: boolean;
   files: DialFile[];
@@ -28,4 +34,7 @@ export interface FilesState {
   isDownloadingArchive: boolean;
   isUploadingFiles: boolean;
   isUploadingArchive: boolean;
+
+  isLoadingSearchListing: boolean;
+  searchListingMetadata: Record<string, SearchListingMetadata>; // ключ - folderPath
 }

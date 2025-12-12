@@ -307,6 +307,7 @@ export const FileManager: React.FC = () => {
         }}
         treeOptions={{
           expandedPaths,
+          title: t('Folder tree'),
           collapsed: treeCollapsedState,
           onCollapseChange: setTreeCollapsedState,
           loadedPaths: loadedFoldersPaths,

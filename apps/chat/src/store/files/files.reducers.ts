@@ -36,6 +36,17 @@ import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
 
+const invalidateSearchCacheForFile = (state: FilesState, fileId: string) => {
+  const parts = fileId.split('/');
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const folderPath = parts.slice(0, i).join('/');
+    if (folderPath && state.searchListingMetadata[folderPath]) {
+      delete state.searchListingMetadata[folderPath];
+    }
+  }
+};
+
 const initialState: FilesState = {
   initialized: false,
   files: [],
@@ -58,6 +69,9 @@ const initialState: FilesState = {
   isDownloadingArchive: false,
   isUploadingFiles: false,
   isUploadingArchive: false,
+
+  isLoadingSearchListing: false,
+  searchListingMetadata: {},
 };
 
 export const filesSlice = createSlice({
@@ -150,6 +164,8 @@ export const filesSlice = createSlice({
       state.files = state.files.map((file) => {
         return file.id === payload.apiResult.id ? payload.apiResult : file;
       });
+      // Инвалидируем кэш поиска для этого bucket
+      invalidateSearchCacheForFile(state, payload.apiResult.id);
     },
     uploadFileTick: (
       state,
@@ -296,6 +312,57 @@ export const filesSlice = createSlice({
     clearFileMetadata: (state) => {
       state.loadingFileMetadata = false;
       state.fileMetadata = null;
+    },
+    getFullListing: (
+      state,
+      _action: PayloadAction<{
+        folderPath?: string;
+      }>,
+    ) => {
+      state.isLoadingSearchListing = true;
+    },
+    getFullListingSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderPath: string;
+        files: DialFile[];
+      }>,
+    ) => {
+      state.isLoadingSearchListing = false;
+
+      // Добавляем/обновляем файлы в общем массиве
+      const existingFileIds = new Set(state.files.map((f) => f.id));
+      const newFiles = payload.files.filter((f) => !existingFileIds.has(f.id));
+
+      if (newFiles.length > 0) {
+        state.files = [...state.files, ...newFiles];
+      }
+
+      // Помечаем папку как полностью загруженную
+      state.searchListingMetadata[payload.folderPath] = {
+        loadedAt: Date.now(),
+        isFullyLoaded: true,
+        folderPath: payload.folderPath,
+      };
+    },
+    getFullListingFail: (state) => {
+      state.isLoadingSearchListing = false;
+    },
+    invalidateSearchCache: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        bucketRootId?: string;
+      }>,
+    ) => {
+      if (payload.bucketRootId) {
+        delete state.searchListingMetadata[payload.bucketRootId];
+      } else {
+        state.searchListingMetadata = {};
+      }
     },
     getFolders: (
       state,
@@ -498,6 +565,7 @@ export const filesSlice = createSlice({
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.fileId);
       state.selectedFilesIds.filter((id) => id !== payload.fileId);
+      invalidateSearchCacheForFile(state, payload.fileId);
     },
     deleteFileFail: (
       state,
@@ -701,11 +769,17 @@ export const filesSlice = createSlice({
     },
     moveFilesSuccess: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         files: MoveModel[];
       }>,
     ) => {
       state.isMovingFiles = false;
+      payload.files.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.sourceUrl);
+        invalidateSearchCacheForFile(state, file.destinationUrl);
+      });
     },
     moveFilesFail: (
       state,
@@ -727,11 +801,16 @@ export const filesSlice = createSlice({
     },
     deleteFilesSuccess: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         files: DialDeletedItem[];
       }>,
     ) => {
       state.isDeletingFiles = false;
+      payload.files.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.sourceUrl);
+      });
     },
     deleteFilesFail: (
       state,
@@ -777,13 +856,16 @@ export const filesSlice = createSlice({
 
     uploadArchive: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         archive: File;
         name: string;
         destinationUrl: string;
       }>,
     ) => {
       state.isUploadingArchive = true;
+      invalidateSearchCacheForFile(state, payload.destinationUrl);
     },
     uploadArchiveSuccess: (state) => {
       state.isUploadingArchive = false;

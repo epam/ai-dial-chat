@@ -126,6 +126,19 @@ export class FileService {
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
 
+  private static getFullListingUrl = ({
+    path,
+    resultQuery,
+  }: {
+    path?: string;
+    resultQuery?: string;
+  }): string => {
+    const listingUrl = ApiUtils.encodeApiUrl(
+      constructPath('/api/file-manager', path || getFileRootId()),
+    );
+    return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
+  };
+
   public static getFileFolders(
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
@@ -216,6 +229,23 @@ export class FileService {
         urls: paths.map((path) => ApiUtils.encodeApiUrl(path)),
       }),
     }).pipe(map((files) => files.map(mapFileToDial)));
+  }
+
+  public static getFullListing(folderPath?: string): Observable<DialFile[]> {
+    const query = new URLSearchParams({
+      recursive: 'true',
+      filter: BackendDataNodeType.ITEM,
+      permissions: 'true',
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(
+      this.getFullListingUrl({ path: folderPath, resultQuery }),
+    ).pipe(
+      map((files: BackendFile[]) => {
+        return files.map(mapFileToDial);
+      }),
+    );
   }
 
   public static getFileContent<T>(path: string): Observable<T> {
