@@ -57,6 +57,21 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
   overrideDisabledActions?: Partial<DisabledActions>;
 }
 
+const agentDisabledActions = {
+  copyLink: true,
+  unpublish: true,
+};
+
+const toolsetDisabledActions = {
+  copyLink: true,
+  edit: true,
+  share: true,
+  unshare: true,
+  publish: true,
+  unpublish: true,
+  delete: true,
+};
+
 export const ItemCardView = <T extends MarketplaceEntity>({
   entity,
   isSelected,
@@ -89,20 +104,9 @@ export const ItemCardView = <T extends MarketplaceEntity>({
       entity.functionStatus !== ApplicationStatus.DEPLOYED);
 
   const disabledActions = useMemo(() => {
-    const baseActions: DisabledActions = isDialAiEntityModel(entity)
-      ? {
-          copyLink: true,
-          unpublish: true,
-        }
-      : {
-          copyLink: true,
-          edit: true,
-          share: true,
-          unshare: true,
-          publish: true,
-          unpublish: true,
-          delete: true,
-        };
+    const baseActions = isDialAiEntityModel(entity)
+      ? agentDisabledActions
+      : toolsetDisabledActions;
 
     return {
       ...baseActions,
