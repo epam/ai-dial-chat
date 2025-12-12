@@ -32,9 +32,9 @@ import { ApplicationSelectors, AuthSelectors } from '@/src/store/selectors';
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { Tooltip } from '@/src/components/Common/Tooltip';
-import { AgentBookmark } from '@/src/components/Marketplace/AgentBookmark';
 import { ApplicationDetailsFooterProps } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { AgentContextMenu } from '@/src/components/Marketplace/EntityContextMenu/AgentContextMenu';
+import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
+import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
@@ -108,7 +108,7 @@ export const ApplicationDetailsFooter = ({
         <div className="flex items-center gap-2">
           {showContextMenu ? (
             <button className="icon-button">
-              <AgentContextMenu
+              <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
                 triggerIconSize={24}
                 entity={entity}
@@ -128,7 +128,7 @@ export const ApplicationDetailsFooter = ({
             )
           )}
           {onBookmarkClick && (
-            <AgentBookmark
+            <MarketplaceEntityBookmark
               entity={entity}
               size={24}
               className="icon-button group/bookmark"
@@ -149,6 +149,7 @@ export const ApplicationDetailsFooter = ({
               !isExecutableApp(entity) ||
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
+            triggerClassName="shrink-0"
             tooltip={t(
               isPublicApp && !isAdmin
                 ? 'Ask your administrator to deploy this application to be able to use it'

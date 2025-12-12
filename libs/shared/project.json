@@ -57,5 +57,5 @@
     "format": {},
     "format:fix": {}
   },
-  "tags": []
+  "tags": ["production", "publishable"]
 }

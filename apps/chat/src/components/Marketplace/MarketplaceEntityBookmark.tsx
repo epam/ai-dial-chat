@@ -28,7 +28,7 @@ interface Props<T> {
   allocatePlace?: boolean;
 }
 
-export const AgentBookmark = <T extends MarketplaceEntity>({
+export const MarketplaceEntityBookmark = <T extends MarketplaceEntity>({
   entity,
   size = 18,
   className,
@@ -40,24 +40,21 @@ export const AgentBookmark = <T extends MarketplaceEntity>({
   const selectedEntitiesTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
   );
-
-  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
-
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-
   const installedToolsetsSet = useAppSelector(
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
 
   const isMyApp = isMyApplication(entity);
-
   const hidden = isMyApp || entity.sharedWithMe;
+
   if (hidden && !allocatePlace) {
     return null;
   }
 
+  const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
   const isBookmarked = isAgentsTab
     ? installedModelIds.has(entity.reference)
     : installedToolsetsSet.has(entity.reference);

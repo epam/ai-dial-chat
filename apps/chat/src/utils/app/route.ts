@@ -44,12 +44,13 @@ export const getPageName = ({ route, query }: BaseRouter) => {
   }
 };
 
-export const getAppEditorRoute = (type: string) => ({
+export const getAppEditorCreateModeRoute = (type: string) => ({
   pathname: Routes.AppsEditor,
   query: {
     [AppsEditorQuery.Step]: MarketplaceEditorSteps.General,
     [AppsEditorQuery.Schema]: cleanSchemaId(type),
     [AppsEditorQuery.ReturnUrl]:
       window.location.pathname + window.location.search,
+    [AppsEditorQuery.IsCreating]: '1',
   },
 });

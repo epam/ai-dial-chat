@@ -1,18 +1,13 @@
-import { MouseEvent, useCallback, useState } from 'react';
-
-import classNames from 'classnames';
-
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { ConfirmDialogValueTypes } from '@/src/types/common';
-import { FileSourceType } from '@/src/types/files';
-import { Translation } from '@/src/types/translation';
-
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
-
+import { useTranslation } from '@/src/hooks/useTranslation';
+import { ConfirmDialogValueTypes } from '@/src/types/common';
+import { FileSourceType } from '@/src/types/files';
+import { Translation } from '@/src/types/translation';
 import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import classNames from 'classnames';
+import { MouseEvent, useCallback, useState } from 'react';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
@@ -158,6 +153,7 @@ export const CustomLogoSelect = ({
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
+          hideFolderCheckbox
         />
       )}
 

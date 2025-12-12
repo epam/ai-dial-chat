@@ -1,22 +1,22 @@
-import { IconLogin, IconLogout } from '@tabler/icons-react';
-import { useCallback } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
-
-import classNames from 'classnames';
-
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
-
-import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
-import { Translation } from '@/src/types/translation';
+import { ToolsetLoginFormType, WithLogin } from './form';
 
 import { Field } from '@/src/components/Common/Forms/Field';
-
-import { ToolsetLoginFormType } from './form';
-
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
+import { withLabel } from '@/src/components/Common/Forms/Label';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { useTranslation } from '@/src/hooks/useTranslation';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { IconLogin, IconLogout } from '@tabler/icons-react';
+import classNames from 'classnames';
+import { useCallback } from 'react';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
+
+const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
+const getItemLabel = (item: unknown): string => item as string;
 
 const fields = [
   'keyHeader',
@@ -35,6 +35,7 @@ interface ToolsetLoginFormProps {
   fieldsTooltip?: string;
   onLogout?: () => void;
   onLogin?: (data: ToolsetLoginFormType) => void;
+  hideConfigFields?: boolean;
 }
 
 export const ToolsetLoginForm = ({
@@ -47,6 +48,7 @@ export const ToolsetLoginForm = ({
   fieldsTooltip,
   onLogout,
   onLogin,
+  hideConfigFields = false,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -57,8 +59,8 @@ export const ToolsetLoginForm = ({
   const errors = formState.errors;
   const isValid = formState.isValid;
 
-  const includeOAuthFields = useWatch({
-    name: 'includeOAuthFields',
+  const withLogin = useWatch({
+    name: 'withLogin',
     control,
   });
 
@@ -78,85 +80,114 @@ export const ToolsetLoginForm = ({
     <div className={classNames('flex flex-col gap-4', className)}>
       {type === ToolsetAuthTypes.API_KEY && !isSignedIn && (
         <>
-          <Field
-            {...register('keyHeader')}
-            label={t('API Key parameter name')}
-            mandatory
-            placeholder={t('Enter key name')}
-            id="keyHeader"
-            error={errors.keyHeader?.message}
-            disabled={disabled}
-            tooltip={fieldsTooltip}
-          />
-          <Field
-            {...register('apiKey')}
-            label={t('API Key')}
-            mandatory
-            placeholder={t('Enter API Key')}
-            id="apiKey"
-            error={errors.apiKey?.message}
-            disabled={disabled}
-            tooltip={fieldsTooltip}
-          />
+          {!hideConfigFields && (
+            <Field
+              {...register('keyHeader')}
+              label={t('API Key parameter name')}
+              mandatory
+              placeholder={t('Enter key name')}
+              id="keyHeader"
+              error={errors.keyHeader?.message}
+              disabled={disabled}
+              tooltip={fieldsTooltip}
+            />
+          )}
+          {withLogin === WithLogin.WithLogin && (
+            <Field
+              {...register('apiKey')}
+              label={t('API Key')}
+              mandatory
+              placeholder={t('Enter API Key')}
+              id="apiKey"
+              error={errors.apiKey?.message}
+              disabled={disabled}
+              tooltip={fieldsTooltip}
+            />
+          )}
         </>
       )}
 
-      {type === ToolsetAuthTypes.OAUTH && !isSignedIn && includeOAuthFields && (
-        <>
-          <Field
-            {...register('clientId')}
-            label={t('Client ID')}
-            placeholder={t('Enter client ID')}
-            id="clientId"
-            disabled={disabled}
-            error={errors.clientId?.message}
-            mandatory
-          />
-          <Field
-            {...register('clientSecret')}
-            label={t('Client Secret')}
-            placeholder={t('Enter client secret')}
-            id="clientSecret"
-            disabled={disabled}
-            error={errors.clientSecret?.message}
-            mandatory
-            type="password"
-            tooltip={fieldsTooltip}
-          />
-          <Field
-            {...register('authorizationEndpoint')}
-            label={t('Authorization endpoint')}
-            placeholder={t('Enter authorization endpoint')}
-            id="authorizationEndpoint"
-            disabled={disabled}
-            tooltip={fieldsTooltip}
-          />
-          <Field
-            {...register('tokenEndpoint')}
-            label={t('Token endpoint')}
-            placeholder={t('Enter token endpoint')}
-            id="tokenEndpoint"
-            disabled={disabled}
-            tooltip={fieldsTooltip}
-          />
-        </>
-      )}
+      {type === ToolsetAuthTypes.OAUTH &&
+        !isSignedIn &&
+        withLogin === WithLogin.WithConfig && (
+          <>
+            <Field
+              {...register('clientId')}
+              label={t('Client ID')}
+              placeholder={t('Enter client ID')}
+              id="clientId"
+              disabled={disabled}
+              error={errors.clientId?.message}
+              mandatory
+            />
+            <Field
+              {...register('clientSecret')}
+              label={t('Client Secret')}
+              placeholder={t('Enter client secret')}
+              id="clientSecret"
+              disabled={disabled}
+              error={errors.clientSecret?.message}
+              mandatory
+              type="password"
+              tooltip={fieldsTooltip}
+            />
+            <Field
+              {...register('authorizationEndpoint')}
+              label={t('Authorization endpoint')}
+              placeholder={t('Enter authorization endpoint')}
+              id="authorizationEndpoint"
+              disabled={disabled}
+              tooltip={fieldsTooltip}
+            />
+            <Field
+              {...register('tokenEndpoint')}
+              label={t('Token endpoint')}
+              placeholder={t('Enter token endpoint')}
+              id="tokenEndpoint"
+              disabled={disabled}
+              tooltip={fieldsTooltip}
+            />
+            <Controller
+              name="scopes"
+              control={control}
+              render={({ field }) => (
+                <ComboBoxField
+                  label={t('Supported scopes')}
+                  info={t('Type in scope and press ENTER to add')}
+                  initialSelectedItems={field.value}
+                  getItemLabel={getItemLabel}
+                  getItemValue={getItemLabel}
+                  onChangeSelectedItems={field.onChange}
+                  placeholder={t('Enter one or more supported scopes')}
+                  id="scopes"
+                  className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 hover:border-primary md:max-w-full"
+                  hasDeleteAll
+                  hideSuggestions
+                  itemHeightClassName="h-[31px]"
+                  dataQa="combobox"
+                />
+              )}
+            />
+          </>
+        )}
 
-      <DialButton
-        className="w-fit"
-        variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
-        data-qa="sign-in-button"
-        disabled={disabled || !isValid}
-        onClick={handleSubmit}
-        iconBefore={
-          isSignedIn ? (
-            <IconLogout className="text-secondary" size={18} />
-          ) : (
-            <IconLogin size={18} />
-          )
-        }
-        label={t(isSignedIn ? 'Log out' : 'Log in')}
-      />
+      {withLogin !== WithLogin.WithoutLogin && (
+        <DialButton
+          className="flex w-fit items-center"
+          variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
+          data-qa="log-in-button"
+          disabled={disabled || (!isValid && !isSignedIn)}
+          onClick={handleSubmit}
+          iconBefore={
+            isSignedIn ? (
+              <IconLogout className="text-secondary" size={18} />
+            ) : (
+              <IconLogin size={18} />
+            )
+          }
+          label={t(isSignedIn ? 'Log out' : 'Log in')}
+        />
+      )}
     </div>
   );
 };

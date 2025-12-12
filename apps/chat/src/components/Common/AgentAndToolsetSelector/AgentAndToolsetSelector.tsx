@@ -1,24 +1,17 @@
-import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useState } from 'react';
-
-import { useSearchParams } from 'next/navigation';
-
-import classNames from 'classnames';
-
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { MarketplaceEntity } from '@/src/types/marketplace';
-import { Translation } from '@/src/types/translation';
-
-import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
-
-import { Tooltip } from '@/src/components/Common/Tooltip';
-import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
-
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
 import { AgentAndToolsetModal } from './AgentAndToolsetModal';
 
+import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
+import { useTranslation } from '@/src/hooks/useTranslation';
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { Translation } from '@/src/types/translation';
 import { DialButton } from '@epam/ai-dial-ui-kit';
+import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
+import classNames from 'classnames';
+import { useSearchParams } from 'next/navigation';
+import { MouseEvent, useCallback, useState } from 'react';
 
 const NoAgentsAndToolsets: React.FC = () => {
   const { t } = useTranslation(Translation.Common);
@@ -84,50 +77,51 @@ export const AgentAndToolsetSelector: React.FC<
   );
 
   return (
-    <Tooltip tooltip={tooltip}>
-      <div className="relative grow space-y-4">
-        <div className="flex flex-col">
-          <div className="absolute right-0 top-[-22px]">
-            <Tooltip tooltip={addBtnTooltip ?? t('Add Agents and Toolsets')}>
-              <DialButton
-                disabled={readonly}
-                className={classNames('flex items-center text-accent-primary')}
-                textClassName="font-normal"
-                onClick={handleOpenSelectModal}
-                iconBefore={<IconPlus size={18} />}
-                label={t('Add')}
-              />
-            </Tooltip>
-          </div>
-          {!value.length ? (
-            <NoAgentsAndToolsets />
-          ) : (
-            <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
-              {value.map((id) => (
-                <AgentAndToolsetChip
-                  key={id}
-                  id={id}
-                  item={allItemsMap[id]}
-                  onRemove={readonly ? undefined : handleRemoveItem}
-                  readonly={readonly}
-                  onItemClick={onItemClick}
-                />
-              ))}
-            </div>
-          )}
+    <div className="relative grow space-y-4">
+      <div className="flex flex-col">
+        <div className="absolute right-0 top-[-22px]">
+          <Tooltip
+            tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
+          >
+            <DialButton
+              disabled={readonly}
+              className="flex items-center text-accent-primary"
+              textClassName="font-normal"
+              onClick={handleOpenSelectModal}
+              iconBefore={<IconPlus size={18} />}
+              label={t('Add')}
+            />
+          </Tooltip>
         </div>
-        <ToolsetLoginDialog />
-
-        {isSelectModalOpen && !readonly && (
-          <AgentAndToolsetModal
-            initialSelectedIds={value}
-            allItemsMap={allItemsMap}
-            saveSliderStateInURL
-            onClose={handleCloseModal}
-            onConfirm={handleConfirmSelection}
-          />
+        {!value.length ? (
+          <NoAgentsAndToolsets />
+        ) : (
+          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+            {value.map((id) => (
+              <AgentAndToolsetChip
+                key={id}
+                id={id}
+                item={allItemsMap[id]}
+                onRemove={readonly ? undefined : handleRemoveItem}
+                readonly={readonly}
+                onItemClick={onItemClick}
+                customTooltip={tooltip}
+              />
+            ))}
+          </div>
         )}
       </div>
-    </Tooltip>
+      <ToolsetLoginDialog />
+
+      {isSelectModalOpen && !readonly && (
+        <AgentAndToolsetModal
+          initialSelectedIds={value}
+          allItemsMap={allItemsMap}
+          saveSliderStateInURL
+          onClose={handleCloseModal}
+          onConfirm={handleConfirmSelection}
+        />
+      )}
+    </div>
   );
 };

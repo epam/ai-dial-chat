@@ -53,7 +53,7 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
       onClick={handleClick}
     >
       <div className="flex min-w-0 items-center gap-2">
-        <ModelIcon entityId={id} entity={item} size={18} />
+        <ModelIcon entityId={id} entity={item} size={18} isCustomTooltip />
         <ChipTitle name={name} version={version} isError={isError} />
       </div>
       <DialCloseButton

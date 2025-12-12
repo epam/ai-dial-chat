@@ -28,13 +28,13 @@ import {
   TableColumnSortKeys,
 } from '@/src/constants/marketplace';
 
-import { AgentsListWrapper } from '@/src/components/Marketplace/AgentsList/AgentsListWrapper';
-import { AgentsTableHeader } from '@/src/components/Marketplace/AgentsList/AgentsTable/AgentsTableHeader';
-import { SuggestedMessage } from '@/src/components/Marketplace/AgentsList/SuggestedMessage';
-import { AgentsListProps } from '@/src/components/Marketplace/AgentsList/view-props';
+import { MarketplaceEntitiesListWrapper } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesListWrapper';
+import { MarketplaceEntitiesTableHeader } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesTable/MarketplaceEntitiesTableHeader';
+import { SuggestedMessage } from '@/src/components/Marketplace/MarketplaceEntitiesList/SuggestedMessage';
+import { MarketplaceEntitiesListProps } from '@/src/components/Marketplace/MarketplaceEntitiesList/view-props';
 
-import { AgentsTableLeftSideRow } from './AgentsTableLeftSideRow';
-import { AgentsTableRightSideRow } from './AgentsTableRightSideRow';
+import { MarketplaceEntitiesTableLeftSideRow } from './MarketplaceEntitiesTableLeftSideRow';
+import { MarketplaceEntitiesTableRightSideRow } from './MarketplaceEntitiesTableRightSideRow';
 
 import isString from 'lodash-es/isString';
 import orderBy from 'lodash-es/orderBy';
@@ -122,7 +122,9 @@ const TOOLSETS_SORT_KEY_MAP: ToolsetsSortKeyMap = {
   [TableColumnSortKeys.OWNER]: 'author',
 };
 
-export const AgentsTable: React.FC<AgentsListProps<MarketplaceEntity>> = ({
+export const MarketplaceEntitiesTable: React.FC<
+  MarketplaceEntitiesListProps<MarketplaceEntity>
+> = ({
   entities,
   suggestedResults,
   separator,
@@ -278,8 +280,8 @@ export const AgentsTable: React.FC<AgentsListProps<MarketplaceEntity>> = ({
   return (
     <>
       <SuggestedMessage shouldRender={!entities.length} className="md:ml-3" />
-      <AgentsTableHeader ref={headerRefs} />
-      <AgentsListWrapper
+      <MarketplaceEntitiesTableHeader ref={headerRefs} />
+      <MarketplaceEntitiesListWrapper
         separatorRowId={separatorRowId}
         rowsHeight={ROW_SIZES[screenState]}
         ref={wrapperRefs}
@@ -303,7 +305,7 @@ export const AgentsTable: React.FC<AgentsListProps<MarketplaceEntity>> = ({
                 {isString(entity) ? (
                   <span ref={suggestedRowRef}></span>
                 ) : (
-                  <AgentsTableLeftSideRow
+                  <MarketplaceEntitiesTableLeftSideRow
                     entity={entity}
                     isHovered={entity.id === hoveredRowId}
                     onClick={onCardClick}
@@ -334,7 +336,7 @@ export const AgentsTable: React.FC<AgentsListProps<MarketplaceEntity>> = ({
                 {isString(entity) ? (
                   <span></span>
                 ) : (
-                  <AgentsTableRightSideRow
+                  <MarketplaceEntitiesTableRightSideRow
                     entity={entity}
                     isHovered={entity.id === hoveredRowId}
                     onClick={onCardClick}
@@ -347,7 +349,7 @@ export const AgentsTable: React.FC<AgentsListProps<MarketplaceEntity>> = ({
             );
           })}
         </DataRowContainer>
-      </AgentsListWrapper>
+      </MarketplaceEntitiesListWrapper>
     </>
   );
 };

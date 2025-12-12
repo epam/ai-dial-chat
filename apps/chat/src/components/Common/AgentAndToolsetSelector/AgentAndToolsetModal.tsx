@@ -1,20 +1,41 @@
-import { IconSearch } from '@tabler/icons-react';
+import { TalkToNotFound } from '../TalkToNotFound';
 import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+  AgentAndToolsetSelectItem,
+  AgentAndToolsetSelectItemProps,
+} from './AgentAndToolsetSelectItem';
+import { SelectedItemsContainer } from './SelectedItemsContainer';
 
-import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/router';
-
+import { TabButton } from '@/src/components/Buttons/TabButton';
+import { Modal } from '@/src/components/Common/Modal';
+import {
+  SliderGrid,
+  SliderGridRef,
+} from '@/src/components/Common/SliderGrid/SliderGrid';
+import { AppsEditorQuery } from '@/src/constants/applications';
+import {
+  ChangeMarketplaceTabs,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
+import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
+import { Routes } from '@/src/constants/routes';
+import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
+import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { isExternalApp } from '@/src/utils/app/application';
+import { useAppSelector } from '@/src/store/hooks';
+import {
+  ModelsSelectors,
+  SettingsSelectors,
+  ToolsetSelectors,
+  WidgetsSelectors,
+} from '@/src/store/selectors';
+import { MarketplaceEntity } from '@/src/types/marketplace';
+import { ModalState } from '@/src/types/modal';
+import { Translation } from '@/src/types/translation';
+import {
+  isDialAiEntityModel,
+  isExternalApp,
+} from '@/src/utils/app/application';
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
@@ -24,44 +45,22 @@ import {
   updateQueryParams,
 } from '@/src/utils/app/url/query-params';
 import { isInstalledEntity } from '@/src/utils/marketplace';
-
-import { MarketplaceEntity } from '@/src/types/marketplace';
-import { ModalState } from '@/src/types/modal';
-import { Translation } from '@/src/types/translation';
-
-import { useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsSelectors,
-  SettingsSelectors,
-  ToolsetSelectors,
-  WidgetsSelectors,
-} from '@/src/store/selectors';
-
-import { AppsEditorQuery } from '@/src/constants/applications';
-import {
-  ChangeMarketplaceTabs,
-  MarketplaceTabs,
-} from '@/src/constants/marketplace';
-import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
-import { Routes } from '@/src/constants/routes';
-import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
-
-import { TabButton } from '@/src/components/Buttons/TabButton';
-import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
-import { Modal } from '@/src/components/Common/Modal';
-import {
-  SliderGrid,
-  SliderGridRef,
-} from '@/src/components/Common/SliderGrid/SliderGrid';
-
-import { TalkToNotFound } from '../TalkToNotFound';
-import {
-  AgentAndToolsetSelectItem,
-  AgentAndToolsetSelectItemProps,
-} from './AgentAndToolsetSelectItem';
-import { SelectedItemsContainer } from './SelectedItemsContainer';
-
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+import { IconSearch } from '@tabler/icons-react';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/router';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+type DisplayedMarketplaceEntity = MarketplaceEntity & {
+  allVersions?: MarketplaceEntity[];
+};
 
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
@@ -78,9 +77,7 @@ function ScopeTabButton({
   onSetTab,
 }: ScopeTabButtonProps) {
   const { t } = useTranslation(Translation.Chat);
-
   const buttonText = textMap[tab] || tab;
-
   return (
     <TabButton
       tabKey={tab}
@@ -92,10 +89,12 @@ function ScopeTabButton({
     </TabButton>
   );
 }
+
 interface AgentAndToolsetModalViewProps {
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
   saveSliderStateInURL: boolean;
+  sessionKey: string;
   onClose: () => void;
   onConfirm: (selectedIds: string[]) => void;
 }
@@ -104,22 +103,18 @@ const AgentAndToolsetModalView = ({
   initialSelectedIds,
   allItemsMap,
   saveSliderStateInURL,
+  sessionKey,
   onClose,
   onConfirm,
 }: AgentAndToolsetModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
-
   const sliderGridRef = useRef<SliderGridRef>(null);
-  const currentAppReference =
-    router.route === Routes.AppsEditor
-      ? router.query[AppsEditorQuery.Id]?.toString()
-      : undefined;
+  const programmaticScroll = useRef(false);
 
   const [activeSlide, setActiveSlide] = useState(
     getNumberFromSearchParams(
@@ -133,9 +128,14 @@ const AgentAndToolsetModalView = ({
       AgentsAndToolsetsModalQueryParams.SliderPrevActiveSlide,
     ),
   );
+
   const [shouldResetSliderState, setShouldResetSliderState] = useState(false);
-  const [footerHeight, setFooterHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [footerHeight, setFooterHeight] = useState<number | undefined>(
+    undefined,
+  );
+  const [headerHeight, setHeaderHeight] = useState<number | undefined>(
+    undefined,
+  );
   const [scopeTab, setScopeTab] = useState<MarketplaceTabs>(
     getStringFromSearchParams<MarketplaceTabs>(
       searchParams,
@@ -146,9 +146,11 @@ const AgentAndToolsetModalView = ({
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get(AgentsAndToolsetsModalQueryParams.SearchTerm) ?? '',
   );
-  const [selectedIds, setSelectedIds] = useState<string[]>(
+  const [selectedIds, setSelectedIds] = useSessionStorageState<string[]>(
+    sessionKey,
     initialSelectedIds ?? [],
   );
+  const [scrollToItemId, setScrollToItemId] = useState<string | null>(null);
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -164,6 +166,11 @@ const AgentAndToolsetModalView = ({
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
+  const currentAppReference =
+    router.route === Routes.AppsEditor
+      ? router.query[AppsEditorQuery.Id]?.toString()
+      : undefined;
 
   useLayoutEffect(() => {
     if (footerRef.current) {
@@ -199,14 +206,48 @@ const AgentAndToolsetModalView = ({
 
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
-      setSelectedIds((prevIds) => {
-        if (prevIds.includes(itemToToggle.id)) {
-          return prevIds.filter((id) => id !== itemToToggle.id);
-        }
-        return [...prevIds, itemToToggle.id];
-      });
+      const baseId = getEntityBaseId(itemToToggle.id);
+      const isGroupSelected = selectedIds.some(
+        (id) => getEntityBaseId(id) === baseId,
+      );
+
+      if (isGroupSelected) {
+        setSelectedIds((prevIds) =>
+          prevIds.filter((id) => getEntityBaseId(id) !== baseId),
+        );
+      } else {
+        setSelectedIds((prevIds) => [...prevIds, itemToToggle.id]);
+      }
+      setScrollToItemId(null);
     },
-    [],
+    [selectedIds, setSelectedIds],
+  );
+
+  const handleSetVersion = useCallback(
+    (oldVersionId: string, newVersionId: string) => {
+      setSelectedIds((currentIds) => {
+        const index = currentIds.findIndex((id) => id === oldVersionId);
+        if (index !== -1) {
+          const newIds = [...currentIds];
+          newIds[index] = newVersionId;
+          return newIds;
+        }
+
+        const baseId = getEntityBaseId(newVersionId);
+        const anotherVersionIndex = currentIds.findIndex(
+          (id) => getEntityBaseId(id) === baseId,
+        );
+        if (anotherVersionIndex !== -1) {
+          const newIds = [...currentIds];
+          newIds[anotherVersionIndex] = newVersionId;
+          return newIds;
+        }
+
+        return currentIds;
+      });
+      setScrollToItemId(null);
+    },
+    [setSelectedIds],
   );
 
   const handleSetScopeTab = useCallback(
@@ -222,17 +263,21 @@ const AgentAndToolsetModalView = ({
     setShouldResetSliderState(true);
   };
 
-  const handleRemoveItem = useCallback((idToRemove: string) => {
-    setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
-  }, []);
-
-  const searchedAgents = useFuseSearch(
-    allAgents,
-    searchTerm,
-    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
+  const handleRemoveItem = useCallback(
+    (idToRemove: string) => {
+      setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
+      setScrollToItemId(null);
+    },
+    [setSelectedIds],
   );
-  const searchedToolsets = useFuseSearch(
-    allToolsets,
+
+  const allItems = useMemo(
+    () => [...allAgents, ...allToolsets],
+    [allAgents, allToolsets],
+  );
+
+  const searchedItems = useFuseSearch(
+    allItems,
     searchTerm,
     MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
@@ -242,57 +287,58 @@ const AgentAndToolsetModalView = ({
     [selectedIds],
   );
 
-  const sliderItemProps = useMemo(
-    () => ({
-      selectedBaseIdsSet,
-      onToggleSelectItem: handleToggleSelectItem,
-    }),
-    [selectedBaseIdsSet, handleToggleSelectItem],
-  );
-
   const installedSet = useMemo(
     () => new Set([...installedAgentsSet, ...installedToolsetsSet]),
     [installedAgentsSet, installedToolsetsSet],
   );
 
-  const displayedItems = useMemo(() => {
-    const getSelectedItemFromGroup = (
-      entities: MarketplaceEntity[],
-    ): MarketplaceEntity => {
-      const reversedSelectedIds = selectedIds.toReversed();
-      const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
-        entities.some((entity) => entity.id === id),
-      );
+  const displayedItems: DisplayedMarketplaceEntity[] = useMemo(() => {
+    const getSelectedItemFromGroup = ({
+      entities,
+    }: {
+      entities: MarketplaceEntity[];
+    }): DisplayedMarketplaceEntity | null => {
+      if (!entities.length) return null;
+      let activeVersion: MarketplaceEntity | undefined;
 
-      if (lastSelectedIdInGroup) {
-        const selectedEntity = entities.find(
-          (entity) => entity.id === lastSelectedIdInGroup,
+      if (scrollToItemId) {
+        activeVersion = entities.find((entity) => entity.id === scrollToItemId);
+      }
+
+      if (!activeVersion) {
+        const reversedSelectedIds = selectedIds.toReversed();
+        const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
+          entities.some((entity) => entity.id === id),
         );
-        if (selectedEntity) {
-          return selectedEntity;
+        if (lastSelectedIdInGroup) {
+          activeVersion = entities.find(
+            (entity) => entity.id === lastSelectedIdInGroup,
+          );
         }
       }
 
-      return sortItemsVersions(entities)[0];
+      if (!activeVersion) {
+        activeVersion = sortItemsVersions(entities)[0];
+      }
+
+      return { ...activeVersion!, allVersions: entities };
     };
 
-    const groupedAndOrderedAgents = groupMarketplaceEntityAndSaveOrder(
-      searchedAgents.filter(
-        (entity) =>
+    const filteredItems = searchedItems.filter((entity) => {
+      if (isDialAiEntityModel(entity)) {
+        return (
           !isExternalApp(entity) &&
           !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
-          entity.reference !== currentAppReference,
-      ),
-    ).map(({ entities }) => getSelectedItemFromGroup(entities));
+          entity.reference !== currentAppReference
+        );
+      }
+      return true;
+    });
 
-    const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
-      searchedToolsets,
-    ).map(({ entities }) => getSelectedItemFromGroup(entities));
-
-    const allGroupedItems = [
-      ...groupedAndOrderedAgents,
-      ...groupedAndOrderedToolsets,
-    ];
+    const allGroupedItems = groupMarketplaceEntityAndSaveOrder(filteredItems)
+      .map(getSelectedItemFromGroup)
+      .filter((item): item is DisplayedMarketplaceEntity => !!item)
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     if (!isMyWorkspace) {
       return allGroupedItems;
@@ -302,24 +348,67 @@ const AgentAndToolsetModalView = ({
       isInstalledEntity(item, installedSet),
     );
   }, [
-    currentAppReference,
-    searchedAgents,
-    searchedToolsets,
+    searchedItems,
     isMyWorkspace,
+    scrollToItemId,
     selectedIds,
     widgetsSchemaIds,
+    currentAppReference,
     installedSet,
   ]);
 
   const handleItemClick = useCallback(
     (id: string) => {
-      const isDisplayed = displayedItems.some((item) => item.id === id);
+      setSearchTerm('');
+      const isAlreadyDisplayed = displayedItems.some((item) => item.id === id);
+      programmaticScroll.current = true;
 
-      if (isDisplayed && sliderGridRef.current) {
-        sliderGridRef.current.scrollToItem(id);
+      if (isAlreadyDisplayed) {
+        sliderGridRef.current?.scrollToItem(id);
+      } else {
+        const item = allItemsMap[id];
+        if (isMyWorkspace && item && !isInstalledEntity(item, installedSet)) {
+          handleSetScopeTab(MarketplaceTabs.HOME);
+        }
+
+        setScrollToItemId(id);
       }
     },
-    [displayedItems],
+    [
+      displayedItems,
+      allItemsMap,
+      isMyWorkspace,
+      installedSet,
+      handleSetScopeTab,
+      setSearchTerm,
+    ],
+  );
+
+  useEffect(() => {
+    if (
+      scrollToItemId &&
+      displayedItems.some((item) => item.id === scrollToItemId)
+    ) {
+      sliderGridRef.current?.scrollToItem(scrollToItemId);
+    }
+    setTimeout(() => {
+      programmaticScroll.current = false;
+    }, 0);
+  }, [scrollToItemId, displayedItems]);
+
+  useEffect(() => {
+    if (!programmaticScroll.current) {
+      setScrollToItemId(null);
+    }
+  }, [activeSlide, scopeTab, searchTerm]);
+
+  const sliderItemProps = useMemo(
+    () => ({
+      selectedBaseIdsSet,
+      onToggleSelectItem: handleToggleSelectItem,
+      onSetVersion: handleSetVersion,
+    }),
+    [selectedBaseIdsSet, handleToggleSelectItem, handleSetVersion],
   );
 
   const sliderResetDependencies = useMemo(
@@ -386,38 +475,37 @@ const AgentAndToolsetModalView = ({
               </span>
             )}
           </div>
-
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
             {t('All')}
           </span>
         </div>
-        <SliderGrid<
-          MarketplaceEntity,
-          Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
-        >
-          ref={sliderGridRef}
-          items={displayedItems}
-          SliderItem={AgentAndToolsetSelectItem}
-          notFound={
-            <TalkToNotFound
-              isMyWorkspace={isMyWorkspace}
-              onOpenMarketplaceTab={handleSetScopeTab}
-              isSearchMode={!!searchTerm}
-            />
-          }
-          sliderResetDependencies={sliderResetDependencies}
-          itemProps={sliderItemProps}
-          modalHeaderHeight={headerHeight}
-          modalFooterHeight={footerHeight}
-          sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
-          activeSlide={activeSlide}
-          prevActiveSlide={prevActiveSlide}
-          onSetActiveSlide={setActiveSlide}
-          onSetPrevActiveSlide={setPrevActiveSlide}
-        />
+        {!!(headerHeight && footerHeight) && (
+          <SliderGrid<
+            MarketplaceEntity,
+            Omit<AgentAndToolsetSelectItemProps, 'groupItem'>
+          >
+            ref={sliderGridRef}
+            items={displayedItems}
+            SliderItem={AgentAndToolsetSelectItem}
+            notFound={
+              <TalkToNotFound
+                isMyWorkspace={isMyWorkspace}
+                onOpenMarketplaceTab={handleSetScopeTab}
+                isSearchMode={!!searchTerm}
+              />
+            }
+            sliderResetDependencies={sliderResetDependencies}
+            itemProps={sliderItemProps}
+            modalHeaderHeight={headerHeight}
+            modalFooterHeight={footerHeight}
+            sliderDotsClassName="mt-0 sm:mt-6 sm:h-[60px] mb-[80px] sm:mb-0"
+            activeSlide={activeSlide}
+            prevActiveSlide={prevActiveSlide}
+            onSetActiveSlide={setActiveSlide}
+            onSetPrevActiveSlide={setPrevActiveSlide}
+          />
+        )}
       </div>
-
-      <AgentDialogs />
 
       <div
         ref={footerRef}
@@ -453,10 +541,66 @@ export const AgentAndToolsetModal = ({
   onClose,
   onConfirm,
 }: Props) => {
+  const router = useRouter();
+  const sessionKey = useMemo(() => {
+    const { pathname, query, isReady } = router;
+
+    if (!isReady) {
+      return 'agent-toolset-temporary-selection-loading';
+    }
+
+    let contextId: string | undefined = undefined;
+
+    if (pathname.startsWith(Routes.AppsEditor)) {
+      const id = query[AppsEditorQuery.Id];
+      if (typeof id === 'string') {
+        contextId = id;
+      }
+    } else if (pathname.startsWith(Routes.Chat)) {
+      const chatId = query.chatId;
+      if (typeof chatId === 'string') {
+        contextId = chatId;
+      } else if (Array.isArray(chatId) && chatId.length > 0) {
+        contextId = chatId[chatId.length - 1];
+      }
+    }
+
+    if (contextId) {
+      return `agent-toolset-temporary-selection-${contextId}`;
+    }
+
+    return 'agent-toolset-temporary-selection-fallback';
+  }, [router]);
+
   const isModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
   const isToolsetsLoading = useAppSelector(ToolsetSelectors.selectIsLoading);
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
+  const isInstalledToolsetsInitialized = useAppSelector(
+    ToolsetSelectors.selectIsInstalledToolsetsInitialized,
+  );
+
+  const isLoading =
+    isModelsLoading ||
+    isToolsetsLoading ||
+    !isInstalledModelsInitialized ||
+    !isInstalledToolsetsInitialized;
+
+  const handleClose = useCallback(() => {
+    window.sessionStorage.removeItem(sessionKey);
+    onClose();
+  }, [onClose, sessionKey]);
+
+  const handleConfirm = useCallback(
+    (selectedIds: string[]) => {
+      window.sessionStorage.removeItem(sessionKey);
+      onConfirm(selectedIds);
+    },
+    [onConfirm, sessionKey],
+  );
 
   useEffect(() => {
     return () => {
@@ -486,22 +630,19 @@ export const AgentAndToolsetModal = ({
   return (
     <Modal
       portalId="theme-main"
-      state={
-        isModelsLoading || isToolsetsLoading
-          ? ModalState.LOADING
-          : ModalState.OPENED
-      }
+      state={isLoading ? ModalState.LOADING : ModalState.OPENED}
       dataQa="talk-to-agent"
       containerClassName="flex items-center xl:h-fit relative max-h-full flex-col rounded w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
-      onClose={onClose}
+      onClose={handleClose}
       heading
     >
       <AgentAndToolsetModalView
-        onClose={onClose}
-        onConfirm={onConfirm}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
         initialSelectedIds={initialSelectedIds}
         allItemsMap={allItemsMap}
         saveSliderStateInURL={saveSliderStateInURL}
+        sessionKey={sessionKey}
       />
     </Modal>
   );

@@ -27,6 +27,8 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
+
 interface PageProps {
   providers: Provider[];
   themesHostDefined: boolean;
@@ -60,7 +62,7 @@ export default function Signin({
         !isClientSessionValid(session) ||
         !session.data)
     ) {
-      signIn(defaultAuthProvider ?? undefined);
+      void signIn(defaultAuthProvider ?? undefined);
     }
 
     if (
@@ -129,14 +131,14 @@ export default function Signin({
               key={provider.id + provider.name}
               className="button button-secondary flex h-16 place-content-center gap-4 px-4 py-3"
               onClick={() => {
-                handleSignIn(provider);
+                void handleSignIn(provider);
               }}
               data-qa={provider.id}
             >
               <span className="flex shrink-0 flex-wrap place-content-center">
                 <Image
                   className="h-6"
-                  src={`https://authjs.dev/img/providers/${provider.id}.svg`}
+                  src={`https://authjs.dev/img/providers/${cleanProviderId(provider.id)}.svg`}
                   alt="Provider icon"
                   width={24}
                   height={24}

@@ -81,6 +81,7 @@ import {
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import {
   ConversationsActions,
@@ -98,6 +99,7 @@ import {
   PromptsSelectors,
   PublicationSelectors,
   SettingsSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -983,6 +985,36 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ),
               );
             });
+          }
+
+          const toolsetResourcesToPublish =
+            selectedPublication.resources.filter((r) =>
+              isToolsetId(r.targetUrl),
+            );
+
+          if (toolsetResourcesToPublish.length) {
+            const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
+            const toolsetsToReplace = toolsetResourcesToPublish
+              .map((r) =>
+                toolsetsMap[r.reviewUrl]
+                  ? ({
+                      ...toolsetsMap[r.reviewUrl],
+                      id: r.targetUrl,
+                    } as ToolsetModel)
+                  : undefined,
+              )
+              .filter((t) => !!t);
+
+            actions.push(
+              ...toolsetsToReplace.map((t) =>
+                of(
+                  ToolsetActions.deleteToolsetSuccess({
+                    reference: t.reference,
+                  }),
+                ),
+              ),
+              of(ToolsetActions.setToolsets(toolsetsToReplace)),
+            );
           }
 
           return concat(
@@ -2188,40 +2220,41 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
         state,
       ).pipe(
         switchMap(({ updatedPublication, newItemsToSelect }) => {
+          const newSendMessagePayload = {
+            ...sendMessagePayload,
+            message: {
+              ...sendMessagePayload.message,
+              custom_content: {
+                ...sendMessagePayload.message.custom_content,
+                attachments:
+                  sendMessagePayload.message.custom_content?.attachments?.map(
+                    (attachment) => {
+                      const attachmentUrl = ApiUtils.decodeApiUrl(
+                        attachment.url ?? '',
+                      );
+                      const addedResource = updatedPublication.resources.find(
+                        ({ sourceUrl }) => sourceUrl === attachmentUrl,
+                      );
+
+                      if (
+                        !isMyEntity({ id: attachmentUrl }) ||
+                        !addedResource
+                      ) {
+                        return attachment;
+                      }
+
+                      return {
+                        ...attachment,
+                        url: ApiUtils.encodeApiUrl(addedResource.reviewUrl),
+                      };
+                    },
+                  ),
+              },
+            },
+          };
+
           return concat(
-            of(
-              ConversationsActions.sendMessage({
-                ...sendMessagePayload,
-                message: {
-                  ...sendMessagePayload.message,
-                  custom_content: {
-                    ...sendMessagePayload.message.custom_content,
-                    attachments:
-                      sendMessagePayload.message.custom_content?.attachments?.map(
-                        (attachment) => {
-                          const addedResource =
-                            updatedPublication.resources.find(
-                              (resource) =>
-                                resource.sourceUrl === attachment.url,
-                            );
-
-                          if (
-                            !isMyEntity({ id: attachment.url ?? '' }) ||
-                            !addedResource
-                          ) {
-                            return attachment;
-                          }
-
-                          return {
-                            ...attachment,
-                            url: addedResource.reviewUrl,
-                          };
-                        },
-                      ),
-                  },
-                },
-              }),
-            ),
+            of(ConversationsActions.sendMessage(newSendMessagePayload)),
             of(PublicationActions.uploadPublication({ url: publicationUrl })),
             of(
               PublicationActions.setPublicationItems({

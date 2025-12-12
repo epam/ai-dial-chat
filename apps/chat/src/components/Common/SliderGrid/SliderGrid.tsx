@@ -88,7 +88,7 @@ export interface SliderGridRef {
   scrollToItem: (itemId: string) => void;
 }
 
-export const SliderGridInner = <T extends { id: string }, P>(
+const SliderGridInner = <T extends { id: string }, P>(
   {
     items,
     SliderItem,

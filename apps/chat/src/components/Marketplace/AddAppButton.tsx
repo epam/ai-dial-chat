@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getAppEditorRoute } from '@/src/utils/app/route';
+import { getAppEditorCreateModeRoute } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -48,7 +48,7 @@ export function AddAppButton() {
 
   const openEditor = useCallback(
     (type: string) => {
-      void router.push(getAppEditorRoute(type));
+      void router.push(getAppEditorCreateModeRoute(type));
       dispatch(ApplicationActions.setAppDetails(undefined));
       dispatch(
         ApplicationActions.setEditorStep(MarketplaceEditorSteps.General),
@@ -68,9 +68,6 @@ export function AddAppButton() {
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             openEditor(ApplicationType.CUSTOM_APP);
-            dispatch(
-              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
-            );
           },
         },
         {
@@ -81,9 +78,6 @@ export function AddAppButton() {
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
             openEditor(ApplicationType.CODE_APP);
-            dispatch(
-              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
-            );
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({

@@ -37,6 +37,8 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     adminPublishingApprovalModal,
     adminChat,
+    adminChatAssertion,
+    adminChatMessagesAssertion,
     adminChatHeaderDropdownMenu,
     adminChatHeader,
     downloadAssertion,
@@ -177,9 +179,10 @@ dialAdminTest(
         );
         await adminToast.closeToast();
 
-        const exportedConversation = await adminUserItemApiHelper.getItem(
-          expectedTodayConversationId,
-        );
+        const exportedConversation =
+          await adminUserItemApiHelper.getItem<Conversation>(
+            expectedTodayConversationId,
+          );
         baseAssertion.assertValueIsNotUndefined(exportedConversation);
 
         const expectedReviewImage = exportedConversation.messages
@@ -357,9 +360,18 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModal.goToEntityReview();
-        for (let i = 1; i <= 2; i++) {
-          await adminChat.getPlaybackControl().playbackNextButton.click();
-        }
+        const playbackControl = adminChat.getPlaybackControl();
+        await adminChatAssertion.assertElementActionabilityState(
+          playbackControl.playbackNextButton,
+          'disabled',
+        );
+        await adminChatAssertion.assertElementActionabilityState(
+          playbackControl.playbackPreviousButton,
+          'enabled',
+        );
+        await adminChatMessagesAssertion.assertMessagesCount(
+          playbackConversation.playback?.messagesStack?.length ?? 0,
+        );
         await adminChatHeader.dotsMenu.click();
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await adminDialHomePage.downloadData(
@@ -395,7 +407,9 @@ dialAdminTest(
         await adminToast.closeToast();
 
         const exportedPlaybackConversation =
-          await adminUserItemApiHelper.getItem(expectedPlaybackConversationId);
+          await adminUserItemApiHelper.getItem<Conversation>(
+            expectedPlaybackConversationId,
+          );
         baseAssertion.assertValueIsNotUndefined(exportedPlaybackConversation);
 
         const expectedPlaybackReviewImage =

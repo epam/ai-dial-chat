@@ -394,7 +394,10 @@ export const PublicationHandlerFooter = ({
   const isEditInvalid =
     isNamesOrVersionsInvalid || isFoldersInvalid || isDisplayAuthorInvalid;
   const someReviewedConversationHasNoMessages =
-    uploadedPublicationConversations.some(({ messages }) => !messages.length);
+    uploadedPublicationConversations.some(
+      ({ messages, playback }) =>
+        !messages.length && !playback?.messagesStack.length,
+    );
   const areNoChanges =
     !selectedPublicationItems.length &&
     (publication.targetFolder === `${PUBLIC_URL_PREFIX}/` || !areRulesChanged);

@@ -11,6 +11,7 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 
@@ -116,15 +117,20 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         <MenuItem
           key={entity.id}
           className={classNames(
-            'max-w-[350px] text-nowrap hover:bg-accent-primary-alpha',
+            'max-w-[350px] overflow-hidden text-nowrap hover:bg-accent-primary-alpha',
             (currentEntity.id === entity.id ||
               selectedBaseIdsSet?.has(entity.id)) &&
               'bg-accent-primary-alpha',
           )}
           item={
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center gap-2">
               <ModelIcon entityId={entity.id} entity={entity} size={16} />
-              {getDisplayValue(entity)}
+              <Tooltip
+                tooltip={getDisplayValue(entity)}
+                triggerClassName="truncate"
+              >
+                {getDisplayValue(entity)}
+              </Tooltip>
             </div>
           }
           disabled={readonly}

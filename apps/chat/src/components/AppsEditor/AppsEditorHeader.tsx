@@ -3,7 +3,6 @@ import { useFormContext } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
-import { useBeforeRedirect } from '@/src/hooks/useBeforeRedirect';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isApplicationType } from '@/src/utils/app/application';
@@ -14,12 +13,7 @@ import { ApplicationType } from '@/src/types/applications';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationTypesSchemasActions,
-  ConversationsActions,
-  PublicationActions,
-} from '@/src/store/actions';
+import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -28,14 +22,13 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
 
-import { capitalize } from 'lodash';
 import omit from 'lodash-es/omit';
+import capitalize from 'lodash/capitalize';
 
 const tabKeysInfo = {
   [MarketplaceEditorSteps.General]: {
@@ -50,8 +43,6 @@ const applicationTypeNames = {
   [ApplicationType.CODE_APP]: 'Code app',
   [ApplicationType.CUSTOM_APP]: 'Custom app',
 };
-
-const anyRouteExceptAppEditorRegex = /^(?!\/apps-editor(?:\/|$)).*/;
 
 const generalStepFields = ['name', 'version'];
 
@@ -68,10 +59,16 @@ export const AppsEditorHeader = ({
     query: {
       [AppsEditorQuery.Id]: id = '',
       [AppsEditorQuery.Schema]: schemaId = '',
-      [AppsEditorQuery.PublicationUrl]: publicationUrl,
+      [AppsEditorQuery.IsCreating]: isCreating,
     },
   } = useRouter();
+
+  // 1 stands for true
+  const isCreatingApp =
+    !id || (typeof isCreating === 'string' && isCreating === '1');
+
   const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const { formState, trigger } = useFormContext<AppsEditorFormType>();
@@ -88,14 +85,9 @@ export const AppsEditorHeader = ({
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
-
-  const isEditing = !!appDetails;
-
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const returnConversationIds = useAppSelector(
-    ApplicationSelectors.selectReturnConversationIds,
-  );
 
+  const isExistingApp = !!appDetails;
   const isSchemaApplicationType = !isApplicationType(
     decodeURIComponent(schemaId.toString()),
   );
@@ -120,10 +112,10 @@ export const AppsEditorHeader = ({
       {
         key: MarketplaceEditorSteps.Settings,
         label: t(tabKeysInfo[MarketplaceEditorSteps.Settings].label),
-        disabled: !isEditing,
+        disabled: !isExistingApp,
       },
     ],
-    [isEditing, t],
+    [isExistingApp, t],
   );
 
   const errorSteps = useMemo(() => {
@@ -140,7 +132,7 @@ export const AppsEditorHeader = ({
     return steps;
   }, [errors, isValid]);
 
-  const title = `${t(isEditing ? 'Edit' : 'Add')} ${applicationTypeDisplayName}`;
+  const title = `${t(isCreatingApp ? 'Add' : 'Edit')} ${applicationTypeDisplayName}`;
 
   const handleTabClick = useCallback(
     (tab: { key: MarketplaceEditorSteps; disabled: boolean }) => {
@@ -153,7 +145,7 @@ export const AppsEditorHeader = ({
   const handleLogoClick = useCallback(
     async (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
-      if (isEditing) {
+      if (isExistingApp) {
         const isValid = await trigger();
 
         if (!isValid) {
@@ -164,11 +156,11 @@ export const AppsEditorHeader = ({
       }
       onSave(false, true);
     },
-    [isEditing, trigger, onSave],
+    [isExistingApp, trigger, onSave],
   );
 
   const handleSaveAndRedirect = useCallback(async () => {
-    if (isEditing) {
+    if (isExistingApp) {
       const isValid = await trigger();
 
       if (!isValid) {
@@ -177,7 +169,7 @@ export const AppsEditorHeader = ({
       }
     }
     onSave();
-  }, [isEditing, onSave, trigger]);
+  }, [isExistingApp, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
@@ -199,36 +191,6 @@ export const AppsEditorHeader = ({
     [dispatch, errorSteps, onSave, redirectToChat],
   );
 
-  const handleCustomViewerExit = useCallback(() => {
-    if (hasCustomEditor) {
-      dispatch(
-        ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
-      );
-
-      if (publicationUrl) {
-        dispatch(
-          ConversationsActions.selectConversations({
-            conversationIds: [],
-          }),
-        );
-        dispatch(PublicationActions.setIsApplicationReview(true));
-      } else if (returnConversationIds?.length) {
-        dispatch(
-          ConversationsActions.selectConversations({
-            conversationIds: returnConversationIds,
-          }),
-        );
-        dispatch(ApplicationActions.setReturnConversationIds(undefined));
-      } else {
-        dispatch(
-          ConversationsActions.createNewConversations({
-            names: [DEFAULT_CONVERSATION_NAME],
-          }),
-        );
-      }
-    }
-  }, [dispatch, hasCustomEditor, publicationUrl, returnConversationIds]);
-
   const getMobileLabelText = useCallback(
     (tabKey: MarketplaceEditorSteps) => {
       const capitalizedAppType = capitalize(applicationTypeDisplayName);
@@ -243,11 +205,11 @@ export const AppsEditorHeader = ({
   );
 
   const saveLabel =
-    isEditing && !hasCustomEditor && (agent ? !isEntityIdPublic(agent) : false)
+    isExistingApp &&
+    !hasCustomEditor &&
+    (agent ? !isEntityIdPublic(agent) : false)
       ? 'Save and exit'
       : 'Exit';
-
-  useBeforeRedirect(handleCustomViewerExit, anyRouteExceptAppEditorRegex);
 
   return (
     <>
@@ -255,7 +217,7 @@ export const AppsEditorHeader = ({
         tabs={tabs}
         activeTab={currentStep}
         errorTabsSet={errorSteps}
-        isEditing={isEditing}
+        isEditing={isExistingApp}
         onTabClick={handleTabClick}
         getMobileTabLabel={getMobileLabelText}
         title={title}

@@ -191,7 +191,13 @@ export const getToolsetRedirectUri = () =>
   `${window.location.origin}${Routes.ToolsetSignIn}`;
 
 export const isToolsetWithAuth = (toolset: ToolsetModel) => {
-  return toolset.authSettings.authenticationType !== ToolsetAuthTypes.NONE;
+  return (
+    toolset.authSettings.authenticationType !== ToolsetAuthTypes.NONE &&
+    !(
+      toolset.authSettings.authenticationType === ToolsetAuthTypes.API_KEY &&
+      !toolset.authSettings.apiKeyHeader
+    )
+  );
 };
 
 export const isToolsetSignedIn = (
@@ -220,7 +226,7 @@ export const getToolsetPayload = (
       oldToolset.authSettings),
     ...pickBy(newToolset.authSettings, Boolean),
     ...(authType === ToolsetAuthTypes.API_KEY && {
-      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? 'api_key',
+      apiKeyHeader: newToolset.authSettings.apiKeyHeader ?? '',
     }),
     ...(authType === ToolsetAuthTypes.OAUTH && {
       redirectUri: getToolsetRedirectUri(),

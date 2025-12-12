@@ -6,6 +6,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
+import { preventEnterDown } from '@/src/utils/app/forms';
 
 import { ScreenState } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -80,6 +81,7 @@ export const GeneralForm = ({
       onSubmit={onNextClick}
       className="flex size-full flex-col overflow-hidden bg-layer-2"
       data-qa="entity-general-form"
+      onKeyDown={preventEnterDown}
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Field

@@ -69,3 +69,14 @@ export enum ApplicationTypes {
   CUSTOM_APP = 'custom app',
   CODE_APP = 'code app',
 }
+
+export enum ImportResolutionOption {
+  Replace = 'Replace',
+  Postfix = 'Postfix',
+  Ignore = 'Ignore',
+}
+
+export enum OAuthOptions {
+  WithLogin = 'With login',
+  WithLoginAndConfig = 'With login & config',
+}

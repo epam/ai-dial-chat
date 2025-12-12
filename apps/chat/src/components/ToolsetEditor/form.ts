@@ -1,4 +1,5 @@
 import { getNextDefaultName } from '@/src/utils/app/folders';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetModel } from '@/src/types/toolsets';
 
@@ -12,10 +13,17 @@ import { z as zodValidation } from 'zod';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
+export enum WithLogin {
+  WithLogin = 'With login',
+  WithoutLogin = 'Without login',
+  WithConfig = 'With login & config',
+}
+
 export const ToolsetLoginFormSchema = zodValidation
   .object({
-    includeOAuthFields: zodValidation.boolean().optional(),
+    withLogin: zodValidation.enum(WithLogin),
     authenticationType: zodValidation.enum(ToolsetAuthTypes),
+    isLoggedIn: zodValidation.boolean(),
     // API_KEY
     keyHeader: zodValidation.string().optional(),
     apiKey: zodValidation.string().optional(),
@@ -24,8 +32,10 @@ export const ToolsetLoginFormSchema = zodValidation
     clientSecret: zodValidation.string().optional(),
     authorizationEndpoint: zodValidation.string().optional(),
     tokenEndpoint: zodValidation.string().optional(),
+    scopes: zodValidation.array(zodValidation.string()).optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.isLoggedIn) return;
     if (data.authenticationType === ToolsetAuthTypes.API_KEY) {
       if (!data.keyHeader?.trim()) {
         ctx.addIssue({
@@ -34,7 +44,7 @@ export const ToolsetLoginFormSchema = zodValidation
           message: 'Key name is required',
         });
       }
-      if (!data.apiKey?.trim()) {
+      if (!data.apiKey?.trim() && data.withLogin === WithLogin.WithLogin) {
         ctx.addIssue({
           code: 'custom',
           path: ['apiKey'],
@@ -42,15 +52,18 @@ export const ToolsetLoginFormSchema = zodValidation
         });
       }
     }
-    if (data.authenticationType === ToolsetAuthTypes.OAUTH) {
-      if (!data.clientId && data.includeOAuthFields) {
+    if (
+      data.authenticationType === ToolsetAuthTypes.OAUTH &&
+      data.withLogin === WithLogin.WithConfig
+    ) {
+      if (!data.clientId) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientId'],
           message: 'Client ID is required',
         });
       }
-      if (!data.clientSecret && data.includeOAuthFields) {
+      if (!data.clientSecret) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientSecret'],
@@ -104,27 +117,33 @@ export const getDefaultLoginFormData = (
     case ToolsetAuthTypes.API_KEY:
       return {
         authenticationType,
-        keyHeader: toolset?.authSettings?.apiKeyHeader ?? 'api_key',
+        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
+        withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
+        keyHeader: toolset?.authSettings?.apiKeyHeader ?? '',
         apiKey: prevData?.apiKey ?? '',
       };
     case ToolsetAuthTypes.OAUTH:
       return {
         authenticationType,
+        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
         clientId: toolset?.authSettings?.clientId ?? '',
         clientSecret: toolset?.authSettings?.clientSecret ?? '',
         authorizationEndpoint:
           toolset?.authSettings?.authorizationEndpoint ?? '',
         tokenEndpoint: toolset?.authSettings?.tokenEndpoint ?? '',
-        includeOAuthFields:
+        withLogin:
           !prevData &&
           toolset?.authSettings?.clientSecret &&
           toolset?.authSettings?.clientId
-            ? true
-            : (prevData?.includeOAuthFields ?? false),
+            ? WithLogin.WithConfig
+            : (prevData?.withLogin ?? WithLogin.WithLogin),
+        scopes: toolset?.authSettings?.scopesSupported,
       };
     case ToolsetAuthTypes.NONE:
     default:
       return {
+        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
+        withLogin: WithLogin.WithoutLogin,
         authenticationType,
       };
   }
@@ -140,7 +159,7 @@ export const getDefaultFormData = (
       toolset?.name ??
       getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
     endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
-    protocol: toolset?.transport ?? ToolsetTransportType.SSE,
+    protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',

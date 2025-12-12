@@ -30,7 +30,7 @@ export const usePromptActions = (prompt: Prompt) => {
   }, [dispatch, prompt]);
 
   const handleMoveToFolder = useCallback(() => {
-    dispatch(PromptsActions.setMoveToPrompt(prompt));
+    dispatch(PromptsActions.setMoveToPromptId(prompt.id));
   }, [dispatch, prompt]);
 
   const handleShare = useCallback(() => {
@@ -43,7 +43,7 @@ export const usePromptActions = (prompt: Prompt) => {
   }, [dispatch, prompt]);
 
   const handleDelete = useCallback(() => {
-    dispatch(PromptsActions.setDeletingPrompt(prompt));
+    dispatch(PromptsActions.setDeletingPromptId(prompt.id));
   }, [dispatch, prompt]);
 
   const handleInfo = useCallback(() => {
