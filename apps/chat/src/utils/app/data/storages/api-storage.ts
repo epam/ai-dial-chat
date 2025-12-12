@@ -31,6 +31,7 @@ import {
   BackendResourceType,
   MoveModel,
 } from '@/src/types/common';
+import { FileOperationResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -288,21 +289,27 @@ export class ApiStorage implements DialStorage {
     });
   }
 
-  copyFiles(data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+  copyFiles(data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationResult<MoveModel>> {
     return ApiUtils.request('/api/files/copy', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),
     });
   }
 
-  moveFiles(data: { files: DialCopiedItem[] }): Observable<MoveModel[]> {
+  moveFiles(data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationResult<MoveModel>> {
     return ApiUtils.request('/api/files/move', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),
     });
   }
 
-  deleteFiles(data: { files: DialCopiedItem[] }): Observable<void> {
+  deleteFiles(data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationResult<string>> {
     return ApiUtils.request('/api/files/delete', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),

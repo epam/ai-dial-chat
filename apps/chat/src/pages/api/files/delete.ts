@@ -10,6 +10,7 @@ import {
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
+import { FileOperationResult } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -78,14 +79,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
 
-    return res.status(200).json({
+    const response: FileOperationResult<string> = {
       success: errors.length === 0,
       total: allFilesToDelete.length,
       succeeded: succeeded.length,
       failed: errors.length,
       results: succeeded,
       errors: errors.length > 0 ? errors : undefined,
-    });
+    };
+
+    return res.status(200).json(response);
   } catch (error) {
     logger.error(error);
     if (error instanceof DialAIError) {

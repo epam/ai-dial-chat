@@ -7,6 +7,7 @@ import {
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 
 import { MoveModel } from '@/src/types/common';
+import { OperationData, OperationDataError } from '@/src/types/files';
 
 export async function fetchAllFilesRecursive(
   folderUrl: string,
@@ -26,8 +27,8 @@ export async function deleteFilesInBatches(
   authToken: string,
   batchSize = 100,
 ): Promise<{
-  succeeded: { index: number; url: string }[];
-  errors: { index: number; url: string; error: string }[];
+  succeeded: OperationData<string>[];
+  errors: OperationDataError<string>[];
 }> {
   const result = await processBatch(
     fileUrls,
@@ -50,10 +51,13 @@ export async function deleteFilesInBatches(
   );
 
   return {
-    succeeded: result.succeeded.map((s) => ({ index: s.index, url: s.result })),
+    succeeded: result.succeeded.map((s) => ({
+      index: s.index,
+      data: s.result,
+    })),
     errors: result.errors.map((e) => ({
       index: e.index,
-      url: e.item,
+      data: e.item,
       error: e.error,
     })),
   };
