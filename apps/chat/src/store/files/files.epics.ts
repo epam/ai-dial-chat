@@ -276,7 +276,7 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
             files,
           }),
         ),
-        catchError((error) => {
+        catchError(() => {
           return of(FilesActions.getFullListingFail());
         }),
       );
