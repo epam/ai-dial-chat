@@ -42,6 +42,8 @@ import {
 } from '@/src/store/actions';
 import { FilesSelectors, UISelectors } from '@/src/store/selectors';
 
+import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 
@@ -703,6 +705,146 @@ const uploadArchiveEpic: AppEpic = (action$) =>
     }),
   );
 
+const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(
+      FilesActions.copyFilesSuccess.type,
+      FilesActions.moveFilesSuccess.type,
+    ),
+    map((action) => {
+      const { result } = action.payload;
+      const { results, errors } = result;
+
+      const isCopy = FilesActions.copyFilesSuccess.match(action);
+      const verbPast = isCopy ? 'copied' : 'moved';
+
+      if (results.length > 0) {
+        if (results.length === 1) {
+          const destinationUrl = results[0].data.destinationUrl;
+          const { parentPath, name } = splitEntityId(destinationUrl);
+
+          return UIActions.showSuccessToast(
+            translate('“{{fileName}}” {{verb}} to {{folder}}', {
+              ns: Translation.Files,
+              fileName: name,
+              folder: parentPath,
+              verb: verbPast,
+            }),
+          );
+        }
+
+        const destinationUrl = results[0].data.destinationUrl;
+        const { parentPath } = splitEntityId(destinationUrl);
+
+        return UIActions.showSuccessToast(
+          translate('{{count}} items {{verb}} to {{folder}}', {
+            ns: Translation.Files,
+            count: results.length,
+            folder: parentPath,
+            verb: verbPast,
+          }),
+        );
+      }
+
+      if (errors && errors.length > 0) {
+        const visibleErrors = errors.slice(0, MAX_VISIBLE_NOTIFICATION_ITEMS);
+        const hiddenCount = errors.length - visibleErrors.length;
+
+        const fileNames = visibleErrors
+          .map((e) => splitEntityId(e.data.destinationUrl).name)
+          .join(', ');
+
+        const restText =
+          hiddenCount > 0
+            ? translate(' and {{count}} other items', {
+                ns: Translation.Files,
+                count: hiddenCount,
+              })
+            : '';
+
+        return UIActions.showErrorToast(
+          translate('{{files}}{{rest}} were not {{verb}}. Please try again.', {
+            ns: Translation.Files,
+            files: fileNames,
+            rest: restText,
+            verb: verbPast,
+          }),
+        );
+      }
+
+      return null;
+    }),
+    filter(Boolean),
+  );
+
+const deleteFilesResultToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.deleteFilesSuccess.type),
+    map(({ payload }) => {
+      const { result } = payload;
+      const { results, errors } = result;
+
+      const verbPast = 'deleted';
+
+      if (results.length > 0) {
+        if (results.length === 1) {
+          const path = results[0].data;
+          const { parentPath, name } = splitEntityId(path);
+
+          return UIActions.showSuccessToast(
+            translate('“{{fileName}}” {{verb}} from {{folder}}', {
+              ns: Translation.Files,
+              fileName: name,
+              folder: parentPath,
+              verb: verbPast,
+            }),
+          );
+        }
+
+        const path = results[0].data;
+        const { parentPath } = splitEntityId(path);
+
+        return UIActions.showSuccessToast(
+          translate('{{count}} items {{verb}} from {{folder}}', {
+            ns: Translation.Files,
+            count: results.length,
+            folder: parentPath,
+            verb: verbPast,
+          }),
+        );
+      }
+
+      if (errors && errors.length > 0) {
+        const visibleErrors = errors.slice(0, MAX_VISIBLE_NOTIFICATION_ITEMS);
+        const hiddenCount = errors.length - visibleErrors.length;
+
+        const fileNames = visibleErrors
+          .map((e) => splitEntityId(e.data).name)
+          .join(', ');
+
+        const restText =
+          hiddenCount > 0
+            ? translate(' and {{count}} other items', {
+                ns: Translation.Files,
+                count: hiddenCount,
+              })
+            : '';
+
+        return UIActions.showErrorToast(
+          translate('{{files}}{{rest}} were not {{verb}}. Please try again.', {
+            ns: Translation.Files,
+            files: fileNames,
+            rest: restText,
+            verb: verbPast,
+          }),
+        );
+      }
+
+      return null;
+    }),
+    filter(Boolean),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -730,4 +872,6 @@ export const FilesEpics = combineEpics(
   downloadFilesAsArchiveEpic,
   uploadFilesEpic,
   uploadArchiveEpic,
+  copyMoveFilesResultToastEpic,
+  deleteFilesResultToastEpic,
 );
