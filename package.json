@@ -183,7 +183,8 @@
     "nodemailer": "7.0.10",
     "dompurify": "3.3.0",
     "js-yaml": "4.1.1",
-    "glob": "11.1.0"
+    "glob": "11.1.0",
+    "@modern-js/utils": "2.69.4"
   },
   "engines": {
     "node": ">=22.2.0",
