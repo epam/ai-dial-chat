@@ -15,7 +15,7 @@ import {
   ATTR_SERVICE_VERSION,
 } from '@opentelemetry/semantic-conventions';
 
-//For the opentelemetry debagging uncomment line 15
+//For the opentelemetry debugging uncomment line 15
 // For troubleshooting, set the log level to DiagLogLevel.DEBUG
 // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 

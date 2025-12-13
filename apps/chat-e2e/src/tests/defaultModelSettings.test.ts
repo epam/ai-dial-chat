@@ -18,7 +18,6 @@ let defaultModel: DialAIEntityModel;
 let nonDefaultModel: DialAIEntityModel;
 let recentAddonIds: string[];
 let recentModelIds: string[];
-let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultAgent()!;
@@ -27,7 +26,6 @@ dialTest.beforeAll(async () => {
   );
   recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
-  allEntities = ModelsUtil.getOpenAIEntities();
 });
 
 dialTest(
@@ -50,14 +48,30 @@ dialTest(
     talkToAgents,
     baseAssertion,
     localStorageManager,
+    fileApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1030', 'EPMRTC-1890');
-    const expectedAddons = ModelsUtil.getAddons();
+    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
+    let modelWithoutAttachments: DialAIEntityModel;
 
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
+        modelWithoutAttachments = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModelsWithoutAttachment().filter(
+            (m) =>
+              m.features?.temperature !== undefined &&
+              m.features.temperature === true &&
+              m.features.systemPrompt !== undefined &&
+              m.features.systemPrompt === true,
+          ),
+        );
+        await fileApiHelper.updateInstalledDeployments([
+          modelWithoutAttachments,
+        ]);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          modelWithoutAttachments,
+        );
         await localStorageManager.useLastConversationSettingsOnce();
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
@@ -65,7 +79,7 @@ dialTest(
         await chat.changeAgentButton.click();
         await talkToAgentDialog.waitForState();
         await talkToAgentDialogAssertion.assertAgentIsSelected(
-          defaultModel.name,
+          modelWithoutAttachments.name,
         );
       },
     );
@@ -73,17 +87,10 @@ dialTest(
     await dialTest.step(
       'Verify the list of recent entities and icons are displayed and valid',
       async () => {
-        const expectedDefaultRecentEntities = [];
-        for (const entity of recentModelIds) {
-          expectedDefaultRecentEntities.push(
-            allEntities.find((e) => e.id === entity)!.name,
-          );
-        }
-
         const recentTalkTo = await talkToAgents.getAgentNames();
         expect
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
-          .toEqual(expectedDefaultRecentEntities);
+          .toEqual([modelWithoutAttachments.name]);
 
         const recentAgentsIcons = await talkToAgents.getAgentsIcons();
         expect
@@ -91,19 +98,15 @@ dialTest(
             recentAgentsIcons.length,
             ExpectedMessages.entitiesIconsCountIsValid,
           )
-          .toBe(recentModelIds.length);
+          .toBe(1);
 
-        for (const recentEntityId of recentModelIds) {
-          const entity = ModelsUtil.getOpenAIEntity(recentEntityId)!;
-          const actualRecentEntity = recentAgentsIcons.find(
-            (e) => e.entityId === entity.id,
-          )!;
-          const expectedEntityIcon = iconApiHelper.getEntityIcon(entity);
-          await baseAssertion.assertEntityIcon(
-            actualRecentEntity.iconLocator,
-            expectedEntityIcon,
-          );
-        }
+        const expectedEntityIcon = iconApiHelper.getEntityIcon(
+          modelWithoutAttachments,
+        );
+        await baseAssertion.assertEntityIcon(
+          recentAgentsIcons[0].iconLocator,
+          expectedEntityIcon,
+        );
         await talkToAgentDialog.cancelButton.click();
       },
     );
