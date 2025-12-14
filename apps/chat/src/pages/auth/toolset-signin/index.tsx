@@ -13,8 +13,6 @@ import {
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { getLayout } from '@/src/pages/_app';
-
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
@@ -64,6 +62,7 @@ function ToolsetSignin() {
         authType: ToolsetAuthTypes.OAUTH,
         callbackUrl,
         code: code.toString(),
+        isAdmin: parsedState.isAdmin,
       }),
     );
   }, [dispatch, router]);
@@ -74,8 +73,6 @@ function ToolsetSignin() {
     </div>
   );
 }
-
-ToolsetSignin.getLayout = getLayout;
 
 export default ToolsetSignin;
 

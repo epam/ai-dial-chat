@@ -648,7 +648,7 @@ const deleteToolsetFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const startSignInProcessEpic: AppEpic = (action$) =>
+const startSignInProcessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ToolsetActions.startSignInProcess.type),
     switchMap(({ payload }) => {
@@ -692,11 +692,13 @@ const startSignInProcessEpic: AppEpic = (action$) =>
             authSettings?.authorizationEndpoint &&
             typeof window !== 'undefined'
           ) {
+            const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
             const callbackUrl = `${window.location.pathname}${window.location.search}`;
             const state = {
               callbackUrl,
               toolsetId: payload.toolset.id,
               credentialsLevel: payload.authLevel,
+              isAdmin,
             };
 
             const url = new URL(authSettings.authorizationEndpoint);
@@ -768,14 +770,17 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
           const toastAction$ = of(
             UIActions.showSuccessToast(
               translate(
-                getLoginSuccessMessage(isAdmin && isPublic, payload.authLevel),
+                getLoginSuccessMessage(
+                  (payload.isAdmin ?? isAdmin) && isPublic,
+                  payload.authLevel,
+                ),
                 { name },
               ),
             ),
           );
 
           if (payload.authType === ToolsetAuthTypes.OAUTH && window) {
-            void router.push(new URL(callbackUrl));
+            void router.push(callbackUrl);
 
             return toastAction$;
           }

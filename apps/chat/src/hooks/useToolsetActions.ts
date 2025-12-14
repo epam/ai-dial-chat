@@ -135,7 +135,9 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
   );
 
   const handleLogout = useCallback(
-    (authLevel: ToolsetCredentialsLevel) => {
+    (e: React.MouseEvent, authLevel: ToolsetCredentialsLevel) => {
+      e.preventDefault();
+      e.stopPropagation();
       dispatch(
         ToolsetActions.logOutToolset({
           authLevel,

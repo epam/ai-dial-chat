@@ -48,12 +48,17 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
   const handleUserLogin = useCallback(
     (e: React.MouseEvent) => {
       if (authAction === ToolsetAuthAction.LogOut) {
-        handleLogout(ToolsetCredentialsLevel.GLOBAL);
+        handleLogout(
+          e,
+          isPublic && !isAdmin
+            ? ToolsetCredentialsLevel.USER
+            : ToolsetCredentialsLevel.GLOBAL,
+        );
       } else {
         handleLogin(e);
       }
     },
-    [authAction, handleLogin, handleLogout],
+    [authAction, handleLogin, handleLogout, isAdmin, isPublic],
   );
 
   if (!withAuth) return null;
