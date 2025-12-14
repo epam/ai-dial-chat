@@ -19,6 +19,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToolsetLoginFormType, WithLogin } from './form';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const getItemLabel = (item: unknown): string => item as string;
@@ -180,23 +181,21 @@ export const ToolsetLoginForm = ({
         )}
 
       {withLogin !== WithLogin.WithoutLogin && (
-        <button
-          className={classNames(
-            'button flex w-fit items-center gap-2 py-2',
-            buttonClassName,
-            isSignedIn ? 'button-secondary' : 'button-primary',
-          )}
+        <DialButton
+          title={t(isSignedIn ? 'Log out' : 'Log in') as string}
+          cssClass={buttonClassName}
+          variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
           data-qa="log-in-button"
-          disabled={disabled || (!isValid && !isSignedIn)}
+          disable={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
-        >
-          {isSignedIn ? (
-            <IconLogout className="text-secondary" size={18} />
-          ) : (
-            <IconLogin size={18} />
-          )}
-          {t(isSignedIn ? 'Log out' : 'Log in')}
-        </button>
+          iconBefore={
+            isSignedIn ? (
+              <IconLogout className="text-secondary" size={18} />
+            ) : (
+              <IconLogin size={18} />
+            )
+          }
+        />
       )}
     </div>
   );

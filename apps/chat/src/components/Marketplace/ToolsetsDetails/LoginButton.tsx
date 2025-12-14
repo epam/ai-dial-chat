@@ -3,8 +3,6 @@ import { FC, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
 
@@ -22,6 +20,8 @@ import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface LoginButtonProps {
   entity: ToolsetModel;
@@ -65,29 +65,26 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
 
   if (isOrganizationView)
     return (
-      <button
+      <DialButton
+        iconBefore={<IconKey size={18} />}
         onClick={handleLogin}
-        className="button button-primary flex items-center gap-2"
+        title={t('Manage creds') as string}
+        variant={ButtonVariant.Primary}
         data-qa="login-button"
-      >
-        <IconKey size={18} />
-        {t('Manage creds')}
-      </button>
+      />
     );
 
   return (
-    <button
+    <DialButton
       onClick={handleUserLogin}
-      className={classNames('button flex items-center gap-2', {
-        'button-primary text-primary':
-          authAction === ToolsetAuthAction.LogIn ||
-          authAction === ToolsetAuthAction.LoginWithMyCreds,
-        'button-secondary': authAction === ToolsetAuthAction.LogOut,
-      })}
+      title={t(getToolsetAuthActionLabel(authAction, screenState)) as string}
+      iconBefore={<LoginIcon size={18} />}
+      variant={
+        authAction === ToolsetAuthAction.LogOut
+          ? ButtonVariant.Secondary
+          : ButtonVariant.Primary
+      }
       data-qa="login-button"
-    >
-      <LoginIcon size={18} />
-      {t(getToolsetAuthActionLabel(authAction, screenState))}
-    </button>
+    />
   );
 };
