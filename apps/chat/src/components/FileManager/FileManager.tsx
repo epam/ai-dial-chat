@@ -102,66 +102,66 @@ export const FileManager: React.FC = () => {
     }
   }, [dispatch, currentPath, destinationPath, folders]);
 
-  const { fileTreeItems, rootFolder, loadedFoldersPaths, visibleColumns } =
-    useMemo(() => {
-      let filteredFiles = files;
-      let filteredFolders = folders;
-      let breadcrumbLabel = t('My Files');
-      const visibleColumns: FileManagerColumnKey[] = [
-        FileManagerColumnKey.Name,
-        FileManagerColumnKey.UpdatedAt,
-        FileManagerColumnKey.Size,
-        FileManagerColumnKey.Actions,
-      ];
+  const {
+    fileTreeItems,
+    rootFolder,
+    loadedFoldersPaths,
+    sharedByMePaths,
+    visibleColumns,
+  } = useMemo(() => {
+    let filteredFiles = files;
+    let filteredFolders = folders;
+    let breadcrumbLabel = t('My Files');
+    const visibleColumns: FileManagerColumnKey[] = [
+      FileManagerColumnKey.Name,
+      FileManagerColumnKey.UpdatedAt,
+      FileManagerColumnKey.Size,
+      FileManagerColumnKey.Actions,
+    ];
 
-      switch (activeTab) {
-        case 'my_files':
-          filteredFiles = filterFilesByFilters(files, defaultMyItemsFilters);
-          filteredFolders = filterFoldersByFilters(
-            folders,
-            defaultMyItemsFilters,
-          );
-          breadcrumbLabel = t('My Files');
-          break;
-        case 'shared':
-          filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
-          filteredFolders = filterFoldersByFilters(
-            folders,
-            SharedWithMeFilters,
-          );
-          breadcrumbLabel = t('Shared with Me');
-          visibleColumns.push(FileManagerColumnKey.Author);
-          break;
-        case 'organization':
-          filteredFiles = filterFilesByFilters(files, PublishedWithMeFilter);
-          filteredFolders = filterFoldersByFilters(
-            folders,
-            PublishedWithMeFilter,
-          );
-          breadcrumbLabel = t('Organization');
-          break;
-        default:
-          break;
-      }
+    switch (activeTab) {
+      case 'my_files':
+        filteredFiles = filterFilesByFilters(files, defaultMyItemsFilters);
+        filteredFolders = filterFoldersByFilters(
+          folders,
+          defaultMyItemsFilters,
+        );
+        breadcrumbLabel = t('My Files');
+        break;
+      case 'shared':
+        filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
+        filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
+        breadcrumbLabel = t('Shared with Me');
+        visibleColumns.push(FileManagerColumnKey.Author);
+        break;
+      case 'organization':
+        filteredFiles = filterFilesByFilters(files, PublishedWithMeFilter);
+        filteredFolders = filterFoldersByFilters(
+          folders,
+          PublishedWithMeFilter,
+        );
+        breadcrumbLabel = t('Organization');
+        break;
+      default:
+        break;
+    }
 
-      const { rootFolder, items, loadedFoldersPaths } = buildFileTree(
-        filteredFiles,
-        filteredFolders,
-        breadcrumbLabel,
-      );
+    const { rootFolder, items, loadedFoldersPaths, sharedByMePaths } =
+      buildFileTree(filteredFiles, filteredFolders, breadcrumbLabel);
 
-      if (activeTab !== previousActiveTabRef.current) {
-        setCurrentPath(rootFolder.id);
-        previousActiveTabRef.current = activeTab;
-      }
+    if (activeTab !== previousActiveTabRef.current) {
+      setCurrentPath(rootFolder.id);
+      previousActiveTabRef.current = activeTab;
+    }
 
-      return {
-        rootFolder,
-        fileTreeItems: items,
-        loadedFoldersPaths,
-        visibleColumns,
-      };
-    }, [t, files, folders, activeTab, previousActiveTabRef]);
+    return {
+      rootFolder,
+      fileTreeItems: items,
+      loadedFoldersPaths,
+      sharedByMePaths,
+      visibleColumns,
+    };
+  }, [t, files, folders, activeTab, previousActiveTabRef]);
 
   const getParentPaths = (path: string | undefined): string[] => {
     if (!path) return [];
@@ -302,6 +302,7 @@ export const FileManager: React.FC = () => {
         items={fileTreeItems}
         rootItem={rootFolder}
         filesLoading={areFilesLoading || areFoldersLoading}
+        sharedByMePaths={sharedByMePaths}
         bulkActionsToolbarOptions={{
           actionLabels: bulkActionLabels,
           getSelectionLabel(selectedCount) {
