@@ -278,18 +278,16 @@ export const FileManager: React.FC = () => {
       return null;
     }
 
-    const isCopy = isCopyingFiles;
-
-    const cancelHandler = isCopy
+    const cancelHandler = isCopyingFiles
       ? () => dispatch(FilesActions.cancelCopyingFiles())
       : () => dispatch(FilesActions.cancelMovingFiles());
 
     return (
       <OperationLoaderModal
-        title={t(isCopy ? 'Copying files' : 'Moving items')}
+        title={t(isCopyingFiles ? 'Copying files' : 'Moving items')}
         text={t('{{count}} items are being {{action}}…', {
           count: movingFilesCountRef.current,
-          action: isCopy ? 'copied' : 'moved',
+          action: isCopyingFiles ? 'copied' : 'moved',
         })}
         onCancel={cancelHandler}
       />
