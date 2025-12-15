@@ -86,6 +86,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
         'flex h-full items-center gap-2 py-1.5 pl-2 pr-1',
         isError ? 'text-error' : 'text-primary',
         readonly || isInvalid ? 'cursor-not-allowed' : 'cursor-pointer',
+        readonly && 'pr-2',
       )}
       onClick={handleClick}
     >
