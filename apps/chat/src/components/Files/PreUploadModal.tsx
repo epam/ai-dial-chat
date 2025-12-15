@@ -403,7 +403,7 @@ export const PreUploadDialog = ({
 
                     <DialRemoveButton
                       onClick={handleUnselectFile(index)}
-                      data-qa="delete-file"
+                      aria-label="remove-file"
                       iconClassName="size-6 shrink-0 text-secondary hover:text-accent-primary"
                     />
                   </div>

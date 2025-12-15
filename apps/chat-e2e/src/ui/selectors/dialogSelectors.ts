@@ -117,7 +117,6 @@ export const UploadFromDeviceModalSelectors = {
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
   addMoreFiles: '[data-qa="add-more-files"]',
-  deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
   fileExtension: '[data-qa="file-extension"]',
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
