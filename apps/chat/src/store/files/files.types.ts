@@ -35,6 +35,9 @@ export interface FilesState {
   isUploadingFiles: boolean;
   isUploadingArchive: boolean;
 
+  copyingFilesSignal: AbortController | null;
+  movingFilesSignal: AbortController | null;
+
   isLoadingSearchListing: boolean;
   searchListingMetadata: Record<string, SearchListingMetadata>; // ключ - folderPath
 }

@@ -478,30 +478,42 @@ const copyFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.copyFiles.type),
     switchMap(({ payload }) => {
-      return FileService.copyFiles(payload).pipe(
-        switchMap((response) => {
-          return concat(
-            of(FilesActions.copyFilesSuccess({ result: response })),
-            of(
-              FilesActions.getFilesWithFolders({
-                id: payload.destinationFolder,
-              }),
+      const abortController = new AbortController();
+
+      return concat(
+        of(FilesActions.setCopyingFilesSignal(abortController)),
+        FileService.copyFiles(payload, {
+          signal: abortController.signal,
+        }).pipe(
+          switchMap((response) =>
+            concat(
+              of(FilesActions.copyFilesSuccess({ result: response })),
+              of(
+                FilesActions.getFilesWithFolders({
+                  id: payload.destinationFolder,
+                }),
+              ),
             ),
-          );
-        }),
-        catchError(() => {
-          return of(
-            FilesActions.copyFilesFail({
-              files: payload.files,
-              destinationFolder: payload.destinationFolder,
-            }),
-            UIActions.showErrorToast(
-              translate('Failed to copy files. Please try again later.', {
-                ns: Translation.Files,
+          ),
+          catchError((error) => {
+            if (error?.name === 'AbortError') {
+              return EMPTY;
+            }
+
+            return of(
+              FilesActions.copyFilesFail({
+                files: payload.files,
+                destinationFolder: payload.destinationFolder,
               }),
-            ),
-          );
-        }),
+              UIActions.showErrorToast(
+                translate('Failed to copy files. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+            );
+          }),
+          takeUntil(action$.pipe(ofType(FilesActions.cancelCopyingFiles.type))),
+        ),
       );
     }),
   );
@@ -510,38 +522,52 @@ const moveFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.moveFiles.type),
     switchMap(({ payload }) => {
-      return FileService.moveFiles(payload).pipe(
-        switchMap((response) => {
-          const actions: AppAction[] = [
-            FilesActions.moveFilesSuccess({ result: response }),
-          ];
+      const abortController = new AbortController();
 
-          if (payload.destinationFolder !== payload.sourceFolder) {
+      return concat(
+        of(FilesActions.setMovingFilesSignal(abortController)),
+        FileService.moveFiles(payload, {
+          signal: abortController.signal,
+        }).pipe(
+          switchMap((response) => {
+            const actions: AppAction[] = [
+              FilesActions.moveFilesSuccess({ result: response }),
+            ];
+
+            if (payload.destinationFolder !== payload.sourceFolder) {
+              actions.push(
+                FilesActions.getFilesWithFolders({
+                  id: payload.sourceFolder,
+                }),
+              );
+            }
+
             actions.push(
-              FilesActions.getFilesWithFolders({ id: payload.sourceFolder }),
-            );
-          }
-
-          actions.push(
-            FilesActions.getFilesWithFolders({
-              id: payload.destinationFolder,
-            }),
-          );
-
-          return from(actions);
-        }),
-        catchError(() => {
-          return of(
-            FilesActions.moveFilesFail({
-              files: payload.files,
-            }),
-            UIActions.showErrorToast(
-              translate('Failed to move files. Please try again later.', {
-                ns: Translation.Files,
+              FilesActions.getFilesWithFolders({
+                id: payload.destinationFolder,
               }),
-            ),
-          );
-        }),
+            );
+
+            return from(actions);
+          }),
+          catchError((error) => {
+            if (error?.name === 'AbortError') {
+              return EMPTY;
+            }
+
+            return of(
+              FilesActions.moveFilesFail({
+                files: payload.files,
+              }),
+              UIActions.showErrorToast(
+                translate('Failed to move files. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+            );
+          }),
+          takeUntil(action$.pipe(ofType(FilesActions.cancelMovingFiles.type))),
+        ),
       );
     }),
   );

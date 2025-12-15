@@ -217,6 +217,16 @@ const selectIsAnyFileOperationInProgress = createSelector(
   },
 );
 
+const selectIsCopyingFiles = createSelector(
+  [rootSelector],
+  (state) => state.isCopyingFiles,
+);
+
+const selectIsMovingFiles = createSelector(
+  [rootSelector],
+  (state) => state.isMovingFiles,
+);
+
 const selectLoadingFileMetadata = (state: RootState) =>
   rootSelector(state).loadingFileMetadata;
 
@@ -301,4 +311,6 @@ export const FilesSelectors = {
   selectSearchListingMetadata,
   selectIsSearchListingLoaded,
   selectSearchResultsForFolder,
+  selectIsMovingFiles,
+  selectIsCopyingFiles,
 };
