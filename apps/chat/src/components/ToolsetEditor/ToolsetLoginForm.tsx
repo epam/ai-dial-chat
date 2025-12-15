@@ -182,11 +182,11 @@ export const ToolsetLoginForm = ({
 
       {withLogin !== WithLogin.WithoutLogin && (
         <DialButton
-          title={t(isSignedIn ? 'Log out' : 'Log in') as string}
-          cssClass={classNames('w-fit', buttonClassName)}
+          label={t(isSignedIn ? 'Log out' : 'Log in') as string}
+          className={classNames('w-fit', buttonClassName)}
           variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
           data-qa="log-in-button"
-          disable={disabled || (!isValid && !isSignedIn)}
+          disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
           iconBefore={
             isSignedIn ? (

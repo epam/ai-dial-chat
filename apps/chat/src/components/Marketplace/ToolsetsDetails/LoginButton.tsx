@@ -52,7 +52,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
       <DialButton
         iconBefore={<IconKey size={18} />}
         onClick={handleLogin}
-        title={t('Manage creds') as string}
+        label={t('Manage creds') as string}
         variant={ButtonVariant.Primary}
         data-qa="login-button"
       />
@@ -61,7 +61,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
   return (
     <DialButton
       onClick={handleLogin}
-      title={t(getToolsetAuthActionLabel(authAction, screenState)) as string}
+      label={t(getToolsetAuthActionLabel(authAction, screenState)) as string}
       iconBefore={<LoginIcon size={18} />}
       variant={
         authAction === ToolsetAuthAction.LogOut
