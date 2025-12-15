@@ -117,6 +117,7 @@ export const buildFileTree = (
   rootFolder: DialRootFolder;
   items: UIKitDialFile[];
   loadedFoldersPaths: Set<string>;
+  sharedByMePaths: Set<string>;
 } => {
   const uikitFiles = files.map(convertToUIKitFile);
 
@@ -125,6 +126,10 @@ export const buildFileTree = (
 
   const loadedFoldersPaths = new Set(
     folders.filter((f) => f.status === UploadStatus.LOADED).map((f) => f.id),
+  );
+
+  const sharedByMePaths = new Set(
+    files.filter((f) => f.isShared && !f.sharedWithMe).map((f) => f.id),
   );
 
   const sortedFolders = [...folders].sort((a, b) => {
@@ -136,6 +141,10 @@ export const buildFileTree = (
   sortedFolders.forEach((folder) => {
     const uikitFolder = convertToUIKitFolder(folder, []);
     folderMap.set(folder.id, uikitFolder);
+
+    if (folder.isShared && !folder.sharedWithMe) {
+      sharedByMePaths.add(folder.id);
+    }
   });
 
   const placedFolderIds = new Set<string>();
@@ -188,5 +197,10 @@ export const buildFileTree = (
     label: breadcrumbLabel || 'Files',
   };
 
-  return { rootFolder, items: [rootFolder], loadedFoldersPaths };
+  return {
+    rootFolder,
+    items: [rootFolder],
+    loadedFoldersPaths,
+    sharedByMePaths,
+  };
 };
