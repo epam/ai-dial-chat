@@ -73,6 +73,8 @@ const initialState: FilesState = {
   isDownloadingArchive: false,
   isUploadingFiles: false,
   isUploadingArchive: false,
+  copyingFilesSignal: new AbortController(),
+  movingFilesSignal: new AbortController(),
 
   isLoadingSearchListing: false,
   searchListingMetadata: {},
@@ -757,6 +759,17 @@ export const filesSlice = createSlice({
     ) => {
       state.isCopyingFiles = false;
     },
+    setCopyingFilesSignal: (
+      state,
+      action: PayloadAction<AbortController | null>,
+    ) => {
+      state.copyingFilesSignal = action.payload;
+    },
+    cancelCopyingFiles: (state) => {
+      state.copyingFilesSignal?.abort();
+      state.copyingFilesSignal = null;
+      state.isCopyingFiles = false;
+    },
 
     moveFiles: (
       state,
@@ -788,6 +801,17 @@ export const filesSlice = createSlice({
         files: DialCopiedItem[];
       }>,
     ) => {
+      state.isMovingFiles = false;
+    },
+    setMovingFilesSignal: (
+      state,
+      action: PayloadAction<AbortController | null>,
+    ) => {
+      state.movingFilesSignal = action.payload;
+    },
+    cancelMovingFiles: (state) => {
+      state.movingFilesSignal?.abort();
+      state.movingFilesSignal = null;
       state.isMovingFiles = false;
     },
 

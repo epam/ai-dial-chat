@@ -292,16 +292,22 @@ export class FileService {
     return DataService.getDataStorage().move(moveModel);
   }
 
-  public static copyFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>> {
-    return DataService.getDataStorage().copyFiles(data);
+  public static copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return DataService.getDataStorage().copyFiles(data, options);
   }
 
-  public static moveFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>> {
-    return DataService.getDataStorage().moveFiles(data);
+  public static moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return DataService.getDataStorage().moveFiles(data, options);
   }
 
   public static deleteFiles(data: {

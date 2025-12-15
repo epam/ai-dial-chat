@@ -279,6 +279,15 @@ const selectSearchResultsForFolder = createSelector(
   },
 );
 
+const selectCopyingFilesSignal = createSelector(
+  [rootSelector],
+  (state) => state.copyingFilesSignal,
+);
+const selectMovingFilesSignal = createSelector(
+  [rootSelector],
+  (state) => state.movingFilesSignal,
+);
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -313,4 +322,6 @@ export const FilesSelectors = {
   selectSearchResultsForFolder,
   selectIsMovingFiles,
   selectIsCopyingFiles,
+  selectCopyingFilesSignal,
+  selectMovingFilesSignal,
 };

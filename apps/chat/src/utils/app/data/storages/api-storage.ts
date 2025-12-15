@@ -289,21 +289,29 @@ export class ApiStorage implements DialStorage {
     });
   }
 
-  copyFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>> {
+  copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
     return ApiUtils.request('/api/files/copy', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),
+      signal: options?.signal,
     });
   }
 
-  moveFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>> {
+  moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
     return ApiUtils.request('/api/files/move', {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),
+      signal: options?.signal,
     });
   }
 
