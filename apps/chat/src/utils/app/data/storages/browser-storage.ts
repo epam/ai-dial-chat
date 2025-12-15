@@ -398,15 +398,21 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
 
-  copyFiles(_data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>> {
+  copyFiles(
+    _data: {
+      files: DialCopiedItem[];
+    },
+    _options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
     throw new Error('BrowserStorage.copyFiles not implemented');
   }
 
-  moveFiles(_data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>> {
+  moveFiles(
+    _data: {
+      files: DialCopiedItem[];
+    },
+    _options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
     throw new Error('BrowserStorage.moveFiles not implemented');
   }
 

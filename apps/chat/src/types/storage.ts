@@ -159,13 +159,19 @@ export interface DialStorage {
 
   move(data: MoveModel): Observable<MoveModel>;
 
-  copyFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>>;
+  copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>>;
 
-  moveFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<FileOperationsResult<MoveModel>>;
+  moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>>;
 
   deleteFiles(data: {
     files: DialDeletedItem[];

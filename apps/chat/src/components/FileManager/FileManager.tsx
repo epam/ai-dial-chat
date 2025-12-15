@@ -23,6 +23,8 @@ import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
+import { OperationLoaderModal } from './OperationLoaderModal';
+
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
@@ -50,6 +52,10 @@ export const FileManager: React.FC = () => {
   const isAnyOperationInProgress = useAppSelector(
     FilesSelectors.selectIsAnyFileOperationInProgress,
   );
+
+  const isCopyingFiles = useAppSelector(FilesSelectors.selectIsCopyingFiles);
+  const isMovingFiles = useAppSelector(FilesSelectors.selectIsMovingFiles);
+  const movingFilesCountRef = useRef<number>(0);
 
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -246,6 +252,8 @@ export const FileManager: React.FC = () => {
     ) => {
       if (movedItems.length === 0) return;
 
+      movingFilesCountRef.current = movedItems.length;
+
       dispatch(
         FilesActions.moveFiles({
           files: movedItems,
@@ -264,6 +272,27 @@ export const FileManager: React.FC = () => {
     },
     [dispatch, currentPath],
   );
+
+  const renderOperationLoaderModal = () => {
+    if (!isCopyingFiles && !isMovingFiles) {
+      return null;
+    }
+
+    const cancelHandler = isCopyingFiles
+      ? () => dispatch(FilesActions.cancelCopyingFiles())
+      : () => dispatch(FilesActions.cancelMovingFiles());
+
+    return (
+      <OperationLoaderModal
+        title={t(isCopyingFiles ? 'Copying files' : 'Moving items')}
+        text={t('{{count}} items are being {{action}}…', {
+          count: movingFilesCountRef.current,
+          action: isCopyingFiles ? 'copied' : 'moved',
+        })}
+        onCancel={cancelHandler}
+      />
+    );
+  };
 
   return (
     <div className="relative size-full">
@@ -327,6 +356,7 @@ export const FileManager: React.FC = () => {
         }}
         onCopyFiles={(copiedItems, destinationFolder) => {
           if (copiedItems.length === 0) return;
+          movingFilesCountRef.current = copiedItems.length;
           dispatch(
             FilesActions.copyFiles({ files: copiedItems, destinationFolder }),
           );
@@ -408,6 +438,7 @@ export const FileManager: React.FC = () => {
           <DialLoader size={48} ariaLabel={t('Processing files...')} />
         </div>
       )}
+      {renderOperationLoaderModal()}
     </div>
   );
 };
