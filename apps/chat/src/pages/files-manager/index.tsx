@@ -30,7 +30,7 @@ function FilesManagerPage() {
     dispatch(UIActions.setIsUserSettingsOpen(false));
   };
   return (
-    <div className="flex size-full flex-col overflow-hidden">
+    <div className="flex size-full flex-col">
       {enabledFeatures.has(Feature.Header) && (
         <BaseHeader
           RightItems={

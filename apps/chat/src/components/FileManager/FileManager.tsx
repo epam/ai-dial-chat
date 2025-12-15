@@ -295,7 +295,7 @@ export const FileManager: React.FC = () => {
   };
 
   return (
-    <div className="relative size-full">
+    <div className="flex w-full grow overflow-auto">
       <DialFileManager
         path={currentPath}
         onPathChange={setCurrentPath}
