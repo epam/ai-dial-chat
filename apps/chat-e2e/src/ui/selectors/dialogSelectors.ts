@@ -1,5 +1,3 @@
-import { Tags } from '@/src/ui/domData';
-
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
