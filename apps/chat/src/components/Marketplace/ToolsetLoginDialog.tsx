@@ -18,6 +18,7 @@ import { AuthSelectors, MarketplaceSelectors } from '@/src/store/selectors';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
@@ -147,11 +148,31 @@ export const ToolsetLoginDialogView = () => {
     [authType, entity, formMethods],
   );
 
+  const handleCloseLogoutModal = useCallback(
+    (result: boolean) => {
+      if (result) handleLogout();
+      else handleClose();
+    },
+    [handleClose, handleLogout],
+  );
+
   useEffect(() => {
     if (authType === ToolsetAuthTypes.OAUTH) {
       void formMethods.trigger();
     }
   }, [authType, formMethods]);
+
+  if (!isOrganizationView && isSignedIn)
+    return (
+      <ConfirmDialog
+        isOpen
+        heading={t('Logging out')}
+        description={t('Are you sure you want to log out?') as string}
+        confirmLabel={t('Log out')}
+        cancelLabel={t('Cancel')}
+        onClose={handleCloseLogoutModal}
+      />
+    );
 
   return (
     <Modal

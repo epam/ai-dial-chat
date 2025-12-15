@@ -8,7 +8,7 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { MouseEvent, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -28,7 +28,6 @@ import {
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import {
   ToolsetContextMenuDisabledActions,
-  ToolsetCredentialsLevel,
   ToolsetModel,
 } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
@@ -65,7 +64,6 @@ export const useToolsetMenuItems = ({
     handleDelete,
     handleEdit,
     handleLogin,
-    handleLogout,
     // handleOpenSharing,
     // handleOpenUnshare,
     handlePublish,
@@ -117,16 +115,7 @@ export const useToolsetMenuItems = ({
           authAction === ToolsetAuthAction.LogOut
             ? 'stroke-error'
             : 'stroke-accent-secondary',
-        onClick: (e: MouseEvent) => {
-          if (authAction === ToolsetAuthAction.LogOut) {
-            handleLogout(
-              e,
-              !isAdmin && isPublicApp
-                ? ToolsetCredentialsLevel.USER
-                : ToolsetCredentialsLevel.GLOBAL,
-            );
-          } else handleLogin(e);
-        },
+        onClick: handleLogin,
       },
       // {
       //   name: t('Share'),
@@ -193,8 +182,6 @@ export const useToolsetMenuItems = ({
       handlePublish,
       handleUnpublish,
       handleDelete,
-      handleLogout,
-      isAdmin,
     ],
   );
 

@@ -1,5 +1,5 @@
 import { IconKey, IconLogin, IconLogout } from '@tabler/icons-react';
-import { FC, useCallback, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -13,7 +13,7 @@ import {
   isToolsetWithAuth,
 } from '@/src/utils/app/toolsets';
 
-import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
@@ -35,7 +35,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
 
   const isPublic = isEntityIdPublic(entity);
   const withAuth = isToolsetWithAuth(entity);
-  const { handleLogin, handleLogout } = useToolsetMenuActions(entity);
+  const { handleLogin } = useToolsetMenuActions(entity);
   const authAction = getToolsetAuthAction(entity, isAdmin);
 
   const isOrganizationView = isPublic && isAdmin;
@@ -43,22 +43,6 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
   const LoginIcon = useMemo(
     () => (authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin),
     [authAction],
-  );
-
-  const handleUserLogin = useCallback(
-    (e: React.MouseEvent) => {
-      if (authAction === ToolsetAuthAction.LogOut) {
-        handleLogout(
-          e,
-          isPublic && !isAdmin
-            ? ToolsetCredentialsLevel.USER
-            : ToolsetCredentialsLevel.GLOBAL,
-        );
-      } else {
-        handleLogin(e);
-      }
-    },
-    [authAction, handleLogin, handleLogout, isAdmin, isPublic],
   );
 
   if (!withAuth) return null;
@@ -76,7 +60,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
 
   return (
     <DialButton
-      onClick={handleUserLogin}
+      onClick={handleLogin}
       title={t(getToolsetAuthActionLabel(authAction, screenState)) as string}
       iconBefore={<LoginIcon size={18} />}
       variant={
