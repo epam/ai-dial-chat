@@ -195,7 +195,7 @@ export const PublishingRulesSelectors = {
   ruleInnerOperator: '[data-qa="inner-operator"]',
   ruleOperator: '[data-qa="rule-operator"]',
   addRuleButton: '[data-qa="add-rule"]',
-  cancelAllRulesIcon: '[name="cancel-all-rules"]',
+  cancelAllRulesIcon: '[data-qa="cancel-all-rules"]',
 };
 
 export const PublishingFilterSelectors = {
