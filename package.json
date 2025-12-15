@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.39.3",
+  "version": "0.39.5",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -65,7 +65,7 @@
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
     "nanoid": "^5.1.5",
-    "next": "15.5.7",
+    "next": "15.5.9",
     "next-auth": "4.24.12",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
@@ -183,7 +183,8 @@
     "nodemailer": "7.0.10",
     "dompurify": "3.3.0",
     "js-yaml": "4.1.1",
-    "glob": "11.1.0"
+    "glob": "11.1.0",
+    "@modern-js/utils": "2.69.4"
   },
   "engines": {
     "node": ">=22.2.0",
