@@ -235,7 +235,7 @@ dialTest(
           sendMessageInputAttachments.removeInputAttachmentIcon(
             initAttachedFiles[0],
           );
-        await removeAttachmentIcon.hoverOver();
+        await removeAttachmentIcon.hover();
         await sendMessageInputAttachmentsAssertions.assertElementColor(
           removeAttachmentIcon,
           expectedColor,

@@ -120,6 +120,7 @@ function ModalView({
                 <DialCloseButton
                   onClose={handleClose}
                   className="absolute right-2 top-2 z-50"
+                  ariaLabel="close"
                 />
               )}
               {heading && typeof heading === 'string' ? (

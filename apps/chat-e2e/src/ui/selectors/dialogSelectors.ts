@@ -170,7 +170,6 @@ export const PublishingDialogSelectors = {
 export const ChangePathElement = {
   changePathContainer: '[data-qa="change-path-container"]',
   path: '[data-qa="path"]',
-  changeButton: '[data-qa="change-button"]',
 };
 
 export const PublishingApprovalModalSelectors = {
@@ -344,7 +343,6 @@ export const AddToolsetSettingsFormSelector = {
   oauthLabel: '[data-qa="oauth-label"]',
   authDetailsContainer: '[data-qa="auth-details-container"]',
   authLoginOption: '#auth-login-option',
-  loginButton: '[data-qa="log-in-button"]',
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',

@@ -270,7 +270,7 @@ export const FileItem = ({
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <DialCloseButton
             onClose={handleCancelFile}
-            data-qa="remove-file"
+            ariaLabel="remove-file"
             size={18}
           />
         ) : (

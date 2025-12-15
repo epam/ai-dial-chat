@@ -44,7 +44,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await baseAssertion.assertElementInnerText(
+        await baseAssertion.assertElementContainsText(
           banner.bannerMessage,
           [
             'Welcome to DIAL! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',

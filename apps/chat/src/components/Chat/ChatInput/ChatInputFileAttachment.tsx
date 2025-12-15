@@ -72,7 +72,7 @@ export const ChatInputFileAttachment = ({
           {onUnselectFile && (
             <DialCloseButton
               onClose={() => onUnselectFile(file.id)}
-              data-qa="remove-file"
+              ariaLabel="remove-file"
               size={18}
             />
           )}

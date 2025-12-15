@@ -108,7 +108,7 @@ export const RulesInput = ({
           <DialCloseButton
             onClose={handleClear}
             className="absolute right-3 top-[10.5px] text-secondary"
-            data-qa="cancel-all-rules"
+            ariaLabel="cancel-all-rules"
             size={18}
           />
         )}

@@ -11,9 +11,16 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Overflow, StyleValues, Styles } from '@/src/ui/domData';
+import {
+  Colors,
+  Overflow,
+  StyleValues,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -36,6 +43,7 @@ dialTest(
     dataInjector,
     shareModal,
     shareModalAssertion,
+    tooltipAssertion,
     tooltip,
     page,
     sendMessage,
@@ -104,25 +112,20 @@ dialTest(
       'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
         await shareModal.closeButton.hoverOver();
-        const closeButtonColor =
-          await shareModal.closeButton.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(closeButtonColor[0], ExpectedMessages.buttonColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
-
+        await shareModalAssertion.assertElementBorderColors(
+          shareModal.closeButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+        );
         await shareModal.copyLinkButton.hoverOver();
-        const copyButtonColor =
-          await shareModal.copyLinkButton.getComputedStyleProperty(
-            Styles.color,
-          );
-        expect
-          .soft(copyButtonColor[0], ExpectedMessages.buttonColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
-
-        const copyLinkTooltip = await tooltip.getContent();
-        expect
-          .soft(copyLinkTooltip, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.copyUrlTooltip);
+        await shareModalAssertion.assertElementBorderColors(
+          shareModal.copyLinkIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+        );
+        await tooltipAssertion.assertElementText(
+          tooltip,
+          ExpectedConstants.copyUrlTooltip,
+          ExpectedMessages.tooltipContentIsValid,
+        );
       },
     );
 

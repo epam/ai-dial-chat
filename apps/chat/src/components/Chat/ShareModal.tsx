@@ -274,7 +274,7 @@ export function ShareModalView() {
                 <Tooltip tooltip={t('Copy URL')}>
                   <DialButton
                     onClick={handleCopy}
-                    data-qa="copy-link"
+                    aria-label="copy-link"
                     iconBefore={
                       <IconCopy
                         size={20}

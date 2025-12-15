@@ -184,7 +184,6 @@ export const ToolsetLoginForm = ({
         <DialButton
           className={classNames('flex w-fit items-center', buttonClassName)}
           variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
-          data-qa="log-in-button"
           disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
           iconBefore={
