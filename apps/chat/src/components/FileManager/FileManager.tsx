@@ -5,6 +5,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   buildFileTree,
+  convertToUIKitFile,
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
@@ -61,8 +62,28 @@ export const FileManager: React.FC = () => {
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
 
+  const isLoadingSearchListing = useAppSelector(
+    FilesSelectors.selectIsLoadingSearchListing,
+  );
+
   const [currentPath, setCurrentPath] = useState<string | undefined>();
   const [destinationPath, setDestinationPath] = useState<string | undefined>();
+
+  const searchResults = useAppSelector(
+    useCallback(
+      (state) =>
+        currentPath
+          ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
+          : [],
+      [currentPath],
+    ),
+  );
+
+  const searchResultsUIKit = useMemo(
+    () => searchResults.map(convertToUIKitFile),
+    [searchResults],
+  );
+
   const [treeCollapsedState, setTreeCollapsedState] = useState<
     boolean | undefined
   >(true);
@@ -78,7 +99,7 @@ export const FileManager: React.FC = () => {
     if (initialDataStatus === UploadStatus.LOADED) {
       dispatch(FilesActions.getFilesWithFolders({}));
     }
-  }, [initialDataStatus]);
+  }, [initialDataStatus, dispatch]);
 
   useEffect(() => {
     if (currentPath && !isRootId(currentPath)) {
@@ -273,6 +294,13 @@ export const FileManager: React.FC = () => {
     [dispatch, currentPath],
   );
 
+  const handleSearchFiles = useCallback(
+    (folder: string) => {
+      dispatch(FilesActions.getFullListing({ folderPath: folder }));
+    },
+    [dispatch],
+  );
+
   const renderOperationLoaderModal = () => {
     if (!isCopyingFiles && !isMovingFiles) {
       return null;
@@ -303,6 +331,9 @@ export const FileManager: React.FC = () => {
         rootItem={rootFolder}
         filesLoading={areFilesLoading || areFoldersLoading}
         sharedByMePaths={sharedByMePaths}
+        onSearchFiles={handleSearchFiles}
+        searchInProgress={isLoadingSearchListing}
+        searchResults={searchResultsUIKit}
         bulkActionsToolbarOptions={{
           actionLabels: bulkActionLabels,
           getSelectionLabel(selectedCount) {

@@ -269,7 +269,12 @@ const getFullListingEpic: AppEpic = (action$, state$) =>
       const CACHE_TTL = 5 * 60 * 1000;
 
       if (metadata?.isFullyLoaded && cacheAge < CACHE_TTL) {
-        return EMPTY;
+        return of(
+          FilesActions.getFullListingSuccess({
+            folderPath,
+            files: [],
+          }),
+        );
       }
 
       return FileService.getFullListing(folderPath).pipe(
