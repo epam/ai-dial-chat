@@ -47,8 +47,8 @@ export const RadioButton = ({
 
         <span className="hidden peer-checked:block">
           <IconCircleChecked
-            width={17}
-            height={17}
+            width={18}
+            height={18}
             className="text-accent-primary"
           />
         </span>
