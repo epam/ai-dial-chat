@@ -153,7 +153,6 @@
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-jsx-a11y": "6.7.1",
     "eslint-plugin-react": "7.32.2",
-    "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-tailwindcss": "^3.13.0",
     "eslint-plugin-testing-library": "^6.1.2",
     "gpt-3-encoder": "^1.1.4",

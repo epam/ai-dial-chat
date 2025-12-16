@@ -4,8 +4,7 @@
     "plugin:@nx/react-typescript",
     "plugin:tailwindcss/recommended",
     "next",
-    "next/core-web-vitals",
-    "plugin:react-hooks/recommended"
+    "next/core-web-vitals"
   ],
   "ignorePatterns": ["!**/*", ".next/**/*"],
   "plugins": ["tailwindcss", "@nx", "@typescript-eslint"],
