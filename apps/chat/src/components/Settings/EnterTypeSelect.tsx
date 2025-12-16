@@ -1,5 +1,7 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isMacOs } from '@/src/utils/app/mobile';
+
 import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
@@ -37,8 +39,8 @@ export const EnterTypeSelect = ({
         name="enter-type-select"
         caption={
           <>
-            <b>{t('Ctrl + Enter')}</b> - {t('send message')},{' '}
-            <b>{t('Enter')}</b> - {t('new line')}
+            <b>{t(`${isMacOs ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
+            {t('send message')}, <b>{t('Enter')}</b> - {t('new line')}
           </>
         }
         onChange={onValueChange}

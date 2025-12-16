@@ -11,11 +11,11 @@ import {
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 
 import { Conversation } from '@/src/types/chat';
-import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -180,12 +180,7 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (
-        e.key === 'Enter' &&
-        !isTyping &&
-        !e.shiftKey &&
-        (enterType !== EnterType.CtrlEnter || e.ctrlKey)
-      ) {
+      if (!isTyping && allowEnterClick(e, enterType)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }

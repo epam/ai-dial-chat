@@ -25,6 +25,7 @@ import {
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -32,7 +33,6 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
-import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/actions';
@@ -360,12 +360,7 @@ export const UserMessage = memo(function UserMessage({
 
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (
-        e.key === 'Enter' &&
-        !isTyping &&
-        !e.shiftKey &&
-        (enterType !== EnterType.CtrlEnter || e.ctrlKey)
-      ) {
+      if (!isTyping && allowEnterClick(e, enterType)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }

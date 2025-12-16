@@ -16,12 +16,12 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
-import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -116,11 +116,7 @@ export const PromptVariablesDialog: FC<Props> = ({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (
-        e.key === 'Enter' &&
-        !e.shiftKey &&
-        (enterType === EnterType.Enter || e.ctrlKey)
-      ) {
+      if (allowEnterClick(e, enterType)) {
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {

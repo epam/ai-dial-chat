@@ -20,11 +20,11 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { areSomePromptsFieldsChanged } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
-import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import { UIActions } from '@/src/store/actions';
@@ -142,12 +142,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (
-        e.key === 'Enter' &&
-        !e.shiftKey &&
-        (enterType !== EnterType.CtrlEnter || e.ctrlKey) &&
-        !saveDisabled
-      ) {
+      if (!saveDisabled && allowEnterClick(e, enterType)) {
         e.preventDefault();
         e.stopPropagation();
         handleEdit(prompt);

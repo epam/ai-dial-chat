@@ -19,12 +19,11 @@ import {
   getConversationSchema,
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
-import { isMobile } from '@/src/utils/app/mobile';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
-import { EnterType } from '@/src/types/settings';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -354,13 +353,7 @@ export const ChatInputMessage = Inversify.register(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (showPromptList && filteredPrompts.length > 0) {
           handleKeyDownIfShown(e);
-        } else if (
-          e.key === 'Enter' &&
-          !isTyping &&
-          !isMobile() &&
-          !e.shiftKey &&
-          (enterType !== EnterType.CtrlEnter || e.ctrlKey)
-        ) {
+        } else if (!isTyping && allowEnterClick(e, enterType)) {
           e.preventDefault();
           if (isReplay || messageIsStreaming) {
             return;
