@@ -13,6 +13,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
+import { StatusMessage } from './StatusMessage';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -85,6 +86,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
         'flex h-full items-center gap-2 py-1.5 pl-2 pr-1',
         isError ? 'text-error' : 'text-primary',
         readonly || isInvalid ? 'cursor-not-allowed' : 'cursor-pointer',
+        readonly && 'pr-2',
       )}
       onClick={handleClick}
     >
@@ -131,7 +133,21 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
         isTriggerClickable
         tooltip={
           <>
-            {customTooltip && <div className="px-2 pt-1">{customTooltip}</div>}
+            {customTooltip && (
+              <div className="px-2 pt-1">
+                {readonly && (
+                  <StatusMessage
+                    id={id}
+                    item={item}
+                    isInvalid={isInvalid}
+                    isLoggedOut={isLoggedOut}
+                    isInSelectionList={isInSelectionList}
+                    readonly={readonly}
+                  />
+                )}
+                <span>{customTooltip}</span>
+              </div>
+            )}
             <ChipTooltipContent
               id={id}
               item={item}

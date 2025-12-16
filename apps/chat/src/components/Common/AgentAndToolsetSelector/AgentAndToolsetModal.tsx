@@ -15,7 +15,10 @@ import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useSessionStorageState } from '@/src/hooks/useSessionStorageState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { isExternalApp } from '@/src/utils/app/application';
+import {
+  isDialAiEntityModel,
+  isExternalApp,
+} from '@/src/utils/app/application';
 import { getEntityBaseId, sortItemsVersions } from '@/src/utils/app/common';
 import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace';
 import { isSmallScreenOrTouchable } from '@/src/utils/app/mobile';
@@ -61,6 +64,10 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
+type DisplayedMarketplaceEntity = MarketplaceEntity & {
+  allVersions?: MarketplaceEntity[];
+};
+
 type TextMap = Record<string, string>;
 interface ScopeTabButtonProps {
   tab: MarketplaceTabs;
@@ -88,6 +95,7 @@ function ScopeTabButton({
     </TabButton>
   );
 }
+
 interface AgentAndToolsetModalViewProps {
   initialSelectedIds: string[];
   allItemsMap: Record<string, MarketplaceEntity | undefined>;
@@ -112,6 +120,7 @@ const AgentAndToolsetModalView = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
   const sliderGridRef = useRef<SliderGridRef>(null);
+  const programmaticScroll = useRef(false);
 
   const [activeSlide, setActiveSlide] = useState(
     getNumberFromSearchParams(
@@ -147,6 +156,7 @@ const AgentAndToolsetModalView = ({
     sessionKey,
     initialSelectedIds ?? [],
   );
+  const [scrollToItemId, setScrollToItemId] = useState<string | null>(null);
 
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
@@ -202,11 +212,46 @@ const AgentAndToolsetModalView = ({
 
   const handleToggleSelectItem = useCallback(
     (itemToToggle: MarketplaceEntity) => {
-      setSelectedIds((prevIds) =>
-        prevIds.includes(itemToToggle.id)
-          ? prevIds.filter((id) => id !== itemToToggle.id)
-          : [...prevIds, itemToToggle.id],
+      const baseId = getEntityBaseId(itemToToggle.id);
+      const isGroupSelected = selectedIds.some(
+        (id) => getEntityBaseId(id) === baseId,
       );
+
+      if (isGroupSelected) {
+        setSelectedIds((prevIds) =>
+          prevIds.filter((id) => getEntityBaseId(id) !== baseId),
+        );
+      } else {
+        setSelectedIds((prevIds) => [...prevIds, itemToToggle.id]);
+      }
+      setScrollToItemId(null);
+    },
+    [selectedIds, setSelectedIds],
+  );
+
+  const handleSetVersion = useCallback(
+    (oldVersionId: string, newVersionId: string) => {
+      setSelectedIds((currentIds) => {
+        const index = currentIds.findIndex((id) => id === oldVersionId);
+        if (index !== -1) {
+          const newIds = [...currentIds];
+          newIds[index] = newVersionId;
+          return newIds;
+        }
+
+        const baseId = getEntityBaseId(newVersionId);
+        const anotherVersionIndex = currentIds.findIndex(
+          (id) => getEntityBaseId(id) === baseId,
+        );
+        if (anotherVersionIndex !== -1) {
+          const newIds = [...currentIds];
+          newIds[anotherVersionIndex] = newVersionId;
+          return newIds;
+        }
+
+        return currentIds;
+      });
+      setScrollToItemId(null);
     },
     [setSelectedIds],
   );
@@ -227,17 +272,18 @@ const AgentAndToolsetModalView = ({
   const handleRemoveItem = useCallback(
     (idToRemove: string) => {
       setSelectedIds((prevIds) => prevIds.filter((id) => id !== idToRemove));
+      setScrollToItemId(null);
     },
     [setSelectedIds],
   );
 
-  const searchedAgents = useFuseSearch(
-    allAgents,
-    searchTerm,
-    MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
+  const allItems = useMemo(
+    () => [...allAgents, ...allToolsets],
+    [allAgents, allToolsets],
   );
-  const searchedToolsets = useFuseSearch(
-    allToolsets,
+
+  const searchedItems = useFuseSearch(
+    allItems,
     searchTerm,
     MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
@@ -247,57 +293,58 @@ const AgentAndToolsetModalView = ({
     [selectedIds],
   );
 
-  const sliderItemProps = useMemo(
-    () => ({
-      selectedBaseIdsSet,
-      onToggleSelectItem: handleToggleSelectItem,
-    }),
-    [selectedBaseIdsSet, handleToggleSelectItem],
-  );
-
   const installedSet = useMemo(
     () => new Set([...installedAgentsSet, ...installedToolsetsSet]),
     [installedAgentsSet, installedToolsetsSet],
   );
 
-  const displayedItems = useMemo(() => {
-    const getSelectedItemFromGroup = (
-      entities: MarketplaceEntity[],
-    ): MarketplaceEntity => {
-      const reversedSelectedIds = selectedIds.toReversed();
-      const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
-        entities.some((entity) => entity.id === id),
-      );
+  const displayedItems: DisplayedMarketplaceEntity[] = useMemo(() => {
+    const getSelectedItemFromGroup = ({
+      entities,
+    }: {
+      entities: MarketplaceEntity[];
+    }): DisplayedMarketplaceEntity | null => {
+      if (!entities.length) return null;
+      let activeVersion: MarketplaceEntity | undefined;
 
-      if (lastSelectedIdInGroup) {
-        const selectedEntity = entities.find(
-          (entity) => entity.id === lastSelectedIdInGroup,
+      if (scrollToItemId) {
+        activeVersion = entities.find((entity) => entity.id === scrollToItemId);
+      }
+
+      if (!activeVersion) {
+        const reversedSelectedIds = selectedIds.toReversed();
+        const lastSelectedIdInGroup = reversedSelectedIds.find((id) =>
+          entities.some((entity) => entity.id === id),
         );
-        if (selectedEntity) {
-          return selectedEntity;
+        if (lastSelectedIdInGroup) {
+          activeVersion = entities.find(
+            (entity) => entity.id === lastSelectedIdInGroup,
+          );
         }
       }
 
-      return sortItemsVersions(entities)[0];
+      if (!activeVersion) {
+        activeVersion = sortItemsVersions(entities)[0];
+      }
+
+      return { ...activeVersion!, allVersions: entities };
     };
 
-    const groupedAndOrderedAgents = groupMarketplaceEntityAndSaveOrder(
-      searchedAgents.filter(
-        (entity) =>
+    const filteredItems = searchedItems.filter((entity) => {
+      if (isDialAiEntityModel(entity)) {
+        return (
           !isExternalApp(entity) &&
           !widgetsSchemaIds.has(entity.applicationTypeSchemaId as string) &&
-          entity.reference !== currentAppReference,
-      ),
-    ).map(({ entities }) => getSelectedItemFromGroup(entities));
+          entity.reference !== currentAppReference
+        );
+      }
+      return true;
+    });
 
-    const groupedAndOrderedToolsets = groupMarketplaceEntityAndSaveOrder(
-      searchedToolsets,
-    ).map(({ entities }) => getSelectedItemFromGroup(entities));
-
-    const allGroupedItems = [
-      ...groupedAndOrderedAgents,
-      ...groupedAndOrderedToolsets,
-    ];
+    const allGroupedItems = groupMarketplaceEntityAndSaveOrder(filteredItems)
+      .map(getSelectedItemFromGroup)
+      .filter((item): item is DisplayedMarketplaceEntity => !!item)
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     if (!isMyWorkspace) {
       return allGroupedItems;
@@ -307,24 +354,67 @@ const AgentAndToolsetModalView = ({
       isInstalledEntity(item, installedSet),
     );
   }, [
-    currentAppReference,
-    searchedAgents,
-    searchedToolsets,
+    searchedItems,
     isMyWorkspace,
+    scrollToItemId,
     selectedIds,
     widgetsSchemaIds,
+    currentAppReference,
     installedSet,
   ]);
 
   const handleItemClick = useCallback(
     (id: string) => {
-      const isDisplayed = displayedItems.some((item) => item.id === id);
+      setSearchTerm('');
+      const isAlreadyDisplayed = displayedItems.some((item) => item.id === id);
+      programmaticScroll.current = true;
 
-      if (isDisplayed && sliderGridRef.current) {
-        sliderGridRef.current.scrollToItem(id);
+      if (isAlreadyDisplayed) {
+        sliderGridRef.current?.scrollToItem(id);
+      } else {
+        const item = allItemsMap[id];
+        if (isMyWorkspace && item && !isInstalledEntity(item, installedSet)) {
+          handleSetScopeTab(MarketplaceTabs.HOME);
+        }
+
+        setScrollToItemId(id);
       }
     },
-    [displayedItems],
+    [
+      displayedItems,
+      allItemsMap,
+      isMyWorkspace,
+      installedSet,
+      handleSetScopeTab,
+      setSearchTerm,
+    ],
+  );
+
+  useEffect(() => {
+    if (
+      scrollToItemId &&
+      displayedItems.some((item) => item.id === scrollToItemId)
+    ) {
+      sliderGridRef.current?.scrollToItem(scrollToItemId);
+    }
+    setTimeout(() => {
+      programmaticScroll.current = false;
+    }, 0);
+  }, [scrollToItemId, displayedItems]);
+
+  useEffect(() => {
+    if (!programmaticScroll.current) {
+      setScrollToItemId(null);
+    }
+  }, [activeSlide, scopeTab, searchTerm]);
+
+  const sliderItemProps = useMemo(
+    () => ({
+      selectedBaseIdsSet,
+      onToggleSelectItem: handleToggleSelectItem,
+      onSetVersion: handleSetVersion,
+    }),
+    [selectedBaseIdsSet, handleToggleSelectItem, handleSetVersion],
   );
 
   const sliderResetDependencies = useMemo(

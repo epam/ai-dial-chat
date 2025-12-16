@@ -17,7 +17,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
-export default function ToolsetSignin() {
+function ToolsetSignin() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -34,9 +34,23 @@ export default function ToolsetSignin() {
       window.location.assign(window.location.origin);
       return;
     }
+
+    let callbackUrl = '/';
+    try {
+      const url = new URL(
+        parsedState.callbackUrl ?? '',
+        window.location.origin,
+      );
+      if (url.origin === window.location.origin) {
+        callbackUrl = url.href;
+      }
+    } catch {
+      console.error('Invalid callback url');
+    }
+
     if (!code || !parsedState.toolsetId) {
       console.error('Toolset signin failed');
-      window.location.assign(window.location.origin);
+      window.location.assign(callbackUrl);
       return;
     }
 
@@ -46,8 +60,9 @@ export default function ToolsetSignin() {
         authLevel:
           parsedState.credentialsLevel ?? ToolsetCredentialsLevel.GLOBAL,
         authType: ToolsetAuthTypes.OAUTH,
-        callbackUrl: parsedState.callbackUrl,
+        callbackUrl,
         code: code.toString(),
+        isAdmin: parsedState.isAdmin,
       }),
     );
   }, [dispatch, router]);
@@ -58,5 +73,7 @@ export default function ToolsetSignin() {
     </div>
   );
 }
+
+export default ToolsetSignin;
 
 export const getServerSideProps = getCommonPageProps;

@@ -510,6 +510,7 @@ const ChatView = memo(() => {
 
   const handleTalkToClose = useCallback(() => {
     handleTalkToConversationId(null);
+    textareaRef.current?.focus();
   }, [handleTalkToConversationId]);
 
   const handleToggleApproveRequiredInput = useCallback(() => {
@@ -627,13 +628,10 @@ const ChatView = memo(() => {
   }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
-    if (
-      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
-      textareaRef.current
-    ) {
-      textareaRef.current.focus();
+    if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
+      textareaRef.current?.focus();
     }
-  }, [enabledFeatures]);
+  }, [enabledFeatures, selectedConversationsIds]);
 
   useEffect(() => {
     setIsApproveRequiredInput(false);

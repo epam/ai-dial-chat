@@ -32,6 +32,7 @@ export interface ChatOverlayOptions {
 interface OverlaySignInOptions {
   autoSignIn: boolean;
   signInProvider?: string;
+  logInHint?: string;
   signInInNewWindow?: boolean;
   validationUserEmail?: string;
 }
