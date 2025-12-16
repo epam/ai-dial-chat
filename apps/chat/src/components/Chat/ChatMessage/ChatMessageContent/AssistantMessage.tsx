@@ -86,7 +86,9 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const anchorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [messageContent, setMessageContent] = useState(message.content);
+  const messageContent = message.content;
+  const [inputMessageContent, setInputMessageContent] =
+    useState(messageContent);
   const [formValue, setFormValue] = useState(currentFormValue);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [shouldScroll, setShouldScroll] = useState(false);
@@ -118,11 +120,11 @@ export const AssistantMessage = memo(function AssistantMessage({
   const codeDetection = (content: string) => content.match(codeRegEx);
 
   const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
-  const isInputHidden = isInputDisabled && !message.content;
+  const isInputHidden = isInputDisabled && !messageContent;
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setMessageContent(event.target.value);
+      setInputMessageContent(event.target.value);
     },
     [],
   );
@@ -143,17 +145,17 @@ export const AssistantMessage = memo(function AssistantMessage({
         getMessageFormValue(message) ?? getConfigurationValue(message),
         formValue,
       );
-      const isContentChanged =
-        message.content !== (newContent ?? messageContent);
+      const content = newContent ?? inputMessageContent;
+      const isContentChanged = messageContent !== content;
 
       if (isContentChanged || isFormValueChanged) {
         onEdit(
           {
             ...message,
-            content: newContent ?? messageContent,
+            content: content,
             templateMapping: getEntitiesFromTemplateMapping(
               message.templateMapping,
-            ).filter(([key]) => messageContent.includes(key)),
+            ).filter(([key]) => inputMessageContent.includes(key)),
           },
           messageIndex,
           conversation.id,
@@ -162,11 +164,12 @@ export const AssistantMessage = memo(function AssistantMessage({
       handleToggleEditing(false);
     },
     [
-      message,
-      messageContent,
-      handleToggleEditing,
       conversation,
       onEdit,
+      message,
+      messageContent,
+      inputMessageContent,
+      handleToggleEditing,
       messageIndex,
     ],
   );
@@ -175,20 +178,22 @@ export const AssistantMessage = memo(function AssistantMessage({
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
         e.preventDefault();
-        handleEditMessage(formValue, messageContent);
+        handleEditMessage(formValue, inputMessageContent);
       }
     },
-    [formValue, handleEditMessage, isTyping, messageContent],
+    [formValue, handleEditMessage, isTyping, inputMessageContent],
   );
 
   const handleCancelEditing = useCallback(() => {
-    setMessageContent(message.content);
+    setInputMessageContent(messageContent);
     handleToggleEditing(false);
-  }, [handleToggleEditing, message.content]);
+  }, [handleToggleEditing, messageContent]);
 
   useEffect(() => {
-    setMessageContent(message.content);
-  }, [message.content]);
+    if (isEditing) {
+      setInputMessageContent(messageContent);
+    }
+  }, [isEditing, messageContent]);
 
   useEffect(() => {
     setFormValue(currentFormValue);
@@ -222,7 +227,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             <AdjustedTextarea
               ref={textareaRef}
               className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
-              value={messageContent}
+              value={inputMessageContent}
               onChange={handleInputChange}
               onKeyDown={handlePressEnter}
               disabled={isInputDisabled}
@@ -251,8 +256,10 @@ export const AssistantMessage = memo(function AssistantMessage({
             {!isInputHidden && (
               <button
                 className="button button-primary"
-                onClick={() => handleEditMessage(formValue, messageContent)}
-                disabled={!messageContent}
+                onClick={() =>
+                  handleEditMessage(formValue, inputMessageContent)
+                }
+                disabled={!inputMessageContent}
                 data-qa="save-and-submit"
               >
                 {t('Save & Submit')}
@@ -269,7 +276,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       <div
         className={classNames(
           'flex min-w-0 shrink grow flex-col',
-          (message.content ||
+          (messageContent ||
             message.errorMessage ||
             message.custom_content?.attachments) &&
             'gap-4',
@@ -278,15 +285,15 @@ export const AssistantMessage = memo(function AssistantMessage({
         {!!message.custom_content?.stages?.length && (
           <MessageStages stages={message.custom_content?.stages} />
         )}
-        {!!(message.content || isShowResponseLoader) && (
+        {!!(messageContent || isShowResponseLoader) && (
           <ChatMDComponent
             isShowResponseLoader={isShowResponseLoader}
-            content={message.content}
+            content={messageContent}
           />
         )}
         {codeWarning &&
           codeWarning.length !== 0 &&
-          codeDetection(message.content) && (
+          codeDetection(messageContent) && (
             <div className="select-none text-xxs text-error">
               {t(codeWarning)}
             </div>

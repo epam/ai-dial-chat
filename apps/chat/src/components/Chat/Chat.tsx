@@ -278,7 +278,10 @@ const ChatView = memo(() => {
     scrollDown();
   }, [scrollDown]);
 
-  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
+  const throttledScrollDown = useMemo(
+    () => throttle(scrollDown, scrollThrottlingTimeout),
+    [scrollDown],
+  );
 
   useEffect(() => {
     throttledScrollDown();
@@ -634,8 +637,10 @@ const ChatView = memo(() => {
   }, [enabledFeatures, selectedConversationsIds]);
 
   useEffect(() => {
-    setIsApproveRequiredInput(false);
-  }, [selectedConversationsIds]);
+    if (isApproveRequiredInput) {
+      setIsApproveRequiredInput(false);
+    }
+  }, [isApproveRequiredInput, selectedConversationsIds]);
 
   useEffect(() => {
     handleScroll();
