@@ -1,5 +1,6 @@
 import {
   IconEye,
+  IconKey,
   IconLink,
   IconLogin,
   IconLogout,
@@ -97,9 +98,18 @@ export const useToolsetMenuItems = ({
         onClick: handleEdit,
       },
       {
+        name: t('Manage creds'),
+        dataQa: 'toolset-login',
+        display:
+          disabledActions.login !== true && isWithAuth && isPublicAndAdmin,
+        Icon: IconKey,
+        onClick: handleLogin,
+      },
+      {
         name: t(getToolsetAuthActionLabel(authAction, screenState)),
         dataQa: 'toolset-login',
-        display: disabledActions.login !== true && isWithAuth,
+        display:
+          disabledActions.login !== true && isWithAuth && !isPublicAndAdmin,
         Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
         iconClassName:
           authAction === ToolsetAuthAction.LogOut
@@ -163,10 +173,11 @@ export const useToolsetMenuItems = ({
       isAppIdPublic,
       canEditOrView,
       handleEdit,
+      isWithAuth,
+      isPublicAndAdmin,
+      handleLogin,
       authAction,
       screenState,
-      isWithAuth,
-      handleLogin,
       isMyAppOrPreview,
       handlePublish,
       handleUnpublish,
