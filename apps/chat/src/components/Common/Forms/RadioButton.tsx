@@ -14,6 +14,8 @@ interface RadioButtonProps
   tooltip?: string;
 }
 
+const iconSize = 18;
+
 export const RadioButton = ({
   caption,
   checked,
@@ -47,13 +49,17 @@ export const RadioButton = ({
 
         <span className="hidden peer-checked:block">
           <IconCircleChecked
-            width={18}
-            height={18}
+            width={iconSize}
+            height={iconSize}
             className="text-accent-primary"
           />
         </span>
         <span className="block peer-checked:hidden">
-          <IconCircle size={18} className="text-secondary" strokeWidth={1} />
+          <IconCircle
+            size={iconSize}
+            className="text-secondary"
+            strokeWidth={1}
+          />
         </span>
 
         {!!caption && (
