@@ -17,7 +17,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
-export default function ToolsetSignin() {
+function ToolsetSignin() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -62,6 +62,7 @@ export default function ToolsetSignin() {
         authType: ToolsetAuthTypes.OAUTH,
         callbackUrl,
         code: code.toString(),
+        isAdmin: parsedState.isAdmin,
       }),
     );
   }, [dispatch, router]);
@@ -72,5 +73,7 @@ export default function ToolsetSignin() {
     </div>
   );
 }
+
+export default ToolsetSignin;
 
 export const getServerSideProps = getCommonPageProps;
