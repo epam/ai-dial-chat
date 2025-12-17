@@ -52,7 +52,7 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
     onClick={() => onRemove?.(id)}
     aria-label="Remove item"
   >
-    <IconX size={14} />
+    <IconX size={18} />
   </button>
 );
 
