@@ -37,7 +37,7 @@ import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEdito
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const ChatPreview = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -135,7 +135,8 @@ const ChatPreview = () => {
             </div>
             <DialButton
               label={t('Deploy code app')}
-              className="button button-accent-secondary mb-2 flex items-center text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+              className="text-accent-secondary"
+              variant={ButtonVariant.Tertiary}
               onClick={handleDeployClick}
               disabled={!isApplicationValid}
               data-qa="deploy-code-app"
@@ -275,7 +276,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
         <div className="flex space-x-2">
           {showRedeployButton && (
             <DialButton
-              className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
+              className="text-accent-secondary"
+              variant={ButtonVariant.Tertiary}
               data-qa="redeploy-code-app"
               disabled={!isApplicationValid}
               onClick={handleRedeploy}
