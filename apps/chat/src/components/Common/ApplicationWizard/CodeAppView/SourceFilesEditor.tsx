@@ -122,7 +122,7 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
           <Tooltip tooltip={tooltip}>
             <div className="flex items-center gap-3">
               <DialButton
-                className=" text-accent-primary"
+                className="text-accent-primary"
                 data-qa="change-button"
                 textClassName="font-normal"
                 disabled={disabled}
