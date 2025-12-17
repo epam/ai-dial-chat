@@ -20,6 +20,7 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { areSomePromptsFieldsChanged } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -28,7 +29,7 @@ import { Translation } from '@/src/types/translation';
 
 import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/selectors';
+import { PromptsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
@@ -137,15 +138,17 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const saveDisabled =
     !prepareEntityName(name, { forRenaming: true }) || !content.trim();
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handleEnter = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey && !saveDisabled) {
+      if (!saveDisabled && allowEnterClick(e, enterType)) {
         e.preventDefault();
         e.stopPropagation();
         handleEdit(prompt);
       }
     },
-    [handleEdit, prompt, saveDisabled],
+    [enterType, handleEdit, prompt, saveDisabled],
   );
 
   const handleConfirmClose = useCallback(
