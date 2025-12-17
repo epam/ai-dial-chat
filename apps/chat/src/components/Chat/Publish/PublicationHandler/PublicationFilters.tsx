@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -63,14 +63,21 @@ export function PublicationFilters({
 
   const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
-  const { setValue, watch } = useFormContext<PublicationRequestFormData>();
+  const { setValue } = useFormContext<PublicationRequestFormData>();
 
-  const rulesOnEdit = watch(PublishRequestFieldsNames.RULES);
+  const rulesOnEdit = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.RULES
+  >({
+    name: PublishRequestFieldsNames.RULES,
+  });
 
   const filters = useMemo(
     () => rulesOnEdit?.map(mapRuleToFilter) ?? [],
     [rulesOnEdit],
   );
+
+  console.log(filters);
 
   const handleFilterUpdate = useCallback(
     (newFilters: TargetAudienceFilter[]) => {
