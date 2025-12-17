@@ -12,6 +12,8 @@ const rootSelector = (state: RootState) => state.ui;
 
 const selectThemeState = (state: RootState) => rootSelector(state).theme;
 
+const selectEnterType = (state: RootState) => rootSelector(state).enterType;
+
 const selectAvailableThemes = (state: RootState) =>
   rootSelector(state).availableThemes;
 
@@ -113,6 +115,7 @@ const selectIsEditorLoader = (state: RootState) =>
 
 export const UISelectors = {
   selectThemeState,
+  selectEnterType,
   selectShowChatbar,
   selectShowPromptbar,
   selectShowMarketplaceFilterbar,
