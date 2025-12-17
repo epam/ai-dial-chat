@@ -11,6 +11,7 @@ import {
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 
@@ -18,7 +19,11 @@ import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
@@ -171,14 +176,16 @@ export const AssistantMessage = memo(function AssistantMessage({
     ],
   );
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+      if (!isTyping && allowEnterClick(e, enterType)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [formValue, handleEditMessage, isTyping, messageContent],
+    [enterType, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleCancelEditing = useCallback(() => {
