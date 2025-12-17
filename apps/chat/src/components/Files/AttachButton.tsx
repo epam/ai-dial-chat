@@ -29,6 +29,8 @@ import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { AttachLinkDialog } from './AttachLinkDialog';
 import { FileManagerModal } from './FileManagerModal';
+// import { FileManagerModal } from './FileManagerModal';
+import { FileManagerModalNew } from './FileManagerModalNew';
 import { PreUploadDialog } from './PreUploadModal';
 
 const myFilesFilter = new Set([FileSourceType.MY_FILES]);
@@ -182,17 +184,26 @@ export const AttachButton = ({
         featureType={FeatureType.File}
       />
       {isSelectFilesDialogOpened && (
-        <FileManagerModal
+        <FileManagerModalNew
           isOpen={isSelectFilesDialogOpened}
-          sourceFilters={sourceFilters}
-          allowedTypes={availableAttachmentsTypes}
+          allowedTypes={['image/png', 'image/jpg']} //{availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
           customButtonLabel={t('Attach')}
           initialSelectedFilesIds={selectedFilesIds}
-          showTooltip
           onClose={handleCloseFileManagerModal}
         />
+        // <FileManagerModal
+        //   isOpen={isSelectFilesDialogOpened}
+        //   sourceFilters={sourceFilters}
+        //   allowedTypes={availableAttachmentsTypes}
+        //   maximumAttachmentsAmount={maximumAttachmentsAmount}
+        //   headerLabel={t(label)}
+        //   customButtonLabel={t('Attach')}
+        //   initialSelectedFilesIds={selectedFilesIds}
+        //   showTooltip
+        //   onClose={handleCloseFileManagerModal}
+        // />
       )}
       {isPreUploadDialogOpened && (
         <PreUploadDialog

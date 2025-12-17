@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useFileManagerActionLabels } from '@/src/hooks/useFileManagerActionLabels';
+import {
+  UseFileManagerActionLabelsOptions,
+  useFileManagerActionLabels,
+} from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -22,7 +25,6 @@ import { ShareActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
 import {
@@ -35,7 +37,13 @@ import {
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 
-export const useFileManager = () => {
+interface UseFileManagerOptions {
+  actionLabelsOptions?: UseFileManagerActionLabelsOptions;
+}
+
+export const useFileManager = ({
+  actionLabelsOptions,
+}: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.SideBar);
 
@@ -45,9 +53,6 @@ export const useFileManager = () => {
   const areFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
-  );
-  const initialDataStatus = useAppSelector(
-    SettingsSelectors.selectInitialDataStatus,
   );
   const isAnyOperationInProgress = useAppSelector(
     FilesSelectors.selectIsAnyFileOperationInProgress,
@@ -93,12 +98,6 @@ export const useFileManager = () => {
     organization: t('Organization'),
   });
   const previousActiveTabRef = useRef(activeTab);
-
-  useEffect(() => {
-    if (initialDataStatus === UploadStatus.LOADED) {
-      dispatch(FilesActions.getFilesWithFolders({}));
-    }
-  }, [initialDataStatus, dispatch]);
 
   useEffect(() => {
     if (currentPath && !isRootId(currentPath)) {
@@ -203,9 +202,8 @@ export const useFileManager = () => {
     return new Set(paths);
   }, []);
 
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
-    initialExpandedPaths,
-  );
+  const [expandedPaths, setExpandedPaths] =
+    useState<Set<string>>(initialExpandedPaths);
 
   useEffect(() => {
     setExpandedPaths((prev) => {
@@ -235,7 +233,7 @@ export const useFileManager = () => {
   );
 
   const { bulkActionLabels, treeActionLabels, gridActionLabels } =
-    useFileManagerActionLabels(activeTab, t);
+    useFileManagerActionLabels(activeTab, t, actionLabelsOptions);
 
   const renderDeleteConfirmationTitle = useCallback(
     (files: string[]) => {
