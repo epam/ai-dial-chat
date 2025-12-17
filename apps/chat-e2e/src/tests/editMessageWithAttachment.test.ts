@@ -205,7 +205,7 @@ dialTest(
           editMessageInputAttachments.removeInputAttachmentIcon(
             Attachment.specialSymbolsName,
           );
-        await removeAttachmentIcon.hover();
+        await removeAttachmentIcon.hoverOver();
         await editMessageInputAttachmentsAssertions.assertElementColor(
           removeAttachmentIcon,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),

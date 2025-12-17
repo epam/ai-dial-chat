@@ -14,11 +14,6 @@ export class AttachFilesTree extends EntitiesTree {
     super(page, parentLocator, filesSection, EntitySelectors.file);
   }
 
-  public removeAttachedFileButton = new Button(
-    this.page,
-    AttributeValues.removeFile,
-  );
-
   public attachedFileIcon = (filename: string, index?: number) =>
     this.getEntityByName(filename, index).locator(
       AttachFilesModalSelectors.attachedFileIcon,
@@ -34,8 +29,10 @@ export class AttachFilesTree extends EntitiesTree {
     this.getEntityByName(filename).locator(FileSelectors.loadingIndicator);
 
   public removeAttachedFileIcon = (filename: string) =>
-    this.getEntityByName(filename).locator(
-      this.removeAttachedFileButton.getElementLocator(),
+    new Button(
+      this.page,
+      AttributeValues.removeFile,
+      this.getEntityByName(filename),
     );
 
   public attachedFileErrorIcon = (filename: string) =>

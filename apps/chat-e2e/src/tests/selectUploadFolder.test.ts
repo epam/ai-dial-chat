@@ -99,7 +99,7 @@ dialTest(
         // await baseAssertion.assertElementBorderColors(
         //   uploadToPathElement,
         //   ThemesUtil.getRgbColorByKey(
-        //           ThemeColorAttributes.bgAccentPrimary,
+        //           ThemeColorAttributes.textAccentPrimary,
         //         ),
         // );
         await baseAssertion.assertElementText(

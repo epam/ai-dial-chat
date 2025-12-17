@@ -10,11 +10,6 @@ export class InputAttachments extends BaseElement {
     super(page, MessageInputSelectors.inputAttachmentsContainer, parentLocator);
   }
 
-  public removeAttachedFileButton = new Button(
-    this.page,
-    AttributeValues.removeFile,
-  );
-
   public inputAttachments = this.getChildElementBySelector(
     MessageInputSelectors.inputAttachment,
   );
@@ -46,8 +41,10 @@ export class InputAttachments extends BaseElement {
     this.inputAttachment(name).locator(FileSelectors.loadingRetry);
 
   public removeInputAttachmentIcon = (name: string) =>
-    this.inputAttachment(name).locator(
-      this.removeAttachedFileButton.getElementLocator(),
+    new Button(
+      this.page,
+      AttributeValues.removeFile,
+      this.inputAttachment(name),
     );
 
   public async retryLoading(
