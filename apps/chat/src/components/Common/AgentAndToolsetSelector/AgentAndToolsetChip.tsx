@@ -2,10 +2,12 @@ import { IconX } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { getEntityNameFromId } from '@/src/utils/app/id';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -50,7 +52,7 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
     onClick={() => onRemove?.(id)}
     aria-label="Remove item"
   >
-    <IconX size={14} />
+    <IconX size={18} />
   </button>
 );
 
@@ -120,15 +122,23 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   isInSelectionList,
   customTooltip,
 }) => {
-  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
+  const { isInvalid, isLoggedOut } = getEntityStatus(item);
 
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
     : item.name;
   const version = !item ? getVersionFromId(id) : item.version;
 
+  const hasError =
+    isLoggedOut ||
+    !!(
+      item &&
+      isDialAiEntityModel(item) &&
+      item.functionStatus !== ApplicationStatus.DEPLOYED
+    );
+
   return (
-    <ChipWrapper isError={isError}>
+    <ChipWrapper isError={hasError}>
       <Tooltip
         isTriggerClickable
         tooltip={
@@ -166,7 +176,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
           item={item}
           name={name}
           version={version}
-          isError={isError}
+          isError={hasError}
           isInvalid={isInvalid}
           readonly={readonly}
           onClick={onItemClick}
@@ -174,7 +184,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
       </Tooltip>
 
       {!readonly && (
-        <ChipRemoveButton id={id} isError={isError} onRemove={onRemove} />
+        <ChipRemoveButton id={id} isError={hasError} onRemove={onRemove} />
       )}
     </ChipWrapper>
   );
