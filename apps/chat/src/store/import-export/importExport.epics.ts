@@ -543,7 +543,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                       ),
                     ),
                   ),
-                  EMPTY,
+                  of(ImportExportActions.finishImport()),
                 ),
               );
             }),
@@ -637,7 +637,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                       ),
                     ),
                   ),
-                  EMPTY,
+                  of(ImportExportActions.finishImport()),
                 ),
               );
             }),
@@ -679,6 +679,9 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
       const actions: Observable<AppAction>[] = [];
 
       const featureType = ImportExportSelectors.selectFeatureType(state$.value);
+      const isLoading = ImportExportSelectors.selectIsLoadingImportExport(
+        state$.value,
+      );
 
       if (featureType === FeatureType.Chat) {
         const duplicatedConversations =
@@ -717,7 +720,11 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           }
         });
 
-        if (!conversationsToPostfix.length && !conversationsToReplace.length) {
+        if (
+          !conversationsToPostfix.length &&
+          !conversationsToReplace.length &&
+          !isLoading
+        ) {
           actions.push(of(ImportExportActions.resetState()));
         } else {
           if (conversationsToPostfix.length) {
@@ -775,7 +782,11 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           }
         });
 
-        if (!promptsToPostfix.length && !promptsToReplace.length) {
+        if (
+          !promptsToPostfix.length &&
+          !promptsToReplace.length &&
+          !isLoading
+        ) {
           actions.push(of(ImportExportActions.resetState()));
         } else {
           if (promptsToReplace.length) {
@@ -835,7 +846,7 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           const duplicateAction =
             payload.mappedActions?.[conversationToUpload.id];
 
-          if (duplicateAction === ReplaceOptions.Ignore) {
+          if (duplicateAction === ReplaceOptions.Ignore && !isLoading) {
             actions.push(of(ImportExportActions.resetState()));
           } else {
             actions.push(

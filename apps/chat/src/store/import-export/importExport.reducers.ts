@@ -69,7 +69,6 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{ data: SupportedExportFormats }>,
     ) => {
-      state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
       state.isShowReplaceDialog = false;
     },
@@ -135,12 +134,13 @@ export const importExportSlice = createSlice({
       _action: PayloadAction<{
         itemsToUpload: Conversation[];
       }>,
-    ) => state,
+    ) => {
+      state.status = UploadStatus.LOADING;
+    },
     importPrompts: (
       state,
       _action: PayloadAction<{ promptsHistory: ExportPromptsFormat }>,
     ) => {
-      state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
     },
     importPromptsFail: (state) => state,
@@ -149,7 +149,9 @@ export const importExportSlice = createSlice({
       _action: PayloadAction<{
         itemsToUpload: Prompt[];
       }>,
-    ) => state,
+    ) => {
+      state.status = UploadStatus.LOADING;
+    },
     showReplaceDialog: (
       state,
       {
@@ -233,6 +235,9 @@ export const importExportSlice = createSlice({
           }
       >,
     ) => state,
+    finishImport: (state) => {
+      state.status = UploadStatus.ALL_LOADED;
+    },
   },
 });
 
