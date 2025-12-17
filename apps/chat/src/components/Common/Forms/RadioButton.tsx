@@ -9,7 +9,7 @@ import IconCircleChecked from '@/public/images/icons/radio-checked.svg';
 
 interface RadioButtonProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  caption?: string | React.ReactNode;
+  caption?: React.ReactNode;
   className?: string;
   tooltip?: string;
 }

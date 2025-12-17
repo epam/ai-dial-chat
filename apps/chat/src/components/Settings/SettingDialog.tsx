@@ -225,7 +225,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             <EnterTypeSelectLabeled
               label={t('Keyboard shortcuts')}
               value={enterType}
-              onValueChange={(e) => setEnterType(e.target.value as EnterType)}
+              onValueChange={(value) => setEnterType(value as EnterType)}
             />
           </>
         )}
