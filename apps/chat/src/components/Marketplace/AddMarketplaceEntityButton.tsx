@@ -45,7 +45,6 @@ export function AddMarketplaceEntityButton({
         onClick={visibleActions[0].onClick}
         label={t(`Add ${label}`)}
         variant={ButtonVariant.Primary}
-        className="hidden xl:flex"
         iconBefore={<IconPlus size={18} />}
         data-qa={dataQa}
       />
