@@ -7,6 +7,7 @@ interface ToggleSwitchLabeledProps extends ToggleSwitchProps {
   labelText?: string | null;
   labelClassName?: string;
   isLabelOnRight?: boolean;
+  className?: string;
 }
 
 export function ToggleSwitchLabeled({
@@ -17,12 +18,14 @@ export function ToggleSwitchLabeled({
   labelClassName,
   isLabelOnRight,
   handleSwitch,
+  className,
 }: ToggleSwitchLabeledProps) {
   return (
     <div
       className={classNames(
         'flex w-full items-center',
         isLabelOnRight ? 'flex-row-reverse justify-center gap-2' : 'gap-5',
+        className,
       )}
       data-qa="toggle-switch-labeled"
     >

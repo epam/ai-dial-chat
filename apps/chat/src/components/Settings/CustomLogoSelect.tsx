@@ -9,6 +9,7 @@ import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { Label } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
@@ -28,6 +29,7 @@ interface CustomLogoSelectProps {
   warningMessage?: string;
   onLogoSelect: (filesIds: string[]) => void;
   onDeleteLocalLogoHandler: () => void;
+  isFormView?: boolean;
 }
 
 export const CustomLogoSelect = ({
@@ -44,6 +46,7 @@ export const CustomLogoSelect = ({
   warningMessage,
   onLogoSelect,
   onDeleteLocalLogoHandler,
+  isFormView,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -109,11 +112,21 @@ export const CustomLogoSelect = ({
   };
 
   return (
-    <div className="flex items-center gap-5" data-qa="custom-logo">
-      {title && <div className="basis-1/3 md:basis-1/4">{t(title)}</div>}
+    <div
+      className={classNames(
+        'flex',
+        isFormView ? 'flex-col' : 'items-center gap-5',
+      )}
+      data-qa="custom-logo"
+    >
+      {title && !isFormView && (
+        <div className="basis-1/3 md:basis-1/4">{t(title)}</div>
+      )}
+      {title && isFormView && <Label>{t(title)}</Label>}
       <div
         className={classNames(
-          'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4',
+          'flex h-[38px] grow items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary',
+          !isFormView && 'max-w-[331px] basis-2/3 md:basis-3/4',
           className,
         )}
       >
