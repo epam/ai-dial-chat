@@ -33,11 +33,9 @@ export async function fetchAllFilesRecursive(
     searchParams.set('limit', '1000');
     searchParams.set('recursive', 'true');
     searchParams.set('permissions', 'true');
-    if (nextToken) {
-      searchParams.set('token', nextToken);
-    }
-
-    const url = `${sanitizeUri(path)}/?${searchParams}`;
+    const url = !nextToken
+      ? `${sanitizeUri(path)}/?${searchParams}`
+      : `${sanitizeUri(path)}/?${searchParams}&token=${nextToken}`;
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: authToken }),
     });
@@ -118,9 +116,11 @@ export function encodeUrlSlugs(url: string): string {
 }
 
 export function buildApiUrl(endpoint: string, slugs?: string): string {
+  const host = process.env.DIAL_API_HOST as string;
+
   const path = slugs
-    ? constructPath(process.env.DIAL_API_HOST as string, endpoint, slugs)
-    : constructPath(process.env.DIAL_API_HOST as string, endpoint);
+    ? constructPath(host, endpoint, slugs)
+    : constructPath(host, endpoint);
 
   return sanitizeUri(path);
 }

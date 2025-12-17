@@ -8,6 +8,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
+import { preventEnterDown } from '@/src/utils/app/forms';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -138,6 +139,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
       onSubmit={handleSubmit}
       className="flex size-full flex-col overflow-hidden bg-layer-2"
       data-qa="entity-general-form"
+      onKeyDown={preventEnterDown}
     >
       <div className="grow space-y-4 divide-tertiary overflow-y-auto px-3 py-4 md:px-5 xl:py-5">
         <Field

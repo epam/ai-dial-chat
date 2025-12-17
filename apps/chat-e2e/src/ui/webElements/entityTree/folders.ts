@@ -15,6 +15,7 @@ import { FolderSelectors } from '@/src/ui/selectors/folderSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class Folders extends BaseElement {
@@ -130,6 +131,12 @@ export class Folders extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
+  public getFolderByExactNameInDisplayMode(name: string) {
+    return this.getChildElementBySelector(FolderSelectors.folder)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) });
+  }
+
   public getFolderBackgroundColor(name: string, index?: number) {
     return this.createElementFromLocator(
       this.getFolderByName(name, index),
@@ -164,15 +171,16 @@ export class Folders extends BaseElement {
   }
 
   public getFolderExpandIcon(name: string, index?: number) {
-    return this.getFolderByName(name, index).locator(
-      `${Tags.span}[class='${Attributes.visible}']`,
-    );
+    return this.getFolderByName(name, index)
+      .locator(`${Tags.span}[class='${Attributes.visible}']`)
+      .locator(Tags.svg)
+      .first();
   }
 
   public async isFolderCaretExpanded(name: string, index?: number) {
-    return this.getFolderExpandIcon(name, index)
-      .locator(`.${Attributes.rotated90}`)
-      .isVisible();
+    const icon = this.getFolderExpandIcon(name, index);
+    const classAttribute = await icon.getAttribute('class');
+    return classAttribute?.includes(Attributes.rotated90) ?? false;
   }
 
   public foldersGroup = (parentFolderName: string) => {
@@ -509,6 +517,13 @@ export class Folders extends BaseElement {
       this.getFolderArrowIcon(name, index).locator(Tags.svg),
     );
     return iconElement.getComputedStyleProperty(Styles.color);
+  }
+
+  public getFolderIcon(name: string, index?: number) {
+    return this.getFolderByName(name, index)
+      .locator(FolderSelectors.iconContainer)
+      .locator(Tags.svg)
+      .first();
   }
 
   public getFolderEntityArrowIcon(

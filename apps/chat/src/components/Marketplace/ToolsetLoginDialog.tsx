@@ -20,6 +20,7 @@ import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginFor
 import {
   ToolsetLoginFormSchema,
   ToolsetLoginFormType,
+  WithLogin,
   getDefaultLoginFormData,
 } from '@/src/components/ToolsetEditor/form';
 
@@ -38,7 +39,7 @@ export const ToolsetLoginDialogView = () => {
 
   const formMethods = useForm<ToolsetLoginFormType>({
     defaultValues: getDefaultLoginFormData(authType, entity, {
-      includeOAuthFields: false,
+      withLogin: WithLogin.WithLogin,
     }),
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -112,6 +113,14 @@ export const ToolsetLoginDialogView = () => {
         </h4>
       </div>
 
+      {!isSignedIn && authType === ToolsetAuthTypes.API_KEY && (
+        <div className="text-sm leading-5 text-primary">
+          {t('Enter your API key value for ')}
+          <span className="font-bold">{entity.authSettings.apiKeyHeader}</span>
+          {t(' header')}
+        </div>
+      )}
+
       <FormProvider {...formMethods}>
         <ToolsetLoginForm
           credentialsLevel={authLevel}
@@ -120,6 +129,7 @@ export const ToolsetLoginDialogView = () => {
           buttonClassName="ml-auto"
           onLogin={handleLogin}
           onLogout={handleLogout}
+          hideConfigFields
         />
       </FormProvider>
     </Modal>

@@ -4,10 +4,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 
 import { getValidFormFields } from '@/src/utils/app/forms';
-import { getToolsetPayload } from '@/src/utils/app/toolsets';
+import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
 
+import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
@@ -32,9 +33,10 @@ export const ToolsetEditor = () => {
 
   const {
     [ToolsetEditorQuery.Id]: idQuery,
-    [ToolsetEditorQuery.IsCreate]: isCreateQuery,
+    [ToolsetEditorQuery.IsCreating]: isCreating,
   } = router.query;
-  const isCreateRef = useRef(!idQuery || !!isCreateQuery);
+  const isCreatingToolset =
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
@@ -76,6 +78,7 @@ export const ToolsetEditor = () => {
             clientSecret: data.clientSecret,
             authorizationEndpoint: data.authorizationEndpoint,
             tokenEndpoint: data.tokenEndpoint,
+            scopesSupported: data.scopes,
           },
         },
         toolsetDetails,
@@ -89,7 +92,7 @@ export const ToolsetEditor = () => {
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
             exitAfterSave: saveAndExitRef.current,
-            shouldSelectToolset: isCreateRef.current,
+            shouldSelectToolset: isCreatingToolset,
           }),
         );
       } else {
@@ -109,7 +112,7 @@ export const ToolsetEditor = () => {
       });
       lastSubmittedValuesRef.current = getDefaultFormData(payloadToolset);
     },
-    [dispatch, formMethods, toolsetDetails],
+    [dispatch, formMethods, isCreatingToolset, toolsetDetails],
   );
 
   const handleSubmit = useCallback(
@@ -149,7 +152,7 @@ export const ToolsetEditor = () => {
         dispatch(
           ToolsetActions.exitEditor({
             redirectUrl: redirectToChat ? Routes.Chat : undefined,
-            shouldSelectToolset: isCreateRef.current,
+            shouldSelectToolset: isCreatingToolset,
           }),
         );
         return;
@@ -157,9 +160,10 @@ export const ToolsetEditor = () => {
 
       saveAndExitRef.current = true;
       redirectToChatRef.current = redirectToChat;
+      dispatch(UIActions.setEditorLoader(true));
       handleSubmit(undefined, saveDraft);
     },
-    [dispatch, handleSubmit, isDirty, toolsetDetails],
+    [dispatch, handleSubmit, isCreatingToolset, isDirty, toolsetDetails],
   );
 
   const handleTabClick = useCallback(
@@ -195,6 +199,10 @@ export const ToolsetEditor = () => {
       formMethods.resetField('authenticationType', {
         defaultValue: toolsetDetails.authSettings.authenticationType,
         keepDirty: false,
+      });
+      formMethods.setValue('isLoggedIn', isToolsetSignedIn(toolsetDetails), {
+        shouldDirty: false,
+        shouldValidate: false,
       });
     }
   }, [formMethods, toolsetDetails]);

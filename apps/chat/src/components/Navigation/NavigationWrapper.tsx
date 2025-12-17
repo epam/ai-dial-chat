@@ -9,6 +9,7 @@ import { Routes } from '@/src/constants/routes';
 
 import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
+import { ConversationDialogs } from '@/src/components/Chatbar/ConversationDialogs';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
 import { Promptbar } from '@/src/components/Promptbar';
 import { PromptDialogs } from '@/src/components/Promptbar/components/PromptDialogs';
@@ -42,7 +43,12 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
       <div className="flex size-full flex-col md:flex-row ">
         {shouldShowNavigation && <Navigation />}
         {router.route === Routes.Chat &&
-          enabledFeatures.has(Feature.ConversationsSection) && <Chatbar />}
+          enabledFeatures.has(Feature.ConversationsSection) && (
+            <>
+              <Chatbar />
+              <ConversationDialogs />
+            </>
+          )}
         {router.route === Routes.Marketplace && <MarketplaceFilterbar />}
         <div className="grow overflow-hidden">{children}</div>
         {router.route === Routes.Chat &&

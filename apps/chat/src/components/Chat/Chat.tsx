@@ -25,10 +25,8 @@ import {
   isConversationWithFormSchema,
   isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
-import { isEntityIdExternal } from '@/src/utils/app/id';
 import { is4XLScreen } from '@/src/utils/app/mobile';
 import { doesModelHaveConfiguration } from '@/src/utils/app/models';
-import { isEntityReadOnly } from '@/src/utils/app/permissions';
 
 import {
   Conversation,
@@ -512,6 +510,7 @@ const ChatView = memo(() => {
 
   const handleTalkToClose = useCallback(() => {
     handleTalkToConversationId(null);
+    textareaRef.current?.focus();
   }, [handleTalkToConversationId]);
 
   const handleToggleApproveRequiredInput = useCallback(() => {
@@ -629,13 +628,10 @@ const ChatView = memo(() => {
   }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
-    if (
-      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
-      textareaRef.current
-    ) {
-      textareaRef.current.focus();
+    if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
+      textareaRef.current?.focus();
     }
-  }, [enabledFeatures]);
+  }, [enabledFeatures, selectedConversationsIds]);
 
   useEffect(() => {
     setIsApproveRequiredInput(false);
@@ -853,8 +849,7 @@ const ChatView = memo(() => {
                                               enabledFeatures.has(
                                                 Feature.Likes,
                                               ) &&
-                                              (!isEntityReadOnly(conv) ||
-                                                !isEntityIdExternal(conv) ||
+                                              ((!isReadOnly && !isPlayback) ||
                                                 isValidApproveRequiredConversation)
                                             }
                                             editDisabled={

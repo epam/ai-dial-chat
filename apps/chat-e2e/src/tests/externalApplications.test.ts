@@ -41,6 +41,8 @@ dialTest(
       baseAssertion,
       entityEditorHeaderAssertion,
       dialHomePage,
+      agentInfo,
+      agentInfoAssertion,
       localStorageManager,
       chat,
       talkToAgentDialog,
@@ -326,10 +328,10 @@ dialTest(
       async () => {
         await navigationPanel.backToChat();
         await dialHomePage.waitForPageLoaded();
-        //TODO: enable the step when fixed https://github.com/epam/ai-dial-chat/issues/4881
-        // await agentInfoAssertion.assertAgentName(
-        //   ModelsUtil.getDefaultAgent()!.name,
-        // );
+        await agentInfoAssertion.assertElementDoesNotContainText(
+          agentInfo.agentName,
+          appEntity.name,
+        );
         await chat.changeAgentButton.click();
         await talkToAgentDialog.selectAgent(appEntity, {
           isAgentVisible: false,

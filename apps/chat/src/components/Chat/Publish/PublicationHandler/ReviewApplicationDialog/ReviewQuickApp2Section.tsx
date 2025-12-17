@@ -85,12 +85,15 @@ const ReviewQuickApp2SectionView = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
+  type ProcessedAgent = DialDeploymentSimpleTool & { name: string };
+  type ProcessedToolset = MCPToolset & { name: string };
+
   // TODO: when uploading application also upload toolsets from config to get full data
   const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
-      config.tool_sets?.reduce<{
-        agents: (DialDeploymentSimpleTool & { name: string })[];
-        toolsets: MCPToolset[];
+      (config.tool_sets ?? []).reduce<{
+        agents: ProcessedAgent[];
+        toolsets: ProcessedToolset[];
         isCodeInterpreter: boolean;
       }>(
         (acc, toolset) => {
@@ -106,7 +109,16 @@ const ReviewQuickApp2SectionView = ({
                 : tool.deployment_id,
             }));
           } else if (isMcpToolset(toolset)) {
-            acc.toolsets = [...acc.toolsets, toolset];
+            acc.toolsets.push({
+              ...toolset,
+              name:
+                toolset.name ||
+                ApiUtils.decodeApiUrl(
+                  parseEntityApiKey(splitEntityId(toolset.dial_id).name, {
+                    parseVersion: true,
+                  }).name,
+                ),
+            });
           } else if (isCodeInterpreterToolset(toolset)) {
             acc.isCodeInterpreter = true;
           }

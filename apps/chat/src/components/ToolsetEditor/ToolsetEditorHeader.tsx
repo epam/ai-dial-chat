@@ -1,6 +1,8 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
@@ -9,6 +11,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ToolsetActions } from '@/src/store/toolset/toolset.reducer';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
+
+import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { EditorHeader } from '@/src/components/Header/EditorHeader';
@@ -35,12 +39,23 @@ export const ToolsetEditorHeader = ({
   onSave,
 }: ToolsetEditorHeaderProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const {
+    query: {
+      [ToolsetEditorQuery.Id]: idQuery,
+      [ToolsetEditorQuery.IsCreating]: isCreating,
+    },
+  } = useRouter();
+
   const dispatch = useAppDispatch();
+
+  const isCreatingToolset =
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
 
   const currentStep = useAppSelector(ToolsetSelectors.selectEditorStep);
   const currentToolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
 
-  const isEditing = !!currentToolset;
+  const isExistingToolset = !!currentToolset;
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
@@ -71,16 +86,16 @@ export const ToolsetEditorHeader = ({
       {
         label: ToolsetEditorSteps.Settings,
         key: ToolsetEditorSteps.Settings,
-        disabled: !isEditing,
+        disabled: !isExistingToolset,
       },
     ],
-    [isEditing],
+    [isExistingToolset],
   );
 
   const handleLogoClick = useCallback(
     async (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
-      if (isEditing) {
+      if (isExistingToolset) {
         const isValid = await trigger();
 
         if (!isValid) {
@@ -91,7 +106,7 @@ export const ToolsetEditorHeader = ({
       }
       onSave(false, true);
     },
-    [isEditing, onSave, trigger],
+    [isExistingToolset, onSave, trigger],
   );
 
   const handleTabClick = useCallback(
@@ -103,7 +118,7 @@ export const ToolsetEditorHeader = ({
   );
 
   const handleSaveClick = useCallback(async () => {
-    if (isEditing) {
+    if (isExistingToolset) {
       const isValid = await trigger();
 
       if (!isValid) {
@@ -112,7 +127,7 @@ export const ToolsetEditorHeader = ({
       }
     }
     onSave();
-  }, [isEditing, onSave, trigger]);
+  }, [isExistingToolset, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
@@ -140,10 +155,10 @@ export const ToolsetEditorHeader = ({
         tabs={tabs}
         activeTab={currentStep}
         errorTabsSet={errorSteps}
-        isEditing={isEditing}
+        isEditing={isExistingToolset}
         onTabClick={handleTabClick}
-        title={t(isEditing ? 'Edit toolset' : 'Add toolset')}
-        saveLabel={isEditing ? 'Save and exit' : 'Exit'}
+        title={t(isCreatingToolset ? 'Add toolset' : 'Edit toolset')}
+        saveLabel={isExistingToolset ? 'Save and exit' : 'Exit'}
         onSave={handleSaveClick}
         onLogoClick={handleLogoClick}
         dataQa="entity-editor-header"

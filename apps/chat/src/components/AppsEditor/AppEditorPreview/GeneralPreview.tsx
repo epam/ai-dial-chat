@@ -14,10 +14,10 @@ import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
 import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/ToggleSwitchLabeled';
-import { ApplicationCard } from '@/src/components/Marketplace/AgentsList/AgentsTiles/ApplicationCard';
 import { ApplicationDetailsContent } from '@/src/components/Marketplace/ApplicationDetails/ApplicationContent';
 import { ApplicationDetailsHeader } from '@/src/components/Marketplace/ApplicationDetails/ApplicationHeader';
 import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
+import { MarketplaceEntityCard } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesTiles/MarketplaceEntityCard';
 
 interface GeneralPreviewProps {
   entity: DialAIEntityModel;
@@ -93,7 +93,7 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
               <ApplicationDetailsContent entity={cardEntity} />
             </div>
           ) : (
-            <ApplicationCard
+            <MarketplaceEntityCard
               entity={cardEntity}
               onClick={fakeCallback}
               isPreview

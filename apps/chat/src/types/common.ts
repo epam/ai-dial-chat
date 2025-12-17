@@ -38,6 +38,7 @@ export interface BackendDataEntity {
   url: string;
   permissions?: SharePermission[];
   updatedAt?: number;
+  author?: string;
 }
 
 export interface BackendEntity extends BackendDataEntity {
@@ -142,6 +143,7 @@ export enum PageType {
   Marketplace = 'marketplace',
   ToolsetEditor = 'toolset-editor',
   AppsEditor = 'apps-editor',
+  FileManager = 'file-manager',
 }
 
 export enum ScreenState {

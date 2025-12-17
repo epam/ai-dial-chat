@@ -67,7 +67,11 @@ export const CustomViewerForm = () => {
         if (application && applicationData) {
           const convertedApplication = convertApplicationFromApi(application);
 
-          dispatch(ApplicationActions.updateSuccess(convertedApplication));
+          dispatch(
+            ApplicationActions.updateSuccess({
+              appDetails: convertedApplication,
+            }),
+          );
           dispatch(
             ModelsActions.updateModel({
               model: convertedApplication,

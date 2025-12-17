@@ -100,7 +100,6 @@ export class BasePage {
         { apiMethod: 'GET', urlPattern: API.bucketHost },
         { urlPattern: API.installedDeploymentsHost() },
         { apiMethod: 'GET', urlPattern: API.publishedApplicationsHost() },
-        { apiMethod: 'GET', urlPattern: API.filesListingHost() },
         { apiMethod: 'GET', urlPattern: API.publishedConversationsHost() },
         { apiMethod: 'GET', urlPattern: API.publishedPromptsHost() },
         { apiMethod: 'GET', urlPattern: API.appSchemasHost },

@@ -6,8 +6,10 @@ import { Toolset } from '@epam/ai-dial-shared';
 
 export class ToolsetApiHelper extends BaseApiHelper {
   public async createToolset(toolsetModel: Toolset) {
-    const url = `${API.toolsetCreateHost()}/${this.userBucket ?? BucketUtil.getBucket()}/${toolsetModel.display_name}${ItemUtil.entityIdSeparator}${toolsetModel.display_version}`;
-    const response = await this.request.post(
+    const bucket = this.userBucket ?? BucketUtil.getBucket();
+    const toolsetPath = `${toolsetModel.display_name}${ItemUtil.entityIdSeparator}${toolsetModel.display_version}`;
+    const url = `${API.toolsetCreateHost()}/${bucket}/${toolsetPath}`;
+    const response = await this.request.put(
       this.getHost(ItemUtil.getEncodedItemId(url)),
       {
         data: toolsetModel,
@@ -26,6 +28,16 @@ export class ToolsetApiHelper extends BaseApiHelper {
     this.apiAssertion.assertResponseCode(response, undefined, 200);
     const toolsets = await response.json();
     return toolsets.data as Toolset[];
+  }
+
+  public async getToolset(name: string, version?: string) {
+    const allToolsets = await this.listToolsets();
+    return allToolsets.find(
+      (t) =>
+        t.display_name === name &&
+        t.display_version ===
+          (version ?? ExpectedConstants.defaultEntityVersion),
+    );
   }
 
   public async deleteAllToolsets() {

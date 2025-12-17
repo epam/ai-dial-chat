@@ -40,7 +40,10 @@ const commonBorderColors = {
 // Do not use palette directly, only through semantic colors
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}',
+    './../../node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
+  ],
   darkMode: 'class',
   theme: {
     backgroundColor: {

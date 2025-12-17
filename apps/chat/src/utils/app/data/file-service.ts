@@ -5,6 +5,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApiKeys,
+  BackendChatEntity,
   BackendDataNodeType,
   FeatureType,
   MoveModel,
@@ -14,6 +15,7 @@ import {
   BackendFileFolder,
   DialFile,
   FileFolderInterface,
+  FileOperationsResult,
 } from '@/src/types/files';
 import { HTTPMethod } from '@/src/types/http';
 
@@ -22,7 +24,12 @@ import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
 
-import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
+import {
+  DialCopiedItem,
+  DialDeletedItem,
+  DialFileNodeType,
+  DialFile as UIKitDialFile,
+} from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
 
 const mapFileToDial = (file: BackendFile): DialFile => {
@@ -120,6 +127,19 @@ export class FileService {
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
 
+  private static getFullListingUrl = ({
+    path,
+    resultQuery,
+  }: {
+    path?: string;
+    resultQuery?: string;
+  }): string => {
+    const listingUrl = ApiUtils.encodeApiUrl(
+      constructPath('/api/file-manager', path || getFileRootId()),
+    );
+    return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
+  };
+
   public static getFileFolders(
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
@@ -212,33 +232,93 @@ export class FileService {
     }).pipe(map((files) => files.map(mapFileToDial)));
   }
 
+  public static getFullListing(folderPath?: string): Observable<DialFile[]> {
+    const query = new URLSearchParams({
+      recursive: 'true',
+      filter: BackendDataNodeType.ITEM,
+      permissions: 'true',
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(
+      this.getFullListingUrl({ path: folderPath, resultQuery }),
+    ).pipe(
+      map((files: BackendFile[]) => {
+        return files.map(mapFileToDial);
+      }),
+    );
+  }
+
   public static getFileContent<T>(path: string): Observable<T> {
     return ApiUtils.request(path);
+  }
+
+  public static getFileMetadata(
+    fileId: string,
+  ): Observable<UIKitDialFile | null> {
+    return ApiUtils.request(
+      `/api/metadata/${ApiUtils.encodeApiUrl(fileId)}`,
+    ).pipe(
+      map((metadata: BackendChatEntity) => {
+        const relativePath = metadata.parentPath
+          ? ApiUtils.decodeApiUrl(metadata.parentPath)
+          : undefined;
+
+        const decodedUrl = ApiUtils.decodeApiUrl(metadata.url);
+
+        const uiKitFile: UIKitDialFile = {
+          ...metadata,
+          nodeType: DialFileNodeType.ITEM,
+          resourceType:
+            metadata.resourceType as unknown as UIKitDialFile['resourceType'],
+          path: metadata.url,
+          folderId: constructPath(getFileRootId(metadata.bucket), relativePath),
+          id: decodedUrl,
+          permissions: metadata.permissions as UIKitDialFile['permissions'],
+          createdAt: metadata.createdAt
+            ? new Date(metadata.createdAt).toISOString()
+            : undefined,
+          updatedAt: metadata.updatedAt
+            ? new Date(metadata.updatedAt).toISOString()
+            : undefined,
+        };
+
+        return uiKitFile;
+      }),
+    );
   }
 
   public static moveFile(moveModel: MoveModel): Observable<MoveModel> {
     return DataService.getDataStorage().move(moveModel);
   }
 
-  public static copyFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<MoveModel[]> {
-    return DataService.getDataStorage().copyFiles(data);
+  public static copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return DataService.getDataStorage().copyFiles(data, options);
   }
 
-  public static moveFiles(data: {
-    files: DialCopiedItem[];
-  }): Observable<MoveModel[]> {
-    return DataService.getDataStorage().moveFiles(data);
+  public static moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return DataService.getDataStorage().moveFiles(data, options);
   }
 
   public static deleteFiles(data: {
     files: DialDeletedItem[];
-  }): Observable<void> {
+  }): Observable<FileOperationsResult<string>> {
     return DataService.getDataStorage().deleteFiles(data);
   }
 
-  public static async downloadFilesAsArchive(files: DialFile[]): Promise<void> {
+  public static async downloadFilesAsArchive(
+    files: UIKitDialFile[],
+  ): Promise<void> {
     try {
       const archiveName = files.length === 1 ? files[0].name : 'files';
 
@@ -287,5 +367,12 @@ export class FileService {
     } catch (error) {
       throw new Error(`Error downloading files: ${error}`);
     }
+  }
+
+  public static uploadArchive(data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    return DataService.getDataStorage().uploadArchive(data);
   }
 }

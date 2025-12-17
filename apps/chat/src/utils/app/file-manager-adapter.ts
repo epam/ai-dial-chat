@@ -1,8 +1,9 @@
-import { getFileRootId } from '@/src/utils/app/id';
+import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileNodeType,
   DialFileResourceType,
@@ -10,7 +11,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 
 export interface DialRootFolder extends UIKitDialFile {
-  breadcrumbLabel: string;
+  label: string;
 }
 
 const isChildOfFolders = (
@@ -82,7 +83,7 @@ export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
     contentLength: file.contentLength,
     contentType: file.contentType,
     updatedAt: file.updatedAt ? String(file.updatedAt) : undefined,
-    author: undefined, // TODO: Map from file metadata when available
+    author: file.author,
     parentPath,
     extension: file.name.includes('.') ? file.name.split('.').pop() : undefined,
   };
@@ -111,13 +112,25 @@ export const convertToUIKitFolder = (
 export const buildFileTree = (
   files: DialFile[],
   folders: FileFolderInterface[],
-  rootPath: string = getFileRootId(),
   breadcrumbLabel?: string,
-): { rootFolder: DialRootFolder; items: UIKitDialFile[] } => {
+): {
+  rootFolder: DialRootFolder;
+  items: UIKitDialFile[];
+  loadedFoldersPaths: Set<string>;
+  sharedByMePaths: Set<string>;
+} => {
   const uikitFiles = files.map(convertToUIKitFile);
 
   const folderMap = new Map<string, UIKitDialFile>();
   const rootItems: UIKitDialFile[] = [];
+
+  const loadedFoldersPaths = new Set(
+    folders.filter((f) => f.status === UploadStatus.LOADED).map((f) => f.id),
+  );
+
+  const sharedByMePaths = new Set(
+    files.filter((f) => f.isShared && !f.sharedWithMe).map((f) => f.id),
+  );
 
   const sortedFolders = [...folders].sort((a, b) => {
     const depthA = a.id.split('/').length;
@@ -128,6 +141,10 @@ export const buildFileTree = (
   sortedFolders.forEach((folder) => {
     const uikitFolder = convertToUIKitFolder(folder, []);
     folderMap.set(folder.id, uikitFolder);
+
+    if (folder.isShared && !folder.sharedWithMe) {
+      sharedByMePaths.add(folder.id);
+    }
   });
 
   const placedFolderIds = new Set<string>();
@@ -165,16 +182,25 @@ export const buildFileTree = (
     }
   });
 
+  const rootId = getFileRootId(
+    getEntityBucket({ id: rootItems?.[0]?.id || '' }),
+  );
+
   const rootFolder: DialRootFolder = {
-    id: rootPath,
+    id: rootId,
     name: 'Files',
-    path: rootPath,
+    path: rootId,
     folderId: '',
     nodeType: DialFileNodeType.FOLDER,
     items: rootItems,
     parentPath: null,
-    breadcrumbLabel: breadcrumbLabel || 'Files',
+    label: breadcrumbLabel || 'Files',
   };
 
-  return { rootFolder, items: [rootFolder] };
+  return {
+    rootFolder,
+    items: [rootFolder],
+    loadedFoldersPaths,
+    sharedByMePaths,
+  };
 };

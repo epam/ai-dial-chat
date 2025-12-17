@@ -203,6 +203,82 @@ const selectChosenFolderIds = createSelector(
   },
 );
 
+const selectIsAnyFileOperationInProgress = createSelector(
+  [rootSelector],
+  (state) => {
+    return (
+      state.isCopyingFiles ||
+      state.isMovingFiles ||
+      state.isDeletingFiles ||
+      state.isDownloadingArchive ||
+      state.isUploadingFiles ||
+      state.isUploadingArchive
+    );
+  },
+);
+
+const selectIsCopyingFiles = createSelector(
+  [rootSelector],
+  (state) => state.isCopyingFiles,
+);
+
+const selectIsMovingFiles = createSelector(
+  [rootSelector],
+  (state) => state.isMovingFiles,
+);
+
+const selectLoadingFileMetadata = (state: RootState) =>
+  rootSelector(state).loadingFileMetadata;
+
+const selectFileMetadata = (state: RootState) =>
+  rootSelector(state).fileMetadata;
+
+const selectIsLoadingSearchListing = (state: RootState) =>
+  rootSelector(state).isLoadingSearchListing;
+
+const selectSearchListingMetadata = (state: RootState) =>
+  rootSelector(state).searchListingMetadata;
+
+const selectIsSearchListingLoaded = createSelector(
+  [
+    selectSearchListingMetadata,
+    (_state: RootState, folderPath: string) => folderPath,
+  ],
+  (metadata, folderPath) => {
+    return metadata[folderPath]?.isFullyLoaded ?? false;
+  },
+);
+
+const selectSearchResultsForFolder = createSelector(
+  [
+    selectFiles,
+    (_state: RootState, folderPath?: string) => folderPath,
+    (_state: RootState, _folder, searchTerm?: string) => searchTerm,
+  ],
+  (files, folderPath, searchTerm) => {
+    let filteredFiles = files;
+
+    if (folderPath) {
+      filteredFiles = filteredFiles.filter(
+        (file) =>
+          file.folderId === folderPath ||
+          file.folderId?.startsWith(`${folderPath}/`),
+      );
+    }
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filteredFiles = filteredFiles.filter(
+        (file) =>
+          file.name.toLowerCase().includes(term) ||
+          file.relativePath?.toLowerCase().includes(term),
+      );
+    }
+
+    return filteredFiles;
+  },
+);
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -228,4 +304,13 @@ export const FilesSelectors = {
   selectEmptyFolderIds,
   selectChosenEmptyFolderIds,
   selectChosenFolderIds,
+  selectIsAnyFileOperationInProgress,
+  selectLoadingFileMetadata,
+  selectFileMetadata,
+  selectIsLoadingSearchListing,
+  selectSearchListingMetadata,
+  selectIsSearchListingLoaded,
+  selectSearchResultsForFolder,
+  selectIsMovingFiles,
+  selectIsCopyingFiles,
 };

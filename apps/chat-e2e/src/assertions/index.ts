@@ -43,3 +43,5 @@ export * from './publishing/publicationReviewControlAssertion';
 export * from './api/apiAssertion';
 export * from './entityEditorPreviewCardAssertion';
 export * from './entityEditorPreviewToggleAssertion';
+export * from './replaceConfirmationModalAssertion';
+export * from './toolset/toolsetAuthAssertion';

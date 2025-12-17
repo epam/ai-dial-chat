@@ -18,7 +18,11 @@ import {
 import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType, MoveModel } from '@/src/types/common';
-import { DialFile, FileFolderInterface } from '@/src/types/files';
+import {
+  DialFile,
+  FileFolderInterface,
+  FileOperationsResult,
+} from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -26,10 +30,26 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { FilesState } from './files.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
+import {
+  DialCopiedItem,
+  DialDeletedItem,
+  DialUploadFileItem,
+  DialFile as UIKitDialFile,
+} from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
+
+const invalidateSearchCacheForFile = (state: FilesState, fileId: string) => {
+  const parts = fileId.split('/');
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const folderPath = parts.slice(0, i).join('/');
+    if (folderPath && state.searchListingMetadata[folderPath]) {
+      delete state.searchListingMetadata[folderPath];
+    }
+  }
+};
 
 const initialState: FilesState = {
   initialized: false,
@@ -43,6 +63,21 @@ const initialState: FilesState = {
 
   filesStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
+
+  loadingFileMetadata: false,
+  fileMetadata: null,
+
+  isCopyingFiles: false,
+  isMovingFiles: false,
+  isDeletingFiles: false,
+  isDownloadingArchive: false,
+  isUploadingFiles: false,
+  isUploadingArchive: false,
+  copyingFilesSignal: new AbortController(),
+  movingFilesSignal: new AbortController(),
+
+  isLoadingSearchListing: false,
+  searchListingMetadata: {},
 };
 
 export const filesSlice = createSlice({
@@ -135,6 +170,7 @@ export const filesSlice = createSlice({
       state.files = state.files.map((file) => {
         return file.id === payload.apiResult.id ? payload.apiResult : file;
       });
+      invalidateSearchCacheForFile(state, payload.apiResult.id);
     },
     uploadFileTick: (
       state,
@@ -187,15 +223,27 @@ export const filesSlice = createSlice({
           : { ...file },
       );
 
-      state.files = mappedFiles.concat(
-        state.files.filter(
-          (stateFile) =>
-            //remove all files from loaded folder to have latest folder update
-            !payload.foldersSet.has(stateFile.folderId) ||
-            stateFile.publishedWithMe ||
-            stateFile.sharedWithMe,
-        ),
+      const prevById: Record<string, DialFile> = Object.fromEntries(
+        state.files.map((f) => [f.id, f]),
       );
+
+      const mergedMappedFiles: DialFile[] = mappedFiles.map((newFile) => {
+        const oldFile = prevById[newFile.id];
+        if (!oldFile) return newFile;
+
+        const merged: DialFile = {
+          ...oldFile,
+          ...newFile,
+        };
+
+        return merged;
+      });
+
+      const otherFiles = state.files.filter(
+        (f) => !payload.foldersSet.has(f.folderId),
+      );
+
+      state.files = [...mergedMappedFiles, ...otherFiles];
       state.filesStatus = UploadStatus.LOADED;
 
       if (!isRootId(parentFolderId)) {
@@ -242,6 +290,83 @@ export const filesSlice = createSlice({
     getFilesFail: (state) => {
       state.filesStatus = UploadStatus.FAILED;
     },
+    getFileMetadata: (
+      state,
+      _action: PayloadAction<{
+        fileId: string;
+      }>,
+    ) => {
+      state.loadingFileMetadata = true;
+      state.fileMetadata = null;
+    },
+    getFileMetadataSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        metadata: UIKitDialFile;
+      }>,
+    ) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = payload.metadata as UIKitDialFile;
+    },
+    getFileMetadataFail: (state) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = null;
+    },
+    clearFileMetadata: (state) => {
+      state.loadingFileMetadata = false;
+      state.fileMetadata = null;
+    },
+    getFullListing: (
+      state,
+      _action: PayloadAction<{
+        folderPath?: string;
+      }>,
+    ) => {
+      state.isLoadingSearchListing = true;
+    },
+    getFullListingSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderPath: string;
+        files: DialFile[];
+      }>,
+    ) => {
+      state.isLoadingSearchListing = false;
+
+      const existingFileIds = new Set(state.files.map((f) => f.id));
+      const newFiles = payload.files.filter((f) => !existingFileIds.has(f.id));
+
+      if (newFiles.length > 0) {
+        state.files = [...state.files, ...newFiles];
+      }
+
+      state.searchListingMetadata[payload.folderPath] = {
+        loadedAt: Date.now(),
+        isFullyLoaded: true,
+        folderPath: payload.folderPath,
+      };
+    },
+    getFullListingFail: (state) => {
+      state.isLoadingSearchListing = false;
+    },
+    invalidateSearchCache: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        bucketRootId?: string;
+      }>,
+    ) => {
+      if (payload.bucketRootId) {
+        delete state.searchListingMetadata[payload.bucketRootId];
+      } else {
+        state.searchListingMetadata = {};
+      }
+    },
     getFolders: (
       state,
       {
@@ -270,9 +395,15 @@ export const filesSlice = createSlice({
     ) => {
       state.loadingFolderId = undefined;
       state.foldersStatus = UploadStatus.LOADED;
+
+      const incomingIds = new Set(payload.folders.map((f) => f.id));
+      const filteredState = state.folders.filter(
+        (f) => f.folderId !== payload.folderId || incomingIds.has(f.id),
+      );
+
       state.folders = combineEntities(
         payload.folders,
-        state.folders.map((f) =>
+        filteredState.map((f) =>
           f.id === payload.folderId ? { ...f, status: UploadStatus.LOADED } : f,
         ),
       );
@@ -437,6 +568,7 @@ export const filesSlice = createSlice({
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.fileId);
       state.selectedFilesIds.filter((id) => id !== payload.fileId);
+      invalidateSearchCacheForFile(state, payload.fileId);
     },
     deleteFileFail: (
       state,
@@ -607,20 +739,37 @@ export const filesSlice = createSlice({
         files: DialCopiedItem[];
         destinationFolder: string;
       }>,
-    ) => state,
+    ) => {
+      state.isCopyingFiles = true;
+    },
     copyFilesSuccess: (
       state,
       _action: PayloadAction<{
-        files: MoveModel[];
+        result: FileOperationsResult<MoveModel>;
       }>,
-    ) => state,
+    ) => {
+      state.isCopyingFiles = false;
+    },
     copyFilesFail: (
       state,
       _action: PayloadAction<{
         files: DialCopiedItem[];
         destinationFolder: string;
       }>,
-    ) => state,
+    ) => {
+      state.isCopyingFiles = false;
+    },
+    setCopyingFilesSignal: (
+      state,
+      action: PayloadAction<AbortController | null>,
+    ) => {
+      state.copyingFilesSignal = action.payload;
+    },
+    cancelCopyingFiles: (state) => {
+      state.copyingFilesSignal?.abort();
+      state.copyingFilesSignal = null;
+      state.isCopyingFiles = false;
+    },
 
     moveFiles: (
       state,
@@ -629,19 +778,42 @@ export const filesSlice = createSlice({
         sourceFolder: string;
         destinationFolder: string;
       }>,
-    ) => state,
+    ) => {
+      state.isMovingFiles = true;
+    },
     moveFilesSuccess: (
       state,
-      _action: PayloadAction<{
-        files: MoveModel[];
+      {
+        payload,
+      }: PayloadAction<{
+        result: FileOperationsResult<MoveModel>;
       }>,
-    ) => state,
+    ) => {
+      state.isMovingFiles = false;
+      payload.result.results.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.data.sourceUrl);
+        invalidateSearchCacheForFile(state, file.data.destinationUrl);
+      });
+    },
     moveFilesFail: (
       state,
       _action: PayloadAction<{
         files: DialCopiedItem[];
       }>,
-    ) => state,
+    ) => {
+      state.isMovingFiles = false;
+    },
+    setMovingFilesSignal: (
+      state,
+      action: PayloadAction<AbortController | null>,
+    ) => {
+      state.movingFilesSignal = action.payload;
+    },
+    cancelMovingFiles: (state) => {
+      state.movingFilesSignal?.abort();
+      state.movingFilesSignal = null;
+      state.isMovingFiles = false;
+    },
 
     deleteFiles: (
       state,
@@ -649,30 +821,84 @@ export const filesSlice = createSlice({
         files: DialDeletedItem[];
         folderUrl: string;
       }>,
-    ) => state,
+    ) => {
+      state.isDeletingFiles = true;
+    },
     deleteFilesSuccess: (
       state,
-      _action: PayloadAction<{
-        files: DialDeletedItem[];
+      {
+        payload,
+      }: PayloadAction<{
+        deletedItems: DialDeletedItem[];
+        result: FileOperationsResult<string>;
       }>,
-    ) => state,
+    ) => {
+      state.isDeletingFiles = false;
+      payload.deletedItems.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.sourceUrl);
+      });
+    },
     deleteFilesFail: (
       state,
       _action: PayloadAction<{
         files: DialDeletedItem[];
       }>,
-    ) => state,
+    ) => {
+      state.isDeletingFiles = false;
+    },
 
     downloadFilesAsArchive: (
       state,
       _action: PayloadAction<{
-        files: DialFile[];
+        files: UIKitDialFile[];
       }>,
-    ) => state,
+    ) => {
+      state.isDownloadingArchive = true;
+    },
 
-    downloadFilesAsArchiveSuccess: (state) => state,
+    downloadFilesAsArchiveSuccess: (state) => {
+      state.isDownloadingArchive = false;
+    },
 
-    downloadFilesAsArchiveFail: (state) => state,
+    downloadFilesAsArchiveFail: (state) => {
+      state.isDownloadingArchive = false;
+    },
+
+    uploadFiles: (
+      state,
+      _action: PayloadAction<{
+        files: DialUploadFileItem[];
+        destinationUrl: string;
+      }>,
+    ) => {
+      state.isUploadingFiles = true;
+    },
+    uploadFilesSuccess: (state) => {
+      state.isUploadingFiles = false;
+    },
+    uploadFilesFail: (state) => {
+      state.isUploadingFiles = false;
+    },
+
+    uploadArchive: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        archive: File;
+        name: string;
+        destinationUrl: string;
+      }>,
+    ) => {
+      state.isUploadingArchive = true;
+      invalidateSearchCacheForFile(state, payload.destinationUrl);
+    },
+    uploadArchiveSuccess: (state) => {
+      state.isUploadingArchive = false;
+    },
+    uploadArchiveFail: (state) => {
+      state.isUploadingArchive = false;
+    },
   },
 });
 

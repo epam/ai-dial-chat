@@ -125,6 +125,7 @@ export const uiSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string | null;
+        title?: string;
         type?: ToastType;
         response?: Response;
         icon?: JSX.Element;
@@ -222,6 +223,9 @@ export const uiSlice = createSlice({
       }>,
     ) => {
       state.visibleSidebarItems[payload.featureType] = payload.visibleItems;
+    },
+    setEditorLoader: (state, { payload }: PayloadAction<boolean>) => {
+      state.isEditorLoader = payload;
     },
   },
 });
