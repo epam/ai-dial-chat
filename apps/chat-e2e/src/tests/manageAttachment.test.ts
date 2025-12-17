@@ -1,7 +1,14 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { Attachment, CheckboxState, ExpectedConstants, ExpectedMessages, MenuOptions, UploadMenuOptions } from '@/src/testData';
+import {
+  Attachment,
+  CheckboxState,
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+  UploadMenuOptions,
+} from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { Button, DropdownMenu, FileModalSection } from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
@@ -9,7 +16,6 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator, expect } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
-
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
