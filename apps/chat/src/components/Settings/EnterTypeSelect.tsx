@@ -25,12 +25,10 @@ export const EnterTypeSelect = ({
         inputId={EnterType.Enter}
         name="enter-type-select"
         title={
-          (
-            <>
-              <b>{t('Enter')}</b> - {t('send message')},{' '}
-              <b>{t('Shift + Enter')}</b> - {t('new line')}
-            </>
-          ) as unknown as string // TODO: fix typing in ui-kit https://github.com/epam/ai-dial-ui-kit/pull/340
+          <>
+            <b>{t('Enter')}</b> - {t('send message')},{' '}
+            <b>{t('Shift + Enter')}</b> - {t('new line')}
+          </>
         }
         onChange={onValueChange}
         value={EnterType.Enter}
@@ -41,12 +39,10 @@ export const EnterTypeSelect = ({
         inputId={EnterType.CtrlEnter}
         name="enter-type-select"
         title={
-          (
-            <>
-              <b>{t(`${isMacOs ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
-              {t('send message')}, <b>{t('Enter')}</b> - {t('new line')}
-            </>
-          ) as unknown as string // TODO: fix typing in ui-kit https://github.com/epam/ai-dial-ui-kit/pull/340
+          <>
+            <b>{t(`${isMacOs ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
+            {t('send message')}, <b>{t('Enter')}</b> - {t('new line')}
+          </>
         }
         onChange={onValueChange}
         value={EnterType.CtrlEnter}
