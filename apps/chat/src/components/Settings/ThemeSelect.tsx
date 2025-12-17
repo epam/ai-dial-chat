@@ -10,6 +10,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+import { Label } from '@/src/components/Common/Forms/Label';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 
@@ -45,10 +46,10 @@ export const ThemeSelect = ({
   }
 
   return (
-    <div className="flex items-center gap-5">
-      <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
+    <div className="flex flex-col">
+      <Label>{t('Theme')}</Label>
       <div
-        className="h-[38px] grow basis-2/3 rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4"
+        className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary"
         data-qa="theme"
       >
         <Menu
