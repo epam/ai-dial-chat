@@ -1,7 +1,7 @@
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
 import { DEFAULT_TOOLSET_NAME } from '@/src/constants/default-ui-settings';
 import { formErrors, urlErrors } from '@/src/constants/form-errors';
@@ -112,12 +112,14 @@ export const getDefaultLoginFormData = (
   authenticationType: ToolsetAuthTypes,
   toolset?: ToolsetModel,
   prevData?: Partial<ToolsetLoginFormType>,
+  authLevel?: ToolsetCredentialsLevel,
 ): ToolsetLoginFormType => {
+  const isLoggedIn = toolset ? isToolsetSignedIn(toolset, authLevel) : false;
   switch (authenticationType) {
     case ToolsetAuthTypes.API_KEY:
       return {
         authenticationType,
-        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
+        isLoggedIn,
         withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
         keyHeader: toolset?.authSettings?.apiKeyHeader ?? '',
         apiKey: prevData?.apiKey ?? '',
@@ -125,7 +127,7 @@ export const getDefaultLoginFormData = (
     case ToolsetAuthTypes.OAUTH:
       return {
         authenticationType,
-        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
+        isLoggedIn,
         clientId: toolset?.authSettings?.clientId ?? '',
         clientSecret: toolset?.authSettings?.clientSecret ?? '',
         authorizationEndpoint:
@@ -142,7 +144,7 @@ export const getDefaultLoginFormData = (
     case ToolsetAuthTypes.NONE:
     default:
       return {
-        isLoggedIn: toolset ? isToolsetSignedIn(toolset) : false,
+        isLoggedIn,
         withLogin: WithLogin.WithoutLogin,
         authenticationType,
       };
@@ -159,7 +161,7 @@ export const getDefaultFormData = (
       toolset?.name ??
       getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
     endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
-    protocol: toolset?.transport ?? ToolsetTransportType.SSE,
+    protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',

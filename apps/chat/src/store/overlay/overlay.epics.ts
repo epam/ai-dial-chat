@@ -1366,7 +1366,12 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
             );
           } else {
             //will try to signin in the iframe
-            signIn(signInOptions?.signInProvider);
+            const logInHint = signInOptions?.logInHint;
+            const authParams: Record<string, string> | undefined = logInHint
+              ? { login_hint: logInHint }
+              : undefined;
+
+            signIn(signInOptions?.signInProvider, undefined, authParams);
           }
         }
       };
