@@ -77,8 +77,6 @@ export function PublicationFilters({
     [rulesOnEdit],
   );
 
-  console.log(filters);
-
   const handleFilterUpdate = useCallback(
     (newFilters: TargetAudienceFilter[]) => {
       setValue(

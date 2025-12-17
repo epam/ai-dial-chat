@@ -1,6 +1,6 @@
 import { IconDownload } from '@tabler/icons-react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
