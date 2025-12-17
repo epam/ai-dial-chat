@@ -51,6 +51,7 @@ export enum UIStorageKeys {
   LastConversationSettings = 'lastConversationSettings',
   SelectedWidget = 'selectedWidget',
   DefaultModelReference = 'defaultModelReference',
+  EnterType = 'enterType',
 }
 
 export enum MigrationStorageKeys {

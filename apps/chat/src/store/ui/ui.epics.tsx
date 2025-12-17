@@ -64,6 +64,7 @@ const initEpic: AppEpic = (action$, state$) =>
         chatCollapsedSections: DataService.getChatCollapsedSections(),
         promptCollapsedSections: DataService.getPromptCollapsedSections(),
         fileCollapsedSections: DataService.getFileCollapsedSections(),
+        enterType: DataService.getEnterType(),
       });
     }),
     switchMap(
@@ -79,6 +80,7 @@ const initEpic: AppEpic = (action$, state$) =>
         chatCollapsedSections,
         promptCollapsedSections,
         fileCollapsedSections,
+        enterType,
       }) => {
         const actions: AppAction[] = [UIActions.initTheme()];
 
@@ -86,6 +88,7 @@ const initEpic: AppEpic = (action$, state$) =>
           actions.push(UIActions.setCustomLogo({ logo: customLogo }));
         }
 
+        actions.push(UIActions.setEnterType(enterType));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
         actions.push(
@@ -176,6 +179,13 @@ const saveThemeEpic: AppEpic = (action$) =>
         `${payload} ${payload.startsWith('dark') ? 'dark' : 'light'}` || '';
     }),
     switchMap(({ payload }) => DataService.setTheme(payload)),
+    ignoreElements(),
+  );
+
+const saveEnterTypeEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setEnterType.type),
+    switchMap(({ payload }) => DataService.setEnterType(payload)),
     ignoreElements(),
   );
 
@@ -413,6 +423,7 @@ export const UIEpics = combineEpics(
   initEpic,
   initThemeEpic,
   saveThemeEpic,
+  saveEnterTypeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
   saveShowMarketplaceFilterbarEpic,
