@@ -347,7 +347,7 @@ export const FileManagerModal = memo(
 
           <div className="flex w-full grow overflow-auto">
             <DialFileManager
-              className="px-0 pb-0"
+              className="px-0 pb-5"
               path={currentPath}
               onPathChange={setCurrentPath}
               defaultSelectedPaths={initialSelectedFilesIdsRef.current}
