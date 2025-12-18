@@ -170,11 +170,9 @@ export const CustomLogoSelect = ({
           onClose={handleOnClose}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}
           customButtonLabel={t('Select file')}
-          customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
-          hideFolderCheckbox
         />
       )}
 

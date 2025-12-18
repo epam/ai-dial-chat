@@ -106,7 +106,7 @@ export const useFileManager = ({
       return tabs;
     }
     return tabs?.filter((tab) => availableTabs.has(tab.id));
-  }, [availableTabs]);
+  }, [availableTabs, tabs]);
 
   useEffect(() => {
     if (currentPath && !isRootId(currentPath)) {
