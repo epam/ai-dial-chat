@@ -7,6 +7,7 @@ import {
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType, PageType, SortOrder } from '@/src/types/common';
 import {
   DetailsEntity,
@@ -71,6 +72,18 @@ export const getEntityStatus = (
       isInvalid,
       isLoggedOut,
       isError: isLoggedOut,
+    };
+  }
+
+  if (isDialAiEntityModel(entity)) {
+    const hasFunctionStatusError =
+      entity.functionStatus &&
+      entity.functionStatus !== ApplicationStatus.DEPLOYED;
+
+    return {
+      isInvalid,
+      isLoggedOut: false,
+      isError: !!hasFunctionStatusError,
     };
   }
 
