@@ -10,8 +10,10 @@ import {
 } from '@/src/utils/app/file';
 
 import { ModalState } from '@/src/types/modal';
+import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
 
+import { UIActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -86,16 +88,35 @@ export const FileManagerModalNew = ({
     [folders],
   );
 
+  const prevSelectionRef = useRef<Set<string>>(new Set());
+
   const pathSelectionHandler = useCallback(
     (paths: Set<string>) => {
       setSelectedPaths(paths);
-      paths.forEach((path) => {
-        if (folderPaths.has(path)) {
-          dispatch(FilesActions.setChosenFolder({ folderId: path }));
+
+      const prev = prevSelectionRef.current;
+      const next = new Set(paths);
+
+      const added = [...next].filter((id) => !prev.has(id));
+      const removed = [...prev].filter((id) => !next.has(id));
+
+      prevSelectionRef.current = next;
+
+      for (const id of added) {
+        if (folderPaths.has(id)) {
+          dispatch(FilesActions.setChosenFolder({ folderId: id }));
         } else {
-          dispatch(FilesActions.setChosenFiles({ ids: [path] }));
+          dispatch(FilesActions.setChosenFiles({ ids: [id] }));
         }
-      });
+      }
+
+      for (const id of removed) {
+        if (folderPaths.has(id)) {
+          dispatch(FilesActions.setChosenFolder({ folderId: id }));
+        } else {
+          dispatch(FilesActions.setChosenFiles({ ids: [id] }));
+        }
+      }
     },
     [dispatch, folderPaths],
   );
@@ -157,26 +178,43 @@ export const FileManagerModalNew = ({
   const handleAttachFiles = useCallback(() => {
     const result: string[] = [];
 
-    console.log(
-      '🚀 ~ FileManagerModalNew ~ selectedFolderIds:',
-      selectedFolderIds,
-    );
-    console.log(
-      '🚀 ~ FileManagerModalNew ~ selectedFilesIds:',
-      selectedFilesIds,
-    );
+    if (selectedFilesIds.length > maximumAttachmentsAmount) {
+      dispatch(
+        UIActions.showToast({
+          type: ToastType.Error,
+          title: t('Too many files selected'),
+          message: t(
+            'You selected {{count}} files, including files in folders. You can attach up to {{limit}} files.',
+            {
+              count: selectedFilesIds.length,
+              limit: maximumAttachmentsAmount,
+            },
+          ),
+        }),
+      );
+      return;
+    }
 
     const selectedFiles = files.filter((file) =>
       selectedFilesIds.includes(file.id),
     );
+
     const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
       selectedFiles,
       allowedTypesArray,
     ).map((file) => file.id);
-    console.log(
-      '🚀 ~ FileManagerModalNew ~ filesWithIncorrectTypes:',
-      filesWithIncorrectTypes,
-    );
+
+    if (filesWithIncorrectTypes.length > 0) {
+      dispatch(
+        UIActions.showToast({
+          type: ToastType.Info,
+          title: t('Unsupported files skipped'),
+          message: t(
+            'Some files in the selected folder(-s) weren’t attached because their type isn’t supported.',
+          ),
+        }),
+      );
+    }
 
     if (canAttachFolders) {
       result.push(...selectedFolderIds);
@@ -192,16 +230,18 @@ export const FileManagerModalNew = ({
           : true;
       }),
     );
-    console.log('🚀 ~ FileManagerModalNew ~ result:', result);
 
     onClose(uniq(result));
   }, [
     allowedTypesArray,
     canAttachFolders,
+    dispatch,
     files,
+    maximumAttachmentsAmount,
     onClose,
     selectedFilesIds,
     selectedFolderIds,
+    t,
   ]);
 
   const {

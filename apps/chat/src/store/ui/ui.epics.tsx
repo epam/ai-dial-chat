@@ -31,8 +31,8 @@ import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 import { errorsMessages } from '@/src/constants/errors';
 import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
-import { TitledToastMessage } from '../../components/Toasts/TitledToastMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
+import { TitledToastMessage } from '@/src/components/Toasts/TitledToastMessage';
 
 import { Feature } from '@epam/ai-dial-shared';
 

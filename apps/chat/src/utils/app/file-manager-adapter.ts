@@ -119,6 +119,7 @@ export const buildFileTree = (
   loadedFoldersPaths: Set<string>;
   sharedByMePaths: Set<string>;
 } => {
+  console.log('🚀 ~ buildFileTree ~ folders:', folders);
   const uikitFiles = files.map(convertToUIKitFile);
 
   const folderMap = new Map<string, UIKitDialFile>();
