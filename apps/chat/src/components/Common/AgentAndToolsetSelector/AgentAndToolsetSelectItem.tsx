@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { isExecutableApp } from '@/src/utils/app/application';
 import { getEntityBaseId } from '@/src/utils/app/common';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
@@ -13,6 +14,19 @@ export interface AgentAndToolsetSelectItemProps {
   onToggleSelectItem: (item: MarketplaceEntity) => void;
 }
 
+const disabledAgentActions = {
+  edit: true,
+  share: true,
+  unshare: true,
+  publish: true,
+  logs: true,
+  delete: true,
+};
+
+const hasEntityContextMenu = (entity: MarketplaceEntity): boolean => {
+  return isToolsetEntityModel(entity) || isExecutableApp(entity);
+};
+
 export const AgentAndToolsetSelectItem: React.FC<
   AgentAndToolsetSelectItemProps
 > = ({ groupItem, selectedBaseIdsSet, onToggleSelectItem }) => {
@@ -24,9 +38,10 @@ export const AgentAndToolsetSelectItem: React.FC<
       entity={groupItem}
       isSelected={isSelected}
       onClick={onToggleSelectItem}
-      hasContextMenu={isToolsetEntityModel(groupItem)}
+      hasContextMenu={hasEntityContextMenu(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}
       className="bg-layer-2 hover:bg-layer-3"
+      overrideDisabledActions={disabledAgentActions}
     />
   );
 };

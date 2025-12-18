@@ -43,9 +43,13 @@ export const PreviewModeButton = ({
 
   const Icon = useMemo(() => previewModeIcons[mode], [mode]);
 
-  const handlePreviewModeChange = useCallback(() => {
-    changePreviewMode(mode);
-  }, [mode, changePreviewMode]);
+  const handlePreviewModeChange = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      changePreviewMode(mode);
+    },
+    [mode, changePreviewMode],
+  );
 
   return (
     <button
