@@ -7,7 +7,7 @@ import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onExport: (args?: { withAttachments?: boolean }) => void;
@@ -29,7 +29,8 @@ export const ExportModal = ({ onExport, onClose }: Props) => {
       <div className="flex flex-col items-start">
         <DialButton
           data-qa="with-attachments"
-          className="w-full rounded px-3 py-2 text-left hover:bg-accent-secondary-alpha"
+          className="w-full text-left text-primary hover:bg-accent-secondary-alpha"
+          variant={ButtonVariant.Tertiary}
           onClick={() => {
             onExport({ withAttachments: true });
           }}
@@ -37,7 +38,8 @@ export const ExportModal = ({ onExport, onClose }: Props) => {
         />
         <DialButton
           data-qa="without-attachments"
-          className="w-full rounded px-3 py-2 text-left hover:bg-accent-secondary-alpha"
+          className="w-full text-left text-primary hover:bg-accent-secondary-alpha"
+          variant={ButtonVariant.Tertiary}
           onClick={() => {
             onExport();
           }}

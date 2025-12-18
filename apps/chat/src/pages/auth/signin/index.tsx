@@ -27,6 +27,8 @@ import { useAppDispatch } from '@/src/store/hooks';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
 
 interface PageProps {
@@ -127,15 +129,14 @@ export default function Signin({
         </div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
-            <button
-              key={provider.id + provider.name}
-              className="button button-secondary flex h-16 place-content-center gap-4 px-4 py-3"
+            <DialButton
+              className="place-content-center gap-4 p-4"
               onClick={() => {
                 void handleSignIn(provider);
               }}
-              data-qa={provider.id}
-            >
-              <span className="flex shrink-0 flex-wrap place-content-center">
+              key={provider.id + provider.name}
+              variant={ButtonVariant.Secondary}
+              iconBefore={
                 <Image
                   className="h-6"
                   src={`https://authjs.dev/img/providers/${cleanProviderId(provider.id)}.svg`}
@@ -143,13 +144,11 @@ export default function Signin({
                   width={24}
                   height={24}
                 />
-              </span>
-              <div className="flex flex-wrap content-center">
-                <span className="text-lg">
-                  {t(`Sign in with ${provider.name}`)}
-                </span>
-              </div>
-            </button>
+              }
+              label={`${t('Sign in with')} ${provider.name}`}
+              textClassName="text-lg"
+              data-qa={provider.id}
+            />
           ))}
         </div>
       </div>

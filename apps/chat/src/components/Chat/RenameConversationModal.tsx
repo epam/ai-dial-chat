@@ -28,9 +28,8 @@ import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
-import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
-
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface RenameConversationViewProps {
   renamingConversation: ConversationInfo;
