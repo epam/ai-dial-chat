@@ -80,10 +80,12 @@ export const AppsEditor = () => {
   const {
     [AppsEditorQuery.Schema]: typeQuery = '',
     [AppsEditorQuery.PublicationUrl]: publicationUrl = '',
-    [AppsEditorQuery.Id]: id,
+    [AppsEditorQuery.IsCreating]: isCreating,
+    [AppsEditorQuery.Id]: idQuery,
   } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
-  const isCreateRef = useRef(!id);
+  const isCreatingApp =
+    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
 
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
@@ -205,7 +207,7 @@ export const AppsEditor = () => {
             tabToOpen: changeEditorTabRef.current ?? undefined,
             redirectUrl: redirectToChatRef.current ? Routes.Chat : undefined,
             isSaveAndExit: saveAndExitRef.current,
-            shouldSelectApplication: isCreateRef.current,
+            shouldSelectApplication: isCreatingApp,
           }),
         );
       }
@@ -228,6 +230,7 @@ export const AppsEditor = () => {
       dispatch,
       formMethods,
       isAppDeployed,
+      isCreatingApp,
       isSchemaApplicationType,
       isShared,
       marketplaceEntities,
@@ -280,7 +283,7 @@ export const AppsEditor = () => {
         dispatch(
           ApplicationActions.exitEditor({
             redirectUrl: redirectToChat ? Routes.Chat : undefined,
-            shouldSelectApplication: isCreateRef.current,
+            shouldSelectApplication: isCreatingApp,
           }),
         );
         return;
@@ -292,7 +295,7 @@ export const AppsEditor = () => {
 
       void handleSubmit(undefined, saveDraft);
     },
-    [isDirty, appDetails, isAppPublic, handleSubmit, dispatch],
+    [isDirty, appDetails, isAppPublic, dispatch, handleSubmit, isCreatingApp],
   );
 
   const handleTabClick = useCallback(

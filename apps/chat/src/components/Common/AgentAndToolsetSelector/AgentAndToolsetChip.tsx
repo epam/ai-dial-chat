@@ -2,10 +2,12 @@ import { IconX } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { getEntityNameFromId } from '@/src/utils/app/id';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -13,6 +15,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
+import { StatusMessage } from './StatusMessage';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -49,7 +52,7 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
     onClick={() => onRemove?.(id)}
     aria-label="Remove item"
   >
-    <IconX size={14} />
+    <IconX size={18} />
   </button>
 );
 
@@ -85,6 +88,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
         'flex h-full items-center gap-2 py-1.5 pl-2 pr-1',
         isError ? 'text-error' : 'text-primary',
         readonly || isInvalid ? 'cursor-not-allowed' : 'cursor-pointer',
+        readonly && 'pr-2',
       )}
       onClick={handleClick}
     >
@@ -118,20 +122,42 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   isInSelectionList,
   customTooltip,
 }) => {
-  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
+  const { isInvalid, isLoggedOut } = getEntityStatus(item);
 
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
     : item.name;
   const version = !item ? getVersionFromId(id) : item.version;
 
+  const hasError =
+    isLoggedOut ||
+    !!(
+      item &&
+      isDialAiEntityModel(item) &&
+      item.functionStatus !== ApplicationStatus.DEPLOYED
+    );
+
   return (
-    <ChipWrapper isError={isError}>
+    <ChipWrapper isError={hasError}>
       <Tooltip
         isTriggerClickable
         tooltip={
           <>
-            {customTooltip && <div className="px-2 pt-1">{customTooltip}</div>}
+            {customTooltip && (
+              <div className="px-2 pt-1">
+                {readonly && (
+                  <StatusMessage
+                    id={id}
+                    item={item}
+                    isInvalid={isInvalid}
+                    isLoggedOut={isLoggedOut}
+                    isInSelectionList={isInSelectionList}
+                    readonly={readonly}
+                  />
+                )}
+                <span>{customTooltip}</span>
+              </div>
+            )}
             <ChipTooltipContent
               id={id}
               item={item}
@@ -150,7 +176,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
           item={item}
           name={name}
           version={version}
-          isError={isError}
+          isError={hasError}
           isInvalid={isInvalid}
           readonly={readonly}
           onClick={onItemClick}
@@ -158,7 +184,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
       </Tooltip>
 
       {!readonly && (
-        <ChipRemoveButton id={id} isError={isError} onRemove={onRemove} />
+        <ChipRemoveButton id={id} isError={hasError} onRemove={onRemove} />
       )}
     </ChipWrapper>
   );
