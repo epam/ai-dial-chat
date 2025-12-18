@@ -2,6 +2,7 @@ import { isMobile as isMobileValue, isTablet } from 'react-device-detect';
 
 import { ScreenState } from '@/src/types/common';
 
+export { isMacOs } from 'react-device-detect';
 export const isMobile = () => isMobileValue && !isTablet;
 export const isTouchable = () => isMobileValue || isTablet;
 
