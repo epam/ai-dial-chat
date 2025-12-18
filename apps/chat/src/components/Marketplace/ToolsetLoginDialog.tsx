@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -20,7 +20,7 @@ import { TabButton } from '@/src/components/Buttons/TabButton';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Modal } from '@/src/components/Common/Modal';
-import { withRenderWhen } from '@/src/components/Common/RenderWhen';
+import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 import { ToolsetLoginForm } from '@/src/components/ToolsetEditor/ToolsetLoginForm';
 import {
   ToolsetLoginFormSchema,
@@ -55,13 +55,16 @@ const getAuthLevelDescriptions = (
   }
 };
 
-export const ToolsetLoginDialogView = () => {
+interface ToolsetLoginDialogProps {
+  entity: ToolsetModel;
+}
+
+export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
+  entity,
+}) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
-  const entity = useAppSelector(
-    MarketplaceSelectors.selectLoginEntity,
-  ) as ToolsetModel;
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const authType = entity.authSettings.authenticationType;
   const isPublic = isEntityIdPublic(entity);
@@ -248,6 +251,7 @@ export const ToolsetLoginDialogView = () => {
   );
 };
 
-export const ToolsetLoginDialog = withRenderWhen(
-  MarketplaceSelectors.selectLoginEntity,
-)(ToolsetLoginDialogView);
+export const ToolsetLoginDialog =
+  withRenderWhenEntities<ToolsetLoginDialogProps>({
+    entity: MarketplaceSelectors.selectLoginEntity,
+  })(ToolsetLoginDialogView);
