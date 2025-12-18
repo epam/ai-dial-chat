@@ -145,6 +145,7 @@ export const FilesSelector: React.FC<Props> = ({
             customButtonLabel={t('Select files') ?? ''}
             forceShowSelectCheckBox
             sourceFilters={filesFilter}
+            warningMessage={confirmDialogValues?.description}
           />
         )}
         {confirmDialogValues && confirmDialogOpen && (
