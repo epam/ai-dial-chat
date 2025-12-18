@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -23,8 +23,13 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
 
-  const { setValue, watch } = useFormContext<PublicationRequestFormData>();
-  const path = watch(PublishRequestFieldsNames.PUBLISH_TO_URL);
+  const { setValue } = useFormContext<PublicationRequestFormData>();
+  const path = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.PUBLISH_TO_URL
+  >({
+    name: PublishRequestFieldsNames.PUBLISH_TO_URL,
+  });
 
   const handleFolderChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
