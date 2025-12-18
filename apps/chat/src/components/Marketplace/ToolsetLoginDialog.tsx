@@ -48,7 +48,7 @@ const getAuthLevelDescriptions = (
         : 'Log in with personal credentials.';
     case ToolsetCredentialsLevel.GLOBAL:
       return isSignedIn
-        ? 'Log out the toolset for all users in the organization using these credentials.'
+        ? 'Log out of the toolset for all users in the organization using these credentials.'
         : 'Log in with credentials that will be available to other users in the organization.';
     default:
       return '';
@@ -209,6 +209,7 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
           <div className="flex gap-3">
             {credsTabs.map(({ label, key }) => (
               <TabButton
+                className="text-sm"
                 key={key}
                 tabKey={key}
                 selected={authLevel === key}
