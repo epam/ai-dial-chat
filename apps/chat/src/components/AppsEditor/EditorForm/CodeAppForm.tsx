@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -79,11 +79,15 @@ export const CodeAppForm = () => {
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const publicationUrl = publicationUrlQuery.toString();
 
-  const { control, formState, setError, clearErrors, watch, setValue } =
+  const { control, formState, setError, clearErrors, setValue } =
     useFormContext<CodeAppFormType>();
   const errors = formState.errors;
-  const sources = watch('sources');
-  const filesLoaded = watch('filesLoaded');
+  const sources = useWatch<CodeAppFormType, 'sources'>({
+    name: 'sources',
+  });
+  const filesLoaded = useWatch<CodeAppFormType, 'filesLoaded'>({
+    name: 'filesLoaded',
+  });
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppShared = !!appDetails?.isShared;

@@ -3,7 +3,7 @@ import { Observable, map } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { LastConversationSettings } from '@/src/types/settings';
+import { EnterType, LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { ThemesConfig } from '@/src/types/themes';
 
@@ -60,6 +60,14 @@ export class DataService {
 
   public static setTheme(theme: string): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.Settings, { theme });
+  }
+
+  public static getEnterType(): Observable<EnterType> {
+    return BrowserStorage.getData(UIStorageKeys.EnterType, EnterType.Enter);
+  }
+
+  public static setEnterType(enterType: EnterType): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.EnterType, enterType);
   }
 
   public static getThemesConfig(): Observable<ThemesConfig> {
