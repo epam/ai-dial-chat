@@ -317,7 +317,7 @@ export const FileManagerModal = memo(
         containerClassName="flex flex-col gap-4 w-full sm:w-[1200px] h-[min(800px,100vh)] !bg-layer-2"
         dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
       >
-        <div className="flex h-full flex-col gap-5 overflow-auto px-3 py-4 md:p-6">
+        <div className="flex h-full flex-col overflow-auto px-3 py-4 md:p-6">
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
               <h2 id={headingId} className="text-base font-semibold">
@@ -347,7 +347,7 @@ export const FileManagerModal = memo(
 
           <div className="flex w-full grow overflow-auto">
             <DialFileManager
-              className="p-0"
+              className="px-0 pb-0"
               path={currentPath}
               onPathChange={setCurrentPath}
               defaultSelectedPaths={initialSelectedFilesIdsRef.current}
