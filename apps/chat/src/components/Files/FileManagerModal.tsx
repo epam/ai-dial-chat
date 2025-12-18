@@ -9,6 +9,7 @@ import {
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
 
+import { FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
@@ -31,6 +32,7 @@ import {
   DialFileAcceptType,
   DialFileManager,
   DialFileManagerActions,
+  DialFileManagerTabs,
   DialLoader,
 } from '@epam/ai-dial-ui-kit';
 import uniq from 'lodash-es/uniq';
@@ -46,6 +48,7 @@ interface Props {
   onClose: (result: boolean | string[]) => void;
   forceShowSelectCheckBox?: boolean;
   forceHideSelectFolders?: boolean;
+  sourceFilters?: Set<FileSourceType>;
 }
 
 export const FileManagerModal = memo(
@@ -60,6 +63,7 @@ export const FileManagerModal = memo(
     forceShowSelectCheckBox,
     forceHideSelectFolders,
     onClose,
+    sourceFilters,
   }: Props) => {
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
@@ -243,6 +247,23 @@ export const FileManagerModal = memo(
       t,
     ]);
 
+    const availableTabs = useMemo(() => {
+      if (!sourceFilters) return undefined;
+
+      const mapping: Record<FileSourceType, DialFileManagerTabs | undefined> = {
+        [FileSourceType.MY_FILES]: DialFileManagerTabs.MyFiles,
+        [FileSourceType.SHARED_WITH_ME]: DialFileManagerTabs.Shared,
+        [FileSourceType.PUBLIC]: DialFileManagerTabs.Organization,
+        [FileSourceType.REVIEW_FILES]: undefined,
+      };
+
+      return new Set(
+        Array.from(sourceFilters)
+          .map((s) => mapping[s])
+          .filter((t): t is DialFileManagerTabs => Boolean(t)),
+      );
+    }, [sourceFilters]);
+
     const {
       currentPath,
       setCurrentPath,
@@ -284,6 +305,7 @@ export const FileManagerModal = memo(
           organization: [DialFileManagerActions.Download],
         },
       },
+      availableTabs,
     });
 
     return (

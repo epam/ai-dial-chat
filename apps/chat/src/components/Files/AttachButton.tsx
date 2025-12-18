@@ -184,6 +184,7 @@ export const AttachButton = ({
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen={isSelectFilesDialogOpened}
+          sourceFilters={sourceFilters}
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}

@@ -39,10 +39,12 @@ import {
 
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
+  availableTabs?: Set<string>;
 }
 
 export const useFileManager = ({
   actionLabelsOptions,
+  availableTabs,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.SideBar);
@@ -98,6 +100,13 @@ export const useFileManager = ({
     organization: t('Organization'),
   });
   const previousActiveTabRef = useRef(activeTab);
+
+  const filteredTabs = useMemo(() => {
+    if (!availableTabs || !availableTabs.size) {
+      return tabs;
+    }
+    return tabs?.filter((tab) => availableTabs.has(tab.id));
+  }, [availableTabs]);
 
   useEffect(() => {
     if (currentPath && !isRootId(currentPath)) {
@@ -409,13 +418,13 @@ export const useFileManager = ({
 
   const toolbarOptions = useMemo(
     () => ({
-      tabs: tabs,
+      tabs: filteredTabs,
       activeTab: activeTab,
       onTabChange: handleTabChange,
       newButtonVariant: ButtonVariant.Primary,
       newActionLabels: newActionLabels,
     }),
-    [tabs, activeTab, handleTabChange, newActionLabels],
+    [filteredTabs, activeTab, handleTabChange, newActionLabels],
   );
 
   const destinationFolderPopupOptions = useMemo(
