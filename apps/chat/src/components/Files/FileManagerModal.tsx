@@ -82,10 +82,6 @@ export const FileManagerModal = memo(
     );
     const selectedFilesIds = useAppSelector(FilesSelectors.selectChosenItems);
 
-    const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
-      new Set(initialSelectedFilesIds),
-    );
-
     const folderPaths = useMemo(
       () => new Set(folders.map((f) => f.id)),
       [folders],
@@ -95,8 +91,6 @@ export const FileManagerModal = memo(
 
     const pathSelectionHandler = useCallback(
       (paths: Set<string>) => {
-        setSelectedPaths(paths);
-
         const prev = prevSelectionRef.current;
         const next = new Set(paths);
 
@@ -124,19 +118,19 @@ export const FileManagerModal = memo(
       [dispatch, folderPaths],
     );
 
-    const initialSelectedFilesIdsRef = useRef<string[]>(
-      initialSelectedFilesIds,
+    const initialSelectedFilesIdsRef = useRef<Set<string>>(
+      new Set(initialSelectedFilesIds),
     );
 
     useEffect(() => {
-      initialSelectedFilesIdsRef.current = initialSelectedFilesIds;
+      initialSelectedFilesIdsRef.current = new Set(initialSelectedFilesIds);
     }, [initialSelectedFilesIds]);
 
     useEffect(() => {
-      if (isOpen && initialSelectedFilesIdsRef.current.length) {
+      if (isOpen && initialSelectedFilesIdsRef.current.size) {
         dispatch(
           FilesActions.setChosenFilesAndFolders({
-            ids: initialSelectedFilesIdsRef.current,
+            ids: Array.from(initialSelectedFilesIdsRef.current),
           }),
         );
       }
@@ -334,7 +328,7 @@ export const FileManagerModal = memo(
               className="p-0"
               path={currentPath}
               onPathChange={setCurrentPath}
-              selectedPaths={selectedPaths}
+              defaultSelectedPaths={initialSelectedFilesIdsRef.current}
               onSelectedPathsChange={pathSelectionHandler}
               items={fileTreeItems}
               rootItem={rootFolder}
