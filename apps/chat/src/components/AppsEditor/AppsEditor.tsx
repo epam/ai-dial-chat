@@ -131,7 +131,7 @@ export const AppsEditor = () => {
     getDefaultFormData({
       app: appDetails,
       models: modelsWithFolder,
-      type: type,
+      type,
       runtime: pythonVersions[0],
     }),
   );
@@ -219,7 +219,11 @@ export const AppsEditor = () => {
         keepIsValid: true,
         keepErrors: true,
       });
-      lastSubmittedValuesRef.current = getDefaultFormData(payload);
+      lastSubmittedValuesRef.current = getDefaultFormData({
+        app: payload,
+        type,
+        runtime: pythonVersions[0],
+      });
     },
     [
       appDetails,
@@ -231,8 +235,10 @@ export const AppsEditor = () => {
       isShared,
       marketplaceEntities,
       publicationUrl,
+      pythonVersions,
       schema,
       t,
+      type,
     ],
   );
 
