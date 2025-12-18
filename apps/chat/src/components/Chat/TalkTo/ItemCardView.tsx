@@ -20,7 +20,6 @@ import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
-import { ApplicationStatus } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -95,13 +94,9 @@ export const ItemCardView = <T extends MarketplaceEntity>({
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
-  const { isLoggedOut } = getEntityStatus(entity);
+  const { isError } = getEntityStatus(entity);
 
-  const hasError =
-    !!isUnavailableModel ||
-    isLoggedOut ||
-    (isDialAiEntityModel(entity) &&
-      entity.functionStatus !== ApplicationStatus.DEPLOYED);
+  const hasDisplayError = !!isUnavailableModel || isError;
 
   const disabledActions = useMemo(() => {
     const baseActions = isDialAiEntityModel(entity)
@@ -155,7 +150,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
-        hasError && 'border-error',
+        hasDisplayError && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
         className,

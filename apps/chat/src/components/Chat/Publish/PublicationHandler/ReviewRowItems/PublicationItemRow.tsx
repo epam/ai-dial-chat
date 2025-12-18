@@ -1,6 +1,6 @@
 import { IconDownload } from '@tabler/icons-react';
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -62,8 +62,12 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     PublicationSelectors.selectPublicVersionGroups,
   );
 
-  const { watch } = useFormContext<PublicationRequestFormData>();
-  const publishToUrl = watch(PublishRequestFieldsNames.PUBLISH_TO_URL);
+  const publishToUrl = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.PUBLISH_TO_URL
+  >({
+    name: PublishRequestFieldsNames.PUBLISH_TO_URL,
+  });
 
   const defaultVersion =
     editState?.version ?? item.publicationInfo?.version ?? NA_VERSION;
