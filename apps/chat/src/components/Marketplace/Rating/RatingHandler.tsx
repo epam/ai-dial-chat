@@ -7,6 +7,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 const starIdxs = [1, 2, 3, 4, 5];
 
 interface Props {
@@ -50,19 +52,17 @@ export const RatingHandler = ({ onRatingApply, onClose }: Props) => {
         ))}
       </div>
       <div className="mt-3 flex w-full justify-end gap-2">
-        <button
+        <DialButton
           onClick={onClose}
-          className="rounded border border-primary  px-3 py-2 text-sm font-semibold"
-        >
-          {t('Cancel')}
-        </button>
-        <button
+          variant={ButtonVariant.Secondary}
+          label={t('Cancel')}
+        />
+        <DialButton
           disabled={!selectedRating}
-          className="rounded bg-accent-primary px-3 py-2 text-sm font-semibold disabled:bg-controls-disable disabled:text-controls-disable"
+          variant={ButtonVariant.Primary}
+          label={t('Send')}
           onClick={onRatingApply}
-        >
-          {t('Send')}
-        </button>
+        />
       </div>
     </>
   );

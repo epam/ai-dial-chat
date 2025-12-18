@@ -179,7 +179,7 @@ dialTest(
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
         );
         await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.loginButton,
+          toolsetEditorViewForm.logoutButton,
           SignInButtonTitles.logOut,
         );
       },
@@ -250,7 +250,7 @@ dialTest(
     await dialTest.step(
       'Click on "Log out" btn and verify preview card label is changed',
       async () => {
-        await toolsetEditorViewForm.clickLoginButton();
+        await toolsetEditorViewForm.clickLogoutButton();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.logOutDialogTitle,
         );
@@ -307,7 +307,7 @@ dialTest(
     await dialTest.step(
       'Click on "Log out" btn and proceed to "General Info" step',
       async () => {
-        await toolsetEditorViewForm.clickLoginButton();
+        await toolsetEditorViewForm.clickLogoutButton();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
           { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
@@ -370,7 +370,7 @@ dialTest(
     await dialTest.step(
       'Click on "Log out" btn and set a new endpoint value',
       async () => {
-        await toolsetEditorViewForm.clickLoginButton();
+        await toolsetEditorViewForm.clickLogoutButton();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
           { expectedName: updatedName, expectedCredsLabel: Creds.loggedOut },
@@ -547,14 +547,14 @@ dialTest(
           { expectedCredsLabel: Creds.myCreds },
         );
         await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.loginButton,
+          toolsetEditorViewForm.logoutButton,
           SignInButtonTitles.logOut,
         );
       },
     );
 
     await dialTest.step('Log-out the toolset', async () => {
-      await toolsetEditorViewForm.clickLoginButton();
+      await toolsetEditorViewForm.clickLogoutButton();
       await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
       await toolsetEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
         {
@@ -578,7 +578,7 @@ dialTest(
           { expectedCredsLabel: Creds.myCreds },
         );
         await toolsetEditorViewFormAssertion.assertElementText(
-          toolsetEditorViewForm.loginButton,
+          toolsetEditorViewForm.logoutButton,
           SignInButtonTitles.logOut,
         );
       },

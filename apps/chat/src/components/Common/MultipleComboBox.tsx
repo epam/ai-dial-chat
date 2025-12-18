@@ -5,7 +5,6 @@ import {
   size,
   useFloating,
 } from '@floating-ui/react';
-import { IconX } from '@tabler/icons-react';
 import {
   FC,
   RefObject,
@@ -24,6 +23,7 @@ import { Translation } from '@/src/types/translation';
 
 import { Tooltip } from './Tooltip';
 
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 import { useCombobox, useMultipleSelection } from 'downshift';
 
 interface getFilteredItemsArgs<T> {
@@ -284,20 +284,18 @@ export function MultipleComboBox<T>({
                           {getItemLabel(selectedItemForRender)}
                         </span>
                       )}
-                      <button
+                      <DialCloseButton
                         data-qa={`unselect-item-${getItemValue(
                           selectedItemForRender,
                         )}`}
                         disabled={disabled}
-                        className={disabled ? 'cursor-not-allowed' : ''}
-                        onClick={(e) => {
+                        onClose={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
                           removeSelectedItem(selectedItemForRender);
                         }}
-                      >
-                        <IconX size={14} className="text-secondary" />
-                      </button>
+                        size={14}
+                      />
                     </span>
                   </Tooltip>
                 );
@@ -363,17 +361,16 @@ export function MultipleComboBox<T>({
           </ul>
         </div>
         {hasDeleteAll && selectedItems.length > 0 ? (
-          <button
-            className={classNames('py-2', disabled && 'cursor-not-allowed')}
+          <DialCloseButton
+            className="py-2 text-primary"
             disabled={disabled}
-            onClick={(e) => {
+            onClose={(e) => {
               e.stopPropagation();
               setSelectedItems([]);
               onChangeSelectedItems([]);
             }}
-          >
-            <IconX height={18} width={18} />
-          </button>
+            size={18}
+          />
         ) : null}
       </div>
     </Tooltip>

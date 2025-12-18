@@ -1,5 +1,3 @@
-import { Tags } from '@/src/ui/domData';
-
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
@@ -117,7 +115,6 @@ export const UploadFromDeviceModalSelectors = {
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
   addMoreFiles: '[data-qa="add-more-files"]',
-  deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
   fileExtension: '[data-qa="file-extension"]',
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
@@ -170,7 +167,6 @@ export const PublishingDialogSelectors = {
 export const ChangePathElement = {
   changePathContainer: '[data-qa="change-path-container"]',
   path: '[data-qa="path"]',
-  changeButton: '[data-qa="change-button"]',
 };
 
 export const PublishingApprovalModalSelectors = {
@@ -344,7 +340,6 @@ export const AddToolsetSettingsFormSelector = {
   oauthLabel: '[data-qa="oauth-label"]',
   authDetailsContainer: '[data-qa="auth-details-container"]',
   authLoginOption: '#auth-login-option',
-  loginButton: '[data-qa="log-in-button"]',
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',

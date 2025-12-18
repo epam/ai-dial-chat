@@ -3,12 +3,11 @@ import {
   ElementActionabilityState,
   ElementState,
   ExpectedConstants,
-  ExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { PublishingRequestDialog } from '@/src/ui/webElements';
-import { expect } from '@playwright/test';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 export class PublishingRequestDialogAssertion extends BaseAssertion {
   readonly publishingRequestDialog: PublishingRequestDialog;
@@ -36,21 +35,15 @@ export class PublishingRequestDialogAssertion extends BaseAssertion {
     );
 
     if (expectedState === 'disabled') {
-      const textColor =
-        await this.publishingRequestDialog.sendRequestButton.getComputedStyleProperty(
-          Styles.color,
-        );
-      expect
-        .soft(textColor[0], ExpectedMessages.elementColorIsValid)
-        .toBe(Colors.controlsTextDisable);
+      await this.assertElementBackgroundColors(
+        this.publishingRequestDialog.sendRequestButton,
+        ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsBgDisable),
+      );
     } else {
-      const backgroundColor =
-        await this.publishingRequestDialog.sendRequestButton.getComputedStyleProperty(
-          Styles.backgroundColor,
-        );
-      expect
-        .soft(backgroundColor[0], ExpectedMessages.buttonBackgroundColorIsValid)
-        .toBe(Colors.textPermanent);
+      await this.assertElementBackgroundColors(
+        this.publishingRequestDialog.sendRequestButton,
+        ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+      );
     }
   }
 

@@ -13,6 +13,8 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean | string;
   tooltip?: ReactNode;
@@ -47,16 +49,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
 
           {type === 'password' && (
-            <button
-              className="button absolute right-0 top-1/2 -translate-y-1/2"
+            <DialButton
+              className="absolute right-0 top-1/2 -translate-y-1/2 px-3 text-secondary"
               onClick={handleTogglePassword}
-            >
-              {isVisible ? (
-                <IconEye size={18} className="text-secondary" />
-              ) : (
-                <IconEyeOff size={18} className="text-secondary" />
-              )}
-            </button>
+              iconBefore={
+                isVisible ? <IconEye size={18} /> : <IconEyeOff size={18} />
+              }
+            />
           )}
         </div>
       </Tooltip>

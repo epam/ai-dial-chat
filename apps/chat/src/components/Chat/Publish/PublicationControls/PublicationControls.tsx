@@ -28,6 +28,8 @@ import {
 
 import { TEntity } from './view-props';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 interface Props<TEntity> {
   entity: TEntity;
   children?: React.ReactNode;
@@ -184,45 +186,37 @@ function PublicationControlsView({
       )}
       data-qa="chat-review-container"
     >
-      <button
-        className={classNames(
-          'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
-          publicationIdx !== 0 && 'hover:bg-layer-4',
-        )}
+      <DialButton
+        variant={ButtonVariant.Secondary}
+        className="p-2 disabled:bg-layer-2"
         data-qa="prev-chat-review-button"
         disabled={publicationIdx === 0}
         onClick={() => toggleResource(-1)}
-      >
-        <IconPlayerPlay
-          className="shrink-0 rotate-180"
-          height={18}
-          width={18}
-        />
-      </button>
-      <button
-        className={classNames(
-          'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
-          resourcesToReview.length - 1 && 'hover:bg-layer-4',
-        )}
+        iconAfter={
+          <IconPlayerPlay
+            className="shrink-0 rotate-180"
+            height={18}
+            width={18}
+          />
+        }
+      />
+      <DialButton
+        variant={ButtonVariant.Secondary}
+        className="p-2 disabled:bg-layer-2"
         data-qa="next-chat-review-button"
         disabled={publicationIdx === resourcesToReview.length - 1}
         onClick={() => toggleResource(1)}
-      >
-        <IconPlayerPlay className="shrink-0" height={18} width={18} />
-      </button>
-      <button
+        iconBefore={
+          <IconPlayerPlay className="shrink-0" height={18} width={18} />
+        }
+      />
+      <DialButton
+        variant={ButtonVariant.Primary}
         onClick={handleBackToPublication}
         data-qa="back-to-publication"
         disabled={isMessageStreaming}
-        className={classNames(
-          'button button-primary flex max-h-[38px] items-center',
-          {
-            'cursor-not-allowed': isMessageStreaming,
-          },
-        )}
-      >
-        {t('Back to publication request')}
-      </button>
+        label={t('Back to publication request')}
+      />
       {children}
     </div>
   );

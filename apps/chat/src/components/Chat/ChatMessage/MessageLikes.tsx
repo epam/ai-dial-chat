@@ -7,11 +7,11 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { Button } from '@/src/components/Common/Button';
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface LikeItemProps {
   targetStatus: LikeState;
@@ -31,18 +31,21 @@ const DesktopLikeView = ({
   dataQa,
 }: LikeItemProps) => (
   <Tooltip placement="top" isTriggerClickable={!wasClicked} tooltip={label}>
-    <Button
+    <DialButton
       onClick={() => {
         if (!wasClicked) {
           onLike(targetStatus);
         }
       }}
-      className={!wasClicked ? 'text-secondary' : 'text-accent-primary'}
+      className={
+        !wasClicked
+          ? 'text-secondary hover:enabled:text-accent-primary'
+          : 'text-accent-primary'
+      }
       disabled={wasClicked}
       data-qa={dataQa}
-    >
-      <Icon size={18} />
-    </Button>
+      iconBefore={<Icon size={18} />}
+    />
   </Tooltip>
 );
 

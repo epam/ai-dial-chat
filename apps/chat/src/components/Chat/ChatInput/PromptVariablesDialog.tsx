@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -32,6 +31,12 @@ import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
+
+import {
+  ButtonVariant,
+  DialButton,
+  DialCloseButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
@@ -186,12 +191,10 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          onClick={onClose}
-        >
-          <IconX size={24} />
-        </button>
+        <DialCloseButton
+          className="absolute right-2 top-2 rounded"
+          onClose={onClose}
+        />
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key} data-qa="variable">
@@ -232,13 +235,12 @@ export const PromptVariablesDialog: FC<Props> = ({
         ))}
 
         <div className="mt-1 flex justify-end">
-          <button
+          <DialButton
+            label={t('Submit')}
             type="submit"
-            className="button button-primary"
+            variant={ButtonVariant.Primary}
             data-qa="submit-variable"
-          >
-            {t('Submit')}
-          </button>
+          />
         </div>
       </form>
     </div>

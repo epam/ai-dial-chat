@@ -30,6 +30,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
@@ -163,14 +165,13 @@ export const GeneralForm = ({
           tooltip={t('Fill in all required fields')}
           hideTooltip={isValid || isEditing}
         >
-          <button
-            className="button button-primary py-2"
+          <DialButton
             data-qa="save-entity-general-info"
             type="submit"
             disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
-          >
-            {t('Next')}
-          </button>
+            label={t('Next')}
+            variant={ButtonVariant.Primary}
+          />
         </Tooltip>
       </div>
     </form>

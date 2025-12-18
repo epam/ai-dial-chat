@@ -29,6 +29,7 @@ import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface RenameConversationViewProps {
   renamingConversation: ConversationInfo;
@@ -152,24 +153,23 @@ function RenameConversationView({
         autoComplete="off"
       />
       <div className="relative flex justify-end gap-3">
-        <button
-          className="button button-secondary py-2"
+        <DialButton
           onClick={handleClose}
           data-qa="cancel"
-        >
-          {t('Cancel')}
-        </button>
-        <button
-          className="button button-primary py-2 disabled:cursor-not-allowed"
+          label={t('Cancel')}
+          variant={ButtonVariant.Secondary}
+        />
+
+        <DialButton
+          label={t('Save')}
+          variant={ButtonVariant.Primary}
           onClick={handleRename}
           data-qa="save"
           disabled={
             !newConversationName.trim() ||
             newConversationName === originConversationName
           }
-        >
-          {t('Save')}
-        </button>
+        />
       </div>
     </Modal>
   );

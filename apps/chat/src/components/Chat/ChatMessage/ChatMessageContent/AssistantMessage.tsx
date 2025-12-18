@@ -41,6 +41,7 @@ import {
   MessageFormValue,
   onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 
 interface AssistantMessageProps {
@@ -248,22 +249,21 @@ export const AssistantMessage = memo(function AssistantMessage({
 
         <div className="flex items-center justify-end">
           <div className="relative flex gap-3">
-            <button
-              className="button button-secondary"
+            <DialButton
+              label={t('Cancel')}
+              variant={ButtonVariant.Secondary}
               onClick={handleCancelEditing}
               data-qa="cancel"
-            >
-              {t('Cancel')}
-            </button>
+            />
+
             {!isInputHidden && (
-              <button
-                className="button button-primary"
+              <DialButton
+                label={t('Save & Submit')}
+                variant={ButtonVariant.Primary}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={!messageContent}
                 data-qa="save-and-submit"
-              >
-                {t('Save & Submit')}
-              </button>
+              />
             )}
             <div ref={anchorRef} className="absolute bottom-0"></div>
           </div>
