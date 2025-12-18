@@ -1,5 +1,5 @@
-import { useTranslation } from '@/src/hooks/useTranslation';
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 

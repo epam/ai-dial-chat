@@ -203,9 +203,8 @@ export const useFileManager = () => {
     return new Set(paths);
   }, []);
 
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
-    initialExpandedPaths,
-  );
+  const [expandedPaths, setExpandedPaths] =
+    useState<Set<string>>(initialExpandedPaths);
 
   useEffect(() => {
     setExpandedPaths((prev) => {
