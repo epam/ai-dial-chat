@@ -126,7 +126,7 @@ const LogsFooter = () => {
   );
 };
 
-export const ApplicationLogsView = () => {
+const ApplicationLogsView = () => {
   const dispatch = useAppDispatch();
 
   const handleClose = useCallback(() => {
