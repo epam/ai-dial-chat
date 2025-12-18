@@ -298,7 +298,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
           )}
           <PreviewModeButton
             mode={PreviewMode.closed}
-            className="max-xl:hidden"
+            className="max-md:hidden"
           />
         </div>
       </div>

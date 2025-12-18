@@ -55,7 +55,10 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
         <ChipTitle name={name} version={version} isError={isError} />
       </div>
       <button
-        className="shrink-0 text-secondary hover:text-primary"
+        className={classNames(
+          'shrink-0 text-secondary',
+          isError ? 'hover:text-error' : 'hover:text-accent-primary',
+        )}
         onClick={handleRemove}
       >
         <IconX size={18} />
