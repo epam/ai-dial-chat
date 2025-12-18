@@ -172,6 +172,7 @@ export const CustomLogoSelect = ({
           customButtonLabel={t('Select file')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
+          warningMessage={warningMessage}
         />
       )}
 

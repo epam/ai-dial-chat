@@ -1,5 +1,5 @@
 import { useId } from '@floating-ui/react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -49,6 +49,7 @@ interface Props {
   forceShowSelectCheckBox?: boolean;
   forceHideSelectFolders?: boolean;
   sourceFilters?: Set<FileSourceType>;
+  warningMessage?: string;
 }
 
 export const FileManagerModal = memo(
@@ -64,6 +65,7 @@ export const FileManagerModal = memo(
     forceHideSelectFolders,
     onClose,
     sourceFilters,
+    warningMessage,
   }: Props) => {
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
@@ -343,6 +345,7 @@ export const FileManagerModal = memo(
                   })}
               </p>
             )}
+            {warningMessage && <p>{warningMessage}</p>}
           </div>
 
           <div className="flex w-full grow overflow-auto">
