@@ -1,14 +1,26 @@
+import { useEffect } from 'react';
+
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { FilesActions } from '@/src/store/actions';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
+
 import { OperationLoaderModal } from './OperationLoaderModal';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileManager, DialLoader } from '@epam/ai-dial-ui-kit';
 
 export const FileManager: React.FC = () => {
   const { t } = useTranslation(Translation.SideBar);
+  const dispatch = useAppDispatch();
+  const initialDataStatus = useAppSelector(
+    SettingsSelectors.selectInitialDataStatus,
+  );
+
   const {
     currentPath,
     setCurrentPath,
@@ -44,6 +56,12 @@ export const FileManager: React.FC = () => {
     handleUploadArchive,
     handleUnshareFile,
   } = useFileManager();
+
+  useEffect(() => {
+    if (initialDataStatus === UploadStatus.LOADED) {
+      dispatch(FilesActions.getFilesWithFolders({}));
+    }
+  }, [initialDataStatus, dispatch]);
 
   return (
     <div className="flex w-full grow overflow-auto">

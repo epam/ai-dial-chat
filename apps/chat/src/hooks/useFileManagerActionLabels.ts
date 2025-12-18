@@ -22,7 +22,9 @@ const ACTION_LABELS = {
 
 type FileAction = keyof typeof ACTION_LABELS;
 
-const TAB_ACTIONS: Record<DialFileManagerTabs, FileAction[]> = {
+type ActionsByTab = Record<DialFileManagerTabs, FileAction[]>;
+
+const DEFAULT_TAB_ACTIONS: ActionsByTab = {
   my_files: [
     DialFileManagerActions.Duplicate,
     DialFileManagerActions.Copy,
@@ -43,16 +45,25 @@ const TAB_ACTIONS: Record<DialFileManagerTabs, FileAction[]> = {
 const buildLabelMap = (actions: FileAction[], t: TranslationFn) =>
   Object.fromEntries(actions.map((a) => [a, ACTION_LABELS[a](t)]));
 
+export interface UseFileManagerActionLabelsOptions {
+  actionsByTab?: ActionsByTab;
+  withTreeRename?: boolean;
+}
+
 /**
  * Returns translated action label maps for bulk, grid, and tree views.
  */
 export function useFileManagerActionLabels(
   activeTab: DialFileManagerTabs,
   t: TranslationFn,
+  {
+    actionsByTab = DEFAULT_TAB_ACTIONS,
+    withTreeRename = true,
+  }: UseFileManagerActionLabelsOptions = {},
 ) {
   const baseActions = useMemo<FileAction[]>(
-    () => TAB_ACTIONS[activeTab],
-    [activeTab],
+    () => actionsByTab[activeTab] ?? [],
+    [actionsByTab, activeTab],
   );
 
   const bulkActionLabels = useMemo(
@@ -64,10 +75,10 @@ export function useFileManagerActionLabels(
 
   const treeActions = useMemo<FileAction[]>(
     () =>
-      activeTab === DialFileManagerTabs.MyFiles
-        ? [...baseActions, 'rename']
+      withTreeRename && activeTab === DialFileManagerTabs.MyFiles
+        ? [...baseActions, DialFileManagerActions.Rename]
         : baseActions,
-    [activeTab, baseActions],
+    [withTreeRename, activeTab, baseActions],
   );
 
   const treeActionLabels = useMemo(
@@ -75,5 +86,9 @@ export function useFileManagerActionLabels(
     [treeActions, t],
   );
 
-  return { bulkActionLabels, gridActionLabels, treeActionLabels };
+  return {
+    bulkActionLabels,
+    gridActionLabels,
+    treeActionLabels,
+  };
 }

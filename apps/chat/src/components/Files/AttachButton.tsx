@@ -190,7 +190,6 @@ export const AttachButton = ({
           headerLabel={t(label)}
           customButtonLabel={t('Attach')}
           initialSelectedFilesIds={selectedFilesIds}
-          showTooltip
           onClose={handleCloseFileManagerModal}
         />
       )}

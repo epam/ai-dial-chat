@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useFileManagerActionLabels } from '@/src/hooks/useFileManagerActionLabels';
+import {
+  UseFileManagerActionLabelsOptions,
+  useFileManagerActionLabels,
+} from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -22,7 +25,6 @@ import { ShareActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
 import {
@@ -35,7 +37,15 @@ import {
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 
-export const useFileManager = () => {
+interface UseFileManagerOptions {
+  actionLabelsOptions?: UseFileManagerActionLabelsOptions;
+  availableTabs?: Set<string>;
+}
+
+export const useFileManager = ({
+  actionLabelsOptions,
+  availableTabs,
+}: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.SideBar);
 
@@ -45,9 +55,6 @@ export const useFileManager = () => {
   const areFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
-  );
-  const initialDataStatus = useAppSelector(
-    SettingsSelectors.selectInitialDataStatus,
   );
   const isAnyOperationInProgress = useAppSelector(
     FilesSelectors.selectIsAnyFileOperationInProgress,
@@ -94,11 +101,12 @@ export const useFileManager = () => {
   });
   const previousActiveTabRef = useRef(activeTab);
 
-  useEffect(() => {
-    if (initialDataStatus === UploadStatus.LOADED) {
-      dispatch(FilesActions.getFilesWithFolders({}));
+  const filteredTabs = useMemo(() => {
+    if (!availableTabs || !availableTabs.size) {
+      return tabs;
     }
-  }, [initialDataStatus, dispatch]);
+    return tabs?.filter((tab) => availableTabs.has(tab.id));
+  }, [availableTabs]);
 
   useEffect(() => {
     if (currentPath && !isRootId(currentPath)) {
@@ -234,7 +242,7 @@ export const useFileManager = () => {
   );
 
   const { bulkActionLabels, treeActionLabels, gridActionLabels } =
-    useFileManagerActionLabels(activeTab, t);
+    useFileManagerActionLabels(activeTab, t, actionLabelsOptions);
 
   const renderDeleteConfirmationTitle = useCallback(
     (files: string[]) => {
@@ -410,13 +418,13 @@ export const useFileManager = () => {
 
   const toolbarOptions = useMemo(
     () => ({
-      tabs: tabs,
+      tabs: filteredTabs,
       activeTab: activeTab,
       onTabChange: handleTabChange,
       newButtonVariant: ButtonVariant.Primary,
       newActionLabels: newActionLabels,
     }),
-    [tabs, activeTab, handleTabChange, newActionLabels],
+    [filteredTabs, activeTab, handleTabChange, newActionLabels],
   );
 
   const destinationFolderPopupOptions = useMemo(
