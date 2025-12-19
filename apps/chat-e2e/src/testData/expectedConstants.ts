@@ -357,6 +357,7 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
+  filesManagerPath: '/files-manager',
 };
 
 export enum Types {
@@ -482,9 +483,11 @@ export const API = {
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
   toolsetsHost: () => `${API.api}/toolsets-listing`,
+  filePropsHost: '/files-manager.json',
   filesHostSegment: 'files',
   filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
   fileHost: () => `/api/${API.filesHostSegment}`,
+  downloadFilesHost: () => `${API.fileHost()}/download`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
@@ -728,3 +731,9 @@ export enum SignInButtonTitles {
   logIn = 'Log in',
   logOut = 'Log out',
 }
+
+export const ExpectedConfirmationPopupData = {
+  deleteItemHeader: 'Confirm Deleting Item',
+  deleteItemContent: (item: string) =>
+    `Are you sure you want to delete “${item}”?`,
+};

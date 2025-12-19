@@ -1062,6 +1062,9 @@ dialTest(
     let secondConfigAppMinorV: DialAIEntityModel;
     let secondConfigAppMajorV: DialAIEntityModel;
     let sortedVersions: string[];
+    const expectedBorderColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentPrimary,
+    );
 
     await dialTest.step(
       'Publish two custom applications by admin user, the second one has two versions',
@@ -1146,6 +1149,10 @@ dialTest(
           firstConfigApp.name,
           ExpectedMessages.recentEntitiesIsOnTop,
         );
+        await talkToAgentDialogAssertion.assertElementBorderColors(
+          talkToAgentDialog.getTalkToAgent(firstConfigApp),
+          expectedBorderColor,
+        );
       },
     );
 
@@ -1213,6 +1220,10 @@ dialTest(
           recentTalkTo[0],
           secondConfigAppMinorV.name,
           ExpectedMessages.recentEntitiesIsOnTop,
+        );
+        await talkToAgentDialogAssertion.assertElementBorderColors(
+          talkToAgentDialog.getTalkToAgent(secondConfigAppMinorV),
+          expectedBorderColor,
         );
       },
     );

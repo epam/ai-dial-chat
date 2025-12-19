@@ -26,7 +26,6 @@ export const FilesNavigation = () => {
       tooltip={t('Files')}
       Icon={IconFolderOpen}
       selected={router.route === Routes.FilesManager}
-      dataQa="files-manager"
       caption={t('Files')}
     />
   );

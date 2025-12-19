@@ -80,3 +80,20 @@ export enum OAuthOptions {
   WithLogin = 'With login',
   WithLoginAndConfig = 'With login & config',
 }
+
+export enum FilesManagerToolbarTabs {
+  MyFiles = 'My Files',
+  SharedWithMe = 'Shared with Me',
+  Organization = 'Organization',
+}
+
+export enum FileManagerColumnKey {
+  Name = 'name',
+  UpdatedAt = 'updatedAt',
+  Size = 'size',
+  Author = 'author',
+  Owner = 'owner',
+  Path = 'path',
+  Actions = '__actions',
+  Select = '__select'
+}

@@ -64,7 +64,7 @@ export const FileManager: React.FC = () => {
   }, [initialDataStatus, dispatch]);
 
   return (
-    <div className="flex w-full grow overflow-auto">
+    <div className="flex w-full grow overflow-auto" data-qa="file-manager">
       <DialFileManager
         path={currentPath}
         onPathChange={setCurrentPath}

@@ -18,6 +18,7 @@ export enum Attributes {
   target = 'target',
   dataQA = 'data-qa',
   ariaSelected = 'aria-selected',
+  ariaChecked = 'aria-checked',
   id = 'id',
   ariaExpanded = 'aria-expanded',
   ariaDetails = 'aria-details',
@@ -35,4 +36,5 @@ export enum AttributeValues {
   copyLink = 'copy-link',
   close = 'close',
   removeFile = 'remove-file',
+  mixed = 'mixed'
 }

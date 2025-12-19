@@ -348,7 +348,7 @@ export const FileManagerModal = memo(
             {warningMessage && <p>{warningMessage}</p>}
           </div>
 
-          <div className="flex w-full grow overflow-auto">
+          <div className="flex w-full grow overflow-auto" data-qa="file-manager">
             <DialFileManager
               className="px-0 pb-5"
               path={currentPath}
