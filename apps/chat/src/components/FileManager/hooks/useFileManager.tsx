@@ -105,8 +105,11 @@ export const useFileManager = ({
       total: 10,
     });
 
-    return { title, text, files } as FilesUploadingModalOptions;
-  }, [isUploadingFiles, uploadingFiles, t]);
+    const onCancel = () =>
+      dispatch(FilesActions.cancelUploadFiles(uploadingFilesIds));
+
+    return { title, text, files, onCancel } as FilesUploadingModalOptions;
+  }, [isUploadingFiles, uploadingFiles, uploadingFilesIds, t, dispatch]);
 
   const isLoadingSearchListing = useAppSelector(
     FilesSelectors.selectIsLoadingSearchListing,

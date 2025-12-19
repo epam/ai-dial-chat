@@ -16,7 +16,6 @@ import {
   switchMap,
   takeUntil,
   tap,
-  toArray,
 } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
@@ -670,6 +669,9 @@ const uploadFilesEpic: AppEpic = (action$) =>
       const relativePath =
         urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
 
+      const controller = new AbortController();
+      let canceled = false;
+
       const uploads$ = payload.files.map((file) => {
         const formData = new FormData();
         formData.append('attachment', file.fileContent, file.name);
@@ -686,6 +688,7 @@ const uploadFilesEpic: AppEpic = (action$) =>
           file.name,
           undefined,
           bucket,
+          { signal: controller.signal },
         ).pipe(
           filter(
             ({ percent, result }) =>
@@ -704,11 +707,22 @@ const uploadFilesEpic: AppEpic = (action$) =>
               percent: percent!,
             });
           }),
-          catchError(() => of(FilesActions.uploadFileFail({ id: fileId }))),
+          catchError(() =>
+            canceled ? EMPTY : of(FilesActions.uploadFileFail({ id: fileId })),
+          ),
         );
       });
 
       return merge(...uploads$).pipe(
+        takeUntil(
+          action$.pipe(
+            ofType(FilesActions.cancelUploadFiles.type),
+            tap(() => {
+              canceled = true;
+              controller.abort();
+            }),
+          ),
+        ),
         scan(
           (acc, action) => {
             if (
@@ -719,7 +733,6 @@ const uploadFilesEpic: AppEpic = (action$) =>
             }
 
             acc.total = payload.files.length;
-
             acc.lastAction = action;
             return acc;
           },
@@ -727,7 +740,8 @@ const uploadFilesEpic: AppEpic = (action$) =>
         ),
         mergeMap(({ finished, total, lastAction }) => {
           const action$ = of(lastAction);
-          if (finished === total) {
+
+          if (!canceled && finished === total) {
             return concat(
               action$,
               of(FilesActions.uploadFilesSuccess()),
@@ -741,7 +755,9 @@ const uploadFilesEpic: AppEpic = (action$) =>
 
           return action$;
         }),
-        catchError(() => of(FilesActions.uploadFilesFail())),
+        catchError(() =>
+          canceled ? EMPTY : of(FilesActions.uploadFilesFail()),
+        ),
       );
     }),
   );

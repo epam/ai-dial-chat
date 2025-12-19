@@ -24,6 +24,7 @@ import { MAX_FILE_SIZE_IN_BYTES } from '@/src/constants/file';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
+import { FilesUploadingModal } from '@/src/components/FileManager/FilesUploadingModal';
 import { OperationLoaderModal } from '@/src/components/FileManager/OperationLoaderModal';
 
 import {
@@ -279,6 +280,7 @@ export const FileManagerModal = memo(
       searchResultsUIKit,
 
       operationLoaderModal,
+      filesUploadingModalOptions,
 
       bulkActionsToolbarOptions,
       treeOptions,
@@ -388,6 +390,14 @@ export const FileManagerModal = memo(
                 title={operationLoaderModal.title}
                 text={operationLoaderModal.text}
                 onCancel={operationLoaderModal.onCancel}
+              />
+            )}
+            {filesUploadingModalOptions && (
+              <FilesUploadingModal
+                title={filesUploadingModalOptions.title}
+                text={filesUploadingModalOptions.text}
+                files={filesUploadingModalOptions.files}
+                onCancel={filesUploadingModalOptions.onCancel}
               />
             )}
           </div>

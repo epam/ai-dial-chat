@@ -908,6 +908,15 @@ export const filesSlice = createSlice({
     uploadFilesFail: (state) => {
       state.isUploadingFiles = false;
     },
+    cancelUploadFiles: (state, { payload }: PayloadAction<Set<string>>) => {
+      const uploadingIds = payload;
+
+      state.files = state.files.filter(
+        (f) => !uploadingIds.has(f.id) || f.status !== UploadStatus.LOADING,
+      );
+
+      state.isUploadingFiles = false;
+    },
 
     uploadArchive: (
       state,

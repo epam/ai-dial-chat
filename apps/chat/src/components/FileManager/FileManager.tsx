@@ -113,6 +113,7 @@ export const FileManager: React.FC = () => {
           title={filesUploadingModalOptions.title}
           text={filesUploadingModalOptions.text}
           files={filesUploadingModalOptions.files}
+          onCancel={filesUploadingModalOptions.onCancel}
         />
       )}
     </div>
