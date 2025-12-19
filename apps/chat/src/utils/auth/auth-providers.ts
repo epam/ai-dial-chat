@@ -7,8 +7,6 @@ import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
 
-
-
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
 import {
