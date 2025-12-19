@@ -41,12 +41,14 @@ const getAzureProvider = (config: ProviderConfig) =>
     : undefined;
 
 const getAzureB2CProvider = (config: ProviderConfig) =>
-  config.clientId && config.clientSecret && config.tenantId
+  config.clientId && config.clientSecret && config.tenantId && config.userFlow
     ? AzureB2CProvider({
         id: config.id,
+        issuer: config.issuer,
         clientId: config.clientId,
         clientSecret: config.clientSecret,
         tenantId: config.tenantId,
+        primaryUserFlow: config.userFlow,
         name: config.name ?? DEFAULT_NAME,
         authorization: {
           params: {
