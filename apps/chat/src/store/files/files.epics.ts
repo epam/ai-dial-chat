@@ -9,18 +9,25 @@ import {
   ignoreElements,
   iif,
   map,
+  merge,
   mergeMap,
   of,
+  scan,
   switchMap,
   takeUntil,
   tap,
+  toArray,
 } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { FileService } from '@/src/utils/app/data/file-service';
-import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
+import {
+  constructPath,
+  getDownloadPath,
+  triggerDownload,
+} from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getGeneratedFolderId,
@@ -654,19 +661,83 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
     ),
   );
 
+// const uploadFilesEpic: AppEpic = (action$) =>
+//   action$.pipe(
+//     ofType(FilesActions.uploadFiles.type),
+//     mergeMap(({ payload }) => {
+//       // TODO: refactor to use bucket and relativePath separately
+//       const urlParts = payload.destinationUrl.split('/');
+//       const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
+//       const relativePath =
+//         urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
+
+//       const uploadObservables = payload.files.map((file) => {
+//         const formData = new FormData();
+//         formData.append('attachment', file.fileContent, file.name);
+
+//         const fileId = constructPath(
+//           getFileRootId(bucket),
+//           relativePath,
+//           file.name,
+//         );
+
+//         return FileService.sendFile(
+//           formData,
+//           relativePath,
+//           file.name,
+//           undefined,
+//           bucket,
+//         ).pipe(
+//           filter(({ result }) => typeof result !== 'undefined'),
+//           map(({ result }) => result!),
+//           catchError(() => {
+//             return of(null);
+//           }),
+//         );
+//       });
+
+//       return forkJoin(uploadObservables).pipe(
+//         switchMap((results) => {
+//           const hasErrors = results.some((result) => result === null);
+
+//           if (hasErrors) {
+//             return of(FilesActions.uploadFilesFail());
+//           }
+
+//           return concat(
+//             of(FilesActions.uploadFilesSuccess()),
+//             of(
+//               FilesActions.getFilesWithFolders({
+//                 id: payload.destinationUrl,
+//               }),
+//             ),
+//           );
+//         }),
+//         catchError(() => {
+//           return of(FilesActions.uploadFilesFail());
+//         }),
+//       );
+//     }),
+//   );
+
 const uploadFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.uploadFiles.type),
     mergeMap(({ payload }) => {
-      // TODO: refactor to use bucket and relativePath separately
       const urlParts = payload.destinationUrl.split('/');
       const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
       const relativePath =
         urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
 
-      const uploadObservables = payload.files.map((file) => {
+      const uploads$ = payload.files.map((file) => {
         const formData = new FormData();
         formData.append('attachment', file.fileContent, file.name);
+
+        const fileId = constructPath(
+          getFileRootId(bucket),
+          relativePath,
+          file.name,
+        );
 
         return FileService.sendFile(
           formData,
@@ -675,34 +746,64 @@ const uploadFilesEpic: AppEpic = (action$) =>
           undefined,
           bucket,
         ).pipe(
-          filter(({ result }) => typeof result !== 'undefined'),
-          map(({ result }) => result!),
-          catchError(() => {
-            return of(null);
+          filter(
+            ({ percent, result }) =>
+              typeof percent !== 'undefined' || typeof result !== 'undefined',
+          ),
+          map(({ percent, result }) => {
+            if (result) {
+              return FilesActions.uploadFileSuccess({
+                apiResult: result,
+                showSuccessMessage: false,
+              });
+            }
+
+            return FilesActions.uploadFileTick({
+              id: fileId,
+              percent: percent!,
+            });
           }),
+          catchError(() => of(FilesActions.uploadFileFail({ id: fileId }))),
         );
       });
 
-      return forkJoin(uploadObservables).pipe(
-        switchMap((results) => {
-          const hasErrors = results.some((result) => result === null);
+      return merge(...uploads$).pipe(
+        scan(
+          (acc, action) => {
+            if (
+              action.type === FilesActions.uploadFileSuccess.type ||
+              action.type === FilesActions.uploadFileFail.type
+            ) {
+              acc.finished++;
+            }
 
-          if (hasErrors) {
-            return of(FilesActions.uploadFilesFail());
+            acc.total = payload.files.length;
+
+            acc.lastAction = action;
+            return acc;
+          },
+          { finished: 0, total: payload.files.length, lastAction: null as any },
+        ),
+        mergeMap(({ finished, total, lastAction }) => {
+          // always emit ticks or final file actions
+          const action$ = of(lastAction);
+
+          // when uploads completed → trigger post actions
+          if (finished === total) {
+            return concat(
+              action$,
+              of(FilesActions.uploadFilesSuccess()),
+              of(
+                FilesActions.getFilesWithFolders({
+                  id: payload.destinationUrl,
+                }),
+              ),
+            );
           }
 
-          return concat(
-            of(FilesActions.uploadFilesSuccess()),
-            of(
-              FilesActions.getFilesWithFolders({
-                id: payload.destinationUrl,
-              }),
-            ),
-          );
+          return action$;
         }),
-        catchError(() => {
-          return of(FilesActions.uploadFilesFail());
-        }),
+        catchError(() => of(FilesActions.uploadFilesFail())),
       );
     }),
   );

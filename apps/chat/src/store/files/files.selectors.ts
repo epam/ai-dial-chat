@@ -217,6 +217,11 @@ const selectIsAnyFileOperationInProgress = createSelector(
   },
 );
 
+const selectIsUploadingFiles = createSelector(
+  [rootSelector],
+  (state) => state.isUploadingFiles,
+);
+
 const selectIsCopyingFiles = createSelector(
   [rootSelector],
   (state) => state.isCopyingFiles,
@@ -313,4 +318,5 @@ export const FilesSelectors = {
   selectSearchResultsForFolder,
   selectIsMovingFiles,
   selectIsCopyingFiles,
+  selectIsUploadingFiles,
 };
