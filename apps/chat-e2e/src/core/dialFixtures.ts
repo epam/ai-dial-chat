@@ -38,6 +38,7 @@ import {
   FilesManagerCollapsibleSidebar,
   FilesManagerContainer,
   FilesManagerGrid,
+  FilesManagerModal,
   FilesManagerToolbar,
   FoldersTree,
   InformationModal,
@@ -441,8 +442,13 @@ const dialTest = test.extend<{
   filesManagerFoldersTree: FoldersTree;
   filesManagerGridRowDropdownMenu: Dropdown;
   filesManagerDeleteItemConfirmationPopup: ConfirmationPopup;
+  filesManagerModal: FilesManagerModal;
+  filesManagerModalManager: FilesManager;
+  filesManagerModalGrid: FilesManagerGrid;
+  filesManagerModalToolbar: FilesManagerToolbar;
   filesManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   filesManagerGridAssertion: FilesManagerGridAssertion;
+  filesManagerModalGridAssertion: FilesManagerGridAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1798,6 +1804,24 @@ const dialTest = test.extend<{
     );
     await use(filesManagerDeleteItemConfirmationPopup);
   },
+  filesManagerModal: async ({ page }, use) => {
+    const filesManagerModal = new FilesManagerModal(page);
+    await use(filesManagerModal);
+  },
+  filesManagerModalManager: async ({ filesManagerModal }, use) => {
+    const filesManagerModalManager = filesManagerModal.getFilesManager();
+    await use(filesManagerModalManager);
+  },
+  filesManagerModalGrid: async ({ filesManagerModalManager }, use) => {
+    const filesManagerModalGrid =
+      filesManagerModalManager.getFilesManagerGrid();
+    await use(filesManagerModalGrid);
+  },
+  filesManagerModalToolbar: async ({ filesManagerModalManager }, use) => {
+    const filesManagerModalToolbar =
+      filesManagerModalManager.getFilesManagerToolbar();
+    await use(filesManagerModalToolbar);
+  },
   filesManagerDeleteItemConfirmationPopupAssertion: async (
     { filesManagerDeleteItemConfirmationPopup },
     use,
@@ -1811,6 +1835,12 @@ const dialTest = test.extend<{
       filesManagerGrid,
     );
     await use(filesManagerGridAssertion);
+  },
+  filesManagerModalGridAssertion: async ({ filesManagerModalGrid }, use) => {
+    const filesManagerModalGridAssertion = new FilesManagerGridAssertion(
+      filesManagerModalGrid,
+    );
+    await use(filesManagerModalGridAssertion);
   },
 });
 

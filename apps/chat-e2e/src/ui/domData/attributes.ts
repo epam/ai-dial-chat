@@ -36,5 +36,5 @@ export enum AttributeValues {
   copyLink = 'copy-link',
   close = 'close',
   removeFile = 'remove-file',
-  mixed = 'mixed'
+  mixed = 'mixed',
 }

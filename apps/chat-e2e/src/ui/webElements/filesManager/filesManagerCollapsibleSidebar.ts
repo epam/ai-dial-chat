@@ -2,7 +2,6 @@ import { FilesManagerSidebarSelectors } from '@/src/ui/selectors';
 import { BaseElement, Button, FoldersTree } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
-
 export class FilesManagerCollapsibleSidebar extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, FilesManagerSidebarSelectors.container, parentLocator);

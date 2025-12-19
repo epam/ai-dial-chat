@@ -1,6 +1,6 @@
+import { FilesManager } from '@/src/ui/webElements';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Header } from '@/src/ui/webElements/header';
-import { FilesManager } from '@/src/ui/webElements';
 
 export class FilesManagerContainer extends BaseLayoutContainer<Header> {
   private filesManager!: FilesManager;

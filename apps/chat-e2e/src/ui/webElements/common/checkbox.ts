@@ -7,5 +7,7 @@ export class Checkbox extends BaseElement {
     super(page, CheckboxSelectors.checkboxContainer, parentLocator);
   }
 
-  public checkboxInput = this.getChildElementBySelector(CheckboxSelectors.checkbox);
+  public checkboxInput = this.getChildElementBySelector(
+    CheckboxSelectors.checkbox,
+  );
 }

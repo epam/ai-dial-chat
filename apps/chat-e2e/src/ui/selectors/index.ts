@@ -11,6 +11,6 @@ export * from './folderSelectors';
 export * from './overlaySelectors';
 export * from './marketplaceSelectors';
 export * from './commonSelectors';
-export * from './filesManagerSelectors'
+export * from './filesManagerSelectors';
 export { EntitySelectors } from '@/src/ui/selectors/entitySelectors';
 export * from './commonSelectors';

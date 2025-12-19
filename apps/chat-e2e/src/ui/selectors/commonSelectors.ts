@@ -59,7 +59,7 @@ export const CheckboxSelectors = {
 };
 
 export const PopupSelectors = {
-  popupContainer: '[role="dialog"]',
+  popupContainer: '[role="dialog"][aria-modal="true"]',
   popupHeader: '#dial-popup-heading',
   popupContent: '[aria-label="popup-description"]',
 };

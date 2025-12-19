@@ -734,6 +734,9 @@ export enum SignInButtonTitles {
 
 export const ExpectedConfirmationPopupData = {
   deleteItemHeader: 'Confirm Deleting Item',
+  deleteItemsHeader: 'Confirm Deleting Items',
   deleteItemContent: (item: string) =>
     `Are you sure you want to delete “${item}”?`,
+  deleteItemsContent: (count: number) =>
+    `Do you want to delete the following ${count} items?`,
 };

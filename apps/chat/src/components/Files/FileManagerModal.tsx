@@ -322,7 +322,11 @@ export const FileManagerModal = memo(
         <div className="flex h-full flex-col overflow-auto px-3 py-4 md:p-6">
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
-              <h2 id={headingId} className="text-base font-semibold">
+              <h2
+                id={headingId}
+                className="text-base font-semibold"
+                data-qa="modal-title"
+              >
                 {headerLabel}
               </h2>
             </div>
@@ -348,7 +352,10 @@ export const FileManagerModal = memo(
             {warningMessage && <p>{warningMessage}</p>}
           </div>
 
-          <div className="flex w-full grow overflow-auto" data-qa="file-manager">
+          <div
+            className="flex w-full grow overflow-auto"
+            data-qa="file-manager"
+          >
             <DialFileManager
               className="px-0 pb-5"
               path={currentPath}

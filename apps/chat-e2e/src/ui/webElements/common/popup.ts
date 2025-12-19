@@ -2,7 +2,6 @@ import { PopupSelectors } from '@/src/ui/selectors';
 import { BaseElement, Button } from '@/src/ui/webElements';
 import { Page } from '@playwright/test';
 
-
 export class Popup extends BaseElement {
   constructor(page: Page) {
     super(page, PopupSelectors.popupContainer);

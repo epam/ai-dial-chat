@@ -15,11 +15,16 @@ import {
   Attributes,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
-import { BaseElement, FileModalSection, Tab } from '@/src/ui/webElements';
+import {
+  BaseElement,
+  Button,
+  FileModalSection,
+  Tab,
+} from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Locator, expect } from '@playwright/test';
+import { Locator } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
@@ -124,16 +129,18 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
     fileApiHelper,
-    confirmationDialog,
     conversationData,
     sendMessage,
     dataInjector,
     conversations,
     attachmentDropdownMenu,
+    filesManagerModalGrid,
+    filesManagerModalToolbar,
+    filesManagerDeleteItemConfirmationPopup,
+    filesManagerDeleteItemConfirmationPopupAssertion,
     localStorageManager,
-    manageAttachmentsAssertion,
+    filesManagerModalGridAssertion,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -162,7 +169,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Attach files" modal for created conversation and check attached files',
+      'Open "Files manager" modal for created conversation and check attached files',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -172,35 +179,37 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of attachedFiles) {
-          await attachFilesModal.checkAttachedFile(
-            file,
-            FileModalSection.AllFiles,
-          );
+          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
         }
       },
     );
 
     await dialTest.step(
-      'Click Delete button at the bottom and verify "Confirm deleting file" modal with valid text appears',
+      'Click Delete button at the bottom and verify "Confirm deleting items" popup with valid text appears',
       async () => {
-        await attachFilesModal.deleteFilesButton.click();
-        expect
-          .soft(
-            await confirmationDialog.getConfirmationMessage(),
-            ExpectedMessages.confirmationMessageIsValid,
-          )
-          .toBe(ExpectedConstants.deleteFilesMessage);
+        await filesManagerModalToolbar.getDeleteButton().click();
+        await filesManagerDeleteItemConfirmationPopupAssertion.assertElementState(
+          filesManagerDeleteItemConfirmationPopup,
+          'visible',
+        );
+        await filesManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConfirmationPopupData.deleteItemsHeader,
+        );
+        await filesManagerDeleteItemConfirmationPopupAssertion.assertConfirmationPopupContent(
+          ExpectedConfirmationPopupData.deleteItemsContent(
+            attachedFiles.length,
+          ),
+        );
       },
     );
 
     await dialTest.step(
-      'Close modal and verify files are not deleted',
+      'Close popup and verify files are not deleted',
       async () => {
-        await confirmationDialog.cancelDialog();
+        await filesManagerDeleteItemConfirmationPopup.getCancelButton().click();
         for (const file of attachedFiles) {
-          await manageAttachmentsAssertion.assertEntityState(
-            { name: file },
-            FileModalSection.AllFiles,
+          await filesManagerModalGridAssertion.assertGridRowByNameState(
+            file,
             'visible',
           );
         }
@@ -208,17 +217,17 @@ dialTest(
     );
 
     await dialTest.step(
-      'Proceed again to "Confirm deleting file" modal, confirm files delete and verify they disappear from files list',
+      'Proceed again to "Confirm deleting items" modal, confirm files delete and verify they disappear from files list',
       async () => {
-        await attachFilesModal.deleteFilesButton.click();
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await filesManagerModalToolbar.getDeleteButton().click();
+        await filesManagerDeleteItemConfirmationPopup.confirm({
+          triggeredHttpMethod: 'POST',
+        });
         for (const file of attachedFiles) {
-          await expect
-            .soft(
-              attachFilesModal.getAllFilesTree().getEntityByName(file),
-              ExpectedMessages.fileIsNotAttached,
-            )
-            .toBeHidden();
+          await filesManagerModalGridAssertion.assertGridRowByNameState(
+            file,
+            'hidden',
+          );
         }
       },
     );

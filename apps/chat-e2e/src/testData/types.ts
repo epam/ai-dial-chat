@@ -95,5 +95,5 @@ export enum FileManagerColumnKey {
   Owner = 'owner',
   Path = 'path',
   Actions = '__actions',
-  Select = '__select'
+  Select = '__select',
 }
