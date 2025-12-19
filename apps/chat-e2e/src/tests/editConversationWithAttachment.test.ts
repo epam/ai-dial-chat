@@ -37,6 +37,12 @@ dialTest(
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
+    const modelWithoutAttachments = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getModelsWithoutAttachment(),
+    );
+    await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+      modelWithoutAttachments,
+    );
     let imageUrl: string;
     let conversation: Conversation;
 
@@ -65,7 +71,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
         await chatHeader.chatAgent.click();
-        await talkToAgentDialog.selectAgent(ModelsUtil.getDefaultAgent()!);
+        await talkToAgentDialog.selectAgent(modelWithoutAttachments);
       },
     );
 
