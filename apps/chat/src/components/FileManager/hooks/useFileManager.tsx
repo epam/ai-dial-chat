@@ -102,7 +102,7 @@ export const useFileManager = ({
     const title = t('Uploading items');
     const text = t('{{done}} of {{total}} items uploaded...', {
       done: files.filter((f) => f.status !== UploadStatus.LOADING).length,
-      total: 10,
+      total: files.length,
     });
 
     const onCancel = () =>
