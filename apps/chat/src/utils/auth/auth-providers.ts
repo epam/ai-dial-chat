@@ -7,6 +7,8 @@ import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import OktaProvider from 'next-auth/providers/okta';
 
+
+
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
 
 import {
@@ -184,7 +186,7 @@ const getOktaProvider = (config: ProviderConfig) =>
 
 const providerNames = {
   [SupportedProviders.AUTH0]: 'auth0',
-  [SupportedProviders.AZURE_B2C]: 'azureB2C',
+  [SupportedProviders.AZURE_B2C]: 'azure-ad-b2c',
   [SupportedProviders.AZURE_AD]: 'azure-ad',
   [SupportedProviders.COGNITO]: 'cognito',
   [SupportedProviders.GOOGLE]: 'google',
