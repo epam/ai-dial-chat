@@ -7,6 +7,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { ScreenState } from '@/src/types/common';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import range from 'lodash-es/range';
 
 const getDotSizeClass = (
@@ -126,14 +127,13 @@ export const SliderDots: React.FC<Props> = ({
           {sliderDotsArray.length > 1 && (
             <>
               {!isMobileOrTablet && (
-                <button
+                <DialButton
                   onClick={handleClickLeftArrow}
                   data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretLeftFilled size={18} />
-                </button>
+                  className="text-secondary hover:enabled:text-accent-primary"
+                  iconBefore={<IconCaretLeftFilled size={18} />}
+                />
               )}
               <div className="flex max-w-[176px] overflow-hidden">
                 <div
@@ -144,36 +144,31 @@ export const SliderDots: React.FC<Props> = ({
                 >
                   {sliderDotsArray.map((slideNumber) => {
                     return (
-                      <div
+                      <DialButton
+                        className={classNames(
+                          'flex min-w-2 items-center justify-center rounded-full bg-controls-disable transition-all duration-200',
+                          getDotSizeClass(
+                            slideNumber,
+                            activeSlide,
+                            sliderDotsArray.length,
+                          ),
+                        )}
                         key={slideNumber}
                         data-qa={`slider-dot-${slideNumber}`}
                         onClick={() => onSetActiveSlide(slideNumber)}
-                        className="flex min-w-2 items-center justify-center"
-                      >
-                        <button
-                          className={classNames(
-                            'rounded-full bg-controls-disable transition-all duration-200',
-                            getDotSizeClass(
-                              slideNumber,
-                              activeSlide,
-                              sliderDotsArray.length,
-                            ),
-                          )}
-                        />
-                      </div>
+                      />
                     );
                   })}
                 </div>
               </div>
               {!isMobileOrTablet && (
-                <button
+                <DialButton
                   onClick={handleClickRightArrow}
                   data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretRightFilled size={18} />
-                </button>
+                  className="text-secondary hover:enabled:text-accent-primary"
+                  iconBefore={<IconCaretRightFilled size={18} />}
+                />
               )}
             </>
           )}

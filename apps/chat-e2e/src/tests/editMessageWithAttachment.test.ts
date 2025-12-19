@@ -7,10 +7,11 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
@@ -147,6 +148,7 @@ dialTest(
     conversations,
     chatMessages,
     editMessageInputAttachments,
+    editMessageInputAttachmentsAssertions,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1762', 'EPMRTC-1902');
@@ -204,14 +206,10 @@ dialTest(
             Attachment.specialSymbolsName,
           );
         await removeAttachmentIcon.hoverOver();
-        const removeIconColor =
-          await removeAttachmentIcon.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            removeIconColor[0],
-            ExpectedMessages.removeAttachmentIconIsHighlighted,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+        await editMessageInputAttachmentsAssertions.assertElementColor(
+          removeAttachmentIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
 
         await removeAttachmentIcon.click();
         await expect

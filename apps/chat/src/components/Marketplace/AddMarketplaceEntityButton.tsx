@@ -58,16 +58,17 @@ export function AddMarketplaceEntityButton({
       onOpenChange={setIsOpen}
       placement="bottom"
       TriggerCustomRenderer={
-        <button
-          className="button button-primary flex items-center gap-2 py-2"
+        <DialButton
+          variant={ButtonVariant.Primary}
           data-qa={dataQa}
-        >
-          <span>{isScreenSmall ? t('Add') : t(`Add ${label}`)}</span>
-          <IconChevronDown
-            size={18}
-            className={classNames(isOpen && 'rotate-180')}
-          />
-        </button>
+          label={isScreenSmall ? t('Add') : t(`Add ${label}`)}
+          iconAfter={
+            <IconChevronDown
+              size={18}
+              className={classNames(isOpen && 'rotate-180')}
+            />
+          }
+        />
       }
     />
   );

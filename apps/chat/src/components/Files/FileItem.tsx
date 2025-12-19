@@ -3,7 +3,6 @@ import {
   IconExclamationCircle,
   IconFile,
   IconReload,
-  IconX,
 } from '@tabler/icons-react';
 import {
   MouseEventHandler,
@@ -34,6 +33,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -256,20 +256,23 @@ export const FileItem = ({
           </div>
         )}
         {item.status === UploadStatus.FAILED && (
-          <button onClick={handleRetry} data-qa="retry-upload">
-            <IconReload
-              className="shrink-0 text-secondary hover:text-accent-primary"
-              size={18}
-            />
-          </button>
+          <DialButton
+            onClick={handleRetry}
+            data-qa="retry-upload"
+            iconBefore={
+              <IconReload
+                className="shrink-0 text-secondary hover:text-accent-primary"
+                size={18}
+              />
+            }
+          />
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
-          <button onClick={handleCancelFile} data-qa="remove-file">
-            <IconX
-              className="shrink-0 text-secondary hover:text-accent-primary"
-              size={18}
-            />
-          </button>
+          <DialCloseButton
+            onClose={handleCancelFile}
+            ariaLabel="remove-file"
+            size={18}
+          />
         ) : (
           <FileItemContextMenu
             isSelected={isSelected}

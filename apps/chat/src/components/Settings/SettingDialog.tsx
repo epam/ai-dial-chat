@@ -32,6 +32,7 @@ import { EnterTypeSelectLabeled } from './EnterTypeSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const ToggleSwitchLabel = withLabel(ToggleSwitchLabeled);
 
@@ -232,15 +233,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       </div>
 
       <div className="flex justify-end">
-        <button
-          type="button"
-          ref={saveBtnRef}
-          className="button button-primary"
-          data-qa="save"
+        <DialButton
+          label={t('Save')}
+          variant={ButtonVariant.Primary}
           onClick={handleSave}
-        >
-          {t('Save')}
-        </button>
+          data-qa="save"
+          ref={saveBtnRef}
+        />
       </div>
     </Modal>
   );

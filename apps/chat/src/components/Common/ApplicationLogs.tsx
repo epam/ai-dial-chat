@@ -18,6 +18,8 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 const LogsHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -87,40 +89,37 @@ const LogsFooter = () => {
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
       <Tooltip tooltip={t('Reload logs')}>
-        <button
+        <DialButton
           onClick={uploadLogs}
-          className="icon-button"
           data-qa="application-reload-logs"
           disabled={isLogsLoading}
-        >
-          <IconRefresh
-            className={classNames(
-              isLogsLoading
-                ? 'button-secondary'
-                : 'text-secondary hover:text-accent-primary',
-            )}
-            size={24}
-          />
-        </button>
+          iconBefore={
+            <IconRefresh
+              className={classNames(
+                isLogsLoading
+                  ? 'text-controls-disable'
+                  : 'text-secondary hover:text-accent-primary',
+              )}
+            />
+          }
+        />
       </Tooltip>
       {applicationLogs && (
         <Tooltip tooltip={t('Download logs')}>
-          <button
+          <DialButton
+            label={t('Download')}
+            variant={ButtonVariant.Secondary}
+            textClassName="text-sm"
             onClick={() => downloadApplicationLogs(applicationLogs)}
-            className="button button-secondary flex h-[38px] items-center gap-1"
             data-qa="application-download-logs"
             disabled={isLogsLoading}
-          >
-            <IconDownload
-              className={classNames(
-                isLogsLoading
-                  ? 'button-secondary'
-                  : 'shrink-0 text-secondary hover:text-accent-primary',
-              )}
-              size={18}
-            />
-            <span className="text-sm">{t('Download')}</span>
-          </button>
+            iconBefore={
+              <IconDownload
+                className={classNames(isLogsLoading && 'button-secondary')}
+                size={18}
+              />
+            }
+          />
         </Tooltip>
       )}
     </div>

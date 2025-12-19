@@ -5,8 +5,10 @@ import classNames from 'classnames';
 import { useMenuItemHandler } from '@/src/hooks/useHandler';
 import { usePromptActions } from '@/src/hooks/usePromptActions';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { ScreenState } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -26,6 +28,7 @@ import { ViewPromptButtons } from './ViewPromptButtons';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface PromptFieldProps {
   children: React.ReactNode;
@@ -69,6 +72,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
+  const screenState = useScreenState();
 
   const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
@@ -153,19 +157,16 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                   onChangeSelectedVersion={handleChangeSelectedVersion}
                 />
               )}
-              <button
+              <DialButton
                 onClick={onUse}
                 disabled={disableUsePrompt}
-                className={classNames(
-                  'button button-primary flex items-center gap-2',
-                  disableUsePrompt && 'cursor-not-allowed',
-                )}
+                variant={ButtonVariant.Primary}
                 data-qa="use-prompt"
-              >
-                <InsertPromptIcon className="size-[18px]" />
-                <span className="hidden md:block">{t('Use prompt')}</span>
-                <span className="block md:hidden">{t('Use')}</span>
-              </button>
+                iconBefore={<InsertPromptIcon className="size-[18px]" />}
+                label={
+                  screenState <= ScreenState.SM ? t('Use') : t('Use prompt')
+                }
+              />
             </>
           )}
         </div>

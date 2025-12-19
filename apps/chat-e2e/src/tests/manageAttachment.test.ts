@@ -10,11 +10,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import {
-  BaseElement,
-  DropdownMenu,
-  FileModalSection,
-} from '@/src/ui/webElements';
+import { Button, DropdownMenu, FileModalSection } from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -237,7 +233,7 @@ dialTest(
     manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3302');
-    let removeAttachedFileIconElement: BaseElement;
+    let removeAttachedFileIconElement: Button;
     let attachedFileLoadingIndicatorElement: Locator;
     let allFilesTreeElement: AttachFilesTree;
 

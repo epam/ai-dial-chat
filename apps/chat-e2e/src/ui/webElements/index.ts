@@ -89,3 +89,4 @@ export * from './renameConversationModal';
 export * from './shareModal';
 export * from './settingsModal';
 export * from './promptPreviewModalWindow';
+export * from './common/button';

@@ -28,6 +28,7 @@ import {
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { Loader } from '@/src/components/Common/Loader';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -93,21 +94,22 @@ const FilterSection = ({
   }
   return (
     <div className="px-5 py-2.5" data-qa="marketplace-filter">
-      <button
+      <DialButton
         onClick={() => onToggleFilterSection(filterType)}
-        className="flex w-full justify-between font-semibold"
+        className="flex w-full justify-between"
         data-qa="filter-property"
         aria-expanded={openedSections[filterType]}
-      >
-        <h5 className="text-sm">{sectionName}</h5>
-        <IconChevronUp
-          className={classNames(
-            'duration-200',
-            !openedSections[filterType] && 'rotate-180',
-          )}
-          size={18}
-        />
-      </button>
+        label={sectionName}
+        iconAfter={
+          <IconChevronUp
+            className={classNames(
+              'duration-200',
+              !openedSections[filterType] && 'rotate-180',
+            )}
+            size={18}
+          />
+        }
+      />
       {openedSections[filterType] && (
         <div
           className="mt-3.5 flex flex-col gap-3.5"

@@ -31,6 +31,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -77,14 +78,13 @@ function ShareAccessSection({
   return (
     <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
       {isShared ? (
-        <button
+        <DialButton
           onClick={onUnshare}
-          className="flex gap-2 text-sm text-accent-primary"
+          className="flex text-sm text-accent-primary"
           data-qa="remove-access-button"
-        >
-          <IconUserUnshare height={18} width={18} />
-          <p>{unshareLabel}</p>
-        </button>
+          iconBefore={<IconUserUnshare height={18} width={18} />}
+          label={unshareLabel}
+        />
       ) : (
         <p data-qa="not-shared-entity-label">{notSharedMessage}</p>
       )}
@@ -272,17 +272,16 @@ export function ShareModalView() {
                 </Tooltip>
               ) : (
                 <Tooltip tooltip={t('Copy URL')}>
-                  <button
-                    className="outline-none"
+                  <DialButton
                     onClick={handleCopy}
-                    data-qa="copy-link"
-                  >
-                    <IconCopy
-                      height={20}
-                      width={20}
-                      className="text-secondary hover:text-accent-primary"
-                    />
-                  </button>
+                    aria-label="copy-link"
+                    iconBefore={
+                      <IconCopy
+                        size={20}
+                        className="text-secondary hover:text-accent-primary"
+                      />
+                    }
+                  />
                 </Tooltip>
               )}
             </div>

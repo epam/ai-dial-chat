@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -13,6 +12,8 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Label } from '@/src/components/Common/Forms/Label';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
+
+import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
@@ -139,24 +140,20 @@ export const CustomLogoSelect = ({
         </div>
         <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
-            <button
-              type="button"
+            <DialButton
               onClick={onClickAddHandler}
-              className="text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              className="text-accent-primary"
+              textClassName="font-normal"
               disabled={disabled}
               data-qa={localLogo ? 'change-icon' : 'add-icon'}
-            >
-              {localLogo ? t('Change') : t('Add')}
-            </button>
+              label={localLogo ? t('Change') : t('Add')}
+            />
             {localLogo && (
-              <button
-                type="button"
-                onClick={handleDeleteLogo}
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              <DialCloseButton
+                onClose={handleDeleteLogo}
                 disabled={disabled}
-              >
-                <IconX size={18} />
-              </button>
+                size={18}
+              />
             )}
           </div>
         </Tooltip>

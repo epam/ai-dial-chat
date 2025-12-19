@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import React, { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
@@ -15,6 +14,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
+
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface ListItemContentProps {
   id: string;
@@ -54,15 +55,11 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
         <ModelIcon entityId={id} entity={item} size={18} isCustomTooltip />
         <ChipTitle name={name} version={version} isError={isError} />
       </div>
-      <button
-        className={classNames(
-          'shrink-0 text-secondary',
-          isError ? 'hover:text-error' : 'hover:text-accent-primary',
-        )}
-        onClick={handleRemove}
-      >
-        <IconX size={18} />
-      </button>
+      <DialCloseButton
+        className={classNames('text-secondary', isError && 'hover:text-error')}
+        onClose={handleRemove}
+        size={18}
+      />
     </div>
   );
 };

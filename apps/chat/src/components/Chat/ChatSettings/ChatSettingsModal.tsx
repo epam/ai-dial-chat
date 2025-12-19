@@ -21,6 +21,8 @@ import { Modal } from '@/src/components/Common/Modal';
 
 import { ConversationSettings } from './ConversationSettings';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 interface ChatSettingsViewProps {
   conversation: Conversation;
   onChangeSettings: (
@@ -196,13 +198,12 @@ export const ChatSettings = ({
       </div>
       {isSomethingConfigurable && (
         <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
-          <button
-            className="button button-primary"
-            data-qa="apply-changes"
+          <DialButton
+            label={t('Apply changes')}
+            variant={ButtonVariant.Primary}
             onClick={handleOnApplySettings}
-          >
-            {t('Apply changes')}
-          </button>
+            data-qa="apply-changes"
+          />
         </div>
       )}
     </Modal>

@@ -1,7 +1,8 @@
-import { Tags } from '@/src/ui/domData';
+import { AttributeValues, Tags } from '@/src/ui/domData';
 import { ErrorLabelSelectors, MessageInputSelectors } from '@/src/ui/selectors';
 import { FileSelectors } from '@/src/ui/selectors/fileSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Button } from '@/src/ui/webElements/common/button';
 import { Locator, Page } from '@playwright/test';
 
 export class InputAttachments extends BaseElement {
@@ -40,8 +41,10 @@ export class InputAttachments extends BaseElement {
     this.inputAttachment(name).locator(FileSelectors.loadingRetry);
 
   public removeInputAttachmentIcon = (name: string) =>
-    this.createElementFromLocator(
-      this.inputAttachment(name).locator(FileSelectors.remove),
+    new Button(
+      this.page,
+      AttributeValues.removeFile,
+      this.inputAttachment(name),
     );
 
   public async retryLoading(
