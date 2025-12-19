@@ -661,65 +661,6 @@ const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
     ),
   );
 
-// const uploadFilesEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     ofType(FilesActions.uploadFiles.type),
-//     mergeMap(({ payload }) => {
-//       // TODO: refactor to use bucket and relativePath separately
-//       const urlParts = payload.destinationUrl.split('/');
-//       const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
-//       const relativePath =
-//         urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
-
-//       const uploadObservables = payload.files.map((file) => {
-//         const formData = new FormData();
-//         formData.append('attachment', file.fileContent, file.name);
-
-//         const fileId = constructPath(
-//           getFileRootId(bucket),
-//           relativePath,
-//           file.name,
-//         );
-
-//         return FileService.sendFile(
-//           formData,
-//           relativePath,
-//           file.name,
-//           undefined,
-//           bucket,
-//         ).pipe(
-//           filter(({ result }) => typeof result !== 'undefined'),
-//           map(({ result }) => result!),
-//           catchError(() => {
-//             return of(null);
-//           }),
-//         );
-//       });
-
-//       return forkJoin(uploadObservables).pipe(
-//         switchMap((results) => {
-//           const hasErrors = results.some((result) => result === null);
-
-//           if (hasErrors) {
-//             return of(FilesActions.uploadFilesFail());
-//           }
-
-//           return concat(
-//             of(FilesActions.uploadFilesSuccess()),
-//             of(
-//               FilesActions.getFilesWithFolders({
-//                 id: payload.destinationUrl,
-//               }),
-//             ),
-//           );
-//         }),
-//         catchError(() => {
-//           return of(FilesActions.uploadFilesFail());
-//         }),
-//       );
-//     }),
-//   );
-
 const uploadFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.uploadFiles.type),
@@ -785,10 +726,7 @@ const uploadFilesEpic: AppEpic = (action$) =>
           { finished: 0, total: payload.files.length, lastAction: null as any },
         ),
         mergeMap(({ finished, total, lastAction }) => {
-          // always emit ticks or final file actions
           const action$ = of(lastAction);
-
-          // when uploads completed → trigger post actions
           if (finished === total) {
             return concat(
               action$,
