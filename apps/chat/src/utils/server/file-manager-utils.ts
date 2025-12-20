@@ -21,9 +21,7 @@ export async function fetchAllFilesRecursive(
   let nextToken: string | undefined = undefined;
 
   do {
-    const encodeFolderSlugs = ServerUtils.encodeSlugs(
-      folderUrl.split('/').filter(Boolean),
-    );
+    const encodeFolderSlugs = encodeUrlSlugs(folderUrl);
     const path = constructPath(
       process.env.DIAL_API_HOST as string,
       'v1/metadata',
@@ -112,7 +110,7 @@ export async function processBatch<T, R>(
 }
 
 export function encodeUrlSlugs(url: string): string {
-  return ServerUtils.encodeSlugs(url.split('/').filter(Boolean));
+  return ServerUtils.encodeSlugs(url.split('/'));
 }
 
 export function buildApiUrl(endpoint: string, slugs?: string): string {
