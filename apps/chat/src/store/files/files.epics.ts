@@ -812,7 +812,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
 
           return UIActions.showToast({
             type: ToastType.Success,
-            title: translate('Items {{verb}} successfully', {
+            title: translate('Item {{verb}} successfully', {
               ns: Translation.Common,
               verb: verbPast,
             }),
