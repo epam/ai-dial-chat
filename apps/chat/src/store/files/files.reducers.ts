@@ -866,17 +866,55 @@ export const filesSlice = createSlice({
 
     uploadFiles: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         files: DialUploadFileItem[];
         destinationUrl: string;
       }>,
     ) => {
       state.isUploadingFiles = true;
+
+      const urlParts = payload.destinationUrl.split('/');
+      const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
+      const relativePath =
+        urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
+
+      payload.files.forEach((file) => {
+        const id = constructPath(
+          getFileRootId(bucket),
+          relativePath,
+          file.name,
+        );
+        state.files = state.files.filter((f) => f.id !== id);
+
+        state.files.push({
+          id,
+          name: file.name,
+          relativePath,
+          folderId: constructPath(getFileRootId(bucket), relativePath),
+          status: UploadStatus.LOADING,
+          percent: 0,
+          fileContent: file.fileContent,
+          contentLength: file.fileContent.size,
+          contentType: file.fileContent.type,
+        });
+      });
     },
+
     uploadFilesSuccess: (state) => {
       state.isUploadingFiles = false;
     },
     uploadFilesFail: (state) => {
+      state.isUploadingFiles = false;
+    },
+    cancelUploadFiles: (state, { payload }: PayloadAction<Set<string>>) => {
+      const uploadingIds = payload;
+
+      state.files = state.files.filter(
+        (f) => !uploadingIds.has(f.id) || f.status !== UploadStatus.LOADING,
+      );
+
       state.isUploadingFiles = false;
     },
 

@@ -57,6 +57,7 @@ export class FileService {
     fileName: string,
     httpMethod?: HTTPMethod,
     bucket?: string,
+    options?: { signal?: AbortSignal | null },
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = ApiUtils.encodeApiUrl(
       constructPath(getFileRootId(bucket), relativePath, fileName),
@@ -67,6 +68,7 @@ export class FileService {
       method: httpMethod ? httpMethod : HTTPMethod.POST,
       async: true,
       body: formData,
+      signal: options?.signal,
     }).pipe(
       map(
         ({

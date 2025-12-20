@@ -9,6 +9,7 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { FilesUploadingModal } from './FilesUploadingModal';
 import { OperationLoaderModal } from './OperationLoaderModal';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -34,6 +35,7 @@ export const FileManager: React.FC = () => {
     searchResultsUIKit,
 
     operationLoaderModal,
+    filesUploadingModalOptions,
 
     bulkActionsToolbarOptions,
     treeOptions,
@@ -104,6 +106,14 @@ export const FileManager: React.FC = () => {
           title={operationLoaderModal.title}
           text={operationLoaderModal.text}
           onCancel={operationLoaderModal.onCancel}
+        />
+      )}
+      {filesUploadingModalOptions && (
+        <FilesUploadingModal
+          title={filesUploadingModalOptions.title}
+          text={filesUploadingModalOptions.text}
+          files={filesUploadingModalOptions.files}
+          onCancel={filesUploadingModalOptions.onCancel}
         />
       )}
     </div>

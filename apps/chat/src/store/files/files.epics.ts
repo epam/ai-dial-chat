@@ -9,8 +9,10 @@ import {
   ignoreElements,
   iif,
   map,
+  merge,
   mergeMap,
   of,
+  scan,
   switchMap,
   takeUntil,
   tap,
@@ -20,7 +22,11 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { FileService } from '@/src/utils/app/data/file-service';
-import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
+import {
+  constructPath,
+  getDownloadPath,
+  triggerDownload,
+} from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getGeneratedFolderId,
@@ -658,15 +664,23 @@ const uploadFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.uploadFiles.type),
     mergeMap(({ payload }) => {
-      // TODO: refactor to use bucket and relativePath separately
       const urlParts = payload.destinationUrl.split('/');
       const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
       const relativePath =
         urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
 
-      const uploadObservables = payload.files.map((file) => {
+      const controller = new AbortController();
+      let canceled = false;
+
+      const uploads$ = payload.files.map((file) => {
         const formData = new FormData();
         formData.append('attachment', file.fileContent, file.name);
+
+        const fileId = constructPath(
+          getFileRootId(bucket),
+          relativePath,
+          file.name,
+        );
 
         return FileService.sendFile(
           formData,
@@ -674,35 +688,76 @@ const uploadFilesEpic: AppEpic = (action$) =>
           file.name,
           undefined,
           bucket,
+          { signal: controller.signal },
         ).pipe(
-          filter(({ result }) => typeof result !== 'undefined'),
-          map(({ result }) => result!),
-          catchError(() => {
-            return of(null);
+          filter(
+            ({ percent, result }) =>
+              typeof percent !== 'undefined' || typeof result !== 'undefined',
+          ),
+          map(({ percent, result }) => {
+            if (result) {
+              return FilesActions.uploadFileSuccess({
+                apiResult: result,
+                showSuccessMessage: false,
+              });
+            }
+
+            return FilesActions.uploadFileTick({
+              id: fileId,
+              percent: percent!,
+            });
           }),
+          catchError(() =>
+            canceled ? EMPTY : of(FilesActions.uploadFileFail({ id: fileId })),
+          ),
         );
       });
 
-      return forkJoin(uploadObservables).pipe(
-        switchMap((results) => {
-          const hasErrors = results.some((result) => result === null);
+      return merge(...uploads$).pipe(
+        takeUntil(
+          action$.pipe(
+            ofType(FilesActions.cancelUploadFiles.type),
+            tap(() => {
+              canceled = true;
+              controller.abort();
+            }),
+          ),
+        ),
+        scan(
+          (acc, action) => {
+            if (
+              action.type === FilesActions.uploadFileSuccess.type ||
+              action.type === FilesActions.uploadFileFail.type
+            ) {
+              acc.finished++;
+            }
 
-          if (hasErrors) {
-            return of(FilesActions.uploadFilesFail());
+            acc.total = payload.files.length;
+            acc.lastAction = action;
+            return acc;
+          },
+          { finished: 0, total: payload.files.length, lastAction: null as any },
+        ),
+        mergeMap(({ finished, total, lastAction }) => {
+          const action$ = of(lastAction);
+
+          if (!canceled && finished === total) {
+            return concat(
+              action$,
+              of(FilesActions.uploadFilesSuccess()),
+              of(
+                FilesActions.getFilesWithFolders({
+                  id: payload.destinationUrl,
+                }),
+              ),
+            );
           }
 
-          return concat(
-            of(FilesActions.uploadFilesSuccess()),
-            of(
-              FilesActions.getFilesWithFolders({
-                id: payload.destinationUrl,
-              }),
-            ),
-          );
+          return action$;
         }),
-        catchError(() => {
-          return of(FilesActions.uploadFilesFail());
-        }),
+        catchError(() =>
+          canceled ? EMPTY : of(FilesActions.uploadFilesFail()),
+        ),
       );
     }),
   );

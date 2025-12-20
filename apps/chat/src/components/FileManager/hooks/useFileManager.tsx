@@ -6,6 +6,7 @@ import {
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { constructPath } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
@@ -25,6 +26,8 @@ import { ShareActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+
+import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
 import {
@@ -67,6 +70,46 @@ export const useFileManager = ({
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
+
+  const isUploadingFiles = useAppSelector(
+    FilesSelectors.selectIsUploadingFiles,
+  );
+
+  const [uploadingFilesIds, setUploadingFilesIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  useEffect(() => {
+    if (!isUploadingFiles && uploadingFilesIds.size) {
+      setUploadingFilesIds(new Set());
+    }
+  }, [isUploadingFiles, uploadingFilesIds]);
+
+  const uploadingFiles = useMemo(() => {
+    return files.filter((file) => uploadingFilesIds.has(file.id));
+  }, [files, uploadingFilesIds]);
+
+  const filesUploadingModalOptions = useMemo(() => {
+    if (!isUploadingFiles || !uploadingFiles?.length) return null;
+
+    const files = uploadingFiles.map(({ id, name, status, percent }) => ({
+      id,
+      name,
+      status,
+      percent,
+    }));
+
+    const title = t('Uploading items');
+    const text = t('{{done}} of {{total}} items uploaded...', {
+      done: files.filter((f) => f.status !== UploadStatus.LOADING).length,
+      total: files.length,
+    });
+
+    const onCancel = () =>
+      dispatch(FilesActions.cancelUploadFiles(uploadingFilesIds));
+
+    return { title, text, files, onCancel } as FilesUploadingModalOptions;
+  }, [isUploadingFiles, uploadingFiles, uploadingFilesIds, t, dispatch]);
 
   const isLoadingSearchListing = useAppSelector(
     FilesSelectors.selectIsLoadingSearchListing,
@@ -497,6 +540,15 @@ export const useFileManager = ({
     void row;
   }, []);
 
+  const getFileId = useCallback((name: string, path: string) => {
+    const urlParts = path.split('/');
+    const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
+    const relativePath =
+      urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
+
+    return constructPath(getFileRootId(bucket), relativePath, name);
+  }, []);
+
   const handleUploadFiles = useCallback(
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
@@ -506,8 +558,12 @@ export const useFileManager = ({
           destinationUrl,
         }),
       );
+
+      setUploadingFilesIds(
+        new Set(filesToUpload.map((f) => getFileId(f.name, destinationUrl))),
+      );
     },
-    [dispatch],
+    [dispatch, setUploadingFilesIds, getFileId],
   );
 
   const handleCreateFolder = useCallback(
@@ -562,6 +618,7 @@ export const useFileManager = ({
     searchResultsUIKit,
 
     operationLoaderModal: renderOperationLoaderModal(),
+    filesUploadingModalOptions,
 
     bulkActionsToolbarOptions,
     treeOptions,
