@@ -40,7 +40,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             className="flex w-full min-w-[120px] cursor-pointer items-center justify-between gap-2 pr-3"
             data-qa="account-settings"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex max-w-[400px] items-center gap-3 overflow-hidden">
               {session?.user?.image ? (
                 <img
                   className="rounded"
@@ -53,7 +53,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
                 <UserIcon width={18} height={18} />
               )}
 
-              <span className="grow" data-qa="username">
+              <span className="grow truncate" data-qa="username">
                 {session?.user?.name || t('User')}
               </span>
             </div>
