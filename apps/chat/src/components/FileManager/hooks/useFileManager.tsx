@@ -13,7 +13,7 @@ import {
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
-import { getFileRootId, isRootId } from '@/src/utils/app/id';
+import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
@@ -39,6 +39,7 @@ import {
   FileManagerColumnKey,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
@@ -179,10 +180,11 @@ export const useFileManager = ({
     loadedFoldersPaths,
     sharedByMePaths,
     visibleColumns,
+    currentPathRootAlias,
   } = useMemo(() => {
     let filteredFiles = files;
     let filteredFolders = folders;
-    let breadcrumbLabel = t('My Files');
+    let pathRootAlias = t('My Files');
     const visibleColumns: FileManagerColumnKey[] = [
       FileManagerColumnKey.Name,
       FileManagerColumnKey.UpdatedAt,
@@ -197,12 +199,12 @@ export const useFileManager = ({
           folders,
           defaultMyItemsFilters,
         );
-        breadcrumbLabel = t('My Files');
+        pathRootAlias = t('My Files');
         break;
       case 'shared':
         filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
-        breadcrumbLabel = t('Shared with Me');
+        pathRootAlias = t('Shared with Me');
         visibleColumns.push(FileManagerColumnKey.Author);
         break;
       case 'organization':
@@ -211,14 +213,14 @@ export const useFileManager = ({
           folders,
           PublishedWithMeFilter,
         );
-        breadcrumbLabel = t('Organization');
+        pathRootAlias = t('Organization');
         break;
       default:
         break;
     }
 
     const { rootFolder, items, loadedFoldersPaths, sharedByMePaths } =
-      buildFileTree(filteredFiles, filteredFolders, breadcrumbLabel);
+      buildFileTree(filteredFiles, filteredFolders, pathRootAlias);
 
     if (activeTab !== previousActiveTabRef.current) {
       setCurrentPath(rootFolder.id);
@@ -231,6 +233,7 @@ export const useFileManager = ({
       loadedFoldersPaths,
       sharedByMePaths,
       visibleColumns,
+      currentPathRootAlias: pathRootAlias,
     };
   }, [t, files, folders, activeTab, previousActiveTabRef]);
 
@@ -409,8 +412,21 @@ export const useFileManager = ({
     ],
   );
 
-  const fileMetadataPopupOptions = useMemo(
-    () => ({
+  const fileMetadataPopupOptions = useMemo(() => {
+    const adjustedMetadata = cloneDeep(fileMetadata);
+
+    if (adjustedMetadata?.path && currentPathRootAlias) {
+      const root = getRootId({
+        featureType: FeatureType.File,
+        id: adjustedMetadata.path,
+      });
+      adjustedMetadata.path = adjustedMetadata.path.replace(
+        root,
+        currentPathRootAlias,
+      );
+    }
+
+    return {
       title: t('Information'),
       nameLabel: t('Name: '),
       pathLabel: t('Path: '),
@@ -418,10 +434,9 @@ export const useFileManager = ({
       sizeLabel: t('Size: '),
       authorLabel: t('Author: '),
       loading: isFileMetadataLoading,
-      fileMetadata: fileMetadata ?? undefined,
-    }),
-    [t, isFileMetadataLoading, fileMetadata],
-  );
+      fileMetadata: adjustedMetadata ?? undefined,
+    };
+  }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
 
   const navigationPanelOptions = useMemo(
     () => ({

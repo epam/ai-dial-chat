@@ -112,7 +112,7 @@ export const convertToUIKitFolder = (
 export const buildFileTree = (
   files: DialFile[],
   folders: FileFolderInterface[],
-  breadcrumbLabel?: string,
+  pathRootAlias?: string,
 ): {
   rootFolder: DialRootFolder;
   items: UIKitDialFile[];
@@ -194,7 +194,7 @@ export const buildFileTree = (
     nodeType: DialFileNodeType.FOLDER,
     items: rootItems,
     parentPath: null,
-    label: breadcrumbLabel || 'Files',
+    label: pathRootAlias || 'Files',
   };
 
   return {
