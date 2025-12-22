@@ -2,9 +2,7 @@ import { FC } from 'react';
 
 interface ComponentResolve<P extends object> {
   instance: () => FC<P> | undefined;
-  bind: (
-    componentFactory: (component: FC<P>) => FC<P>,
-  ) => FC<P>;
+  bind: (componentFactory: (component: FC<P>) => FC<P>) => FC<P>;
   unbind: () => void;
   render: () => FC<P> & { original: FC<P> };
 }
@@ -13,10 +11,7 @@ interface ComponentResolve<P extends object> {
 type AnyComponent = FC<any>;
 
 export class Inversify {
-  private static container = new WeakMap<
-    AnyComponent,
-    AnyComponent
-  >();
+  private static container = new WeakMap<AnyComponent, AnyComponent>();
 
   public static register<P extends object>(
     name: string,
@@ -49,9 +44,8 @@ export class Inversify {
 
     return {
       instance: () => Inversify.container.get(component),
-      bind: (
-        componentFactory,
-      ) => Inversify.bindImplementation(component, componentFactory),
+      bind: (componentFactory) =>
+        Inversify.bindImplementation(component, componentFactory),
       unbind: () => Inversify.container.set(component, component),
       render: () => Inversify.renderImplementation(component),
     };
@@ -70,7 +64,7 @@ export class Inversify {
     component: FC<P>,
   ): FC<P> & { original: FC<P> } {
     const renderedComponent = (props: P) => {
-      const ResolvedComponent = (Inversify.container.get(component) ?? component);
+      const ResolvedComponent = Inversify.container.get(component) ?? component;
 
       return <ResolvedComponent {...props} />;
     };
