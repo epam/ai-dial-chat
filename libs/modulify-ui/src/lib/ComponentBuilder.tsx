@@ -182,9 +182,10 @@ export class ComponentBuilder<
 
       this.useEffectsRunner(this.effectsFn, componentState, setComponentState);
 
-      const reactElement = createElement(
-        this.baseComponent,
-        props,
+      const reactElement: ReactElement = (
+        typeof this.baseComponent === 'function'
+          ? this.baseComponent({ ...props })
+          : createElement(this.baseComponent, { ...props })
       ) as ReactElement;
 
       const typedReactElement = reactElement as ReactElement<
@@ -240,7 +241,10 @@ export class ComponentBuilder<
 
   private handlersFn: CB_HandlersFn = () => ({ host: {}, component: {} });
 
-  private stateFn?: CB_StateFn;
+  private stateFn?: CB_StateFn = () => ({
+    state: {},
+    setState: () => ({}),
+  });
 
   private effectsFn: CB_EffectsFn = () => [];
 
