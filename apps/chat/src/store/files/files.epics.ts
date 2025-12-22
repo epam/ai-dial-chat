@@ -32,7 +32,7 @@ import {
   getGeneratedFolderId,
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
-import { getFileRootId } from '@/src/utils/app/id';
+import { getEntityNameFromId, getFileRootId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -49,7 +49,10 @@ import {
 } from '@/src/store/actions';
 import { FilesSelectors, UISelectors } from '@/src/store/selectors';
 
-import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
+import {
+  EMPTY_FOLDER_PLACEHOLDER_FILE_NAME,
+  MAX_VISIBLE_NOTIFICATION_ITEMS,
+} from '@/src/constants/file';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
@@ -808,7 +811,17 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
       if (results.length > 0) {
         if (results.length === 1) {
           const destinationUrl = results[0].data.destinationUrl;
+          const sourceUrl = results[0].data.sourceUrl;
+
           const { parentPath, name } = splitEntityId(destinationUrl);
+          const { parentPath: sourceParentPath } = splitEntityId(sourceUrl);
+          const isEmptyFolder = name === EMPTY_FOLDER_PLACEHOLDER_FILE_NAME;
+          const itemName = isEmptyFolder
+            ? getEntityNameFromId(sourceParentPath ?? '')
+            : name;
+          const folderName = isEmptyFolder
+            ? parentPath?.replace(itemName, '')
+            : parentPath;
 
           return UIActions.showToast({
             type: ToastType.Success,
@@ -818,8 +831,8 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
             }),
             message: translate('“{{fileName}}” {{verb}} to {{folder}}', {
               ns: Translation.Files,
-              fileName: name,
-              folder: parentPath,
+              fileName: itemName,
+              folder: folderName,
               verb: verbPast,
             }),
           });
@@ -895,17 +908,24 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
         if (results.length === 1) {
           const path = results[0].data;
           const { parentPath, name } = splitEntityId(path);
+          const isEmptyFolder = name === EMPTY_FOLDER_PLACEHOLDER_FILE_NAME;
+          const itemName = isEmptyFolder
+            ? getEntityNameFromId(parentPath ?? '')
+            : name;
+          const folderName = isEmptyFolder
+            ? parentPath?.replace(itemName, '')
+            : parentPath;
 
           return UIActions.showToast({
             type: ToastType.Success,
-            title: translate('Items {{verb}} successfully', {
+            title: translate('Item {{verb}} successfully', {
               ns: Translation.Common,
               verb: verbPast,
             }),
             message: translate('“{{fileName}}” {{verb}} from {{folder}}', {
               ns: Translation.Files,
-              fileName: name,
-              folder: parentPath,
+              fileName: itemName,
+              folder: folderName,
               verb: verbPast,
             }),
           });
