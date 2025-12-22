@@ -32,4 +32,18 @@ export class FilesManagerGridAssertion extends BaseAssertion {
       expectedState,
     );
   }
+
+  public async assertGridRowColor(name: string, expectedColor: string) {
+    await this.assertElementColor(
+      this.filesManagerGrid.gridRowByNameCell(name),
+      expectedColor,
+    );
+  }
+
+  public async assertGridCheckboxColor(name: string, expectedColor: string) {
+    await this.assertElementColor(
+      this.filesManagerGrid.gridCheckboxByNameCell(name),
+      expectedColor,
+    );
+  }
 }
