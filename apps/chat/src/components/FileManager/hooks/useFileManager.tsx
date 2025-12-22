@@ -35,6 +35,7 @@ import {
   DialCopiedItem,
   DialDeletedItem,
   DialFile,
+  DialFileManagerTabs,
   DialUploadFileItem,
   FileManagerColumnKey,
   useDialFileManagerTabs,
@@ -142,7 +143,7 @@ export const useFileManager = ({
     shared: t('Shared with Me'),
     organization: t('Organization'),
   });
-  const previousActiveTabRef = useRef(activeTab);
+  const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
 
   const filteredTabs = useMemo(() => {
     if (!availableTabs || !availableTabs.size) {
@@ -159,6 +160,28 @@ export const useFileManager = ({
       }
     }
   }, [dispatch, currentPath, folders]);
+
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+
+  const getParentPaths = useCallback((path: string | undefined): string[] => {
+    if (!path) return [];
+    const parts = path.split('/');
+    const paths: string[] = [];
+    for (let i = 2; i <= parts.length; i++) {
+      paths.push(parts.slice(0, i).join('/'));
+    }
+    return paths;
+  }, []);
+
+  useEffect(() => {
+    setExpandedPaths((prev) => {
+      const newPaths = getParentPaths(currentPath);
+      const updated = new Set(prev);
+      newPaths.forEach((p) => updated.add(p));
+
+      return updated;
+    });
+  }, [currentPath, getParentPaths]);
 
   useEffect(() => {
     if (
@@ -220,8 +243,13 @@ export const useFileManager = ({
     const { rootFolder, items, loadedFoldersPaths, sharedByMePaths } =
       buildFileTree(filteredFiles, filteredFolders, breadcrumbLabel);
 
-    if (activeTab !== previousActiveTabRef.current) {
+    if (
+      activeTab !== previousActiveTabRef.current &&
+      rootFolder.id &&
+      isRootId(rootFolder.id)
+    ) {
       setCurrentPath(rootFolder.id);
+      setExpandedPaths(new Set([rootFolder.id]));
       previousActiveTabRef.current = activeTab;
     }
 
@@ -233,38 +261,6 @@ export const useFileManager = ({
       visibleColumns,
     };
   }, [t, files, folders, activeTab, previousActiveTabRef]);
-
-  const getParentPaths = useCallback((path: string | undefined): string[] => {
-    if (!path) return [];
-    const parts = path.split('/');
-    const paths: string[] = [];
-    for (let i = 1; i <= parts.length; i++) {
-      paths.push(parts.slice(0, i).join('/'));
-    }
-    return paths;
-  }, []);
-
-  const initialExpandedPaths = useMemo(() => {
-    const rootId = getFileRootId();
-    const parts = rootId.split('/');
-    const paths: string[] = [];
-    for (let i = 1; i <= parts.length; i++) {
-      paths.push(parts.slice(0, i).join('/'));
-    }
-    return new Set(paths);
-  }, []);
-
-  const [expandedPaths, setExpandedPaths] =
-    useState<Set<string>>(initialExpandedPaths);
-
-  useEffect(() => {
-    setExpandedPaths((prev) => {
-      const newPaths = getParentPaths(currentPath);
-      const updated = new Set(prev);
-      newPaths.forEach((p) => updated.add(p));
-      return updated;
-    });
-  }, [currentPath, getParentPaths]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
