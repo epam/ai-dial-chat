@@ -120,8 +120,8 @@ export default function Signin({
   }
 
   return (
-    <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
-      <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
+    <div className="flex size-full h-screen overflow-auto place-content-center bg-auth-layer-0">
+      <div className="my-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5 h-fit">
         <div className="my-5 flex justify-center">
           {!!logoImgSrc && (
             <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
