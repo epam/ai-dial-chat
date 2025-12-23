@@ -280,7 +280,7 @@ export const FileManagerModal = memo(
       searchResultsUIKit,
       isRenaming,
 
-      operationLoaderModal,
+      operationLoaderModalOptions,
       filesUploadingModalOptions,
 
       bulkActionsToolbarOptions,
@@ -398,20 +398,11 @@ export const FileManagerModal = memo(
                 <DialLoader size={48} ariaLabel={t('Processing files...')} />
               </div>
             )}
-            {operationLoaderModal && !isRenaming && (
-              <OperationLoaderModal
-                title={operationLoaderModal.title}
-                text={operationLoaderModal.text}
-                onCancel={operationLoaderModal.onCancel}
-              />
+            {operationLoaderModalOptions && !isRenaming && (
+              <OperationLoaderModal {...operationLoaderModalOptions} />
             )}
             {filesUploadingModalOptions && (
-              <FilesUploadingModal
-                title={filesUploadingModalOptions.title}
-                text={filesUploadingModalOptions.text}
-                files={filesUploadingModalOptions.files}
-                onCancel={filesUploadingModalOptions.onCancel}
-              />
+              <FilesUploadingModal {...filesUploadingModalOptions} />
             )}
           </div>
 
