@@ -51,7 +51,7 @@ export const GridSelectors = {
   gridColumn: (columnId: string) => `[col-id="${columnId}"]`,
   gridCell: (columnId: string) =>
     `[role="gridcell"]${GridSelectors.gridColumn(columnId)}`,
-  gridCellValue: '#name'
+  gridCellValue: '#name',
 };
 
 export const CheckboxSelectors = {
