@@ -393,16 +393,15 @@ export const useFileManager = ({
   );
 
   const treeOptions = useMemo(
-    () =>
-      ({
-        expandedPaths,
-        title: t('Folder tree'),
-        collapsed: treeCollapsedState,
-        onCollapseChange: setTreeCollapsedState,
-        loadedPaths: loadedFoldersPaths,
-        actionLabels: treeActionLabels,
-        onExpandedPathsChange: setExpandedPaths,
-      }) as FileTreeOptions,
+    () => ({
+      expandedPaths,
+      title: t('Folder tree'),
+      collapsed: treeCollapsedState,
+      onCollapseChange: setTreeCollapsedState,
+      loadedPaths: loadedFoldersPaths,
+      actionLabels: treeActionLabels,
+      onExpandedPathsChange: setExpandedPaths,
+    }),
     [
       expandedPaths,
       setExpandedPaths,
