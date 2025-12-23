@@ -602,6 +602,7 @@ const deleteFilesEpic: AppEpic = (action$) =>
               FilesActions.deleteFilesSuccess({
                 deletedItems: payload.files,
                 result: response,
+                request: payload,
               }),
             ),
             of(
@@ -808,14 +809,20 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
     ),
     map((action) => {
       const { result, request } = action.payload;
-      const { results, errors } = result;
 
+      const isRenaming = request.sourceFolder === request.destinationFolder;
+      if (isRenaming) {
+        return null;
+      }
+
+      const { errors } = result;
+      const items = request.files;
       const isCopy = FilesActions.copyFilesSuccess.match(action);
       const verbPast = isCopy ? 'copied' : 'moved';
 
-      if (results.length > 0) {
-        if (results.length === 1) {
-          const destinationUrl = results[0].data.destinationUrl;
+      if (items.length > 0) {
+        if (items.length === 1) {
+          const destinationUrl = items[0].destinationUrl;
           const { parentPath, name } = splitEntityId(destinationUrl);
 
           return UIActions.showToast({
@@ -833,13 +840,8 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
           });
         }
 
-        const destinationUrl = results[0].data.destinationUrl;
+        const destinationUrl = request.destinationFolder;
         const { parentPath } = splitEntityId(destinationUrl);
-        const isRenaming = request.sourceFolder === request.destinationFolder;
-
-        if (isRenaming) {
-          return null;
-        }
 
         return UIActions.showToast({
           type: ToastType.Success,
@@ -849,7 +851,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
           }),
           message: translate('{{count}} items {{verb}} to {{folder}}', {
             ns: Translation.Files,
-            count: results.length,
+            count: items.length,
             folder: parentPath,
             verb: verbPast,
           }),
@@ -899,19 +901,19 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.deleteFilesSuccess.type),
     map(({ payload }) => {
-      const { result } = payload;
-      const { results, errors } = result;
-
+      const { result, request } = payload;
+      const { errors } = result;
+      const items = request.files;
       const verbPast = 'deleted';
 
-      if (results.length > 0) {
-        if (results.length === 1) {
-          const path = results[0].data;
-          const { parentPath, name } = splitEntityId(path);
+      if (items.length > 0) {
+        const path = items[0].sourceUrl;
+        const { parentPath, name } = splitEntityId(path);
 
+        if (items.length === 1) {
           return UIActions.showToast({
             type: ToastType.Success,
-            title: translate('Items {{verb}} successfully', {
+            title: translate('Item {{verb}} successfully', {
               ns: Translation.Common,
               verb: verbPast,
             }),
@@ -924,9 +926,6 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
           });
         }
 
-        const path = results[0].data;
-        const { parentPath } = splitEntityId(path);
-
         return UIActions.showToast({
           type: ToastType.Success,
           title: translate('Items {{verb}} successfully', {
@@ -935,7 +934,7 @@ const deleteFilesResultToastEpic: AppEpic = (action$) =>
           }),
           message: translate('{{count}} items {{verb}} from {{folder}}', {
             ns: Translation.Files,
-            count: results.length,
+            count: items.length,
             folder: parentPath,
             verb: verbPast,
           }),
