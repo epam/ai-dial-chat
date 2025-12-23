@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
+import { ApiUtils } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
@@ -35,11 +36,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const token = await getToken({ req });
 
     const entities = await getSortedEntities(token);
-    if (!entities.some((entity) => entity.id === modelId)) {
+    const model = entities.find(
+      (entity) => entity.id === modelId || entity.reference === modelId,
+    );
+    if (!model) {
       throw new Error(`Rated model not exists - ${modelId}`);
     }
 
-    const url = `${DIAL_API_HOST}/v1/${modelId}/rate`;
+    const url = `${DIAL_API_HOST}/v1/${ApiUtils.encodeApiUrl(model.id)}/rate`;
 
     await fetch(url, {
       headers: getApiHeaders({
@@ -55,7 +59,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }),
     }).then((r) => r.status);
   } catch (error) {
-    logger.error(error);
+    logger.error('Failed to rate message:' + error);
+    return res.status(500).send(errorsMessages.generalServer);
   }
 
   return res.status(200).json({});
