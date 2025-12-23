@@ -841,6 +841,10 @@ export const filesSlice = createSlice({
       }: PayloadAction<{
         deletedItems: DialDeletedItem[];
         result: FileOperationsResult<string>;
+        request: {
+          files: DialDeletedItem[];
+          folderUrl: string;
+        };
       }>,
     ) => {
       state.isDeletingFiles = false;
