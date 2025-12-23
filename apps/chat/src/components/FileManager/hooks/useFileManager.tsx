@@ -27,6 +27,8 @@ import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { FileTreeOptions } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
+
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
@@ -402,9 +404,11 @@ export const useFileManager = ({
       onCollapseChange: setTreeCollapsedState,
       loadedPaths: loadedFoldersPaths,
       actionLabels: treeActionLabels,
+      onExpandedPathsChange: setExpandedPaths,
     }),
     [
       expandedPaths,
+      setExpandedPaths,
       t,
       treeCollapsedState,
       loadedFoldersPaths,
