@@ -59,8 +59,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }),
     }).then((r) => r.status);
   } catch (error) {
-    logger.error(error);
-    return res.status(500).json({ error });
+    logger.error('Failed to rate message:' + error);
+    return res.status(500).send(errorsMessages.generalServer);
   }
 
   return res.status(200).json({});
