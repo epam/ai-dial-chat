@@ -78,6 +78,8 @@ export const useFileManager = ({
     FilesSelectors.selectIsUploadingFiles,
   );
 
+  const isRenamingRef = useRef(false);
+
   const [uploadingFilesIds, setUploadingFilesIds] = useState<Set<string>>(
     new Set(),
   );
@@ -333,6 +335,7 @@ export const useFileManager = ({
       if (movedItems.length === 0) return;
 
       movingFilesCountRef.current = movedItems.length;
+      isRenamingRef.current = sourceFolder === destinationFolder;
 
       dispatch(
         FilesActions.moveFiles({
@@ -644,6 +647,7 @@ export const useFileManager = ({
     sharedByMePaths,
     isLoadingSearchListing,
     searchResultsUIKit,
+    isRenaming: isRenamingRef.current,
 
     operationLoaderModal: renderOperationLoaderModal(),
     filesUploadingModalOptions,
