@@ -1154,9 +1154,6 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
 
       return ShareService.shareDiscard(resourceUrls).pipe(
         mergeMap(() => {
-          // if (!payload.isFolder && payload.featureType === FeatureType.File) {
-          //   return EMPTY;
-          // }
           const actions: Observable<AppAction>[] = payload.resourceIds.map(
             (resourceId) =>
               of(

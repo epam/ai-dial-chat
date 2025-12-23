@@ -367,7 +367,7 @@ export const useFileManager = ({
     [dispatch],
   );
 
-  const renderOperationLoaderModal = useCallback(() => {
+  const operationLoaderModalOptions = useMemo(() => {
     if (!isCopyingFiles && !isMovingFiles) {
       return null;
     }
@@ -662,7 +662,7 @@ export const useFileManager = ({
     searchResultsUIKit,
     isRenaming: isRenamingRef.current,
 
-    operationLoaderModal: renderOperationLoaderModal(),
+    operationLoaderModalOptions,
     filesUploadingModalOptions,
 
     bulkActionsToolbarOptions,

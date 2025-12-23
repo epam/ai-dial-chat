@@ -3,6 +3,7 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils } from '@/src/utils/server/server';
 
+import { BackendDataNodeType } from '@/src/types/common';
 import { BackendFile, BackendFileFolder } from '@/src/types/files';
 
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
@@ -52,7 +53,7 @@ export async function fetchAllFilesRecursive(
     const items = json.items || [];
 
     for (const file of items) {
-      if (file.nodeType === 'ITEM') {
+      if (file.nodeType === BackendDataNodeType.ITEM) {
         const backendFile = file as BackendFile;
         allFiles.push({
           name: backendFile.name,
