@@ -25,6 +25,7 @@ import { withRenderForScreen } from '@/src/components/Common/ScreenRender';
 import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const UserInfo = () => {
   const { t } = useTranslation(Translation.Header);
@@ -46,9 +47,10 @@ const UserInfo = () => {
           <UserIcon className="mx-2 text-secondary" width={18} height={18} />
         )}
 
-        <span className="grow" data-qa="username">
-          {session?.user?.name ?? ''}
-        </span>
+        <DialEllipsisTooltip
+          contentClassName="grow"
+          text={<span data-qa="username">{session?.user?.name ?? ''}</span>}
+        />
       </div>
     </div>
   );
