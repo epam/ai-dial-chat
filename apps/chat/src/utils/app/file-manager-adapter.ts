@@ -3,9 +3,10 @@ import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileNodeType,
+  DialFilePermission,
   DialFileResourceType,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
@@ -68,6 +69,11 @@ export const filterFoldersByFilters = (
   return result;
 };
 
+const PermissionMap: Record<SharePermission, DialFilePermission> = {
+  [SharePermission.READ]: DialFilePermission.READ,
+  [SharePermission.WRITE]: DialFilePermission.WRITE,
+};
+
 export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
   const fullPath = file.id;
 
@@ -86,6 +92,7 @@ export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
     author: file.author,
     parentPath,
     extension: file.name.includes('.') ? file.name.split('.').pop() : undefined,
+    permissions: file.permissions?.map((p) => PermissionMap[p]),
   };
 };
 
@@ -106,6 +113,7 @@ export const convertToUIKitFolder = (
     items: childItems,
     parentPath,
     updatedAt: folder.updatedAt ? String(folder.updatedAt) : undefined,
+    permissions: folder.permissions?.map((p) => PermissionMap[p]),
   };
 };
 
