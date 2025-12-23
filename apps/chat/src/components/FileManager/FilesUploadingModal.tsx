@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -34,6 +34,19 @@ export const FilesUploadingModal = ({
   const { t } = useTranslation(Translation.Common);
   const [isOpen, setIsOpen] = useState(true);
 
+  const renderDetails = useCallback((percent?: number) => {
+    if (percent === undefined) return null;
+
+    return (
+      <div className="h-1 w-full overflow-hidden rounded-full bg-layer-1">
+        <div
+          className="h-full rounded-full bg-accent-primary transition-all duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    );
+  }, []);
+
   return (
     <DialPopup
       className="!h-fit !max-h-full !w-[400px] md:!max-h-[693px]"
@@ -66,16 +79,7 @@ export const FilesUploadingModal = ({
             <div key={file.name} className="rounded bg-layer-2 px-3 py-2">
               <DialFileName
                 name={file.name}
-                details={
-                  file.percent !== undefined ? (
-                    <div className="h-1 w-full overflow-hidden rounded-full bg-layer-1">
-                      <div
-                        className="h-full rounded-full bg-accent-primary transition-all duration-300"
-                        style={{ width: `${file.percent}%` }}
-                      />
-                    </div>
-                  ) : null
-                }
+                details={renderDetails(file.percent)}
               />
             </div>
           ))}

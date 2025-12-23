@@ -223,7 +223,7 @@ export const useFileManager = ({
     ];
 
     switch (activeTab) {
-      case 'my_files':
+      case DialFileManagerTabs.MyFiles:
         filteredFiles = filterFilesByFilters(files, defaultMyItemsFilters);
         filteredFolders = filterFoldersByFilters(
           folders,
@@ -231,13 +231,13 @@ export const useFileManager = ({
         );
         pathRootAlias = t('My Files');
         break;
-      case 'shared':
+      case DialFileManagerTabs.Shared:
         filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
         pathRootAlias = t('Shared with Me');
         visibleColumns.push(FileManagerColumnKey.Author);
         break;
-      case 'organization':
+      case DialFileManagerTabs.Organization:
         filteredFiles = filterFilesByFilters(files, PublishedWithMeFilter);
         filteredFolders = filterFoldersByFilters(
           folders,
