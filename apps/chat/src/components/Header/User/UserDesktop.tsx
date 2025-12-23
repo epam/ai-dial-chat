@@ -18,6 +18,7 @@ import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import UserIcon from '@/public/images/icons/user.svg';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 export const UserDesktop = Inversify.register('UserDesktop', () => {
   const { t } = useTranslation(Translation.Header);
@@ -53,9 +54,14 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
                 <UserIcon width={18} height={18} />
               )}
 
-              <span className="grow truncate" data-qa="username">
-                {session?.user?.name || t('User')}
-              </span>
+              <DialEllipsisTooltip
+                contentClassName="grow"
+                text={
+                  <span data-qa="username">
+                    {session?.user?.name || t('User')}
+                  </span>
+                }
+              />
             </div>
             <ChevronDownIcon
               className={`shrink-0 text-primary transition-all ${
