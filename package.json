@@ -33,7 +33,7 @@
     "affected:format:fix": "nx affected -t format:fix"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "^0.6.0-rc.18",
+    "@epam/ai-dial-ui-kit": "^0.6.0-rc.20",
     "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "4.7.0",
