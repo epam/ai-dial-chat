@@ -32,4 +32,10 @@ export class FilesManagerGrid extends Grid {
         GridSelectors.gridCell(FileManagerColumnKey.Select),
       ),
     );
+
+  public gridNameCell = (name: string) =>
+    this.gridRowColumnByCellValue(FileManagerColumnKey.Name, name);
+
+  public gridNameCellValue = (name: string) =>
+    this.gridNameCell(name).locator(GridSelectors.gridCellValue);
 }

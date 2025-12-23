@@ -21,4 +21,12 @@ export class Grid extends BaseElement {
         hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
       }),
     });
+
+  public gridRowColumnByCellValue = (columnId: string, value: string) =>
+    this.gridRows
+      .getChildElementBySelector(GridSelectors.gridCell(columnId))
+      .getElementLocator()
+      .filter({
+        hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
+      });
 }
