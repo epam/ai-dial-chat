@@ -1,6 +1,6 @@
 import { IconMessages, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
 import React, { FocusEvent, useCallback, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -52,8 +52,8 @@ const ChatPreview = () => {
   const type = decodeURIComponent(typeQuery.toString());
   const appReference = decodeURIComponent(referenceQuery?.toString() ?? '');
 
-  const { formState } = useFormContext();
-  const isApplicationValid = formState.isValid;
+  const { control } = useFormContext();
+  const { isValid: isApplicationValid } = useFormState({ control });
 
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -165,8 +165,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
   const type = decodeURIComponent(typeQuery.toString());
   const { previewMode } = useMarketplaceEditorView();
 
-  const { formState } = useFormContext();
-  const isApplicationValid = formState.isValid;
+  const { control } = useFormContext();
+  const { isValid: isApplicationValid } = useFormState({ control });
 
   const editorStep = useAppSelector(ApplicationSelectors.selectEditorStep);
   const appDetails = useAppSelector(

@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -79,9 +84,9 @@ export const CodeAppForm = () => {
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const publicationUrl = publicationUrlQuery.toString();
 
-  const { control, formState, setError, clearErrors, setValue } =
+  const { control, setError, clearErrors, setValue } =
     useFormContext<CodeAppFormType>();
-  const errors = formState.errors;
+  const { errors } = useFormState<CodeAppFormType>({ control });
   const sources = useWatch<CodeAppFormType, 'sources'>({
     name: 'sources',
   });

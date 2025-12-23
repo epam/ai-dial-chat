@@ -1132,10 +1132,11 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         }),
         switchMap(() => EMPTY),
         catchError((e: Response) => {
+          console.error('Failed to rate message:', e);
           return of(
             ConversationsActions.rateMessageFail({
               ...payload,
-              error: e,
+              error: translate('Failed to rate message'),
             }),
           );
         }),

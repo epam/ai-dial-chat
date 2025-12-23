@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -76,11 +76,9 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
   const isFieldDisabled =
     isAppDeployed || isSharedWithMe || isAppPublic || isDeploying;
 
-  const {
-    register,
-    formState: { errors, isValid },
-    control,
-  } = useFormContext<BaseAppForm>();
+  const { register, control } = useFormContext<BaseAppForm>();
+
+  const { errors, isValid } = useFormState<BaseAppForm>({ control });
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
