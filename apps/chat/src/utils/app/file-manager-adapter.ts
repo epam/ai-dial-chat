@@ -186,6 +186,8 @@ export const buildFileTree = (
     getEntityBucket({ id: rootItems?.[0]?.id || '' }),
   );
 
+  loadedFoldersPaths.add(rootId);
+
   const rootFolder: DialRootFolder = {
     id: rootId,
     name: 'Files',
