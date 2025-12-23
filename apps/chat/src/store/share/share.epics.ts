@@ -1143,7 +1143,7 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
 const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.discardSharedWithMe.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const resourceUrls = payload.isFolder
         ? payload.resourceIds.map(
             (resourceId) => ApiUtils.encodeApiUrl(resourceId) + '/',
@@ -1153,7 +1153,7 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           );
 
       return ShareService.shareDiscard(resourceUrls).pipe(
-        switchMap(() => {
+        mergeMap(() => {
           // if (!payload.isFolder && payload.featureType === FeatureType.File) {
           //   return EMPTY;
           // }

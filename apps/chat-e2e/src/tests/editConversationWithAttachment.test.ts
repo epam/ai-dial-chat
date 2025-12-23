@@ -9,7 +9,6 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -99,13 +98,13 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
     sendMessage,
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
     sendMessageInputAttachmentsAssertions,
-    attachAllFilesTreeAssertion,
+    filesManagerModalGridAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1764', 'EPMRTC-1901');
@@ -150,16 +149,17 @@ dialTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         for (const file of initAttachedFiles) {
-          await attachFilesModal.checkAttachedFile(
+          await filesManagerModal
+            .getFilesManager()
+            .getFilesManagerGrid()
+            .gridCheckboxByNameCell(file)
+            .click();
+          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
-            FileModalSection.AllFiles,
-          );
-          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-            { name: file },
             CheckboxState.checked,
           );
         }
-        await attachFilesModal.attachFiles();
+        await filesManagerModal.getAttachButton().click();
         for (const file of initAttachedFiles) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
             file,
@@ -178,16 +178,12 @@ dialTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         for (const file of initAttachedFiles) {
-          await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-            { name: file },
+          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
+            file,
             CheckboxState.checked,
           );
-          await attachAllFilesTreeAssertion.assertEntityColor(
-            { name: file },
-            expectedColor,
-          );
-          await attachAllFilesTreeAssertion.assertEntityCheckboxColor(
-            { name: file },
+          await filesManagerModalGridAssertion.assertGridCheckboxColor(
+            file,
             expectedColor,
           );
         }
@@ -197,23 +193,25 @@ dialTest(
     await dialTest.step(
       'Uncheck attached file, check another and verify updated files are displayed in Send message box',
       async () => {
-        await attachFilesModal.checkAttachedFile(
+        await filesManagerModal
+          .getFilesManager()
+          .getFilesManagerGrid()
+          .gridCheckboxByNameCell(initAttachedFiles[1])
+          .click();
+        await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
           initAttachedFiles[1],
-          FileModalSection.AllFiles,
-        );
-        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-          { name: initAttachedFiles[1] },
           CheckboxState.unchecked,
         );
-        await attachFilesModal.checkAttachedFile(
+        await filesManagerModal
+          .getFilesManager()
+          .getFilesManagerGrid()
+          .gridCheckboxByNameCell(updatedAttachedFiles[1])
+          .click();
+        await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
           updatedAttachedFiles[1],
-          FileModalSection.AllFiles,
-        );
-        await attachAllFilesTreeAssertion.assertEntityCheckboxState(
-          { name: updatedAttachedFiles[1] },
           CheckboxState.checked,
         );
-        await attachFilesModal.attachFiles();
+        await filesManagerModal.getAttachButton().click();
 
         for (const file of updatedAttachedFiles) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(

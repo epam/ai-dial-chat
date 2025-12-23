@@ -501,7 +501,12 @@ const copyFilesEpic: AppEpic = (action$) =>
         }).pipe(
           switchMap((response) =>
             concat(
-              of(FilesActions.copyFilesSuccess({ result: response })),
+              of(
+                FilesActions.copyFilesSuccess({
+                  result: response,
+                  request: payload,
+                }),
+              ),
               of(
                 FilesActions.getFilesWithFolders({
                   id: payload.destinationFolder,
@@ -545,7 +550,10 @@ const moveFilesEpic: AppEpic = (action$) =>
         }).pipe(
           switchMap((response) => {
             const actions: AppAction[] = [
-              FilesActions.moveFilesSuccess({ result: response }),
+              FilesActions.moveFilesSuccess({
+                result: response,
+                request: payload,
+              }),
             ];
 
             if (payload.destinationFolder !== payload.sourceFolder) {
@@ -802,7 +810,7 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
       FilesActions.moveFilesSuccess.type,
     ),
     map((action) => {
-      const { result } = action.payload;
+      const { result, request } = action.payload;
       const { results, errors } = result;
 
       const isCopy = FilesActions.copyFilesSuccess.match(action);
@@ -840,6 +848,11 @@ const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
 
         const destinationUrl = results[0].data.destinationUrl;
         const { parentPath } = splitEntityId(destinationUrl);
+        const isRenaming = request.sourceFolder === request.destinationFolder;
+
+        if (isRenaming) {
+          return null;
+        }
 
         return UIActions.showToast({
           type: ToastType.Success,

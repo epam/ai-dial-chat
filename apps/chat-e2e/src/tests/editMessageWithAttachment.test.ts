@@ -3,13 +3,13 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
+  CheckboxState,
   ExpectedMessages,
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
@@ -248,7 +248,7 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
     fileApiHelper,
     attachmentDropdownMenu,
     conversationData,
@@ -258,6 +258,8 @@ dialTest(
     editMessageInputAttachments,
     chat,
     localStorageManager,
+    filesManagerModalGridAssertion,
+    editMessageInputAttachmentsAssertions,
   }) => {
     setTestIds('EPMRTC-1903');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -311,29 +313,46 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await attachFilesModal.checkAttachedFile(
-          initAttachedFiles[1],
-          FileModalSection.AllFiles,
+        const filesToUncheck = initAttachedFiles.filter(
+          (f) => !updatedAttachedFiles.includes(f),
         );
-        await attachFilesModal.checkAttachedFile(
-          updatedAttachedFiles[1],
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.attachFiles();
-        for (const file of updatedAttachedFiles) {
-          await expect
-            .soft(
-              editMessageInputAttachments.inputAttachment(file),
-              ExpectedMessages.fileIsAttached,
-            )
-            .toBeVisible();
+        for (const file of filesToUncheck) {
+          await filesManagerModal
+            .getFilesManager()
+            .getFilesManagerGrid()
+            .gridCheckboxByNameCell(file)
+            .click();
+          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
+            file,
+            CheckboxState.unchecked,
+          );
         }
-        expect
-          .soft(
-            await editMessageInputAttachments.inputAttachments.getElementsCount(),
-            ExpectedMessages.attachedFilesCountIsValid,
-          )
-          .toBe(updatedAttachedFiles.length);
+
+        const filesToCheck = updatedAttachedFiles.filter(
+          (f) => !initAttachedFiles.includes(f),
+        );
+        for (const file of filesToCheck) {
+          await filesManagerModal
+            .getFilesManager()
+            .getFilesManagerGrid()
+            .gridCheckboxByNameCell(file)
+            .click();
+          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
+            file,
+            CheckboxState.checked,
+          );
+        }
+        await filesManagerModal.getAttachButton().click();
+        for (const file of updatedAttachedFiles) {
+          await editMessageInputAttachmentsAssertions.assertAttachedFileState(
+            file,
+            'visible',
+          );
+        }
+        await editMessageInputAttachmentsAssertions.assertElementsCount(
+          editMessageInputAttachments.inputAttachments,
+          updatedAttachedFiles.length,
+        );
       },
     );
 

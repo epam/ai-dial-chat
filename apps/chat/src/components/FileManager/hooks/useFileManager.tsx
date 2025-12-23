@@ -27,6 +27,8 @@ import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { FileTreeOptions } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
+
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
@@ -41,6 +43,7 @@ import {
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import cloneDeep from 'lodash-es/cloneDeep';
+import groupBy from 'lodash-es/groupBy';
 
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
@@ -76,6 +79,8 @@ export const useFileManager = ({
   const isUploadingFiles = useAppSelector(
     FilesSelectors.selectIsUploadingFiles,
   );
+
+  const isRenamingRef = useRef(false);
 
   const [uploadingFilesIds, setUploadingFilesIds] = useState<Set<string>>(
     new Set(),
@@ -332,6 +337,7 @@ export const useFileManager = ({
       if (movedItems.length === 0) return;
 
       movingFilesCountRef.current = movedItems.length;
+      isRenamingRef.current = sourceFolder === destinationFolder;
 
       dispatch(
         FilesActions.moveFiles({
@@ -398,9 +404,11 @@ export const useFileManager = ({
       onCollapseChange: setTreeCollapsedState,
       loadedPaths: loadedFoldersPaths,
       actionLabels: treeActionLabels,
+      onExpandedPathsChange: setExpandedPaths,
     }),
     [
       expandedPaths,
+      setExpandedPaths,
       t,
       treeCollapsedState,
       loadedFoldersPaths,
@@ -603,15 +611,31 @@ export const useFileManager = ({
     [dispatch],
   );
 
-  const handleUnshareFile = useCallback(
-    (file: { path: string; nodeType?: string }) => {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [file.path],
-          featureType: FeatureType.File,
-          isFolder: file.nodeType === 'folder',
-        }),
+  const handleUnshareFiles = useCallback(
+    (items: { path: string; nodeType?: string }[]) => {
+      const grouped = groupBy(items, (item) =>
+        item.nodeType === 'folder' ? 'folders' : 'files',
       );
+
+      if (grouped.folders?.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: grouped.folders.map((f) => f.path),
+            featureType: FeatureType.File,
+            isFolder: true,
+          }),
+        );
+      }
+
+      if (grouped.files?.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: grouped.files.map((f) => f.path),
+            featureType: FeatureType.File,
+            isFolder: false,
+          }),
+        );
+      }
     },
     [dispatch],
   );
@@ -627,6 +651,7 @@ export const useFileManager = ({
     sharedByMePaths,
     isLoadingSearchListing,
     searchResultsUIKit,
+    isRenaming: isRenamingRef.current,
 
     operationLoaderModal: renderOperationLoaderModal(),
     filesUploadingModalOptions,
@@ -650,6 +675,6 @@ export const useFileManager = ({
     handleUploadFiles,
     handleCreateFolder,
     handleUploadArchive,
-    handleUnshareFile,
+    handleUnshareFiles,
   };
 };

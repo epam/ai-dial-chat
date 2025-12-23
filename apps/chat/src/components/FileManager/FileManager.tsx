@@ -33,6 +33,7 @@ export const FileManager: React.FC = () => {
     sharedByMePaths,
     isLoadingSearchListing,
     searchResultsUIKit,
+    isRenaming,
 
     operationLoaderModal,
     filesUploadingModalOptions,
@@ -56,7 +57,7 @@ export const FileManager: React.FC = () => {
     handleUploadFiles,
     handleCreateFolder,
     handleUploadArchive,
-    handleUnshareFile,
+    handleUnshareFiles,
   } = useFileManager();
 
   useEffect(() => {
@@ -94,14 +95,14 @@ export const FileManager: React.FC = () => {
         onUploadFiles={handleUploadFiles}
         onCreateFolder={handleCreateFolder}
         onUploadArchive={handleUploadArchive}
-        onUnshareFile={handleUnshareFile}
+        onUnshareFiles={handleUnshareFiles}
       />
       {isAnyOperationInProgress && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
           <DialLoader size={48} ariaLabel={t('Processing files...')} />
         </div>
       )}
-      {operationLoaderModal && (
+      {operationLoaderModal && !isRenaming && (
         <OperationLoaderModal
           title={operationLoaderModal.title}
           text={operationLoaderModal.text}
