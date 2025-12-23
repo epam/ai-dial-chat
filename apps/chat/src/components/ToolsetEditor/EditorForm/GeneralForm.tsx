@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -58,11 +58,8 @@ export const GeneralForm = ({
   const isMobileView = screenState === ScreenState.SM;
   const isEditing = !!toolset;
 
-  const {
-    register,
-    formState: { errors, isValid },
-    control,
-  } = useFormContext<ToolsetEditorForm>();
+  const { register, control } = useFormContext<ToolsetEditorForm>();
+  const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 

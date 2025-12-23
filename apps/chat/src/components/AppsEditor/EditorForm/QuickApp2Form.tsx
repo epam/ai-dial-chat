@@ -1,5 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -93,16 +98,9 @@ export const QuickApp2Form = () => {
     [modelsMap, toolsetsMap],
   );
 
-  const {
-    control,
-    formState,
-    register,
-    setError,
-    clearErrors,
-    getValues,
-    setValue,
-  } = useFormContext<QuickApp2FormType>();
-  const errors = formState.errors;
+  const { control, register, setError, clearErrors, getValues, setValue } =
+    useFormContext<QuickApp2FormType>();
+  const { errors } = useFormState<QuickApp2FormType>({ control });
 
   const modelId = useWatch({
     control,

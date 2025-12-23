@@ -1,5 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Controller, useController, useFormContext } from 'react-hook-form';
+import {
+  Controller,
+  useController,
+  useFormContext,
+  useFormState,
+} from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -43,8 +48,8 @@ export const QuickAppForm = () => {
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const { control, formState, register } = useFormContext<QuickAppFormType>();
-  const errors = formState.errors;
+  const { control, register } = useFormContext<QuickAppFormType>();
+  const { errors } = useFormState<QuickAppFormType>({ control });
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);

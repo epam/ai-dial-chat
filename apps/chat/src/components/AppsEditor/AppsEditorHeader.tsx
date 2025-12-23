@@ -1,5 +1,5 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -71,9 +71,8 @@ export const AppsEditorHeader = ({
 
   const dispatch = useAppDispatch();
 
-  const { formState, trigger } = useFormContext<AppsEditorFormType>();
-  const errors = formState.errors;
-  const isValid = formState.isValid;
+  const { control, trigger } = useFormContext<AppsEditorFormType>();
+  const { errors, isValid } = useFormState<AppsEditorFormType>({ control });
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
