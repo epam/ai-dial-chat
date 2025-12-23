@@ -178,7 +178,7 @@ export class ComponentBuilder<
 
       useEffect(() => {
         this.stateFn?.(componentState, setComponentState);
-      }, [this.stateFn]); // (оставил как у тебя, хотя обычно так не делают)
+      }, [this.stateFn]);
 
       this.useEffectsRunner(this.effectsFn, componentState, setComponentState);
 
