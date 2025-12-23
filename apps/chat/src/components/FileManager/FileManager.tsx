@@ -33,6 +33,7 @@ export const FileManager: React.FC = () => {
     sharedByMePaths,
     isLoadingSearchListing,
     searchResultsUIKit,
+    isRenaming,
 
     operationLoaderModal,
     filesUploadingModalOptions,
@@ -101,7 +102,7 @@ export const FileManager: React.FC = () => {
           <DialLoader size={48} ariaLabel={t('Processing files...')} />
         </div>
       )}
-      {operationLoaderModal && (
+      {operationLoaderModal && !isRenaming && (
         <OperationLoaderModal
           title={operationLoaderModal.title}
           text={operationLoaderModal.text}

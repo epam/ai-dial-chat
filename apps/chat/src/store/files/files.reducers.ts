@@ -746,6 +746,11 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         result: FileOperationsResult<MoveModel>;
+        request: {
+          files: DialCopiedItem[];
+          sourceFolder?: string;
+          destinationFolder: string;
+        };
       }>,
     ) => {
       state.isCopyingFiles = false;
@@ -787,6 +792,11 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         result: FileOperationsResult<MoveModel>;
+        request: {
+          files: DialCopiedItem[];
+          sourceFolder: string;
+          destinationFolder: string;
+        };
       }>,
     ) => {
       state.isMovingFiles = false;
