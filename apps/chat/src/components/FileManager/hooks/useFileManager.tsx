@@ -27,6 +27,8 @@ import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { ToolbarOptions } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
+
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 
 import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
@@ -45,11 +47,13 @@ import groupBy from 'lodash-es/groupBy';
 
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
+  toolbarOptions?: ToolbarOptions;
   availableTabs?: Set<string>;
 }
 
 export const useFileManager = ({
   actionLabelsOptions,
+  toolbarOptions: externalToolbarOptions,
   availableTabs,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
@@ -326,7 +330,7 @@ export const useFileManager = ({
     [t],
   );
 
-  const moveToFileHandler = useCallback(
+  const handleMoveFiles = useCallback(
     (
       movedItems: DialCopiedItem[],
       sourceFolder: string,
@@ -397,7 +401,7 @@ export const useFileManager = ({
   const treeOptions = useMemo(
     () => ({
       expandedPaths,
-      title: t('Folder tree'),
+      header: t('Folder tree'),
       collapsed: treeCollapsedState,
       onCollapseChange: setTreeCollapsedState,
       loadedPaths: loadedFoldersPaths,
@@ -483,8 +487,15 @@ export const useFileManager = ({
       onTabChange: handleTabChange,
       newButtonVariant: ButtonVariant.Primary,
       newActionLabels: newActionLabels,
+      ...externalToolbarOptions,
     }),
-    [filteredTabs, activeTab, handleTabChange, newActionLabels],
+    [
+      filteredTabs,
+      activeTab,
+      handleTabChange,
+      newActionLabels,
+      externalToolbarOptions,
+    ],
   );
 
   const destinationFolderPopupOptions = useMemo(
@@ -666,7 +677,7 @@ export const useFileManager = ({
     handleSearchFiles,
     handleCopyFiles,
     handleGetInfo,
-    moveToFileHandler,
+    handleMoveFiles,
     handleDeleteFiles,
     handleDownloadFiles,
     handleTableFileClick,

@@ -50,7 +50,7 @@ export const FileManager: React.FC = () => {
     handleSearchFiles,
     handleCopyFiles,
     handleGetInfo,
-    moveToFileHandler,
+    handleMoveFiles,
     handleDeleteFiles,
     handleDownloadFiles,
     handleTableFileClick,
@@ -86,7 +86,7 @@ export const FileManager: React.FC = () => {
         toolbarOptions={toolbarOptions}
         onCopyFiles={handleCopyFiles}
         onGetInfo={handleGetInfo}
-        onMoveToFiles={moveToFileHandler}
+        onMoveToFiles={handleMoveFiles}
         onDeleteFiles={handleDeleteFiles}
         onDownloadFiles={handleDownloadFiles}
         onTableFileClick={handleTableFileClick}

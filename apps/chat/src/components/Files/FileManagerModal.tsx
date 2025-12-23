@@ -278,6 +278,7 @@ export const FileManagerModal = memo(
       sharedByMePaths,
       isLoadingSearchListing,
       searchResultsUIKit,
+      isRenaming,
 
       operationLoaderModal,
       filesUploadingModalOptions,
@@ -297,6 +298,7 @@ export const FileManagerModal = memo(
       handleUploadFiles,
       handleCreateFolder,
       handleUploadArchive,
+      handleMoveFiles,
     } = useFileManager({
       actionLabelsOptions: {
         actionsByTab: {
@@ -308,6 +310,9 @@ export const FileManagerModal = memo(
           shared: [DialFileManagerActions.Download],
           organization: [DialFileManagerActions.Download],
         },
+      },
+      toolbarOptions: {
+        newButtonVariant: ButtonVariant.Secondary,
       },
       availableTabs,
     });
@@ -386,13 +391,14 @@ export const FileManagerModal = memo(
               onUploadFiles={handleUploadFiles}
               onCreateFolder={handleCreateFolder}
               onUploadArchive={handleUploadArchive}
+              onMoveToFiles={handleMoveFiles}
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
                 <DialLoader size={48} ariaLabel={t('Processing files...')} />
               </div>
             )}
-            {operationLoaderModal && (
+            {operationLoaderModal && !isRenaming && (
               <OperationLoaderModal
                 title={operationLoaderModal.title}
                 text={operationLoaderModal.text}
