@@ -41,6 +41,7 @@ import {
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import cloneDeep from 'lodash-es/cloneDeep';
+import groupBy from 'lodash-es/groupBy';
 
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
@@ -603,15 +604,31 @@ export const useFileManager = ({
     [dispatch],
   );
 
-  const handleUnshareFile = useCallback(
-    (file: { path: string; nodeType?: string }) => {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [file.path],
-          featureType: FeatureType.File,
-          isFolder: file.nodeType === 'folder',
-        }),
+  const handleUnshareFiles = useCallback(
+    (items: { path: string; nodeType?: string }[]) => {
+      const grouped = groupBy(items, (item) =>
+        item.nodeType === 'folder' ? 'folders' : 'files',
       );
+
+      if (grouped.folders?.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: grouped.folders.map((f) => f.path),
+            featureType: FeatureType.File,
+            isFolder: true,
+          }),
+        );
+      }
+
+      if (grouped.files?.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: grouped.files.map((f) => f.path),
+            featureType: FeatureType.File,
+            isFolder: false,
+          }),
+        );
+      }
     },
     [dispatch],
   );
@@ -650,6 +667,6 @@ export const useFileManager = ({
     handleUploadFiles,
     handleCreateFolder,
     handleUploadArchive,
-    handleUnshareFile,
+    handleUnshareFiles,
   };
 };
