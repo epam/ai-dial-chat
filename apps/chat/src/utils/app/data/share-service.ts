@@ -197,6 +197,7 @@ export class ShareService {
                 absolutePath,
                 contentType: mimeType ? mimeType : 'application/octet-stream',
                 author: file.author,
+                permissions: file.permissions,
               });
             }
 
