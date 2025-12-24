@@ -36,11 +36,10 @@ import {
   DialFileManagerTabs,
   DialLoader,
 } from '@epam/ai-dial-ui-kit';
-import uniq from 'lodash-es/uniq';
 
 interface Props {
   isOpen: boolean;
-  initialSelectedFilesIds?: string[];
+  selectedFilesIds?: string[];
   allowedTypes?: string[];
   allowedTypesLabel?: string | null;
   maximumAttachmentsAmount?: number;
@@ -58,7 +57,7 @@ export const FileManagerModal = memo(
     isOpen,
     allowedTypes = [],
     allowedTypesLabel,
-    initialSelectedFilesIds = [],
+    selectedFilesIds: previousSelectedFilesIds = [],
     headerLabel,
     customButtonLabel,
     maximumAttachmentsAmount = 0,
@@ -125,24 +124,6 @@ export const FileManagerModal = memo(
       [dispatch, folderPaths],
     );
 
-    const initialSelectedFilesIdsRef = useRef<Set<string>>(
-      new Set(initialSelectedFilesIds),
-    );
-
-    useEffect(() => {
-      initialSelectedFilesIdsRef.current = new Set(initialSelectedFilesIds);
-    }, [initialSelectedFilesIds]);
-
-    useEffect(() => {
-      if (isOpen && initialSelectedFilesIdsRef.current.size) {
-        dispatch(
-          FilesActions.setChosenFilesAndFolders({
-            ids: Array.from(initialSelectedFilesIdsRef.current),
-          }),
-        );
-      }
-    }, [isOpen, dispatch]);
-
     const allowedTypesArray = useMemo(
       () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
       [allowedTypes, canAttachFiles, canAttachFolders],
@@ -182,35 +163,19 @@ export const FileManagerModal = memo(
     }, [dispatch, isOpen]);
 
     const handleAttachFiles = useCallback(() => {
-      const result: string[] = [];
-
-      if (selectedFilesIds.length > maximumAttachmentsAmount) {
-        dispatch(
-          UIActions.showToast({
-            type: ToastType.Error,
-            title: t('Too many files selected'),
-            message: t(
-              'You selected {{count}} files, including files in folders. You can attach up to {{limit}} files.',
-              {
-                count: selectedFilesIds.length,
-                limit: maximumAttachmentsAmount,
-              },
-            ),
-          }),
-        );
-        return;
-      }
+      const accumulatedIds = new Set<string>(previousSelectedFilesIds);
 
       const selectedFiles = files.filter((file) =>
         selectedFilesIds.includes(file.id),
       );
 
-      const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
-        selectedFiles,
-        allowedTypesArray,
-      ).map((file) => file.id);
+      const invalidFileIds = new Set(
+        getDialFilesWithInvalidFileType(selectedFiles, allowedTypesArray).map(
+          (file) => file.id,
+        ),
+      );
 
-      if (filesWithIncorrectTypes.length > 0) {
+      if (invalidFileIds.size > 0) {
         dispatch(
           UIActions.showToast({
             type: ToastType.Info,
@@ -223,26 +188,50 @@ export const FileManagerModal = memo(
       }
 
       if (canAttachFolders) {
-        result.push(...selectedFolderIds);
+        selectedFolderIds.forEach((folderId) => {
+          accumulatedIds.add(folderId);
+        });
       }
-      result.push(
-        ...selectedFilesIds.filter((id) => {
-          if (filesWithIncorrectTypes.includes(id)) {
-            return false;
-          }
 
-          return canAttachFolders
-            ? !selectedFolderIds.some((folderId) => id.startsWith(folderId))
-            : true;
-        }),
-      );
+      selectedFilesIds.forEach((fileId) => {
+        if (invalidFileIds.has(fileId)) {
+          return;
+        }
 
-      onClose(uniq(result));
+        if (
+          canAttachFolders &&
+          selectedFolderIds.some((folderId) => fileId.startsWith(folderId))
+        ) {
+          return;
+        }
+
+        accumulatedIds.add(fileId);
+      });
+
+      if (accumulatedIds.size > maximumAttachmentsAmount) {
+        dispatch(
+          UIActions.showToast({
+            type: ToastType.Error,
+            title: t('Too many files selected'),
+            message: t(
+              'You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.',
+              {
+                count: accumulatedIds.size,
+                limit: maximumAttachmentsAmount,
+              },
+            ),
+          }),
+        );
+        return;
+      }
+
+      onClose(Array.from(accumulatedIds));
     }, [
       allowedTypesArray,
       canAttachFolders,
       dispatch,
       files,
+      previousSelectedFilesIds,
       maximumAttachmentsAmount,
       onClose,
       selectedFilesIds,
@@ -367,7 +356,6 @@ export const FileManagerModal = memo(
               className="px-0 pb-5"
               path={currentPath}
               onPathChange={setCurrentPath}
-              defaultSelectedPaths={initialSelectedFilesIdsRef.current}
               onSelectedPathsChange={pathSelectionHandler}
               items={fileTreeItems}
               rootItem={rootFolder}
