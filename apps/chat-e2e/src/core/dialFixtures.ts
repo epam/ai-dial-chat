@@ -446,6 +446,8 @@ const dialTest = test.extend<{
   filesManagerModalManager: FilesManager;
   filesManagerModalGrid: FilesManagerGrid;
   filesManagerModalToolbar: FilesManagerToolbar;
+  filesManagerModalCollapsibleSidebar: FilesManagerCollapsibleSidebar;
+  filesManagerModalFoldersTree: FoldersTree;
   filesManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   filesManagerGridAssertion: FilesManagerGridAssertion;
   filesManagerModalGridAssertion: FilesManagerGridAssertion;
@@ -1821,6 +1823,22 @@ const dialTest = test.extend<{
     const filesManagerModalToolbar =
       filesManagerModalManager.getFilesManagerToolbar();
     await use(filesManagerModalToolbar);
+  },
+  filesManagerModalCollapsibleSidebar: async (
+    { filesManagerModalManager },
+    use,
+  ) => {
+    const filesManagerModalCollapsibleSidebar =
+      filesManagerModalManager.getFilesManagerCollapsibleSidebar();
+    await use(filesManagerModalCollapsibleSidebar);
+  },
+  filesManagerModalFoldersTree: async (
+    { filesManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const filesManagerModalFoldersTree =
+      filesManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(filesManagerModalFoldersTree);
   },
   filesManagerDeleteItemConfirmationPopupAssertion: async (
     { filesManagerDeleteItemConfirmationPopup },
