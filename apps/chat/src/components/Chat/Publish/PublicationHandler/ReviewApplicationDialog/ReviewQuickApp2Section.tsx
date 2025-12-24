@@ -84,7 +84,7 @@ const ReviewQuickApp2SectionView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap); // <-- ПОЛУЧАЕМ КАРТУ ТУЛСЕТОВ
+  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
 
   const isCodeInterpreterEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
