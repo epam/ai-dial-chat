@@ -227,7 +227,11 @@ export const useFileManager = ({
 
     switch (activeTab) {
       case DialFileManagerTabs.MyFiles:
-        filteredFiles = filterFilesByFilters(files, defaultMyItemsFilters);
+        filteredFiles = filterFilesByFilters(
+          files,
+          defaultMyItemsFilters,
+          getFileRootId(),
+        );
         filteredFolders = filterFoldersByFilters(
           folders,
           defaultMyItemsFilters,
