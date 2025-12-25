@@ -27,7 +27,10 @@ import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import { ToolbarOptions } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
+import {
+  NavigationPanelOptions,
+  ToolbarOptions,
+} from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
 
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 
@@ -252,6 +255,18 @@ export const useFileManager = ({
     const { rootFolder, items, loadedFoldersPaths, sharedByMePaths } =
       buildFileTree(filteredFiles, filteredFolders, pathRootAlias);
 
+    if (activeTab === DialFileManagerTabs.Shared) {
+      const currentSharedRootId = isRootId(currentPath)
+        ? currentPath
+        : getRootId({
+            featureType: FeatureType.File,
+            id: currentPath,
+          });
+
+      rootFolder.id = currentSharedRootId;
+      rootFolder.path = currentSharedRootId!;
+    }
+
     if (
       activeTab !== previousActiveTabRef.current &&
       rootFolder.id &&
@@ -270,7 +285,7 @@ export const useFileManager = ({
       visibleColumns,
       currentPathRootAlias: pathRootAlias,
     };
-  }, [t, files, folders, activeTab, previousActiveTabRef]);
+  }, [t, files, folders, activeTab, previousActiveTabRef, currentPath]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
@@ -444,12 +459,58 @@ export const useFileManager = ({
     };
   }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
 
-  const navigationPanelOptions = useMemo(
-    () => ({
+  function extractHiddenSharedPathPart(
+    rootFolderPath: string,
+    rootItemPath: string,
+    rootItemName: string,
+  ): string | null {
+    if (!rootItemPath.startsWith(rootFolderPath)) {
+      return null;
+    }
+
+    const afterRoot = rootItemPath
+      .slice(rootFolderPath.length)
+      .replace(/^\/+/, '');
+
+    if (!afterRoot.endsWith(rootItemName)) {
+      return null;
+    }
+
+    const hidden = afterRoot.slice(0, afterRoot.length - rootItemName.length);
+
+    return hidden.replace(/\/$/, '') || null;
+  }
+
+  const navigationPanelOptions = useMemo(() => {
+    const options: NavigationPanelOptions = {
       searchable: true,
-    }),
-    [],
-  );
+    };
+
+    if (
+      activeTab === DialFileManagerTabs.Shared &&
+      currentPath &&
+      currentPath !== rootFolder.path &&
+      rootFolder.items?.length
+    ) {
+      const rootItem = rootFolder.items.find(
+        (item) =>
+          currentPath === item.path || currentPath.startsWith(item.path + '/'),
+      );
+
+      if (rootItem) {
+        const breadcrumbsHiddenPathPart = extractHiddenSharedPathPart(
+          rootFolder.path,
+          rootItem.path,
+          rootItem.name,
+        );
+
+        options.breadcrumbsHiddenPathPart =
+          breadcrumbsHiddenPathPart ?? undefined;
+      }
+    }
+
+    return options;
+  }, [currentPath, rootFolder, activeTab]);
 
   const dateOptions = useMemo(
     () => ({
