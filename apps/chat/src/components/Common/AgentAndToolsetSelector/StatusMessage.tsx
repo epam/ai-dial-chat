@@ -10,6 +10,7 @@ interface StatusMessageProps {
   item?: MarketplaceEntity;
   isInvalid: boolean;
   isLoggedOut: boolean;
+  isUndeployed: boolean;
   isInSelectionList?: boolean;
   readonly?: boolean;
 }
@@ -18,6 +19,7 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   id,
   isInvalid,
   isLoggedOut,
+  isUndeployed,
   isInSelectionList,
   readonly,
 }) => {
@@ -41,18 +43,30 @@ export const StatusMessage: React.FC<StatusMessageProps> = ({
   }
 
   if (isLoggedOut) {
-    return (
-      <div className="text-sm text-error">
-        {t(
-          `Logged out toolset. Click ${isInSelectionList ? 'to scroll to' : 'on'} the toolset to log in.`,
-        )}
-      </div>
-    );
+    const message = readonly
+      ? 'Logged out toolset.'
+      : `Logged out toolset. Click ${
+          isInSelectionList ? 'to scroll to' : 'on'
+        } the toolset to log in.`;
+
+    return <div className="text-sm text-error">{t(message)}</div>;
   }
 
-  const textTemplate = isInSelectionList
-    ? 'Click to scroll to the {{entityType}}.'
-    : 'Click on the {{entityType}} to see details.';
+  if (isUndeployed) {
+    const message = readonly
+      ? 'Undeployed app.'
+      : `Undeployed app. Click ${
+          isInSelectionList ? 'to scroll to' : 'on'
+        } the app to deploy.`;
+
+    return <div className="text-sm text-error">{t(message)}</div>;
+  }
+
+  const textTemplate = !readonly
+    ? isInSelectionList
+      ? 'Click to scroll to the {{entityType}}.'
+      : 'Click on the {{entityType}} to see details.'
+    : '';
 
   return (
     <div className="text-sm text-secondary">
