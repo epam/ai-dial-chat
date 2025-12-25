@@ -27,14 +27,16 @@ const isChildOfFolders = (
 export const filterFilesByFilters = (
   files: DialFile[],
   filters: EntityFilters,
+  fileRootId?: string,
 ): DialFile[] => {
   const directMatches = files.filter(
     (file) => filters.sectionFilter?.(file) ?? true,
   );
 
-  const matchedFolderIds = new Set(
-    directMatches.map((file) => file.folderId).filter(Boolean),
-  );
+  const matchedFolderIds =
+    directMatches.length > 0 || !fileRootId
+      ? new Set(directMatches.map((file) => file.folderId).filter(Boolean))
+      : new Set([fileRootId]);
 
   return files.filter((file) => {
     if (filters.sectionFilter?.(file)) return true;
