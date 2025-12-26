@@ -63,6 +63,16 @@ export const AppsEditorView = ({
     getDefaultPreviewMode(screenState, editorStep, schema),
   );
 
+  useEffect(() => {
+    if (
+      editorStep === MarketplaceEditorSteps.General &&
+      previewMode !== PreviewMode.half &&
+      screenState > ScreenState.MD
+    ) {
+      setPreviewMode(PreviewMode.half);
+    }
+  }, [editorStep, previewMode, schema, screenState]);
+
   const [name, version] = useWatch({
     control,
     name: ['name', 'version'],

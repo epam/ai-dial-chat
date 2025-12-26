@@ -4,6 +4,9 @@ import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -14,6 +17,7 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { MarketplaceEditorSteps, PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
@@ -193,6 +197,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     );
   }, []);
 
+  const isExternalApp = externalAppsSchemaId.endsWith(type);
+
   const isPreviewHalf = previewMode === PreviewMode.half;
   const isPreviewFull = previewMode === PreviewMode.full;
   const isPreviewClosed = previewMode === PreviewMode.closed;
@@ -257,10 +263,15 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     previewConversationId,
   ]);
 
+  const screenState = useScreenState();
+
   return (
     <>
       <div
-        className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4"
+        className={classNames(
+          'flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4',
+          isExternalApp && screenState <= ScreenState.MD && 'hidden',
+        )}
         data-qa="preview-header"
       >
         <div className="mr-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
@@ -306,7 +317,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
       {!isPreviewClosed && !!appDetails && (
         <div className="grow overflow-hidden" onFocus={handleFocusChat}>
-          {!externalAppsSchemaId.endsWith(type) ? (
+          {!isExternalApp ? (
             <ChatPreview />
           ) : (
             <GeneralPreview entity={appDetails} dataQA="preview-body" />
