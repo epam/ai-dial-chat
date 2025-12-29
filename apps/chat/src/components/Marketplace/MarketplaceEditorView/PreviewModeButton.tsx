@@ -61,7 +61,7 @@ export const PreviewModeButton = ({
       )}
       onClick={handlePreviewModeChange}
       iconBefore={
-        <Tooltip tooltip={t(previewModeTooltips[mode])}>
+        <Tooltip tooltip={t(previewModeTooltips[mode])} isTriggerClickable>
           <Icon size={size} />
         </Tooltip>
       }
