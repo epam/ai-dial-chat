@@ -60,4 +60,5 @@ export enum ThemeColorAttributes {
   controlsBgAccentHover = 'controls-bg-accent-hover',
   controlsBgAccent = 'controls-bg-accent',
   textSecondary = 'text-secondary',
+  textInfp = 'text-info',
 }

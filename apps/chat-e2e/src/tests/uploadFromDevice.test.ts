@@ -70,7 +70,9 @@ dialTest(
             uploadFromDeviceBackgroundColor[0],
             ExpectedMessages.buttonBackgroundColorIsValid,
           )
-          .toBe(ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary));
+          .toBe(
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+          );
 
         const uploadFromDeviceTextColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
@@ -105,11 +107,7 @@ dialTest(
             addModeFilesTextColor[0],
             ExpectedMessages.buttonTextColorIsValid,
           )
-          .toBe(
-            theme === ThemeId.light
-              ? Colors.controlsBackgroundAccentPrimary
-              : Colors.controlsBackgroundAccent,
-          );
+          .toBe(ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textInfp));
 
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         for (const attachment of attachments) {
