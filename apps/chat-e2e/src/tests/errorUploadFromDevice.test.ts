@@ -1,26 +1,28 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
+  CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.only(
   '[Upload from device] Error appears if to load the file with the same name and extension if it already exists in a folder.\n' +
     'Long file name in errors does not break UI on "Upload from device"',
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
+    filesManagerModalGridAssertion,
     fileApiHelper,
     chatBar,
     uploadFromDeviceModal,
-    manageAttachmentsAssertion,
     baseAssertion,
     localStorageManager,
   }) => {
@@ -38,14 +40,13 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.longImageName },
-          FileModalSection.AllFiles,
+        await baseAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.longImageName),
           'visible',
         );
         await dialHomePage.uploadData(
           { path: Attachment.longImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
+          () => filesManagerModal.openUploadFromDeviceModal(),
         );
         await baseAssertion.assertElementState(
           uploadFromDeviceModal.getUploadedFile(Attachment.longImageName),
@@ -85,12 +86,13 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
+    filesManagerModalGridAssertion,
     chatBar,
     uploadFromDeviceModal,
     baseAssertion,
     localStorageManager,
-    attachAllFilesTreeAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
@@ -102,12 +104,15 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await chatBar.openManageAttachmentsModal();
-      await baseAssertion.assertElementState(attachFilesModal, 'visible');
+      await baseAssertion.assertElementState(filesManagerModal, 'visible');
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
-        () => attachFilesModal.uploadFromDevice(),
+        () =>
+          filesManagerModal.openUploadFromDeviceModal(
+            UploadMenuOptions.uploadFiles,
+          ),
       );
-      await attachAllFilesTreeAssertion.assertElementState(
+      await baseAssertion.assertElementState(
         uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
         'visible',
       );
@@ -121,16 +126,12 @@ dialTest(
           restrictedChar,
         );
         await uploadFromDeviceModal.uploadFiles();
-        await attachAllFilesTreeAssertion.assertEntityState(
-          {
-            name: Attachment.sunImageName,
-          },
+        await filesManagerModalGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
           'visible',
         );
-        await attachAllFilesTreeAssertion.assertEntityColor(
-          {
-            name: Attachment.sunImageName,
-          },
+        await filesManagerModalGridAssertion.assertGridRowColor(
+          Attachment.sunImageName,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
       },
@@ -141,19 +142,22 @@ dialTest(
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.heartImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
+          () =>
+            filesManagerModal.openUploadFromDeviceModal(
+              UploadMenuOptions.uploadFiles,
+            ),
         );
-        await attachAllFilesTreeAssertion.assertElementState(
+        await baseAssertion.assertElementState(
           uploadFromDeviceModal.getUploadedFile(Attachment.heartImageName),
           'visible',
         );
         await uploadFromDeviceModal.uploadFiles();
-        await attachAllFilesTreeAssertion.assertEntityState(
-          { name: Attachment.heartImageName },
+        await filesManagerModalGridAssertion.assertGridRowByNameState(
+          Attachment.heartImageName,
           'visible',
         );
-        await attachAllFilesTreeAssertion.assertEntityColor(
-          { name: Attachment.sunImageName },
+        await filesManagerModalGridAssertion.assertGridRowColor(
+          Attachment.sunImageName,
           ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
       },
@@ -168,13 +172,13 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
     chatBar,
     uploadFromDeviceModal,
     fileApiHelper,
     baseAssertion,
     localStorageManager,
-    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
@@ -189,12 +193,13 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
+        await baseAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.sunImageName),
           'visible',
         );
-        await attachFilesModal.uploadFromDeviceButton.click();
+        await filesManagerModal.openUploadFromDeviceModal(
+          UploadMenuOptions.uploadFiles,
+        );
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
           Attachment.restrictedSemicolonCharFilename,
@@ -242,7 +247,9 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
+    filesManagerModalGridAssertion,
     chatBar,
     uploadFromDeviceModal,
     localStorageManager,
@@ -259,7 +266,10 @@ dialTest(
         await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.fileWithoutExtension, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
+          () =>
+            filesManagerModal.openUploadFromDeviceModal(
+              UploadMenuOptions.uploadFiles,
+            ),
         );
       },
     );
@@ -282,21 +292,15 @@ dialTest(
           .toBe('');
 
         await uploadFromDeviceModal.uploadFiles();
-        await expect
-          .soft(
-            attachFilesModal
-              .getAllFilesTree()
-              .getEntityByName(Attachment.fileWithoutExtension),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
+        await filesManagerModalGridAssertion.assertGridRowByNameState(
+          Attachment.fileWithoutExtension,
+          'visible',
+        );
 
-        const isFileChecked = attachFilesModal
-          .getAllFilesTree()
-          .getEntityCheckbox(Attachment.fileWithoutExtension);
-        await expect
-          .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
-          .toBeChecked();
+        await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
+          Attachment.fileWithoutExtension,
+          CheckboxState.checked,
+        );
       },
     );
   },

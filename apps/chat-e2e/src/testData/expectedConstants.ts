@@ -412,6 +412,7 @@ export enum AccountMenuOptions {
 export enum UploadMenuOptions {
   attachUploadedFiles = 'Attach uploaded files',
   uploadFromDevice = 'Upload from device',
+  uploadFiles = 'Upload files',
 }
 
 export enum ExampleURLs {
@@ -487,7 +488,6 @@ export const API = {
   filesHostSegment: 'files',
   filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
   fileHost: () => `/api/${API.filesHostSegment}`,
-  folderFilesListingHost: (folderName: string) => `/${folderName}?filter=ITEM`,
   downloadFilesHost: () => `${API.fileHost()}/download`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',

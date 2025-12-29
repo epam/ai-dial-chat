@@ -1,3 +1,4 @@
+import { UploadMenuOptions } from '@/src/testData';
 import { FilesManagerModalSelectors } from '@/src/ui/selectors';
 import { FilesManager, FilesManagerModalHeader } from '@/src/ui/webElements';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -47,4 +48,17 @@ export class FilesManagerModal extends BaseElement {
   public modalTitle = this.getChildElementBySelector(
     FilesManagerModalSelectors.title,
   );
+
+  public async openUploadFromDeviceModal(
+    option: UploadMenuOptions = UploadMenuOptions.uploadFiles,
+  ) {
+    await this.getFilesManager()
+      .getFilesManagerToolbar()
+      .getNewButton()
+      .click();
+    await this.getFilesManager()
+      .getFilesManagerToolbar()
+      .getNewButtonDropdownMenu()
+      .selectItem(option);
+  }
 }
