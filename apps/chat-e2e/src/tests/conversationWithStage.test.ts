@@ -65,7 +65,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertShowMoreLessButtonColor(
           'less',
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
       },
     );

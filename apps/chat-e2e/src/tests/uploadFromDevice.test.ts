@@ -70,7 +70,7 @@ dialTest(
             uploadFromDeviceBackgroundColor[0],
             ExpectedMessages.buttonBackgroundColorIsValid,
           )
-          .toBe(Colors.controlsBackgroundAccent);
+          .toBe(ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary));
 
         const uploadFromDeviceTextColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
