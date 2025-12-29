@@ -110,7 +110,6 @@ export const AgentAndToolsetSelector: React.FC<
                 onRemove={readonly ? undefined : handleRemoveItem}
                 readonly={readonly}
                 onItemClick={onItemClick}
-                customTooltip={tooltip}
               />
             ))}
           </div>
