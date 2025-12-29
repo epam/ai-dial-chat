@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { isExternalAppEditor } from '@/src/utils/app/application';
 
 import {
   ApiDetailedApplicationTypeSchema,
@@ -17,6 +21,8 @@ import {
   ApplicationSelectors,
   ApplicationTypesSchemasSelectors,
 } from '@/src/store/selectors';
+
+import { AppsEditorQuery } from '@/src/constants/applications';
 
 import { AppEditorPreview } from '@/src/components/AppsEditor/AppEditorPreview/AppEditorPreview';
 import { EditorForm } from '@/src/components/AppsEditor/EditorForm/EditorForm';
@@ -62,16 +68,22 @@ export const AppsEditorView = ({
   const [previewMode, setPreviewMode] = useState<PreviewMode>(
     getDefaultPreviewMode(screenState, editorStep, schema),
   );
+  const router = useRouter();
+  const isExternalAppEditing = useMemo(() => {
+    const { [AppsEditorQuery.Schema]: typeQuery = '' } = router.query;
+    const type = decodeURIComponent(typeQuery.toString());
+    return isExternalAppEditor(type);
+  }, [router.query]);
 
   useEffect(() => {
     if (
-      editorStep === MarketplaceEditorSteps.General &&
+      (editorStep === MarketplaceEditorSteps.General || isExternalAppEditing) &&
       previewMode !== PreviewMode.half &&
       screenState > ScreenState.MD
     ) {
       setPreviewMode(PreviewMode.half);
     }
-  }, [editorStep, previewMode, schema, screenState]);
+  }, [editorStep, isExternalAppEditing, previewMode, schema, screenState]);
 
   const [name, version] = useWatch({
     control,
