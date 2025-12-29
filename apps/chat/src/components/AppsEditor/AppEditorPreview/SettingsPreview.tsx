@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
