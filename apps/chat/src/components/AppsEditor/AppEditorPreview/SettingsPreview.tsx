@@ -17,7 +17,6 @@ import {
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
-import { ScreenState } from '@/src/types/common';
 import { MarketplaceEditorSteps, PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
@@ -189,7 +188,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     ConversationsSelectors.selectPreviewConversationId,
   );
 
-  const isExternalApp = useMemo(() => isExternalAppEditor(type), [type]);
+  const isExternalAppEditing = useMemo(() => isExternalAppEditor(type), [type]);
 
   const isPreviewHalf = previewMode === PreviewMode.half;
   const isPreviewFull = previewMode === PreviewMode.full;
@@ -255,14 +254,12 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     previewConversationId,
   ]);
 
-  const screenState = useScreenState();
-
   return (
     <>
       <div
         className={classNames(
           'flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4',
-          isExternalApp && screenState <= ScreenState.MD && 'hidden',
+          isExternalAppEditing && 'hidden',
         )}
         data-qa="preview-header"
       >
@@ -309,7 +306,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
       {!isPreviewClosed && !!appDetails && (
         <div className="grow overflow-hidden" onFocus={handleFocusChat}>
-          {!isExternalApp ? (
+          {!isExternalAppEditing ? (
             <ChatPreview />
           ) : (
             <GeneralPreview entity={appDetails} dataQA="preview-body" />
