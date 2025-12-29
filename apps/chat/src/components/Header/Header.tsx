@@ -144,7 +144,7 @@ export const Header = Inversify.register('Header', () => {
       RightItems={
         <>
           {!enabledFeatures.has(Feature.HideUserMenu) && (
-            <div className="overflow-hidden md:grow">
+            <div className="overflow-hidden">
               <User />
             </div>
           )}

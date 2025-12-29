@@ -171,7 +171,7 @@ export const EditorHeader = <T extends string>({
           ></DialButton>
 
           {!isUserMenuHidden && (
-            <div className="h-full grow overflow-hidden max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
+            <div className="h-full overflow-hidden max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
               <User />
             </div>
           )}

@@ -62,7 +62,7 @@ export const MarketplaceHeader = () => {
       RightItems={
         !isUserMenuHidden && (
           <>
-            <div className="w-[48px] overflow-hidden md:w-auto md:grow">
+            <div className="w-[48px] overflow-hidden md:w-auto">
               <User />
             </div>
 

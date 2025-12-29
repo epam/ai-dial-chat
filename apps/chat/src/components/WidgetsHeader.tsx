@@ -57,7 +57,7 @@ export const WidgetsHeader = () => {
       RightItems={
         !isUserMenuHidden && (
           <>
-            <div className="w-[48px] overflow-hidden md:w-auto md:grow">
+            <div className="w-[48px] overflow-hidden md:w-auto">
               <User />
             </div>
 
