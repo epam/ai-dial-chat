@@ -305,7 +305,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
           {isPreviewFull && (
             <PreviewModeButton
               mode={PreviewMode.half}
-              className="max-xl:hidden"
+              className="rotate-180 max-xl:hidden"
             />
           )}
           <PreviewModeButton
