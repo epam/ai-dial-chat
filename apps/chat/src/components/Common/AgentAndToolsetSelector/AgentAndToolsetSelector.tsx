@@ -1,10 +1,9 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import { useSearchParams } from 'next/navigation';
 
-import classNames from 'classnames';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
@@ -16,6 +15,8 @@ import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDia
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
 import { AgentAndToolsetModal } from './AgentAndToolsetModal';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 const NoAgentsAndToolsets: React.FC = () => {
   const { t } = useTranslation(Translation.Common);
@@ -87,17 +88,14 @@ export const AgentAndToolsetSelector: React.FC<
           <Tooltip
             tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
           >
-            <button
+            <DialButton
               disabled={readonly}
-              className={classNames(
-                'flex items-center text-accent-primary',
-                readonly && 'cursor-not-allowed',
-              )}
+              className="flex items-center text-accent-primary"
+              textClassName="font-normal"
               onClick={handleOpenSelectModal}
-            >
-              <IconPlus size={18} />
-              <p className="ml-2">{t('Add')}</p>
-            </button>
+              iconBefore={<IconPlus size={18} />}
+              label={t('Add')}
+            />
           </Tooltip>
         </div>
         {!value.length ? (
@@ -112,7 +110,6 @@ export const AgentAndToolsetSelector: React.FC<
                 onRemove={readonly ? undefined : handleRemoveItem}
                 readonly={readonly}
                 onItemClick={onItemClick}
-                customTooltip={tooltip}
               />
             ))}
           </div>

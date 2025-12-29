@@ -11,6 +11,7 @@ import {
   getMessageFormValue,
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 
@@ -18,7 +19,11 @@ import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
@@ -36,6 +41,7 @@ import {
   MessageFormValue,
   onLikeMessageHandler,
 } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 
 interface AssistantMessageProps {
@@ -174,14 +180,16 @@ export const AssistantMessage = memo(function AssistantMessage({
     ],
   );
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+      if (!isTyping && allowEnterClick(e, enterType)) {
         e.preventDefault();
         handleEditMessage(formValue, inputMessageContent);
       }
     },
-    [formValue, handleEditMessage, isTyping, inputMessageContent],
+    [isTyping, enterType, handleEditMessage, formValue, inputMessageContent],
   );
 
   const handleCancelEditing = useCallback(() => {
@@ -246,24 +254,21 @@ export const AssistantMessage = memo(function AssistantMessage({
 
         <div className="flex items-center justify-end">
           <div className="relative flex gap-3">
-            <button
-              className="button button-secondary"
+            <DialButton
+              label={t('Cancel')}
+              variant={ButtonVariant.Secondary}
               onClick={handleCancelEditing}
               data-qa="cancel"
-            >
-              {t('Cancel')}
-            </button>
+            />
+
             {!isInputHidden && (
-              <button
-                className="button button-primary"
-                onClick={() =>
-                  handleEditMessage(formValue, inputMessageContent)
-                }
+              <DialButton
+                label={t('Save & Submit')}
+                variant={ButtonVariant.Primary}
+                onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={!inputMessageContent}
                 data-qa="save-and-submit"
-              >
-                {t('Save & Submit')}
-              </button>
+              />
             )}
             <div ref={anchorRef} className="absolute bottom-0"></div>
           </div>

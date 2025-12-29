@@ -1,6 +1,6 @@
 import { IconMessages, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
 import React, { FocusEvent, useCallback, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -37,6 +37,7 @@ import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEdito
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const ChatPreview = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -51,8 +52,8 @@ const ChatPreview = () => {
   const type = decodeURIComponent(typeQuery.toString());
   const appReference = decodeURIComponent(referenceQuery?.toString() ?? '');
 
-  const { formState } = useFormContext();
-  const isApplicationValid = formState.isValid;
+  const { control } = useFormContext();
+  const { isValid: isApplicationValid } = useFormState({ control });
 
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -132,15 +133,15 @@ const ChatPreview = () => {
               </span>
               {t('after making changes.')}
             </div>
-            <button
-              className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-              data-qa="deploy-code-app"
-              disabled={!isApplicationValid}
+            <DialButton
+              label={t('Deploy code app')}
+              className="text-accent-secondary"
+              variant={ButtonVariant.Tertiary}
               onClick={handleDeployClick}
-            >
-              <IconPlayerPlay size={18} />
-              <span>{t('Deploy code app')}</span>
-            </button>
+              disabled={!isApplicationValid}
+              data-qa="deploy-code-app"
+              iconBefore={<IconPlayerPlay size={18} />}
+            />
           </div>
         )
       ) : (
@@ -164,8 +165,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
   const type = decodeURIComponent(typeQuery.toString());
   const { previewMode } = useMarketplaceEditorView();
 
-  const { formState } = useFormContext();
-  const isApplicationValid = formState.isValid;
+  const { control } = useFormContext();
+  const { isValid: isApplicationValid } = useFormState({ control });
 
   const editorStep = useAppSelector(ApplicationSelectors.selectEditorStep);
   const appDetails = useAppSelector(
@@ -274,15 +275,15 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
         <div className="flex space-x-2">
           {showRedeployButton && (
-            <button
-              className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
+            <DialButton
+              className="text-accent-secondary"
+              variant={ButtonVariant.Tertiary}
               data-qa="redeploy-code-app"
               disabled={!isApplicationValid}
               onClick={handleRedeploy}
-            >
-              <IconRefresh size={18} />
-              <span>{t('Redeploy')}</span>
-            </button>
+              iconBefore={<IconRefresh size={18} />}
+              label={t('Redeploy')}
+            />
           )}
           {isPreviewHalf && (
             <PreviewModeButton
@@ -298,7 +299,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
           )}
           <PreviewModeButton
             mode={PreviewMode.closed}
-            className="max-xl:hidden"
+            className="max-md:hidden"
           />
         </div>
       </div>

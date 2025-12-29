@@ -1,6 +1,6 @@
-import { IconX } from '@tabler/icons-react';
-
 import classNames from 'classnames';
+
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onClose: () => void;
@@ -18,13 +18,11 @@ export const CloseSidebarButton: React.FC<Props> = ({
         isLeftSide ? 'right-0 translate-x-full' : 'left-0 -translate-x-full',
       )}
     >
-      <button
-        onClick={onClose}
-        className="cursor-pointer rounded-full bg-layer-3 p-[6px]"
+      <DialCloseButton
+        onClose={onClose}
         data-qa="close-sidebar"
-      >
-        <IconX size={24} className="text-primary" />
-      </button>
+        className="rounded-full bg-layer-3 p-[6px]"
+      />
     </div>
   );
 };

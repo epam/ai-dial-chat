@@ -1,6 +1,8 @@
-import { IconLink, IconX } from '@tabler/icons-react';
+import { IconLink } from '@tabler/icons-react';
 
 import { DialLink } from '@/src/types/files';
+
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   link: DialLink;
@@ -21,12 +23,7 @@ export const ChatInputLinkAttachment = ({ link, onUnselect }: Props) => {
         </div>
         {onUnselect && (
           <div className="flex gap-3">
-            <button onClick={() => onUnselect()}>
-              <IconX
-                className="shrink-0 text-secondary hover:text-accent-primary"
-                size={18}
-              />
-            </button>
+            <DialCloseButton onClose={() => onUnselect()} size={18} />
           </div>
         )}
       </div>

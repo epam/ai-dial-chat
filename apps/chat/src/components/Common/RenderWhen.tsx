@@ -1,5 +1,7 @@
 import { ComponentType } from 'react';
 
+import { createSelector } from '@reduxjs/toolkit';
+
 import { RootState } from '@/src/types/store';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -42,6 +44,8 @@ export function withRenderWhenNot(selector: (state: RootState) => unknown) {
 export function withRenderWhenFeature(feature: Feature) {
   return function <T extends object>(WrappedComponent: ComponentType<T>) {
     const ComponentWithRenderWhen = (props: T) => {
+      'use no memo';
+
       const shouldRender = useAppSelector((state) =>
         SettingsSelectors.isFeatureEnabled(state, feature),
       );
@@ -51,5 +55,47 @@ export function withRenderWhenFeature(feature: Feature) {
     ComponentWithRenderWhen.displayName = `withRenderWhenFeature(${getComponentDisplayName(WrappedComponent)})`;
 
     return ComponentWithRenderWhen;
+  };
+}
+
+type EntitiesProps<T> = {
+  [K in keyof T]: T[K];
+};
+export function withRenderWhenEntities<T extends EntitiesProps<T>>(
+  propsMap: Record<keyof T, (s: RootState) => T[keyof T] | undefined | null>,
+) {
+  type InjectedProps = EntitiesProps<T>;
+  type ExternalProps = Omit<T, keyof InjectedProps>;
+
+  const propsMapEntries = Object.entries(propsMap) as [
+    keyof InjectedProps,
+    (state: RootState) => InjectedProps[keyof InjectedProps],
+  ][];
+
+  const selector = createSelector(
+    propsMapEntries.map(([, s]) => s),
+    (...selectorResults) => {
+      return propsMapEntries.reduce<Partial<InjectedProps>>((acc, [key], i) => {
+        acc[key] = selectorResults[i];
+        return acc;
+      }, {});
+    },
+  );
+
+  return (Component: ComponentType<T>) => {
+    const Wrapper = (props: ExternalProps) => {
+      const entityProps = useAppSelector(selector);
+
+      if (
+        Object.values(entityProps).some((v) => v === undefined || v === null)
+      ) {
+        return null;
+      }
+
+      return <Component {...props} {...(entityProps as InjectedProps)} />;
+    };
+
+    Wrapper.displayName = `withRenderWhenEntities(${getComponentDisplayName(Component)})`;
+    return Wrapper;
   };
 }

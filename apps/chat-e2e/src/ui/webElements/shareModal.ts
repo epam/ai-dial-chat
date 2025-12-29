@@ -1,8 +1,8 @@
 import { BaseElement } from './baseElement';
 
-import { Tags } from '@/src/ui/domData';
+import { AttributeValues, Tags } from '@/src/ui/domData';
 import { ChatSelectors, ShareModalSelectors } from '@/src/ui/selectors';
-import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
+import { Button } from '@/src/ui/webElements/common/button';
 import { Locator, Page } from '@playwright/test';
 
 export class ShareModal extends BaseElement {
@@ -10,10 +10,17 @@ export class ShareModal extends BaseElement {
     super(page, ShareModalSelectors.modalContainer, parentLocator);
   }
 
-  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
-  public copyLinkButton = this.getChildElementBySelector(
-    `${ShareModalSelectors.copyLink} > ${Tags.svg}`,
+  public closeButton = new Button(
+    this.page,
+    AttributeValues.close,
+    this.rootLocator,
   );
+  public copyLinkButton = new Button(
+    this.page,
+    AttributeValues.copyLink,
+    this.rootLocator,
+  );
+  public copyLinkIcon = this.copyLinkButton.getChildElementBySelector(Tags.svg);
   public shareLinkInput = this.getChildElementBySelector(
     ShareModalSelectors.shareLink,
   );

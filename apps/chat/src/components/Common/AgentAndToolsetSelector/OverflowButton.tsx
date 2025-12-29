@@ -18,6 +18,8 @@ import {
   OUTSIDE_PRESS_AND_MOUSE_EVENT,
 } from '@/src/constants/modal';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 export interface HiddenItem<T> {
   id: string;
   data?: T;
@@ -80,11 +82,11 @@ export const OverflowButton = <T,>({
 
   return (
     <>
-      <button
+      <DialButton
         ref={refs.setReference}
         {...getReferenceProps()}
         className={classNames(
-          'box-border flex h-[34px] shrink-0 cursor-pointer items-center rounded border px-3 py-1.5 transition-colors',
+          'box-border flex h-[34px] shrink-0 items-center rounded border px-3 py-1.5 transition-colors',
           {
             'bg-error text-error hover:border-error': hasErrorInHiddenItems,
             'border-error': hasErrorInHiddenItems && isOpen,
@@ -96,9 +98,8 @@ export const OverflowButton = <T,>({
             'border-secondary': !hasErrorInHiddenItems && !isOpen,
           },
         )}
-      >
-        +{hiddenItems.length}
-      </button>
+        label={`+${hiddenItems.length}`}
+      />
 
       {isOpen && (
         <div

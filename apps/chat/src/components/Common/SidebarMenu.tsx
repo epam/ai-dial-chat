@@ -8,6 +8,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ContextMenu } from './ContextMenu';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 const ICON_WIDTH = 24;
 const ITEM_PADDING = 5;
 const ITEMS_GAP_IN_PIXELS = 8;
@@ -24,24 +26,25 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   } = props;
 
   const item = (
-    <button
+    <DialButton
       className={classNames(
-        'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed [&:not(:disabled)]:hover:bg-accent-primary-alpha [&:not(:disabled)]:hover:text-accent-primary',
+        'rounded p-[5px] [&:not(:disabled)]:hover:bg-accent-primary-alpha [&:not(:disabled)]:hover:text-accent-primary',
         className,
       )}
       onClick={!childMenuItems ? onClick : undefined}
       data-qa={dataQa}
       disabled={disabled}
-    >
-      {Icon && (
-        <Icon
-          size={ICON_WIDTH}
-          height={ICON_WIDTH}
-          width={ICON_WIDTH}
-          strokeWidth="1.5"
-        />
-      )}
-    </button>
+      iconBefore={
+        Icon && (
+          <Icon
+            size={ICON_WIDTH}
+            height={ICON_WIDTH}
+            width={ICON_WIDTH}
+            strokeWidth="1.5"
+          />
+        )
+      }
+    />
   );
 
   if (childMenuItems) {

@@ -10,7 +10,6 @@ import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
 import {
   DialDeploymentSimpleTool,
   MCPToolset,
@@ -22,7 +21,11 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  SettingsSelectors,
+  ToolsetSelectors,
+} from '@/src/store/selectors';
 
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -81,19 +84,17 @@ const ReviewQuickApp2SectionView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
+
   const isCodeInterpreterEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
 
-  type ProcessedAgent = DialDeploymentSimpleTool & { name: string };
-  type ProcessedToolset = MCPToolset & { name: string };
-
-  // TODO: when uploading application also upload toolsets from config to get full data
   const { agents, toolsets, isCodeInterpreter } = useMemo(
     () =>
       (config.tool_sets ?? []).reduce<{
-        agents: ProcessedAgent[];
-        toolsets: ProcessedToolset[];
+        agents: (DialDeploymentSimpleTool & { name: string })[];
+        toolsets: (MCPToolset & { name: string })[];
         isCodeInterpreter: boolean;
       }>(
         (acc, toolset) => {
@@ -122,7 +123,6 @@ const ReviewQuickApp2SectionView = ({
           } else if (isCodeInterpreterToolset(toolset)) {
             acc.isCodeInterpreter = true;
           }
-
           return acc;
         },
         { agents: [], toolsets: [], isCodeInterpreter: false },
@@ -200,21 +200,17 @@ const ReviewQuickApp2SectionView = ({
             {t('Agents: ')}
           </span>
           <div className="flex flex-wrap gap-2 text-primary">
-            {agents.map((agent) => (
-              <AgentAndToolsetChip
-                key={agent.deployment_id}
-                item={{
-                  id: agent.deployment_id,
-                  description: '',
-                  name: agent.name,
-                  type: EntityType.Model,
-                  reference: agent.deployment_id,
-                  isDefault: false,
-                }}
-                id={agent.deployment_id}
-                readonly
-              />
-            ))}
+            {agents.map((agent) => {
+              const decodedId = ApiUtils.decodeApiUrl(agent.deployment_id);
+              return (
+                <AgentAndToolsetChip
+                  key={decodedId}
+                  item={modelsMap[decodedId]}
+                  id={decodedId}
+                  readonly
+                />
+              );
+            })}
           </div>
         </div>
       )}
@@ -225,21 +221,17 @@ const ReviewQuickApp2SectionView = ({
             {t('Toolsets: ')}
           </span>
           <div className="flex flex-wrap gap-2 text-primary">
-            {toolsets.map((toolset) => (
-              <AgentAndToolsetChip
-                id={toolset.dial_id}
-                key={toolset.dial_id}
-                item={{
-                  id: toolset.dial_id,
-                  description: toolset.description,
-                  name: toolset.name,
-                  type: EntityType.Toolset,
-                  reference: toolset.dial_id,
-                  isDefault: false,
-                }}
-                readonly
-              />
-            ))}
+            {toolsets.map((toolset) => {
+              const decodedId = ApiUtils.decodeApiUrl(toolset.dial_id);
+              return (
+                <AgentAndToolsetChip
+                  key={decodedId}
+                  item={toolsetsMap[decodedId]}
+                  id={decodedId}
+                  readonly
+                />
+              );
+            })}
           </div>
         </div>
       )}

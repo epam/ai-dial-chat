@@ -25,3 +25,14 @@ export enum Attributes {
   blank = '_blank',
   checked = 'checked',
 }
+
+export enum AttributeValues {
+  login = 'Log in',
+  logout = 'Log out',
+  cancelAllRules = 'cancel-all-rules',
+  sendRequest = 'Send request',
+  change = 'Change',
+  copyLink = 'copy-link',
+  close = 'close',
+  removeFile = 'remove-file',
+}

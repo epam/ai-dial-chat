@@ -7,11 +7,18 @@ import {
   ThemeId,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Attributes, Colors, Overflow, Styles } from '@/src/ui/domData';
+import {
+  Attributes,
+  Colors,
+  Overflow,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
+import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Locator, expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
 let modelsWithoutAttachments: DialAIEntityModel[];
@@ -149,7 +156,7 @@ dialTest(
     manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
-    let deleteUploadedFileIcon: BaseElement;
+    let deleteUploadedFileIcon: Locator;
     const attachments = [Attachment.longImageName, Attachment.cloudImageName];
     const expectedExtensionClassAttribute = 'absolute right-2';
     let uploadedFileInput: BaseElement;
@@ -216,17 +223,12 @@ dialTest(
       'Hover over bin icon for the 1st uploaded file and verify it is highlighted',
       async () => {
         deleteUploadedFileIcon =
-          uploadFromDeviceModal.getDeleteUploadedFileIcon(attachments[0]);
-        await deleteUploadedFileIcon.hoverOver();
-
-        const deleteUploadedFileIconColor =
-          await deleteUploadedFileIcon.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            deleteUploadedFileIconColor[0],
-            ExpectedMessages.buttonColorIsValid,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+          uploadFromDeviceModal.getDeleteUploadedFileButtonIcon(attachments[0]);
+        await deleteUploadedFileIcon.hover();
+        await manageAttachmentsAssertion.assertElementColor(
+          deleteUploadedFileIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
 
@@ -269,13 +271,10 @@ dialTest(
       'Open again "Upload from device" modal, remove remained file and verify "Upload" button becomes disabled',
       async () => {
         await attachFilesModal.uploadFromDeviceButton.click();
-        uploadFromDeviceModal.getDeleteUploadedFileIcon(attachments[1]);
-        await expect
-          .soft(
-            uploadFromDeviceModal.uploadButton.getElementLocator(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeDisabled();
+        await manageAttachmentsAssertion.assertElementActionabilityState(
+          uploadFromDeviceModal.uploadButton,
+          'disabled',
+        );
       },
     );
   },

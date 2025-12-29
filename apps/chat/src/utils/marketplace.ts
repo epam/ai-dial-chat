@@ -7,6 +7,7 @@ import {
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
+import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType, PageType, SortOrder } from '@/src/types/common';
 import {
   DetailsEntity,
@@ -44,6 +45,7 @@ import { ParsedUrlQuery } from 'querystring';
 export interface EntityStatus {
   isInvalid: boolean;
   isLoggedOut: boolean;
+  isUndeployed: boolean;
   isError: boolean;
 }
 
@@ -51,30 +53,43 @@ export const getEntityStatus = (
   entity: MarketplaceEntity | undefined,
 ): EntityStatus => {
   const isInvalid = !entity;
-
   if (isInvalid) {
-    return { isInvalid, isLoggedOut: false, isError: true };
-  }
-
-  if (
-    isToolsetEntityModel(entity) &&
-    entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE
-  ) {
-    const isSignedInGlobal = isToolsetSignedIn(entity);
-    const isSignedInUser = isToolsetSignedIn(
-      entity,
-      ToolsetCredentialsLevel.USER,
-    );
-    const isLoggedOut = !isSignedInGlobal && !isSignedInUser;
-
     return {
       isInvalid,
-      isLoggedOut,
-      isError: isLoggedOut,
+      isLoggedOut: false,
+      isUndeployed: false,
+      isError: true,
     };
   }
 
-  return { isInvalid, isLoggedOut: false, isError: false };
+  let isLoggedOut = false;
+  let isUndeployed = false;
+
+  if (isToolsetEntityModel(entity)) {
+    if (entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE) {
+      const isSignedInGlobal = isToolsetSignedIn(entity);
+      const isSignedInUser = isToolsetSignedIn(
+        entity,
+        ToolsetCredentialsLevel.USER,
+      );
+      isLoggedOut = !isSignedInGlobal && !isSignedInUser;
+    }
+  }
+
+  if (isDialAiEntityModel(entity)) {
+    isUndeployed =
+      !!entity.functionStatus &&
+      entity.functionStatus !== ApplicationStatus.DEPLOYED;
+  }
+
+  const isError = isInvalid || isLoggedOut || isUndeployed;
+
+  return {
+    isInvalid,
+    isLoggedOut,
+    isUndeployed,
+    isError,
+  };
 };
 
 // Filter checkers

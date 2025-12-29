@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -30,6 +30,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
+
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
@@ -56,11 +58,8 @@ export const GeneralForm = ({
   const isMobileView = screenState === ScreenState.SM;
   const isEditing = !!toolset;
 
-  const {
-    register,
-    formState: { errors, isValid },
-    control,
-  } = useFormContext<ToolsetEditorForm>();
+  const { register, control } = useFormContext<ToolsetEditorForm>();
+  const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
@@ -163,14 +162,13 @@ export const GeneralForm = ({
           tooltip={t('Fill in all required fields')}
           hideTooltip={isValid || isEditing}
         >
-          <button
-            className="button button-primary py-2"
+          <DialButton
             data-qa="save-entity-general-info"
             type="submit"
             disabled={(!isValid && !isEditing) || isToolsetDetailsLoading}
-          >
-            {t('Next')}
-          </button>
+            label={t('Next')}
+            variant={ButtonVariant.Primary}
+          />
         </Tooltip>
       </div>
     </form>

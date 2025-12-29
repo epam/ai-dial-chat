@@ -1132,10 +1132,11 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         }),
         switchMap(() => EMPTY),
         catchError((e: Response) => {
+          console.error('Failed to rate message:', e);
           return of(
             ConversationsActions.rateMessageFail({
               ...payload,
-              error: e,
+              error: translate('Failed to rate message'),
             }),
           );
         }),
@@ -1713,7 +1714,9 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
     ofType(ConversationsActions.streamMessageFail.type),
     switchMap(({ payload }) => {
       return (
-        payload.response ? from(payload.response.json()) : of(undefined)
+        payload.response
+          ? from(payload.response.json().catch(() => undefined))
+          : of(undefined)
       ).pipe(
         map((response: { message: string } | undefined) => ({
           payload,

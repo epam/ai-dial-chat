@@ -1,10 +1,12 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { LoginButton } from '@/src/components/Marketplace/ToolsetsDetails/LoginButton';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 export const SimpleToolsetDetailsFooter: React.FC<
   ToolsetDetailsFooterProps
@@ -25,13 +27,12 @@ export const SimpleToolsetDetailsFooter: React.FC<
 
       <div className="flex items-center gap-2">
         {onRemove && (
-          <button
-            className="button button-secondary py-2"
+          <DialButton
             onClick={() => onRemove(entity)}
             data-qa="remove-from-details"
-          >
-            {t('Remove')}
-          </button>
+            label={t('Remove')}
+            variant={ButtonVariant.Secondary}
+          />
         )}
 
         <LoginButton entity={entity} />

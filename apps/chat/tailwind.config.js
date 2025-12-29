@@ -14,7 +14,7 @@ const commonBgColors = {
   'accent-primary': 'var(--bg-accent-primary, #5C8DEA)',
   'accent-secondary': 'var(--bg-accent-secondary, #37BABC)',
   'accent-tertiary': 'var(--bg-accent-tertiary, #A972FF)',
-  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #5C8DEA2B)',
+  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #74A4FF26)',
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC26)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2B)',
   overlay: 'var(--bg-overlay, #090D13B3)',
@@ -24,15 +24,15 @@ const commonBgColors = {
 
 const commonBorderColors = {
   transparent: 'transparent',
-  primary: 'var(--stroke-primary, #424952)',
+  primary: 'var(--stroke-primary, #69727C)',
   secondary: 'var(--stroke-secondary, #222932)',
   tertiary: 'var(--stroke-tertiary, #090D13)',
   error: 'var(--stroke-error, #F76464)',
-  warning: 'var(--stroke-warning, #F4CE46)',
-  info: 'var(--stroke-info, #5C8DEA)',
+  warning: 'var(--stroke-warning, #EEC840)',
+  info: 'var(--stroke-info, #74A4FF)',
   success: 'var(--stroke-success, #37BABC)',
   hover: 'var(--stroke-hover, #F3F4F6)',
-  'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
+  'accent-primary': 'var(--stroke-accent-primary, #74A4FF)',
   'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
   'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
 };
@@ -40,7 +40,10 @@ const commonBorderColors = {
 // Do not use palette directly, only through semantic colors
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}',
+    './../../node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',
+  ],
   darkMode: 'class',
   theme: {
     backgroundColor: {
@@ -57,16 +60,17 @@ module.exports = {
     textColor: {
       transparent: 'transparent',
       primary: 'var(--text-primary, #F3F4F6)',
-      secondary: 'var(--text-secondary, #7F8792)',
+      secondary: 'var(--text-secondary, #9AA2AD)',
       error: 'var(--text-error, #F76464)',
-      warning: 'var(--text-warning, #F4CE46)',
-      info: 'var(--text-info, #5C8DEA)',
+      warning: 'var(--text-warning, #EEC840)',
+      'warning-icon': 'var(--text-warning-icon, #EEC840)',
+      info: 'var(--text-info, #74A4FF)',
       success: 'var(--text-success, #37BABC)',
-      'accent-primary': 'var(--text-accent-primary, #5C8DEA)',
+      'accent-primary': 'var(--text-accent-primary, #74A4FF)',
       'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
       'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
-      'controls-disable': 'var(--controls-text-disable, #424952)',
+      'controls-disable': 'var(--controls-text-disable, #5B6570)',
     },
     gradientColorStops: commonBgColors,
     /////////
@@ -106,7 +110,7 @@ module.exports = {
           css: {
             color: 'var(--text-primary, #F3F4F6)',
             a: {
-              color: 'var(--text-accent-primary, #5C8DEA)',
+              color: 'var(--text-accent-primary, #74A4FF)',
             },
             pre: {
               border: 'none',

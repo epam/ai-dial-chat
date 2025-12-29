@@ -1,6 +1,11 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { useCallback } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -62,10 +67,9 @@ export const ToolsetLoginForm = ({
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
-  const { register, formState, getValues, trigger, control } =
+  const { register, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
-  const errors = formState.errors;
-  const isValid = formState.isValid;
+  const { isValid, errors } = useFormState<ToolsetLoginFormType>({ control });
 
   const withLogin = useWatch({
     name: 'withLogin',
@@ -182,10 +186,8 @@ export const ToolsetLoginForm = ({
 
       {withLogin !== WithLogin.WithoutLogin && (
         <DialButton
-          label={t(isSignedIn ? 'Log out' : 'Log in') as string}
-          className={classNames('w-fit', buttonClassName)}
+          className={classNames('flex w-fit items-center', buttonClassName)}
           variant={isSignedIn ? ButtonVariant.Secondary : ButtonVariant.Primary}
-          data-qa="log-in-button"
           disabled={disabled || (!isValid && !isSignedIn)}
           onClick={handleSubmit}
           iconBefore={
@@ -195,6 +197,7 @@ export const ToolsetLoginForm = ({
               <IconLogin size={18} />
             )
           }
+          label={t(isSignedIn ? 'Log out' : 'Log in')}
         />
       )}
     </div>
