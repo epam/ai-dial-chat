@@ -49,7 +49,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertShowMoreLessButtonColor(
           'more',
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
       },
     );

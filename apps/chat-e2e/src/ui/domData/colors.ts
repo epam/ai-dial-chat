@@ -4,7 +4,7 @@ export enum Colors {
   textAccentSecondary = 'rgb(55, 186, 188)',
   backgroundAccentTertiary = 'rgb(169, 114, 255)',
   textError = 'rgb(247, 100, 100)',
-  controlsBackgroundAccent = 'rgb(116, 164, 255)',
+  controlsBackgroundAccent = 'rgb(92, 141, 234)',
   controlsBackgroundAccentPrimary = 'rgb(39, 100, 217)',
   controlsBackgroundDisable = 'rgb(154, 162, 173)',
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
