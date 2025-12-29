@@ -223,7 +223,7 @@ dialTest(
         ) {
           await talkToAgentDialogAssertion.assertElementBorderColors(
             visibleTopicsElement.getNthElement(i),
-            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsBgAccent),
           );
         }
       },

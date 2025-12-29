@@ -1,7 +1,8 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialTest(
   'Show more/less hides stages after 3rd',
@@ -48,7 +49,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertShowMoreLessButtonColor(
           'more',
-          Colors.controlsBackgroundAccent,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
         );
       },
     );
@@ -64,7 +65,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertShowMoreLessButtonColor(
           'less',
-          Colors.controlsBackgroundAccent,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
         );
       },
     );

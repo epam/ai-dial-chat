@@ -141,7 +141,7 @@ dialTest(
           ToggleState.off,
         );
         await settingsModalAssertion.assertFullWidthChatToggleColor(
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsTextDisable),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4),
         );
       },
     );
