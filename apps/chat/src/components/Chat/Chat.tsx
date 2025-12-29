@@ -254,14 +254,14 @@ const ChatView = memo(() => {
     [dispatch],
   );
 
-  const setAutoScroll = () => {
+  const setAutoScroll = useCallback(() => {
     if (disableAutoScrollTimeoutRef.current !== null) {
       clearTimeout(disableAutoScrollTimeoutRef.current);
     }
 
     setAutoScrollEnabled(true);
     setShowScrollDownButton(false);
-  };
+  }, []);
 
   const scrollDown = useCallback(
     (force = false) => {
@@ -272,14 +272,17 @@ const ChatView = memo(() => {
         });
       }
     },
-    [autoScrollEnabled],
+    [autoScrollEnabled, setAutoScroll],
   );
 
   useEffect(() => {
     scrollDown();
   }, [scrollDown]);
 
-  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
+  const throttledScrollDown = useMemo(
+    () => throttle(scrollDown, scrollThrottlingTimeout),
+    [scrollDown],
+  );
 
   useEffect(() => {
     throttledScrollDown();
@@ -313,7 +316,7 @@ const ChatView = memo(() => {
 
       lastScrollTop.current = scrollTop;
     }
-  }, []);
+  }, [setAutoScroll]);
 
   const handleChatMessagesResize = useCallback(() => {
     if (
@@ -406,7 +409,7 @@ const ChatView = memo(() => {
       setPrevSelectedIds(selectedConversationsIds);
       setIsShowChatSettings(false);
     }
-  }, [prevSelectedIds, selectedConversationsIds]);
+  }, [prevSelectedIds, selectedConversationsIds, setAutoScroll]);
 
   const handleDeleteMessage = useCallback(
     (index: number, conv: Conversation) => {
