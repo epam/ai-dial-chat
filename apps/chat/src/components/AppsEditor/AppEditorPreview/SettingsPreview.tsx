@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -15,7 +16,9 @@ import {
 } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { MarketplaceEditorSteps, PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
@@ -23,6 +26,7 @@ import { ApplicationActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
   ConversationsSelectors,
   MarketplaceSelectors,
   ModelsSelectors,
@@ -199,6 +203,11 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     () => !!modelFromState && isApplicationDeployed(modelFromState),
     [modelFromState],
   );
+  const schema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const hasCustomEditor =
+    !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
   const showRedeployButton =
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
@@ -253,6 +262,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     previewConversationId,
   ]);
 
+  const screenState = useScreenState();
+
   return (
     <>
       <div
@@ -296,10 +307,12 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
               className="rotate-180 max-xl:hidden"
             />
           )}
-          <PreviewModeButton
-            mode={PreviewMode.closed}
-            className="max-md:hidden"
-          />
+          {(hasCustomEditor || screenState <= ScreenState.MD) && (
+            <PreviewModeButton
+              mode={PreviewMode.closed}
+              className="max-md:hidden"
+            />
+          )}
         </div>
       </div>
 

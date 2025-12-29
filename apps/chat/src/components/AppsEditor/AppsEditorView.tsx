@@ -74,6 +74,8 @@ export const AppsEditorView = ({
     const type = decodeURIComponent(typeQuery.toString());
     return isExternalAppEditor(type);
   }, [router.query]);
+  const hasCustomEditor =
+    !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
   useEffect(() => {
     if (
@@ -82,8 +84,22 @@ export const AppsEditorView = ({
       screenState > ScreenState.MD
     ) {
       setPreviewMode(PreviewMode.half);
+    } else if (
+      !hasCustomEditor &&
+      editorStep === MarketplaceEditorSteps.Settings &&
+      previewMode === PreviewMode.closed &&
+      screenState > ScreenState.MD
+    ) {
+      setPreviewMode(PreviewMode.half);
     }
-  }, [editorStep, isExternalAppEditing, previewMode, schema, screenState]);
+  }, [
+    editorStep,
+    hasCustomEditor,
+    isExternalAppEditing,
+    previewMode,
+    schema,
+    screenState,
+  ]);
 
   const [name, version] = useWatch({
     control,
