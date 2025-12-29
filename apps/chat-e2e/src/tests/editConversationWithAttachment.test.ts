@@ -99,6 +99,7 @@ dialTest(
     dialHomePage,
     setTestIds,
     filesManagerModal,
+    filesManagerModalGrid,
     sendMessage,
     fileApiHelper,
     attachmentDropdownMenu,
@@ -107,7 +108,7 @@ dialTest(
     filesManagerModalGridAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1764', 'EPMRTC-1901');
+    setTestIds('EPMRTC-1763', 'EPMRTC-1901');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
@@ -149,11 +150,7 @@ dialTest(
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
         for (const file of initAttachedFiles) {
-          await filesManagerModal
-            .getFilesManager()
-            .getFilesManagerGrid()
-            .gridCheckboxByNameCell(file)
-            .click();
+          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,
@@ -193,18 +190,14 @@ dialTest(
     await dialTest.step(
       'Uncheck attached file, check another and verify updated files are displayed in Send message box',
       async () => {
-        await filesManagerModal
-          .getFilesManager()
-          .getFilesManagerGrid()
+        await filesManagerModalGrid
           .gridCheckboxByNameCell(initAttachedFiles[1])
           .click();
         await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
           initAttachedFiles[1],
           CheckboxState.unchecked,
         );
-        await filesManagerModal
-          .getFilesManager()
-          .getFilesManagerGrid()
+        await filesManagerModalGrid
           .gridCheckboxByNameCell(updatedAttachedFiles[1])
           .click();
         await filesManagerModalGridAssertion.assertGridCheckboxByNameState(

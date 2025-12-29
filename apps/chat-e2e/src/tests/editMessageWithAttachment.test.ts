@@ -249,6 +249,7 @@ dialTest(
     dialHomePage,
     setTestIds,
     filesManagerModal,
+    filesManagerModalGrid,
     fileApiHelper,
     attachmentDropdownMenu,
     conversationData,
@@ -317,11 +318,7 @@ dialTest(
           (f) => !updatedAttachedFiles.includes(f),
         );
         for (const file of filesToUncheck) {
-          await filesManagerModal
-            .getFilesManager()
-            .getFilesManagerGrid()
-            .gridCheckboxByNameCell(file)
-            .click();
+          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.unchecked,
@@ -332,11 +329,7 @@ dialTest(
           (f) => !initAttachedFiles.includes(f),
         );
         for (const file of filesToCheck) {
-          await filesManagerModal
-            .getFilesManager()
-            .getFilesManagerGrid()
-            .gridCheckboxByNameCell(file)
-            .click();
+          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,
