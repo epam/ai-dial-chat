@@ -16,6 +16,7 @@ import {
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isToolsetId } from '@/src/utils/app/id';
+import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -44,7 +45,10 @@ import {
   FEATURES_ENDPOINTS_DEFAULT_VALUES,
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
-import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_MODEL,
   DialDeploymentToolsetToolTypes,
@@ -494,14 +498,20 @@ export const getQuickAppData2 = (
       { dialDeploymentsToolsets: [], dialMCPToolsets: [] },
     );
 
+  const model = modelsMap[formData.model];
+  const temperatureToUse =
+    model && doesModelAllowTemperature(model)
+      ? formData.temperature
+      : FALLBACK_TEMPERATURE;
+
   return {
     ...getGeneralApplicationData(formData),
     applicationProperties: {
       orchestrator: {
         deployment: {
-          name: modelsMap[formData.model]?.id ?? formData.model,
+          name: model?.id ?? formData.model,
           parameters: {
-            temperature: formData.temperature,
+            temperature: temperatureToUse,
           },
         },
         system_prompt: {
