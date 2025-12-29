@@ -1,8 +1,12 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import {
+  isExternalAppEditor,
+  isQuickApp2Editor,
+  isQuickAppEditor,
+} from '@/src/utils/app/application';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -15,11 +19,6 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
-import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
-import {
-  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
-  DEFAULT_QUICK_APPS_SCHEMA_ID,
-} from '@/src/constants/quick-apps';
 
 import { CodeAppForm } from '@/src/components/AppsEditor/EditorForm/CodeAppForm';
 import { CustomAppForm } from '@/src/components/AppsEditor/EditorForm/CustomAppForm';
@@ -43,35 +42,14 @@ export const EditorForm = ({ onNextClick }: EditorFormProps) => {
   const { [AppsEditorQuery.Schema]: typeQuery = '' } = router.query;
   const type = decodeURIComponent(typeQuery.toString());
 
-  const quickAppSchemaId = useMemo(() => {
-    return DefaultsService.get(
-      'quickAppsSchemaId',
-      DEFAULT_QUICK_APPS_SCHEMA_ID,
-    );
-  }, []);
-
-  const quickAppSchemaId2 = useMemo(() => {
-    return DefaultsService.get(
-      'quickAppsSchemaId2',
-      DEFAULT_QUICK_APPS_SCHEMA_2_ID,
-    );
-  }, []);
-
-  const externalAppsSchemaId = useMemo(() => {
-    return DefaultsService.get(
-      'externalAppsSchemaId',
-      DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
-    );
-  }, []);
-
   const getSettingsForm = useCallback(() => {
-    if (quickAppSchemaId.endsWith(type.toString())) {
+    if (isQuickAppEditor(type.toString())) {
       return <QuickAppForm />;
     }
-    if (quickAppSchemaId2.endsWith(type.toString())) {
+    if (isQuickApp2Editor(type.toString())) {
       return <QuickApp2Form />;
     }
-    if (externalAppsSchemaId.endsWith(type.toString())) {
+    if (isExternalAppEditor(type.toString())) {
       return <ExternalAppForm />;
     }
 
@@ -89,7 +67,7 @@ export const EditorForm = ({ onNextClick }: EditorFormProps) => {
         }
         return null;
     }
-  }, [externalAppsSchemaId, quickAppSchemaId, quickAppSchemaId2, schema, type]);
+  }, [schema, type]);
 
   switch (editorStep) {
     case MarketplaceEditorSteps.Settings:

@@ -1,5 +1,5 @@
 import { IconMessages, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
-import React, { FocusEvent, useCallback, useEffect, useMemo } from 'react';
+import { FocusEvent, useCallback, useEffect, useMemo } from 'react';
 import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -12,8 +12,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
+  isExternalAppEditor,
 } from '@/src/utils/app/application';
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
@@ -32,7 +32,6 @@ import {
 
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
-import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 
 import { GeneralPreview } from '@/src/components/AppsEditor/AppEditorPreview/GeneralPreview';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -190,14 +189,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     ConversationsSelectors.selectPreviewConversationId,
   );
 
-  const externalAppsSchemaId = useMemo(() => {
-    return DefaultsService.get(
-      'externalAppsSchemaId',
-      DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
-    );
-  }, []);
-
-  const isExternalApp = externalAppsSchemaId.endsWith(type);
+  const isExternalApp = useMemo(() => isExternalAppEditor(type), [type]);
 
   const isPreviewHalf = previewMode === PreviewMode.half;
   const isPreviewFull = previewMode === PreviewMode.full;
