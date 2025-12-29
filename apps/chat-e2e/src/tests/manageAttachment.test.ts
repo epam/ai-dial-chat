@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
   CheckboxState,
   ExpectedConfirmationPopupData,
@@ -113,6 +114,7 @@ dialTest(
         });
         await filesManagerDeleteItemConfirmationPopup.confirm({
           triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.deleteFileHost(),
         });
         await filesManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
@@ -222,6 +224,7 @@ dialTest(
         await filesManagerModalToolbar.getDeleteButton().click();
         await filesManagerDeleteItemConfirmationPopup.confirm({
           triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.deleteFileHost(),
         });
         for (const file of attachedFiles) {
           await filesManagerModalGridAssertion.assertGridRowByNameState(

@@ -358,6 +358,8 @@ export const ExpectedConstants = {
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
   filesManagerPath: '/files-manager',
+  deleteItemToastMessage: (filename: string, path: string) =>
+    `Item deleted successfully.\n“${filename}” deleted from ${path}`,
 };
 
 export enum Types {
@@ -489,6 +491,7 @@ export const API = {
   fileHost: () => `/api/${API.filesHostSegment}`,
   folderFilesListingHost: (folderName: string) => `/${folderName}?filter=ITEM`,
   downloadFilesHost: () => `${API.fileHost()}/download`,
+  deleteFileHost: () => `${API.fileHost()}/delete`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',

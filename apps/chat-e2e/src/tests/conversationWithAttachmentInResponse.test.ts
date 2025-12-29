@@ -15,6 +15,8 @@ dialTest(
     dataInjector,
     fileApiHelper,
     filesManagerModalFoldersTree,
+    filesManagerModalGrid,
+    filesManagerModalGridAssertion,
     filesManagerModal,
     chatHeader,
     chat,
@@ -62,11 +64,10 @@ dialTest(
         await conversations.selectEntity(responseImageConversation.name);
         await chatBar.openManageAttachmentsModal();
         await filesManagerModalFoldersTree.expandFolders(...imagePathSegments);
-        //TODO: enable when issue with not visible in the grid files is fixed
-        // await filesManagerModalGridAssertion.assertElementState(
-        //   filesManagerModalGrid.gridRowByNameCell(Attachment.sunImageName),
-        //   'visible',
-        // );
+        await filesManagerModalGridAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.sunImageName),
+          'visible',
+        );
         closeButton = filesManagerModal.getCloseButton();
         await closeButton.click();
       },
@@ -86,11 +87,10 @@ dialTest(
 
         await chatBar.openManageAttachmentsModal();
         await filesManagerModalFoldersTree.expandFolders(...imagePathSegments);
-        //TODO: enable when issue with not visible in the grid files is fixed
-        // await filesManagerModalGridAssertion.assertElementState(
-        //   filesManagerModalGrid.gridRowByNameCell(Attachment.cloudImageName),
-        //   'visible',
-        // );
+        await filesManagerModalGridAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.cloudImageName),
+          'visible',
+        );
         await closeButton.click();
       },
     );
@@ -114,11 +114,10 @@ dialTest(
         await filesManagerModalFoldersTree.expandFolders(
           ...secondImagePathSegments,
         );
-        //TODO: enable when issue with not visible in the grid files is fixed
-        // await filesManagerModalGridAssertion.assertElementState(
-        //   filesManagerModalGrid.gridRowByNameCell(Attachment.flowerImageName),
-        //   'visible',
-        // );
+        await filesManagerModalGridAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.flowerImageName),
+          'visible',
+        );
       },
     );
   },
