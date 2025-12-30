@@ -15,7 +15,7 @@ dialTest.beforeAll(async () => {
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
-dialTest.only(
+dialTest(
   'Check md table in response.\n' +
     'Copy md table as CSV.\n' +
     'Copy md table as TXT.\n' +
