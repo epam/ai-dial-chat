@@ -262,6 +262,7 @@ const AgentAndToolsetModalView = ({
     (tab: MarketplaceTabs = MarketplaceTabs.HOME) => {
       setScopeTab(tab);
       setShouldResetSliderState(true);
+      setActiveSlide(0);
     },
     [],
   );
