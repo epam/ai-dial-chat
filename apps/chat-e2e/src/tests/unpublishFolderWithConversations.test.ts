@@ -28,7 +28,7 @@ dialTest.beforeAll(async ({ iconApiHelper }) => {
     ThemeColorAttributes.textError,
   );
   expectedBgDisabledColor = ThemesUtil.getRgbColorByKey(
-    ThemeColorAttributes.controlsBgDisable,
+    ThemeColorAttributes.textSecondary,
   );
 });
 
