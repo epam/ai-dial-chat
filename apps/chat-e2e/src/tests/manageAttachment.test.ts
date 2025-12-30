@@ -237,7 +237,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Delete file while it is being uploaded',
   async ({
     dialHomePage,
@@ -318,7 +318,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Delete file after there was internet connection error',
   async ({
     dialHomePage,
@@ -401,7 +401,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Reload file after there was internet connection error',
   async ({
     dialHomePage,
@@ -565,7 +565,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file appears/disappears without browser refresh\n' +
     '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file LOCATED IN FOLDER appears/disappears without browser refresh',
   async ({

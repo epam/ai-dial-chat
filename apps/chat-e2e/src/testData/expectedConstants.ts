@@ -496,6 +496,7 @@ export const API = {
   fileHost: () => `/api/${API.filesHostSegment}`,
   downloadFilesHost: () => `${API.fileHost()}/download`,
   deleteFileHost: () => `${API.fileHost()}/delete`,
+  folderFilesListingHost: (folderName: string) => `/${folderName}?filter=ITEM`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
