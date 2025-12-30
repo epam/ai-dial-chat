@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { prepareFileName } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   buildApiUrl,
@@ -146,12 +147,18 @@ const handler = async (
           file.relativePath,
         );
 
-        const slugs = encodeUrlSlugs(targetPath);
+        const pathSegments = targetPath.split('/').filter(Boolean);
+
+        const rawFileName = pathSegments.pop() ?? 'file';
+        const fileName = prepareFileName(rawFileName);
+
+        pathSegments.push(fileName);
+
+        const slugs = encodeUrlSlugs(pathSegments.join('/'));
+
         const uploadUrl = buildApiUrl('v1', slugs);
 
         logger.debug(`Uploading file to: ${uploadUrl}`);
-
-        const fileName = targetPath.split('/').filter(Boolean).pop() ?? 'file';
 
         const formData = new FormData();
         formData.append('file', file.content, {
