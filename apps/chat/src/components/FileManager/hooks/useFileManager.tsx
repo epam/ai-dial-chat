@@ -6,7 +6,7 @@ import {
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, doesHaveNotAllowedSymbols } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
@@ -714,6 +714,17 @@ export const useFileManager = ({
     [dispatch],
   );
 
+  const handleRenameValidation = useCallback(
+    (value: string, _item: DialFile) => {
+      if (doesHaveNotAllowedSymbols(value)) {
+        return t('Name contains invalid characters');
+      }
+
+      return null;
+    },
+    [t],
+  );
+
   return {
     currentPath,
     setCurrentPath,
@@ -750,5 +761,6 @@ export const useFileManager = ({
     handleCreateFolder,
     handleUploadArchive,
     handleUnshareFiles,
+    handleRenameValidation,
   };
 };

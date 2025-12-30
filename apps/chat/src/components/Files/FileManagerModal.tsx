@@ -288,6 +288,7 @@ export const FileManagerModal = memo(
       handleCreateFolder,
       handleUploadArchive,
       handleMoveFiles,
+      handleRenameValidation,
     } = useFileManager({
       actionLabelsOptions: {
         actionsByTab: {
@@ -380,6 +381,7 @@ export const FileManagerModal = memo(
               onCreateFolder={handleCreateFolder}
               onUploadArchive={handleUploadArchive}
               onMoveToFiles={handleMoveFiles}
+              onRenameValidate={handleRenameValidation}
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">

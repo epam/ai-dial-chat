@@ -58,6 +58,7 @@ export const FileManager: React.FC = () => {
     handleCreateFolder,
     handleUploadArchive,
     handleUnshareFiles,
+    handleRenameValidation,
   } = useFileManager();
 
   useEffect(() => {
@@ -96,6 +97,7 @@ export const FileManager: React.FC = () => {
         onCreateFolder={handleCreateFolder}
         onUploadArchive={handleUploadArchive}
         onUnshareFiles={handleUnshareFiles}
+        onRenameValidate={handleRenameValidation}
       />
       {isAnyOperationInProgress && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
