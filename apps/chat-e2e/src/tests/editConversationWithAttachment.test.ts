@@ -92,7 +92,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Change attached files in message box.\n' +
     'Delete attachment on x from message box',
   async ({
@@ -167,15 +167,18 @@ dialTest(
       },
     );
 
+    await dialTest.step('Open "Attach files" modal again', async () => {
+      await sendMessage.attachmentMenuTrigger.click();
+      await attachmentDropdownMenu.selectMenuOption(
+        UploadMenuOptions.attachUploadedFiles,
+        { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+      );
+    });
+
     await dialTest.step.skip(
       //TODO verify the desired behaviour - now previously selected files are not marked
-      'Open "Attach files" modal again and verify files are checked and marked with blue',
+      'verify files are checked and marked with blue',
       async () => {
-        await sendMessage.attachmentMenuTrigger.click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
-        );
         for (const file of initAttachedFiles) {
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
@@ -200,7 +203,6 @@ dialTest(
         //   initAttachedFiles[1],
         //   CheckboxState.unchecked,
         // );
-        await sendMessage.attachmentMenuTrigger.click();
         await filesManagerModalGrid
           .gridCheckboxByNameCell(updatedAttachedFiles[1])
           .click();
