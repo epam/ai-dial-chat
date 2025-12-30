@@ -1,3 +1,5 @@
+import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
+
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
@@ -188,7 +190,7 @@ export const PublishingApprovalModalSelectors = {
   updateRequestButton: '[data-qa="update"]',
   version: '[data-qa="version"]',
   entityRow: '[data-qa="entity-publication-row"]',
-  fieldValue: (name: string) => `[value="${name}"]`,
+  fieldValue: (name: string) => InputSelectors.value(name),
 };
 
 export const PublishingTreeSelectors = {

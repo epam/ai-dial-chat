@@ -360,6 +360,10 @@ export const ExpectedConstants = {
   filesManagerPath: '/files-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
+  replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
+  replaceAttachmentConfirmationMessage: (filename: string) =>
+    `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
+  failedToMoveFileMessage: 'Failed to move files. Please try again later.',
 };
 
 export enum Types {

@@ -68,3 +68,7 @@ export const PopupSelectors = {
 export const LoaderSelectors = {
   loaderContainer: '[role="status"]',
 };
+
+export const InputSelectors = {
+  value: (value: string) => `[value="${value}"]`,
+};

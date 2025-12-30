@@ -451,6 +451,8 @@ const dialTest = test.extend<{
   filesManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   filesManagerGridAssertion: FilesManagerGridAssertion;
   filesManagerModalGridAssertion: FilesManagerGridAssertion;
+  fileConflictConfirmationPopup: ConfirmationPopup;
+  fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1859,6 +1861,21 @@ const dialTest = test.extend<{
       filesManagerModalGrid,
     );
     await use(filesManagerModalGridAssertion);
+  },
+  fileConflictConfirmationPopup: async ({ page }, use) => {
+    const fileConflictConfirmationPopup = new ConfirmationPopup(
+      page,
+      'Replace',
+    );
+    await use(fileConflictConfirmationPopup);
+  },
+  fileConflictConfirmationPopupAssertion: async (
+    { fileConflictConfirmationPopup },
+    use,
+  ) => {
+    const fileConflictConfirmationPopupAssertion =
+      new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
+    await use(fileConflictConfirmationPopupAssertion);
   },
 });
 

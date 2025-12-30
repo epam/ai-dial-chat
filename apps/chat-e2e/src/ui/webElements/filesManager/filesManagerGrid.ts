@@ -1,6 +1,12 @@
-import { FileManagerColumnKey } from '@/src/testData';
-import { GridSelectors, IconSelectors } from '@/src/ui/selectors';
+import { FileManagerColumnKey, MenuOptions } from '@/src/testData';
+import { keys } from '@/src/ui/keyboard';
+import {
+  GridSelectors,
+  IconSelectors,
+  InputSelectors,
+} from '@/src/ui/selectors';
 import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
+import { FileUtil } from '@/src/utils';
 
 export class FilesManagerGrid extends Grid {
   public rowDropdownMenu!: Dropdown;
@@ -38,4 +44,16 @@ export class FilesManagerGrid extends Grid {
 
   public gridNameCellValue = (name: string) =>
     this.gridNameCell(name).locator(GridSelectors.gridCellValue);
+
+  public async renameFile(currentName: string, newName: string) {
+    await this.gridDotsMenuByNameCell(currentName).click();
+    await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
+    const nameWithoutExtension =
+      FileUtil.getFilenameWithoutExtension(currentName);
+    const input = this.getElementLocator().locator(
+      InputSelectors.value(nameWithoutExtension),
+    );
+    await input.fill(newName);
+    await this.click();
+  }
 }

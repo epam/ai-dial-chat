@@ -4,14 +4,16 @@ import {
   CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
+  MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   '[Upload from device] Error appears if to load the file with the same name and extension if it already exists in a folder.\n' +
     'Long file name in errors does not break UI on "Upload from device"',
   async ({
@@ -19,15 +21,14 @@ dialTest.only(
     setTestIds,
     filesManagerModal,
     filesManagerModalGrid,
-    filesManagerModalGridAssertion,
+    fileConflictConfirmationPopup,
+    fileConflictConfirmationPopupAssertion,
     fileApiHelper,
     chatBar,
-    uploadFromDeviceModal,
     baseAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1777', 'EPMRTC-1778');
-    const expectedErrorTextClassAttribute = 'truncate whitespace-pre-wrap';
 
     await dialTest.step('Upload file with long name to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
@@ -48,39 +49,25 @@ dialTest.only(
           { path: Attachment.longImageName, dataType: 'upload' },
           () => filesManagerModal.openUploadFromDeviceModal(),
         );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupContent(
+          ExpectedConstants.replaceAttachmentConfirmationMessage(
+            Attachment.longImageName,
+          ),
+        );
+        await fileConflictConfirmationPopup.getCancelButton().click();
         await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFile(Attachment.longImageName),
+          filesManagerModalGrid.gridRowByNameCell(Attachment.longImageName),
           'visible',
-        );
-        await uploadFromDeviceModal.uploadButton.click();
-      },
-    );
-
-    await dialTest.step(
-      'Verify error message is shown, it is red and has valid class attribute value',
-      async () => {
-        const error = uploadFromDeviceModal.getModalError();
-        await baseAssertion.assertElementState(error, 'visible');
-        await baseAssertion.assertElementText(
-          error.errorMessage,
-          ExpectedConstants.duplicatedFilenameError(Attachment.longImageName),
-          ExpectedMessages.errorMessageContentIsValid,
-        );
-        await baseAssertion.assertElementColor(
-          error.errorMessage,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
-        );
-        await baseAssertion.assertElementAttribute(
-          error.errorMessage,
-          Attributes.class,
-          expectedErrorTextClassAttribute,
         );
       },
     );
   },
 );
 
-dialTest(
+dialTest.only(
   '[Upload from device] Error appears if to load the file with restricted special char in the name which was renamed.\n' +
     '[Upload from device] File name is updated ok if the file has restricted special char in the name',
   async ({
@@ -90,9 +77,9 @@ dialTest(
     filesManagerModalGrid,
     filesManagerModalGridAssertion,
     chatBar,
-    uploadFromDeviceModal,
     baseAssertion,
     localStorageManager,
+    toastAssertion,
   }) => {
     setTestIds('EPMRTC-1780', 'EPMRTC-1802');
     const restrictedChar = GeneratorUtil.randomArrayElement(
@@ -113,7 +100,7 @@ dialTest(
           ),
       );
       await baseAssertion.assertElementState(
-        uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
+        filesManagerModalGrid.gridRowByNameCell(Attachment.sunImageName),
         'visible',
       );
     });
@@ -121,64 +108,42 @@ dialTest(
     await dialTest.step(
       'Add restricted symbol to file name, click Upload and observe restricted symbols are restricted, file is not renamed',
       async () => {
-        await uploadFromDeviceModal.typeInUploadedFilename(
+        await filesManagerModalGrid.renameFile(
           Attachment.sunImageName,
-          restrictedChar,
+          `${Attachment.sunImageName}${restrictedChar}`,
         );
-        await uploadFromDeviceModal.uploadFiles();
-        await filesManagerModalGridAssertion.assertGridRowByNameState(
-          Attachment.sunImageName,
-          'visible',
-        );
-        await filesManagerModalGridAssertion.assertGridRowColor(
-          Attachment.sunImageName,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
-        );
-      },
-    );
 
-    await dialTest.step(
-      'Upload a file without a restricted symbol, click Upload and verify file is uploaded and had blue color name',
-      async () => {
-        await dialHomePage.uploadData(
-          { path: Attachment.heartImageName, dataType: 'upload' },
-          () =>
-            filesManagerModal.openUploadFromDeviceModal(
-              UploadMenuOptions.uploadFiles,
-            ),
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.failedToMoveFileMessage,
         );
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFile(Attachment.heartImageName),
-          'visible',
-        );
-        await uploadFromDeviceModal.uploadFiles();
+
         await filesManagerModalGridAssertion.assertGridRowByNameState(
-          Attachment.heartImageName,
+          Attachment.sunImageName,
           'visible',
         );
         await filesManagerModalGridAssertion.assertGridRowColor(
           Attachment.sunImageName,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textPrimary),
         );
       },
     );
   },
 );
 
-dialTest(
+dialTest.only(
   '[Upload from device] Several different errors are combined into one (error about restricted symbols, already existed file, equal files).\n' +
     "'[Upload from device] Error appears if to load two files with equal names and extension'.\n" +
     '[Upload from device] Error appears if to upload the file if to rename it using restricted chars',
   async ({
     dialHomePage,
     setTestIds,
-    filesManagerModal,
-    filesManagerModalGrid,
+    attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
     fileApiHelper,
     baseAssertion,
     localStorageManager,
+    manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
@@ -193,13 +158,12 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
-        await baseAssertion.assertElementState(
-          filesManagerModalGrid.gridRowByNameCell(Attachment.sunImageName),
+        await manageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.sunImageName },
+          FileModalSection.AllFiles,
           'visible',
         );
-        await filesManagerModal.openUploadFromDeviceModal(
-          UploadMenuOptions.uploadFiles,
-        );
+        await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
           Attachment.restrictedSemicolonCharFilename,
@@ -247,9 +211,7 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    filesManagerModal,
-    filesManagerModalGrid,
-    filesManagerModalGridAssertion,
+    attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
     localStorageManager,
@@ -266,10 +228,7 @@ dialTest(
         await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.fileWithoutExtension, dataType: 'upload' },
-          () =>
-            filesManagerModal.openUploadFromDeviceModal(
-              UploadMenuOptions.uploadFiles,
-            ),
+          () => attachFilesModal.uploadFromDevice(),
         );
       },
     );
@@ -292,15 +251,21 @@ dialTest(
           .toBe('');
 
         await uploadFromDeviceModal.uploadFiles();
-        await filesManagerModalGridAssertion.assertGridRowByNameState(
-          Attachment.fileWithoutExtension,
-          'visible',
-        );
+        await expect
+          .soft(
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.fileWithoutExtension),
+            ExpectedMessages.fileIsAttached,
+          )
+          .toBeVisible();
 
-        await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
-          Attachment.fileWithoutExtension,
-          CheckboxState.checked,
-        );
+        const isFileChecked = attachFilesModal
+          .getAllFilesTree()
+          .getEntityCheckbox(Attachment.fileWithoutExtension);
+        await expect
+          .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
+          .toBeChecked();
       },
     );
   },
