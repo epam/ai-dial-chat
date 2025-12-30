@@ -13,7 +13,8 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
 import { doesModelAllowTemperature } from '@/src/utils/app/models';
-import { ApiUtils } from '@/src/utils/server/api';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import {
   ApplicationType,
@@ -318,13 +319,52 @@ const getQuickAppFormData = (app?: CustomApplicationModel): QuickAppForm => {
   };
 };
 
+const getQuickAppItemNameFromConfig = (
+  item: MCPToolset | DialDeploymentSimpleTool,
+): string => {
+  if ('dial_id' in item) {
+    return (
+      item.name ||
+      ApiUtils.decodeApiUrl(
+        parseEntityApiKey(splitEntityId(item.dial_id).name, {
+          parseVersion: true,
+        }).name,
+      )
+    );
+  }
+
+  if (isApplicationId(item.deployment_id)) {
+    return ApiUtils.decodeApiUrl(
+      parseEntityApiKey(splitEntityId(item.deployment_id).name, {
+        parseVersion: true,
+      }).name,
+    );
+  }
+
+  return item.deployment_id;
+};
+
 const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
+
   const agentToolsets =
     appProperties?.tool_sets
       ?.filter(isDialDeploymentToolset)
       ?.flatMap((toolset) => toolset.tools) ?? [];
   const mcpToolsets = appProperties?.tool_sets?.filter(isMcpToolset) ?? [];
+
+  const allItems = [...agentToolsets, ...mcpToolsets];
+
+  const sortedItems = allItems.sort((a, b) =>
+    getQuickAppItemNameFromConfig(a).localeCompare(
+      getQuickAppItemNameFromConfig(b),
+    ),
+  );
+
+  const sortedIds = sortedItems.map((item) => {
+    const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
+    return ApiUtils.decodeApiUrl(id);
+  });
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
@@ -336,14 +376,7 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
     temperature:
       appProperties?.orchestrator?.deployment?.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
-    agentsAndToolsets: [
-      ...agentToolsets.map((agentToolset) =>
-        ApiUtils.decodeApiUrl(agentToolset.deployment_id),
-      ),
-      ...mcpToolsets.map((mcpToolset) =>
-        ApiUtils.decodeApiUrl(mcpToolset.dial_id),
-      ),
-    ],
+    agentsAndToolsets: sortedIds,
     codeInterpreter:
       appProperties?.tool_sets?.some(
         (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
