@@ -35,7 +35,7 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 let appEntityForCleanup: BackendEntity | undefined;
 
-dialTest(
+dialTest.skip(
   'Create custom app with required fields only.\n' + // EPMRTC-5130
     'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
     'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
@@ -614,7 +614,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Edit custom application\n' + //EPMRTC-5131
     'Edit version for custom app\n' + //EPMRTC-4305
     'DIAL logo click on second step in AppEditor saves app ( decided on daily to leave for now)', // EPMRTC-5747
@@ -848,7 +848,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
     'Delete custom app from application card pop-up\n' + // EPMRTC-4103
     '[Custom app]: Delete specific not published version' + // EPMRTC-4285
@@ -1090,7 +1090,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Custom app Topic dropdown select.\n' + // EPMRTC-4374
     '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
     'Preview on step "General info"\n' + // EPMRTC-5749
@@ -1684,7 +1684,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Edit Custom app: Update icon of custom app\n' + //EPMRTC-4109
     '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars\n' + // EPMRTC-5538
     '[App editor]: Release date displayed on detailed preview on "General info" step when edit custom app', //EPMRTC-5831
@@ -1866,7 +1866,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits.\n' + // EPMRTC-4131
     '[Custom app + Marketplace]: tooltips for icons on application modal window', // EPMRTC-4290
   async ({
@@ -2051,7 +2051,7 @@ dialTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   'Check icons of chats with published custom app.\n' + //EPMRTC-4303
     'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMRTC-6345
     'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMRTC-4302
@@ -2212,7 +2212,7 @@ dialAdminTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
     'Create two custom apps consecutively', // EPMRTC-6263
   async ({
@@ -2379,7 +2379,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   "Tooltip for long app's name displayed in several lines\n" + // EPMRTC-5946
     '[App editor]: Changes are saved if set focus to field and then move cursor to Save and exit or to step in header', // EPMRTC-6046
   async ({

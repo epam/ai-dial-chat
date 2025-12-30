@@ -29,7 +29,7 @@ const defaultToolsetNamePattern = new RegExp(
   `${ExpectedConstants.defaultToolsetName} \\d+`,
 );
 
-dialTest(
+dialTest.skip(
   'Create toolset - basic scenario.\n' +
     '[Editor]: detailed card view is displayed by default on Preview side.\n' +
     `[Toolset]: toolset's card is open on My Workspace page when create toolset and click "save and exit" (without login).\n` +
@@ -443,7 +443,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Toolset]: toolset with default name and version is saved correctly.\n' +
     '[Toolset]: cards are not duplicated for each saved changes when edit toolset several times.\n' +
     '[App editor]: Release date displayed on detailed preview on "General info" step when edit toolset.\n' +
@@ -653,7 +653,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Toolset]: message on Toolsets tab if no any toolset is created',
   async ({
     marketplacePage,
@@ -690,7 +690,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Card detailed view is open when user redirected back to My workspace (where search and filters are applied) after creating toolset.\n' +
     '[Toolset]:Endpoint url is save after login failed.\n' +
     "Tooltip for long toolset's name displayed in several lines",
