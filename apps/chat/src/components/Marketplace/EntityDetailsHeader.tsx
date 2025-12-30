@@ -91,7 +91,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
           <div className="flex shrink-0 justify-between">
             <div
               className={classNames(
-                'flex w-full flex-col',
+                'flex w-full flex-col items-start',
                 entity.topics?.length ? 'gap-2' : '',
               )}
             >

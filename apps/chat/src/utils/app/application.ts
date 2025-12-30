@@ -3,7 +3,11 @@ import {
   DefaultsService,
 } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
-import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
+import {
+  ApiUtils,
+  getMarketplaceEntityApiKey,
+  parseEntityApiKey,
+} from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -40,6 +44,7 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId, getEntityBucket } from './id';
 import { isEntityIdPublic } from './publications';
+import { splitEntityId } from './shared-utils';
 import { translate } from './translation';
 
 import isObject from 'lodash-es/isObject';
@@ -459,4 +464,20 @@ export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
   if (isExternalAppEditor(type)) return AppsEditorSchemaTypes.ExternalApp;
 
   return AppsEditorSchemaTypes.CustomApp;
+};
+
+export const getEntityDisplayName = (
+  id: string,
+  allEntitiesMap: Record<string, MarketplaceEntity | undefined>,
+): string => {
+  const entity = allEntitiesMap[id];
+  if (entity?.name) {
+    return entity.name;
+  }
+
+  return ApiUtils.decodeApiUrl(
+    parseEntityApiKey(splitEntityId(id).name, {
+      parseVersion: true,
+    }).name,
+  );
 };
