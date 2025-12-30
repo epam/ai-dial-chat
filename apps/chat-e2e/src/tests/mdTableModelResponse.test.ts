@@ -3,8 +3,9 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from "@/src/utils/themesUtil";
 import { Locator, expect } from '@playwright/test';
 
 const expectedChatMessageIndex = 2;
@@ -14,7 +15,7 @@ dialTest.beforeAll(async () => {
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
-dialTest(
+dialTest.only(
   'Check md table in response.\n' +
     'Copy md table as CSV.\n' +
     'Copy md table as TXT.\n' +
@@ -136,11 +137,7 @@ dialTest(
             tableHeaderBackgroundColor[0],
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
-          .toBe(
-            theme === ThemeId.dark
-              ? Colors.backgroundLayer4Dark
-              : Colors.backgroundLayer4Light,
-          );
+          .toBe(ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4, theme as ThemeId));
 
         const tableRowBackgroundColor =
           await chatMessages.getChatMessageTableRowsBackgroundColor(
@@ -151,11 +148,7 @@ dialTest(
             tableRowBackgroundColor[0],
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
-          .toBe(
-            theme === ThemeId.dark
-              ? Colors.backgroundLayer3Dark
-              : Colors.backgroundLayer3Light,
-          );
+          .toBe(ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer3, theme as ThemeId));
       },
     );
 
