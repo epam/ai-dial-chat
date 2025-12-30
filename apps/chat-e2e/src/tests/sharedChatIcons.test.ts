@@ -114,12 +114,12 @@ dialTest(
         await shareModal.closeButton.hoverOver();
         await shareModalAssertion.assertElementBorderColors(
           shareModal.closeButton,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
         await shareModal.copyLinkButton.hoverOver();
         await shareModalAssertion.assertElementBorderColors(
           shareModal.copyLinkIcon,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
         await tooltipAssertion.assertElementText(
           tooltip,
