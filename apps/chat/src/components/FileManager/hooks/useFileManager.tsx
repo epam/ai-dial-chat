@@ -6,7 +6,11 @@ import {
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { constructPath, doesHaveNotAllowedSymbols } from '@/src/utils/app/file';
+import {
+  constructPath,
+  doesHaveNotAllowedSymbols,
+  prepareFileName,
+} from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
@@ -645,6 +649,9 @@ export const useFileManager = ({
   const handleUploadFiles = useCallback(
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
+
+      filesToUpload.forEach((file) => (file.name = prepareFileName(file.name)));
+
       dispatch(
         FilesActions.uploadFiles({
           files: filesToUpload,
@@ -677,7 +684,7 @@ export const useFileManager = ({
       dispatch(
         FilesActions.uploadArchive({
           archive: archiveFile,
-          name,
+          name: prepareFileName(name),
           destinationUrl,
         }),
       );
