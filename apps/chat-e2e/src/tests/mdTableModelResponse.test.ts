@@ -5,7 +5,7 @@ import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { ThemesUtil } from "@/src/utils/themesUtil";
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator, expect } from '@playwright/test';
 
 const expectedChatMessageIndex = 2;
@@ -137,7 +137,12 @@ dialTest(
             tableHeaderBackgroundColor[0],
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
-          .toBe(ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4, theme as ThemeId));
+          .toBe(
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgLayer4,
+              theme as ThemeId,
+            ),
+          );
 
         const tableRowBackgroundColor =
           await chatMessages.getChatMessageTableRowsBackgroundColor(
@@ -148,7 +153,12 @@ dialTest(
             tableRowBackgroundColor[0],
             ExpectedMessages.tableEntityBackgroundColorIsValid,
           )
-          .toBe(ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer3, theme as ThemeId));
+          .toBe(
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgLayer3,
+              theme as ThemeId,
+            ),
+          );
       },
     );
 
