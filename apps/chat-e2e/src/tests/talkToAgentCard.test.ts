@@ -223,7 +223,7 @@ dialTest(
         ) {
           await talkToAgentDialogAssertion.assertElementBorderColors(
             visibleTopicsElement.getNthElement(i),
-            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.controlsBgAccent),
           );
         }
       },
@@ -507,7 +507,7 @@ dialTest(
         for (let i = 1; i <= tooltipTopicsCount; i++) {
           await tooltipAssertion.assertElementBorderColors(
             topicsTooltip.topic.getNthElement(i),
-            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+            ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
           );
         }
       },
