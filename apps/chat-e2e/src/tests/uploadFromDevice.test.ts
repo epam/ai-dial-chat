@@ -39,6 +39,7 @@ dialTest(
     localStorageManager,
     uploadFromDeviceModal,
     manageAttachmentsAssertion,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1888', 'EPMRTC-3197', 'EPMRTC-3233');
     const attachments = [Attachment.sunImageName, Attachment.cloudImageName];
@@ -60,18 +61,10 @@ dialTest(
           attachFilesModal,
           'visible',
         );
-
-        const uploadFromDeviceBackgroundColor =
-          await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
-            Styles.backgroundColor,
-          );
-        expect
-          .soft(
-            uploadFromDeviceBackgroundColor[0],
-            ExpectedMessages.buttonBackgroundColorIsValid,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
-
+        await baseAssertion.assertElementBackgroundColors(
+          attachFilesModal.uploadFromDeviceButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+        );
         const uploadFromDeviceTextColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
             Styles.color,
@@ -96,20 +89,13 @@ dialTest(
           )
           .toBeDisabled();
 
-        const addModeFilesTextColor =
-          await uploadFromDeviceModal.addMoreFiles.getComputedStyleProperty(
-            Styles.color,
-          );
-        expect
-          .soft(
-            addModeFilesTextColor[0],
-            ExpectedMessages.buttonTextColorIsValid,
-          )
-          .toBe(
-            theme === ThemeId.light
-              ? Colors.controlsBackgroundAccentPrimary
-              : Colors.controlsBackgroundAccent,
-          );
+        await baseAssertion.assertElementColor(
+          uploadFromDeviceModal.addMoreFiles,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.textInfo,
+            theme as ThemeId,
+          ),
+        );
 
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         for (const attachment of attachments) {
