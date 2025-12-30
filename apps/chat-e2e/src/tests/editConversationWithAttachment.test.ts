@@ -92,7 +92,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Change attached files in message box.\n' +
     'Delete attachment on x from message box',
   async ({
