@@ -1,5 +1,4 @@
 import { FileManagerColumnKey, MenuOptions } from '@/src/testData';
-import { keys } from '@/src/ui/keyboard';
 import {
   GridSelectors,
   IconSelectors,

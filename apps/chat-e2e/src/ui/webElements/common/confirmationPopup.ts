@@ -21,9 +21,11 @@ export class ConfirmationPopup extends Popup {
   public async confirm({
     triggeredHttpMethod = undefined,
     triggeredHttpHost = undefined,
+    expectedRequests = undefined,
   }: {
     triggeredHttpMethod?: 'PUT' | 'DELETE' | 'POST' | 'GET';
     triggeredHttpHost?: string;
+    expectedRequests?: Map<string, string>;
   } = {}) {
     if (triggeredHttpMethod) {
       const predicate = (resp: Response) =>
@@ -34,7 +36,19 @@ export class ConfirmationPopup extends Popup {
       const respPromise = this.page.waitForResponse(predicate);
       await this.confirmButton.click();
       return respPromise;
+    } else if (expectedRequests && expectedRequests.size > 0) {
+      const responsePromises: Promise<unknown>[] = [];
+
+      for (const [partialPath, method] of expectedRequests) {
+        responsePromises.push(
+          this.page.waitForResponse(
+            (r) =>
+              r.url().includes(partialPath) && r.request().method() === method,
+          ),
+        );
+      }
+      await this.confirmButton.click();
+      await Promise.all(responsePromises);
     }
-    await this.confirmButton.click();
   }
 }

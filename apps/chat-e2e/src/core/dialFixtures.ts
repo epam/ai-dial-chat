@@ -1865,7 +1865,7 @@ const dialTest = test.extend<{
   fileConflictConfirmationPopup: async ({ page }, use) => {
     const fileConflictConfirmationPopup = new ConfirmationPopup(
       page,
-      'Replace',
+      'Confirm',
     );
     await use(fileConflictConfirmationPopup);
   },

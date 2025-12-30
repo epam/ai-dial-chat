@@ -13,7 +13,7 @@ import path from 'path';
 import { CDPSession, Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
-  path: string;
+  path: string | string[];
   dataType?: 'download' | 'upload';
 }
 
@@ -287,10 +287,13 @@ export class BasePage {
       return downloadedData;
     } catch (error) {
       await Promise.all(
-        downloadedData.map((data) =>
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          fs.promises.unlink(data.path).catch(() => {}),
-        ),
+        downloadedData.map((data) => {
+          const paths = Array.isArray(data.path) ? data.path : [data.path];
+          return Promise.all(
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            paths.map((p) => fs.promises.unlink(p).catch(() => {})),
+          );
+        }),
       );
       throw new Error(`Download failed:`);
     }
@@ -315,7 +318,10 @@ export class BasePage {
     const fileChooserPromise = this.page.waitForEvent('filechooser');
     await method();
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(directory, uploadData.path));
+    const filePaths = Array.isArray(uploadData.path)
+      ? uploadData.path.map((p) => path.join(directory, p))
+      : path.join(directory, uploadData.path);
+    await fileChooser.setFiles(filePaths);
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(500);
   }

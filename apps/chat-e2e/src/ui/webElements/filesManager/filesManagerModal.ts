@@ -49,9 +49,7 @@ export class FilesManagerModal extends BaseElement {
     FilesManagerModalSelectors.title,
   );
 
-  public async openUploadFromDeviceModal(
-    option: UploadMenuOptions = UploadMenuOptions.uploadFiles,
-  ) {
+  public async openUploadFromDevice() {
     await this.getFilesManager()
       .getFilesManagerToolbar()
       .getNewButton()
@@ -59,6 +57,6 @@ export class FilesManagerModal extends BaseElement {
     await this.getFilesManager()
       .getFilesManagerToolbar()
       .getNewButtonDropdownMenu()
-      .selectItem(option);
+      .selectItem(UploadMenuOptions.uploadFiles);
   }
 }
