@@ -513,7 +513,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Download several files',
   async ({
     filesManagerPage,

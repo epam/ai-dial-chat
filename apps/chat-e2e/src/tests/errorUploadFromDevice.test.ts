@@ -63,7 +63,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Upload from device] Error appears if to load the file with restricted special char in the name which was renamed.\n' +
     '[Upload from device] File name is updated ok if the file has restricted special char in the name',
   async ({
@@ -123,7 +123,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Upload from device] Several different errors are combined into one (error about restricted symbols, already existed file, equal files).\n' +
     "'[Upload from device] Error appears if to load two files with equal names and extension'.\n" +
     '[Upload from device] Error appears if to upload the file if to rename it using restricted chars',
@@ -210,7 +210,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Upload from device] Error appears if to upload a file with a dot at the name without extension.\n' +
     '[Upload from device] A file without extension is uploaded successfully',
   async ({

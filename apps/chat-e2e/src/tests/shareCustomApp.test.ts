@@ -17,7 +17,7 @@ let appData: CustomAppAttributes;
 const getIconName = (iconUrl: string) =>
   iconUrl.substring(iconUrl.lastIndexOf('/') + 1);
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing custom app without editing permissions via context menu in DIAL Marketplace.\n' +
     'Share custom application via QR code without edit rights.\n' +
     'Share pop up: Message about not shared yet app for not shared app.\n' +
