@@ -2,13 +2,13 @@ import { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { EnterType } from '@/src/types/settings';
 
-import { isMacOs, isMobile } from './mobile';
+import { isMacOs, isTabletScreenOrMobile } from './mobile';
 
 export const allowEnterClick = <T>(
   e: KeyboardEvent | ReactKeyboardEvent<T>,
   enterType: EnterType,
 ) => {
-  if (e.key !== 'Enter' || isMobile() || e.shiftKey || e.altKey) {
+  if (e.key !== 'Enter' || isTabletScreenOrMobile() || e.shiftKey || e.altKey) {
     return false;
   }
   if (enterType !== EnterType.CtrlEnter) {
