@@ -512,7 +512,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversationId: string;
         messageIndex: number;
-        error: Response | string;
+        error: string;
       }>,
     ) => state,
     deleteMessage: (state, _action: PayloadAction<{ index: number }>) => state,

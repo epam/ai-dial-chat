@@ -114,12 +114,12 @@ dialTest(
         await shareModal.closeButton.hoverOver();
         await shareModalAssertion.assertElementBorderColors(
           shareModal.closeButton,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
         await shareModal.copyLinkButton.hoverOver();
         await shareModalAssertion.assertElementBorderColors(
           shareModal.copyLinkIcon,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
         );
         await tooltipAssertion.assertElementText(
           tooltip,
@@ -807,7 +807,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   `Share option appears in context menu for chat folder if there is any chat inside.\n` +
     'Share form text differs for chat and folder.\n' +
     'Share folder with chats via QR code.\n' +

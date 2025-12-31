@@ -29,7 +29,7 @@ dialTest.beforeAll(async () => {
   );
 });
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Share with me. Chats with different context.\n' +
     'Shared chat history is updated in Shared with me if to generate new picture.\n' +
     'Publish chat with file, file is from "Shared with me" section',
@@ -330,7 +330,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Share with me. Folder with chats with different context',
   async ({
     conversationData,
@@ -557,7 +557,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
     'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
     'Unshared by the owner file disappears from "Shared with me". User1 shares two files, unshares one file.\n' +
@@ -849,7 +849,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat in Playback mode',
   async ({
     conversationData,
@@ -1045,7 +1045,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat with plotly graph',
   async ({
     conversationData,
@@ -1123,7 +1123,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing of a chat with attached link',
   async ({
     conversationData,

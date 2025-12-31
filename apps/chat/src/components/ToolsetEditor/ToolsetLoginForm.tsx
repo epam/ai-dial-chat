@@ -1,6 +1,11 @@
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import { useCallback } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
@@ -62,10 +67,9 @@ export const ToolsetLoginForm = ({
 
   const isSignedIn = toolset && isToolsetSignedIn(toolset, credentialsLevel);
 
-  const { register, formState, getValues, trigger, control } =
+  const { register, getValues, trigger, control } =
     useFormContext<ToolsetLoginFormType>();
-  const errors = formState.errors;
-  const isValid = formState.isValid;
+  const { isValid, errors } = useFormState<ToolsetLoginFormType>({ control });
 
   const withLogin = useWatch({
     name: 'withLogin',

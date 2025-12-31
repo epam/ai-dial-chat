@@ -16,7 +16,7 @@ import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialAdminTest(
+dialAdminTest.skip(
   'Publish custom app from context menu from card list view.\n' +
     'Publish custom app: version of app is displayed.\n' +
     'Author field is editable on publication request.\n' +

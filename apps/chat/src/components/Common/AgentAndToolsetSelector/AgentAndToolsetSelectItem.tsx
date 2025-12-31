@@ -3,6 +3,7 @@ import React from 'react';
 import { isExecutableApp } from '@/src/utils/app/application';
 import { getEntityBaseId } from '@/src/utils/app/common';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
+import { getEntityStatus } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
@@ -32,11 +33,13 @@ export const AgentAndToolsetSelectItem: React.FC<
 > = ({ groupItem, selectedBaseIdsSet, onToggleSelectItem }) => {
   const currentBaseId = getEntityBaseId(groupItem.id);
   const isSelected = selectedBaseIdsSet.has(currentBaseId);
+  const { isError } = getEntityStatus(groupItem);
 
   return (
     <ItemCardView
       entity={groupItem}
       isSelected={isSelected}
+      hasError={isError}
       onClick={onToggleSelectItem}
       hasContextMenu={hasEntityContextMenu(groupItem)}
       selectedBaseIdsSet={selectedBaseIdsSet}

@@ -81,7 +81,8 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
 
   const isMobileView = isSmallScreen();
 
-  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
+  const { isInvalid, isLoggedOut, isError, isUndeployed } =
+    getEntityStatus(item);
 
   const shouldShowTooltip = !isMobileView || (isMobileView && isInvalid);
   const name = !item
@@ -127,6 +128,7 @@ export const OverflowListItem: React.FC<OverflowListItemProps> = ({
           version={version}
           isInvalid={isInvalid}
           isLoggedOut={isLoggedOut}
+          isUndeployed={isUndeployed}
           isInSelectionList
         />
       }

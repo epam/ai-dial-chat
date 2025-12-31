@@ -1,7 +1,7 @@
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
-  IconLayoutSidebarRightCollapse,
+  IconLayoutSidebarLeftCollapse,
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo } from 'react';
 
@@ -20,7 +20,7 @@ import { DialButton } from '@epam/ai-dial-ui-kit';
 const previewModeIcons = {
   [PreviewMode.full]: IconArrowsMaximize,
   [PreviewMode.closed]: IconArrowsMinimize,
-  [PreviewMode.half]: IconLayoutSidebarRightCollapse,
+  [PreviewMode.half]: IconLayoutSidebarLeftCollapse,
 };
 const previewModeTooltips = {
   [PreviewMode.full]: 'Expand preview',
@@ -61,7 +61,7 @@ export const PreviewModeButton = ({
       )}
       onClick={handlePreviewModeChange}
       iconBefore={
-        <Tooltip tooltip={t(previewModeTooltips[mode])}>
+        <Tooltip tooltip={t(previewModeTooltips[mode])} isTriggerClickable>
           <Icon size={size} />
         </Tooltip>
       }

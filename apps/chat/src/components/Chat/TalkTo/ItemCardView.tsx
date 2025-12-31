@@ -17,7 +17,6 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
-import { getEntityStatus } from '@/src/utils/marketplace';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -49,6 +48,7 @@ interface ItemCardViewProps<T extends MarketplaceEntity> {
   onClick: (entity: T) => void;
   conversation?: Conversation;
   disabled?: boolean;
+  hasError?: boolean;
   isUnavailableModel?: boolean;
   hasContextMenu?: boolean;
   className?: string;
@@ -77,6 +77,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   onClick,
   conversation,
   disabled,
+  hasError,
   isUnavailableModel,
   hasContextMenu = true,
   className,
@@ -93,10 +94,6 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   const screenState = useScreenState();
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
-
-  const { isError } = getEntityStatus(entity);
-
-  const hasDisplayError = !!isUnavailableModel || isError;
 
   const disabledActions = useMemo(() => {
     const baseActions = isDialAiEntityModel(entity)
@@ -150,7 +147,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
-        hasDisplayError && 'border-error',
+        hasError && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
         className,

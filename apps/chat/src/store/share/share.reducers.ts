@@ -227,6 +227,7 @@ export const shareSlice = createSlice({
       _action: PayloadAction<{
         featureType: FeatureType;
         sharedWith: ShareRelations;
+        includeUserInfo?: boolean;
       }>,
     ) => state,
     getSharedListingSuccess: (
