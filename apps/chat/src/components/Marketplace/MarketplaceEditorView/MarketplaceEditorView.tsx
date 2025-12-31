@@ -108,7 +108,7 @@ export const MarketplaceEditorView = ({
             className={classNames(
               'flex h-full min-h-0 flex-col transition-all duration-300 ease-in-out',
               {
-                'w-1/2 opacity-100': isPreviewHalf,
+                'w-1/2 border-l border-secondary opacity-100': isPreviewHalf,
                 'w-full opacity-100': isPreviewFull,
                 'w-0 overflow-hidden opacity-0': isPreviewClosed,
               },
