@@ -39,7 +39,7 @@ export const ViewToggler: React.FC = () => {
             'rounded border p-1.5',
             selectedViewType === view
               ? 'border-accent-primary text-accent-primary'
-              : 'stroke-primary text-secondary',
+              : 'border-primary text-secondary',
           )}
           onClick={() => handleToggleView(view)}
           iconBefore={<Icon />}
