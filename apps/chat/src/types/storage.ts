@@ -9,6 +9,7 @@ import {
   CustomApplicationModel,
 } from './applications';
 import { BackendChatEntity, MoveModel } from './common';
+import { FileOperationsResult } from './files';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 import { ToolsetInfo, ToolsetModel } from './toolsets';
@@ -18,6 +19,7 @@ import {
   Entity,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
+import { DialCopiedItem, DialDeletedItem } from '@epam/ai-dial-ui-kit';
 
 export enum StorageType {
   BrowserStorage = 'browserStorage',
@@ -157,6 +159,26 @@ export interface DialStorage {
   setPrompts(prompts: Prompt[]): Observable<PromptInfo>;
 
   move(data: MoveModel): Observable<MoveModel>;
+
+  copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>>;
+
+  moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>>;
+
+  deleteFiles(data: {
+    files: DialDeletedItem[];
+  }): Observable<FileOperationsResult<string>>;
+
+  uploadArchive(data: { file: File; destinationUrl: string }): Observable<void>;
 
   // Application methods
   createApplication(

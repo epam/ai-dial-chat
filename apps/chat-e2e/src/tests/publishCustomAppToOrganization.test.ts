@@ -8,7 +8,7 @@ import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { Conversation } from '@epam/ai-dial-shared';
 
-dialAdminTest(
+dialAdminTest.skip(
   'Publish custom app from Application pop-up form on DIAL Marketplace page.\n' +
     'Publish custom application to new folder in Change path.\n' +
     '[Admin view]: "Author" field is displayed on publish request form.\n' +

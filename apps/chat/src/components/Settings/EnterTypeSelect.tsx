@@ -24,7 +24,7 @@ export const EnterTypeSelect = ({
       <DialRadioButton
         inputId={EnterType.Enter}
         name="enter-type-select"
-        title={
+        label={
           <>
             <b>{t('Enter')}</b> - {t('send message')},{' '}
             <b>{t('Shift + Enter')}</b> - {t('new line')}
@@ -38,7 +38,7 @@ export const EnterTypeSelect = ({
       <DialRadioButton
         inputId={EnterType.CtrlEnter}
         name="enter-type-select"
-        title={
+        label={
           <>
             <b>{t(`${isMacOs ? '⌘' : 'Ctrl'} + Enter`)}</b> -{' '}
             {t('send message')}, <b>{t('Enter')}</b> - {t('new line')}

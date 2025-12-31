@@ -1,3 +1,5 @@
+import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
+
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
@@ -119,8 +121,10 @@ export const UploadFromDeviceModalSelectors = {
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
-export const AttachFilesModalSelectors = {
+export const FilesManagerModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
+  title: '[data-qa="modal-title"]',
+  supportedAttributesLabel: '[data-qa="supported-attributes"]',
   organizationFilesContainer: '[data-qa="organization-files-container"]',
   sharedWithMeFilesContainer: '[data-qa="shared-with-me-files-container"]',
   allFilesContainer: '[data-qa="all-files-container"]',
@@ -133,10 +137,6 @@ export const AttachFilesModalSelectors = {
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   rootFolder: '[data-qa="section-root"]',
   fileSection: '[data-qa="file-section-content"]',
-};
-
-export const FilesModalSelectors = {
-  supportedAttributesLabel: '[data-qa="supported-attributes"]',
 };
 
 export const SelectFolderModalSelectors = {
@@ -190,7 +190,7 @@ export const PublishingApprovalModalSelectors = {
   updateRequestButton: '[data-qa="update"]',
   version: '[data-qa="version"]',
   entityRow: '[data-qa="entity-publication-row"]',
-  fieldValue: (name: string) => `[value="${name}"]`,
+  fieldValue: (name: string) => InputSelectors.value(name),
 };
 
 export const PublishingTreeSelectors = {
