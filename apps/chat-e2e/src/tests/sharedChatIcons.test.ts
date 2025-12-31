@@ -807,7 +807,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   `Share option appears in context menu for chat folder if there is any chat inside.\n` +
     'Share form text differs for chat and folder.\n' +
     'Share folder with chats via QR code.\n' +

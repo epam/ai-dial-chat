@@ -1,8 +1,8 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment, ExpectedMessages } from '@/src/testData';
+import { API, Attachment } from '@/src/testData';
+import { Button } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Generated in response picture appears in Manage attachments',
@@ -14,8 +14,10 @@ dialTest(
     localStorageManager,
     dataInjector,
     fileApiHelper,
-    attachFilesModal,
-    attachedAllFiles,
+    filesManagerModalFoldersTree,
+    filesManagerModalGrid,
+    filesManagerModalGridAssertion,
+    filesManagerModal,
     chatHeader,
     chat,
     talkToAgentDialog,
@@ -32,6 +34,7 @@ dialTest(
     const secondImagePath = API.modelFilePath(updatedModel.id);
     const secondImagePathSegments = secondImagePath.split('/');
     const requestContent = 'request';
+    let closeButton: Button;
 
     await dialTest.step(
       'Create conversation with attachment in the response',
@@ -60,22 +63,13 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(responseImageConversation.name);
         await chatBar.openManageAttachmentsModal();
-
-        for (const segment of imagePathSegments) {
-          await attachedAllFiles.expandFolder(segment, {
-            isHttpMethodTriggered: true,
-          });
-        }
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              imagePathSegments[imagePathSegments.length - 1],
-              Attachment.sunImageName,
-            ),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
-        await attachFilesModal.closeButton.click();
+        await filesManagerModalFoldersTree.expandFolders(...imagePathSegments);
+        await filesManagerModalGridAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.sunImageName),
+          'visible',
+        );
+        closeButton = filesManagerModal.getCloseButton();
+        await closeButton.click();
       },
     );
 
@@ -92,21 +86,12 @@ dialTest(
         });
 
         await chatBar.openManageAttachmentsModal();
-        for (const segment of imagePathSegments) {
-          await attachedAllFiles.expandFolder(segment, {
-            isHttpMethodTriggered: true,
-          });
-        }
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              imagePathSegments[imagePathSegments.length - 1],
-              Attachment.cloudImageName,
-            ),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
-        await attachFilesModal.closeButton.click();
+        await filesManagerModalFoldersTree.expandFolders(...imagePathSegments);
+        await filesManagerModalGridAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.cloudImageName),
+          'visible',
+        );
+        await closeButton.click();
       },
     );
 
@@ -126,20 +111,13 @@ dialTest(
         });
 
         await chatBar.openManageAttachmentsModal();
-        for (const segment of secondImagePathSegments) {
-          await attachedAllFiles.expandFolder(segment, {
-            isHttpMethodTriggered: true,
-          });
-        }
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              secondImagePathSegments[secondImagePathSegments.length - 1],
-              Attachment.flowerImageName,
-            ),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
+        await filesManagerModalFoldersTree.expandFolders(
+          ...secondImagePathSegments,
+        );
+        await filesManagerModalGridAssertion.assertElementState(
+          filesManagerModalGrid.gridRowByNameCell(Attachment.flowerImageName),
+          'visible',
+        );
       },
     );
   },

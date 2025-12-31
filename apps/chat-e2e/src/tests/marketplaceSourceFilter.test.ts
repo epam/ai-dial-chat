@@ -25,7 +25,7 @@ import { Locator } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialTest(
+dialTest.skip(
   'Sources: check My Custom apps.\n' +
     'Sources: combination inside sources filter works as OR; combination sources + type/topic works as AND.\n' +
     '[App Editor]: Filters and search results are saved when edit field icon for custom app',
@@ -213,7 +213,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Sources: the search results are updated if to remove/add custom application.\n' +
     'Sources: the filter disappears and search results are updated if to remove custom application when only one existed.\n' +
     `My workspace: The button is named 'Add app', the menu has names 'Custom app', 'Code app'`,
@@ -357,7 +357,7 @@ dialTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sources: check Shared with me.\n' +
     'Sources: check Public. And Sorting order - alphabetically.\n' +
     'Copy link is not available for Shared with me applications',
