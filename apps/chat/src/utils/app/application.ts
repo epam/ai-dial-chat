@@ -1,4 +1,7 @@
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import {
+  Defaults,
+  DefaultsService,
+} from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 import {
   ApiUtils,
@@ -34,6 +37,8 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
+
+import { AppsEditorSchemaTypes } from '@/src/components/AppsEditor/form';
 
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
@@ -426,6 +431,40 @@ export const isDialAiEntityModel = (
   entity: MarketplaceEntity,
 ): entity is DialAIEntityModel =>
   entity?.type === EntityType.Application || entity?.type === EntityType.Model;
+
+const checkAppEditorType =
+  (editorSchemaType: keyof Defaults, defaultSchemaId: string) =>
+  (type: string): boolean => {
+    const schemaId = DefaultsService.get(editorSchemaType, defaultSchemaId);
+    return schemaId.endsWith(type);
+  };
+
+export const isQuickAppEditor = checkAppEditorType(
+  'quickAppsSchemaId',
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
+);
+
+export const isQuickApp2Editor = checkAppEditorType(
+  'quickAppsSchemaId2',
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+);
+
+export const isExternalAppEditor = checkAppEditorType(
+  'externalAppsSchemaId',
+  DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+);
+
+export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
+  if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
+
+  if (isQuickAppEditor(type)) return AppsEditorSchemaTypes.QuickApp;
+
+  if (isQuickApp2Editor(type)) return AppsEditorSchemaTypes.QuickApp2;
+
+  if (isExternalAppEditor(type)) return AppsEditorSchemaTypes.ExternalApp;
+
+  return AppsEditorSchemaTypes.CustomApp;
+};
 
 export const getEntityDisplayName = (
   id: string,
