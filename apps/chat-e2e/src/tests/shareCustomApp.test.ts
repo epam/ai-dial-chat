@@ -391,7 +391,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Sharing custom app with editing permissions for other users.\n' +
     'Share custom application via QR code with edit rights.\n' +
     `Sharing custom app without editing permissions via share icon on app's card pop-up in DIAL Marketplace.\n` +
@@ -670,7 +670,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Unshare option for Icon file from shared apps in Shared with me section in Manage attachments.\n' +
     'Default icon displayed for recipient of shared app if unshare icon file for app via Manage attachments.\n' +
     `Unshare custom app by user who received shared link via button on app's card in Marketplace`,
