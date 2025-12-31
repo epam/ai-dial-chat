@@ -121,7 +121,7 @@ export default function Signin({
 
   return (
     <div className="flex size-full h-screen flex-col items-center overflow-auto bg-auth-layer-0">
-      <div className='shrink grow'></div>
+      <div className="shrink grow"></div>
       <div className="my-1 h-fit w-[368px] shrink-0 grow-0 rounded bg-auth-layer-1 p-6">
         <div className="mb-6 flex justify-center">
           {!!logoImgSrc && (
@@ -153,7 +153,7 @@ export default function Signin({
           ))}
         </div>
       </div>
-      <div className='shrink grow'></div>
+      <div className="shrink grow"></div>
     </div>
   );
 }
