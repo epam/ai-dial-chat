@@ -256,7 +256,6 @@ dialTest(
     dataInjector,
     chatMessages,
     conversations,
-    editMessageInputAttachments,
     chat,
     localStorageManager,
     filesManagerModalGridAssertion,
