@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -42,6 +42,12 @@ export const ToolsetEditorView = ({
   const [previewMode, setPreviewMode] = React.useState<PreviewMode>(
     screenState <= ScreenState.MD ? PreviewMode.closed : PreviewMode.half,
   );
+
+  useEffect(() => {
+    if (screenState > ScreenState.MD && previewMode !== PreviewMode.half) {
+      setPreviewMode(PreviewMode.half);
+    }
+  }, [previewMode, screenState]);
 
   const { control } = useFormContext<ToolsetEditorForm>();
 
