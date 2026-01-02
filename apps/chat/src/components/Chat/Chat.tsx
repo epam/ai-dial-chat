@@ -612,7 +612,9 @@ const ChatView = memo(
     }, [enabledFeatures, selectedConversationsIds]);
 
     useEffect(() => {
-      setIsApproveRequiredInput(false);
+      if (isApproveRequiredInput) {
+        setIsApproveRequiredInput(false);
+      }
     }, [selectedConversationsIds]);
 
     useEffect(() => {
