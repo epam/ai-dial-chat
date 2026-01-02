@@ -33,7 +33,7 @@ function DefaultFallbackComponent({ onClick }: DefaultFallbackComponentProps) {
       <h2 className="text-lg">{t('Oops, something went wrong...')}</h2>
       <DialButton
         variant={ButtonVariant.Secondary}
-        title={t('Back')}
+        label={t('Back')}
         onClick={handleBack}
         data-qa="back-button"
       />
