@@ -189,8 +189,7 @@ export const AttachButton = ({
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
           customButtonLabel={t('Attach')}
-          initialSelectedFilesIds={selectedFilesIds}
-          showTooltip
+          selectedFilesIds={selectedFilesIds}
           onClose={handleCloseFileManagerModal}
         />
       )}

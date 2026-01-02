@@ -4,12 +4,15 @@ import {
   concat,
   filter,
   forkJoin,
+  from,
   groupBy,
   ignoreElements,
   iif,
   map,
+  merge,
   mergeMap,
   of,
+  scan,
   switchMap,
   takeUntil,
   tap,
@@ -18,9 +21,12 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
-import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { FileService } from '@/src/utils/app/data/file-service';
-import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
+import {
+  constructPath,
+  getDownloadPath,
+  triggerDownload,
+} from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getGeneratedFolderId,
@@ -32,7 +38,8 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
-import { AppEpic } from '@/src/types/store';
+import { AppAction, AppEpic } from '@/src/types/store';
+import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -42,7 +49,10 @@ import {
 } from '@/src/store/actions';
 import { FilesSelectors, UISelectors } from '@/src/store/selectors';
 
+import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -55,7 +65,6 @@ const initEpic: AppEpic = (action$, state$) =>
             featureType: FeatureType.File,
           }),
         ),
-        of(FilesActions.getFiles({ id: getQuickAttachmentsSavingPath() })),
         of(FilesActions.initFinish()),
       ),
     ),
@@ -237,6 +246,55 @@ const getFilesEpic: AppEpic = (action$) =>
         ),
       ),
     ),
+  );
+
+const getFileMetadataEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.getFileMetadata.type),
+    switchMap(({ payload }) =>
+      FileService.getFileMetadata(payload.fileId).pipe(
+        map((metadata) => {
+          if (!metadata) {
+            return FilesActions.getFileMetadataFail();
+          }
+          return FilesActions.getFileMetadataSuccess({ metadata });
+        }),
+        catchError(() => of(FilesActions.getFileMetadataFail())),
+      ),
+    ),
+  );
+
+const getFullListingEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.getFullListing.type),
+    switchMap(({ payload }) => {
+      const folderPath = payload.folderPath || '';
+
+      const metadata = state$.value.files.searchListingMetadata[folderPath];
+      const cacheAge = metadata ? Date.now() - metadata.loadedAt : Infinity;
+      const CACHE_TTL = 5 * 60 * 1000;
+
+      if (metadata?.isFullyLoaded && cacheAge < CACHE_TTL) {
+        return of(
+          FilesActions.getFullListingSuccess({
+            folderPath,
+            files: [],
+          }),
+        );
+      }
+
+      return FileService.getFullListing(folderPath).pipe(
+        map((files) =>
+          FilesActions.getFullListingSuccess({
+            folderPath,
+            files,
+          }),
+        ),
+        catchError(() => {
+          return of(FilesActions.getFullListingFail());
+        }),
+      );
+    }),
   );
 
 const getFileFoldersEpic: AppEpic = (action$) =>
@@ -427,6 +485,500 @@ const setChosenFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const copyFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.copyFiles.type),
+    switchMap(({ payload }) => {
+      const abortController = new AbortController();
+
+      return concat(
+        of(FilesActions.setCopyingFilesSignal(abortController)),
+        FileService.copyFiles(payload, {
+          signal: abortController.signal,
+        }).pipe(
+          switchMap((response) =>
+            concat(
+              of(
+                FilesActions.copyFilesSuccess({
+                  result: response,
+                  request: payload,
+                }),
+              ),
+              of(
+                FilesActions.getFilesWithFolders({
+                  id: payload.destinationFolder,
+                }),
+              ),
+            ),
+          ),
+          catchError((error) => {
+            if (error?.name === 'AbortError') {
+              return EMPTY;
+            }
+
+            return of(
+              FilesActions.copyFilesFail({
+                files: payload.files,
+                destinationFolder: payload.destinationFolder,
+              }),
+              UIActions.showErrorToast(
+                translate('Failed to copy files. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+            );
+          }),
+          takeUntil(action$.pipe(ofType(FilesActions.cancelCopyingFiles.type))),
+        ),
+      );
+    }),
+  );
+
+const moveFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.moveFiles.type),
+    switchMap(({ payload }) => {
+      const abortController = new AbortController();
+
+      return concat(
+        of(FilesActions.setMovingFilesSignal(abortController)),
+        FileService.moveFiles(payload, {
+          signal: abortController.signal,
+        }).pipe(
+          switchMap((response) => {
+            const actions: AppAction[] = [
+              FilesActions.moveFilesSuccess({
+                result: response,
+                request: payload,
+              }),
+            ];
+
+            if (payload.destinationFolder !== payload.sourceFolder) {
+              actions.push(
+                FilesActions.getFilesWithFolders({
+                  id: payload.sourceFolder,
+                }),
+              );
+            }
+
+            actions.push(
+              FilesActions.getFilesWithFolders({
+                id: payload.destinationFolder,
+              }),
+            );
+
+            return from(actions);
+          }),
+          catchError((error) => {
+            if (error?.name === 'AbortError') {
+              return EMPTY;
+            }
+
+            return of(
+              FilesActions.moveFilesFail({
+                files: payload.files,
+              }),
+              UIActions.showErrorToast(
+                translate('Failed to move files. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+            );
+          }),
+          takeUntil(action$.pipe(ofType(FilesActions.cancelMovingFiles.type))),
+        ),
+      );
+    }),
+  );
+
+const deleteFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.deleteFiles.type),
+    switchMap(({ payload }) => {
+      return FileService.deleteFiles({ files: payload.files }).pipe(
+        switchMap((response) => {
+          return concat(
+            of(
+              FilesActions.deleteFilesSuccess({
+                deletedItems: payload.files,
+                result: response,
+                request: payload,
+              }),
+            ),
+            of(
+              FilesActions.getFilesWithFolders({
+                id: payload.folderUrl,
+              }),
+            ),
+          );
+        }),
+        catchError(() => {
+          return of(
+            FilesActions.deleteFilesFail({
+              files: payload.files,
+            }),
+            UIActions.showErrorToast(
+              translate('Failed to delete files. Please try again later.', {
+                ns: Translation.Files,
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const downloadFilesAsArchiveEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.downloadFilesAsArchive.type),
+    switchMap(
+      (action: ReturnType<typeof FilesActions.downloadFilesAsArchive>) => {
+        const { files } = action.payload;
+
+        if (files.length === 1 && files[0].nodeType === DialFileNodeType.ITEM) {
+          const file = files[0];
+          const filePath = file.path || file.id;
+          if (!filePath) {
+            return of(
+              UIActions.showErrorToast(
+                translate('Failed to download file. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+              FilesActions.downloadFilesAsArchiveFail(),
+            );
+          }
+          triggerDownload(`/api/${ApiUtils.encodeApiUrl(filePath)}`, file.name);
+          return of(FilesActions.downloadFilesAsArchiveSuccess());
+        }
+
+        return from(FileService.downloadFilesAsArchive(files)).pipe(
+          map(() => FilesActions.downloadFilesAsArchiveSuccess()),
+          catchError(() => {
+            return of(
+              UIActions.showErrorToast(
+                translate('Failed to download files. Please try again later.', {
+                  ns: Translation.Files,
+                }),
+              ),
+              FilesActions.downloadFilesAsArchiveFail(),
+            );
+          }),
+        );
+      },
+    ),
+  );
+
+const uploadFilesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.uploadFiles.type),
+    mergeMap(({ payload }) => {
+      const urlParts = payload.destinationUrl.split('/');
+      const bucket = urlParts.length > 1 ? urlParts[1] : undefined;
+      const relativePath =
+        urlParts.length > 2 ? urlParts.slice(2).join('/') : undefined;
+
+      const controller = new AbortController();
+      let canceled = false;
+
+      const uploads$ = payload.files.map((file) => {
+        const formData = new FormData();
+        formData.append('attachment', file.fileContent, file.name);
+
+        const fileId = constructPath(
+          getFileRootId(bucket),
+          relativePath,
+          file.name,
+        );
+
+        return FileService.sendFile(
+          formData,
+          relativePath,
+          file.name,
+          undefined,
+          bucket,
+          { signal: controller.signal },
+        ).pipe(
+          filter(
+            ({ percent, result }) =>
+              typeof percent !== 'undefined' || typeof result !== 'undefined',
+          ),
+          map(({ percent, result }) => {
+            if (result) {
+              return FilesActions.uploadFileSuccess({
+                apiResult: result,
+                showSuccessMessage: false,
+              });
+            }
+
+            return FilesActions.uploadFileTick({
+              id: fileId,
+              percent: percent!,
+            });
+          }),
+          catchError(() =>
+            canceled ? EMPTY : of(FilesActions.uploadFileFail({ id: fileId })),
+          ),
+        );
+      });
+
+      return merge(...uploads$).pipe(
+        takeUntil(
+          action$.pipe(
+            ofType(FilesActions.cancelUploadFiles.type),
+            tap(() => {
+              canceled = true;
+              controller.abort();
+            }),
+          ),
+        ),
+        scan(
+          (acc, action) => {
+            if (
+              action.type === FilesActions.uploadFileSuccess.type ||
+              action.type === FilesActions.uploadFileFail.type
+            ) {
+              acc.finished++;
+            }
+
+            acc.total = payload.files.length;
+            acc.lastAction = action;
+            return acc;
+          },
+          { finished: 0, total: payload.files.length, lastAction: null as any },
+        ),
+        mergeMap(({ finished, total, lastAction }) => {
+          const action$ = of(lastAction);
+
+          if (!canceled && finished === total) {
+            return concat(
+              action$,
+              of(FilesActions.uploadFilesSuccess()),
+              of(
+                FilesActions.getFilesWithFolders({
+                  id: payload.destinationUrl,
+                }),
+              ),
+            );
+          }
+
+          return action$;
+        }),
+        catchError(() =>
+          canceled ? EMPTY : of(FilesActions.uploadFilesFail()),
+        ),
+      );
+    }),
+  );
+
+const uploadArchiveEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.uploadArchive.type),
+    switchMap(({ payload }) => {
+      return FileService.uploadArchive({
+        file: payload.archive,
+        destinationUrl: `${payload.destinationUrl}/${payload.name}`,
+      }).pipe(
+        switchMap(() =>
+          of(
+            FilesActions.uploadArchiveSuccess(),
+            FilesActions.getFilesWithFolders({
+              id: payload.destinationUrl,
+            }),
+          ),
+        ),
+        catchError(() =>
+          of(
+            UIActions.showErrorToast(
+              translate('Failed to upload archive. Please try again later.', {
+                ns: Translation.Files,
+              }),
+            ),
+            FilesActions.uploadArchiveFail(),
+          ),
+        ),
+      );
+    }),
+  );
+
+const copyMoveFilesResultToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(
+      FilesActions.copyFilesSuccess.type,
+      FilesActions.moveFilesSuccess.type,
+    ),
+    map((action) => {
+      const { result, request } = action.payload;
+
+      const isRenaming = request.sourceFolder === request.destinationFolder;
+      if (isRenaming) {
+        return null;
+      }
+
+      const { errors } = result;
+      const items = request.files;
+      const isCopy = FilesActions.copyFilesSuccess.match(action);
+      const verbPast = isCopy ? 'copied' : 'moved';
+
+      if (items.length > 0) {
+        if (items.length === 1) {
+          const destinationUrl = items[0].destinationUrl;
+          const { parentPath, name } = splitEntityId(destinationUrl);
+
+          return UIActions.showToast({
+            type: ToastType.Success,
+            title: translate('Item {{verb}} successfully', {
+              ns: Translation.Common,
+              verb: verbPast,
+            }),
+            message: translate('“{{fileName}}” {{verb}} to {{folder}}', {
+              ns: Translation.Files,
+              fileName: name,
+              folder: parentPath,
+              verb: verbPast,
+            }),
+          });
+        }
+
+        const destinationUrl = request.destinationFolder;
+        const { parentPath } = splitEntityId(destinationUrl);
+
+        return UIActions.showToast({
+          type: ToastType.Success,
+          title: translate('Items {{verb}} successfully', {
+            ns: Translation.Common,
+            verb: verbPast,
+          }),
+          message: translate('{{count}} items {{verb}} to {{folder}}', {
+            ns: Translation.Files,
+            count: items.length,
+            folder: parentPath,
+            verb: verbPast,
+          }),
+        });
+      }
+
+      if (errors && errors.length > 0) {
+        const visibleErrors = errors.slice(0, MAX_VISIBLE_NOTIFICATION_ITEMS);
+        const hiddenCount = errors.length - visibleErrors.length;
+
+        const fileNames = visibleErrors
+          .map((e) => splitEntityId(e.data.destinationUrl).name)
+          .join(', ');
+
+        const restText =
+          hiddenCount > 0
+            ? translate(' and {{count}} other items', {
+                ns: Translation.Files,
+                count: hiddenCount,
+              })
+            : '';
+
+        return UIActions.showToast({
+          type: ToastType.Error,
+          title: translate('Items {{verb}} failed', {
+            ns: Translation.Common,
+            verb: isCopy ? 'copying' : 'moving',
+          }),
+          message: translate(
+            '{{files}}{{rest}} were not {{verb}}. Please try again.',
+            {
+              ns: Translation.Files,
+              files: fileNames,
+              rest: restText,
+              verb: verbPast,
+            },
+          ),
+        });
+      }
+
+      return null;
+    }),
+    filter(Boolean),
+  );
+
+const deleteFilesResultToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(FilesActions.deleteFilesSuccess.type),
+    map(({ payload }) => {
+      const { result, request } = payload;
+      const { errors } = result;
+      const items = request.files;
+      const verbPast = 'deleted';
+
+      if (items.length > 0) {
+        const path = items[0].sourceUrl;
+        const { parentPath, name } = splitEntityId(path);
+
+        if (items.length === 1) {
+          return UIActions.showToast({
+            type: ToastType.Success,
+            title: translate('Item {{verb}} successfully', {
+              ns: Translation.Common,
+              verb: verbPast,
+            }),
+            message: translate('“{{fileName}}” {{verb}} from {{folder}}', {
+              ns: Translation.Files,
+              fileName: name,
+              folder: parentPath,
+              verb: verbPast,
+            }),
+          });
+        }
+
+        return UIActions.showToast({
+          type: ToastType.Success,
+          title: translate('Items {{verb}} successfully', {
+            ns: Translation.Common,
+            verb: verbPast,
+          }),
+          message: translate('{{count}} items {{verb}} from {{folder}}', {
+            ns: Translation.Files,
+            count: items.length,
+            folder: parentPath,
+            verb: verbPast,
+          }),
+        });
+      }
+
+      if (errors && errors.length > 0) {
+        const visibleErrors = errors.slice(0, MAX_VISIBLE_NOTIFICATION_ITEMS);
+        const hiddenCount = errors.length - visibleErrors.length;
+
+        const fileNames = visibleErrors
+          .map((e) => splitEntityId(e.data).name)
+          .join(', ');
+
+        const restText =
+          hiddenCount > 0
+            ? translate(' and {{count}} other items', {
+                ns: Translation.Files,
+                count: hiddenCount,
+              })
+            : '';
+
+        return UIActions.showToast({
+          type: ToastType.Error,
+          title: translate('Items deleting failed', {
+            ns: Translation.Common,
+          }),
+          message: translate(
+            '{{files}}{{rest}} were not {{verb}}. Please try again.',
+            {
+              ns: Translation.Files,
+              files: fileNames,
+              rest: restText,
+              verb: verbPast,
+            },
+          ),
+        });
+      }
+
+      return null;
+    }),
+    filter(Boolean),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -434,6 +986,8 @@ export const FilesEpics = combineEpics(
   uploadFilesSuccessEpic,
   getFileFoldersEpic,
   getFilesEpic,
+  getFileMetadataEpic,
+  getFullListingEpic,
   reuploadFileEpic,
   renameFolderEpic,
   renameFolderFailEpic,
@@ -445,4 +999,13 @@ export const FilesEpics = combineEpics(
   deleteFileFailEpic,
   unselectFilesEpic,
   setChosenFolderEpic,
+
+  copyFilesEpic,
+  moveFilesEpic,
+  deleteFilesEpic,
+  downloadFilesAsArchiveEpic,
+  uploadFilesEpic,
+  uploadArchiveEpic,
+  copyMoveFilesResultToastEpic,
+  deleteFilesResultToastEpic,
 );

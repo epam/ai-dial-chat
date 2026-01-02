@@ -192,10 +192,12 @@ export class BaseAssertion {
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     // Use Playwright's recommended matcher for input values
-    await expect(
-      elementLocator,
-      expectedMessage ?? ExpectedMessages.fieldValueIsValid,
-    ).toHaveValue(expectedValue);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+      )
+      .toHaveValue(expectedValue);
   }
 
   public async assertElementAttribute(
@@ -251,10 +253,9 @@ export class BaseAssertion {
       Styles.borderRightColor,
       Styles.borderTopColor,
     ]) {
-      await expect(
-        elementLocator,
-        ExpectedMessages.borderColorsAreValid,
-      ).toHaveCSS(border, expectedColor);
+      await expect
+        .soft(elementLocator, ExpectedMessages.borderColorsAreValid)
+        .toHaveCSS(border, expectedColor);
     }
   }
 
@@ -264,15 +265,13 @@ export class BaseAssertion {
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     if (expectedColor !== undefined) {
-      await expect(
-        elementLocator,
-        ExpectedMessages.entityBackgroundColorIsValid,
-      ).toHaveCSS(Styles.backgroundColor, expectedColor);
+      await expect
+        .soft(elementLocator, ExpectedMessages.entityBackgroundColorIsValid)
+        .toHaveCSS(Styles.backgroundColor, expectedColor);
     } else {
-      await expect(
-        elementLocator,
-        ExpectedMessages.entityBackgroundColorIsValid,
-      ).toHaveCSS(Styles.backgroundColor, Colors.defaultBackground);
+      await expect
+        .soft(elementLocator, ExpectedMessages.entityBackgroundColorIsValid)
+        .toHaveCSS(Styles.backgroundColor, Colors.defaultBackground);
     }
   }
 
@@ -281,18 +280,16 @@ export class BaseAssertion {
     expectedColor: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.entityBackgroundColorIsValid,
-    ).toHaveCSS(Styles.color, expectedColor);
+    await expect
+      .soft(elementLocator, ExpectedMessages.entityBackgroundColorIsValid)
+      .toHaveCSS(Styles.color, expectedColor);
   }
 
   public async assertElementTextIsSelected(element: BaseElement | Locator) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.elementTextIsSelected,
-    ).toHaveJSProperty(Properties.selectionStart, 0);
+    await expect
+      .soft(elementLocator, ExpectedMessages.elementTextIsSelected)
+      .toHaveJSProperty(Properties.selectionStart, 0);
   }
 
   public async assertIsElementFocused(
@@ -301,14 +298,12 @@ export class BaseAssertion {
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     isFocused
-      ? await expect(
-          elementLocator,
-          ExpectedMessages.elementIsInFocus,
-        ).toBeFocused()
-      : await expect(
-          elementLocator,
-          ExpectedMessages.elementIsNotInFocus,
-        ).not.toBeFocused();
+      ? await expect
+          .soft(elementLocator, ExpectedMessages.elementIsInFocus)
+          .toBeFocused()
+      : await expect
+          .soft(elementLocator, ExpectedMessages.elementIsNotInFocus)
+          .not.toBeFocused();
   }
 
   public async assertElementIsInViewport(
@@ -316,10 +311,9 @@ export class BaseAssertion {
     ratio?: number,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.elementIsInFocus,
-    ).toBeInViewport({ ratio: ratio });
+    await expect
+      .soft(elementLocator, ExpectedMessages.elementIsInFocus)
+      .toBeInViewport({ ratio: ratio });
   }
 
   public async assertElementCursor(
@@ -327,10 +321,9 @@ export class BaseAssertion {
     cursor: Cursors,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.elementCursorIsValid,
-    ).toHaveCSS(Styles.cursor, cursor);
+    await expect
+      .soft(elementLocator, ExpectedMessages.elementCursorIsValid)
+      .toHaveCSS(Styles.cursor, cursor);
   }
 
   public async assertStringTruncatedTo160(
@@ -460,10 +453,9 @@ export class BaseAssertion {
     expectedWrap: Overflow | StyleValues,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.elementTextWrapIsValid,
-    ).toHaveCSS(Styles.overflow_wrap, expectedWrap);
+    await expect
+      .soft(elementLocator, ExpectedMessages.elementTextWrapIsValid)
+      .toHaveCSS(Styles.overflow_wrap, expectedWrap);
   }
 
   public async assertElementTextIsTruncated(
@@ -471,10 +463,12 @@ export class BaseAssertion {
     expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect(
-      elementLocator,
-      expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
-    ).toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+      )
+      .toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
   }
 
   public async assertElementDisplayStyle(
@@ -482,10 +476,9 @@ export class BaseAssertion {
     expectedDisplay: Overflow | StyleValues,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
-    await expect(
-      elementLocator,
-      ExpectedMessages.elementTextWrapIsValid,
-    ).toHaveCSS(Styles.display, expectedDisplay);
+    await expect
+      .soft(elementLocator, ExpectedMessages.elementTextWrapIsValid)
+      .toHaveCSS(Styles.display, expectedDisplay);
   }
 
   public assertBooleanCondition(

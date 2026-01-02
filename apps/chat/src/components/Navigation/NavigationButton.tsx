@@ -65,6 +65,7 @@ export const NavigationButton = ({
           !isOverlay ? (rounded ? 'md:p-[9px]' : 'md:p-[10px]') : 'md:p-1',
         )}
         aria-selected={selected}
+        aria-label={caption}
       >
         {/* eslint-enable jsx-a11y/role-supports-aria-props */}
         <Icon
