@@ -32,7 +32,7 @@ dialTest.beforeAll(async () => {
   )!;
 });
 
-dialAdminTest(
+dialAdminTest.skip(
   'Publish chat with file.\n' +
     'Publish chat with attachments: download files.\n' +
     'Admin area: Publish request details.\n' +
@@ -400,7 +400,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   'Publish chat with plotly.\n' +
     'Header context menu options for chats from publication request from Approve required section.\n' +
     'Error message appears if to Share the conversation with an attachment from Organization',

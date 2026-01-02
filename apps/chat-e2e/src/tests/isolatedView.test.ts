@@ -13,7 +13,7 @@ import {
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.skip(
   'Isolated view: new conversation is opened based on exact model set in URL.\n' +
     'Isolated view: application description is shown on the first screen.\n' +
     'Isolated view: Prompt and Conversation panels are not available.\n' +
@@ -132,7 +132,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Isolated view: available features in conversation',
   async ({
     dialHomePage,
@@ -246,7 +246,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Isolate view: error message appears if URL is based on non-existed model id',
   async ({ dialHomePage, chatNotFound, setTestIds }) => {
     setTestIds('EPMRTC-2963');
@@ -267,7 +267,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +

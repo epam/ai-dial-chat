@@ -35,6 +35,7 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
     (router.route === Routes.Chat ||
       router.route === Routes.Marketplace ||
       router.route === Routes.Widgets ||
+      router.route === Routes.FilesManager ||
       router.route === Routes.SelectedWidget);
 
   return (

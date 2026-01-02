@@ -217,21 +217,24 @@ export class ApiUtils {
     method,
     async,
     body,
+    signal,
   }: {
     url: string | URL;
     method: HTTPMethod;
     async: boolean;
     body: XMLHttpRequestBodyInit | Document | null | undefined;
+    signal?: AbortSignal | null;
   }): Observable<{ percent?: number; result?: unknown }> {
     return new Observable((observer) => {
       const xhr = new XMLHttpRequest();
+      let aborted = false;
 
       xhr.open(method, url, async);
       xhr.responseType = 'json';
 
       // Track upload progress
       xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
+        if (!aborted && event.lengthComputable) {
           const percentComplete = (event.loaded / event.total) * 100;
           observer.next({ percent: Math.round(percentComplete) });
         }
@@ -239,6 +242,7 @@ export class ApiUtils {
 
       // Handle response
       xhr.onload = () => {
+        if (aborted) return;
         if (xhr.status === 200) {
           observer.next({ result: xhr.response });
           observer.complete();
@@ -248,14 +252,31 @@ export class ApiUtils {
       };
 
       xhr.onerror = () => {
-        observer.error('Request failed');
+        if (!aborted) {
+          observer.error('Request failed');
+        }
       };
+
+      // attach abort signal
+      const abortHandler = () => {
+        aborted = true;
+        xhr.abort();
+        observer.complete();
+      };
+
+      if (signal) {
+        signal.addEventListener('abort', abortHandler);
+      }
 
       xhr.send(body);
 
       // Return cleanup function
       return () => {
+        aborted = true;
         xhr.abort();
+        if (signal) {
+          signal.removeEventListener('abort', abortHandler);
+        }
       };
     });
   }
