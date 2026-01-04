@@ -450,6 +450,10 @@ export const ExpectedMessages = {
     'Updated conversation should have original and new messages',
   postfixedConversationHasImportedMessages:
     'Postfixed conversation should have imported (original) messages only',
+  popupHeaderIsValid: 'Popup header is valid',
+  popupContentIsValid: 'Popup content is valid',
+  gridRowIsVisible: 'Grid row is visible',
+  gridRowIsNotVisible: 'Grid row is not visible',
 };
 
 export const PublishingExpectedMessages = {

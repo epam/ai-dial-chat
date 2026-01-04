@@ -1,6 +1,13 @@
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import {
+  Defaults,
+  DefaultsService,
+} from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
-import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
+import {
+  ApiUtils,
+  getMarketplaceEntityApiKey,
+  parseEntityApiKey,
+} from '@/src/utils/server/api';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -31,10 +38,13 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
+import { AppsEditorSchemaTypes } from '@/src/components/AppsEditor/form';
+
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId, getEntityBucket } from './id';
 import { isEntityIdPublic } from './publications';
+import { splitEntityId } from './shared-utils';
 import { translate } from './translation';
 
 import isObject from 'lodash-es/isObject';
@@ -421,3 +431,53 @@ export const isDialAiEntityModel = (
   entity: MarketplaceEntity,
 ): entity is DialAIEntityModel =>
   entity?.type === EntityType.Application || entity?.type === EntityType.Model;
+
+const checkAppEditorType =
+  (editorSchemaType: keyof Defaults, defaultSchemaId: string) =>
+  (type: string): boolean => {
+    const schemaId = DefaultsService.get(editorSchemaType, defaultSchemaId);
+    return schemaId.endsWith(type);
+  };
+
+export const isQuickAppEditor = checkAppEditorType(
+  'quickAppsSchemaId',
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
+);
+
+export const isQuickApp2Editor = checkAppEditorType(
+  'quickAppsSchemaId2',
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+);
+
+export const isExternalAppEditor = checkAppEditorType(
+  'externalAppsSchemaId',
+  DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
+);
+
+export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
+  if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
+
+  if (isQuickAppEditor(type)) return AppsEditorSchemaTypes.QuickApp;
+
+  if (isQuickApp2Editor(type)) return AppsEditorSchemaTypes.QuickApp2;
+
+  if (isExternalAppEditor(type)) return AppsEditorSchemaTypes.ExternalApp;
+
+  return AppsEditorSchemaTypes.CustomApp;
+};
+
+export const getEntityDisplayName = (
+  id: string,
+  allEntitiesMap: Record<string, MarketplaceEntity | undefined>,
+): string => {
+  const entity = allEntitiesMap[id];
+  if (entity?.name) {
+    return entity.name;
+  }
+
+  return ApiUtils.decodeApiUrl(
+    parseEntityApiKey(splitEntityId(id).name, {
+      parseVersion: true,
+    }).name,
+  );
+};

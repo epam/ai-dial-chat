@@ -1,6 +1,5 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
-import { Styles } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -48,10 +47,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
       label === 'more'
         ? this.chatMessages.showMoreButton
         : this.chatMessages.showLessButton;
-    const color = await button.getComputedStyleProperty(Styles.color);
-    expect
-      .soft(color[0], ExpectedMessages.elementColorIsValid)
-      .toBe(expectedColor);
+    await this.assertElementColor(button, expectedColor);
   }
 
   public async assertMessageStagesCount(

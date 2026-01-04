@@ -210,7 +210,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           onModelChange={onModelChange}
         />
 
-        {screenState !== ScreenState.SM && (
+        {screenState > ScreenState.MD && (
           <>
             <ToggleSwitchLabel
               label={t('Chat width')}

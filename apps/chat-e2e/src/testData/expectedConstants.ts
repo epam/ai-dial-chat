@@ -357,6 +357,13 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
+  filesManagerPath: '/files-manager',
+  deleteItemToastMessage: (filename: string, path: string) =>
+    `Item deleted successfully.\n“${filename}” deleted from ${path}`,
+  replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
+  replaceAttachmentConfirmationMessage: (filename: string) =>
+    `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
+  failedToMoveFileMessage: 'Failed to move files. Please try again later.',
 };
 
 export enum Types {
@@ -411,6 +418,7 @@ export enum AccountMenuOptions {
 export enum UploadMenuOptions {
   attachUploadedFiles = 'Attach uploaded files',
   uploadFromDevice = 'Upload from device',
+  uploadFiles = 'Upload files',
 }
 
 export enum ExampleURLs {
@@ -482,9 +490,13 @@ export const API = {
   promptsHost: () => `${API.listingHost}/prompts`,
   appsHost: () => `${API.listingHost}/applications`,
   toolsetsHost: () => `${API.api}/toolsets-listing`,
+  filePropsHost: '/files-manager.json',
   filesHostSegment: 'files',
   filesListingHost: () => `${API.listingHost}/${API.filesHostSegment}`,
   fileHost: () => `/api/${API.filesHostSegment}`,
+  downloadFilesHost: () => `${API.fileHost()}/download`,
+  deleteFileHost: () => `${API.fileHost()}/delete`,
+  folderFilesListingHost: (folderName: string) => `/${folderName}?filter=ITEM`,
   conversationHost: '/api/conversations',
   promptHost: '/api/prompts',
   moveHost: '/api/ops/resource/move',
@@ -728,3 +740,12 @@ export enum SignInButtonTitles {
   logIn = 'Log in',
   logOut = 'Log out',
 }
+
+export const ExpectedConfirmationPopupData = {
+  deleteItemHeader: 'Confirm Deleting Item',
+  deleteItemsHeader: 'Confirm Deleting Items',
+  deleteItemContent: (item: string) =>
+    `Are you sure you want to delete “${item}”?`,
+  deleteItemsContent: (count: number) =>
+    `Do you want to delete the following ${count} items?`,
+};

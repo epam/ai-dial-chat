@@ -42,6 +42,7 @@ export function AddMarketplaceEntityButton({
   if (visibleActions.length === 1)
     return (
       <DialButton
+        className="shrink-0"
         onClick={visibleActions[0].onClick}
         label={t(`Add ${label}`)}
         variant={ButtonVariant.Primary}
@@ -59,6 +60,7 @@ export function AddMarketplaceEntityButton({
       placement="bottom"
       TriggerCustomRenderer={
         <DialButton
+          className="shrink-0"
           variant={ButtonVariant.Primary}
           data-qa={dataQa}
           label={isScreenSmall ? t('Add') : t(`Add ${label}`)}
