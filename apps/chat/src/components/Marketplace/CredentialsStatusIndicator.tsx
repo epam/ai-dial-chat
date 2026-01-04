@@ -7,6 +7,7 @@ import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { Badge } from '@/src/components/Badge';
+import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface CredentialsStatusIndicatorProps {
   entity: ToolsetModel;
@@ -33,10 +34,16 @@ export const CredentialsStatusIndicator = ({
   }
 
   return (
-    <Badge
-      label={t(label)}
-      type={isSignedIn ? 'success' : 'error'}
-      className="shrink-0"
-    />
+    <Tooltip
+      tooltip={isSignedIn ? 'Signed In' : 'Signed Out'}
+      isTriggerClickable
+      triggerClassName="flex shrink-0"
+    >
+      <Badge
+        label={t(label)}
+        type={isSignedIn ? 'success' : 'error'}
+        className="shrink-0"
+      />
+    </Tooltip>
   );
 };
