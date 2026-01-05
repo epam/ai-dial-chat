@@ -49,7 +49,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
       <DialButton
         className={classNames(
-          'flex h-full items-center justify-center px-3',
+          'flex h-full shrink-0 items-center justify-center px-3',
           isOverlay ? 'md:px-3' : 'md:px-5',
         )}
         data-qa={dataQa}

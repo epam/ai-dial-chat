@@ -22,6 +22,7 @@ import { Routes } from '@/src/constants/routes';
 
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
+import { FilesNavigation } from './FilesNavigation';
 import { MarketplaceNavigation } from './MarketplaceNavigation';
 import { NavigationButton } from './NavigationButton';
 import { WidgetsNavigation } from './WidgetsNavigation';
@@ -70,6 +71,7 @@ const NavigationView = () => {
         caption={t('Chat')}
       />
       <MarketplaceNavigation />
+      <FilesNavigation />
       <WidgetsNavigation />
     </div>
   );
