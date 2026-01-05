@@ -290,7 +290,10 @@ const ChatView = memo(
       scrollDown();
     }, [scrollDown]);
 
-    const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
+    const throttledScrollDown = useMemo(
+      () => throttle(scrollDown, scrollThrottlingTimeout),
+      [scrollDown],
+    );
 
     useEffect(() => {
       throttledScrollDown();
