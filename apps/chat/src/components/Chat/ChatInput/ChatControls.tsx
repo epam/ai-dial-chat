@@ -79,7 +79,7 @@ export const ChatControls: FC<Props> = ({
   return (
     <DialButton
       className={classNames(
-        'absolute top-[calc(50%_-_12px)]',
+        'absolute bottom-3',
         isOverlay ? 'right-3' : 'right-4',
       )}
       onClick={handleReplayReStart}
