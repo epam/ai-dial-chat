@@ -56,7 +56,10 @@ const ListItemContent: React.FC<ListItemContentProps> = ({
         <ChipTitle name={name} version={version} isError={isError} />
       </div>
       <DialCloseButton
-        className={classNames('text-secondary', isError && 'hover:text-error')}
+        className={classNames(
+          'text-secondary',
+          isError && 'hover:enabled:text-error',
+        )}
         onClose={handleRemove}
         size={18}
       />
