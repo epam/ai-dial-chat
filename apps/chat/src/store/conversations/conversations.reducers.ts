@@ -859,6 +859,18 @@ export const conversationsSlice = createSlice({
     ) => {
       state.moveToConversationId = payload;
     },
+    setDeletingConversationId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.deletingConversationId = payload;
+    },
+    setExportingConversationId: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.exportingConversationId = payload;
+    },
   },
 });
 
