@@ -59,7 +59,9 @@ export function Layout({
     MarketplaceSelectors.selectIsApplyingModel,
   );
   const isEditorLoader = useAppSelector(UISelectors.selectIsEditorLoader);
-  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
+  const isAnyMenuOpen = useAppSelector((state) =>
+    UISelectors.selectIsAnyMenuOpen(state, router.pathname),
+  );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const screenState = useScreenState();
