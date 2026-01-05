@@ -136,7 +136,7 @@ export const CustomLogoSelect = ({
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >
-          {localLogo ?? customPlaceholder ?? t('No custom logo')}
+          {localLogo || customPlaceholder || t('No custom logo')}
         </div>
         <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
@@ -167,11 +167,9 @@ export const CustomLogoSelect = ({
           onClose={handleOnClose}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}
           customButtonLabel={t('Select file')}
-          customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
-          hideFolderCheckbox
         />
       )}
 

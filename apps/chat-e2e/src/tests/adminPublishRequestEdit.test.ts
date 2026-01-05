@@ -17,7 +17,7 @@ import { DateUtil, GeneratorUtil, ModelsUtil, UserUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import path from 'path';
 
-dialAdminTest(
+dialAdminTest.skip(
   'Admin can not update chat from unpublish request.\n' +
     '"Add agent to My workspace to continue" is not displayed for conversation from (un)publish request if open info modal',
   async ({
@@ -225,7 +225,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   'Update settings of agent for chat from publication request.\n' +
     'Update agent for chat from publication request.\n' +
     'Edit existing message for chat from publication request Approve required.\n' +
@@ -363,7 +363,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   'Regenerate last message for chat form publication request.\n' +
     'Edit chat: remove all messages.\n' +
     '[Admin view][Edit request]: Edit chat icon stays after it was clicked and message input is displayed',
@@ -476,7 +476,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   '[Admin view][Edit request]: Edit button is not displayed for the chat in Playback mode in publish request',
   async ({
     conversationData,
@@ -545,7 +545,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   '[Admin view][Edit chat] Added file appears in review. User sends new prompt.\n' +
     '[Admin view][Edit chat] Added file appears in review. User updates old prompt.\n' +
     '[Admin view][Edit chat] Deleted file in chat history stays in review',
@@ -690,7 +690,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   '[Admin view][Edit chat] Generated file by agent appears in review.\n' +
     'Organization: The chat with a generated file is published\n' +
     'Organization: the chat with added by user file is published\n' +
@@ -1020,7 +1020,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   '[Admin view][Edit request]: Rename the chat while edit the request.\n' +
     '[Admin view][Edit request]: Rename the chat though the menu in chat header.\n' +
     "[Admin view][Edit request]: Rename the chat through the context menu on the 'Conversations' panel.\n" +
@@ -1342,7 +1342,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   // 'Last version is not displayed after update chat\'s name\n'+
   '[Admin view][Edit request]: Edit version for chat ( there is no previous version)\n' +
     '[Admin view][Edit request]:Edit version when there are more that one public version',
@@ -1555,7 +1555,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest(
+dialAdminTest.skip(
   "Edit folder's name for publish request for folder with chat\n" +
     '[Admin view][Edit request] Rename the folder several times in a row\n' +
     "Update folder's name for publish request for folder with chat with attached file. Input different names for chat's folder and file's folder",

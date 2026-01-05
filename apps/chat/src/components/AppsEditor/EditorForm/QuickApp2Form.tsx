@@ -15,6 +15,7 @@ import {
   getSharedTooltip,
   isDialAiEntityModel,
 } from '@/src/utils/app/application';
+import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
@@ -135,7 +136,7 @@ export const QuickApp2Form = () => {
 
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
-    return selectedModel?.features?.temperature !== false;
+    return selectedModel ? doesModelAllowTemperature(selectedModel) : true;
   }, [modelId, modelsMap]);
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;

@@ -823,7 +823,7 @@ dialTest(
     toastAssertion,
     conversationDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1763');
+    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1764');
     let firstConversation: Conversation;
 
     await dialTest.step('Prepare folders hierarchy', async () => {

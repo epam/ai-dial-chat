@@ -31,6 +31,7 @@ import {
   BackendResourceType,
   MoveModel,
 } from '@/src/types/common';
+import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -53,6 +54,7 @@ import {
   Entity,
   MessageFormSchema,
 } from '@epam/ai-dial-shared';
+import { DialCopiedItem } from '@epam/ai-dial-ui-kit';
 
 const MAX_RETRIES_COUNT = 3;
 
@@ -285,6 +287,64 @@ export class ApiStorage implements DialStorage {
         overwrite: data.overwrite,
       }),
     });
+  }
+
+  copyFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return ApiUtils.request('/api/files/copy', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+      signal: options?.signal,
+    });
+  }
+
+  moveFiles(
+    data: {
+      files: DialCopiedItem[];
+    },
+    options?: { signal?: AbortSignal | null },
+  ): Observable<FileOperationsResult<MoveModel>> {
+    return ApiUtils.request('/api/files/move', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+      signal: options?.signal,
+    });
+  }
+
+  deleteFiles(data: {
+    files: DialCopiedItem[];
+  }): Observable<FileOperationsResult<string>> {
+    return ApiUtils.request('/api/files/delete', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify(data),
+    });
+  }
+
+  uploadArchive(data: {
+    file: File;
+    destinationUrl: string;
+  }): Observable<void> {
+    const encodedDestination = encodeURIComponent(data.destinationUrl);
+
+    return from(
+      fetch(`/api/files/upload-archive?destination=${encodedDestination}`, {
+        method: HTTPMethod.POST,
+        body: data.file,
+      }).then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            const message = text || 'Failed to upload archive';
+            throw new Error(message);
+          });
+        }
+
+        return undefined;
+      }),
+    );
   }
 
   createApplication(
