@@ -13,6 +13,7 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
+import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -44,6 +45,7 @@ import {
 import {
   DEFAULT_APPLICATION_NAME,
   DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
@@ -673,7 +675,14 @@ export const getApplicationPayload = ({
           document_relative_url: data.documentRelativeUrl,
         },
       };
-    case AppsEditorSchemaTypes.QuickApp2:
+
+    case AppsEditorSchemaTypes.QuickApp2: {
+      const model = allEntitiesMap[data.model];
+      const temperatureToUse =
+        model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
+          ? data.temperature
+          : FALLBACK_TEMPERATURE;
+
       return {
         ...generalData,
         inputAttachmentTypes: data.inputAttachmentTypes,
@@ -686,9 +695,9 @@ export const getApplicationPayload = ({
         applicationProperties: {
           orchestrator: {
             deployment: {
-              name: allEntitiesMap[data.model]?.id ?? data.model,
+              name: model?.id ?? data.model,
               parameters: {
-                temperature: data.temperature,
+                temperature: temperatureToUse,
               },
             },
             system_prompt: {
@@ -705,6 +714,7 @@ export const getApplicationPayload = ({
           tool_sets: getQuickApp2Toolsets({ data, allEntitiesMap }),
         },
       };
+    }
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return {

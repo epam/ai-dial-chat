@@ -136,7 +136,7 @@ export const CustomLogoSelect = ({
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >
-          {localLogo ?? customPlaceholder ?? t('No custom logo')}
+          {localLogo || customPlaceholder || t('No custom logo')}
         </div>
         <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
