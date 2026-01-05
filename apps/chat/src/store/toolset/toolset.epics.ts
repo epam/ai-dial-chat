@@ -331,6 +331,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   }
 
                   const actions: Observable<AppAction>[] = [
+                    of(UIActions.setEditorLoader(false)),
                     of(
                       ToolsetActions.updateToolsetSuccess({
                         oldToolset: payload.oldToolset,
