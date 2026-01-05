@@ -367,7 +367,10 @@ describe('utils/app/common.ts', () => {
       const expectedNewEntityId = `${ApiKeys.Prompts}/public/parent/path/${newName}`;
 
       const publicVersionGroups: PublicVersionGroups = {
-        [expectedNewEntityId]: { allVersions: [{ version: '3.3.3' }] } as any,
+        [expectedNewEntityId]: {
+          allVersions: [{ version: '3.3.3', id: entityId }],
+          selectedVersion: { version: '3.3.3', id: entityId },
+        },
       };
 
       expect(
