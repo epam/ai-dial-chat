@@ -1,19 +1,13 @@
-import { FloatingOverlay } from '@floating-ui/react';
 import { useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
-
-import { ScreenState } from '@/src/types/common';
-
-import { MarketplaceActions, UIActions } from '@/src/store/actions';
+import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceSelectors,
   ModelsSelectors,
   ToolsetSelectors,
-  UISelectors,
 } from '@/src/store/selectors';
 
 import {
@@ -35,10 +29,6 @@ export const Marketplace = () => {
 
   const router = useRouter();
 
-  const isFilterbarOpen = useAppSelector(
-    UISelectors.selectShowMarketplaceFilterbar,
-  );
-  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   const isModelsLoading = useAppSelector(
     ModelsSelectors.selectAreModelsLoading,
   );
@@ -92,16 +82,6 @@ export const Marketplace = () => {
     selectedTab,
   ]);
 
-  const screenState = useScreenState();
-
-  const showOverlay =
-    (isFilterbarOpen || isProfileOpen) &&
-    (screenState === ScreenState.SM || screenState === ScreenState.MD);
-
-  const handleCloseOverlay = () => {
-    dispatch(UIActions.closeAllPanels());
-  };
-
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
       dispatch(
@@ -124,12 +104,6 @@ export const Marketplace = () => {
         <>
           <TabHeader isBannerVisible={isBannerVisible} />
           {isAgentsTab ? <AgentsTabRenderer /> : <ToolsTabRenderer />}
-          {showOverlay && (
-            <FloatingOverlay
-              className="z-30 bg-blackout"
-              onClick={handleCloseOverlay}
-            />
-          )}
         </>
       )}
     </div>

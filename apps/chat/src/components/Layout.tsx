@@ -1,14 +1,17 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
 import { useRouteHistory } from '@/src/hooks/useRouteHistory';
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPageType } from '@/src/utils/app/route';
 import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
@@ -56,8 +59,19 @@ export function Layout({
     MarketplaceSelectors.selectIsApplyingModel,
   );
   const isEditorLoader = useAppSelector(UISelectors.selectIsEditorLoader);
+  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+
+  const screenState = useScreenState();
 
   const [loading, setLoading] = useState(isApplyingModel);
+
+  const showFloatingOverlay =
+    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
+
+  const handleCloseOverlay = useCallback(() => {
+    dispatch(UIActions.closeAllPanels());
+  }, [dispatch]);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
@@ -134,6 +148,12 @@ export function Layout({
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
+          {showFloatingOverlay && (
+            <FloatingOverlay
+              className="z-30 bg-blackout"
+              onClick={handleCloseOverlay}
+            />
+          )}
           <NavigationWrapper>{children}</NavigationWrapper>
         </main>
       )}

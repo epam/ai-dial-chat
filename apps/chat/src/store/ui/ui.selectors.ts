@@ -75,11 +75,8 @@ const selectShowSelectToMigrateWindow = (state: RootState) =>
   rootSelector(state).showSelectToMigrateWindow;
 
 const selectIsAnyMenuOpen = createSelector(
-  [rootSelector, SettingsSelectors.selectEnabledFeatures],
-  (state, enabledFeatures) =>
-    (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
-    (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
-    state.isProfileOpen,
+  [rootSelector],
+  (state) => state.showPromptbar || state.showChatbar || state.isProfileOpen,
 );
 
 const selectCollapsedSections = //TODO: review later how it is used
