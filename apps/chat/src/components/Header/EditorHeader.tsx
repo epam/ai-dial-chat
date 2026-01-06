@@ -75,7 +75,7 @@ export const EditorHeader = <T extends string>({
       data-qa={dataQa}
     >
       <div className="flex grow items-center justify-between overflow-hidden">
-        <div className="flex h-full shrink-0 gap-4">
+        <div className="flex h-full shrink-0 gap-4 md:pl-3">
           <div className="relative flex items-center md:hidden">
             <button
               onClick={() => setMenuOpen((prev) => !prev)}
@@ -154,7 +154,7 @@ export const EditorHeader = <T extends string>({
             variant={ButtonVariant.Tertiary}
           ></DialButton>
 
-          <User />
+          <User className="h-full max-xl:hidden md:border-l md:border-secondary md:pl-2" />
         </div>
       </div>
     </div>
