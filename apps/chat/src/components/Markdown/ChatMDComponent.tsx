@@ -138,7 +138,6 @@ const getMDComponents = (
 
       return (
         <details
-          open
           className={classnames(
             'rounded bg-layer-3 [&_details]:bg-layer-1 [&_details_details]:bg-layer-3',
             ' [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_.codeblock>*]:!bg-layer-1 [&_details>summary]:border-secondary [&_details]:border [&_details]:border-secondary [&_details_.codeblock>*]:!bg-layer-3 [&_details_.codeblock>div]:border-tertiary [&_details_.codeblock]:border-0 [&_details_details>summary]:border-tertiary [&_details_details]:border-0 [&_details_details_.codeblock>*]:!bg-layer-1 [&_details_details_.codeblock>div]:border-secondary [&_details_details_.codeblock]:border',
