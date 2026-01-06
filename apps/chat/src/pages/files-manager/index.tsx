@@ -25,6 +25,7 @@ function FilesManagerPage() {
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
   );
+  const isUserMenuHidden = enabledFeatures.has(Feature.HideUserMenu);
 
   const onClose = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -34,12 +35,15 @@ function FilesManagerPage() {
       {enabledFeatures.has(Feature.Header) && (
         <BaseHeader
           RightItems={
-            <>
-              <div className="flex w-[48px] items-center justify-center md:w-auto">
-                <User />
-              </div>
-              <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
-            </>
+            !isUserMenuHidden && (
+              <>
+                <div className="w-[48px] overflow-hidden md:w-auto">
+                  <User />
+                </div>
+
+                <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
+              </>
+            )
           }
         />
       )}

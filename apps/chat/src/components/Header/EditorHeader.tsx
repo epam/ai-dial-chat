@@ -19,6 +19,7 @@ import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface EditorHeaderTab<T extends string> {
   label: string;
@@ -89,8 +90,8 @@ export const EditorHeader = <T extends string>({
       )}
       data-qa={dataQa}
     >
-      <div className="flex grow items-center justify-between">
-        <div className="flex h-full space-x-4">
+      <div className="flex grow items-center justify-between overflow-hidden">
+        <div className="flex h-full shrink-0 gap-4">
           <div className="relative flex items-center md:hidden">
             <button
               onClick={() => setMenuOpen((prev) => !prev)}
@@ -135,7 +136,7 @@ export const EditorHeader = <T extends string>({
           </div>
 
           <span
-            className="hidden items-center pl-1 text-primary md:flex xl:pl-0"
+            className="hidden shrink-0 items-center pl-1 text-primary md:flex xl:pl-0"
             data-qa="action-entity-type-title"
           >
             {title}
@@ -155,21 +156,22 @@ export const EditorHeader = <T extends string>({
           />
         </div>
 
-        <div className="hidden h-full xl:flex">
+        <div className="hidden h-full shrink-0 xl:flex">
           <Logo onLogoClick={onLogoClick} />
         </div>
 
-        <div className="flex h-full items-center space-x-2 pr-3 md:pr-5 xl:pr-0">
-          <button
-            className="button flex items-center space-x-1 text-accent-primary max-xl:p-0 md:flex"
+        <div className="flex h-full grow items-center justify-end gap-2 overflow-hidden pr-3 md:pr-5 xl:pr-0">
+          <DialButton
+            className="shrink-0"
             onClick={onSave}
             data-qa="save-and-exit"
-          >
-            <IconLogout size={14} />
-            <span>{t(saveLabel ?? 'Save and exit')}</span>
-          </button>
+            iconBefore={<IconLogout size={14} />}
+            label={t(saveLabel ?? 'Save and exit')}
+            variant={ButtonVariant.Tertiary}
+          ></DialButton>
+
           {!isUserMenuHidden && (
-            <div className="h-full max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
+            <div className="h-full overflow-hidden max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
               <User />
             </div>
           )}

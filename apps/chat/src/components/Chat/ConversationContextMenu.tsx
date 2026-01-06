@@ -1,14 +1,7 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import {
-  MouseEventHandler,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { MouseEventHandler, useCallback, useEffect, useMemo } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
-import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isPlaybackConversation,
@@ -18,7 +11,6 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
 import { ContextMenuProps } from '@/src/types/menu';
-import { Translation } from '@/src/types/translation';
 
 import {
   ChatActions,
@@ -35,8 +27,6 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { ExportModal } from '@/src/components/Chatbar/ExportModal';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 
 import {
@@ -66,8 +56,6 @@ export const ConversationContextMenu = ({
   isHeaderMenu,
   disabledState,
 }: ConversationContextMenuProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -80,10 +68,6 @@ export const ConversationContextMenu = ({
       conversation.id,
     ),
   );
-
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isUnshared, setIsUnshared] = useState(false);
-  const [isShowExportModal, setIsShowExportModal] = useState(false);
 
   const screenState = useScreenState();
   const isMobileOrTablet =
@@ -117,19 +101,24 @@ export const ConversationContextMenu = ({
   const { getFloatingProps } = useInteractions([dismiss]);
 
   const handleOpenExportModal = useCallback(() => {
-    setIsShowExportModal(true);
-  }, []);
+    dispatch(ConversationsActions.setExportingConversationId(conversation.id));
+  }, [conversation.id, dispatch]);
 
   const handleCloseExportModal = useCallback(() => {
-    setIsShowExportModal(false);
-  }, []);
+    dispatch(ConversationsActions.setExportingConversationId());
+  }, [dispatch]);
 
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
-    useCallback((e) => {
-      e.stopPropagation();
+    useCallback(
+      (e) => {
+        e.stopPropagation();
 
-      setIsDeleting(true);
-    }, []);
+        dispatch(
+          ConversationsActions.setDeletingConversationId(conversation.id),
+        );
+      },
+      [conversation.id, dispatch],
+    );
 
   const handleOpenPublishing = useCallback(() => {
     dispatch(
@@ -214,22 +203,13 @@ export const ConversationContextMenu = ({
     }, [conversation, dispatch, setIsOpen]);
 
   const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
-    useCallback((e) => {
-      e.stopPropagation();
-      setIsUnshared(true);
-    }, []);
-
-  const handleUnsharing = useCallback(() => {
-    if (conversation.sharedWithMe) {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [conversation.id],
-          featureType: FeatureType.Chat,
-        }),
-      );
-    }
-    setIsUnshared(false);
-  }, [conversation.id, conversation.sharedWithMe, dispatch]);
+    useCallback(
+      (e) => {
+        e.stopPropagation();
+        dispatch(ShareActions.setUnshareEntity(conversation));
+      },
+      [conversation, dispatch],
+    );
 
   const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -243,15 +223,6 @@ export const ConversationContextMenu = ({
     },
     [conversation.id, dispatch, setIsOpen],
   );
-
-  const handleDelete = useCallback(() => {
-    dispatch(
-      ConversationsActions.deleteConversations({
-        conversationIds: [conversation.id],
-      }),
-    );
-    setIsDeleting(false);
-  }, [conversation.id, dispatch]);
 
   const handleOpenMoveToModal = useCallback(() => {
     dispatch(ConversationsActions.setMoveToConversationId(conversation.id));
@@ -302,90 +273,50 @@ export const ConversationContextMenu = ({
   }, [conversation, dispatch]);
 
   return (
-    <>
-      <button
-        ref={refs.setFloating}
-        {...getFloatingProps()}
-        data-qa="dots-menu"
-        disabled={disabledState}
-        className="group"
-      >
-        <ItemContextMenu
-          TriggerIcon={TriggerIcon}
-          className={className}
-          entity={conversation}
-          isEmptyConversation={!isReplay && !isPlayback && isEmptyConversation}
-          featureType={FeatureType.Chat}
-          onOpenMoveToModal={handleOpenMoveToModal}
-          onDelete={handleOpenDeleteModal}
-          onRename={handleOpenRenameModal}
-          onExport={handleExport}
-          onOpenExportModal={handleOpenExportModal}
-          onCompare={
-            !isReplay && !isPlayback && !isCustomViewerApplication
-              ? handleCompare
-              : undefined
-          }
-          onDuplicate={handleDuplicate}
-          onReplay={
-            !isReplay && !isPlayback && !isCustomViewerApplication
-              ? handleStartReplay
-              : undefined
-          }
-          onPlayback={
-            isPlaybackActionAvailable ? handleCreatePlayback : undefined
-          }
-          onShare={!isReplay ? handleOpenSharing : undefined}
-          onUnshare={!isReplay ? handleOpenUnshareModal : undefined}
-          onPublish={!isReplay ? handleOpenPublishing : undefined}
-          onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
-          onOpenChange={setIsOpen}
-          isOpen={isOpen}
-          isLoading={conversation.status !== UploadStatus.LOADED}
-          onSelect={isHeaderMenu ? undefined : handleSelect}
-          useStandardColor={isHeaderMenu}
-          onShowInfo={handleOpenInfoModal}
-          hideTriggerIcon={!isHeaderMenu && isMobileOrTablet}
-        />
-      </button>
-
-      {isShowExportModal && (
-        <ExportModal onExport={handleExport} onClose={handleCloseExportModal} />
-      )}
-
-      {isDeleting && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm deleting conversation')}
-          description={`${t('Are you sure that you want to delete a conversation?')}${t(
-            conversation.isShared
-              ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
-              : '',
-          )}`}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsDeleting(false);
-            if (result) handleDelete();
-          }}
-        />
-      )}
-
-      {isUnshared && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unshare conversation')}
-          description={t(
-            'Are you sure that you want to unshare a conversation?',
-          )}
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshared(false);
-            if (result) handleUnsharing();
-          }}
-        />
-      )}
-    </>
+    <button
+      ref={refs.setFloating}
+      {...getFloatingProps()}
+      data-qa="dots-menu"
+      disabled={disabledState}
+      className="group"
+    >
+      <ItemContextMenu
+        TriggerIcon={TriggerIcon}
+        className={className}
+        entity={conversation}
+        isEmptyConversation={!isReplay && !isPlayback && isEmptyConversation}
+        featureType={FeatureType.Chat}
+        onOpenMoveToModal={handleOpenMoveToModal}
+        onDelete={handleOpenDeleteModal}
+        onRename={handleOpenRenameModal}
+        onExport={handleExport}
+        onOpenExportModal={handleOpenExportModal}
+        onCompare={
+          !isReplay && !isPlayback && !isCustomViewerApplication
+            ? handleCompare
+            : undefined
+        }
+        onDuplicate={handleDuplicate}
+        onReplay={
+          !isReplay && !isPlayback && !isCustomViewerApplication
+            ? handleStartReplay
+            : undefined
+        }
+        onPlayback={
+          isPlaybackActionAvailable ? handleCreatePlayback : undefined
+        }
+        onShare={!isReplay ? handleOpenSharing : undefined}
+        onUnshare={!isReplay ? handleOpenUnshareModal : undefined}
+        onPublish={!isReplay ? handleOpenPublishing : undefined}
+        onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
+        onOpenChange={setIsOpen}
+        isOpen={isOpen}
+        isLoading={conversation.status !== UploadStatus.LOADED}
+        onSelect={isHeaderMenu ? undefined : handleSelect}
+        useStandardColor={isHeaderMenu}
+        onShowInfo={handleOpenInfoModal}
+        hideTriggerIcon={!isHeaderMenu && isMobileOrTablet}
+      />
+    </button>
   );
 };
