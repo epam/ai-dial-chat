@@ -3,6 +3,8 @@ import classNames from 'classnames';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { User } from '@/src/components/Header/User/User';
+
 import { Logo } from './Logo';
 
 interface Props {
@@ -28,6 +30,7 @@ export const BaseHeader: React.FC<Props> = ({ LeftItems, RightItems }) => {
         <Logo />
       </div>
       <div className="flex w-1/2 items-center justify-end pl-20">
+        <User />
         {RightItems && RightItems}
       </div>
     </div>

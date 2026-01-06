@@ -8,17 +8,13 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { PartialBy } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-import { UIActions } from '@/src/store/ui/ui.reducers';
-import { UISelectors } from '@/src/store/ui/ui.selectors';
 
 import { Stepper } from '@/src/components/Common/Stepper';
 import { Logo } from '@/src/components/Header/Logo';
 import { User } from '@/src/components/Header/User/User';
-import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import { Feature } from '@epam/ai-dial-shared';
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface EditorHeaderTab<T extends string> {
@@ -58,21 +54,9 @@ export const EditorHeader = <T extends string>({
 }: EditorHeaderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const dispatch = useAppDispatch();
-
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const isUserSettingsOpen = useAppSelector(
-    UISelectors.selectIsUserSettingsOpen,
-  );
-  const isUserMenuHidden = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
-  );
 
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const handleCloseUserSettings = useCallback(() => {
-    dispatch(UIActions.setIsUserSettingsOpen(false));
-  }, [dispatch]);
 
   const handleTabClose = useCallback(
     (tab: PartialBy<EditorHeaderTab<T>, 'label'>) => {
@@ -170,18 +154,9 @@ export const EditorHeader = <T extends string>({
             variant={ButtonVariant.Tertiary}
           ></DialButton>
 
-          {!isUserMenuHidden && (
-            <div className="h-full overflow-hidden max-xl:hidden max-md:pr-2 md:border-l md:border-secondary md:pl-2">
-              <User />
-            </div>
-          )}
+          <User />
         </div>
       </div>
-
-      <SettingDialog
-        open={isUserSettingsOpen}
-        onClose={handleCloseUserSettings}
-      />
     </div>
   );
 };
