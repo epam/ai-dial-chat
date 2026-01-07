@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   useFormContext,
@@ -71,7 +71,11 @@ const ControlledField = withController(Field);
 
 const getItemLabel = (item: unknown): string => item as string;
 
-export const QuickApp2Form = () => {
+interface AppsEditorProps {
+  onAutoSave: () => void;
+}
+
+export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const appDetails = useAppSelector(
@@ -149,9 +153,13 @@ export const QuickApp2Form = () => {
     [selectedEntityId, allEntitiesMap],
   );
 
-  const handleOpenDetails = useCallback((entity: MarketplaceEntity) => {
-    setSelectedEntityId(entity.id);
-  }, []);
+  const handleOpenDetails = useCallback(
+    (entity: MarketplaceEntity) => {
+      setSelectedEntityId(entity.id);
+      onAutoSave();
+    },
+    [onAutoSave],
+  );
 
   const handleCloseDetails = useCallback(() => {
     setSelectedEntityId(null);
