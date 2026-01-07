@@ -60,7 +60,7 @@ export function AddMarketplaceEntityButton({
       placement="bottom"
       TriggerCustomRenderer={
         <DialButton
-          className="shrink-0"
+          className="shrink-0 focus:border-transparent"
           variant={ButtonVariant.Primary}
           data-qa={dataQa}
           label={isScreenSmall ? t('Add') : t(`Add ${label}`)}

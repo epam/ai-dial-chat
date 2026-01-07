@@ -1,7 +1,6 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
-  IconPaperclip,
   IconScale,
   IconSquareCheck,
   IconSquareOff,
@@ -23,11 +22,7 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ConversationsSelectors,
-  SettingsSelectors,
-  UISelectors,
-} from '@/src/store/selectors';
+import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
@@ -38,7 +33,7 @@ import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import { Feature, SupportedExportFormats } from '@epam/ai-dial-shared';
+import { SupportedExportFormats } from '@epam/ai-dial-shared';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);
@@ -49,9 +44,6 @@ export const ChatbarSettings = () => {
 
   const isStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
-  );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
   );
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -190,17 +182,6 @@ export const ChatbarSettings = () => {
         },
         display: !isSelectMode,
       },
-      {
-        name: t('Attachments'),
-        display:
-          enabledFeatures.has(Feature.AttachmentsManager) && !isSelectMode,
-        dataQa: 'attachments',
-        Icon: IconPaperclip,
-        disabled: isStreaming,
-        onClick: () => {
-          setIsSelectFilesDialogOpened(true);
-        },
-      },
     ],
     [
       t,
@@ -208,7 +189,6 @@ export const ChatbarSettings = () => {
       isStreaming,
       isSelectMode,
       deleteTerm,
-      enabledFeatures,
       dispatch,
       collapsedSections,
       jsonImportHandler,
