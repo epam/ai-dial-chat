@@ -260,6 +260,7 @@ dialTest(
     localStorageManager,
     filesManagerModalGridAssertion,
     editMessageInputAttachmentsAssertions,
+    editMessageInputAttachments,
   }) => {
     setTestIds('EPMRTC-1903');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -277,8 +278,10 @@ dialTest(
     ];
     const updatedAttachedFiles = [
       Attachment.sunImageName,
+      Attachment.cloudImageName,
       Attachment.flowerImageName,
     ];
+    const filesToCheck = [Attachment.flowerImageName];
     const attachmentUrls: string[] = [];
 
     await dialTest.step('Upload 3 files to app', async () => {
@@ -307,35 +310,22 @@ dialTest(
       await dialHomePage.waitForPageLoaded();
       await conversations.selectEntity(conversation.name);
       await chatMessages.openEditMessageMode(1);
+      for (const file of initAttachedFiles) {
+        await editMessageInputAttachmentsAssertions.assertAttachedFileState(
+          file,
+          'visible',
+        );
+      }
+
       await chatMessages.getChatMessageClipIcon(1).click();
       await attachmentDropdownMenu.selectMenuOption(
         UploadMenuOptions.attachUploadedFiles,
       );
     });
 
-    await dialTest.step.skip(
-      //TODO this behavior is probably not desired. skipping for now
-      'In "Attach files" modal change uncheck attached files',
-      async () => {
-        const filesToUncheck = initAttachedFiles.filter(
-          (f) => !updatedAttachedFiles.includes(f),
-        );
-        for (const file of filesToUncheck) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
-          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
-            file,
-            CheckboxState.unchecked,
-          );
-        }
-      },
-    );
-
     await dialTest.step(
       'In "Attach files" modal change attached files and verify updated files are displayed in Edit message box',
       async () => {
-        const filesToCheck = updatedAttachedFiles.filter(
-          (f) => !initAttachedFiles.includes(f),
-        );
         for (const file of filesToCheck) {
           await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
@@ -350,11 +340,10 @@ dialTest(
             'visible',
           );
         }
-        //TODO check if this is correct
-        // await editMessageInputAttachmentsAssertions.assertElementsCount(
-        //   editMessageInputAttachments.inputAttachments,
-        //   updatedAttachedFiles.length,
-        // );
+        await editMessageInputAttachmentsAssertions.assertElementsCount(
+          editMessageInputAttachments.inputAttachments,
+          updatedAttachedFiles.length,
+        );
       },
     );
 
@@ -365,13 +354,12 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         const request = await chat.saveAndSubmitRequest();
-        //TODO check if it is correct
-        // expect
-        //   .soft(
-        //     request.messages[0].custom_content.attachments.length,
-        //     ExpectedMessages.attachedFilesCountIsValid,
-        //   )
-        //   .toBe(updatedAttachedFiles.length);
+        expect
+          .soft(
+            request.messages[0].custom_content.attachments.length,
+            ExpectedMessages.attachedFilesCountIsValid,
+          )
+          .toBe(updatedAttachedFiles.length);
         for (const file of updatedAttachedFiles) {
           expect
             .soft(
