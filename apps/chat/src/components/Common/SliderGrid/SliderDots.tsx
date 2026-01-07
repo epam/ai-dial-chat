@@ -122,7 +122,7 @@ export const SliderDots: React.FC<Props> = ({
       <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
         <div className="relative z-40 flex items-center gap-4 md:-translate-x-1/2">
           {sliderDotsArray.length <= 1 && screenState === ScreenState.SM && (
-            <span className="h-[18px] bg-transparent"></span>
+            <span className="h-[8px] bg-transparent"></span>
           )}
           {sliderDotsArray.length > 1 && (
             <>
