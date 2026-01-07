@@ -202,7 +202,6 @@ const AttachmentRendererComponent = withErrorBoundary(
     if (
       mappedVisualizers &&
       isCustomAttachmentType &&
-      attachment.url &&
       mappedAttachmentUrl
     ) {
       return (
