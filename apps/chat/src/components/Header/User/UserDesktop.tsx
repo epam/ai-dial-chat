@@ -41,7 +41,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             className="flex w-full min-w-[120px] cursor-pointer items-center justify-between gap-2 pr-3"
             data-qa="account-settings"
           >
-            <div className="flex max-w-[400px] items-center gap-3 overflow-hidden">
+            <div className="flex items-center gap-3 overflow-hidden">
               {session?.user?.image ? (
                 <img
                   className="rounded"

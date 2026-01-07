@@ -330,7 +330,7 @@ export const getDefaultModelReference = ({
 };
 
 export const isOldConversationReplay = (replay: Replay | undefined) =>
-  replay &&
+  !!replay &&
   replay.isReplay &&
   replay.replayUserMessagesStack &&
   replay.replayUserMessagesStack.some((message) => !message.model);

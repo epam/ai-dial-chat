@@ -1,6 +1,7 @@
 import { UseFormClearErrors, UseFormSetError } from 'react-hook-form';
 
 import {
+  getEditorSchemaType,
   getMcpToolsetStr,
   getQuick2AppDocumentUrl,
   getQuickAppDocumentUrl,
@@ -12,10 +13,11 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
-import { ApiUtils } from '@/src/utils/server/api';
+import { doesModelAllowTemperature } from '@/src/utils/app/models';
+import { splitEntityId } from '@/src/utils/app/shared-utils';
+import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import {
-  ApplicationType,
   CustomApplicationModel,
   ExternalAppConfig,
   Toolsets,
@@ -43,14 +45,12 @@ import {
 import {
   DEFAULT_APPLICATION_NAME,
   DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
-import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { formErrors } from '@/src/constants/form-errors';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
-  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
-  DEFAULT_QUICK_APPS_SCHEMA_ID,
   DialDeploymentToolsetToolTypes,
   ToolsetTypes,
 } from '@/src/constants/quick-apps';
@@ -316,13 +316,52 @@ const getQuickAppFormData = (app?: CustomApplicationModel): QuickAppForm => {
   };
 };
 
+const getQuickAppItemNameFromConfig = (
+  item: MCPToolset | DialDeploymentSimpleTool,
+): string => {
+  if ('dial_id' in item) {
+    return (
+      item.name ||
+      ApiUtils.decodeApiUrl(
+        parseEntityApiKey(splitEntityId(item.dial_id).name, {
+          parseVersion: true,
+        }).name,
+      )
+    );
+  }
+
+  if (isApplicationId(item.deployment_id)) {
+    return ApiUtils.decodeApiUrl(
+      parseEntityApiKey(splitEntityId(item.deployment_id).name, {
+        parseVersion: true,
+      }).name,
+    );
+  }
+
+  return item.deployment_id;
+};
+
 const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
+
   const agentToolsets =
     appProperties?.tool_sets
       ?.filter(isDialDeploymentToolset)
       ?.flatMap((toolset) => toolset.tools) ?? [];
   const mcpToolsets = appProperties?.tool_sets?.filter(isMcpToolset) ?? [];
+
+  const allItems = [...agentToolsets, ...mcpToolsets];
+
+  const sortedItems = allItems.sort((a, b) =>
+    getQuickAppItemNameFromConfig(a).localeCompare(
+      getQuickAppItemNameFromConfig(b),
+    ),
+  );
+
+  const sortedIds = sortedItems.map((item) => {
+    const id = 'dial_id' in item ? item.dial_id : item.deployment_id;
+    return ApiUtils.decodeApiUrl(id);
+  });
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
@@ -334,14 +373,7 @@ const getQuickApp2FormData = (app?: CustomApplicationModel): QuickApp2Form => {
     temperature:
       appProperties?.orchestrator?.deployment?.parameters?.temperature ??
       DEFAULT_TEMPERATURE,
-    agentsAndToolsets: [
-      ...agentToolsets.map((agentToolset) =>
-        ApiUtils.decodeApiUrl(agentToolset.deployment_id),
-      ),
-      ...mcpToolsets.map((mcpToolset) =>
-        ApiUtils.decodeApiUrl(mcpToolset.dial_id),
-      ),
-    ],
+    agentsAndToolsets: sortedIds,
     codeInterpreter:
       appProperties?.tool_sets?.some(
         (toolset) => toolset.type === ToolsetTypes.CodeInterpreter,
@@ -412,30 +444,6 @@ const getExternalAppFormData = (
     (app?.applicationProperties as ExternalAppConfig)?.external_url ||
     MANDATORY_FIELD_PLACEHOLDER,
 });
-
-const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
-  const quickAppSchemaId = DefaultsService.get(
-    'quickAppsSchemaId',
-    DEFAULT_QUICK_APPS_SCHEMA_ID,
-  );
-  const quickApp2SchemaId = DefaultsService.get(
-    'quickAppsSchemaId2',
-    DEFAULT_QUICK_APPS_SCHEMA_2_ID,
-  );
-  const externalAppSchemaId = DefaultsService.get(
-    'externalAppsSchemaId',
-    DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
-  );
-
-  if (quickAppSchemaId.endsWith(type)) return AppsEditorSchemaTypes.QuickApp;
-  if (quickApp2SchemaId.endsWith(type)) return AppsEditorSchemaTypes.QuickApp2;
-  if (externalAppSchemaId.endsWith(type))
-    return AppsEditorSchemaTypes.ExternalApp;
-
-  if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
-
-  return AppsEditorSchemaTypes.CustomApp;
-};
 
 const getSettingsFormData = ({
   app,
@@ -667,7 +675,14 @@ export const getApplicationPayload = ({
           document_relative_url: data.documentRelativeUrl,
         },
       };
-    case AppsEditorSchemaTypes.QuickApp2:
+
+    case AppsEditorSchemaTypes.QuickApp2: {
+      const model = allEntitiesMap[data.model];
+      const temperatureToUse =
+        model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
+          ? data.temperature
+          : FALLBACK_TEMPERATURE;
+
       return {
         ...generalData,
         inputAttachmentTypes: data.inputAttachmentTypes,
@@ -680,9 +695,9 @@ export const getApplicationPayload = ({
         applicationProperties: {
           orchestrator: {
             deployment: {
-              name: allEntitiesMap[data.model]?.id ?? data.model,
+              name: model?.id ?? data.model,
               parameters: {
-                temperature: data.temperature,
+                temperature: temperatureToUse,
               },
             },
             system_prompt: {
@@ -699,6 +714,7 @@ export const getApplicationPayload = ({
           tool_sets: getQuickApp2Toolsets({ data, allEntitiesMap }),
         },
       };
+    }
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return {

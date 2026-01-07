@@ -6,6 +6,8 @@ import { RootState } from '@/src/types/store';
 import { WidgetsSelectors } from '@/src/store/models/widgets.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
+import { Routes } from '@/src/constants/routes';
+
 import { Feature } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.ui;
@@ -75,11 +77,20 @@ const selectShowSelectToMigrateWindow = (state: RootState) =>
   rootSelector(state).showSelectToMigrateWindow;
 
 const selectIsAnyMenuOpen = createSelector(
-  [rootSelector, SettingsSelectors.selectEnabledFeatures],
-  (state, enabledFeatures) =>
-    (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
-    (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
-    state.isProfileOpen,
+  [rootSelector, (_state, route: string) => route],
+  (state, route) => {
+    const isChatRoute = route === Routes.Chat;
+    const isChatPanelsOpened = isChatRoute
+      ? state.showPromptbar || state.showChatbar
+      : false;
+    const isMarketplaceRoute = route === Routes.Marketplace;
+    const isMarketplacePanelOpened = isMarketplaceRoute
+      ? state.showMarketplaceFilterbar
+      : false;
+    return (
+      isChatPanelsOpened || isMarketplacePanelOpened || state.isProfileOpen
+    );
+  },
 );
 
 const selectCollapsedSections = //TODO: review later how it is used

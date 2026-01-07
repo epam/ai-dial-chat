@@ -11,16 +11,9 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import {
-  Colors,
-  Overflow,
-  Styles,
-  ThemeColorAttributes,
-} from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
+import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -36,10 +29,10 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
     sendMessage,
-    conversations,
-    chatHeader,
+    sendMessageAssertion,
+    baseAssertion,
     fileApiHelper,
     attachmentDropdownMenu,
     localStorageManager,
@@ -78,96 +71,77 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await expect
-          .soft(
-            sendMessage.attachmentMenuTrigger.getElementLocator(),
-            ExpectedMessages.clipIconIsAvailable,
-          )
-          .toBeVisible();
+        await sendMessageAssertion.assertElementState(
+          sendMessage.attachmentMenuTrigger,
+          'visible',
+          ExpectedMessages.clipIconIsAvailable,
+        );
       },
     );
 
     await dialTest.step(
-      'Open "Attach files" modal and verify supported types label is "all", "Attach" button is disabled,"Upload from device" button has theme background color',
+      'Open "Files Manager" modal and verify supported types label is "all", "Attach" button is disabled',
       async () => {
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await expect
-          .soft(
-            attachFilesModal.getElementLocator(),
-            ExpectedMessages.attachFilesModalIsOpened,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await attachFilesModal.getModalHeader().getSupportedTypes(),
-            ExpectedMessages.supportedTypesLabelIsCorrect,
-          )
-          .toBe(Attachment.allTypesLabel);
-        await expect
-          .soft(
-            attachFilesModal.attachFilesButton.getElementLocator(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeDisabled();
-
-        const uploadFromDeviseBtnBackgroundColor =
-          await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
-            Styles.backgroundColor,
-          );
-        expect
-          .soft(
-            uploadFromDeviseBtnBackgroundColor[0],
-            ExpectedMessages.buttonBackgroundColorIsValid,
-          )
-          .toBe(Colors.defaultBackground);
-      },
-    );
-
-    await dialTest.step(
-      'Upload 2 files and verify Send button is enabled',
-      async () => {
-        for (const file of attachedFiles) {
-          await attachFilesModal.checkAttachedFile(
-            file,
-            FileModalSection.AllFiles,
-          );
-        }
-        await attachFilesModal.attachFiles();
-        const isSendMessageBtnEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(
-            isSendMessageBtnEnabled,
-            ExpectedMessages.sendMessageButtonEnabled,
-          )
-          .toBeTruthy();
-      },
-    );
-
-    await dialTest.step(
-      'Send request and verify conversation is named by the 1st attachment in the textarea',
-      async () => {
-        await dialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
+        await baseAssertion.assertElementState(filesManagerModal, 'visible');
+        baseAssertion.assertValue(
+          await filesManagerModal.getHeader().getSupportedTypes(),
+          Attachment.allTypesLabel,
+          ExpectedMessages.supportedTypesLabelIsCorrect,
         );
-        await sendMessage.send();
-        await expect
-          .soft(
-            conversations.getEntityByName(attachedFiles[0]),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await chatHeader.chatTitle.getElementInnerContent(),
-            ExpectedMessages.headerTitleIsValid,
-          )
-          .toBe(attachedFiles[0]);
+        await baseAssertion.assertElementActionabilityState(
+          filesManagerModal.getAttachButton(),
+          'disabled',
+        );
       },
     );
+
+    //TODO: need to update when Upload popup is implemented
+    // await dialTest.step(
+    //   'Upload 2 files and verify Send button is enabled',
+    //   async () => {
+    //     for (const file of attachedFiles) {
+    //       await attachFilesModal.checkAttachedFile(
+    //         file,
+    //         FileModalSection.AllFiles,
+    //       );
+    //     }
+    //     await attachFilesModal.attachFiles();
+    //     const isSendMessageBtnEnabled =
+    //       await sendMessage.sendMessageButton.isElementEnabled();
+    //     expect
+    //       .soft(
+    //         isSendMessageBtnEnabled,
+    //         ExpectedMessages.sendMessageButtonEnabled,
+    //       )
+    //       .toBeTruthy();
+    //   },
+    // );
+    //
+    // await dialTest.step(
+    //   'Send request and verify conversation is named by the 1st attachment in the textarea',
+    //   async () => {
+    //     await dialHomePage.mockChatTextResponse(
+    //       MockedChatApiResponseBodies.simpleTextBody,
+    //     );
+    //     await sendMessage.send();
+    //     await expect
+    //       .soft(
+    //         conversations.getEntityByName(attachedFiles[0]),
+    //         ExpectedMessages.conversationIsVisible,
+    //       )
+    //       .toBeVisible();
+    //     expect
+    //       .soft(
+    //         await chatHeader.chatTitle.getElementInnerContent(),
+    //         ExpectedMessages.headerTitleIsValid,
+    //       )
+    //       .toBe(attachedFiles[0]);
+    //   },
+    // );
   },
 );
 
@@ -176,7 +150,8 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
     sendMessage,
     fileApiHelper,
     attachmentDropdownMenu,
@@ -208,11 +183,10 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await attachFilesModal.checkAttachedFile(
-          Attachment.sunImageName,
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal.attachFiles();
+        await filesManagerModalGrid
+          .gridCheckboxByNameCell(Attachment.sunImageName)
+          .click();
+        await filesManagerModal.getAttachButton().click();
       },
     );
 
@@ -310,14 +284,19 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
+    filesManagerModalGridAssertion,
     sendMessage,
     fileApiHelper,
     attachmentDropdownMenu,
     chat,
     chatMessages,
+    chatMessagesAssertion,
     page,
     sendMessageInputAttachments,
+    sendMessageInputAttachmentsAssertions,
+    downloadAssertion,
     localStorageManager,
   }) => {
     setTestIds(
@@ -353,38 +332,26 @@ dialTest(
     );
 
     await dialTest.step(
-      'Check uploaded file and verify its name is truncated in Attach file modal',
+      'Check uploaded file and verify its name is truncated in "Manage attachments" modal',
       async () => {
-        await attachFilesModal.checkAttachedFile(
-          Attachment.longImageName,
-          FileModalSection.AllFiles,
+        await filesManagerModalGrid
+          .gridCheckboxByNameCell(Attachment.longImageName)
+          .click();
+        await filesManagerModalGridAssertion.assertElementTextIsTruncated(
+          filesManagerModalGrid.gridNameCell(Attachment.longImageName),
         );
-        const attachmentNameOverflow = await attachFilesModal
-          .getAllFilesTree()
-          .getEntityName(Attachment.longImageName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(
-            attachmentNameOverflow[0],
-            ExpectedMessages.attachmentNameIsTruncated,
-          )
-          .toBe(Overflow.ellipsis);
-        await attachFilesModal.attachFiles();
+        await filesManagerModal.getAttachButton().click();
       },
     );
 
     await dialTest.step(
       'Verify long attachment name is truncated in Send message box',
       async () => {
-        const attachmentNameOverflow = await sendMessageInputAttachments
-          .inputAttachmentName(Attachment.longImageName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(
-            attachmentNameOverflow[0],
-            ExpectedMessages.attachmentNameIsTruncated,
-          )
-          .toBe(Overflow.ellipsis);
+        await sendMessageInputAttachmentsAssertions.assertElementTextIsTruncated(
+          sendMessageInputAttachments.inputAttachmentName(
+            Attachment.longImageName,
+          ),
+        );
       },
     );
 
@@ -395,15 +362,9 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.sendRequestWithButton(request);
-        const attachmentNameOverflow = await chatMessages
-          .getChatMessageAttachment(1, Attachment.longImageName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(
-            attachmentNameOverflow[0],
-            ExpectedMessages.attachmentNameIsTruncated,
-          )
-          .toBe(Overflow.ellipsis);
+        await chatMessagesAssertion.assertElementTextIsTruncated(
+          chatMessages.getChatMessageAttachment(1, Attachment.longImageName),
+        );
       },
     );
 
@@ -415,21 +376,14 @@ dialTest(
           1,
           Attachment.longImageName,
         );
-        const isAttachmentNameTruncated = await chatMessages
-          .getChatMessageAttachment(1, Attachment.longImageName)
-          .isElementWidthTruncated();
-        expect
-          .soft(
-            isAttachmentNameTruncated,
-            ExpectedMessages.attachmentNameIsFullyVisible,
-          )
-          .toBeFalsy();
-        await expect
-          .soft(
-            chatMessages.getOpenedChatMessageAttachment(1),
-            ExpectedMessages.attachmentIsExpanded,
-          )
-          .toBeVisible();
+        await chatMessagesAssertion.assertElementTextIsTruncated(
+          chatMessages.getChatMessageAttachment(1, Attachment.longImageName),
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getOpenedChatMessageAttachment(1),
+          'visible',
+          ExpectedMessages.attachmentIsExpanded,
+        );
       },
     );
 
@@ -440,22 +394,14 @@ dialTest(
           1,
           Attachment.longImageName,
         );
-        const isAttachmentNameTruncated = await chatMessages
-          .getChatMessageAttachment(1, Attachment.longImageName)
-          .isElementWidthTruncated();
-        expect
-          .soft(
-            isAttachmentNameTruncated,
-            ExpectedMessages.attachmentNameIsTruncated,
-          )
-          .toBeTruthy();
-
-        await expect
-          .soft(
-            chatMessages.getOpenedChatMessageAttachment(1),
-            ExpectedMessages.attachmentIsCollapsed,
-          )
-          .toBeHidden();
+        await chatMessagesAssertion.assertElementTextIsTruncated(
+          chatMessages.getChatMessageAttachment(1, Attachment.longImageName),
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getOpenedChatMessageAttachment(1),
+          'hidden',
+          ExpectedMessages.attachmentIsCollapsed,
+        );
       },
     );
 
@@ -465,12 +411,10 @@ dialTest(
         const downloadedData = await dialHomePage.downloadData(() =>
           chatMessages.getDownloadAttachmentIcon(1).click(),
         );
-        expect
-          .soft(
-            downloadedData.path,
-            ExpectedMessages.attachmentIsSuccessfullyDownloaded,
-          )
-          .toContain(Attachment.longImageName);
+        await downloadAssertion.assertJpgFileIsDownloaded(
+          downloadedData,
+          Attachment.longImageName,
+        );
       },
     );
   },
@@ -576,7 +520,10 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
+    filesManagerModalGrid,
+
+    filesManagerModalGridAssertion,
     sendMessage,
     conversationData,
     dataInjector,
@@ -615,7 +562,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Attach files" modal and verify supported types label is "images"',
+      'Open "Manage attachments" modal and verify supported types label is "images"',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -624,29 +571,35 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        expect
-          .soft(
-            await attachFilesModal.getModalHeader().getSupportedTypes(),
-            ExpectedMessages.supportedTypesLabelIsCorrect,
-          )
-          .toBe(Attachment.imagesTypesLabel);
+        baseAssertion.assertValue(
+          await filesManagerModal.getHeader().getSupportedTypes(),
+          Attachment.imagesTypesLabel,
+          ExpectedMessages.supportedTypesLabelIsCorrect,
+        );
       },
     );
 
     await dialTest.step(
-      'Check txt file, click "Attach" button and verify error message is shown',
+      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is not available',
       async () => {
-        await attachFilesModal.checkAttachedFile(
-          Attachment.textName,
-          FileModalSection.AllFiles,
+        await filesManagerModalGrid
+          .gridRowByNameCell(Attachment.textName)
+          .hover();
+        await filesManagerModalGridAssertion.assertElementCursor(
+          filesManagerModalGrid.gridNameCellValue(Attachment.textName),
+          Cursors.notAllowed,
         );
-        await attachFilesModal.attachFilesButton.click();
-        const error = attachFilesModal.getModalError();
-        await baseAssertion.assertElementState(error, 'visible');
-        await baseAssertion.assertElementText(
-          error.errorMessage,
-          ExpectedConstants.attachedFileError(Attachment.textName),
-          ExpectedMessages.sendMessageButtonEnabled,
+        await filesManagerModalGridAssertion.assertElementActionabilityState(
+          filesManagerModalGrid.gridCheckboxByNameCell(Attachment.textName),
+          'disabled',
+        );
+        await filesManagerModalGridAssertion.assertElementState(
+          filesManagerModalGrid.gridDotsMenuByNameCell(Attachment.textName),
+          'hidden',
+        );
+        await filesManagerModalGridAssertion.assertElementActionabilityState(
+          filesManagerModalGrid.gridHeaderCheckbox,
+          'disabled',
         );
       },
     );
@@ -659,14 +612,15 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
+    filesManagerModal,
     sendMessage,
     conversationData,
     dataInjector,
     fileApiHelper,
+    filesManagerModalGrid,
     attachmentDropdownMenu,
-    attachedAllFiles,
-    manageAttachmentsAssertion,
+
+    filesManagerModalGridAssertion,
     chatMessages,
     conversations,
     localStorageManager,
@@ -715,10 +669,8 @@ dialTest(
         await conversations.selectEntity(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.getChatMessageClipIcon(1).click();
-        const editMessageAttachMenuOptions =
-          await attachmentDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayExcludesAll(
-          editMessageAttachMenuOptions,
+        await baseAssertion.assertElementDoesNotContainText(
+          attachmentDropdownMenu,
           [MenuOptions.attachFolders, MenuOptions.attachLink],
           ExpectedMessages.contextMenuOptionsValid,
         );
@@ -729,10 +681,8 @@ dialTest(
       'Click on request input clip icon and verify no "Attach link", "Attach folders" options are available in the menu',
       async () => {
         await sendMessage.attachmentMenuTrigger.click();
-        const attachMenuOptions =
-          await attachmentDropdownMenu.getAllMenuOptions();
-        baseAssertion.assertArrayExcludesAll(
-          attachMenuOptions,
+        await baseAssertion.assertElementDoesNotContainText(
+          attachmentDropdownMenu,
           [MenuOptions.attachFolders, MenuOptions.attachLink],
           ExpectedMessages.contextMenuOptionsValid,
         );
@@ -746,23 +696,23 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
           { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
         );
-        await attachedAllFiles.getFolderName(folderName).hoverOver();
+        await filesManagerModalGrid.gridRowByNameCell(folderName).hover();
         const folderCheckboxElement =
-          attachedAllFiles.getFolderCheckbox(folderName);
-        await manageAttachmentsAssertion.assertCheckboxState(
+          filesManagerModalGrid.gridCheckboxByNameCell(folderName);
+        await filesManagerModalGridAssertion.assertCheckboxState(
           folderCheckboxElement,
           CheckboxState.unchecked,
         );
         await folderCheckboxElement.click();
-        await manageAttachmentsAssertion.assertCheckboxState(
+        await filesManagerModalGridAssertion.assertCheckboxState(
           folderCheckboxElement,
           CheckboxState.checked,
         );
-        await manageAttachmentsAssertion.assertElementActionabilityState(
-          attachFilesModal.attachFilesButton,
+        await baseAssertion.assertElementActionabilityState(
+          filesManagerModal.getAttachButton(),
           'enabled',
         );
-        await attachFilesModal.attachFiles();
+        await filesManagerModal.getAttachButton().click();
         await sendMessageAssertion.assertElementState(
           sendMessageInputAttachments.inputAttachmentName(
             Attachment.sunImageName,

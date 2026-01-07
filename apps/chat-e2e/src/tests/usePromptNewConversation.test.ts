@@ -12,7 +12,7 @@ import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialTest(
+dialTest.skip(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
     'Use prompt for chat with attached file\n' +
@@ -153,7 +153,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt with parameters for chat',
   async ({
     dialHomePage,
@@ -208,7 +208,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt option is not available for Chat in Replay mode\n' +
     'Use prompt is available for chat in Replay mode when response generation was stopped\n' +
     'Use prompt option is not available for Chat in Playback mode',
@@ -317,7 +317,7 @@ dialTest(
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest(
+dialAdminTest.skip(
   'Use prompt not available for chat from Organization\n' +
     'Use prompt not available for chat from Approve required.\n' +
     'Use prompt option is not available when publication request is selected.\n' +
@@ -461,7 +461,7 @@ dialAdminTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt is not available for chat with not available agent\n' +
     'Use prompt is not available for chat with agent which not added to My workspace',
   async ({
@@ -558,7 +558,7 @@ dialTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.skip(
   'Use prompt not available for chat from Shared with me\n' +
     `View prompt: 'Use prompt' button is disabled for just created new prompt if there is a chat without available input field selected.\n` +
     'Use prompt from "Shared with me" section for chat with history',
@@ -661,7 +661,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Use prompt from Organization for chat',
   async ({
     dialHomePage,

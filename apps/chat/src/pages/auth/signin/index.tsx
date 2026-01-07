@@ -120,9 +120,10 @@ export default function Signin({
   }
 
   return (
-    <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
-      <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
-        <div className="my-5 flex justify-center">
+    <div className="flex size-full h-screen flex-col items-center overflow-auto bg-auth-layer-0">
+      <div className="shrink grow"></div>
+      <div className="my-1 h-fit w-[368px] shrink-0 grow-0 rounded bg-auth-layer-1 p-6">
+        <div className="mb-6 flex justify-center">
           {!!logoImgSrc && (
             <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
           )}
@@ -152,6 +153,7 @@ export default function Signin({
           ))}
         </div>
       </div>
+      <div className="shrink grow"></div>
     </div>
   );
 }

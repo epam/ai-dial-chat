@@ -24,4 +24,6 @@ export const IconSelectors = {
   oauthIcon: '.tabler-icon-brand-oauth',
   keyIcon: '.tabler-icon-key',
   lockOffIcon: '.tabler-icon-lock-off',
+  dotsMenuIcon: '.tabler-icon-dots-vertical',
+  caretIcon: '.tabler-icon-caret-right-filled',
 };

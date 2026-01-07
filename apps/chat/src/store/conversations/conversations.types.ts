@@ -47,6 +47,9 @@ export interface ConversationsState {
   preselectedAction?: string | null;
 
   moveToConversationId: string | undefined;
+
+  deletingConversationId?: string | undefined;
+  exportingConversationId?: string | undefined;
 }
 
 export interface BaseSendMessagePayload {
