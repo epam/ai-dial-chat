@@ -22,10 +22,7 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ConversationsSelectors,
-  UISelectors,
-} from '@/src/store/selectors';
+import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
