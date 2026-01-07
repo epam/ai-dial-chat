@@ -3,6 +3,7 @@ import {
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -13,15 +14,13 @@ dialTest(
   '[Upload from device] Error appears if to load the file with the same name and extension if it already exists in a folder.\n' +
     'Long file name in errors does not break UI on "Upload from device"',
   async ({
-    dialHomePage,
+    filesManagerPage,
     setTestIds,
-    filesManagerModal,
-    filesManagerModalGrid,
+    filesManagerToolbar,
+    filesManagerGridAssertion,
     fileConflictConfirmationPopup,
     fileConflictConfirmationPopupAssertion,
     fileApiHelper,
-    chatBar,
-    baseAssertion,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1777', 'EPMRTC-1778');
@@ -32,18 +31,21 @@ dialTest(
     });
 
     await dialTest.step(
-      'Upload the same file again through chat bar dots menu',
+      'Upload the same file again through Files manager',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-        await baseAssertion.assertElementState(
-          filesManagerModalGrid.gridRowByNameCell(Attachment.longImageName),
+        await filesManagerPage.openFilesManagerPage();
+        await filesManagerPage.waitForPageLoaded();
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.longImageName,
           'visible',
         );
-        await dialHomePage.uploadData(
+        await filesManagerToolbar.getNewButton().click();
+        await filesManagerPage.uploadData(
           { path: Attachment.longImageName, dataType: 'upload' },
-          () => filesManagerModal.openUploadFromDevice(),
+          () =>
+            filesManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles),
         );
         await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
           ExpectedConstants.replaceAttachmentConfirmationTitle,
@@ -54,8 +56,8 @@ dialTest(
           ),
         );
         await fileConflictConfirmationPopup.getCancelButton().click();
-        await baseAssertion.assertElementState(
-          filesManagerModalGrid.gridRowByNameCell(Attachment.longImageName),
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.longImageName,
           'visible',
         );
       },
