@@ -8,12 +8,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { PartialBy } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
-
 import { Stepper } from '@/src/components/Common/Stepper';
-import { Logo } from '@/src/components/Header/Logo';
-import { User } from '@/src/components/Header/User/User';
+import { BaseHeader } from '@/src/components/Header/BaseHeader';
 
 import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
@@ -54,8 +50,6 @@ export const EditorHeader = <T extends string>({
 }: EditorHeaderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleTabClose = useCallback(
@@ -67,14 +61,12 @@ export const EditorHeader = <T extends string>({
   );
 
   return (
-    <div
-      className={classNames(
-        'z-10 flex w-full border-b border-secondary bg-layer-1',
-        isOverlay ? 'min-h-[36px]' : 'min-h-[48px]',
-      )}
-      data-qa={dataQa}
-    >
-      <div className="flex grow items-center justify-between overflow-hidden">
+    <BaseHeader
+      dataQa={dataQa}
+      onLogoClick={onLogoClick}
+      logoWrapperClassName="hidden xl:flex"
+      rightItemsWrapperClassName="flex-row-reverse !justify-start max-xl:[&>div:first-of-type]:hidden"
+      LeftItems={
         <div className="flex h-full shrink-0 gap-4 md:pl-3">
           <div className="relative flex items-center md:hidden">
             <button
@@ -139,12 +131,9 @@ export const EditorHeader = <T extends string>({
             className="hidden md:flex"
           />
         </div>
-
-        <div className="hidden h-full shrink-0 xl:flex">
-          <Logo onLogoClick={onLogoClick} />
-        </div>
-
-        <div className="flex h-full grow items-center justify-end gap-2 overflow-hidden pr-3 md:pr-5 xl:pr-0">
+      }
+      RightItems={
+        <div className="flex h-full items-center xl:mr-2 xl:border-r xl:border-secondary">
           <DialButton
             className="shrink-0"
             onClick={onSave}
@@ -153,10 +142,8 @@ export const EditorHeader = <T extends string>({
             label={t(saveLabel ?? 'Save and exit')}
             variant={ButtonVariant.Tertiary}
           ></DialButton>
-
-          <User className="h-full max-xl:hidden md:border-l md:border-secondary md:pl-2" />
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 };
