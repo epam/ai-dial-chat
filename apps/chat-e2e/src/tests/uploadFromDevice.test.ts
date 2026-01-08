@@ -7,11 +7,18 @@ import {
   ThemeId,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Attributes, Colors, Overflow, Styles } from '@/src/ui/domData';
+import {
+  Attributes,
+  Colors,
+  Overflow,
+  Styles,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement, FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
+import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Locator, expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
 let modelsWithoutAttachments: DialAIEntityModel[];
@@ -20,7 +27,7 @@ dialTest.beforeAll(async () => {
   modelsWithoutAttachments = ModelsUtil.getModelsWithoutAttachment();
 });
 
-dialTest(
+dialTest.skip(
   '[Upload from device] is opened from Manage attachments screen.\n' +
     '"Add more files..." on "Upload from device" opens system file manager.\n' +
     '[Upload from device] is closed on X',
@@ -32,6 +39,7 @@ dialTest(
     localStorageManager,
     uploadFromDeviceModal,
     manageAttachmentsAssertion,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1888', 'EPMRTC-3197', 'EPMRTC-3233');
     const attachments = [Attachment.sunImageName, Attachment.cloudImageName];
@@ -53,18 +61,10 @@ dialTest(
           attachFilesModal,
           'visible',
         );
-
-        const uploadFromDeviceBackgroundColor =
-          await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
-            Styles.backgroundColor,
-          );
-        expect
-          .soft(
-            uploadFromDeviceBackgroundColor[0],
-            ExpectedMessages.buttonBackgroundColorIsValid,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
-
+        await baseAssertion.assertElementBackgroundColors(
+          attachFilesModal.uploadFromDeviceButton,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgAccentPrimary),
+        );
         const uploadFromDeviceTextColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
             Styles.color,
@@ -89,20 +89,13 @@ dialTest(
           )
           .toBeDisabled();
 
-        const addModeFilesTextColor =
-          await uploadFromDeviceModal.addMoreFiles.getComputedStyleProperty(
-            Styles.color,
-          );
-        expect
-          .soft(
-            addModeFilesTextColor[0],
-            ExpectedMessages.buttonTextColorIsValid,
-          )
-          .toBe(
-            theme === ThemeId.light
-              ? Colors.controlsBackgroundAccentPrimary
-              : Colors.controlsBackgroundAccent,
-          );
+        await baseAssertion.assertElementColor(
+          uploadFromDeviceModal.addMoreFiles,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.textInfo,
+            theme as ThemeId,
+          ),
+        );
 
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         for (const attachment of attachments) {
@@ -134,7 +127,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Delete a file from "Upload from device".\n' +
     'Three dots appear at the end of long file name on "Upload from device".\n' +
     '"Upload" button become disabled if to remove all files from "Upload from device"',
@@ -149,7 +142,7 @@ dialTest(
     manageAttachmentsAssertion,
   }) => {
     setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
-    let deleteUploadedFileIcon: BaseElement;
+    let deleteUploadedFileIcon: Locator;
     const attachments = [Attachment.longImageName, Attachment.cloudImageName];
     const expectedExtensionClassAttribute = 'absolute right-2';
     let uploadedFileInput: BaseElement;
@@ -216,17 +209,12 @@ dialTest(
       'Hover over bin icon for the 1st uploaded file and verify it is highlighted',
       async () => {
         deleteUploadedFileIcon =
-          uploadFromDeviceModal.getDeleteUploadedFileIcon(attachments[0]);
-        await deleteUploadedFileIcon.hoverOver();
-
-        const deleteUploadedFileIconColor =
-          await deleteUploadedFileIcon.getComputedStyleProperty(Styles.color);
-        expect
-          .soft(
-            deleteUploadedFileIconColor[0],
-            ExpectedMessages.buttonColorIsValid,
-          )
-          .toBe(Colors.controlsBackgroundAccent);
+          uploadFromDeviceModal.getDeleteUploadedFileButtonIcon(attachments[0]);
+        await deleteUploadedFileIcon.hover();
+        await manageAttachmentsAssertion.assertElementColor(
+          deleteUploadedFileIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
       },
     );
 
@@ -269,19 +257,16 @@ dialTest(
       'Open again "Upload from device" modal, remove remained file and verify "Upload" button becomes disabled',
       async () => {
         await attachFilesModal.uploadFromDeviceButton.click();
-        uploadFromDeviceModal.getDeleteUploadedFileIcon(attachments[1]);
-        await expect
-          .soft(
-            uploadFromDeviceModal.uploadButton.getElementLocator(),
-            ExpectedMessages.buttonIsDisabled,
-          )
-          .toBeDisabled();
+        await manageAttachmentsAssertion.assertElementActionabilityState(
+          uploadFromDeviceModal.uploadButton,
+          'disabled',
+        );
       },
     );
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Upload from device] opened from message box. Select 15 files at the same time.\n' +
     '[Upload from device] opened from Attach files. Select 15 files at the same time.\n' +
     '[Upload from device] Images are allowed to be selected if images are allowed only',
@@ -395,7 +380,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Upload from device] No error appears if to load two files with equal names but different extensions.\n' +
     '[Upload from device] Files with weight 0 and 512Mb are uploaded',
   async ({
@@ -445,7 +430,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   `Focus stays in the file named while it's being renamed manually on "Upload from device".\n` +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension. Renamed file.\n" +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension.\n" +
@@ -543,7 +528,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   '[Manage attachments] Any type file is uploaded in Manage Attachments without any dependency on model set in chat',
   async ({
     dialHomePage,

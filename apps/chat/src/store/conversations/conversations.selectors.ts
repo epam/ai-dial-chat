@@ -807,6 +807,12 @@ const selectAction = (state: RootState) =>
 const selectMoveToConversationId = (state: RootState) =>
   rootSelector(state).moveToConversationId;
 
+const selectDeletingConversationId = (state: RootState) =>
+  rootSelector(state).deletingConversationId;
+
+const selectExportingConversationId = (state: RootState) =>
+  rootSelector(state).exportingConversationId;
+
 export const ConversationsSelectors = {
   selectConversations,
   selectConversationsByFolderId,
@@ -885,4 +891,6 @@ export const ConversationsSelectors = {
   selectIsNotAllowed,
   selectNotAllowedItemsForDisplay,
   selectMoveToConversationId,
+  selectDeletingConversationId,
+  selectExportingConversationId,
 };

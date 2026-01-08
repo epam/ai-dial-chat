@@ -14,6 +14,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { canEditSharedFolderOrParent } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';
+import { isMacOs } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -95,9 +96,7 @@ export function FileItemContextMenu({
         dataQa: 'save',
         additionalNameNode: isCodeEditorFile ? (
           <span className="pl-2 text-secondary">
-            {navigator.userAgent.toLowerCase().includes('mac')
-              ? 'Cmd+S'
-              : 'Ctrl+S'}
+            {isMacOs ? '⌘+S' : 'Ctrl+S'}
           </span>
         ) : null,
         display: !!onSave,

@@ -1,5 +1,5 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -60,9 +60,8 @@ export const ToolsetEditorHeader = ({
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
 
-  const { formState, trigger } = useFormContext<ToolsetEditorForm>();
-  const errors = formState.errors;
-  const isValid = formState.isValid;
+  const { trigger, control } = useFormContext<ToolsetEditorForm>();
+  const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
   const errorSteps = useMemo(() => {
     return stepFields.reduce<Set<ToolsetEditorSteps>>(

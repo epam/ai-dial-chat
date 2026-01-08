@@ -1,21 +1,22 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment, ExpectedMessages } from '@/src/testData';
+import { API, Attachment } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Generated in response picture appears in Manage attachments',
   async ({
     dialHomePage,
+    filesManagerPage,
     setTestIds,
-    chatBar,
+    navigationPanel,
     conversationData,
     localStorageManager,
     dataInjector,
     fileApiHelper,
-    attachFilesModal,
-    attachedAllFiles,
+    filesManagerFoldersTree,
+    filesManagerGrid,
+    filesManagerGridAssertion,
     chatHeader,
     chat,
     talkToAgentDialog,
@@ -54,64 +55,44 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Manage attachments" modal and verify image is placed inside nested folders',
+      'Open "Files manager" page and verify image is placed inside nested folders',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectEntity(responseImageConversation.name);
-        await chatBar.openManageAttachmentsModal();
-
-        for (const segment of imagePathSegments) {
-          await attachedAllFiles.expandFolder(segment, {
-            isHttpMethodTriggered: true,
-          });
-        }
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              imagePathSegments[imagePathSegments.length - 1],
-              Attachment.sunImageName,
-            ),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
-        await attachFilesModal.closeButton.click();
+        await filesManagerPage.openFilesManagerPage();
+        await filesManagerPage.waitForPageLoaded();
+        await filesManagerFoldersTree.expandFolders(...imagePathSegments);
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
-      'Generate one more picture for the same conversation and verify it is visible on "Manage attachments" modal',
+      'Generate one more picture for the same conversation and verify it is visible on "Files manager"',
       async () => {
+        await navigationPanel.backToChat();
         await dialHomePage.mockChatImageResponse(
           defaultModel.id,
           Attachment.cloudImageName,
         );
+        await conversations.selectEntity(responseImageConversation.name);
         await chat.sendRequestWithButton(requestContent);
         await fileApiHelper.putFile(Attachment.cloudImageName, {
           parentPath: imagePath,
         });
 
-        await chatBar.openManageAttachmentsModal();
-        for (const segment of imagePathSegments) {
-          await attachedAllFiles.expandFolder(segment, {
-            isHttpMethodTriggered: true,
-          });
-        }
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              imagePathSegments[imagePathSegments.length - 1],
-              Attachment.cloudImageName,
-            ),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
-        await attachFilesModal.closeButton.click();
+        await navigationPanel.goToFilesManager();
+        await filesManagerFoldersTree.expandFolders(...imagePathSegments);
+        await filesManagerGridAssertion.assertElementState(
+          filesManagerGrid.gridRowByNameCell(Attachment.cloudImageName),
+          'visible',
+        );
+        await navigationPanel.backToChat();
       },
     );
 
     await dialTest.step(
-      'Change conversation model, generate one more picture and verify it is visible on "Manage attachments" modal under new model folder',
+      'Change conversation model, generate one more picture and verify it is visible on "Files manager" under new model folder',
       async () => {
         await chatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(updatedModel);
@@ -125,21 +106,12 @@ dialTest(
           parentPath: secondImagePath,
         });
 
-        await chatBar.openManageAttachmentsModal();
-        for (const segment of secondImagePathSegments) {
-          await attachedAllFiles.expandFolder(segment, {
-            isHttpMethodTriggered: true,
-          });
-        }
-        await expect
-          .soft(
-            attachedAllFiles.getFolderEntity(
-              secondImagePathSegments[secondImagePathSegments.length - 1],
-              Attachment.flowerImageName,
-            ),
-            ExpectedMessages.fileIsAttached,
-          )
-          .toBeVisible();
+        await navigationPanel.goToFilesManager();
+        await filesManagerFoldersTree.expandFolders(...secondImagePathSegments);
+        await filesManagerGridAssertion.assertElementState(
+          filesManagerGrid.gridRowByNameCell(Attachment.flowerImageName),
+          'visible',
+        );
       },
     );
   },

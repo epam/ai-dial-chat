@@ -17,7 +17,6 @@ import {
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
-import { getEntityStatus } from '@/src/utils/marketplace';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -41,16 +40,20 @@ import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/Entit
 import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/MarketplaceEntityIndicator';
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
+export type DisabledActions = Record<string, boolean>;
+
 interface ItemCardViewProps<T extends MarketplaceEntity> {
   entity: T;
   isSelected: boolean;
   onClick: (entity: T) => void;
   conversation?: Conversation;
   disabled?: boolean;
+  hasError?: boolean;
   isUnavailableModel?: boolean;
   hasContextMenu?: boolean;
   className?: string;
   selectedBaseIdsSet?: Set<string>;
+  overrideDisabledActions?: Partial<DisabledActions>;
 }
 
 const agentDisabledActions = {
@@ -74,10 +77,12 @@ export const ItemCardView = <T extends MarketplaceEntity>({
   onClick,
   conversation,
   disabled,
+  hasError,
   isUnavailableModel,
   hasContextMenu = true,
   className,
   selectedBaseIdsSet,
+  overrideDisabledActions,
 }: ItemCardViewProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -90,7 +95,16 @@ export const ItemCardView = <T extends MarketplaceEntity>({
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
-  const { isLoggedOut } = getEntityStatus(entity);
+  const disabledActions = useMemo(() => {
+    const baseActions = isDialAiEntityModel(entity)
+      ? agentDisabledActions
+      : toolsetDisabledActions;
+
+    return {
+      ...baseActions,
+      ...overrideDisabledActions,
+    };
+  }, [entity, overrideDisabledActions]);
 
   const versionsToSelect = useMemo(() => {
     const sourceList = isDialAiEntityModel(entity)
@@ -133,7 +147,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
         'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
-        (!!isUnavailableModel || isLoggedOut) && 'border-error',
+        hasError && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         isOldReplay && 'pb-2',
         className,
@@ -146,11 +160,7 @@ export const ItemCardView = <T extends MarketplaceEntity>({
           <MarketplaceEntityContextMenu
             className="xl:invisible group-hover:xl:visible"
             entity={entity}
-            disabledActions={
-              isDialAiEntityModel(entity)
-                ? agentDisabledActions
-                : toolsetDisabledActions
-            }
+            disabledActions={disabledActions}
           />
         </div>
       )}

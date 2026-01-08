@@ -1,14 +1,21 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Controller,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from 'react-hook-form';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
+  getEntityDisplayName,
   getSharedTooltip,
   isDialAiEntityModel,
 } from '@/src/utils/app/application';
+import { doesModelAllowTemperature } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
@@ -49,6 +56,7 @@ import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/Toolset
 import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { isEqual } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
@@ -93,25 +101,42 @@ export const QuickApp2Form = () => {
     [modelsMap, toolsetsMap],
   );
 
-  const {
-    control,
-    formState,
-    register,
-    setError,
-    clearErrors,
-    getValues,
-    setValue,
-  } = useFormContext<QuickApp2FormType>();
-  const errors = formState.errors;
+  const { control, register, setError, clearErrors, getValues, setValue } =
+    useFormContext<QuickApp2FormType>();
+  const { errors } = useFormState<QuickApp2FormType>({ control });
 
   const modelId = useWatch({
     control,
     name: 'model',
   });
 
+  const agentsAndToolsets = useWatch({
+    control,
+    name: 'agentsAndToolsets',
+  });
+
+  const sortedAgentsAndToolsets = useMemo(() => {
+    if (!agentsAndToolsets || Object.keys(allEntitiesMap).length === 0) {
+      return agentsAndToolsets || [];
+    }
+    return [...agentsAndToolsets].sort((a, b) =>
+      getEntityDisplayName(a, allEntitiesMap).localeCompare(
+        getEntityDisplayName(b, allEntitiesMap),
+      ),
+    );
+  }, [agentsAndToolsets, allEntitiesMap]);
+
+  useEffect(() => {
+    if (!isEqual(sortedAgentsAndToolsets, agentsAndToolsets)) {
+      setValue('agentsAndToolsets', sortedAgentsAndToolsets, {
+        shouldDirty: false,
+      });
+    }
+  }, [sortedAgentsAndToolsets, agentsAndToolsets, setValue]);
+
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
-    return selectedModel?.features?.temperature !== false;
+    return selectedModel ? doesModelAllowTemperature(selectedModel) : true;
   }, [modelId, modelsMap]);
 
   const isSharedWithMe = !!appDetails?.sharedWithMe;

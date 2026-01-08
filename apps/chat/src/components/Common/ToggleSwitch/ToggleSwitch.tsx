@@ -44,7 +44,7 @@ export function ToggleSwitch({
           disabled={disabled}
           onChange={handleSwitch}
           id="toggle"
-          className="sr-only"
+          className="sr-only h-0"
           checked={isOn}
         />
         <label htmlFor="toggle" className={switchClassName}>

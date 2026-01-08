@@ -19,6 +19,7 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { TabOption, Tabs } from './Tabs';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import omit from 'lodash-es/omit';
 
 // Use dynamic import to prevent SSR issues with Monaco Editor
@@ -133,16 +134,14 @@ export const MonacoEditor = memo(function MonacoEditor(
             )}
           </div>
           <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
-            <button
-              type="button"
+            <DialButton
               className="p-2 text-secondary hover:text-accent-primary"
               onClick={(e) => {
                 setIsFullScreen(!isFullScreen);
                 dispatchMouseLeaveEvent(e);
               }}
-            >
-              <FullScreenIcon size={18} />
-            </button>
+              iconBefore={<FullScreenIcon size={18} />}
+            />
           </Tooltip>
         </div>
       )}

@@ -25,6 +25,7 @@ import {
   isMessageInputDisabled,
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
+import { allowEnterClick } from '@/src/utils/app/keyboard';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -61,6 +62,7 @@ import {
   MessageFormValue,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -355,14 +357,16 @@ export const UserMessage = memo(function UserMessage({
     ],
   );
 
+  const enterType = useAppSelector(UISelectors.selectEnterType);
+
   const handlePressEnter = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
+      if (!isTyping && allowEnterClick(e, enterType)) {
         e.preventDefault();
         handleEditMessage(formValue, messageContent);
       }
     },
-    [formValue, handleEditMessage, isTyping, messageContent],
+    [enterType, formValue, handleEditMessage, isTyping, messageContent],
   );
 
   const handleUnselectFile = useCallback(
@@ -574,28 +578,26 @@ export const UserMessage = memo(function UserMessage({
           </div>
 
           <div className="relative flex gap-3">
-            <button
-              className="button button-secondary"
+            <DialButton
+              variant={ButtonVariant.Secondary}
+              label={t('Cancel')}
               onClick={() => {
                 setMessageContent(message.content);
                 setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
                 handleToggleEditing(false);
               }}
               data-qa="cancel"
-            >
-              {t('Cancel')}
-            </button>
+            />
             {!isInputHidden && (
-              <button
-                className="button button-primary"
+              <DialButton
+                variant={ButtonVariant.Primary}
+                label={t('Save & Submit')}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={
                   isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
                 }
                 data-qa="save-and-submit"
-              >
-                {t('Save & Submit')}
-              </button>
+              />
             )}
             <div ref={anchorRef} className="absolute bottom-0"></div>
           </div>

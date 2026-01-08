@@ -1,4 +1,4 @@
-import { ToastOptions, toast } from 'react-hot-toast';
+import { Renderable, ToastOptions, toast } from 'react-hot-toast';
 
 import {
   EMPTY,
@@ -32,6 +32,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
+import { TitledToastMessage } from '@/src/components/Toasts/TitledToastMessage';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -63,6 +64,7 @@ const initEpic: AppEpic = (action$, state$) =>
         chatCollapsedSections: DataService.getChatCollapsedSections(),
         promptCollapsedSections: DataService.getPromptCollapsedSections(),
         fileCollapsedSections: DataService.getFileCollapsedSections(),
+        enterType: DataService.getEnterType(),
       });
     }),
     switchMap(
@@ -78,6 +80,7 @@ const initEpic: AppEpic = (action$, state$) =>
         chatCollapsedSections,
         promptCollapsedSections,
         fileCollapsedSections,
+        enterType,
       }) => {
         const actions: AppAction[] = [UIActions.initTheme()];
 
@@ -85,6 +88,7 @@ const initEpic: AppEpic = (action$, state$) =>
           actions.push(UIActions.setCustomLogo({ logo: customLogo }));
         }
 
+        actions.push(UIActions.setEnterType(enterType));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
         actions.push(
@@ -175,6 +179,13 @@ const saveThemeEpic: AppEpic = (action$) =>
         `${payload} ${payload.startsWith('dark') ? 'dark' : 'light'}` || '';
     }),
     switchMap(({ payload }) => DataService.setTheme(payload)),
+    ignoreElements(),
+  );
+
+const saveEnterTypeEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setEnterType.type),
+    switchMap(({ payload }) => DataService.setEnterType(payload)),
     ignoreElements(),
   );
 
@@ -275,21 +286,28 @@ const showToastEpic: AppEpic = (action$) =>
         icon: payload.icon,
       };
 
+      let content: Renderable = message;
+      if (payload.title) {
+        content = (
+          <TitledToastMessage title={payload.title} message={message} />
+        );
+      }
+
       switch (payload.type) {
         case ToastType.Error:
-          toast.error(message, { ...toastConfig, id: ToastType.Error });
+          toast.error(content, { ...toastConfig, id: ToastType.Error });
           break;
         case ToastType.Success:
-          toast.success(message, { ...toastConfig, id: ToastType.Success });
+          toast.success(content, { ...toastConfig, id: ToastType.Success });
           break;
         case ToastType.Warning:
-          toast.loading(message, { ...toastConfig, id: ToastType.Warning });
+          toast.loading(content, { ...toastConfig, id: ToastType.Warning });
           break;
         case ToastType.Loading:
-          toast.loading(message, { ...toastConfig, id: ToastType.Loading });
+          toast.loading(content, { ...toastConfig, id: ToastType.Loading });
           break;
         default:
-          toast.loading(message, { ...toastConfig, id: ToastType.Info });
+          toast.loading(content, { ...toastConfig, id: ToastType.Info });
           break;
       }
     }),
@@ -405,6 +423,7 @@ export const UIEpics = combineEpics(
   initEpic,
   initThemeEpic,
   saveThemeEpic,
+  saveEnterTypeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
   saveShowMarketplaceFilterbarEpic,

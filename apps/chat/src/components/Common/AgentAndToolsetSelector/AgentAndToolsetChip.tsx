@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { useMemo } from 'react';
 
 import classNames from 'classnames';
 
@@ -13,7 +13,8 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
-import { StatusMessage } from './StatusMessage';
+
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -42,16 +43,15 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
   isError,
   onRemove,
 }) => (
-  <button
+  <DialCloseButton
     className={classNames(
       'mr-1 p-1 text-secondary',
-      isError ? 'hover:text-error' : 'hover:text-accent-primary',
+      isError && 'hover:enabled:text-error',
     )}
-    onClick={() => onRemove?.(id)}
+    onClose={() => onRemove?.(id)}
     aria-label="Remove item"
-  >
-    <IconX size={14} />
-  </button>
+    size={18}
+  />
 );
 
 interface ChipBodyProps {
@@ -108,7 +108,6 @@ interface AgentAndToolsetChipProps {
   readonly?: boolean;
   onItemClick?: (id: string) => void;
   isInSelectionList?: boolean;
-  customTooltip?: string;
 }
 
 export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
@@ -118,49 +117,44 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   readonly,
   onItemClick,
   isInSelectionList,
-  customTooltip,
 }) => {
-  const { isInvalid, isLoggedOut, isError } = getEntityStatus(item);
+  const { isInvalid, isLoggedOut, isError, isUndeployed } =
+    getEntityStatus(item);
 
   const name = !item
     ? getEntityNameFromId(id, { removeVersion: true })
     : item.name;
   const version = !item ? getVersionFromId(id) : item.version;
 
+  const tooltipContent = useMemo(() => {
+    return (
+      <ChipTooltipContent
+        id={id}
+        item={item}
+        name={name}
+        version={version}
+        isInvalid={isInvalid}
+        isLoggedOut={isLoggedOut}
+        isUndeployed={isUndeployed}
+        isInSelectionList={isInSelectionList}
+        readonly={readonly}
+      />
+    );
+  }, [
+    id,
+    item,
+    name,
+    version,
+    isInvalid,
+    isLoggedOut,
+    isUndeployed,
+    isInSelectionList,
+    readonly,
+  ]);
+
   return (
     <ChipWrapper isError={isError}>
-      <Tooltip
-        isTriggerClickable
-        tooltip={
-          <>
-            {customTooltip && (
-              <div className="px-2 pt-1">
-                {readonly && (
-                  <StatusMessage
-                    id={id}
-                    item={item}
-                    isInvalid={isInvalid}
-                    isLoggedOut={isLoggedOut}
-                    isInSelectionList={isInSelectionList}
-                    readonly={readonly}
-                  />
-                )}
-                <span>{customTooltip}</span>
-              </div>
-            )}
-            <ChipTooltipContent
-              id={id}
-              item={item}
-              name={name}
-              version={version}
-              isInvalid={isInvalid}
-              isLoggedOut={isLoggedOut}
-              isInSelectionList={isInSelectionList}
-              hideStatusMessage={readonly}
-            />
-          </>
-        }
-      >
+      <Tooltip isTriggerClickable tooltip={tooltipContent}>
         <ChipBody
           id={id}
           item={item}

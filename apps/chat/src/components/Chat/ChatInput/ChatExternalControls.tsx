@@ -19,6 +19,7 @@ import {
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -77,20 +78,23 @@ export function ChatExternalControls({
   return (
     <div className="flex justify-center">
       <div className="relative mx-2 mb-2 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
-        <button
-          className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center gap-2 border-primary bg-layer-2 p-3 hover:bg-layer-4"
+        <DialButton
+          className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center border-primary bg-layer-2 p-3"
+          variant={ButtonVariant.Secondary}
           onClick={handleDuplicate}
           data-qa="duplicate"
-        >
-          <span className="text-secondary">
-            <IconCopy width={18} height={18} />
-          </span>
-          {isChatReadyForInput && !isReadOnly
-            ? t('Duplicate')
-            : t(
-                `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
-              )}
-        </button>
+          iconBefore={
+            <IconCopy className="text-secondary" width={18} height={18} />
+          }
+          label={
+            isChatReadyForInput && !isReadOnly
+              ? t('Duplicate')
+              : t(
+                  `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
+                )
+          }
+        />
+
         {showScrollDownButton && (
           <ScrollDownButton
             className="-top-16 right-0 md:-top-20"

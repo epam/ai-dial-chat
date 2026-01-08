@@ -81,6 +81,7 @@ import {
   Role,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
@@ -90,7 +91,17 @@ const isWideScreen = () => !is4XLScreen();
 const checkIsWideLayout = (messagesLength: number, isCompareMode: boolean) =>
   isWideScreen() && !messagesLength && !isCompareMode;
 
-const ChatView = memo(() => {
+interface CustomViewerType {
+  title: string;
+  viewerUrl: string;
+  applicationId: string;
+}
+
+interface ChatViewProps {
+  customViewer?: CustomViewerType;
+}
+
+const ChatView = memo(({ customViewer }: ChatViewProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -253,14 +264,14 @@ const ChatView = memo(() => {
     [dispatch],
   );
 
-  const setAutoScroll = () => {
+  const setAutoScroll = useCallback(() => {
     if (disableAutoScrollTimeoutRef.current !== null) {
       clearTimeout(disableAutoScrollTimeoutRef.current);
     }
 
     setAutoScrollEnabled(true);
     setShowScrollDownButton(false);
-  };
+  }, []);
 
   const scrollDown = useCallback(
     (force = false) => {
@@ -271,12 +282,8 @@ const ChatView = memo(() => {
         });
       }
     },
-    [autoScrollEnabled],
+    [autoScrollEnabled, setAutoScroll],
   );
-
-  useEffect(() => {
-    scrollDown();
-  }, [scrollDown]);
 
   const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
 
@@ -312,7 +319,7 @@ const ChatView = memo(() => {
 
       lastScrollTop.current = scrollTop;
     }
-  }, []);
+  }, [setAutoScroll]);
 
   const handleChatMessagesResize = useCallback(() => {
     if (
@@ -405,7 +412,7 @@ const ChatView = memo(() => {
       setPrevSelectedIds(selectedConversationsIds);
       setIsShowChatSettings(false);
     }
-  }, [prevSelectedIds, selectedConversationsIds]);
+  }, [prevSelectedIds, selectedConversationsIds, setAutoScroll]);
 
   const handleDeleteMessage = useCallback(
     (index: number, conv: Conversation) => {
@@ -590,42 +597,6 @@ const ChatView = memo(() => {
       (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
       !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
-
-  const applicationTypeSchemas = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
-
-  const customViewer = useMemo(() => {
-    const model = modelsMap[selectedConversations[0]?.model?.id];
-
-    if (!model) return;
-
-    if (model.viewerUrl) {
-      return {
-        viewerUrl: model.viewerUrl,
-        title: model.name,
-        applicationId: model.id,
-      };
-    }
-
-    if (
-      model.applicationTypeSchemaId &&
-      applicationTypeSchemas.some(
-        (schema) => schema.id === model.applicationTypeSchemaId,
-      )
-    ) {
-      const schema = applicationTypeSchemas.find(
-        (schema) => schema.id === model.applicationTypeSchemaId,
-      );
-      if (schema?.viewerUrl) {
-        return {
-          viewerUrl: schema.viewerUrl,
-          title: schema.displayName,
-          applicationId: model.id,
-        };
-      }
-    }
-  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
     if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
@@ -1006,11 +977,7 @@ const ChatView = memo(() => {
 
 interface CustomChatViewerProps {
   setShowSettings: (value: boolean) => void;
-  customViewer: {
-    title: string;
-    viewerUrl: string;
-    applicationId: string;
-  };
+  customViewer: CustomViewerType;
 }
 
 const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
@@ -1022,6 +989,9 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
 
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
   );
 
   const handleTalkToConversationId = useCallback(
@@ -1037,9 +1007,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
     return router.pathname === Routes.AppsEditor;
   }, [router.pathname]);
 
-  const isStartedCustomViewerConversation = useAppSelector(
-    ConversationsSelectors.selectIsStartedCustomViewerConversation,
-  );
   return (
     <>
       {selectedConversations[0].messages.length !== 0 ||
@@ -1059,9 +1026,14 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
             </div>
 
             <div className="flex w-full flex-col items-center pt-3 md:pt-5">
-              <button
-                className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-                data-qa="start-working"
+              <DialButton
+                className="mb-2 flex items-center md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                variant={ButtonVariant.Primary}
+                label={t('Start working with the {{viewerTitle}}', {
+                  ns: Translation.Chat,
+                  viewerTitle: customViewer.title,
+                })}
+                iconBefore={<IconPlayerPlay size={18} />}
                 onClick={() =>
                   dispatch(
                     ConversationsActions.setIsStartedCustomViewerConversation(
@@ -1069,26 +1041,10 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
                     ),
                   )
                 }
-              >
-                <IconPlayerPlay size={18} />
-                <span>
-                  {t('Start working with the')}
-                  {` ${customViewer.title}`}
-                </span>
-              </button>
+              />
             </div>
           </div>
         ))}
-      {(isStartedCustomViewerConversation ||
-        isApplicationPreviewChat ||
-        selectedConversations[0].messages.length !== 0) && (
-        <CustomChatViewer
-          conversation={selectedConversations[0]}
-          id={customViewer.applicationId}
-          title={customViewer.title}
-          customViewerUrl={customViewer.viewerUrl}
-        />
-      )}
     </>
   );
 };
@@ -1103,6 +1059,8 @@ export function Chat({ isPreview }: ChatProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const router = useRouter();
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -1131,10 +1089,52 @@ export function Chat({ isPreview }: ChatProps) {
   const isPublicationUpdating = useAppSelector(
     PublicationSelectors.selectIsPublicationUpdating,
   );
+  const isStartedCustomViewerConversation = useAppSelector(
+    ConversationsSelectors.selectIsStartedCustomViewerConversation,
+  );
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
   );
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === Routes.AppsEditor;
+  }, [router.pathname]);
+
+  const customViewer = useMemo(() => {
+    const model = modelsMap[selectedConversations[0]?.model?.id];
+
+    if (!model) return;
+
+    if (model.viewerUrl) {
+      return {
+        viewerUrl: model.viewerUrl,
+        title: model.name,
+        applicationId: model.id,
+      };
+    }
+
+    if (
+      model.applicationTypeSchemaId &&
+      applicationTypeSchemas.some(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      )
+    ) {
+      const schema = applicationTypeSchemas.find(
+        (schema) => schema.id === model.applicationTypeSchemaId,
+      );
+      if (schema?.viewerUrl) {
+        return {
+          viewerUrl: schema.viewerUrl,
+          title: schema.displayName,
+          applicationId: model.id,
+        };
+      }
+    }
+  }, [modelsMap, applicationTypeSchemas, selectedConversations]);
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());
@@ -1196,9 +1196,25 @@ export function Chat({ isPreview }: ChatProps) {
     );
   }
 
+  if (
+    customViewer &&
+    (isStartedCustomViewerConversation ||
+      isApplicationPreviewChat ||
+      selectedConversations[0].messages.length !== 0)
+  ) {
+    return (
+      <CustomChatViewer
+        conversation={selectedConversations[0]}
+        id={customViewer.applicationId}
+        title={customViewer.title}
+        customViewerUrl={customViewer.viewerUrl}
+      />
+    );
+  }
+
   return (
     <>
-      <ChatView />
+      <ChatView customViewer={customViewer} />
       {!isPreview && <ChatInputFooter />}
     </>
   );

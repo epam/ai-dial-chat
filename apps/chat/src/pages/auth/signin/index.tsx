@@ -7,6 +7,8 @@ import { Provider } from 'next-auth/providers';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { constructPath } from '@/src/utils/app/shared-utils';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import {
@@ -18,10 +20,14 @@ import {
   isServerSessionValid,
 } from '@/src/utils/auth/session';
 
+import { Translation } from '@/src/types/translation';
+
 import { SettingsActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const cleanProviderId = (id: string) => id.replace(/[1-9]\d*$/, '');
 
@@ -38,6 +44,7 @@ export default function Signin({
 }: PageProps) {
   const dispatch = useAppDispatch();
   const { status, ...session } = useSession();
+  const { t } = useTranslation(Translation.Common);
   const router = useRouter();
   const logoImgSrc = useMemo(() => {
     if (themesHostDefined) {
@@ -113,24 +120,24 @@ export default function Signin({
   }
 
   return (
-    <div className="flex size-full h-screen items-center justify-center bg-auth-layer-0">
-      <div className="mt-8 w-[368px] rounded bg-auth-layer-1 px-8 py-5">
-        <div className="my-5 flex justify-center">
+    <div className="flex size-full h-screen flex-col items-center overflow-auto bg-auth-layer-0">
+      <div className="shrink grow"></div>
+      <div className="my-1 h-fit w-[368px] shrink-0 grow-0 rounded bg-auth-layer-1 p-6">
+        <div className="mb-6 flex justify-center">
           {!!logoImgSrc && (
             <Image src={logoImgSrc} alt="Brand" width={70} height={70} />
           )}
         </div>
         <div className="flex flex-col gap-4">
           {Object.values(providers).map((provider: Provider) => (
-            <button
-              key={provider.id + provider.name}
-              className="button button-secondary flex h-16 place-content-center gap-4 px-4 py-3"
+            <DialButton
+              className="place-content-center gap-4 p-4"
               onClick={() => {
                 void handleSignIn(provider);
               }}
-              data-qa={provider.id}
-            >
-              <span className="flex shrink-0 flex-wrap place-content-center">
+              key={provider.id + provider.name}
+              variant={ButtonVariant.Secondary}
+              iconBefore={
                 <Image
                   className="h-6"
                   src={`https://authjs.dev/img/providers/${cleanProviderId(provider.id)}.svg`}
@@ -138,14 +145,15 @@ export default function Signin({
                   width={24}
                   height={24}
                 />
-              </span>
-              <div className="flex flex-wrap content-center">
-                <span className="text-lg">Sign in with {provider.name}</span>
-              </div>
-            </button>
+              }
+              label={`${t('Sign in with')} ${provider.name}`}
+              textClassName="text-lg"
+              data-qa={provider.id}
+            />
           ))}
         </div>
       </div>
+      <div className="shrink grow"></div>
     </div>
   );
 }

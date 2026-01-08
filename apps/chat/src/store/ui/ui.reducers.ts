@@ -3,6 +3,7 @@ import { JSX } from 'react';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import { EnterType } from '@/src/types/settings';
 import { ThemesConfig } from '@/src/types/themes';
 import { ToastType } from '@/src/types/toasts';
 
@@ -45,6 +46,7 @@ const initialState: UIState = {
     [FeatureType.Chat]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
     [FeatureType.Prompt]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
   },
+  enterType: EnterType.Enter,
 };
 
 export const uiSlice = createSlice({
@@ -58,6 +60,9 @@ export const uiSlice = createSlice({
     initTheme: (state) => state,
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
+    },
+    setEnterType: (state, { payload }: PayloadAction<EnterType>) => {
+      state.enterType = payload;
     },
     setAvailableThemes: (state, { payload }: PayloadAction<ThemesConfig>) => {
       state.availableThemes = payload.themes;
@@ -125,6 +130,7 @@ export const uiSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string | null;
+        title?: string;
         type?: ToastType;
         response?: Response;
         icon?: JSX.Element;

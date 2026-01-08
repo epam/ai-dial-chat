@@ -1,19 +1,24 @@
 import { IconMessages, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
-import React, { FocusEvent, useCallback, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { FocusEvent, useCallback, useEffect, useMemo } from 'react';
+import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isApplicationDeployed,
   isApplicationDeploymentInProgress,
+  isExternalAppEditor,
 } from '@/src/utils/app/application';
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationStatus, ApplicationType } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { MarketplaceEditorSteps, PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
@@ -21,6 +26,7 @@ import { ApplicationActions, ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
+  ApplicationTypesSchemasSelectors,
   ConversationsSelectors,
   MarketplaceSelectors,
   ModelsSelectors,
@@ -28,7 +34,6 @@ import {
 
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
-import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 
 import { GeneralPreview } from '@/src/components/AppsEditor/AppEditorPreview/GeneralPreview';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -37,6 +42,7 @@ import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEdito
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { ButtonVariant, DialButton } from '@epam/ai-dial-ui-kit';
 
 const ChatPreview = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -51,8 +57,8 @@ const ChatPreview = () => {
   const type = decodeURIComponent(typeQuery.toString());
   const appReference = decodeURIComponent(referenceQuery?.toString() ?? '');
 
-  const { formState } = useFormContext();
-  const isApplicationValid = formState.isValid;
+  const { control } = useFormContext();
+  const { isValid: isApplicationValid } = useFormState({ control });
 
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -132,15 +138,15 @@ const ChatPreview = () => {
               </span>
               {t('after making changes.')}
             </div>
-            <button
-              className="button button-accent-secondary mb-2 flex items-center gap-2 text-accent-secondary md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-              data-qa="deploy-code-app"
-              disabled={!isApplicationValid}
+            <DialButton
+              label={t('Deploy code app')}
+              className="text-accent-secondary"
+              variant={ButtonVariant.Tertiary}
               onClick={handleDeployClick}
-            >
-              <IconPlayerPlay size={18} />
-              <span>{t('Deploy code app')}</span>
-            </button>
+              disabled={!isApplicationValid}
+              data-qa="deploy-code-app"
+              iconBefore={<IconPlayerPlay size={18} />}
+            />
           </div>
         )
       ) : (
@@ -164,8 +170,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
   const type = decodeURIComponent(typeQuery.toString());
   const { previewMode } = useMarketplaceEditorView();
 
-  const { formState } = useFormContext();
-  const isApplicationValid = formState.isValid;
+  const { control } = useFormContext();
+  const { isValid: isApplicationValid } = useFormState({ control });
 
   const editorStep = useAppSelector(ApplicationSelectors.selectEditorStep);
   const appDetails = useAppSelector(
@@ -185,12 +191,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     ConversationsSelectors.selectPreviewConversationId,
   );
 
-  const externalAppsSchemaId = useMemo(() => {
-    return DefaultsService.get(
-      'externalAppsSchemaId',
-      DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
-    );
-  }, []);
+  const isExternalAppEditing = useMemo(() => isExternalAppEditor(type), [type]);
 
   const isPreviewHalf = previewMode === PreviewMode.half;
   const isPreviewFull = previewMode === PreviewMode.full;
@@ -202,6 +203,11 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     () => !!modelFromState && isApplicationDeployed(modelFromState),
     [modelFromState],
   );
+  const schema = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+  );
+  const hasCustomEditor =
+    !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
   const showRedeployButton =
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
@@ -256,10 +262,15 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     previewConversationId,
   ]);
 
+  const screenState = useScreenState();
+
   return (
     <>
       <div
-        className="flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4"
+        className={classNames(
+          'flex max-w-full items-center justify-between px-0 py-3 max-md:self-end md:px-5 md:py-4 xl:px-5 xl:py-4',
+          isExternalAppEditing && 'hidden',
+        )}
         data-qa="preview-header"
       >
         <div className="mr-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
@@ -274,15 +285,15 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
         <div className="flex space-x-2">
           {showRedeployButton && (
-            <button
-              className="xl:button button-accent-secondary mb-0 flex items-center gap-2 border-r border-secondary px-3 py-0 text-accent-secondary md:last:mb-6 lg:max-w-3xl xl:mx-auto xl:border-none"
+            <DialButton
+              className="text-accent-secondary"
+              variant={ButtonVariant.Tertiary}
               data-qa="redeploy-code-app"
               disabled={!isApplicationValid}
               onClick={handleRedeploy}
-            >
-              <IconRefresh size={18} />
-              <span>{t('Redeploy')}</span>
-            </button>
+              iconBefore={<IconRefresh size={18} />}
+              label={t('Redeploy')}
+            />
           )}
           {isPreviewHalf && (
             <PreviewModeButton
@@ -293,19 +304,21 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
           {isPreviewFull && (
             <PreviewModeButton
               mode={PreviewMode.half}
-              className="max-xl:hidden"
+              className="rotate-180 max-xl:hidden"
             />
           )}
-          <PreviewModeButton
-            mode={PreviewMode.closed}
-            className="max-xl:hidden"
-          />
+          {(hasCustomEditor || screenState <= ScreenState.MD) && (
+            <PreviewModeButton
+              mode={PreviewMode.closed}
+              className="max-md:hidden"
+            />
+          )}
         </div>
       </div>
 
       {!isPreviewClosed && !!appDetails && (
         <div className="grow overflow-hidden" onFocus={handleFocusChat}>
-          {!externalAppsSchemaId.endsWith(type) ? (
+          {!isExternalAppEditing ? (
             <ChatPreview />
           ) : (
             <GeneralPreview entity={appDetails} dataQA="preview-body" />

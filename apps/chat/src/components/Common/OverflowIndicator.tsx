@@ -6,6 +6,8 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 interface OverflowIndicatorProps {
   count: number;
   tooltipContent: React.ReactNode;
@@ -50,12 +52,12 @@ export const OverflowIndicator = ({
       onOpenChange={setOpen}
       placement={placement}
     >
-      <button
-        type="button"
+      <DialButton
         className={classNames(
-          'flex cursor-pointer items-center rounded border border-accent-primary bg-transparent p-0 px-1.5 py-1 text-xs leading-3 text-primary',
+          'flex items-center rounded border border-accent-primary bg-transparent p-0 px-1.5 py-1',
           className,
         )}
+        textClassName="font-normal leading-3 text-xs"
         onClick={(event) => {
           stopBubbling(event);
           handleDelayShow(!open);
@@ -63,9 +65,8 @@ export const OverflowIndicator = ({
         onMouseEnter={() => handleDelayShow(true)}
         onMouseLeave={() => handleDelayShow(false)}
         data-qa={dataQA}
-      >
-        +{count}
-      </button>
+        label={`+${count}`}
+      />
     </Tooltip>
   );
 };

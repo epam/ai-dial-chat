@@ -21,6 +21,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   onSend: () => void;
@@ -53,20 +54,21 @@ export const SendMessageButton = Inversify.register(
       (isLastAssistantMessageEmpty && !messageIsStreaming)
     ) {
       return (
-        <button
+        <DialButton
           className={classNames(
-            'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary',
+            'absolute bottom-4 hover:text-accent-primary',
             isLastMessageError && 'text-error',
             isOverlay ? 'right-3' : 'right-4',
           )}
           aria-label={t('Send a message')}
           onClick={onSend}
           data-qa="regenerate"
-        >
-          <Tooltip tooltip={tooltip} isTriggerClickable>
-            <IconRefresh size={24} stroke="1.5" />
-          </Tooltip>
-        </button>
+          iconBefore={
+            <Tooltip tooltip={tooltip} isTriggerClickable>
+              <IconRefresh size={24} stroke="1.5" />
+            </Tooltip>
+          }
+        />
       );
     }
 
@@ -76,24 +78,29 @@ export const SendMessageButton = Inversify.register(
       : [IconSend, 'send', isDisabled];
 
     return (
-      <button
+      <DialButton
         className={classNames(
-          'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary disabled:cursor-not-allowed disabled:text-secondary',
+          'absolute bottom-3 hover:text-accent-primary disabled:text-secondary',
           isOverlay ? 'right-3' : 'right-4',
         )}
-        aria-label={t('Send a message')}
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
-      >
-        <Tooltip
-          hideTooltip={!disabled && !messageIsStreaming}
-          tooltip={tooltip}
-          isTriggerClickable
-        >
-          {isSpinner ? <Spinner size={20} /> : <Icon size={24} stroke="1.5" />}
-        </Tooltip>
-      </button>
+        aria-label={t('Send a message')}
+        iconBefore={
+          <Tooltip
+            hideTooltip={!disabled && !messageIsStreaming}
+            tooltip={tooltip}
+            isTriggerClickable
+          >
+            {isSpinner ? (
+              <Spinner size={20} />
+            ) : (
+              <Icon size={24} stroke="1.5" />
+            )}
+          </Tooltip>
+        }
+      />
     );
   },
 );

@@ -23,6 +23,8 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import { DialButton } from '@epam/ai-dial-ui-kit';
+
 interface CreateNewEntityButtonProps {
   iconSize: number;
   tooltip: string;
@@ -44,33 +46,30 @@ const CreateNewEntityButton: React.FC<CreateNewEntityButtonProps> = ({
 
   return (
     <Tooltip isTriggerClickable tooltip={t(tooltip)}>
-      <button
-        className="flex h-full items-center justify-center disabled:cursor-not-allowed"
+      <DialButton
+        className="flex h-full items-center justify-center"
         aria-label={t(tooltip)}
         onClick={onClick}
         disabled={isDisabled}
         data-qa="new-entity"
-      >
-        {showSpinner ? (
-          <Spinner
-            size={iconSize + 6}
-            className="cursor-pointer text-secondary md:mx-2"
-          />
-        ) : (
-          <div
-            className={classNames(
-              'flex items-center justify-center rounded-full border border-transparent p-[2px]',
-              isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
-              colorsClass,
-            )}
-          >
-            <IconPlus
-              className={isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}
-              size={iconSize}
+        iconBefore={
+          showSpinner ? (
+            <Spinner
+              size={iconSize + 6}
+              className="cursor-pointer text-secondary md:mx-2"
             />
-          </div>
-        )}
-      </button>
+          ) : (
+            <div
+              className={classNames(
+                'flex items-center justify-center rounded-full border border-transparent p-[2px]',
+                colorsClass,
+              )}
+            >
+              <IconPlus size={iconSize} />
+            </div>
+          )
+        }
+      />
     </Tooltip>
   );
 };

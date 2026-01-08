@@ -589,12 +589,14 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.me,
+            includeUserInfo: true,
           }),
         ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
             sharedWith: ShareRelations.others,
+            includeUserInfo: true,
           }),
         ),
       );
@@ -644,6 +646,7 @@ const getSharedListingEpic: AppEpic = (action$) =>
           EnumMapper.getBackendResourceTypeByFeatureType(payload.featureType),
         ],
         with: payload.sharedWith,
+        includeUserInfo: payload.includeUserInfo,
       }).pipe(
         switchMap((entities) => {
           return of(
@@ -1140,7 +1143,7 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
 const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.discardSharedWithMe.type),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const resourceUrls = payload.isFolder
         ? payload.resourceIds.map(
             (resourceId) => ApiUtils.encodeApiUrl(resourceId) + '/',
@@ -1150,10 +1153,7 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           );
 
       return ShareService.shareDiscard(resourceUrls).pipe(
-        switchMap(() => {
-          if (!payload.isFolder && payload.featureType === FeatureType.File) {
-            return EMPTY;
-          }
+        mergeMap(() => {
           const actions: Observable<AppAction>[] = payload.resourceIds.map(
             (resourceId) =>
               of(

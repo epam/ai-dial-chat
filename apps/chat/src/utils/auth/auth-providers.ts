@@ -41,12 +41,14 @@ const getAzureProvider = (config: ProviderConfig) =>
     : undefined;
 
 const getAzureB2CProvider = (config: ProviderConfig) =>
-  config.clientId && config.clientSecret && config.tenantId
+  config.clientId && config.clientSecret && config.tenantId && config.userFlow
     ? AzureB2CProvider({
         id: config.id,
+        issuer: config.issuer,
         clientId: config.clientId,
         clientSecret: config.clientSecret,
         tenantId: config.tenantId,
+        primaryUserFlow: config.userFlow,
         name: config.name ?? DEFAULT_NAME,
         authorization: {
           params: {
@@ -184,7 +186,7 @@ const getOktaProvider = (config: ProviderConfig) =>
 
 const providerNames = {
   [SupportedProviders.AUTH0]: 'auth0',
-  [SupportedProviders.AZURE_B2C]: 'azureB2C',
+  [SupportedProviders.AZURE_B2C]: 'azure-ad-b2c',
   [SupportedProviders.AZURE_AD]: 'azure-ad',
   [SupportedProviders.COGNITO]: 'cognito',
   [SupportedProviders.GOOGLE]: 'google',

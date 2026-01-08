@@ -32,7 +32,9 @@ export class ToolsetAuthAssertion extends BaseAssertion {
       expectedCredsLabel,
     );
     await this.assertElementText(
-      this.toolsetEditorViewForm.loginButton,
+      expectedSignInButtonTitle === 'Log in'
+        ? this.toolsetEditorViewForm.loginButton
+        : this.toolsetEditorViewForm.logoutButton,
       expectedSignInButtonTitle,
     );
   }
