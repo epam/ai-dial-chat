@@ -1,5 +1,6 @@
 'use client';
 
+import { ConfigurationInJSON, OverlayFeatures } from './OverlayConfiguration';
 import { BackToButton } from './backToSelectOverlayMode';
 
 import {
@@ -37,6 +38,8 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
   const [importedConversation, setImportedConversation] = useState('');
   const [messageIndex, setMessageIndex] = useState('0');
   const [inputContent, setInputContent] = useState('');
+
+  const { enabledFeatures, ...restOverlayOptions } = overlayOptions;
 
   const handleDisplayInformation = useCallback((textToShow: string) => {
     dialogRef.current?.showModal();
@@ -134,6 +137,18 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       JSON.stringify(replayResult?.conversation, null, 2),
     );
   }, [conversationIdInputValue, conversationNewName, handleDisplayInformation]);
+
+  const setOverlayOptions = useCallback(
+    (newOptions: Partial<ChatOverlayOptions>) => {
+      const updatedOptions = {
+        ...overlayOptions,
+        hostDomain: window.location.origin,
+        ...newOptions,
+      };
+      overlay.current?.setOverlayOptions(updatedOptions);
+    },
+    [overlayOptions],
+  );
 
   useEffect(() => {
     if (!overlay.current && containerRef.current) {
@@ -268,12 +283,12 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
         }}
       ></div>
 
-      <div className="flex max-w-[600px] flex-col gap-2">
+      <div className="flex max-w-[900px] flex-col gap-2">
         <BackToButton />
         <details open={true} id="chat-actions">
           <summary>Chat actions</summary>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col gap-2">
               <button
                 className="button"
@@ -537,6 +552,16 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                   />
                 </div>
               </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <ConfigurationInJSON
+                restOverlayOptions={restOverlayOptions}
+                handleSetOverlayOptions={setOverlayOptions}
+              />
+              <OverlayFeatures
+                enabledFeatures={enabledFeatures}
+                setOverlayOptions={setOverlayOptions}
+              />
             </div>
           </div>
         </details>
