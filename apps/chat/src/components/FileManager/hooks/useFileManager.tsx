@@ -243,7 +243,6 @@ export const useFileManager = ({
         pathRootAlias = t('My Files');
         break;
       case DialFileManagerTabs.Shared:
-        filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
         pathRootAlias = t('Shared with Me');
         visibleColumns.push(FileManagerColumnKey.Author);
