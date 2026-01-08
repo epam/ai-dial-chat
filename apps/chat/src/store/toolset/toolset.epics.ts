@@ -353,7 +353,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   } else {
                     if (payload.tabToOpen) {
                       actions.push(
-                        of(ToolsetActions.setEditorStep(payload.tabToOpen!)),
+                        of(ToolsetActions.setEditorStep(payload.tabToOpen)),
                       );
                     }
                   }
