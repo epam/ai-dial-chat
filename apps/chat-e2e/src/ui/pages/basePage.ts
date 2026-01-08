@@ -156,10 +156,10 @@ export class BasePage {
     await client.send('Network.enable');
     await client.send('Network.emulateNetworkConditions', {
       offline: conditions?.offline ?? false,
-      latency: conditions?.latency ?? 500, // slow down UI responsiveness
+      latency: conditions?.latency ?? 75000, // slow down UI responsiveness
       downloadThroughput:
         conditions?.downloadThroughput ?? (5 * 1024 * 1024) / 8, // 5 Mbps download - reasonably fast
-      uploadThroughput: conditions?.uploadThroughput ?? (50 * 1024) / 8, // 50 Kbps upload - very slow,
+      uploadThroughput: conditions?.uploadThroughput ?? (10 * 1024) / 8, // 10 Kbps upload - very slow,
     });
     return client;
   }

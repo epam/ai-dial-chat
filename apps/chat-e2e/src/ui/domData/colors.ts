@@ -61,4 +61,5 @@ export enum ThemeColorAttributes {
   controlsBgAccent = 'controls-bg-accent',
   textSecondary = 'text-secondary',
   textInfo = 'text-info',
+  controlsBgOutlinedNeutralHover = 'controls-bg-outlined-neutral-hover',
 }

@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
   CheckboxState,
   ExpectedMessages,
@@ -12,7 +13,6 @@ import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
 
@@ -257,7 +257,9 @@ dialTest(
     chatMessages,
     conversations,
     chat,
+    apiAssertion,
     localStorageManager,
+    editMessageInputAttachments,
     filesManagerModalGridAssertion,
     editMessageInputAttachmentsAssertions,
   }) => {
@@ -274,10 +276,6 @@ dialTest(
     const initAttachedFiles = [
       Attachment.sunImageName,
       Attachment.cloudImageName,
-    ];
-    const updatedAttachedFiles = [
-      Attachment.sunImageName,
-      Attachment.flowerImageName,
     ];
     const attachmentUrls: string[] = [];
 
@@ -310,30 +308,14 @@ dialTest(
       await chatMessages.getChatMessageClipIcon(1).click();
       await attachmentDropdownMenu.selectMenuOption(
         UploadMenuOptions.attachUploadedFiles,
+        { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
       );
     });
-
-    await dialTest.step.skip(
-      //TODO this behavior is probably not desired. skipping for now
-      'In "Attach files" modal change uncheck attached files',
-      async () => {
-        const filesToUncheck = initAttachedFiles.filter(
-          (f) => !updatedAttachedFiles.includes(f),
-        );
-        for (const file of filesToUncheck) {
-          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
-          await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
-            file,
-            CheckboxState.unchecked,
-          );
-        }
-      },
-    );
 
     await dialTest.step(
       'In "Attach files" modal change attached files and verify updated files are displayed in Edit message box',
       async () => {
-        const filesToCheck = updatedAttachedFiles.filter(
+        const filesToCheck = allAttachedFiles.filter(
           (f) => !initAttachedFiles.includes(f),
         );
         for (const file of filesToCheck) {
@@ -344,17 +326,16 @@ dialTest(
           );
         }
         await filesManagerModal.getAttachButton().click();
-        for (const file of updatedAttachedFiles) {
+        for (const file of allAttachedFiles) {
           await editMessageInputAttachmentsAssertions.assertAttachedFileState(
             file,
             'visible',
           );
         }
-        //TODO check if this is correct
-        // await editMessageInputAttachmentsAssertions.assertElementsCount(
-        //   editMessageInputAttachments.inputAttachments,
-        //   updatedAttachedFiles.length,
-        // );
+        await editMessageInputAttachmentsAssertions.assertElementsCount(
+          editMessageInputAttachments.inputAttachments,
+          allAttachedFiles.length,
+        );
       },
     );
 
@@ -365,23 +346,7 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         const request = await chat.saveAndSubmitRequest();
-        //TODO check if it is correct
-        // expect
-        //   .soft(
-        //     request.messages[0].custom_content.attachments.length,
-        //     ExpectedMessages.attachedFilesCountIsValid,
-        //   )
-        //   .toBe(updatedAttachedFiles.length);
-        for (const file of updatedAttachedFiles) {
-          expect
-            .soft(
-              request.messages[0].custom_content.attachments.find(
-                (a: AttachmentInterface) => a.title === file,
-              ),
-              ExpectedMessages.requestCustomContentIsValid,
-            )
-            .toBeDefined();
-        }
+        apiAssertion.verifyRequestAttachments(request, ...attachmentUrls);
       },
     );
   },

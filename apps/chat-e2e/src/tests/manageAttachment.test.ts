@@ -16,13 +16,13 @@ import {
   Attributes,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
+import { IconSelectors } from '@/src/ui/selectors';
 import {
   BaseElement,
   Button,
   FileModalSection,
   Tab,
 } from '@/src/ui/webElements';
-import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
@@ -237,80 +237,78 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Manage attachments] Delete file while it is being uploaded',
   async ({
-    dialHomePage,
+    filesManagerPage,
+    filesManagerToolbar,
     setTestIds,
-    attachFilesModal,
-    uploadFromDeviceModal,
-    chatBar,
+    uploadingItemsPopup,
     localStorageManager,
     baseAssertion,
-    manageAttachmentsAssertion,
+    filesManagerGridAssertion,
   }) => {
     setTestIds('EPMRTC-3302');
-    let removeAttachedFileIconElement: Button;
-    let attachedFileLoadingIndicatorElement: Locator;
-    let allFilesTreeElement: AttachFilesTree;
+    let cancelButton: Button;
 
-    await dialTest.step(
-      'Open "Manage attachments" modal through chat side bar menu icon',
-      async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-      },
-    );
+    await dialTest.step('Open "Files manager" page', async () => {
+      await localStorageManager.setShowSideBarPanels();
+      await filesManagerPage.openFilesManagerPage();
+      await filesManagerPage.waitForPageLoaded({ isGridVisible: false });
+    });
 
     await dialTest.step('Start upload attachment from device', async () => {
-      await baseAssertion.assertElementState(attachFilesModal, 'visible');
-      await dialHomePage.emulateSlowNetworkConditions();
-      await dialHomePage.uploadData(
+      await filesManagerToolbar.getNewButton().click();
+      await filesManagerPage.emulateSlowNetworkConditions();
+      await filesManagerPage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
-        () => attachFilesModal.uploadFromDevice(),
+        () =>
+          filesManagerToolbar
+            .getNewButtonDropdownMenu()
+            .selectItem(UploadMenuOptions.uploadFiles),
       );
-      await baseAssertion.assertElementState(
-        uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
-        'visible',
+      await baseAssertion.assertElementText(
+        uploadingItemsPopup.uploadingItemName,
+        Attachment.sunImageName,
       );
-      await uploadFromDeviceModal.uploadButton.click();
+      const extension = Attachment.sunImageName.substring(
+        Attachment.sunImageName.lastIndexOf('.') + 1,
+      );
+      await baseAssertion.assertElementClass(
+        uploadingItemsPopup.fileTypeIcon,
+        IconSelectors.fileTypeIcon(extension),
+      );
     });
 
     await dialTest.step(
       'Verify loading indicator is shown while file is uploading, cancel button is highlighted on hover',
       async () => {
-        allFilesTreeElement = attachFilesModal.getAllFilesTree();
-        attachedFileLoadingIndicatorElement =
-          allFilesTreeElement.attachedFileLoadingIndicator(
-            Attachment.sunImageName,
-          );
         await baseAssertion.assertElementState(
-          attachedFileLoadingIndicatorElement,
+          uploadingItemsPopup.uploadingIndicator,
           'visible',
         );
-        removeAttachedFileIconElement =
-          allFilesTreeElement.removeAttachedFileIcon(Attachment.sunImageName);
-        await removeAttachedFileIconElement.hoverOver();
-        await baseAssertion.assertElementColor(
-          removeAttachedFileIconElement,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        await baseAssertion.assertElementText(
+          uploadingItemsPopup.uploadingItemsCount,
+          ExpectedConstants.uploadingItemsMessage(1),
+        );
+        cancelButton = uploadingItemsPopup.getCancelButton();
+        await cancelButton.hoverOver();
+        await baseAssertion.assertElementBackgroundColors(
+          cancelButton,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.controlsBgOutlinedNeutralHover,
+          ),
         );
       },
     );
 
     await dialTest.step(
-      'Click on cancel button near loading indicator and verify uploading stops, file disappears from the list',
+      'Click on cancel button and verify uploading stops, file is not displayed in the grid',
       async () => {
-        await removeAttachedFileIconElement.click();
-        await baseAssertion.assertElementState(
-          attachedFileLoadingIndicatorElement,
-          'hidden',
-        );
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
+        await cancelButton.click();
+        await baseAssertion.assertElementState(uploadingItemsPopup, 'hidden');
+        await filesManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
           'hidden',
         );
       },
@@ -565,18 +563,15 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file appears/disappears without browser refresh\n' +
     '[Manage attachments] Single User, Multiple Tabs. Added and Deleted file LOCATED IN FOLDER appears/disappears without browser refresh',
   async ({
-    dialHomePage,
+    filesManagerPage,
     setTestIds,
-    attachFilesModal,
     fileApiHelper,
-    chatBar,
-    manageAttachmentsAssertion,
-    attachedAllFiles,
-    localStorageManager,
+    filesManagerGridAssertion,
+    filesManagerFoldersTree,
   }) => {
     setTestIds('EPMRTC-5396', 'EPMRTC-5526');
     const filesToTest = [
@@ -600,12 +595,6 @@ dialTest.skip(
       },
     ];
 
-    await dialTest.step('Open DIAL', async () => {
-      await localStorageManager.setShowSideBarPanels();
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-    });
-
     await dialTest.step('Upload 2 files via API', async () => {
       for (const file of filesToTest) {
         if (file.folderName !== '' && file.isText) {
@@ -628,18 +617,17 @@ dialTest.skip(
     await dialTest.step(
       'Open the "Manage Attachments" modal and confirm files are present.',
       async () => {
-        await chatBar.openManageAttachmentsModal();
+        await filesManagerPage.openFilesManagerPage();
+        await filesManagerPage.waitForPageLoaded();
         for (const file of filesToTest) {
           if (file.folderName !== '') {
-            await attachedAllFiles.expandCollapseFolder(file.folderName);
+            await filesManagerFoldersTree.expandFolders(file.folderName);
           }
-          await manageAttachmentsAssertion.assertEntityState(
-            { name: file.name },
-            FileModalSection.AllFiles,
+          await filesManagerGridAssertion.assertGridRowByNameState(
+            file.name,
             'visible',
           );
         }
-        await attachFilesModal.closeButton.click();
       },
     );
 
@@ -648,16 +636,21 @@ dialTest.skip(
         `Delete ${file.isText ? 'text' : 'non-text'} file via API and verify it's not visible`,
         async () => {
           await fileApiHelper.deleteFromAllFiles(file.url);
-          await chatBar.openManageAttachmentsModal();
-          if (file.folderName !== '') {
-            await attachedAllFiles.expandCollapseFolder(file.folderName);
+          await filesManagerPage.reloadPage();
+          if (filesToTest.indexOf(file) !== filesToTest.length - 1) {
+            await filesManagerPage.waitForPageLoaded();
+            if (file.folderName !== '') {
+              await filesManagerFoldersTree.expandFolders(file.folderName);
+            }
+            await filesManagerGridAssertion.assertGridRowByNameState(
+              file.name,
+              'hidden',
+            );
+          } else {
+            await filesManagerPage.waitForPageLoaded({
+              isGridVisible: false,
+            });
           }
-          await manageAttachmentsAssertion.assertEntityState(
-            { name: file.name },
-            FileModalSection.AllFiles,
-            'hidden',
-          );
-          await attachFilesModal.closeButton.click();
         },
       );
     }

@@ -121,11 +121,6 @@ dialTest(
       Attachment.sunImageName,
       Attachment.cloudImageName,
     ];
-    const updatedAttachedFiles = [
-      Attachment.sunImageName,
-      Attachment.flowerImageName,
-      Attachment.cloudImageName,
-    ];
     const expectedColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textAccentPrimary,
     );
@@ -175,44 +170,22 @@ dialTest(
       );
     });
 
-    await dialTest.step.skip(
-      //TODO verify the desired behaviour - now previously selected files are not marked
-      'verify files are checked and marked with blue',
+    await dialTest.step(
+      'Check one more file and verify updated files are displayed in Send message box',
       async () => {
-        for (const file of initAttachedFiles) {
+        const filesToCheck = allAttachedFiles.filter(
+          (f) => !initAttachedFiles.includes(f),
+        );
+        for (const file of filesToCheck) {
+          await filesManagerModalGrid.gridCheckboxByNameCell(file).click();
           await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
             file,
             CheckboxState.checked,
           );
-          await filesManagerModalGridAssertion.assertGridCheckboxColor(
-            file,
-            expectedColor,
-          );
         }
-      },
-    );
-
-    await dialTest.step(
-      'Uncheck attached file, check another and verify updated files are displayed in Send message box',
-      //TODO verify the desired behaviour - now previously selected files are not marked
-      async () => {
-        // await filesManagerModalGrid
-        //   .gridCheckboxByNameCell(initAttachedFiles[1])
-        //   .click();
-        // await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
-        //   initAttachedFiles[1],
-        //   CheckboxState.unchecked,
-        // );
-        await filesManagerModalGrid
-          .gridCheckboxByNameCell(updatedAttachedFiles[1])
-          .click();
-        await filesManagerModalGridAssertion.assertGridCheckboxByNameState(
-          updatedAttachedFiles[1],
-          CheckboxState.checked,
-        );
         await filesManagerModal.getAttachButton().click();
 
-        for (const file of updatedAttachedFiles) {
+        for (const file of allAttachedFiles) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
             file,
             'visible',
@@ -220,7 +193,7 @@ dialTest(
         }
         await sendMessageInputAttachmentsAssertions.assertElementsCount(
           sendMessageInputAttachments.inputAttachments,
-          updatedAttachedFiles.length,
+          allAttachedFiles.length,
         );
       },
     );

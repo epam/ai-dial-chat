@@ -121,6 +121,13 @@ export const UploadFromDeviceModalSelectors = {
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
+export const UploadingItemsSelectors = {
+  uploadingItemsCount: '[data-qa="uploading-items-count"]',
+  fileTypeIcon: '[aria-label="File type icon"]',
+  itemName: '#name',
+  uploadingIndicator: '[data-qa="uploading-indicator"]',
+};
+
 export const FilesManagerModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
   title: '[data-qa="modal-title"]',

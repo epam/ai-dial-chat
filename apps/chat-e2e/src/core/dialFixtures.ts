@@ -53,6 +53,7 @@ import {
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
   TopicsTooltip,
+  UploadingItemsPopup,
 } from '../ui/webElements';
 import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
@@ -453,6 +454,7 @@ const dialTest = test.extend<{
   filesManagerModalGridAssertion: FilesManagerGridAssertion;
   fileConflictConfirmationPopup: ConfirmationPopup;
   fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  uploadingItemsPopup: UploadingItemsPopup;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1876,6 +1878,10 @@ const dialTest = test.extend<{
     const fileConflictConfirmationPopupAssertion =
       new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
     await use(fileConflictConfirmationPopupAssertion);
+  },
+  uploadingItemsPopup: async ({ page }, use) => {
+    const uploadingItemsPopup = new UploadingItemsPopup(page);
+    await use(uploadingItemsPopup);
   },
 });
 
