@@ -587,24 +587,24 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       isConversationWithFormSchema(conv),
   );
 
-    const isChatReadyForInput =
-      !isMarketplaceEnabled ||
-      areModelsInstalled ||
-      isIsolatedView ||
-      isAdminPreview ||
-      isApproveRequiredEntity;
+  const isChatReadyForInput =
+    !isMarketplaceEnabled ||
+    areModelsInstalled ||
+    isIsolatedView ||
+    isAdminPreview ||
+    isApproveRequiredEntity;
 
-    const isInputVisible =
-      ((!isReplay || isNotEmptyConversations) &&
-        !isReadOnly &&
-        !isApproveRequiredEntity &&
-        (areModelsInstalled ||
-          isAdminPreview ||
-          isReplay ||
-          isIsolatedView ||
-          !isMarketplaceEnabled) &&
-        !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
-      (isValidApproveRequiredConversation && isApproveRequiredInput);
+  const isInputVisible =
+    ((!isReplay || isNotEmptyConversations) &&
+      !isReadOnly &&
+      !isApproveRequiredEntity &&
+      (areModelsInstalled ||
+        isAdminPreview ||
+        isReplay ||
+        isIsolatedView ||
+        !isMarketplaceEnabled) &&
+      !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
+    (isValidApproveRequiredConversation && isApproveRequiredInput);
 
   useEffect(() => {
     if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
