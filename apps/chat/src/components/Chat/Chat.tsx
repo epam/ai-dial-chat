@@ -130,6 +130,9 @@ const ChatView = memo(
     const isDeleteMessageHided = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.HideDeleteUserMessage),
     );
+    const isMarketplaceEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+    );
     const isReplay = useAppSelector(
       ConversationsSelectors.selectIsReplaySelectedConversations,
     );
@@ -592,6 +595,7 @@ const ChatView = memo(
     );
 
     const isChatReadyForInput =
+      !isMarketplaceEnabled ||
       areModelsInstalled ||
       isIsolatedView ||
       isAdminPreview ||
@@ -601,7 +605,11 @@ const ChatView = memo(
       ((!isReplay || isNotEmptyConversations) &&
         !isReadOnly &&
         !isApproveRequiredEntity &&
-        (areModelsInstalled || isAdminPreview || isReplay || isIsolatedView) &&
+        (areModelsInstalled ||
+          isAdminPreview ||
+          isReplay ||
+          isIsolatedView ||
+          !isMarketplaceEnabled) &&
         !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
       (isValidApproveRequiredConversation && isApproveRequiredInput);
 
