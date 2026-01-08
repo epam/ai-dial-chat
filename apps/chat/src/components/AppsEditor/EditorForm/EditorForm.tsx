@@ -30,9 +30,10 @@ import { QuickAppForm } from '@/src/components/AppsEditor/EditorForm/QuickAppFor
 
 interface EditorFormProps {
   onNextClick: () => void;
+  onAutoSave: () => void;
 }
 
-export const EditorForm = ({ onNextClick }: EditorFormProps) => {
+export const EditorForm = ({ onNextClick, onAutoSave }: EditorFormProps) => {
   const router = useRouter();
   const editorStep = useAppSelector(ApplicationSelectors.selectEditorStep);
   const schema = useAppSelector(
@@ -47,7 +48,7 @@ export const EditorForm = ({ onNextClick }: EditorFormProps) => {
       return <QuickAppForm />;
     }
     if (isQuickApp2Editor(type.toString())) {
-      return <QuickApp2Form />;
+      return <QuickApp2Form onAutoSave={onAutoSave} />;
     }
     if (isExternalAppEditor(type.toString())) {
       return <ExternalAppForm />;
@@ -67,7 +68,7 @@ export const EditorForm = ({ onNextClick }: EditorFormProps) => {
         }
         return null;
     }
-  }, [schema, type]);
+  }, [onAutoSave, schema, type]);
 
   switch (editorStep) {
     case MarketplaceEditorSteps.Settings:
