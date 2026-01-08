@@ -210,25 +210,25 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           onModelChange={onModelChange}
         />
 
+        {screenState > ScreenState.SM && (
+          <ToggleSwitchLabel
+            label={t('Chat width')}
+            isOn={isChatFullWidthLocal}
+            labelText={t('Show chat full screen width')}
+            labelClassName="grow"
+            handleSwitch={onChangeHandlerFullWidth}
+            switchOnText={t('ON')}
+            switchOFFText={t('OFF')}
+            isLabelOnRight
+            className="mt-1"
+          />
+        )}
         {screenState > ScreenState.MD && (
-          <>
-            <ToggleSwitchLabel
-              label={t('Chat width')}
-              isOn={isChatFullWidthLocal}
-              labelText={t('Show chat full screen width')}
-              labelClassName="grow"
-              handleSwitch={onChangeHandlerFullWidth}
-              switchOnText={t('ON')}
-              switchOFFText={t('OFF')}
-              isLabelOnRight
-              className="mt-1"
-            />
-            <EnterTypeSelectLabeled
-              label={t('Keyboard shortcuts')}
-              value={enterType}
-              onValueChange={(value) => setEnterType(value as EnterType)}
-            />
-          </>
+          <EnterTypeSelectLabeled
+            label={t('Keyboard shortcuts')}
+            value={enterType}
+            onValueChange={(value) => setEnterType(value as EnterType)}
+          />
         )}
       </div>
 
